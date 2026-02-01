@@ -1,0 +1,15 @@
+project:
+  type: book
+
+book:
+  title: "Quantitative Finance Lab"
+  author: "Ramtin Asadi"
+  chapters:
+    - index.qmd
+    - overview.qmd
+
+format:
+  html:
+    theme: cosmo
+
+output-dir: ../docs

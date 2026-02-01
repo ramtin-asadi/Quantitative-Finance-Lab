@@ -1,0 +1,15 @@
+name: docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: quarto-dev/quarto-actions/setup@v2
+      - name: Render book
+        run: quarto render book --output-dir ../docs

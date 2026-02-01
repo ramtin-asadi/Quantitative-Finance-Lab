@@ -1,0 +1,33 @@
+# Data (local only)
+data/
+
+# Environments
+.venv/
+venv/
+ENV/
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Build artifacts
+build/
+dist/
+
+# Caches
+.cache/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Coverage
+.coverage
+htmlcov/
