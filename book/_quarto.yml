@@ -7,6 +7,7 @@ book:
   chapters:
     - index.qmd
     - overview.qmd
+    - ../notebooks/01_yield_curve_construction.ipynb
 
 format:
   html:
