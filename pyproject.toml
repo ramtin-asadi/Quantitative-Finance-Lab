@@ -25,11 +25,13 @@ dev = [
   "pre-commit",
 ]
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["quantfinlab*"]
+
+[tool.setuptools.package-data]
+quantfinlab = ["py.typed"]
+
 
 [tool.black]
 line-length = 100

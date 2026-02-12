@@ -1,5 +1,6 @@
 project:
   type: book
+  output-dir: ../docs
 
 book:
   title: "Quantitative Finance Lab"
@@ -7,10 +8,10 @@ book:
   chapters:
     - index.qmd
     - overview.qmd
-    - ../notebooks/01_yield_curve_construction.ipynb
+    - notebooks/01_yield_curve_bond_pricing_and_risk.ipynb
 
 format:
   html:
-    theme: cosmo
-
-output-dir: ../docs
+    theme: flatly
+    toc: false
+    number-sections: false
