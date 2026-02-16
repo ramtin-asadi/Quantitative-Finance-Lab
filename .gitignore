@@ -34,3 +34,5 @@ htmlcov/
 
 .quarto/
 **/*.quarto_ipynb
+
+/.quarto/

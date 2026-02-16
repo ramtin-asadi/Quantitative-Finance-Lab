@@ -6,6 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="description" content="How this lab is organized: project template, engineering conventions, and reproducibility guidelines.">
 
 <title>Overview – Quantitative Finance Lab</title>
 <style>
@@ -42,7 +43,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-c58f986be3ff872790ab570c6d9e49f2.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-2641b481724464e61c86985d8c912b6f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -74,7 +75,7 @@ ul.task-list li input[type="checkbox"] {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -110,7 +111,7 @@ ul.task-list li input[type="checkbox"] {
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Quantitative Finance Lab</span></a>
+  <a href="./index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Quantitative-Finance-Lab</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -133,7 +134,23 @@ ul.task-list li input[type="checkbox"] {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#purpose" id="toc-purpose" class="nav-link active" data-scroll-target="#purpose">Purpose</a></li>
+  <li><a href="#how-projects-are-structured" id="toc-how-projects-are-structured" class="nav-link" data-scroll-target="#how-projects-are-structured">How projects are structured</a></li>
+  <li><a href="#repository-layout-conceptual" id="toc-repository-layout-conceptual" class="nav-link" data-scroll-target="#repository-layout-conceptual">Repository layout (conceptual)</a></li>
+  <li><a href="#the-quantfinlab-philosophy" id="toc-the-quantfinlab-philosophy" class="nav-link" data-scroll-target="#the-quantfinlab-philosophy">The <code>quantfinlab</code> philosophy</a></li>
+  <li><a href="#data-reproducibility" id="toc-data-reproducibility" class="nav-link" data-scroll-target="#data-reproducibility">Data &amp; reproducibility</a></li>
+  <li><a href="#evaluation-conventions-recommended" id="toc-evaluation-conventions-recommended" class="nav-link" data-scroll-target="#evaluation-conventions-recommended">Evaluation conventions (recommended)</a></li>
+  <li><a href="#quality-checklist-used-in-this-lab" id="toc-quality-checklist-used-in-this-lab" class="nav-link" data-scroll-target="#quality-checklist-used-in-this-lab">Quality checklist used in this lab</a></li>
+  <li><a href="#roadmap-high-level" id="toc-roadmap-high-level" class="nav-link" data-scroll-target="#roadmap-high-level">Roadmap (high level)</a></li>
+  <li><a href="#disclaimer" id="toc-disclaimer" class="nav-link" data-scroll-target="#disclaimer">Disclaimer</a></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
@@ -156,9 +173,120 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>This project is a workspace for quantitative finance experiments and reproducible research.</p>
+<section id="purpose" class="level2">
+<h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
+<p>This lab is designed to be a <strong>long-running series</strong> of quantitative finance projects, where each project is:</p>
+<ol type="1">
+<li><strong>Readable</strong> (clear narrative, equations, and interpretation)<br>
+</li>
+<li><strong>Reproducible</strong> (same inputs → same results, consistent metrics)<br>
+</li>
+<li><strong>Reusable</strong> (core logic extracted into a Python package)</li>
+</ol>
+<p>The long-term output is a portfolio of work that demonstrates both <strong>research depth</strong> and <strong>software discipline</strong>.</p>
+<hr>
+</section>
+<section id="how-projects-are-structured" class="level2">
+<h2 class="anchored" data-anchor-id="how-projects-are-structured">How projects are structured</h2>
+<p>Each project is written as a Quarto notebook and typically follows:</p>
+<ol type="1">
+<li><strong>Motivation &amp; problem statement</strong></li>
+<li><strong>Mathematical formulation</strong></li>
+<li><strong>Implementation details</strong></li>
+<li><strong>Experiments and comparisons</strong></li>
+<li><strong>Diagnostics + failure modes</strong></li>
+<li><strong>Summary of results &amp; takeaways</strong></li>
+</ol>
+<p>As patterns emerge, reusable components are moved into the <strong><code>quantfinlab</code></strong> package so future projects can build on stable foundations.</p>
+<hr>
+</section>
+<section id="repository-layout-conceptual" class="level2">
+<h2 class="anchored" data-anchor-id="repository-layout-conceptual">Repository layout (conceptual)</h2>
+<ul>
+<li><p><code>notebooks/</code><br>
+Project notebooks (Quarto). These are the <strong>public-facing</strong> research artifacts.</p></li>
+<li><p><code>quantfinlab/</code><br>
+Reusable Python library modules shared across projects.</p></li>
+<li><p><code>docs/</code><br>
+Rendered website output (GitHub Pages).</p></li>
+<li><p><code>.github/workflows/</code>, <code>pyproject.toml</code>, <code>.pre-commit-config.yaml</code><br>
+Code quality + reproducibility tooling (lint/format/tests/CI).</p></li>
+</ul>
+<hr>
+</section>
+<section id="the-quantfinlab-philosophy" class="level2">
+<h2 class="anchored" data-anchor-id="the-quantfinlab-philosophy">The <code>quantfinlab</code> philosophy</h2>
+<p>The design rule is:</p>
+<blockquote class="blockquote">
+<p><strong>Notebooks are clients. The library is the product.</strong></p>
+</blockquote>
+<p>If code is used in more than one place—or is critical enough to deserve tests—it should live in <code>quantfinlab</code>.</p>
+<p>Examples of what belongs in the library: - curve construction helpers, bond pricing primitives, risk measures - portfolio constraints, optimization wrappers, objective/penalty building blocks - standardized performance metrics and plotting utilities - data validation, common transformations, and safe defaults</p>
+<hr>
+</section>
+<section id="data-reproducibility" class="level2">
+<h2 class="anchored" data-anchor-id="data-reproducibility">Data &amp; reproducibility</h2>
+<p>Many finance datasets are large or licensed, so the repository generally avoids committing raw data.</p>
+<p><strong>Recommended approach</strong> - Keep datasets in a local <code>data/</code> directory (gitignored). - Use clear filenames and a short data note inside each notebook: - required file(s) - expected columns - frequency and timezone assumptions - missing data handling expectations</p>
+<p><strong>Strong reproducibility standard</strong> - A notebook should either: - run end-to-end from a clean clone once data is present, or - fail with a clear, friendly message explaining what’s missing and where to put it.</p>
+<hr>
+</section>
+<section id="evaluation-conventions-recommended" class="level2">
+<h2 class="anchored" data-anchor-id="evaluation-conventions-recommended">Evaluation conventions (recommended)</h2>
+<p>To keep comparisons consistent across projects, the lab aims to standardize:</p>
+<ul>
+<li><strong>Return definition</strong> (close-to-close vs open-to-open, etc.)</li>
+<li><strong>Rebalance convention</strong> (timing, lookahead prevention)</li>
+<li><strong>Transaction costs model</strong> (turnover-based, spread-based, fees)</li>
+<li><strong>Metrics</strong><br>
+At minimum: CAGR, volatility, Sharpe, max drawdown, turnover, hit rate<br>
+When relevant: tail metrics (VaR/CVaR), exposure diagnostics, constraint activity</li>
+</ul>
+<p>If a metric can be misleading, the notebook should highlight it and include at least one complementary diagnostic plot/table.</p>
+<hr>
+</section>
+<section id="quality-checklist-used-in-this-lab" class="level2">
+<h2 class="anchored" data-anchor-id="quality-checklist-used-in-this-lab">Quality checklist used in this lab</h2>
+<p>A project is considered “complete” when it includes:</p>
+<ul>
+<li>clear assumptions and constraints<br>
+</li>
+<li>sanity checks and edge-case discussion<br>
+</li>
+<li>comparison baselines (simple but strong references)<br>
+</li>
+<li>reproducible plots/tables (consistent formatting and labels)<br>
+</li>
+<li>reusable implementation extracted to <code>quantfinlab</code> where appropriate<br>
+</li>
+<li>minimal tests for core functions when feasible</li>
+</ul>
+<hr>
+</section>
+<section id="roadmap-high-level" class="level2">
+<h2 class="anchored" data-anchor-id="roadmap-high-level">Roadmap (high level)</h2>
+<ul>
+<li>Expand the library into clearer submodules (fixed income, portfolio, risk, datasets)</li>
+<li>Add test coverage for high-value finance primitives</li>
+<li>Add standardized experiment configs + results tables at the end of each project</li>
+<li>Add small sample datasets for “out-of-the-box” runs when possible</li>
+<li>Add additional projects in areas like:
+<ul>
+<li>risk attribution and factor models</li>
+<li>transaction cost modeling and turnover control</li>
+<li>robust optimization and regularization</li>
+<li>stress testing and scenario analysis</li>
+<li>yield curve strategies and bond portfolio PnL attribution</li>
+</ul></li>
+</ul>
+<hr>
+</section>
+<section id="disclaimer" class="level2">
+<h2 class="anchored" data-anchor-id="disclaimer">Disclaimer</h2>
+<p>This content is for <strong>education and research</strong>. It is not investment advice. Any results depend heavily on data quality, assumptions, costs, constraints, and implementation details.</p>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -563,8 +691,8 @@ ul.task-list li input[type="checkbox"] {
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="./index.html" class="pagination-link" aria-label="Quantitative Finance Lab">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-title">Quantitative Finance Lab</span></span>
+      <a href="./index.html" class="pagination-link" aria-label="Quantitative-Finance-Lab">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-title">Quantitative-Finance-Lab</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">

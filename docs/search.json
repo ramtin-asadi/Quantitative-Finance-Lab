@@ -2,11 +2,71 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "Quantitative Finance Lab",
+    "title": "Quantitative-Finance-Lab",
     "section": "",
-    "text": "Quantitative Finance Lab\nWelcome to the quantitative finance lab. This book documents methods, experiments, and results.\n\nNotebooks will be added later under /notebooks.",
+    "text": "Quantitative Finance Lab",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Quantitative Finance Lab</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Quantitative-Finance-Lab</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#what-this-is",
+    "href": "index.html#what-this-is",
+    "title": "Quantitative-Finance-Lab",
+    "section": "What this is",
+    "text": "What this is\nQuantitative-Finance-Lab is a project series where each topic is developed end-to-end:\n\nClear narrative: intuition → math → implementation\nReproducible experiments: consistent metrics, plots, and comparisons\nLibrary-first engineering: reusable components are extracted into quantfinlab\n\nThe goal is to build a portfolio that is both research-grade (well explained) and engineering-grade (reusable, testable, maintainable).",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Quantitative-Finance-Lab</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#start-here",
+    "href": "index.html#start-here",
+    "title": "Quantitative-Finance-Lab",
+    "section": "Start here",
+    "text": "Start here\n\nRead the Overview for conventions, reproducibility notes, and how projects are structured.\nThen open a project notebook and follow it top-to-bottom.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Quantitative-Finance-Lab</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#projects",
+    "href": "index.html#projects",
+    "title": "Quantitative-Finance-Lab",
+    "section": "Projects",
+    "text": "Projects\n\n\n\n01 — Yield Curve, Bond Pricing & Risk\n\nYield curve construction (discount factors / zero rates)\nBond pricing and key risk measures\nPractical fixed-income utilities you can reuse elsewhere\n\nOpen Project 01\n\n\n\n02 — Portfolio Optimization (Mean–Variance)\n\nMean–variance optimization pipeline\nCovariance estimators and model comparisons\nBacktest-style evaluation and performance diagnostics\n\nOpen Project 02",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Quantitative-Finance-Lab</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#the-quantfinlab-library",
+    "href": "index.html#the-quantfinlab-library",
+    "title": "Quantitative-Finance-Lab",
+    "section": "The quantfinlab library",
+    "text": "The quantfinlab library\nAs the series grows, reusable code is consolidated into quantfinlab:\n\nshared fixed-income helpers\nportfolio utilities\nplotting/diagnostic helpers\ncommon conventions (metrics, configs, I/O)\n\nThe intent is simple: notebooks explain and experiment; the library implements.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Quantitative-Finance-Lab</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#reproducibility",
+    "href": "index.html#reproducibility",
+    "title": "Quantitative-Finance-Lab",
+    "section": "Reproducibility",
+    "text": "Reproducibility\n\nThis repo follows a reproducibility-first workflow (formatting/linting/testing/CI).\nLarge datasets are typically not committed. If a notebook expects data files, place them under a local data/ directory (gitignored) and follow any project-specific notes.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Quantitative-Finance-Lab</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#disclaimer",
+    "href": "index.html#disclaimer",
+    "title": "Quantitative-Finance-Lab",
+    "section": "Disclaimer",
+    "text": "Disclaimer\nThis repository is for research and educational purposes. Nothing here is investment advice, and results may vary by dataset, assumptions, costs, constraints, and implementation details.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Quantitative-Finance-Lab</span>"
     ]
   },
   {
@@ -14,7 +74,97 @@
     "href": "overview.html",
     "title": "Overview",
     "section": "",
-    "text": "This project is a workspace for quantitative finance experiments and reproducible research.",
+    "text": "Purpose\nThis lab is designed to be a long-running series of quantitative finance projects, where each project is:\nThe long-term output is a portfolio of work that demonstrates both research depth and software discipline.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
+    ]
+  },
+  {
+    "objectID": "overview.html#purpose",
+    "href": "overview.html#purpose",
+    "title": "Overview",
+    "section": "",
+    "text": "Readable (clear narrative, equations, and interpretation)\n\nReproducible (same inputs → same results, consistent metrics)\n\nReusable (core logic extracted into a Python package)",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
+    ]
+  },
+  {
+    "objectID": "overview.html#how-projects-are-structured",
+    "href": "overview.html#how-projects-are-structured",
+    "title": "Overview",
+    "section": "How projects are structured",
+    "text": "How projects are structured\nEach project is written as a Quarto notebook and typically follows:\n\nMotivation & problem statement\nMathematical formulation\nImplementation details\nExperiments and comparisons\nDiagnostics + failure modes\nSummary of results & takeaways\n\nAs patterns emerge, reusable components are moved into the quantfinlab package so future projects can build on stable foundations.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
+    ]
+  },
+  {
+    "objectID": "overview.html#repository-layout-conceptual",
+    "href": "overview.html#repository-layout-conceptual",
+    "title": "Overview",
+    "section": "Repository layout (conceptual)",
+    "text": "Repository layout (conceptual)\n\nnotebooks/\nProject notebooks (Quarto). These are the public-facing research artifacts.\nquantfinlab/\nReusable Python library modules shared across projects.\ndocs/\nRendered website output (GitHub Pages).\n.github/workflows/, pyproject.toml, .pre-commit-config.yaml\nCode quality + reproducibility tooling (lint/format/tests/CI).",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
+    ]
+  },
+  {
+    "objectID": "overview.html#the-quantfinlab-philosophy",
+    "href": "overview.html#the-quantfinlab-philosophy",
+    "title": "Overview",
+    "section": "The quantfinlab philosophy",
+    "text": "The quantfinlab philosophy\nThe design rule is:\n\nNotebooks are clients. The library is the product.\n\nIf code is used in more than one place—or is critical enough to deserve tests—it should live in quantfinlab.\nExamples of what belongs in the library: - curve construction helpers, bond pricing primitives, risk measures - portfolio constraints, optimization wrappers, objective/penalty building blocks - standardized performance metrics and plotting utilities - data validation, common transformations, and safe defaults",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
+    ]
+  },
+  {
+    "objectID": "overview.html#data-reproducibility",
+    "href": "overview.html#data-reproducibility",
+    "title": "Overview",
+    "section": "Data & reproducibility",
+    "text": "Data & reproducibility\nMany finance datasets are large or licensed, so the repository generally avoids committing raw data.\nRecommended approach - Keep datasets in a local data/ directory (gitignored). - Use clear filenames and a short data note inside each notebook: - required file(s) - expected columns - frequency and timezone assumptions - missing data handling expectations\nStrong reproducibility standard - A notebook should either: - run end-to-end from a clean clone once data is present, or - fail with a clear, friendly message explaining what’s missing and where to put it.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
+    ]
+  },
+  {
+    "objectID": "overview.html#evaluation-conventions-recommended",
+    "href": "overview.html#evaluation-conventions-recommended",
+    "title": "Overview",
+    "section": "Evaluation conventions (recommended)",
+    "text": "Evaluation conventions (recommended)\nTo keep comparisons consistent across projects, the lab aims to standardize:\n\nReturn definition (close-to-close vs open-to-open, etc.)\nRebalance convention (timing, lookahead prevention)\nTransaction costs model (turnover-based, spread-based, fees)\nMetrics\nAt minimum: CAGR, volatility, Sharpe, max drawdown, turnover, hit rate\nWhen relevant: tail metrics (VaR/CVaR), exposure diagnostics, constraint activity\n\nIf a metric can be misleading, the notebook should highlight it and include at least one complementary diagnostic plot/table.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
+    ]
+  },
+  {
+    "objectID": "overview.html#quality-checklist-used-in-this-lab",
+    "href": "overview.html#quality-checklist-used-in-this-lab",
+    "title": "Overview",
+    "section": "Quality checklist used in this lab",
+    "text": "Quality checklist used in this lab\nA project is considered “complete” when it includes:\n\nclear assumptions and constraints\n\nsanity checks and edge-case discussion\n\ncomparison baselines (simple but strong references)\n\nreproducible plots/tables (consistent formatting and labels)\n\nreusable implementation extracted to quantfinlab where appropriate\n\nminimal tests for core functions when feasible",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
+    ]
+  },
+  {
+    "objectID": "overview.html#roadmap-high-level",
+    "href": "overview.html#roadmap-high-level",
+    "title": "Overview",
+    "section": "Roadmap (high level)",
+    "text": "Roadmap (high level)\n\nExpand the library into clearer submodules (fixed income, portfolio, risk, datasets)\nAdd test coverage for high-value finance primitives\nAdd standardized experiment configs + results tables at the end of each project\nAdd small sample datasets for “out-of-the-box” runs when possible\nAdd additional projects in areas like:\n\nrisk attribution and factor models\ntransaction cost modeling and turnover control\nrobust optimization and regularization\nstress testing and scenario analysis\nyield curve strategies and bond portfolio PnL attribution",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
+    ]
+  },
+  {
+    "objectID": "overview.html#disclaimer",
+    "href": "overview.html#disclaimer",
+    "title": "Overview",
+    "section": "Disclaimer",
+    "text": "Disclaimer\nThis content is for education and research. It is not investment advice. Any results depend heavily on data quality, assumptions, costs, constraints, and implementation details.",
     "crumbs": [
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
     ]
