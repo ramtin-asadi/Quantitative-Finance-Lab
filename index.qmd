@@ -1,7 +1,5 @@
-# Quantitative Finance Lab
-
 ---
-title: "Quantitative-Finance-Lab"
+title: "Home"
 subtitle: "Project-based research + a reusable Python library for quantitative finance"
 description: "A living lab of reproducible quant-finance projects (notes, math, experiments) backed by a growing Python package: quantfinlab."
 toc: false

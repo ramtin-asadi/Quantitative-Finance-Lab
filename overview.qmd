@@ -1,5 +1,3 @@
-# Overview
-
 ---
 title: "Overview"
 description: "How this lab is organized: project template, engineering conventions, and reproducibility guidelines."

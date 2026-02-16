@@ -2,71 +2,71 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "Quantitative-Finance-Lab",
+    "title": "Quantitative Finance Lab",
     "section": "",
-    "text": "Quantitative Finance Lab",
+    "text": "What this is\nQuantitative-Finance-Lab is a project series where each topic is developed end-to-end:\nThe goal is to build a portfolio that is both research-grade (well explained) and engineering-grade (reusable, testable, maintainable).",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Quantitative-Finance-Lab</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Home</span>"
     ]
   },
   {
     "objectID": "index.html#what-this-is",
     "href": "index.html#what-this-is",
-    "title": "Quantitative-Finance-Lab",
-    "section": "What this is",
-    "text": "What this is\nQuantitative-Finance-Lab is a project series where each topic is developed end-to-end:\n\nClear narrative: intuition → math → implementation\nReproducible experiments: consistent metrics, plots, and comparisons\nLibrary-first engineering: reusable components are extracted into quantfinlab\n\nThe goal is to build a portfolio that is both research-grade (well explained) and engineering-grade (reusable, testable, maintainable).",
+    "title": "Quantitative Finance Lab",
+    "section": "",
+    "text": "Clear narrative: intuition → math → implementation\nReproducible experiments: consistent metrics, plots, and comparisons\nLibrary-first engineering: reusable components are extracted into quantfinlab",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Quantitative-Finance-Lab</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Home</span>"
     ]
   },
   {
     "objectID": "index.html#start-here",
     "href": "index.html#start-here",
-    "title": "Quantitative-Finance-Lab",
+    "title": "Quantitative Finance Lab",
     "section": "Start here",
     "text": "Start here\n\nRead the Overview for conventions, reproducibility notes, and how projects are structured.\nThen open a project notebook and follow it top-to-bottom.",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Quantitative-Finance-Lab</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Home</span>"
     ]
   },
   {
     "objectID": "index.html#projects",
     "href": "index.html#projects",
-    "title": "Quantitative-Finance-Lab",
+    "title": "Quantitative Finance Lab",
     "section": "Projects",
     "text": "Projects\n\n\n\n01 — Yield Curve, Bond Pricing & Risk\n\nYield curve construction (discount factors / zero rates)\nBond pricing and key risk measures\nPractical fixed-income utilities you can reuse elsewhere\n\nOpen Project 01\n\n\n\n02 — Portfolio Optimization (Mean–Variance)\n\nMean–variance optimization pipeline\nCovariance estimators and model comparisons\nBacktest-style evaluation and performance diagnostics\n\nOpen Project 02",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Quantitative-Finance-Lab</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Home</span>"
     ]
   },
   {
     "objectID": "index.html#the-quantfinlab-library",
     "href": "index.html#the-quantfinlab-library",
-    "title": "Quantitative-Finance-Lab",
+    "title": "Quantitative Finance Lab",
     "section": "The quantfinlab library",
     "text": "The quantfinlab library\nAs the series grows, reusable code is consolidated into quantfinlab:\n\nshared fixed-income helpers\nportfolio utilities\nplotting/diagnostic helpers\ncommon conventions (metrics, configs, I/O)\n\nThe intent is simple: notebooks explain and experiment; the library implements.",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Quantitative-Finance-Lab</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Home</span>"
     ]
   },
   {
     "objectID": "index.html#reproducibility",
     "href": "index.html#reproducibility",
-    "title": "Quantitative-Finance-Lab",
+    "title": "Quantitative Finance Lab",
     "section": "Reproducibility",
     "text": "Reproducibility\n\nThis repo follows a reproducibility-first workflow (formatting/linting/testing/CI).\nLarge datasets are typically not committed. If a notebook expects data files, place them under a local data/ directory (gitignored) and follow any project-specific notes.",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Quantitative-Finance-Lab</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Home</span>"
     ]
   },
   {
     "objectID": "index.html#disclaimer",
     "href": "index.html#disclaimer",
-    "title": "Quantitative-Finance-Lab",
+    "title": "Quantitative Finance Lab",
     "section": "Disclaimer",
     "text": "Disclaimer\nThis repository is for research and educational purposes. Nothing here is investment advice, and results may vary by dataset, assumptions, costs, constraints, and implementation details.",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Quantitative-Finance-Lab</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Home</span>"
     ]
   },
   {
