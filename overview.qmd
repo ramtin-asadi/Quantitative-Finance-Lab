@@ -1,3 +1,133 @@
 # Overview
 
-This project is a workspace for quantitative finance experiments and reproducible research.
+---
+title: "Overview"
+description: "How this lab is organized: project template, engineering conventions, and reproducibility guidelines."
+toc: true
+---
+
+## Purpose
+
+This lab is designed to be a **long-running series** of quantitative finance projects, where each project is:
+
+1. **Readable** (clear narrative, equations, and interpretation)  
+2. **Reproducible** (same inputs → same results, consistent metrics)  
+3. **Reusable** (core logic extracted into a Python package)
+
+The long-term output is a portfolio of work that demonstrates both **research depth** and **software discipline**.
+
+---
+
+## How projects are structured
+
+Each project is written as a Quarto notebook and typically follows:
+
+1. **Motivation & problem statement**
+2. **Mathematical formulation**
+3. **Implementation details**
+4. **Experiments and comparisons**
+5. **Diagnostics + failure modes**
+6. **Summary of results & takeaways**
+
+As patterns emerge, reusable components are moved into the **`quantfinlab`** package so future projects can build on stable foundations.
+
+---
+
+## Repository layout (conceptual)
+
+- `notebooks/`  
+  Project notebooks (Quarto). These are the **public-facing** research artifacts.
+
+- `quantfinlab/`  
+  Reusable Python library modules shared across projects.
+
+- `docs/`  
+  Rendered website output (GitHub Pages).
+
+- `.github/workflows/`, `pyproject.toml`, `.pre-commit-config.yaml`  
+  Code quality + reproducibility tooling (lint/format/tests/CI).
+
+---
+
+## The `quantfinlab` philosophy
+
+The design rule is:
+
+> **Notebooks are clients. The library is the product.**
+
+If code is used in more than one place—or is critical enough to deserve tests—it should live in `quantfinlab`.
+
+Examples of what belongs in the library:
+- curve construction helpers, bond pricing primitives, risk measures
+- portfolio constraints, optimization wrappers, objective/penalty building blocks
+- standardized performance metrics and plotting utilities
+- data validation, common transformations, and safe defaults
+
+---
+
+## Data & reproducibility
+
+Many finance datasets are large or licensed, so the repository generally avoids committing raw data.
+
+**Recommended approach**
+- Keep datasets in a local `data/` directory (gitignored).
+- Use clear filenames and a short data note inside each notebook:
+  - required file(s)
+  - expected columns
+  - frequency and timezone assumptions
+  - missing data handling expectations
+
+**Strong reproducibility standard**
+- A notebook should either:
+  - run end-to-end from a clean clone once data is present, or
+  - fail with a clear, friendly message explaining what’s missing and where to put it.
+
+---
+
+## Evaluation conventions (recommended)
+
+To keep comparisons consistent across projects, the lab aims to standardize:
+
+- **Return definition** (close-to-close vs open-to-open, etc.)
+- **Rebalance convention** (timing, lookahead prevention)
+- **Transaction costs model** (turnover-based, spread-based, fees)
+- **Metrics**  
+  At minimum: CAGR, volatility, Sharpe, max drawdown, turnover, hit rate  
+  When relevant: tail metrics (VaR/CVaR), exposure diagnostics, constraint activity
+
+If a metric can be misleading, the notebook should highlight it and include at least one complementary diagnostic plot/table.
+
+---
+
+## Quality checklist used in this lab
+
+A project is considered “complete” when it includes:
+
+-  clear assumptions and constraints  
+-  sanity checks and edge-case discussion  
+-  comparison baselines (simple but strong references)  
+-  reproducible plots/tables (consistent formatting and labels)  
+-  reusable implementation extracted to `quantfinlab` where appropriate  
+-  minimal tests for core functions when feasible  
+
+---
+
+## Roadmap (high level)
+
+- Expand the library into clearer submodules (fixed income, portfolio, risk, datasets)
+- Add test coverage for high-value finance primitives
+- Add standardized experiment configs + results tables at the end of each project
+- Add small sample datasets for “out-of-the-box” runs when possible
+- Add additional projects in areas like:
+  - risk attribution and factor models
+  - transaction cost modeling and turnover control
+  - robust optimization and regularization
+  - stress testing and scenario analysis
+  - yield curve strategies and bond portfolio PnL attribution
+
+---
+
+## Disclaimer
+
+This content is for **education and research**. It is not investment advice. Any results depend heavily on data quality, assumptions, costs, constraints, and implementation details.
+

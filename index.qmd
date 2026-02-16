@@ -1,5 +1,86 @@
 # Quantitative Finance Lab
 
-Welcome to the quantitative finance lab. This book documents methods, experiments, and results.
+---
+title: "Quantitative-Finance-Lab"
+subtitle: "Project-based research + a reusable Python library for quantitative finance"
+description: "A living lab of reproducible quant-finance projects (notes, math, experiments) backed by a growing Python package: quantfinlab."
+toc: false
+page-layout: full
+---
 
-> Notebooks will be added later under `/notebooks`.
+:::{.callout-note}
+This site is the published companion to the GitHub repository:  
+`https://github.com/ramtin-asadi/Quantitative-Finance-Lab`
+:::
+
+## What this is
+
+**Quantitative-Finance-Lab** is a project series where each topic is developed end-to-end:
+
+- **Clear narrative**: intuition → math → implementation
+- **Reproducible experiments**: consistent metrics, plots, and comparisons
+- **Library-first engineering**: reusable components are extracted into **`quantfinlab`**
+
+The goal is to build a portfolio that is both **research-grade** (well explained) and **engineering-grade** (reusable, testable, maintainable).
+
+---
+
+## Start here
+
+- Read the **Overview** for conventions, reproducibility notes, and how projects are structured.
+- Then open a project notebook and follow it top-to-bottom.
+
+---
+
+## Projects
+
+::: {.columns}
+
+::: {.column width="50%"}
+### 01 — Yield Curve, Bond Pricing & Risk
+
+- Yield curve construction (discount factors / zero rates)
+- Bond pricing and key risk measures
+- Practical fixed-income utilities you can reuse elsewhere
+
+[Open Project 01](notebooks/01_yield_curve_bond_pricing_and_risk.qmd)
+:::
+
+::: {.column width="50%"}
+### 02 — Portfolio Optimization (Mean–Variance)
+
+- Mean–variance optimization pipeline
+- Covariance estimators and model comparisons
+- Backtest-style evaluation and performance diagnostics
+
+[Open Project 02](notebooks/02_portfolio_optimization_MV_models.qmd)
+:::
+
+:::
+
+---
+
+## The `quantfinlab` library
+
+As the series grows, reusable code is consolidated into **`quantfinlab`**:
+
+- shared fixed-income helpers
+- portfolio utilities
+- plotting/diagnostic helpers
+- common conventions (metrics, configs, I/O)
+
+The intent is simple: **notebooks explain and experiment**; **the library implements**.
+
+---
+
+## Reproducibility
+
+- This repo follows a reproducibility-first workflow (formatting/linting/testing/CI).
+- Large datasets are typically **not committed**. If a notebook expects data files, place them under a local `data/` directory (gitignored) and follow any project-specific notes.
+
+---
+
+## Disclaimer
+
+This repository is for **research and educational purposes**. Nothing here is investment advice, and results may vary by dataset, assumptions, costs, constraints, and implementation details.
+
