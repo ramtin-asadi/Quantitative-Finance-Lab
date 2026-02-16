@@ -1,0 +1,18 @@
+project:
+  type: book
+  output-dir: docs
+
+book:
+  title: "Quantitative Finance Lab"
+  author: "Ramtin Asadi"
+  chapters:
+    - index.qmd
+    - overview.qmd
+    - notebooks/01_yield_curve_bond_pricing_and_risk.ipynb
+    - notebooks/02_portfolio_optimization_MV_models.ipynb
+
+format:
+  html:
+    theme: flatly
+    toc: false
+    number-sections: false

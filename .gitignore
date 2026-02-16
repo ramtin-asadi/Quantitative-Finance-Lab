@@ -31,3 +31,6 @@ Thumbs.db
 # Coverage
 .coverage
 htmlcov/
+
+.quarto/
+**/*.quarto_ipynb

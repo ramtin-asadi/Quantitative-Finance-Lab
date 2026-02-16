@@ -1,5 +1,0 @@
-# Quantitative Finance Lab
-
-Welcome to the quantitative finance lab. This book documents methods, experiments, and results.
-
-> Notebooks will be added later under `/notebooks`.

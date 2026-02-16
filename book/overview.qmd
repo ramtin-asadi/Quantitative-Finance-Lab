@@ -1,3 +1,0 @@
-# Overview
-
-This project is a workspace for quantitative finance experiments and reproducible research.
