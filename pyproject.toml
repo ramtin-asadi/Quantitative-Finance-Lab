@@ -15,6 +15,9 @@ authors = [
 dependencies = [
   "pandas",
   "numpy",
+  "matplotlib",
+  "scipy",
+  "cvxpy"
 ]
 
 [project.optional-dependencies]
