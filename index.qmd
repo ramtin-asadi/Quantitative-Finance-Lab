@@ -41,7 +41,7 @@ The goal is to build a portfolio that is both **research-grade** (well explained
 - Bond pricing and key risk measures
 - Practical fixed-income utilities you can reuse elsewhere
 
-[Open Project 01](notebooks/01_yield_curve_bond_pricing_and_risk.qmd)
+[Open Project 01](notebooks/01_yield_curve_bond_pricing_and_risk.html)
 :::
 
 ::: {.column width="50%"}
@@ -51,7 +51,7 @@ The goal is to build a portfolio that is both **research-grade** (well explained
 - Covariance estimators and model comparisons
 - Backtest-style evaluation and performance diagnostics
 
-[Open Project 02](notebooks/02_portfolio_optimization_MV_models.qmd)
+[Open Project 02](notebooks/02_portfolio_optimization_MV_models.html)
 :::
 
 :::

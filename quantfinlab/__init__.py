@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from . import fixed_income, plots
+from . import fixed_income, plots, portfolio
 from .core import (
+    BacktestResult,
     Bond,
     BookMetrics,
     Curve,
@@ -10,6 +11,7 @@ from .core import (
     IssuanceBook,
     IssuedBond,
     ModelError,
+    PortfolioState,
     QuantFinLabError,
 )
 
@@ -23,9 +25,12 @@ __all__ = [
     "CurvePillars",
     "Curve",
     "Bond",
+    "PortfolioState",
+    "BacktestResult",
     "IssuedBond",
     "IssuanceBook",
     "BookMetrics",
     "fixed_income",
+    "portfolio",
     "plots",
 ]

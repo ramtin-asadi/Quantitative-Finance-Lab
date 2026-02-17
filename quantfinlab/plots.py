@@ -7,12 +7,10 @@ import pandas as pd
 from cycler import cycler
 
 from . import fixed_income as fi
+from .core import PortfolioState
 
-LAB_COLORS = [
-    "#069AF3", "#FE420F", "#00008B", "#008080", "#800080",
-    "#7BC8F6", "#0072B2", "#04D8B2", "#CC79A7", "#DC143C",
-    "#9614fa", "#76FF7B", "#FF8072",
-]
+LAB_COLORS = ["#069AF3","#FE420F", "#00008B", "#008080", "#800080",
+          "#7BC8F6", "#0072B2","#04D8B2", "#CC79A7", "#FF8072", "#9614fa", "#DC143C"]
 
 # Single source of truth for style
 _LAB_STYLE = {
@@ -375,6 +373,318 @@ def draw_table(
     tbl.scale(*scale)
     if title:
         ax.set_title(title)
+
+
+# ----------------------------
+# Portfolio plotting helpers
+# ----------------------------
+
+def make_color_map(names, palette=LAB_COLORS) -> dict[str, str]:
+    vals = [str(n) for n in names]
+    return {name: palette[i % len(palette)] for i, name in enumerate(vals)}
+
+
+def _as_series(x) -> pd.Series:
+    if isinstance(x, pd.Series):
+        return x
+    return pd.Series(x)
+
+
+def _result_field(result, key: str):
+    if isinstance(result, dict):
+        if key not in result:
+            raise KeyError(f"Result is missing key {key!r}.")
+        return result[key]
+    return result[key]
+
+
+def _drawdown(values: pd.Series) -> pd.Series:
+    v = _as_series(values).astype(float)
+    if v.empty:
+        return v
+    return v / v.cummax() - 1.0
+
+
+def _format_date_axis(ax: plt.Axes) -> None:
+    ax.tick_params(axis="x", labelrotation=25)
+
+
+def plot_net_equity(
+    ax: plt.Axes,
+    result,
+    *,
+    name: str | None = None,
+    color: str | None = None,
+    title: str | None = None,
+) -> None:
+    s = _as_series(_result_field(result, "net_values")).dropna()
+    if s.empty:
+        ax.text(0.5, 0.5, "No net equity data", ha="center", va="center")
+        ax.axis("off")
+        return
+    ax.plot(s.index, s.values, color=color)
+    ax.set_title(title or f"{name or 'Strategy'} - Net Equity")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Growth of $1")
+    _format_date_axis(ax)
+
+
+def plot_drawdown(
+    ax: plt.Axes,
+    result,
+    *,
+    name: str | None = None,
+    color: str | None = None,
+    title: str | None = None,
+) -> None:
+    s = _as_series(_result_field(result, "net_values")).dropna()
+    if s.empty:
+        ax.text(0.5, 0.5, "No net equity data", ha="center", va="center")
+        ax.axis("off")
+        return
+    dd = _drawdown(s)
+    ax.plot(dd.index, dd.values, color=color)
+    ax.set_title(title or f"{name or 'Strategy'} - Drawdown")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Drawdown")
+    _format_date_axis(ax)
+
+
+def plot_top_weights(
+    ax: plt.Axes,
+    result,
+    *,
+    name: str | None = None,
+    color: str | None = None,
+    k: int = 10,
+    title: str | None = None,
+) -> None:
+    wdf = pd.DataFrame(_result_field(result, "weights"))
+    if wdf.empty:
+        ax.text(0.5, 0.5, "No weights", ha="center", va="center")
+        ax.axis("off")
+        return
+    last_dt = pd.Timestamp(wdf.index[-1])
+    w_last = wdf.loc[last_dt].astype(float)
+    w_last = w_last[w_last > 0].sort_values(ascending=False)
+    if w_last.empty:
+        ax.text(0.5, 0.5, "No positive weights", ha="center", va="center")
+        ax.axis("off")
+        return
+    top = w_last.head(int(k)).sort_values()
+    ax.barh(top.index, top.values, color=color)
+    ax.set_title(title or f"{name or 'Strategy'} - Top {min(int(k), len(top))} Weights ({last_dt.date()})")
+    ax.set_xlabel("Weight")
+
+
+def _cache_state(cache: dict, dt: pd.Timestamp):
+    if dt in cache:
+        st = cache[dt]
+    elif pd.Timestamp(dt) in cache:
+        st = cache[pd.Timestamp(dt)]
+    else:
+        return None
+    if isinstance(st, PortfolioState):
+        return st.as_dict()
+    return st
+
+
+def plot_top_risk_contrib(
+    ax: plt.Axes,
+    result,
+    cache: dict,
+    *,
+    cov_key: str = "oas",
+    name: str | None = None,
+    color: str | None = None,
+    k: int = 10,
+    title: str | None = None,
+) -> None:
+    wdf = pd.DataFrame(_result_field(result, "weights"))
+    if wdf.empty:
+        ax.text(0.5, 0.5, "No weights", ha="center", va="center")
+        ax.axis("off")
+        return
+
+    last_dt = pd.Timestamp(wdf.index[-1])
+    state = _cache_state(cache, last_dt)
+    if state is None:
+        ax.text(0.5, 0.5, "No cache state", ha="center", va="center")
+        ax.axis("off")
+        return
+
+    cov_map = state.get("cov_ann_map", {})
+    if cov_key not in cov_map:
+        keys_lower = {str(k).lower(): k for k in cov_map}
+        if cov_key.lower() in keys_lower:
+            cov_key = keys_lower[cov_key.lower()]
+        else:
+            ax.text(0.5, 0.5, "Missing covariance key", ha="center", va="center")
+            ax.axis("off")
+            return
+
+    cov = np.asarray(cov_map[cov_key], dtype=float)
+    tickers = [str(t) for t in state.get("tickers", [])]
+    if cov.ndim != 2 or cov.shape[0] != cov.shape[1] or cov.shape[0] != len(tickers):
+        ax.text(0.5, 0.5, "Covariance shape mismatch", ha="center", va="center")
+        ax.axis("off")
+        return
+
+    w_vec = wdf.loc[last_dt].reindex(tickers).fillna(0.0).to_numpy(dtype=float)
+    sigma_w = cov @ w_vec
+    port_var = float(w_vec @ sigma_w)
+    port_vol = float(np.sqrt(max(port_var, 1e-18)))
+    rc = pd.Series((w_vec * sigma_w) / port_vol, index=tickers, dtype=float)
+    rc = rc.replace([np.inf, -np.inf], np.nan).dropna()
+    if rc.empty:
+        ax.text(0.5, 0.5, "No risk contribution data", ha="center", va="center")
+        ax.axis("off")
+        return
+
+    top_idx = rc.abs().sort_values(ascending=False).head(int(k)).index
+    show = rc.loc[top_idx].sort_values()
+    ax.barh(show.index, show.values, color=color)
+    ax.set_title(
+        title or f"{name or 'Strategy'} - Top {min(int(k), len(show))} Risk Contributions ({last_dt.date()})"
+    )
+    ax.set_xlabel("Contribution to volatility")
+
+
+def plot_net_equity_compare(
+    ax: plt.Axes,
+    results: dict,
+    *,
+    colors: dict[str, str] | None = None,
+    title: str = "Net Equity (Comparison)",
+) -> None:
+    if not results:
+        ax.text(0.5, 0.5, "No results", ha="center", va="center")
+        ax.axis("off")
+        return
+    for name, res in results.items():
+        s = _as_series(_result_field(res, "net_values")).dropna()
+        if s.empty:
+            continue
+        ax.plot(s.index, s.values, label=str(name), color=(colors or {}).get(str(name)))
+    ax.set_title(title)
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Growth of $1")
+    ax.legend()
+    _format_date_axis(ax)
+
+
+def plot_drawdown_compare(
+    ax: plt.Axes,
+    results: dict,
+    *,
+    colors: dict[str, str] | None = None,
+    title: str = "Drawdown (Comparison)",
+) -> None:
+    if not results:
+        ax.text(0.5, 0.5, "No results", ha="center", va="center")
+        ax.axis("off")
+        return
+    for name, res in results.items():
+        s = _as_series(_result_field(res, "net_values")).dropna()
+        if s.empty:
+            continue
+        dd = _drawdown(s)
+        ax.plot(dd.index, dd.values, label=str(name), color=(colors or {}).get(str(name)))
+    ax.set_title(title)
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Drawdown")
+    ax.legend()
+    _format_date_axis(ax)
+
+
+def _strategy_metrics(
+    results: dict,
+    *,
+    rf_daily: float = 0.0,
+    annualization: float = 252.0,
+) -> pd.DataFrame:
+    rows: list[dict[str, float | str]] = []
+    for name, res in results.items():
+        net_returns = _as_series(_result_field(res, "net_returns")).dropna().astype(float)
+        net_values = _as_series(_result_field(res, "net_values")).dropna().astype(float)
+        if net_returns.empty or net_values.empty:
+            rows.append({"strategy": str(name), "CAGR": np.nan, "AnnVol": np.nan, "Sharpe": np.nan})
+            continue
+        years = len(net_returns) / float(annualization)
+        cagr = float(net_values.iloc[-1] ** (1.0 / years) - 1.0) if years > 0 else np.nan
+        ann_vol = (
+            float(net_returns.std(ddof=1) * np.sqrt(float(annualization)))
+            if len(net_returns) > 1
+            else np.nan
+        )
+        sd = float(net_returns.std(ddof=1)) if len(net_returns) > 1 else np.nan
+        sharpe = (
+            float((net_returns - float(rf_daily)).mean() / sd * np.sqrt(float(annualization)))
+            if np.isfinite(sd) and sd > 0
+            else np.nan
+        )
+        rows.append({"strategy": str(name), "CAGR": cagr, "AnnVol": ann_vol, "Sharpe": sharpe})
+    return pd.DataFrame(rows).set_index("strategy")
+
+
+def plot_sharpe_compare(
+    ax: plt.Axes,
+    results: dict,
+    *,
+    rf_daily: float = 0.0,
+    annualization: float = 252.0,
+    colors: dict[str, str] | None = None,
+    title: str = "Realized Sharpe (Net)",
+) -> None:
+    if not results:
+        ax.text(0.5, 0.5, "No results", ha="center", va="center")
+        ax.axis("off")
+        return
+
+    metrics = _strategy_metrics(results, rf_daily=rf_daily, annualization=annualization)
+    if metrics.empty or "Sharpe" not in metrics.columns:
+        ax.text(0.5, 0.5, "No Sharpe data", ha="center", va="center")
+        ax.axis("off")
+        return
+
+    s = metrics["Sharpe"].sort_values()
+    bar_colors = [(colors or {}).get(str(n)) for n in s.index]
+    ax.barh(s.index.tolist(), s.values, color=bar_colors)
+    ax.set_title(title)
+    ax.set_xlabel("Sharpe")
+
+
+def plot_risk_return_scatter(
+    ax: plt.Axes,
+    results: dict,
+    *,
+    rf_daily: float = 0.0,
+    annualization: float = 252.0,
+    colors: dict[str, str] | None = None,
+    title: str = "Realized Risk-Return (Net)",
+) -> None:
+    if not results:
+        ax.text(0.5, 0.5, "No results", ha="center", va="center")
+        ax.axis("off")
+        return
+
+    metrics = _strategy_metrics(results, rf_daily=rf_daily, annualization=annualization)
+    if metrics.empty:
+        ax.text(0.5, 0.5, "No metric data", ha="center", va="center")
+        ax.axis("off")
+        return
+
+    for name in metrics.index:
+        x = float(metrics.loc[name, "AnnVol"])
+        y = float(metrics.loc[name, "CAGR"])
+        if not (np.isfinite(x) and np.isfinite(y)):
+            continue
+        ax.scatter([x], [y], color=(colors or {}).get(str(name)))
+        ax.annotate(str(name), (x, y), fontsize=8, alpha=0.9)
+
+    ax.set_title(title)
+    ax.set_xlabel("Annualized Volatility")
+    ax.set_ylabel("CAGR")
 
 
 set_plot_style()

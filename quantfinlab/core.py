@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Callable, Literal
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -102,6 +103,76 @@ class Bond:
     freq: int = 2                 # payments per year
     face: float = 1.0             # notional
     day_count: str = "30/360"     # kept for metadata; accrual uses time-in-years below
+
+
+@dataclass(frozen=True)
+class PortfolioState:
+    """
+    Per-rebalance estimation state used by portfolio backtests.
+
+    Attributes:
+    - tickers: active universe in optimizer order
+    - mu_excess_ann: expected annual excess returns indexed by ticker
+    - cov_ann_map: covariance estimates keyed by model name
+    - avg_dollar_volume: optional liquidity diagnostics
+    - metadata: optional custom fields for user workflows
+    """
+    tickers: list[str]
+    mu_excess_ann: pd.Series
+    cov_ann_map: dict[str, np.ndarray]
+    avg_dollar_volume: pd.Series | None = None
+    metadata: Mapping[str, Any] | None = None
+
+    def as_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            "tickers": list(self.tickers),
+            "mu_excess_ann": self.mu_excess_ann,
+            "cov_ann_map": self.cov_ann_map,
+        }
+        if self.avg_dollar_volume is not None:
+            out["avg_dollar_volume"] = self.avg_dollar_volume
+        if self.metadata is not None:
+            out["metadata"] = dict(self.metadata)
+        return out
+
+
+@dataclass(frozen=True)
+class BacktestResult:
+    """
+    Container for portfolio backtest outputs.
+
+    Behaves like a mapping for key notebook access, e.g. result["net_values"].
+    """
+    gross_values: pd.Series
+    net_values: pd.Series
+    gross_returns: pd.Series
+    net_returns: pd.Series
+    weights: pd.DataFrame
+    turnover: pd.Series
+    costs: pd.Series
+    fallbacks: int = 0
+    metadata: Mapping[str, Any] | None = None
+
+    def as_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            "gross_values": self.gross_values,
+            "net_values": self.net_values,
+            "gross_returns": self.gross_returns,
+            "net_returns": self.net_returns,
+            "weights": self.weights,
+            "turnover": self.turnover,
+            "costs": self.costs,
+            "fallbacks": int(self.fallbacks),
+        }
+        if self.metadata is not None:
+            out["metadata"] = dict(self.metadata)
+        return out
+
+    def __getitem__(self, key: str) -> Any:
+        data = self.as_dict()
+        if key not in data:
+            raise KeyError(key)
+        return data[key]
 
 
 
