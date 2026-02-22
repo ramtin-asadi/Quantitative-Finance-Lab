@@ -7,7 +7,7 @@ from typing import Any, Literal
 import numpy as np
 import pandas as pd
 
-from .core import BacktestResult, InputError, ModelError, PortfolioState
+from .core import BacktestResult, InputError, ModelError, PortfolioState, StrategyBuildResult
 
 try:  # optional dependency for shrinkage covariance estimators
     from sklearn.covariance import OAS, LedoitWolf
@@ -1098,6 +1098,292 @@ def backtest(
     )
 
 
+def _clean_close_volume_panels(
+    close_prices: pd.DataFrame,
+    volumes: pd.DataFrame,
+    *,
+    start: str | pd.Timestamp = "2016-01-01",
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    cp = close_prices.copy()
+    vv = volumes.copy()
+
+    cp.columns = [str(c).strip() for c in cp.columns]
+    vv.columns = [str(c).strip() for c in vv.columns]
+    if cp.columns.duplicated().any():
+        cp = cp.T.groupby(level=0).last().T
+    if vv.columns.duplicated().any():
+        vv = vv.T.groupby(level=0).last().T
+
+    cp = _sanitize_frame(cp, name="close_prices")
+    vv = _sanitize_frame(vv, name="volumes")
+    cp = cp.where(cp > 0)
+    vv = vv.where(vv >= 0)
+
+    cp = cp[~cp.index.isna()].sort_index()
+    vv = vv[~vv.index.isna()].sort_index()
+    if cp.index.has_duplicates:
+        cp = cp[~cp.index.duplicated(keep="last")]
+    if vv.index.has_duplicates:
+        vv = vv[~vv.index.duplicated(keep="last")]
+
+    start_ts = pd.Timestamp(start)
+    cp = cp.loc[cp.index >= start_ts]
+    vv = vv.loc[vv.index >= start_ts]
+
+    idx = cp.index.intersection(vv.index)
+    cols = cp.columns.intersection(vv.columns)
+    cp = cp.loc[idx, cols]
+    vv = vv.loc[idx, cols]
+
+    valid_cols = cp.notna().any(axis=0) & vv.notna().any(axis=0)
+    cp = cp.loc[:, valid_cols]
+    vv = vv.loc[:, valid_cols]
+
+    # Deterministic column order improves reproducibility in tie cases.
+    sorted_cols = sorted([str(c) for c in cp.columns])
+    cp = cp.reindex(columns=sorted_cols)
+    vv = vv.reindex(columns=sorted_cols)
+
+    if cp.empty or vv.empty or cp.shape[1] < 2:
+        raise InputError("Not enough valid assets after close/volume cleaning.")
+    return cp.astype(float), vv.astype(float)
+
+
+def build_all_portfolio_strategies(
+    close_prices: pd.DataFrame,
+    volumes: pd.DataFrame,
+    *,
+    start: str | pd.Timestamp = "2016-01-01",
+    rf_annual: float = 0.04,
+    rf_daily: float | None = None,
+    annualization: float = DEFAULT_ANNUALIZATION,
+    lookback_days: int = 252,
+    universe_top_n: int = 100,
+    liq_lookback: int = 252,
+    min_listing_days: int = 252,
+    min_obs: int = 252,
+    min_window_rows: int = 251,
+    cost_bps: float = 10.0,
+    fallback: Literal["equal", "previous", "none"] = "equal",
+    solver_order: Sequence[str] | None = None,
+) -> StrategyBuildResult:
+    """
+    Build full Project-02 strategy set from close/volume panels.
+
+    Returns cleaned data, state cache, and backtest results for:
+    EW, MinVar (Sample/LW/OAS/EWMA), MV (Sample/LW/OAS/EWMA), Ridge-MV,
+    MaxSharpe-SLSQP, MaxSharpe-Frontier.
+    """
+    ann = float(annualization)
+    if ann <= 0:
+        raise InputError("annualization must be positive.")
+    rf_d = float(rf_daily) if rf_daily is not None else float((1.0 + float(rf_annual)) ** (1.0 / ann) - 1.0)
+
+    prices, vols = _clean_close_volume_panels(close_prices, volumes, start=start)
+    returns = prices_to_returns(prices)
+    if returns.empty:
+        raise InputError("returns is empty after cleaning.")
+
+    rebal_dates = make_rebalance_dates(returns.index, freq="ME", min_history_days=int(lookback_days))
+    first_date = _first_valid_date(prices, vols)
+    idx_prices = pd.DatetimeIndex(prices.index)
+
+    cache: dict[pd.Timestamp, dict[str, Any]] = {}
+    for dt in rebal_dates:
+        tickers, avg_dv = select_liquid_universe(
+            dt,
+            close_prices=prices,
+            volumes=vols,
+            top_n=int(universe_top_n),
+            liq_lookback=int(liq_lookback),
+            min_listing_days=int(min_listing_days),
+            min_obs=int(min_obs),
+            first_date=first_date,
+        )
+        if len(tickers) < 2:
+            continue
+
+        d_eff = _resolve_date_on_or_before(idx_prices, pd.Timestamp(dt))
+        if d_eff is None:
+            continue
+        pos = int(idx_prices.get_loc(d_eff))
+        if pos < int(lookback_days):
+            continue
+
+        close_for_model = prices.iloc[pos - int(lookback_days) : pos][tickers]
+        if close_for_model.shape[0] < int(lookback_days):
+            continue
+
+        window = close_for_model.pct_change(fill_method=None).iloc[1:]
+        window = window.replace([np.inf, -np.inf], np.nan).dropna(axis=0, how="any")
+        if window.shape[0] < int(min_window_rows) or window.shape[1] < 2:
+            continue
+
+        tickers = [str(c) for c in window.columns]
+        mu_excess_ann = mu_momentum(
+            window,
+            mode="6-1",
+            rf=float(rf_annual),
+            target_sharpe=0.80,
+            mu_cap=0.30,
+            winsor=0.05,
+            zscore=True,
+            return_series=True,
+        ).reindex(tickers).astype(float)
+
+        cov_ann_map = {
+            "sample": cov_estimate(window, method="samplecov", psd=True, ridge=1e-10),
+            "lw": cov_estimate(window, method="ledoitwolf", psd=True, ridge=1e-10),
+            "oas": cov_estimate(window, method="oas", psd=True, ridge=1e-10),
+            "ewma": cov_estimate(window, method="ewma", ewma_lambda=0.94, psd=True, ridge=1e-10),
+        }
+        cache[pd.Timestamp(d_eff)] = {
+            "tickers": tickers,
+            "mu_excess_ann": mu_excess_ann,
+            "cov_ann_map": cov_ann_map,
+            "avg_dollar_volume": avg_dv.reindex(tickers).astype(float),
+            "window": window,
+        }
+
+    usable_rebal_dates = [pd.Timestamp(d) for d in rebal_dates if pd.Timestamp(d) in cache]
+    if len(usable_rebal_dates) == 0:
+        raise InputError("No valid rebalance dates remain after state construction.")
+
+    solve_order = _normalize_solver_order(solver_order)
+
+    def ew(dt, st, w_prev):
+        return weights_equal(st["tickers"], w_min=0.0, w_max=0.20, long_only=True)
+
+    def make_minvar(cov_key: str):
+        def _fn(dt, st, w_prev):
+            return weights_minvar(
+                cov_ann=st["cov_ann_map"][cov_key],
+                w_prev=w_prev,
+                w_min=0.0,
+                w_max=0.25,
+                long_only=True,
+                turnover_penalty_bps=10.0,
+                solver_order=solve_order,
+            )
+        return _fn
+
+    def make_mv(cov_key: str):
+        def _fn(dt, st, w_prev):
+            return weights_mv(
+                mu_excess_ann=st["mu_excess_ann"].values,
+                cov_ann=st["cov_ann_map"][cov_key],
+                w_prev=w_prev,
+                mv_lambda=4.0,
+                kappa_target_annual=0.20,
+                w_min=0.0,
+                w_max=0.25,
+                long_only=True,
+                turnover_penalty_bps=10.0,
+                solver_order=solve_order,
+            )
+        return _fn
+
+    def ridge_mv_lw(dt, st, w_prev):
+        return weights_ridge_mv(
+            mu_excess_ann=st["mu_excess_ann"].values,
+            cov_ann=st["cov_ann_map"]["lw"],
+            w_prev=w_prev,
+            ridge=1e-4,
+            mv_lambda=6.0,
+            kappa_target_annual=0.30,
+            w_min=0.0,
+            w_max=0.25,
+            long_only=True,
+            turnover_penalty_bps=10.0,
+            solver_order=solve_order,
+        )
+
+    def maxsharpe_slsqp_lw(dt, st, w_prev):
+        return weights_maxsharpe_slsqp(
+            mu_excess_ann=st["mu_excess_ann"].values,
+            cov_ann=st["cov_ann_map"]["lw"],
+            w_prev=w_prev,
+            w_min=0.0,
+            w_max=0.25,
+            long_only=True,
+            turnover_penalty_bps=10.0,
+            kappa_target_annual=0.30,
+        )
+
+    def maxsharpe_frontier_lw(dt, st, w_prev):
+        return weights_maxsharpe_frontier_grid(
+            mu_excess_ann=st["mu_excess_ann"].values,
+            cov_ann=st["cov_ann_map"]["lw"],
+            w_prev=w_prev,
+            grid_n=25,
+            w_min=0.0,
+            w_max=0.25,
+            long_only=True,
+            turnover_penalty_bps=10.0,
+            solver_order=solve_order,
+        )
+
+    strategy_fns = {
+        "ew": ew,
+        "minvar_sample": make_minvar("sample"),
+        "minvar_lw": make_minvar("lw"),
+        "minvar_oas": make_minvar("oas"),
+        "minvar_ewma": make_minvar("ewma"),
+        "mv_sample": make_mv("sample"),
+        "mv_lw": make_mv("lw"),
+        "mv_oas": make_mv("oas"),
+        "mv_ewma": make_mv("ewma"),
+        "ridge_mv": ridge_mv_lw,
+        "maxsharpe_slsqp": maxsharpe_slsqp_lw,
+        "maxsharpe_frontier": maxsharpe_frontier_lw,
+    }
+    cov_key_for_rc = {
+        "ew": "lw",
+        "minvar_sample": "sample",
+        "minvar_lw": "lw",
+        "minvar_oas": "oas",
+        "minvar_ewma": "ewma",
+        "mv_sample": "sample",
+        "mv_lw": "lw",
+        "mv_oas": "oas",
+        "mv_ewma": "ewma",
+        "ridge_mv": "lw",
+        "maxsharpe_slsqp": "lw",
+        "maxsharpe_frontier": "lw",
+    }
+
+    results = {
+        name: backtest(
+            returns=returns,
+            rebal_dates=usable_rebal_dates,
+            cache=cache,
+            weight_fn=fn,
+            cost_bps=float(cost_bps),
+            fallback=fallback,
+            rf_daily=rf_d,
+        )
+        for name, fn in strategy_fns.items()
+    }
+
+    return StrategyBuildResult(
+        prices=prices,
+        volumes=vols,
+        returns=returns,
+        rebal_dates=usable_rebal_dates,
+        cache=cache,
+        results=results,
+        cov_key_for_rc=cov_key_for_rc,
+        metadata={
+            "rf_annual": float(rf_annual),
+            "rf_daily": rf_d,
+            "annualization": ann,
+            "lookback_days": int(lookback_days),
+            "universe_top_n": int(universe_top_n),
+            "n_strategies": len(strategy_fns),
+        },
+    )
+
+
 def calc_drawdown(series: pd.Series) -> pd.Series:
     s = pd.Series(series, copy=False).astype(float)
     if s.empty:
@@ -1262,7 +1548,6 @@ def best_strategy_by_sharpe(
 __all__ = [
     "DEFAULT_SOLVER_ORDER",
     "DEFAULT_ANNUALIZATION",
-    "load_close_volume_csv",
     "prices_to_returns",
     "make_rebalance_dates",
     "select_liquid_universe",
@@ -1280,6 +1565,7 @@ __all__ = [
     "weights_ridge_mv",
     "weights_maxsharpe_slsqp",
     "weights_maxsharpe_frontier_grid",
+    "build_all_portfolio_strategies",
     "backtest",
     "calc_drawdown",
     "performance_metrics",

@@ -7,6 +7,7 @@ import pandas as pd
 from cycler import cycler
 
 from . import fixed_income as fi
+from . import risk as rk
 from .core import PortfolioState
 
 LAB_COLORS = ["#069AF3","#FE420F", "#00008B", "#008080", "#800080",
@@ -15,7 +16,7 @@ LAB_COLORS = ["#069AF3","#FE420F", "#00008B", "#008080", "#800080",
 # Single source of truth for style
 _LAB_STYLE = {
     "figure.figsize": (6, 3),
-    "figure.dpi": 300,
+    "figure.dpi": 200,
     "savefig.dpi": 300,
     "axes.grid": True,
     "grid.alpha": 0.20,
@@ -330,7 +331,7 @@ def plot_krd_heatmap(
     if keys is None:
         keys = sorted(set(int(k) for k in krd_df.columns.get_level_values(1)))
     sub = krd_df[method].reindex(columns=list(keys))
-    im = ax.imshow(sub.values.T, aspect="auto", origin="lower")
+    im = ax.imshow(sub.values.T, aspect="auto", origin="lower", cmap="coolwarm")
     ax.set_title(title or f"KRD - {method}")
     ax.set_yticks(range(len(keys)))
     ax.set_yticklabels([f"{k}Y" for k in keys])
@@ -500,53 +501,26 @@ def plot_top_risk_contrib(
     k: int = 10,
     title: str | None = None,
 ) -> None:
-    wdf = pd.DataFrame(_result_field(result, "weights"))
-    if wdf.empty:
-        ax.text(0.5, 0.5, "No weights", ha="center", va="center")
-        ax.axis("off")
-        return
-
-    last_dt = pd.Timestamp(wdf.index[-1])
-    state = _cache_state(cache, last_dt)
-    if state is None:
-        ax.text(0.5, 0.5, "No cache state", ha="center", va="center")
-        ax.axis("off")
-        return
-
-    cov_map = state.get("cov_ann_map", {})
-    if cov_key not in cov_map:
-        keys_lower = {str(k).lower(): k for k in cov_map}
-        if cov_key.lower() in keys_lower:
-            cov_key = keys_lower[cov_key.lower()]
-        else:
-            ax.text(0.5, 0.5, "Missing covariance key", ha="center", va="center")
-            ax.axis("off")
-            return
-
-    cov = np.asarray(cov_map[cov_key], dtype=float)
-    tickers = [str(t) for t in state.get("tickers", [])]
-    if cov.ndim != 2 or cov.shape[0] != cov.shape[1] or cov.shape[0] != len(tickers):
-        ax.text(0.5, 0.5, "Covariance shape mismatch", ha="center", va="center")
-        ax.axis("off")
-        return
-
-    w_vec = wdf.loc[last_dt].reindex(tickers).fillna(0.0).to_numpy(dtype=float)
-    sigma_w = cov @ w_vec
-    port_var = float(w_vec @ sigma_w)
-    port_vol = float(np.sqrt(max(port_var, 1e-18)))
-    rc = pd.Series((w_vec * sigma_w) / port_vol, index=tickers, dtype=float)
-    rc = rc.replace([np.inf, -np.inf], np.nan).dropna()
-    if rc.empty:
+    try:
+        vol_rc, _ = rk.portfolio_contribution_snapshot(
+            {"backtest": result, "state_cache": cache, "cov_key": cov_key}
+        )
+    except Exception:
         ax.text(0.5, 0.5, "No risk contribution data", ha="center", va="center")
         ax.axis("off")
         return
 
-    top_idx = rc.abs().sort_values(ascending=False).head(int(k)).index
-    show = rc.loc[top_idx].sort_values()
-    ax.barh(show.index, show.values, color=color)
-    ax.set_title(
-        title or f"{name or 'Strategy'} - Top {min(int(k), len(show))} Risk Contributions ({last_dt.date()})"
+    wdf = pd.DataFrame(_result_field(result, "weights"))
+    last_dt = pd.Timestamp(wdf.index[-1]) if not wdf.empty else None
+    plot_top_contrib(
+        ax,
+        vol_rc,
+        title=title or f"{name or 'Strategy'} - Top {min(int(k), len(vol_rc))} Risk Contributions ({last_dt.date() if last_dt is not None else 'n/a'})",
+        k=int(k),
     )
+    if color is not None:
+        for patch in ax.patches:
+            patch.set_color(color)
     ax.set_xlabel("Contribution to volatility")
 
 
@@ -685,6 +659,309 @@ def plot_risk_return_scatter(
     ax.set_title(title)
     ax.set_xlabel("Annualized Volatility")
     ax.set_ylabel("CAGR")
+
+
+# ----------------------------
+# Risk notebook plotting wrappers
+# ----------------------------
+
+def auto_grid(
+    n_panels: int,
+    *,
+    ncols: int = 2,
+    figsize: tuple[float, float] = (11, 7),
+    sharex: bool = False,
+    sharey: bool = False,
+):
+    n = int(n_panels)
+    if n <= 0:
+        raise fi.InputError("n_panels must be positive.")
+    c = max(int(ncols), 1)
+    rows = int(np.ceil(n / c))
+    fig, axes = plt.subplots(rows, c, figsize=figsize, sharex=sharex, sharey=sharey)
+    axes_arr = np.asarray([axes]) if isinstance(axes, plt.Axes) else np.asarray(axes).reshape(-1)
+    return fig, axes_arr
+
+
+def turn_off_unused_axes(axes, *, used: int) -> None:
+    arr = np.asarray(axes).reshape(-1)
+    for i in range(max(int(used), 0), len(arr)):
+        arr[i].axis("off")
+
+
+def _coerce_object_returns(objects) -> dict[str, pd.Series]:
+    if isinstance(objects, pd.DataFrame):
+        data = {str(c): objects[c] for c in objects.columns}
+    elif isinstance(objects, dict):
+        data = {str(k): v for k, v in objects.items()}
+    else:
+        raise fi.InputError("objects must be a dict[name -> return series] or DataFrame.")
+    out: dict[str, pd.Series] = {}
+    for name, val in data.items():
+        s = pd.Series(val, copy=True)
+        s = pd.to_numeric(s, errors="coerce").replace([np.inf, -np.inf], np.nan).dropna().astype(float)
+        if s.empty:
+            continue
+        if not isinstance(s.index, pd.DatetimeIndex):
+            idx = pd.to_datetime(s.index, errors="coerce")
+            if idx.notna().all():
+                s.index = pd.DatetimeIndex(idx)
+                s = s.sort_index()
+        out[str(name)] = s
+    if not out:
+        raise fi.InputError("No non-empty return series remain after cleaning.")
+    return out
+
+
+def plot_nav_compare(ax: plt.Axes, objects, *, colors: dict[str, str] | None = None, title: str = "Cumulative NAV") -> None:
+    obj = _coerce_object_returns(objects)
+    for name, r in obj.items():
+        nav = (1.0 + r).cumprod()
+        ax.plot(nav.index, nav.values, lw=1.8, label=name, color=(colors or {}).get(name))
+    ax.set_title(title)
+    ax.set_ylabel("NAV")
+    ax.legend()
+
+
+def plot_drawdown_compare_objects(
+    ax: plt.Axes,
+    objects,
+    *,
+    colors: dict[str, str] | None = None,
+    title: str = "Drawdown",
+) -> None:
+    obj = _coerce_object_returns(objects)
+    for name, r in obj.items():
+        nav = (1.0 + r).cumprod()
+        dd = nav / nav.cummax() - 1.0
+        ax.plot(dd.index, dd.values, lw=1.4, label=name, color=(colors or {}).get(name))
+    ax.axhline(0.0, color="#444", lw=1.0)
+    ax.set_title(title)
+    ax.set_ylabel("Drawdown")
+    ax.legend()
+
+
+def plot_rolling_vol(
+    ax: plt.Axes,
+    returns,
+    *,
+    windows: list[int] | tuple[int, ...] = (20, 60, 252),
+    annualization: float = 252.0,
+    name: str | None = None,
+) -> None:
+    r = pd.to_numeric(pd.Series(returns), errors="coerce").replace([np.inf, -np.inf], np.nan).dropna()
+    wlist = [int(w) for w in windows if int(w) > 1]
+    if len(wlist) == 0:
+        raise fi.InputError("windows must contain at least one integer > 1.")
+    for w in wlist:
+        rv = r.rolling(w).std(ddof=1) * np.sqrt(float(annualization))
+        ax.plot(rv.index, rv.values, lw=1.4, label=f"{w}d")
+    ax.set_title(f"Rolling Volatility - {name}" if name else "Rolling Volatility")
+    ax.set_ylabel("Ann. Vol")
+    ax.legend()
+
+
+def plot_var_backtest(
+    ax: plt.Axes,
+    returns,
+    *,
+    alpha: float = 0.05,
+    lookback: int = 252,
+    method: str = "hist",
+    methods: list[str] | tuple[str, ...] | None = None,
+    name: str | None = None,
+) -> None:
+    method_norm = str(method).strip().lower()
+    chosen_method = method_norm
+    if method_norm == "best":
+        table = rk.var_backtest_table(
+            {"_object": pd.Series(returns)},
+            alpha=alpha,
+            methods=(list(methods) if methods is not None else list(rk.VAR_BACKTEST_METHODS)),
+            lookback=lookback,
+        )
+        best_map = rk.best_var_methods(table)
+        chosen_method = str(best_map.get("_object", "hist"))
+
+    st = rk.breach_stats(returns, alpha=alpha, lookback=lookback, method=chosen_method)
+    z = st["series"]
+    if z.empty:
+        ax.text(0.5, 0.5, "Insufficient data", ha="center", va="center")
+        ax.axis("off")
+        return
+    br = st["breach"]
+    ax.plot(z.index, z["ret"].values, lw=0.9, alpha=0.9, label="return")
+    ax.plot(
+        z.index,
+        z["var_q"].values,
+        lw=1.8,
+        ls="--",
+        label=f"rolling VaR q({int(alpha * 100)}%) [{chosen_method}]",
+    )
+    ax.scatter(z.index[br], z.loc[br, "ret"].values, s=14, marker="x", label="breach")
+    ax.set_title(f"VaR Backtest - {name}" if name else "VaR Backtest")
+    ax.set_ylabel("Daily Return")
+    ax.legend()
+
+
+def plot_stress_bar(
+    ax: plt.Axes,
+    stress_tbl: pd.DataFrame,
+    *,
+    window: str,
+    metric: str = "cum_return",
+    ascending: bool = True,
+) -> None:
+    if stress_tbl is None or stress_tbl.empty:
+        ax.text(0.5, 0.5, "No stress data", ha="center", va="center")
+        ax.axis("off")
+        return
+    if metric not in stress_tbl.columns:
+        raise fi.InputError(f"metric {metric!r} not in stress table.")
+    if window not in stress_tbl.index:
+        ax.text(0.5, 0.5, "Window not found", ha="center", va="center")
+        ax.axis("off")
+        return
+    sub = stress_tbl.loc[window]
+    if isinstance(sub, pd.Series):
+        sub = sub.to_frame().T
+    if "object" not in sub.columns:
+        raise fi.InputError("stress_tbl must include 'object' column.")
+    s = pd.Series(sub[metric].to_numpy(dtype=float), index=sub["object"].astype(str).tolist(), dtype=float)
+    s = s.sort_values(ascending=bool(ascending))
+    ax.barh(s.index, s.values)
+    ax.set_title(f"{window} - {metric}")
+    ax.set_xlabel(metric)
+
+
+def plot_capm_scatter(
+    ax: plt.Axes,
+    returns,
+    market_ret,
+    *,
+    rf_daily: float = 0.0,
+    name: str | None = None,
+    color: str | None = None,
+) -> None:
+    r = pd.to_numeric(pd.Series(returns), errors="coerce")
+    m = pd.to_numeric(pd.Series(market_ret), errors="coerce")
+    z = pd.concat([m.rename("x"), r.rename("y")], axis=1).dropna()
+    if z.empty:
+        ax.text(0.5, 0.5, "No CAPM data", ha="center", va="center")
+        ax.axis("off")
+        return
+    x = z["x"] - float(rf_daily)
+    y = z["y"] - float(rf_daily)
+    alpha, beta, r2 = rk.capm_ols(y, x)
+    xv = x.to_numpy(dtype=float)
+    yv = y.to_numpy(dtype=float)
+    dot_color = LAB_COLORS[0]
+    line_color = color if color is not None else LAB_COLORS[1]
+    ax.scatter(xv, yv, s=10, alpha=0.10, color=dot_color)
+    if np.isfinite(alpha) and np.isfinite(beta):
+        xs = np.linspace(np.percentile(xv, 1), np.percentile(xv, 99), 200)
+        ax.plot(xs, alpha + beta * xs, lw=2.0, color=line_color)
+    ax.axhline(0.0, color="#444", lw=1.0)
+    ax.axvline(0.0, color="#444", lw=1.0)
+    ax.set_title(f"CAPM Fit - {name}" if name else "CAPM Fit")
+    ax.set_xlabel("Market Excess Return")
+    ax.set_ylabel("Object Excess Return")
+    if np.isfinite(alpha) and np.isfinite(beta) and np.isfinite(r2):
+        ax.text(
+            0.02,
+            0.98,
+            f"alpha(d): {alpha:.4f}\nbeta: {beta:.3f}\nr2: {r2:.3f}",
+            transform=ax.transAxes,
+            va="top",
+            fontsize=9,
+            bbox={"boxstyle": "round", "facecolor": "white", "alpha": 0.75},
+        )
+
+
+def plot_rolling_beta_compare(
+    ax: plt.Axes,
+    capm_roll: dict[str, pd.DataFrame],
+    *,
+    window: int = 252,
+    metric: str = "beta",
+) -> None:
+    col = f"{metric}_{int(window)}"
+    found = 0
+    for name, df in capm_roll.items():
+        if df is None or df.empty or col not in df.columns:
+            continue
+        ax.plot(df.index, df[col].values, lw=1.4, label=str(name))
+        found += 1
+    if found == 0:
+        ax.text(0.5, 0.5, "No rolling data", ha="center", va="center")
+        ax.axis("off")
+        return
+    if metric == "beta":
+        ax.axhline(1.0, color="#444", lw=1.0, ls="--")
+        ax.set_title(f"Rolling Beta ({window}d)")
+        ax.set_ylabel("Beta")
+    else:
+        ax.axhline(0.0, color="#444", lw=1.0)
+        ax.set_title(f"Rolling Correlation ({window}d)")
+        ax.set_ylabel("Correlation")
+    ax.legend(ncol=2)
+
+
+def plot_corr_heatmap(
+    ax: plt.Axes,
+    corr: pd.DataFrame,
+    *,
+    annotate: bool = True,
+    cmap: str = "Spectral",
+) -> None:
+    if corr is None or corr.empty:
+        ax.text(0.5, 0.5, "No correlation data", ha="center", va="center")
+        ax.axis("off")
+        return
+    im = ax.imshow(corr.values, vmin=-1, vmax=1, cmap=cmap)
+    ax.set_xticks(range(len(corr.columns)))
+    ax.set_yticks(range(len(corr.index)))
+    ax.set_xticklabels(corr.columns, rotation=45, ha="right")
+    ax.set_yticklabels(corr.index)
+    ax.set_title("Correlation Matrix")
+    if annotate:
+        for i in range(corr.shape[0]):
+            for j in range(corr.shape[1]):
+                ax.text(j, i, f"{corr.values[i, j]:.2f}", ha="center", va="center", fontsize=8)
+    ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+
+
+def plot_top_contrib(
+    ax: plt.Axes,
+    contrib: pd.Series | pd.DataFrame | dict[str, float],
+    *,
+    title: str = "Top Contributions",
+    k: int = 10,
+) -> None:
+    if isinstance(contrib, pd.Series):
+        s = contrib.copy()
+    elif isinstance(contrib, pd.DataFrame):
+        if contrib.shape[0] == 1:
+            s = contrib.iloc[0]
+        elif contrib.shape[1] == 1:
+            s = contrib.iloc[:, 0]
+        else:
+            raise fi.InputError("Contribution DataFrame must have one row or one column.")
+    elif isinstance(contrib, dict):
+        s = pd.Series(contrib, dtype=float)
+    else:
+        s = pd.Series(contrib, dtype=float)
+    s = pd.to_numeric(s, errors="coerce").replace([np.inf, -np.inf], np.nan).dropna().astype(float)
+    if s.empty:
+        ax.text(0.5, 0.5, "No contribution data", ha="center", va="center")
+        ax.axis("off")
+        return
+    s.index = [str(i) for i in s.index]
+    top_idx = s.abs().sort_values(ascending=False).head(int(max(k, 1))).index
+    show = s.loc[top_idx].sort_values()
+    ax.barh(show.index, show.values)
+    ax.set_title(title)
+    ax.set_xlabel("Contribution")
 
 
 set_plot_style()

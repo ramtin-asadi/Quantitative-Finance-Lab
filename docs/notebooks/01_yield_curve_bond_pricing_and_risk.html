@@ -195,6 +195,11 @@ window.Quarto = {
   <a href="../notebooks/02_portfolio_optimization_MV_models.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">2. Portfolio Optimization with Mean–Variance Models</span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/03_risk_report_engine_and_CAPM.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">3. risk analysis and CAPM</span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -1542,12 +1547,16 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <section id="variables" class="level3">
 <h3 class="anchored" data-anchor-id="variables">9.1 Variables</h3>
 <p>We Pick a grid of cashflow times (like semiannual up to 30Y): <span class="math inline">\(t_1,t_2,\dots,t_M\)</span></p>
-<p>we want to get to $ = (D(t_1),,D(t_M)) $</p>
+<p>we want to get to <span class="math display">\[
+\mathbf{d} = (D(t_1),\dots,D(t_M))
+\]</span></p>
 </section>
 <section id="constraints" class="level3">
 <h3 class="anchored" data-anchor-id="constraints">9.2 constraints</h3>
 <p>For a maturity <span class="math inline">\(T\)</span> (present on the grid), par yield <span class="math inline">\(c\)</span> and frequency <span class="math inline">\(f\)</span>:</p>
-<p><span class="math inline">\(1=\sum_{i=1}^{n}\frac{c}{f}D(t_i)+D(T)\)</span></p>
+<p><span class="math display">\[
+1=\sum_{i=1}^{n}\frac{c}{f}D(t_i)+D(T)
+\]</span></p>
 <p>This is linear in <span class="math inline">\(D(\cdot)\)</span>, so it becomes one row of: <span class="math inline">\(A\mathbf{d}=\mathbf{1}\)</span></p>
 <p>Positivity: <span class="math inline">\(D(t_k)\ge D_{min}\)</span></p>
 <p>Monotone decreasing: <span class="math inline">\(D(t_{k+1})\le D(t_k)\)</span></p>

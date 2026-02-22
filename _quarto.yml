@@ -10,10 +10,12 @@ book:
     - overview.qmd
     - notebooks/01_yield_curve_bond_pricing_and_risk.ipynb
     - notebooks/02_portfolio_optimization_MV_models.ipynb
+    - notebooks/03_risk_report_engine_and_CAPM.ipynb
 
 format:
   html:
     theme: flatly
     toc: false
     number-sections: false
+
 

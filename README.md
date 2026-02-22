@@ -17,14 +17,10 @@ This repository is organized as a **series of end-to-end projects** (research no
 ## Projects (current)
 
 1. **Yield Curve Construction, Bond Pricing, and Risk**
-   - Curve construction with four different models (discount factors / zero rates), simulating a bond portfolio, bond pricing, and risk metrics
-   - Duration/convexity, PV sensitivities, and implementing the whole project on Japan data using quantfinlab
+   - Curve construction with four different models (discount factors / zero rates), simulating a bond portfolio, bond pricing, and risk metrics, duration/convexity, PV sensitivities
 
 2. **Portfolio Optimization (Mean–Variance Models)**
-   -  multiple covariance estimators and mean momentum estimator.
-   - implementation of Mean-Variance, Min-Variance and Max-Sharpe models
-   - Backtest-style evaluation and comparison across model choices
-   - implementation on Hong Kong stock market with quantfinlab
+   -  multiple covariance estimators and mean momentum estimator. implementation of Mean-Variance, Min-Variance and Max-Sharpe models and regularization, with backtesting and rebalancing.
 
 > New projects will be added continuously with the same structure: clean narrative + reusable code extracted into `quantfinlab`.
 

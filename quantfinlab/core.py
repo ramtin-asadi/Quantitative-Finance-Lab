@@ -175,6 +175,80 @@ class BacktestResult:
         return data[key]
 
 
+@dataclass(frozen=True)
+class StrategyBuildResult:
+    """
+    Container for full portfolio-strategy build outputs.
+
+    - prices/volumes/returns: cleaned aligned input panels
+    - rebal_dates: usable rebalance dates after state construction
+    - cache: per-date model state used by backtests and attribution
+    - results: backtest outputs for all configured strategies
+    - cov_key_for_rc: covariance key mapping for risk contribution views
+    """
+    prices: pd.DataFrame
+    volumes: pd.DataFrame
+    returns: pd.DataFrame
+    rebal_dates: list[pd.Timestamp]
+    cache: Mapping[pd.Timestamp, Mapping[str, Any]]
+    results: Mapping[str, BacktestResult]
+    cov_key_for_rc: Mapping[str, str]
+    metadata: Mapping[str, Any] | None = None
+
+    def as_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            "prices": self.prices,
+            "volumes": self.volumes,
+            "returns": self.returns,
+            "rebal_dates": list(self.rebal_dates),
+            "cache": dict(self.cache),
+            "results": dict(self.results),
+            "cov_key_for_rc": dict(self.cov_key_for_rc),
+        }
+        if self.metadata is not None:
+            out["metadata"] = dict(self.metadata)
+        return out
+
+    def __getitem__(self, key: str) -> Any:
+        data = self.as_dict()
+        if key not in data:
+            raise KeyError(key)
+        return data[key]
+
+
+@dataclass(frozen=True)
+class RiskReportArtifacts:
+    """
+    Container for risk report outputs.
+
+    - tables: computed tabular outputs by section name
+    - figures: matplotlib figures grouped by section name
+    - series: optional non-tabular analytics (rolling maps, diagnostics, etc.)
+    - text: optional generated narrative snippets (e.g., executive bullets)
+    """
+    tables: Mapping[str, pd.DataFrame]
+    figures: Mapping[str, list[Any]]
+    series: Mapping[str, Any] | None = None
+    text: Mapping[str, list[str]] | None = None
+
+    def as_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            "tables": dict(self.tables),
+            "figures": dict(self.figures),
+        }
+        if self.series is not None:
+            out["series"] = dict(self.series)
+        if self.text is not None:
+            out["text"] = dict(self.text)
+        return out
+
+    def __getitem__(self, key: str) -> Any:
+        data = self.as_dict()
+        if key not in data:
+            raise KeyError(key)
+        return data[key]
+
+
 
 # ----------------------------
 # Tiny helpers (only what Project 1 needs)
