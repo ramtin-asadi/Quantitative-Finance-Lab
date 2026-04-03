@@ -4,7 +4,7 @@ import math
 import re
 from collections.abc import Callable, Iterable
 from os import PathLike
-from typing import Literal
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -962,6 +962,223 @@ def curve_date_for(index: pd.Index, d: pd.Timestamp) -> pd.Timestamp | None:
     if pos < 0:
         return None
     return pd.Timestamp(index[pos])
+
+
+def short_rate_from_first_tenor(
+    curve_row: pd.Series | dict,
+    *,
+    tenor_cols: list[str] | None = None,
+    default_rate: float = 0.02,
+) -> float:
+    """
+    Extract a short rate from the first available tenor in a par-yield row.
+    Input yields are expected in decimal form.
+    """
+    if isinstance(curve_row, dict):
+        curve_row = pd.Series(curve_row)
+
+    cols = tenor_cols
+    if cols is None:
+        cols = [
+            c
+            for c in curve_row.index.astype(str)
+            if TENOR_PATTERN.fullmatch(str(c).strip().replace(" ", "").upper())
+        ]
+    if not cols:
+        return float(default_rate)
+
+    cols = sorted(cols, key=tenor_to_years)
+    vals = pd.to_numeric(curve_row[cols], errors="coerce").to_numpy(dtype=float)
+    finite = np.isfinite(vals)
+    if finite.sum() == 0:
+        return float(default_rate)
+    first_idx = int(np.where(finite)[0][0])
+    return float(vals[first_idx])
+
+
+def zero_rate_from_df(df: np.ndarray | float, tau: np.ndarray | float, *, default_rate: float = 0.02) -> np.ndarray | float:
+    """
+    Convert discount factors to continuously-compounded zero rates.
+    Uses default_rate where tau <= 0.
+    """
+    df_arr = np.asarray(df, dtype=float)
+    tau_arr = np.asarray(tau, dtype=float)
+    safe_df = np.clip(df_arr, 1e-16, None)
+    out = np.full_like(safe_df, float(default_rate), dtype=float)
+    pos = tau_arr > 0
+    out[pos] = -np.log(safe_df[pos]) / tau_arr[pos]
+    if np.isscalar(df) and np.isscalar(tau):
+        return float(np.asarray(out).reshape(-1)[0])
+    return out
+
+
+def make_discount_lookup(
+    par_yields: pd.DataFrame,
+    *,
+    tenor_cols: list[str] | None = None,
+    curve_method: str = "loglinear",
+    freq: int = 2,
+    short_end: Literal["continuous", "simple"] = "continuous",
+    short_end_policy: Literal["first_tenor_exp", "curve_only"] = "first_tenor_exp",
+    min_df: float = 1e-12,
+    default_rate: float = 0.02,
+) -> dict[str, Any]:
+    """
+    Build a cached lookup for option-horizon discount factors by trade date.
+
+    Returns a dict with:
+    - get_df(date, tau): discount factor(s)
+    - get_rate(date, tau): zero rate(s)
+    - resolve_date(date): latest available curve date <= date (or first date)
+    - curve_mode: dict[curve_date -> mode string]
+    - r0_by_date: dict[curve_date -> short rate]
+    - tau_min: first tenor in years
+
+    Notes:
+    - Designed as an optional convenience layer; existing APIs are unchanged.
+    - For tau < first tenor, short_end_policy='first_tenor_exp' uses exp(-r0*tau).
+    """
+    if par_yields.empty:
+        raise InputError("par_yields is empty.")
+
+    py = par_yields.copy().sort_index()
+    py.index = pd.to_datetime(py.index)
+
+    cols = tenor_cols if tenor_cols is not None else [str(c) for c in py.columns]
+    cols = sorted(cols, key=tenor_to_years)
+    t_years = np.array([tenor_to_years(c) for c in cols], dtype=float)
+    tau_min = float(np.nanmin(t_years))
+
+    df_cache: dict[pd.Timestamp, Callable[[np.ndarray], np.ndarray]] = {}
+    curve_mode: dict[pd.Timestamp, str] = {}
+    r0_by_date: dict[pd.Timestamp, float] = {}
+
+    def resolve_date(d: pd.Timestamp) -> pd.Timestamp:
+        dd = pd.Timestamp(d).normalize()
+        cd = curve_date_for(py.index, dd)
+        if cd is not None:
+            return cd
+        return pd.Timestamp(py.index[0])
+
+    def _fallback_df_func(row: pd.Series) -> Callable[[np.ndarray], np.ndarray]:
+        vals = pd.to_numeric(row[cols], errors="coerce").to_numpy(dtype=float)
+        good = np.isfinite(vals)
+        if good.sum() == 0:
+            return lambda x: np.exp(-float(default_rate) * np.asarray(x, dtype=float))
+        tt = t_years[good]
+        yy = vals[good]
+        ord_idx = np.argsort(tt)
+        tt = tt[ord_idx]
+        yy = yy[ord_idx]
+        log_df = np.log(np.clip(np.exp(-yy * tt), min_df, None))
+
+        def _f(x: np.ndarray) -> np.ndarray:
+            xx = np.asarray(x, dtype=float)
+            xx = np.clip(xx, 1e-12, None)
+            return np.exp(np.interp(xx, tt, log_df, left=log_df[0], right=log_df[-1]))
+
+        return _f
+
+    def _build_df_func(cdate: pd.Timestamp) -> Callable[[np.ndarray], np.ndarray]:
+        if cdate in df_cache:
+            return df_cache[cdate]
+
+        row_obj = py.loc[cdate]
+        row = row_obj.iloc[-1] if isinstance(row_obj, pd.DataFrame) else row_obj
+        r0 = short_rate_from_first_tenor(row, tenor_cols=cols, default_rate=default_rate)
+        r0_by_date[cdate] = float(r0)
+
+        try:
+            pillars = bootstrap_pillars(
+                row,
+                asof=cdate,
+                tenor_cols=cols,
+                freq=freq,
+                short_end=short_end,
+                min_df=min_df,
+            )
+            curves = fit_curves(pillars, methods=(curve_method,), freq=freq, min_df=min_df)
+            base_df = curves[curve_method].df
+            curve_mode[cdate] = f"qfi_{curve_method}"
+        except Exception:
+            base_df = _fallback_df_func(row)
+            curve_mode[cdate] = "fallback_loglinear"
+
+        def _df_func(tau: np.ndarray) -> np.ndarray:
+            tt = np.asarray(tau, dtype=float)
+            out = np.ones_like(tt, dtype=float)
+            pos = tt > 0
+            if pos.sum() == 0:
+                return out
+            tpos = tt[pos]
+            if short_end_policy == "first_tenor_exp":
+                short = tpos < tau_min
+                o = np.empty_like(tpos, dtype=float)
+                o[short] = np.exp(-float(r0) * tpos[short])
+                o[~short] = np.asarray(base_df(tpos[~short]), dtype=float)
+                out[pos] = o
+            else:
+                out[pos] = np.asarray(base_df(tpos), dtype=float)
+            out = np.clip(out, min_df, 1.0)
+            return out
+
+        df_cache[cdate] = _df_func
+        return _df_func
+
+    def get_df(date: pd.Timestamp, tau: np.ndarray | float) -> np.ndarray | float:
+        cdate = resolve_date(date)
+        df_func = _build_df_func(cdate)
+        tau_arr = np.asarray(tau, dtype=float)
+        vals = np.asarray(df_func(tau_arr), dtype=float)
+        if np.isscalar(tau):
+            return float(vals.reshape(-1)[0])
+        return vals
+
+    def get_rate(date: pd.Timestamp, tau: np.ndarray | float) -> np.ndarray | float:
+        cdate = resolve_date(date)
+        _ = _build_df_func(cdate)
+        r0 = float(r0_by_date.get(cdate, default_rate))
+        vals_df = get_df(date, tau)
+        return zero_rate_from_df(vals_df, tau, default_rate=r0)
+
+    return {
+        "get_df": get_df,
+        "get_rate": get_rate,
+        "resolve_date": resolve_date,
+        "curve_mode": curve_mode,
+        "r0_by_date": r0_by_date,
+        "tau_min": tau_min,
+    }
+
+
+def attach_discount_columns(
+    data: pd.DataFrame,
+    lookup: dict[str, Any],
+    *,
+    date_col: str,
+    tau_col: str,
+    df_col: str = "df",
+    rate_col: str = "r_short",
+) -> pd.DataFrame:
+    """
+    Attach discount factor and short rate columns to a table using a lookup
+    returned by make_discount_lookup.
+    """
+    out = data.copy()
+    out[df_col] = np.nan
+    out[rate_col] = np.nan
+
+    if len(out) == 0:
+        return out
+
+    get_df = lookup["get_df"]
+    get_rate = lookup["get_rate"]
+    groups = out.groupby(date_col, sort=False).groups
+    for d, idx in groups.items():
+        tau_vals = out.loc[idx, tau_col].to_numpy(dtype=float)
+        out.loc[idx, df_col] = np.asarray(get_df(d, tau_vals), dtype=float)
+        out.loc[idx, rate_col] = np.asarray(get_rate(d, tau_vals), dtype=float)
+    return out
 
 
 def curves_by_valuation_date(

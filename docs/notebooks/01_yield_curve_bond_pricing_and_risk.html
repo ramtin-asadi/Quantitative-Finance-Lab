@@ -200,6 +200,11 @@ window.Quarto = {
   <a href="../notebooks/03_risk_report_engine_and_CAPM.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">3. risk analysis and CAPM</span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/04_black_scholes_IV_greeks_hedging.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">black–scholes, implied volatility, greeks, arbitrage diagnostics, and hedging</span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -265,7 +270,7 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 </section>
 <section id="what-treasury-par-yield-means" class="level3">
 <h3 class="anchored" data-anchor-id="what-treasury-par-yield-means">1.5 What “Treasury par yield” means</h3>
-<p>A par yield at maturity <span class="math inline">\(T\)</span> is the coupon rate <span class="math inline">\(c(T)\)</span> that makes a standard coupon bond price equal to par: <span class="math inline">\(P(T,c(T))=N\)</span> If we normalize <span class="math inline">\(N=1\)</span>, then par means <span class="math inline">\(P=1\)</span>.</p>
+<p>A par yield at maturity <span class="math inline">\(T\)</span> is the coupon rate <span class="math inline">\(c(T)\)</span> that makes a standard coupon bond price equal to par value: <span class="math inline">\(P(T,c(T))=N\)</span> If we normalize <span class="math inline">\(N=1\)</span>, then par means <span class="math inline">\(P=1\)</span>.</p>
 <p>For discounting, we use these yields but the problem is we have some of the standard maturities which may not be the same as other bonds. so that’s why we have to make this yield curve from the treasury maturities to be able to discount any time to present.</p>
 <p>you can download the data used in this notebook here <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rate-archives">(treasury par yields from 1990 to 2026)</a></p>
 <hr>
@@ -900,7 +905,7 @@ F(t_1,t_2)=\dfrac{\ln D(t_1)-\ln D(t_2)}{t_2-t_1}
 </section>
 <section id="par-yield-implied-by-a-curve" class="level2">
 <h2 class="anchored" data-anchor-id="par-yield-implied-by-a-curve">4) Par Yield Implied by a Curve</h2>
-<p>This is used for building yield curve and validation to see if the predicted rate is close to real rate based on curve. what is the rate that makes the price of bond (PV of cashflows) equal to 1?</p>
+<p>This is used for building yield curve and validation to see if the predicted rate is close to real rate based on curve. We want to know what is the rate that makes the price of bond (PV of cashflows) equal to 1?</p>
 <p>Given a curve <span class="math inline">\(D(t)\)</span>, the par coupon rate for maturity <span class="math inline">\(T\)</span> and frequency <span class="math inline">\(f\)</span> solves</p>
 <p><span class="math inline">\(1=\sum_{i=1}^{n}\dfrac{c}{f}D(t_i)+D(T)\)</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="math inline">\(t_i=i/f\)</span>, <span class="math inline">\(n=fT\)</span>.</p>
 <p><span class="math inline">\(1=\dfrac{c}{f}\sum_{i=1}^{n}D(t_i)+D(T)\)</span></p>
@@ -921,7 +926,7 @@ F(t_1,t_2)=\dfrac{\ln D(t_1)-\ln D(t_2)}{t_2-t_1}
 </section>
 <section id="bootstrapping-for-coupon-tenors-t-1" class="level3">
 <h3 class="anchored" data-anchor-id="bootstrapping-for-coupon-tenors-t-1">5.2 Bootstrapping for coupon tenors (T ≥ 1)</h3>
-<p>Let <span class="math inline">\(c=y(T)\)</span> be the market par yield at maturity <span class="math inline">\(T\)</span> (used as coupon rate). With frequency <span class="math inline">\(f\)</span> and cashflow times <span class="math inline">\(t_i=i/f\)</span>:</p>
+<p>If <span class="math inline">\(c=y(T)\)</span> is the market par yield at maturity <span class="math inline">\(T\)</span> (used as coupon rate). With frequency <span class="math inline">\(f\)</span> and cashflow times <span class="math inline">\(t_i=i/f\)</span>:</p>
 <p>Par condition (normalized notional 1): <span class="math display">\[
 1=\sum_{i=1}^{n-1}\dfrac{c}{f}D(t_i)+\left(1+\dfrac{c}{f}\right)D(T)
 \]</span></p>
@@ -930,14 +935,19 @@ F(t_1,t_2)=\dfrac{\ln D(t_1)-\ln D(t_2)}{t_2-t_1}
 <p>if we have the earlier coupons discount factor, we know everything on the right side of equation. so we can solve it and get to <span class="math inline">\(D(T)\)</span></p>
 <p>it’s called bootstrapping because we first compute the <span class="math inline">\(D(T&lt;1Y)\)</span> with short end convention, then we use that to compute <span class="math inline">\(D(1Y)\)</span> and then use them for <span class="math inline">\(D(2Y)\)</span> until the last maturity (30Y)</p>
 </section>
-<section id="interpolating-discount-factors-at-coupon-dates" class="level3">
-<h3 class="anchored" data-anchor-id="interpolating-discount-factors-at-coupon-dates">5.3 Interpolating discount factors at coupon dates</h3>
-<p>Bootstrapping needs <span class="math inline">\(D(t_i)\)</span> at coupon dates, but you often only have DFs at pillar maturities.</p>
-<p>A robust choice is log-linear interpolation: If <span class="math inline">\(T_a&lt;t&lt;T_b\)</span>, then</p>
+</section>
+<section id="turning-bootstrapped-pillars-into-a-full-curve" class="level2">
+<h2 class="anchored" data-anchor-id="turning-bootstrapped-pillars-into-a-full-curve">6) Turning Bootstrapped Pillars into a Full Curve</h2>
+<p>After bootstrapping we have pillars <span class="math inline">\((T_j, D(T_j))\)</span> or <span class="math inline">\((T_j, z(T_j))\)</span>. Bootstrapping needs <span class="math inline">\(D(t_i)\)</span> at coupon dates, but you often only have DFs at pillar maturities.</p>
+<p>Now we want to define continuous functions <span class="math inline">\(D(t)\)</span> and <span class="math inline">\(z(t)\)</span> for all <span class="math inline">\(t\)</span>.</p>
+<section id="method-a-log-linear-discount-factors" class="level3">
+<h3 class="anchored" data-anchor-id="method-a-log-linear-discount-factors">6.1 Method A: Log-linear discount factors</h3>
+<p>A robust choice is log-linear interpolation: for any <span class="math inline">\(t\)</span> that is between pillars <span class="math inline">\(T_a&lt;t&lt;T_b\)</span>, we have</p>
 <p><span class="math display">\[\ln D(t)=\ln D(T_a)+\dfrac{t-T_a}{T_b-T_a}\left(\ln D(T_b)-\ln D(T_a)\right)
 \]</span></p>
-<p>So <span class="math display">\[D(t)=\exp\left(\ln D(t)\right)
+<p>So Discount Factor is: <span class="math display">\[D(t)=\exp\left(\ln D(t)\right)
 \]</span></p>
+<p>and zero rate is: <span class="math display">\[z(t)=-\dfrac{\ln D(t)}{t}\]</span></p>
 <div id="66bfc6d0" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>df_dec <span class="op">=</span> df.copy()</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>df_dec[tenor_cols] <span class="op">=</span> df_dec[tenor_cols] <span class="op">/</span> <span class="fl">100.0</span></span>
@@ -1128,15 +1138,13 @@ First 5 pillar DFs: [0.99687157 0.99383574 0.99084219 0.98774241 0.98201372 0.96
 </div>
 </section>
 </section>
-<section id="turning-bootstrapped-pillars-into-a-full-curve" class="level2">
-<h2 class="anchored" data-anchor-id="turning-bootstrapped-pillars-into-a-full-curve">6) Turning Bootstrapped Pillars into a Full Curve</h2>
+<section id="turning-bootstrapped-pillars-into-a-full-curve-1" class="level2">
+<h2 class="anchored" data-anchor-id="turning-bootstrapped-pillars-into-a-full-curve-1">6) Turning Bootstrapped Pillars into a Full Curve</h2>
 <p>After bootstrapping we have pillars <span class="math inline">\((T_j, D(T_j))\)</span> or <span class="math inline">\((T_j, z(T_j))\)</span>. Now we want to define continuous functions <span class="math inline">\(D(t)\)</span> and <span class="math inline">\(z(t)\)</span> for all <span class="math inline">\(t\)</span>.</p>
-<section id="method-a-log-linear-discount-factors" class="level3">
-<h3 class="anchored" data-anchor-id="method-a-log-linear-discount-factors">6.1 Method A: Log-linear discount factors</h3>
+<section id="method-a-log-linear-discount-factors-1" class="level3">
+<h3 class="anchored" data-anchor-id="method-a-log-linear-discount-factors-1">6.1 Method A: Log-linear discount factors</h3>
 <p>Interpolate <span class="math inline">\(\ln D(t)\)</span> linearly between pillars (just like for the T we had. we do the same thing between them):</p>
 <p><span class="math inline">\(\ln D(t)=\text{linear interp of } \{\ln D(T_j)\}\)</span></p>
-<p>Then <span class="math inline">\(D(t)=\exp(\ln D(t))\)</span></p>
-<p>and <span class="math inline">\(z(t)=-\dfrac{\ln D(t)}{t}\)</span></p>
 <div id="db56b670" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> loglinear_curve(T, dfs):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    loglinear_log_dfs <span class="op">=</span> np.log(dfs)</span>
@@ -1230,8 +1238,8 @@ First 5 pillar DFs: [0.99687157 0.99383574 0.99084219 0.98774241 0.98201372 0.96
 p_j(t)=a_j(t-x_j)^3+b_j(t-x_j)^2+c_j(t-x_j)+d_j  \quad t\in[x_j,x_{j+1}]
 \]</span></p>
 <p>Constraints include: - <span class="math inline">\(p_j(x_j)=y_j\)</span> and <span class="math inline">\(p_j(x_{j+1})=y_{j+1}\)</span> - first derivatives are chosen by shape-preserving slope rules to reduce overshoot</p>
-<p>we define <span class="math inline">\(z(t)=p_j(t)\)</span></p>
-<p>then <span class="math inline">\(D(t)=e^{-z(t)t}\)</span></p>
+<p>we define <span class="math display">\[z(t)=p_j(t)\]</span></p>
+<p>then <span class="math display">\[D(t)=e^{-z(t)t}\]</span></p>
 <div id="b886b647" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.interpolate <span class="im">import</span> PchipInterpolator</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1410,7 +1418,8 @@ c(T)=f\cdot\frac{1-D(T)}{\sum_{i=1}^{n}D(t_i)}
 <p><span class="math display">\[\min_{\theta}\sum_{j}\left(c^{model}(T_j;\theta)-y^{mkt}(T_j)\right)^2
 \]</span></p>
 <p>Optionally add regularization to discourage extreme shapes: <span class="math inline">\(\lambda\sum_j (z''(t_j))^2\)</span> or bounds on parameters.</p>
-<div id="edfbf229" class="cell" data-execution_count="10">
+<p><strong>L-BFGS</strong>: Limited memory BFGS is a second order optimization method (a Quasi-Newton method) that uses the last m values and gradients for approximation of inverse Hessian and has power in handling high dimentions or huge datasets without having second derivative.</p>
+<div id="edfbf229" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.optimize <span class="im">import</span> minimize</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1436,7 +1445,7 @@ c(T)=f\cdot\frac{1-D(T)}{\sum_{i=1}^{n}D(t_i)}
 <span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    b0_0 <span class="op">=</span> <span class="bu">float</span>(np.nanmedian(par[<span class="op">-</span><span class="dv">3</span>:])) <span class="cf">if</span> <span class="bu">len</span>(par) <span class="op">&gt;=</span> <span class="dv">3</span> <span class="cf">else</span> <span class="bu">float</span>(np.nanmedian(par))</span>
 <span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    x0 <span class="op">=</span> np.array([b0_0, <span class="op">-</span><span class="fl">0.02</span>, <span class="fl">0.02</span>, <span class="fl">0.01</span>, <span class="fl">1.5</span>, <span class="fl">5.0</span>], dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># we use a type of quasi-Newton method for nonlinear optimization of parameters</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>    pred <span class="op">=</span> minimize(obj, x0, method<span class="op">=</span><span class="st">"L-BFGS-B"</span>)</span>
 <span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>    theta <span class="op">=</span> pred.x</span>
 <span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a></span>
@@ -1632,7 +1641,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <p>Once we have <span class="math inline">\(D(t)\)</span> on a grid:</p>
 <p><span class="math inline">\(z(t_k)=-\ln D(t_k)/t_k\)</span></p>
 <p><span class="math inline">\(f(t_k)\approx -\dfrac{\ln D(t_{k+1})-\ln D(t_k)}{t_{k+1}-t_k}\)</span></p>
-<div id="102a4fab" class="cell" data-execution_count="12">
+<div id="102a4fab" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> qp_solve(t_grid, d, constraints, par_mkt, f, min_d):</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    lam <span class="op">=</span> <span class="fl">1e4</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    eps <span class="op">=</span> <span class="fl">1e-4</span></span>
@@ -1644,13 +1653,13 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    d2 <span class="op">=</span> d[<span class="dv">2</span>:] <span class="op">-</span> <span class="dv">2</span> <span class="op">*</span> d[<span class="dv">1</span>:<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> d[:<span class="op">-</span><span class="dv">2</span>]</span>
 <span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    obj <span class="op">=</span> cp.Minimize(lam <span class="op">*</span> cp.sum_squares(d2) <span class="op">+</span> eps <span class="op">*</span> cp.sum_squares(d <span class="op">-</span> d_prior))</span>
 <span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    prog <span class="op">=</span> cp.Problem(obj, constraints)</span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    prog.solve(solver<span class="op">=</span>cp.OSQP)</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    problem <span class="op">=</span> cp.Problem(obj, constraints)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    problem.solve(solver<span class="op">=</span>cp.OSQP)</span>
 <span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    d_sol <span class="op">=</span> np.array(d.value).astype(<span class="bu">float</span>)</span>
 <span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    d_sol <span class="op">=</span> np.clip(d_sol, min_d, <span class="va">None</span>)</span>
 <span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> d_sol, prog.status, prog.value</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> d_sol, problem.status, problem.value</span>
 <span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> qp_build_curve(t_grid, d_sol):</span>
@@ -2484,18 +2493,19 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <h3 class="anchored" data-anchor-id="pv01-dv01">15.1 PV01/ DV01</h3>
 <p>for measuring the risk of these bonds, we can use the sensitivity of the <strong>price of bond</strong> to a little change in interest rates.</p>
 <p>PV01 is the change in PV of the bond when the curve bumps by 1 basis point. DV01 is the value in dollar unit of that which is kind of the same concept</p>
-<p><span class="math inline">\(\dfrac{dP}{dy}=-\sum_{i=1}^n CF_i,t_i,D(t_i)\)</span></p>
+<p><span class="math display">\[\dfrac{dP}{dy}=-\sum_{i=1}^n CF_i,t_i,D(t_i)\]</span></p>
 <p>For approximation, we take <span class="math inline">\(\Delta=0.0001\)</span> (1 basis point move), Parallel-shifted discount factor will be:</p>
-<p><span class="math inline">\(D^{up}(t)=\exp(-(z(t)+\Delta)t)\)</span></p>
+<p><span class="math display">\[D^{up}(t)=\exp(-(z(t)+\Delta)t)\]</span></p>
 <p>PV01 will be:</p>
-<p><span class="math inline">\(PV01=P_0-P_{up}\)</span></p>
+<p><span class="math display">\[PV01=P_0-P_{up}\]</span></p>
 </section>
 <section id="convexity" class="level3">
 <h3 class="anchored" data-anchor-id="convexity">15.2 Convexity</h3>
 <p>convexity is basically the sensitivity of <strong>PV01</strong> to a little change in curve. and it’s the second order partial derivative of price from yield</p>
-<p><span class="math inline">\(\dfrac{d^2P}{dy^2}=\sum_{i=1}^n CF_i,t_i^2,D(t_i)\)</span></p>
+<p><span class="math display">\[\dfrac{d^2P}{dy^2}=\sum_{i=1}^n CF_i,t_i^2,D(t_i)\]</span></p>
 <p>Using central differences with shift size <span class="math inline">\(\Delta\)</span>:</p>
-<p><span class="math inline">\(Conv=\dfrac{P_{down}+P_{up}-2P_0}{P_0\Delta^2}\)</span> where <span class="math inline">\(P_{up}\)</span> uses <span class="math inline">\(+\Delta\)</span> and <span class="math inline">\(P_{down}\)</span> uses <span class="math inline">\(-\Delta\)</span>.</p>
+<p><span class="math display">\[Conv=\dfrac{P_{down}+P_{up}-2P_0}{P_0\Delta^2}\]</span></p>
+<p>where <span class="math inline">\(P_{up}\)</span> uses <span class="math inline">\(+\Delta\)</span> and <span class="math inline">\(P_{down}\)</span> uses <span class="math inline">\(-\Delta\)</span>.</p>
 <hr>
 </section>
 <section id="key-rate-duration-krd" class="level3">
@@ -2510,13 +2520,13 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <p><span class="math inline">\(b_j(t)=\dfrac{R_j-t}{R_j-K_j}\)</span> for <span class="math inline">\(K_j&lt;t\le R_j\)</span></p>
 <p><span class="math inline">\(b_j(t)=0\)</span> for <span class="math inline">\(t&gt;R_j\)</span></p>
 <p>Bumped zero curve (only around key <span class="math inline">\(k_j\)</span>):</p>
-<p><span class="math inline">\(z^{(j)}(t)=z(t)+\Delta b_j(t)\)</span></p>
+<p><span class="math display">\[z^{(j)}(t)=z(t)+\Delta b_j(t)\]</span></p>
 <p>So bumped discount factors:</p>
-<p><span class="math inline">\(D^{(j)}(t)=\exp(-(z(t)+\Delta b_j(t))t)\)</span></p>
+<p><span class="math display">\[D^{(j)}(t)=\exp(-(z(t)+\Delta b_j(t))t)\]</span></p>
 <p>Price under the key bump:</p>
-<p><span class="math inline">\(P^{(j)}(\Delta)=\sum_{i=1}^n CF_i,D(t_i),e^{-\Delta,b_j(t_i),t_i}\)</span></p>
+<p><span class="math display">\[P^{(j)}(\Delta)=\sum_{i=1}^n CF_i,D(t_i),e^{-\Delta,b_j(t_i),t_i}\]</span></p>
 <p>KRD definition (finite-difference)</p>
-<p><span class="math inline">\(KRD_j=\dfrac{P_0-P^{(j)}}{P_0\Delta}\)</span></p>
+<p><span class="math display">\[KRD_j=\dfrac{P_0-P^{(j)}}{P_0\Delta}\]</span></p>
 <hr>
 <div id="35b1dafa" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>risk_rows <span class="op">=</span> []</span>

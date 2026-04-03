@@ -27,7 +27,7 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
-
+workspace/
 # Coverage
 .coverage
 htmlcov/

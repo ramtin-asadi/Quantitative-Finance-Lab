@@ -200,6 +200,11 @@ window.Quarto = {
   <a href="../notebooks/03_risk_report_engine_and_CAPM.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">3. risk analysis and CAPM</span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/04_black_scholes_IV_greeks_hedging.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">black–scholes, implied volatility, greeks, arbitrage diagnostics, and hedging</span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -2262,7 +2267,7 @@ MaxSharpe (FrontierGrid): 0</code></pre>
 <section id="implementation-on-hong-kong-stock-market-with-quantfinlab" class="level2">
 <h2 class="anchored" data-anchor-id="implementation-on-hong-kong-stock-market-with-quantfinlab">implementation on Hong Kong stock market with quantfinlab</h2>
 <p>the data used in this part can be downloaded from here (<a href="https://stooq.com/db/h/">Stooq HKEX daily market data</a>)</p>
-<div id="225c0c82" class="cell" data-execution_count="78">
+<div id="225c0c82" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -2351,7 +2356,7 @@ MaxSharpe (FrontierGrid): 0</code></pre>
 <span id="cb26-86"><a href="#cb26-86" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-87"><a href="#cb26-87" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-88"><a href="#cb26-88" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_state(dt: pd.Timestamp) <span class="op">-&gt;</span> PortfolioState <span class="op">|</span> <span class="va">None</span>:</span>
-<span id="cb26-89"><a href="#cb26-89" aria-hidden="true" tabindex="-1"></a>    tickers, avg_dv <span class="op">=</span> pf.select_liquid_universe(dt, close_prices<span class="op">=</span>prices, volumes<span class="op">=</span>volumes, top_n<span class="op">=</span><span class="dv">100</span>,</span>
+<span id="cb26-89"><a href="#cb26-89" aria-hidden="true" tabindex="-1"></a>    tickers, avg_dv <span class="op">=</span> pf.select_liquid_universe(dt, close_prices<span class="op">=</span>prices, volumes<span class="op">=</span>volumes, top_n<span class="op">=</span><span class="dv">60</span>,</span>
 <span id="cb26-90"><a href="#cb26-90" aria-hidden="true" tabindex="-1"></a>                                                liq_lookback<span class="op">=</span><span class="dv">252</span>, min_listing_days<span class="op">=</span><span class="dv">252</span>,min_obs<span class="op">=</span><span class="dv">252</span>,)</span>
 <span id="cb26-91"><a href="#cb26-91" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> dt <span class="kw">not</span> <span class="kw">in</span> prices.index:</span>
 <span id="cb26-92"><a href="#cb26-92" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span>
@@ -2373,7 +2378,7 @@ MaxSharpe (FrontierGrid): 0</code></pre>
 <span id="cb26-108"><a href="#cb26-108" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> window.shape[<span class="dv">0</span>] <span class="op">&lt;</span> <span class="dv">251</span> <span class="kw">or</span> window.shape[<span class="dv">1</span>] <span class="op">&lt;</span> <span class="dv">2</span>:</span>
 <span id="cb26-109"><a href="#cb26-109" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span>
 <span id="cb26-110"><a href="#cb26-110" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-111"><a href="#cb26-111" aria-hidden="true" tabindex="-1"></a>    mu_excess_ann <span class="op">=</span> pf.mu_momentum(window, mode<span class="op">=</span><span class="st">"6-1"</span>, rf<span class="op">=</span>rf_annual, </span>
+<span id="cb26-111"><a href="#cb26-111" aria-hidden="true" tabindex="-1"></a>    mu_excess_ann <span class="op">=</span> pf.mu_momentum(window, mode<span class="op">=</span><span class="st">"12-1"</span>, rf<span class="op">=</span>rf_annual, </span>
 <span id="cb26-112"><a href="#cb26-112" aria-hidden="true" tabindex="-1"></a>                                   target_sharpe<span class="op">=</span><span class="fl">0.80</span>, mu_cap<span class="op">=</span><span class="fl">0.30</span>, winsor<span class="op">=</span><span class="fl">0.05</span>, </span>
 <span id="cb26-113"><a href="#cb26-113" aria-hidden="true" tabindex="-1"></a>                                   zscore<span class="op">=</span><span class="va">True</span>,return_series<span class="op">=</span><span class="va">True</span>,)</span>
 <span id="cb26-114"><a href="#cb26-114" aria-hidden="true" tabindex="-1"></a></span>
@@ -2381,7 +2386,7 @@ MaxSharpe (FrontierGrid): 0</code></pre>
 <span id="cb26-116"><a href="#cb26-116" aria-hidden="true" tabindex="-1"></a>        <span class="st">"sample"</span>: pf.cov_estimate(window, method<span class="op">=</span><span class="st">"samplecov"</span>, psd<span class="op">=</span><span class="va">True</span>, ridge<span class="op">=</span><span class="fl">1e-10</span>),</span>
 <span id="cb26-117"><a href="#cb26-117" aria-hidden="true" tabindex="-1"></a>        <span class="st">"lw"</span>: pf.cov_estimate(window, method<span class="op">=</span><span class="st">"ledoitwolf"</span>, psd<span class="op">=</span><span class="va">True</span>, ridge<span class="op">=</span><span class="fl">1e-10</span>),</span>
 <span id="cb26-118"><a href="#cb26-118" aria-hidden="true" tabindex="-1"></a>        <span class="st">"oas"</span>: pf.cov_estimate(window, method<span class="op">=</span><span class="st">"oas"</span>, psd<span class="op">=</span><span class="va">True</span>, ridge<span class="op">=</span><span class="fl">1e-10</span>),</span>
-<span id="cb26-119"><a href="#cb26-119" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ewma"</span>: pf.cov_estimate(window, method<span class="op">=</span><span class="st">"ewma"</span>, ewma_lambda<span class="op">=</span><span class="fl">0.94</span>, psd<span class="op">=</span><span class="va">True</span>, ridge<span class="op">=</span><span class="fl">1e-10</span>)</span>
+<span id="cb26-119"><a href="#cb26-119" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ewma"</span>: pf.cov_estimate(window, method<span class="op">=</span><span class="st">"ewma"</span>, ewma_lambda<span class="op">=</span><span class="fl">0.97</span>, psd<span class="op">=</span><span class="va">True</span>, ridge<span class="op">=</span><span class="fl">1e-10</span>)</span>
 <span id="cb26-120"><a href="#cb26-120" aria-hidden="true" tabindex="-1"></a>    }</span>
 <span id="cb26-121"><a href="#cb26-121" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-122"><a href="#cb26-122" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> PortfolioState(</span>
@@ -2405,15 +2410,15 @@ MaxSharpe (FrontierGrid): 0</code></pre>
 <span id="cb26-140"><a href="#cb26-140" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-141"><a href="#cb26-141" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-142"><a href="#cb26-142" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ew(dt, st, w_prev):</span>
-<span id="cb26-143"><a href="#cb26-143" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pf.weights_equal(st[<span class="st">"tickers"</span>], w_min<span class="op">=</span><span class="fl">0.0</span>, w_max<span class="op">=</span><span class="fl">0.20</span>, long_only<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb26-143"><a href="#cb26-143" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pf.weights_equal(st[<span class="st">"tickers"</span>], w_min<span class="op">=</span><span class="fl">0.0</span>, w_max<span class="op">=</span><span class="fl">0.30</span>, long_only<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb26-144"><a href="#cb26-144" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-145"><a href="#cb26-145" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-146"><a href="#cb26-146" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_minvar(cov_key: <span class="bu">str</span>):</span>
 <span id="cb26-147"><a href="#cb26-147" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _fn(dt, st, w_prev):</span>
 <span id="cb26-148"><a href="#cb26-148" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pf.weights_minvar(</span>
 <span id="cb26-149"><a href="#cb26-149" aria-hidden="true" tabindex="-1"></a>            cov_ann<span class="op">=</span>st[<span class="st">"cov_ann_map"</span>][cov_key], w_prev<span class="op">=</span>w_prev,</span>
-<span id="cb26-150"><a href="#cb26-150" aria-hidden="true" tabindex="-1"></a>            w_min<span class="op">=</span><span class="fl">0.0</span>, w_max<span class="op">=</span><span class="fl">0.25</span>, long_only<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb26-151"><a href="#cb26-151" aria-hidden="true" tabindex="-1"></a>            turnover_penalty_bps<span class="op">=</span><span class="fl">10.0</span>,solver_order<span class="op">=</span>[<span class="st">"osqp"</span>, <span class="st">"ecos"</span>, <span class="st">"scs"</span>])</span>
+<span id="cb26-150"><a href="#cb26-150" aria-hidden="true" tabindex="-1"></a>            w_min<span class="op">=</span><span class="fl">0.0</span>, w_max<span class="op">=</span><span class="fl">0.50</span>, long_only<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb26-151"><a href="#cb26-151" aria-hidden="true" tabindex="-1"></a>            turnover_penalty_bps<span class="op">=</span><span class="fl">1.0</span>,solver_order<span class="op">=</span>[<span class="st">"osqp"</span>, <span class="st">"ecos"</span>, <span class="st">"scs"</span>])</span>
 <span id="cb26-152"><a href="#cb26-152" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> _fn</span>
 <span id="cb26-153"><a href="#cb26-153" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-154"><a href="#cb26-154" aria-hidden="true" tabindex="-1"></a></span>
@@ -2423,7 +2428,7 @@ MaxSharpe (FrontierGrid): 0</code></pre>
 <span id="cb26-158"><a href="#cb26-158" aria-hidden="true" tabindex="-1"></a>            mu_excess_ann<span class="op">=</span>st[<span class="st">"mu_excess_ann"</span>].values,</span>
 <span id="cb26-159"><a href="#cb26-159" aria-hidden="true" tabindex="-1"></a>            cov_ann<span class="op">=</span>st[<span class="st">"cov_ann_map"</span>][cov_key], w_prev<span class="op">=</span>w_prev,</span>
 <span id="cb26-160"><a href="#cb26-160" aria-hidden="true" tabindex="-1"></a>            mv_lambda<span class="op">=</span><span class="fl">4.0</span>, kappa_target_annual<span class="op">=</span><span class="fl">0.20</span>, w_min<span class="op">=</span><span class="fl">0.0</span>,</span>
-<span id="cb26-161"><a href="#cb26-161" aria-hidden="true" tabindex="-1"></a>            w_max<span class="op">=</span><span class="fl">0.25</span>, long_only<span class="op">=</span><span class="va">True</span>, turnover_penalty_bps<span class="op">=</span><span class="fl">10.0</span>,</span>
+<span id="cb26-161"><a href="#cb26-161" aria-hidden="true" tabindex="-1"></a>            w_max<span class="op">=</span><span class="fl">0.40</span>, long_only<span class="op">=</span><span class="va">True</span>, turnover_penalty_bps<span class="op">=</span><span class="fl">10.0</span>,</span>
 <span id="cb26-162"><a href="#cb26-162" aria-hidden="true" tabindex="-1"></a>            solver_order<span class="op">=</span>[<span class="st">"osqp"</span>, <span class="st">"ecos"</span>, <span class="st">"scs"</span>])</span>
 <span id="cb26-163"><a href="#cb26-163" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> _fn</span>
 <span id="cb26-164"><a href="#cb26-164" aria-hidden="true" tabindex="-1"></a></span>
@@ -2433,7 +2438,7 @@ MaxSharpe (FrontierGrid): 0</code></pre>
 <span id="cb26-168"><a href="#cb26-168" aria-hidden="true" tabindex="-1"></a>        mu_excess_ann<span class="op">=</span>st[<span class="st">"mu_excess_ann"</span>].values,</span>
 <span id="cb26-169"><a href="#cb26-169" aria-hidden="true" tabindex="-1"></a>        cov_ann<span class="op">=</span>st[<span class="st">"cov_ann_map"</span>][<span class="st">"lw"</span>], w_prev<span class="op">=</span>w_prev,</span>
 <span id="cb26-170"><a href="#cb26-170" aria-hidden="true" tabindex="-1"></a>        ridge<span class="op">=</span><span class="fl">1e-4</span>, mv_lambda<span class="op">=</span><span class="fl">6.0</span>, kappa_target_annual<span class="op">=</span><span class="fl">0.30</span>,</span>
-<span id="cb26-171"><a href="#cb26-171" aria-hidden="true" tabindex="-1"></a>        w_min<span class="op">=</span><span class="fl">0.0</span>, w_max<span class="op">=</span><span class="fl">0.25</span>, long_only<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb26-171"><a href="#cb26-171" aria-hidden="true" tabindex="-1"></a>        w_min<span class="op">=</span><span class="fl">0.0</span>, w_max<span class="op">=</span><span class="fl">0.40</span>, long_only<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb26-172"><a href="#cb26-172" aria-hidden="true" tabindex="-1"></a>        turnover_penalty_bps<span class="op">=</span><span class="fl">10.0</span>,</span>
 <span id="cb26-173"><a href="#cb26-173" aria-hidden="true" tabindex="-1"></a>        solver_order<span class="op">=</span>[<span class="st">"osqp"</span>, <span class="st">"ecos"</span>, <span class="st">"scs"</span>])</span>
 <span id="cb26-174"><a href="#cb26-174" aria-hidden="true" tabindex="-1"></a></span>
@@ -2442,7 +2447,7 @@ MaxSharpe (FrontierGrid): 0</code></pre>
 <span id="cb26-177"><a href="#cb26-177" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pf.weights_maxsharpe_slsqp(</span>
 <span id="cb26-178"><a href="#cb26-178" aria-hidden="true" tabindex="-1"></a>        mu_excess_ann<span class="op">=</span>st[<span class="st">"mu_excess_ann"</span>].values,</span>
 <span id="cb26-179"><a href="#cb26-179" aria-hidden="true" tabindex="-1"></a>        cov_ann<span class="op">=</span>st[<span class="st">"cov_ann_map"</span>][<span class="st">"lw"</span>], w_prev<span class="op">=</span>w_prev,</span>
-<span id="cb26-180"><a href="#cb26-180" aria-hidden="true" tabindex="-1"></a>        w_min<span class="op">=</span><span class="fl">0.0</span>, w_max<span class="op">=</span><span class="fl">0.25</span>, long_only<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb26-180"><a href="#cb26-180" aria-hidden="true" tabindex="-1"></a>        w_min<span class="op">=</span><span class="fl">0.0</span>, w_max<span class="op">=</span><span class="fl">0.20</span>, long_only<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb26-181"><a href="#cb26-181" aria-hidden="true" tabindex="-1"></a>        turnover_penalty_bps<span class="op">=</span><span class="fl">10.0</span>, kappa_target_annual<span class="op">=</span><span class="fl">0.30</span>)</span>
 <span id="cb26-182"><a href="#cb26-182" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-183"><a href="#cb26-183" aria-hidden="true" tabindex="-1"></a></span>
@@ -2451,7 +2456,7 @@ MaxSharpe (FrontierGrid): 0</code></pre>
 <span id="cb26-186"><a href="#cb26-186" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pf.weights_maxsharpe_frontier_grid(</span>
 <span id="cb26-187"><a href="#cb26-187" aria-hidden="true" tabindex="-1"></a>        mu_excess_ann<span class="op">=</span>st[<span class="st">"mu_excess_ann"</span>].values,</span>
 <span id="cb26-188"><a href="#cb26-188" aria-hidden="true" tabindex="-1"></a>        cov_ann<span class="op">=</span>st[<span class="st">"cov_ann_map"</span>][<span class="st">"lw"</span>], w_prev<span class="op">=</span>w_prev,</span>
-<span id="cb26-189"><a href="#cb26-189" aria-hidden="true" tabindex="-1"></a>        grid_n<span class="op">=</span><span class="dv">25</span>, w_min<span class="op">=</span><span class="fl">0.0</span>, w_max<span class="op">=</span><span class="fl">0.25</span>, long_only<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb26-189"><a href="#cb26-189" aria-hidden="true" tabindex="-1"></a>        grid_n<span class="op">=</span><span class="dv">25</span>, w_min<span class="op">=</span><span class="fl">0.0</span>, w_max<span class="op">=</span><span class="fl">0.40</span>, long_only<span class="op">=</span><span class="va">True</span>,</span>
 <span id="cb26-190"><a href="#cb26-190" aria-hidden="true" tabindex="-1"></a>        turnover_penalty_bps<span class="op">=</span><span class="fl">10.0</span>,solver_order<span class="op">=</span>[<span class="st">"osqp"</span>, <span class="st">"ecos"</span>, <span class="st">"scs"</span>])</span>
 <span id="cb26-191"><a href="#cb26-191" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-192"><a href="#cb26-192" aria-hidden="true" tabindex="-1"></a></span>
@@ -2564,7 +2569,7 @@ MaxSharpe (FrontierGrid): 0</code></pre>
 <pre><code>close_prices: (2478, 290) | volumes: (2478, 290)
 Date range: 2016-01-04 to 2026-01-28
 usable rebalance dates: 109
-avg universe size: 100.0
+avg universe size: 60.0
 computed strategies: 12
 ['ew', 'maxsharpe_frontier', 'maxsharpe_slsqp', 'minvar_ewma', 'minvar_lw', 'minvar_oas', 'minvar_sample', 'mv_ewma', 'mv_lw', 'mv_oas', 'mv_sample', 'ridge_mv']</code></pre>
 </div>
@@ -2606,111 +2611,111 @@ computed strategies: 12
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">ew</th>
-<td>0.076280</td>
-<td>0.213572</td>
-<td>0.269004</td>
-<td>-0.400074</td>
-<td>0.190664</td>
-<td>0.366343</td>
+<td>0.074085</td>
+<td>0.225613</td>
+<td>0.256760</td>
+<td>-0.412990</td>
+<td>0.179387</td>
+<td>0.354335</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">maxsharpe_frontier</th>
-<td>0.173174</td>
-<td>0.253011</td>
-<td>0.602840</td>
-<td>-0.396645</td>
-<td>0.436597</td>
-<td>0.763618</td>
+<td>0.200999</td>
+<td>0.285989</td>
+<td>0.650614</td>
+<td>-0.483663</td>
+<td>0.415575</td>
+<td>0.851675</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">maxsharpe_slsqp</th>
-<td>0.137410</td>
-<td>0.243979</td>
-<td>0.490898</td>
-<td>-0.399129</td>
-<td>0.344275</td>
-<td>0.657423</td>
+<td>0.124644</td>
+<td>0.269980</td>
+<td>0.426323</td>
+<td>-0.511800</td>
+<td>0.243541</td>
+<td>0.572678</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">minvar_ewma</th>
-<td>0.080919</td>
-<td>0.132465</td>
-<td>0.356138</td>
-<td>-0.270858</td>
-<td>0.298753</td>
-<td>0.445874</td>
+<td>0.068295</td>
+<td>0.145440</td>
+<td>0.254007</td>
+<td>-0.298557</td>
+<td>0.228751</td>
+<td>0.321257</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">minvar_lw</th>
-<td>0.067458</td>
-<td>0.126572</td>
-<td>0.267248</td>
-<td>-0.320084</td>
-<td>0.210751</td>
-<td>0.343290</td>
+<td>0.065890</td>
+<td>0.140564</td>
+<td>0.242084</td>
+<td>-0.370346</td>
+<td>0.177915</td>
+<td>0.312552</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">minvar_oas</th>
-<td>0.068393</td>
-<td>0.126131</td>
-<td>0.274732</td>
-<td>-0.320297</td>
-<td>0.213530</td>
-<td>0.352852</td>
+<td>0.068116</td>
+<td>0.140346</td>
+<td>0.257164</td>
+<td>-0.364043</td>
+<td>0.187110</td>
+<td>0.332578</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">minvar_sample</th>
-<td>0.070466</td>
-<td>0.125965</td>
-<td>0.290240</td>
-<td>-0.315555</td>
-<td>0.223307</td>
-<td>0.373151</td>
+<td>0.062837</td>
+<td>0.139921</td>
+<td>0.222267</td>
+<td>-0.378604</td>
+<td>0.165971</td>
+<td>0.288264</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">mv_ewma</th>
-<td>0.047504</td>
-<td>0.155153</td>
-<td>0.125856</td>
-<td>-0.432365</td>
-<td>0.109869</td>
-<td>0.166299</td>
+<td>0.086697</td>
+<td>0.175564</td>
+<td>0.339135</td>
+<td>-0.432233</td>
+<td>0.200580</td>
+<td>0.463724</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">mv_lw</th>
-<td>0.059472</td>
-<td>0.174422</td>
-<td>0.195321</td>
-<td>-0.350070</td>
-<td>0.169886</td>
-<td>0.265576</td>
+<td>0.087609</td>
+<td>0.183969</td>
+<td>0.336395</td>
+<td>-0.349672</td>
+<td>0.250547</td>
+<td>0.455489</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">mv_oas</th>
-<td>0.059888</td>
-<td>0.172727</td>
-<td>0.197770</td>
-<td>-0.349493</td>
-<td>0.171358</td>
-<td>0.268584</td>
+<td>0.088860</td>
+<td>0.183131</td>
+<td>0.343368</td>
+<td>-0.349752</td>
+<td>0.254065</td>
+<td>0.464934</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">mv_sample</th>
-<td>0.055860</td>
-<td>0.169960</td>
-<td>0.175636</td>
-<td>-0.351519</td>
-<td>0.158910</td>
-<td>0.238167</td>
+<td>0.089293</td>
+<td>0.182082</td>
+<td>0.346473</td>
+<td>-0.350131</td>
+<td>0.255027</td>
+<td>0.469336</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">ridge_mv</th>
-<td>0.058862</td>
-<td>0.176880</td>
-<td>0.191773</td>
-<td>-0.343360</td>
-<td>0.171428</td>
-<td>0.261115</td>
+<td>0.085356</td>
+<td>0.184902</td>
+<td>0.324386</td>
+<td>-0.339681</td>
+<td>0.251283</td>
+<td>0.439663</td>
 </tr>
 </tbody>
 </table>
@@ -2750,122 +2755,122 @@ computed strategies: 12
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">ew</th>
-<td>0.042396</td>
-<td>4.621129</td>
-<td>0.006054</td>
-<td>0.003173</td>
-<td>0.010000</td>
-<td>100.000000</td>
+<td>0.045115</td>
+<td>4.917503</td>
+<td>0.006182</td>
+<td>0.003299</td>
+<td>0.016667</td>
+<td>60.000000</td>
 <td>0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">maxsharpe_frontier</th>
-<td>0.461996</td>
-<td>50.357586</td>
-<td>0.127701</td>
-<td>0.031370</td>
-<td>0.151092</td>
-<td>6.618471</td>
+<td>0.364164</td>
+<td>39.693930</td>
+<td>0.083381</td>
+<td>0.016669</td>
+<td>0.188200</td>
+<td>5.313500</td>
 <td>0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">maxsharpe_slsqp</th>
-<td>0.068841</td>
-<td>7.503668</td>
-<td>0.011999</td>
-<td>0.003870</td>
-<td>0.130483</td>
-<td>7.663833</td>
+<td>0.067812</td>
+<td>7.391533</td>
+<td>0.010394</td>
+<td>0.003701</td>
+<td>0.129396</td>
+<td>7.728185</td>
 <td>0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">minvar_ewma</th>
-<td>0.441603</td>
-<td>48.134699</td>
-<td>0.067150</td>
-<td>0.033886</td>
-<td>0.137801</td>
-<td>7.256842</td>
+<td>0.355185</td>
+<td>38.715200</td>
+<td>0.045926</td>
+<td>0.025696</td>
+<td>0.163963</td>
+<td>6.098923</td>
 <td>0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">minvar_lw</th>
-<td>0.106463</td>
-<td>11.604440</td>
-<td>0.014779</td>
-<td>0.008326</td>
-<td>0.094543</td>
-<td>10.577203</td>
+<td>0.130927</td>
+<td>14.271095</td>
+<td>0.016595</td>
+<td>0.009471</td>
+<td>0.130331</td>
+<td>7.672761</td>
 <td>0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">minvar_oas</th>
-<td>0.108628</td>
-<td>11.840467</td>
-<td>0.015143</td>
-<td>0.008466</td>
-<td>0.108075</td>
-<td>9.252864</td>
+<td>0.132724</td>
+<td>14.466871</td>
+<td>0.016948</td>
+<td>0.009497</td>
+<td>0.144012</td>
+<td>6.943868</td>
 <td>0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">minvar_sample</th>
-<td>0.115967</td>
-<td>12.640403</td>
-<td>0.016355</td>
-<td>0.008989</td>
-<td>0.130010</td>
-<td>7.691693</td>
+<td>0.143013</td>
+<td>15.588370</td>
+<td>0.017869</td>
+<td>0.010459</td>
+<td>0.163822</td>
+<td>6.104191</td>
 <td>0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">mv_ewma</th>
-<td>0.020636</td>
-<td>2.249277</td>
-<td>0.002477</td>
-<td>0.001648</td>
-<td>0.056364</td>
-<td>17.741750</td>
+<td>0.014978</td>
+<td>1.632645</td>
+<td>0.001836</td>
+<td>0.000884</td>
+<td>0.073447</td>
+<td>13.615348</td>
 <td>0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">mv_lw</th>
-<td>0.005375</td>
-<td>0.585831</td>
-<td>0.000751</td>
-<td>0.000452</td>
-<td>0.031996</td>
-<td>31.254348</td>
+<td>0.008066</td>
+<td>0.879223</td>
+<td>0.001163</td>
+<td>0.000556</td>
+<td>0.056825</td>
+<td>17.597929</td>
 <td>0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">mv_oas</th>
-<td>0.005633</td>
-<td>0.613968</td>
-<td>0.000785</td>
-<td>0.000471</td>
-<td>0.033847</td>
-<td>29.544465</td>
+<td>0.008136</td>
+<td>0.886865</td>
+<td>0.001167</td>
+<td>0.000552</td>
+<td>0.059002</td>
+<td>16.948689</td>
 <td>0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">mv_sample</th>
-<td>0.005587</td>
-<td>0.608993</td>
-<td>0.000757</td>
-<td>0.000469</td>
-<td>0.035177</td>
-<td>28.427916</td>
+<td>0.008214</td>
+<td>0.895379</td>
+<td>0.001169</td>
+<td>0.000551</td>
+<td>0.061121</td>
+<td>16.361005</td>
 <td>0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">ridge_mv</th>
-<td>0.003899</td>
-<td>0.425024</td>
-<td>0.000549</td>
-<td>0.000332</td>
-<td>0.030416</td>
-<td>32.877851</td>
+<td>0.005514</td>
+<td>0.601052</td>
+<td>0.000814</td>
+<td>0.000396</td>
+<td>0.049881</td>
+<td>20.047733</td>
 <td>0</td>
 </tr>
 </tbody>
@@ -2874,7 +2879,7 @@ computed strategies: 12
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>best sharpe: maxsharpe_frontier | sharpe: 0.6028</code></pre>
+<pre><code>best sharpe: maxsharpe_frontier | sharpe: 0.6506</code></pre>
 </div>
 </div>
 
