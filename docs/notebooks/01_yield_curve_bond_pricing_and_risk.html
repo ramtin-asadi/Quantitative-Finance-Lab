@@ -202,7 +202,7 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/04_black_scholes_IV_greeks_hedging.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">black–scholes, implied volatility, greeks, arbitrage diagnostics, and hedging</span></a>
+  <a href="../notebooks/04_BSM_IV_greeks_hedging.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">4. black–scholes, implied volatility, greeks and hedging</span></a>
   </div>
 </li>
     </ul>
@@ -278,7 +278,7 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 </section>
 <section id="imports-and-plotting-style-and-loading-data" class="level2">
 <h2 class="anchored" data-anchor-id="imports-and-plotting-style-and-loading-data">Imports and plotting style and loading data</h2>
-<div id="c76fb050" class="cell" data-execution_count="2">
+<div id="c76fb050" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -308,7 +308,7 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="vs">r"E:</span><span class="dv">\d</span><span class="vs">aneshgah</span><span class="er">\</span><span class="vs">quantitative-finance-lab</span><span class="dv">\d</span><span class="vs">ata</span><span class="er">\</span><span class="vs">par-yield-curve-rates-1990-2026</span><span class="dv">.</span><span class="vs">csv"</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="vs">r"</span><span class="dv">..\d</span><span class="vs">ata</span><span class="er">\</span><span class="vs">par-yield-curve-rates-1990-2026</span><span class="dv">.</span><span class="vs">csv"</span>)</span>
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>col_map <span class="op">=</span> {<span class="st">"date"</span>: <span class="st">"Date"</span>,<span class="st">"1 mo"</span>: <span class="st">"1M"</span>,<span class="st">"2 mo"</span>: <span class="st">"2M"</span>,<span class="st">"3 mo"</span>: <span class="st">"3M"</span>,<span class="st">"4 mo"</span>: <span class="st">"4M"</span>,<span class="st">"6 mo"</span>: <span class="st">"6M"</span>,<span class="st">"1 yr"</span>: <span class="st">"1Y"</span>,<span class="st">"2 yr"</span>: <span class="st">"2Y"</span>,<span class="st">"3 yr"</span>: <span class="st">"3Y"</span>,<span class="st">"5 yr"</span>: <span class="st">"5Y"</span>,<span class="st">"7 yr"</span>: <span class="st">"7Y"</span>,<span class="st">"10 yr"</span>: <span class="st">"10Y"</span>,<span class="st">"20 yr"</span>: <span class="st">"20Y"</span>,<span class="st">"30 yr"</span>: <span class="st">"30Y"</span>}</span>
 <span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
@@ -317,7 +317,7 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 <span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.dropna(subset<span class="op">=</span>[<span class="st">"Date"</span>], ).set_index(<span class="st">"Date"</span>).sort_index()</span>
 <span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="2">
+<div class="cell-output cell-output-display" data-execution_count="1">
 <div>
 
 
@@ -540,7 +540,7 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 </div>
 </div>
 </div>
-<div id="fe483000" class="cell" data-execution_count="3">
+<div id="fe483000" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>tenor_cols <span class="op">=</span> [<span class="st">"1M"</span>,<span class="st">"2M"</span>,<span class="st">"3M"</span>,<span class="st">"4M"</span>,<span class="st">"6M"</span>,<span class="st">"1Y"</span>,<span class="st">"2Y"</span>,<span class="st">"3Y"</span>,<span class="st">"5Y"</span>,<span class="st">"7Y"</span>,<span class="st">"10Y"</span>,<span class="st">"20Y"</span>,<span class="st">"30Y"</span>]</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> tenor_cols:</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    df[c] <span class="op">=</span> pd.to_numeric(df[c], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
@@ -838,7 +838,7 @@ Date range: 1990-01-02 to 2026-01-28</code></pre>
 </div>
 </div>
 </div>
-<div id="96e2f700" class="cell" data-execution_count="4">
+<div id="96e2f700" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sample_dates <span class="op">=</span> [</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    df.index[<span class="dv">0</span>],</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    df.index[<span class="bu">len</span>(df)<span class="op">//</span><span class="dv">2</span>],</span>
@@ -948,7 +948,7 @@ F(t_1,t_2)=\dfrac{\ln D(t_1)-\ln D(t_2)}{t_2-t_1}
 <p>So Discount Factor is: <span class="math display">\[D(t)=\exp\left(\ln D(t)\right)
 \]</span></p>
 <p>and zero rate is: <span class="math display">\[z(t)=-\dfrac{\ln D(t)}{t}\]</span></p>
-<div id="66bfc6d0" class="cell" data-execution_count="5">
+<div id="66bfc6d0" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>df_dec <span class="op">=</span> df.copy()</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>df_dec[tenor_cols] <span class="op">=</span> df_dec[tenor_cols] <span class="op">/</span> <span class="fl">100.0</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1145,7 +1145,7 @@ First 5 pillar DFs: [0.99687157 0.99383574 0.99084219 0.98774241 0.98201372 0.96
 <h3 class="anchored" data-anchor-id="method-a-log-linear-discount-factors-1">6.1 Method A: Log-linear discount factors</h3>
 <p>Interpolate <span class="math inline">\(\ln D(t)\)</span> linearly between pillars (just like for the T we had. we do the same thing between them):</p>
 <p><span class="math inline">\(\ln D(t)=\text{linear interp of } \{\ln D(T_j)\}\)</span></p>
-<div id="db56b670" class="cell" data-execution_count="6">
+<div id="db56b670" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> loglinear_curve(T, dfs):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    loglinear_log_dfs <span class="op">=</span> np.log(dfs)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1240,7 +1240,7 @@ p_j(t)=a_j(t-x_j)^3+b_j(t-x_j)^2+c_j(t-x_j)+d_j  \quad t\in[x_j,x_{j+1}]
 <p>Constraints include: - <span class="math inline">\(p_j(x_j)=y_j\)</span> and <span class="math inline">\(p_j(x_{j+1})=y_{j+1}\)</span> - first derivatives are chosen by shape-preserving slope rules to reduce overshoot</p>
 <p>we define <span class="math display">\[z(t)=p_j(t)\]</span></p>
 <p>then <span class="math display">\[D(t)=e^{-z(t)t}\]</span></p>
-<div id="b886b647" class="cell" data-execution_count="7">
+<div id="b886b647" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.interpolate <span class="im">import</span> PchipInterpolator</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1341,7 +1341,7 @@ z(t)=\beta_0 +\beta_1\left(\frac{1-e^{-t/\tau_1}}{t/\tau_1}\right) +\beta_2\left
 <li><p><span class="math inline">\(\beta_3\)</span> = additional curvature (second hump)</p></li>
 <li><p><span class="math inline">\(\tau_1,\tau_2&gt;0\)</span> control where humps occur</p></li>
 </ul>
-<div id="f4f26f9a" class="cell" data-execution_count="8">
+<div id="f4f26f9a" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> nss_zero(t, b0,b1,b2,b3,tau1,tau2):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> np.array(t, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    x1 <span class="op">=</span> t <span class="op">/</span> tau1</span>
@@ -1366,7 +1366,7 @@ c(T)=f\cdot\frac{1-D(T)}{\sum_{i=1}^{n}D(t_i)}
 <p>continuous: <span class="math inline">\(y(T)=-\ln D(T)/T\)</span></p>
 <p>simple: <span class="math inline">\(y(T)=(1/D(T)-1)/T\)</span></p>
 <p>but first we have to have <span class="math inline">\(D(t)\)</span></p>
-<div id="e4aa8609" class="cell" data-execution_count="9">
+<div id="e4aa8609" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> par_from_d(df_func, T_list, f<span class="op">=</span><span class="dv">2</span>):</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    T_arr <span class="op">=</span> np.asarray(T_list, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> np.full_like(T_arr, np.nan, dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -1419,7 +1419,7 @@ c(T)=f\cdot\frac{1-D(T)}{\sum_{i=1}^{n}D(t_i)}
 \]</span></p>
 <p>Optionally add regularization to discourage extreme shapes: <span class="math inline">\(\lambda\sum_j (z''(t_j))^2\)</span> or bounds on parameters.</p>
 <p><strong>L-BFGS</strong>: Limited memory BFGS is a second order optimization method (a Quasi-Newton method) that uses the last m values and gradients for approximation of inverse Hessian and has power in handling high dimentions or huge datasets without having second derivative.</p>
-<div id="edfbf229" class="cell">
+<div id="edfbf229" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.optimize <span class="im">import</span> minimize</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1570,7 +1570,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <p>Positivity: <span class="math inline">\(D(t_k)\ge D_{min}\)</span></p>
 <p>Monotone decreasing: <span class="math inline">\(D(t_{k+1})\le D(t_k)\)</span></p>
 <p>These are linear inequalities, so the problem stays convex and QP-solvable.</p>
-<div id="e7a07a0f" class="cell" data-execution_count="11">
+<div id="e7a07a0f" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1641,7 +1641,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <p>Once we have <span class="math inline">\(D(t)\)</span> on a grid:</p>
 <p><span class="math inline">\(z(t_k)=-\ln D(t_k)/t_k\)</span></p>
 <p><span class="math inline">\(f(t_k)\approx -\dfrac{\ln D(t_{k+1})-\ln D(t_k)}{t_{k+1}-t_k}\)</span></p>
-<div id="102a4fab" class="cell">
+<div id="102a4fab" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> qp_solve(t_grid, d, constraints, par_mkt, f, min_d):</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    lam <span class="op">=</span> <span class="fl">1e4</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    eps <span class="op">=</span> <span class="fl">1e-4</span></span>
@@ -1777,7 +1777,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <h1>10. Curve fit comparison and RMSE to observed par yields</h1>
 <p>We compute curve-implied par yields <span class="math inline">\(\hat y(T_j)\)</span> and compare to market <span class="math inline">\(y(T_j)\)</span>: <span class="math inline">\(RMSE=\sqrt{\dfrac{1}{m}\sum_{j=1}^m (\hat y(T_j)-y(T_j))^2}\)</span></p>
 <p>for showing the performance, we use some of the tenors as in sample data for our models and some of them as out of sample to see the accuracy of predicting them.</p>
-<div id="ed42bb6d" class="cell" data-execution_count="13">
+<div id="ed42bb6d" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_curves_for_date(date):</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    pillars_full <span class="op">=</span> bootstrap_pillars(date)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> pillars_full <span class="kw">is</span> <span class="va">None</span>:</span>
@@ -1954,7 +1954,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 </figure>
 </div>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="13">
+<div class="cell-output cell-output-display" data-execution_count="12">
 <div>
 
 
@@ -2042,7 +2042,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 </ul>
 <p>Basically we buy bonds with 4 different maturities every month and keep it and get interest every month until maturity of those bonds. so we have 4 books for 4 different bonds (maturities). and our portfolio is based on these four books.</p>
 <p>So each month the outgoing cashflow is buying the bonds and ingoing is all the interest and maybe principal of all the bonds that we have bought.</p>
-<div id="e8091d22" class="cell" data-execution_count="15">
+<div id="e8091d22" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>issue_maturities <span class="op">=</span> [<span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">30</span>]</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>issue_labels <span class="op">=</span> {<span class="dv">2</span>: <span class="st">"2Y"</span>, <span class="dv">5</span>: <span class="st">"5Y"</span>, <span class="dv">10</span>: <span class="st">"10Y"</span>, <span class="dv">30</span>: <span class="st">"30Y"</span>}</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2152,7 +2152,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <p>Original scheduled payment times from issue are <span class="math inline">\(t_i=i/f\)</span>. we only price the bonds that <span class="math inline">\(t_i&gt;\Delta\)</span> because these are the cashflows that have accured up until time <span class="math inline">\(t\)</span> and the remaining time to payment from valuation date for each cashflow is: <span class="math inline">\(\tau_i(t)=t_i-\Delta\)</span></p>
 <p>Price using the curve at valuation date <span class="math inline">\(t\)</span>: <span class="math inline">\(P_t=\sum_{i:t_i&gt;\Delta} CF_i\,D_t(\tau_i(t))\)</span></p>
 <p>For a book of issues <span class="math inline">\(\mathcal{B}_t\)</span> with weights <span class="math inline">\(w_b\)</span> (we don’t have weights here): <span class="math inline">\(PV_t=\sum_{b\in \mathcal{B}_t} w_b\,P_t(b)\)</span></p>
-<div id="92823cf8" class="cell">
+<div id="92823cf8" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> book_pv_cutoff(valuation_date, df_func, cutoff_date):</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    total <span class="op">=</span> <span class="fl">0.0</span></span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    buckets <span class="op">=</span> {}</span>
@@ -2229,7 +2229,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <span id="cb20-74"><a href="#cb20-74" aria-hidden="true" tabindex="-1"></a>    curves_cache[date] <span class="op">=</span> curves_d</span>
 <span id="cb20-75"><a href="#cb20-75" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> curves_d</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="4605ef85" class="cell">
+<div id="4605ef85" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>metrics_rows <span class="op">=</span> []</span>
@@ -2251,7 +2251,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>metrics_df <span class="op">=</span> pd.DataFrame(metrics_rows).set_index([<span class="st">"date"</span>, <span class="st">"method"</span>]).sort_index()</span>
 <span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="f934d23c" class="cell">
+<div id="f934d23c" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>methods <span class="op">=</span> [<span class="st">"loglinear"</span>, <span class="st">"pchip"</span>, <span class="st">"nss"</span>, <span class="st">"qp"</span>]</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>pv_total <span class="op">=</span> (</span>
@@ -2528,7 +2528,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <p>KRD definition (finite-difference)</p>
 <p><span class="math display">\[KRD_j=\dfrac{P_0-P^{(j)}}{P_0\Delta}\]</span></p>
 <hr>
-<div id="35b1dafa" class="cell">
+<div id="35b1dafa" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>risk_rows <span class="op">=</span> []</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>krd_rows <span class="op">=</span> []</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2750,7 +2750,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 </section>
 <section id="implementing-the-whole-project-on-japan-data-using-quantfinlab" class="level1">
 <h1>Implementing the whole project on Japan data using quantfinlab</h1>
-<div id="a1824e0d" class="cell" data-execution_count="1">
+<div id="a1824e0d" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>

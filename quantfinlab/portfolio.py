@@ -1298,10 +1298,10 @@ def build_all_portfolio_strategies(
             solver_order=solve_order,
         )
 
-    def maxsharpe_slsqp_lw(dt, st, w_prev):
+    def maxsharpe_slsqp_ewma(dt, st, w_prev):
         return weights_maxsharpe_slsqp(
             mu_excess_ann=st["mu_excess_ann"].values,
-            cov_ann=st["cov_ann_map"]["lw"],
+            cov_ann=st["cov_ann_map"]["ewma"],
             w_prev=w_prev,
             w_min=0.0,
             w_max=0.25,
@@ -1310,10 +1310,10 @@ def build_all_portfolio_strategies(
             kappa_target_annual=0.30,
         )
 
-    def maxsharpe_frontier_lw(dt, st, w_prev):
+    def maxsharpe_frontier_ewma(dt, st, w_prev):
         return weights_maxsharpe_frontier_grid(
             mu_excess_ann=st["mu_excess_ann"].values,
-            cov_ann=st["cov_ann_map"]["lw"],
+            cov_ann=st["cov_ann_map"]["ewma"],
             w_prev=w_prev,
             grid_n=25,
             w_min=0.0,
@@ -1334,8 +1334,8 @@ def build_all_portfolio_strategies(
         "mv_oas": make_mv("oas"),
         "mv_ewma": make_mv("ewma"),
         "ridge_mv": ridge_mv_lw,
-        "maxsharpe_slsqp": maxsharpe_slsqp_lw,
-        "maxsharpe_frontier": maxsharpe_frontier_lw,
+        "maxsharpe_slsqp": maxsharpe_slsqp_ewma,
+        "maxsharpe_frontier": maxsharpe_frontier_ewma,
     }
     cov_key_for_rc = {
         "ew": "lw",
@@ -1348,8 +1348,8 @@ def build_all_portfolio_strategies(
         "mv_oas": "oas",
         "mv_ewma": "ewma",
         "ridge_mv": "lw",
-        "maxsharpe_slsqp": "lw",
-        "maxsharpe_frontier": "lw",
+        "maxsharpe_slsqp": "EWMA",
+        "maxsharpe_frontier": "EWMA",
     }
 
     results = {

@@ -11,7 +11,7 @@ book:
     - notebooks/01_yield_curve_bond_pricing_and_risk.ipynb
     - notebooks/02_portfolio_optimization_MV_models.ipynb
     - notebooks/03_risk_report_engine_and_CAPM.ipynb
-    - notebooks/04_black_scholes_IV_greeks_hedging.ipynb
+    - notebooks/04_BSM_IV_greeks_hedging.ipynb
 
 format:
   html:
