@@ -279,17 +279,17 @@ window.Quarto = {
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"axes.prop_cycle"</span>] <span class="op">=</span> cycler(color<span class="op">=</span>colors)</span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">6</span>, <span class="dv">3</span>),</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.dpi"</span>: <span class="dv">300</span>,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.dpi"</span>: <span class="dv">200</span>,</span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"savefig.dpi"</span>: <span class="dv">300</span>,</span>
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.grid"</span>: <span class="va">True</span>,</span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grid.alpha"</span>: <span class="fl">0.20</span>,</span>
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>,</span>
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="dv">10</span>,</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="dv">12</span>,</span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="dv">12</span>,</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"xtick.labelsize"</span>: <span class="dv">10</span>,</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ytick.labelsize"</span>: <span class="dv">10</span>,</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">10</span>,</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"xtick.labelsize"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ytick.labelsize"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">7</span>,</span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_color_map(names, palette<span class="op">=</span>colors):</span>
@@ -299,7 +299,7 @@ window.Quarto = {
 </section>
 <section id="initializing-the-parameters-and-data" class="level3">
 <h3 class="anchored" data-anchor-id="initializing-the-parameters-and-data">initializing the parameters and data</h3>
-<div id="aafe44dd" class="cell">
+<div id="aafe44dd" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>rf <span class="op">=</span> <span class="fl">0.04</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>blend <span class="op">=</span> {</span>
@@ -1629,7 +1629,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <p>Approximate annual turnover if rebalances occur <span class="math inline">\(B\)</span> times per year:</p>
 <p><span class="math display">\[\operatorname{TO}_{ann} \approx B\,\overline{\operatorname{TO}}
 \]</span></p>
-<div id="7a16a2f9" class="cell">
+<div id="7a16a2f9" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>fixed_fee <span class="op">=</span> <span class="fl">0.0</span></span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1746,7 +1746,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <section id="strategy-dashboards" class="level2">
 <h2 class="anchored" data-anchor-id="strategy-dashboards">12) Strategy dashboards</h2>
 <p>We report the performance of each model and top weights and top risk contribution (to volatility) at date <span class="math inline">\(t\)</span>: if portfolio variance <span class="math inline">\(\sigma_p^2 = w^T\Sigma w\)</span>, and marginal risk is <span class="math inline">\(m = \Sigma w\)</span>. Contribution to variance: <span class="math inline">\(RC^{var}_i = w_i m_i\)</span>. Contribution to volatility: <span class="math inline">\(RC^{vol}_i = RC^{var}_i / \sigma_p\)</span>.</p>
-<div id="10c170cf" class="cell">
+<div id="10c170cf" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> format_date_axis(ax):</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    ax.xaxis.set_major_formatter(DateFormatter(<span class="st">"%Y-%m"</span>))</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    ax.figure.autofmt_xdate()</span>
@@ -1856,7 +1856,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <span id="cb21-107"><a href="#cb21-107" aria-hidden="true" tabindex="-1"></a>    plot_rc <span class="op">=</span> rc.loc[top_rc].sort_values()</span>
 <span id="cb21-108"><a href="#cb21-108" aria-hidden="true" tabindex="-1"></a>    dt_lbl <span class="op">=</span> st_dt.date() <span class="cf">if</span> st_dt <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> last_dt.date()</span>
 <span id="cb21-109"><a href="#cb21-109" aria-hidden="true" tabindex="-1"></a>    ax_r.barh(plot_rc.index, plot_rc.values, color<span class="op">=</span>color)</span>
-<span id="cb21-110"><a href="#cb21-110" aria-hidden="true" tabindex="-1"></a>    ax_r.set_title(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss"> - Top-10 Risk Contributions (</span><span class="sc">{</span>dt_lbl<span class="sc">}</span><span class="ss">)"</span>)</span>
+<span id="cb21-110"><a href="#cb21-110" aria-hidden="true" tabindex="-1"></a>    ax_r.set_title(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss"> - Top-10 Risk Contributions"</span>)</span>
 <span id="cb21-111"><a href="#cb21-111" aria-hidden="true" tabindex="-1"></a>    ax_r.set_xlabel(<span class="st">"Contribution to vol"</span>)</span>
 <span id="cb21-112"><a href="#cb21-112" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-113"><a href="#cb21-113" aria-hidden="true" tabindex="-1"></a></span>
@@ -2396,7 +2396,7 @@ MaxSharpe (FrontierGrid): 0</code></pre>
 <section id="implementation-on-hong-kong-stock-market-with-quantfinlab" class="level2">
 <h2 class="anchored" data-anchor-id="implementation-on-hong-kong-stock-market-with-quantfinlab">implementation on Hong Kong stock market with quantfinlab</h2>
 <p>the data used in this part can be downloaded from here (<a href="https://stooq.com/db/h/">Stooq HKEX daily market data</a>)</p>
-<div id="225c0c82" class="cell" data-execution_count="3">
+<div id="225c0c82" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>

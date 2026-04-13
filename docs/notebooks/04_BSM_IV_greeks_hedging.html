@@ -271,21 +271,22 @@ window.Quarto = {
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>            <span class="st">"#cc79a7"</span>, <span class="st">"#ff8072"</span>, <span class="st">"#9614fa"</span>, <span class="st">"#dc143c"</span>]</span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"axes.prop_cycle"</span>] <span class="op">=</span> cycler(color<span class="op">=</span>palette)</span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.dpi"</span>: <span class="dv">200</span>,</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"savefig.dpi"</span>: <span class="dv">300</span>,</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.grid"</span>: <span class="va">True</span>,</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grid.alpha"</span>: <span class="fl">0.20</span>,</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>,</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="dv">11</span>,</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="dv">11</span>,</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"xtick.labelsize"</span>: <span class="dv">9</span>,</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ytick.labelsize"</span>: <span class="dv">9</span>,</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">8</span>,</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>seed <span class="op">=</span> <span class="dv">7</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>np.random.seed(seed)</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">6</span>, <span class="dv">3</span>),</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.dpi"</span>: <span class="dv">200</span>,</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"savefig.dpi"</span>: <span class="dv">300</span>,</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.grid"</span>: <span class="va">True</span>,</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grid.alpha"</span>: <span class="fl">0.20</span>,</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>,</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="dv">12</span>,</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="dv">12</span>,</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">"xtick.labelsize"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ytick.labelsize"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">7</span>,</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>seed <span class="op">=</span> <span class="dv">7</span></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>np.random.seed(seed)</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="introduction-to-options" class="level2">
@@ -885,6 +886,9 @@ n trade_date: 505  | n (trade_date, expiry): 11969</code></pre>
 <li><strong>Continuous trading</strong>: Can trade at any time</li>
 <li><strong>No restrictions on short selling</strong>: Can borrow and sell assets you don’t own</li>
 </ol>
+<blockquote class="blockquote">
+<p>We don’t actually believe that the stock will actually follow GBM perfectly. we use it because we need a probabilistic framework to price derivatives that depend on uncertain future values.</p>
+</blockquote>
 <p>While these assumptions are idealized and not close to real world, the model works well in practice and forms the foundation of modern option pricing. and later we can adjust the model and use different models for handling different probabilities.</p>
 </section>
 <section id="the-black-scholes-partial-differential-equation" class="level3">
@@ -2284,31 +2288,31 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>numba</td>
-<td>numba: newton + bracket</td>
-<td>1.623902</td>
+<td>lbr_lite</td>
+<td>lbr-lite: transformed guess + halley/newton</td>
+<td>1.818636</td>
 <td>0.999985</td>
-<td>0.999749</td>
+<td>0.999751</td>
 <td>1.000000</td>
-<td>0.070666</td>
-<td>24,843,009.975310</td>
+<td>0.058734</td>
+<td>29,890,009.018267</td>
+<td>3.000000</td>
 <td>4.000000</td>
-<td>5.000000</td>
 <td>0.000000</td>
 <td>0.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>lbr_lite</td>
-<td>lbr-lite: transformed guess + halley/newton</td>
-<td>2.287789</td>
+<td>numba</td>
+<td>numba: newton + bracket</td>
+<td>1.227526</td>
 <td>0.999985</td>
-<td>0.999751</td>
+<td>0.999749</td>
 <td>1.000000</td>
-<td>0.097961</td>
-<td>17,920,911.072897</td>
-<td>3.000000</td>
+<td>0.086050</td>
+<td>20,401,708.813725</td>
 <td>4.000000</td>
+<td>5.000000</td>
 <td>0.000000</td>
 <td>0.000000</td>
 </tr>
@@ -2347,13 +2351,13 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 </tr>
 <tr class="even">
 <td>Solve time (3 × 585K)</td>
-<td>0.070 s</td>
-<td>0.097 s</td>
+<td>0.086 s</td>
+<td>0.058 s</td>
 </tr>
 <tr class="odd">
 <td>Throughput</td>
-<td>24.8M quotes/sec</td>
-<td>17.9M quotes/sec</td>
+<td>20.4M quotes/sec</td>
+<td>29.8M quotes/sec</td>
 </tr>
 <tr class="even">
 <td>Median iterations (mid)</td>
@@ -2379,12 +2383,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 </table>
 <p>Both solvers have performed pretty good:</p>
 <p>They both achieve zero round-trip pricing error at machine precision which means the extracted <span class="math inline">\(\sigma\)</span> reproduces the input price exactly. This confirms that the root-finding converged to the true solution, not a nearby local minimum or a boundary artifact.</p>
-<p>LBR-lite converges in fewer iterations (median 3 vs.&nbsp;4, P90 of 4 vs.&nbsp;5). This is expected. Each LBR-lite iteration is more expensive (it computes both <span class="math inline">\(f'\)</span> and <span class="math inline">\(f''\)</span>), but the reduced iteration count might worth it and shows that the initial guess and the model actually helped for easier convergence.</p>
-<p>Newton-bisection is faster in time, processing 1.75 million options across three price surfaces in around 70 milliseconds. The per-iteration simplicity of Newton’s method, combined with Numba’s tight loop optimization, gives it a slight edge despite needing one extra iteration on average.</p>
+<p>LBR-lite converges in fewer iterations (median 3 vs.&nbsp;4, P90 of 4 vs.&nbsp;5). This is expected. Each LBR-lite iteration is more expensive (it computes both <span class="math inline">\(f'\)</span> and <span class="math inline">\(f''\)</span>), but the reduced iteration count might worth it and shows that the initial guess and the model actually helped for faster convergence. This is why this model is faster than Newton-Bisection method in time, processing 1.75 million options across three price surfaces in around 60 milliseconds. Two models are so close in speed that in different systems and different runtimes the results are different and sometimes Newton-Bisection ends up faster.</p>
 <p>Both solvers fail on ~0.0015% of mid-price extractions (~9 options out of 585K). These are deep OTM options where the market mid sits at or very near the arbitrage bound, making the IV either undefined or astronomically large. The bid success rate is slightly lower (99.97%) because bid prices are more likely to sit at or below the intrinsic value floor, especially for illiquid deep OTM contracts.</p>
-<section id="solver-selection-and-output" class="level4">
-<h4 class="anchored" data-anchor-id="solver-selection-and-output">Solver Selection and Output</h4>
-<p>The comparison table is sorted by success rate (descending), then solve time, then iterations, then pricing error. The Newton-bisection solver wins on speed and is selected as the primary solver and we are going to keep up with it for the rest of the notebook. but the difference is so small that both models can perform great in all cases.</p>
 <div id="a70d55c3" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>tmp <span class="op">=</span> df_options.copy()</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>tmp[<span class="st">"lm_bin"</span>] <span class="op">=</span> pd.cut(tmp[<span class="st">"lm_f"</span>], bins<span class="op">=</span>np.linspace(<span class="op">-</span><span class="fl">0.25</span>, <span class="fl">0.25</span>, <span class="dv">17</span>), include_lowest<span class="op">=</span><span class="va">True</span>)</span>
@@ -2553,10 +2553,10 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>numba</td>
-<td>numba: newton + bracket</td>
 <td>lbr_lite</td>
 <td>lbr-lite: transformed guess + halley/newton</td>
+<td>numba</td>
+<td>numba: newton + bracket</td>
 </tr>
 </tbody>
 </table>
@@ -2564,6 +2564,9 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 </div>
 </div>
 </div>
+<section id="solver-selection-and-output" class="level4">
+<h4 class="anchored" data-anchor-id="solver-selection-and-output">Solver Selection and Output</h4>
+<p>The comparison table is sorted by success rate (descending), then solve time, then iterations, then pricing error. The LBR-lite solver wins on speed and is selected as the primary solver and we are going to keep up with it for the rest of the notebook. but the difference is so small that both models can perform great in all cases.</p>
 <div id="bf8861af" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>df_options[<span class="st">"price_iv"</span>] <span class="op">=</span> bsm_forward_price(</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    df_options[<span class="st">"cp"</span>].values, df_options[<span class="st">"df"</span>].values,</span>
@@ -2648,7 +2651,7 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <th data-quarto-table-cell-role="th">1</th>
 <td>same_quote_iv_repricing</td>
 <td>0.000000</td>
-<td>0.000000</td>
+<td>-0.000000</td>
 <td>0.999985</td>
 </tr>
 </tbody>

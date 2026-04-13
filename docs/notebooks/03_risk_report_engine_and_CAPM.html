@@ -286,22 +286,23 @@ window.Quarto = {
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>]</span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"axes.prop_cycle"</span>] <span class="op">=</span> cycler(color<span class="op">=</span>palette)</span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.dpi"</span>: <span class="dv">200</span>,</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"savefig.dpi"</span>: <span class="dv">300</span>,</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.grid"</span>: <span class="va">True</span>,</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grid.alpha"</span>: <span class="fl">0.20</span>,</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>,</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="dv">11</span>,</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="dv">11</span>,</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"xtick.labelsize"</span>: <span class="dv">9</span>,</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ytick.labelsize"</span>: <span class="dv">9</span>,</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">9</span>,</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>ann <span class="op">=</span> <span class="dv">252</span></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>rf_annual <span class="op">=</span> <span class="fl">0.04</span></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>rf_daily <span class="op">=</span> (<span class="dv">1</span> <span class="op">+</span> rf_annual) <span class="op">**</span> (<span class="dv">1</span> <span class="op">/</span> ann) <span class="op">-</span> <span class="dv">1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">6</span>, <span class="dv">3</span>),</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.dpi"</span>: <span class="dv">175</span>,</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"savefig.dpi"</span>: <span class="dv">300</span>,</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.grid"</span>: <span class="va">True</span>,</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grid.alpha"</span>: <span class="fl">0.20</span>,</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>,</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="dv">12</span>,</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="dv">12</span>,</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"xtick.labelsize"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ytick.labelsize"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">7</span>,</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>ann <span class="op">=</span> <span class="dv">252</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>rf_annual <span class="op">=</span> <span class="fl">0.04</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>rf_daily <span class="op">=</span> (<span class="dv">1</span> <span class="op">+</span> rf_annual) <span class="op">**</span> (<span class="dv">1</span> <span class="op">/</span> ann) <span class="op">-</span> <span class="dv">1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 </section>
@@ -708,10 +709,10 @@ d_t = \min(0, r_t - \tau)
 </section>
 </section>
 <section id="distribution-shape-and-tail-diagnostics" class="level2">
-<h2 class="anchored" data-anchor-id="distribution-shape-and-tail-diagnostics">4) distribution shape and tail diagnostics</h2>
+<h2 class="anchored" data-anchor-id="distribution-shape-and-tail-diagnostics">5) distribution shape and tail diagnostics</h2>
 <p>performance ratios (sharpe/sortino) do <strong>not</strong> tell you what the return distribution looks like. in the metrics that we analyzed we only work with variance and mean. not the real shape and behavior of distribution. two strategies can have the same sharpe but very different crash behavior.</p>
 <section id="skewness" class="level3">
-<h3 class="anchored" data-anchor-id="skewness">4.1 skewness</h3>
+<h3 class="anchored" data-anchor-id="skewness">5.1 skewness</h3>
 <p>skewness measures asymmetry. using centered moments:</p>
 <p><span class="math display">\[
 \text{skew} = \frac{\mathbb{e}[(r-\mu)^3]}{\sigma^3}
@@ -722,7 +723,7 @@ d_t = \min(0, r_t - \tau)
 </ul>
 </section>
 <section id="excess-kurtosis" class="level3">
-<h3 class="anchored" data-anchor-id="excess-kurtosis">excess kurtosis</h3>
+<h3 class="anchored" data-anchor-id="excess-kurtosis">5.2 excess kurtosis</h3>
 <p>kurtosis measures tail heaviness relative to normal:</p>
 <p><span class="math display">\[
 \text{kurt} = \frac{\mathbb{e}[(r-\mu)^4]}{\sigma^4} - 3
@@ -730,7 +731,7 @@ d_t = \min(0, r_t - \tau)
 <p>the “<span class="math inline">\(-3\)</span>” makes normal distribution kurtosis equal to <span class="math inline">\(0\)</span> (“excess kurtosis”).</p>
 </section>
 <section id="tail-ratio-quantile-based" class="level3">
-<h3 class="anchored" data-anchor-id="tail-ratio-quantile-based">tail ratio (quantile-based)</h3>
+<h3 class="anchored" data-anchor-id="tail-ratio-quantile-based">5.3 tail ratio (quantile-based)</h3>
 <p>a simple, robust tail comparison is:</p>
 <p><span class="math display">\[
 \text{tail ratio} = \left|\frac{q_{0.95}}{q_{0.05}}\right|
@@ -738,7 +739,7 @@ d_t = \min(0, r_t - \tau)
 <p>where <span class="math inline">\(q_p\)</span> is the <span class="math inline">\(p\)</span>-quantile of daily returns. if the left tail is much larger in magnitude than the right tail, the ratio drops. If we have bigger left tail than right tail, it means we have more extreme negative returns than extreme possitive which can be a sign of risk.</p>
 </section>
 <section id="worst-day-averages" class="level3">
-<h3 class="anchored" data-anchor-id="worst-day-averages">worst-day averages</h3>
+<h3 class="anchored" data-anchor-id="worst-day-averages">5.4 worst-day averages</h3>
 <p>another tail measure that can be used is:</p>
 <ul>
 <li>worst 1-day return: <span class="math inline">\(\min_t r_t\)</span></li>
@@ -846,9 +847,9 @@ d_t = \min(0, r_t - \tau)
 </section>
 </section>
 <section id="cumulative-performance-and-drawdown" class="level2">
-<h2 class="anchored" data-anchor-id="cumulative-performance-and-drawdown">5) cumulative performance and drawdown</h2>
+<h2 class="anchored" data-anchor-id="cumulative-performance-and-drawdown">6) cumulative performance and drawdown</h2>
 <section id="drawdown" class="level3">
-<h3 class="anchored" data-anchor-id="drawdown">5.1 drawdown</h3>
+<h3 class="anchored" data-anchor-id="drawdown">6.1 drawdown</h3>
 <p>drawdown measures how far we get below the previous peak and how much time does it take to get back to peak.</p>
 <p>we define peak nav as:</p>
 <p><span class="math display">\[
@@ -897,7 +898,7 @@ d_t = \min(0, r_t - \tau)
 </div>
 </section>
 <section id="drawdown-episode" class="level3">
-<h3 class="anchored" data-anchor-id="drawdown-episode">5.2 drawdown episode</h3>
+<h3 class="anchored" data-anchor-id="drawdown-episode">6.2 drawdown episode</h3>
 <p>the drawdown time-series is great visually, but a user also needs <strong>events</strong>. we want to know exactly what were the worst drawdowns, when did they start, and how long did they last</p>
 <p>an episode starts when drawdown becomes negative and ends when nav reaches the last peak (drawdown returns to <span class="math inline">\(0\)</span>).</p>
 <p>for each episode <span class="math inline">\(k\)</span> we record: - start date <span class="math inline">\(t_k^{start}\)</span> - end date <span class="math inline">\(t_k^{end}\)</span> - depth: <span class="math inline">\(\min_{t \in [t_k^{start}, t_k^{end}]} \text{dd}_t\)</span> - duration: number of trading days in the episode</p>
@@ -1109,12 +1110,12 @@ d_t = \min(0, r_t - \tau)
 </section>
 </section>
 <section id="value-at-risk-var-and-expected-shortfall-es-or-cvar" class="level2">
-<h2 class="anchored" data-anchor-id="value-at-risk-var-and-expected-shortfall-es-or-cvar">6) Value-at-risk (VaR) and expected shortfall (ES or CVaR)</h2>
+<h2 class="anchored" data-anchor-id="value-at-risk-var-and-expected-shortfall-es-or-cvar">7) Value-at-risk (VaR) and expected shortfall (ES or CVaR)</h2>
 <p>We analyzed tail and distribution of objects for risk and average worst days to answer On bad days, how large can losses get and how severe are losses once we enter the tail</p>
 <p>If daily simple returns be <span class="math inline">\(r_t\)</span> (<span class="math inline">\(r_t=-0.02\)</span> means a <span class="math inline">\(-2\%\)</span> return in one day).<br>
 We choose a tail probability <span class="math inline">\(\alpha\)</span> (common one is <span class="math inline">\(\alpha=0.05\)</span> for the <strong>worst 5%</strong> of days).</p>
 <section id="left-tail-quantile" class="level3">
-<h3 class="anchored" data-anchor-id="left-tail-quantile">6.1 left-tail quantile</h3>
+<h3 class="anchored" data-anchor-id="left-tail-quantile">7.1 left-tail quantile</h3>
 <p>We define the left-tail quantile <span class="math inline">\(q_\alpha\)</span> of the return distribution as the threshold such that only an <span class="math inline">\(\alpha\)</span> fraction of observations fall below it:</p>
 <p><span class="math display">\[
 P(r \le q_\alpha(r)) = \alpha.
@@ -1123,7 +1124,7 @@ P(r \le q_\alpha(r)) = \alpha.
 Risk reports often present tail risk as a <strong>positive loss magnitude</strong> for readability.</p>
 </section>
 <section id="value-at-risk-var" class="level3">
-<h3 class="anchored" data-anchor-id="value-at-risk-var">6.2 value-at-risk (VaR)</h3>
+<h3 class="anchored" data-anchor-id="value-at-risk-var">7.2 value-at-risk (VaR)</h3>
 <p>VaR is a threshold loss:</p>
 <p>Using the quantile definition:</p>
 <p><span class="math display">\[
@@ -1134,7 +1135,7 @@ Risk reports often present tail risk as a <strong>positive loss magnitude</stron
 <hr>
 </section>
 <section id="expected-shortfall-es-conditional-var" class="level3">
-<h3 class="anchored" data-anchor-id="expected-shortfall-es-conditional-var">6.3 expected shortfall (ES) / conditional VaR</h3>
+<h3 class="anchored" data-anchor-id="expected-shortfall-es-conditional-var">7.3 expected shortfall (ES) / conditional VaR</h3>
 <p>Expected Shortfall (ES) measures tail severity by averaging losses beyond VaR:</p>
 <p><span class="math display">\[
 \text{ES}_\alpha = -E\!\left[r \mid r \le q_\alpha(r)\right].
@@ -1149,11 +1150,11 @@ Risk reports often present tail risk as a <strong>positive loss magnitude</stron
 </section>
 </section>
 <section id="estimation-methods-used-in-this-report" class="level2">
-<h2 class="anchored" data-anchor-id="estimation-methods-used-in-this-report">6.4 estimation methods used in this report</h2>
+<h2 class="anchored" data-anchor-id="estimation-methods-used-in-this-report">7.4 estimation methods used in this report</h2>
 <p>We report a comparison table for <span class="math inline">\(\alpha=0.05\)</span> using two other estimators: 1) <strong>Cornish–Fisher (CF) adjusted quantiles</strong> 2) <strong>Filtered historical simulation (FHS) with EWMA volatility</strong></p>
 <p>A single VaR/ES estimate can be fragile, so comparing multiple approaches helps users see a plausible range.</p>
 <section id="cornishfisher-cf-non-normal-quantile-correction-using-skewness-and-kurtosis" class="level3">
-<h3 class="anchored" data-anchor-id="cornishfisher-cf-non-normal-quantile-correction-using-skewness-and-kurtosis">6.4.1 cornish–fisher (CF): non-normal quantile correction using skewness and kurtosis</h3>
+<h3 class="anchored" data-anchor-id="cornishfisher-cf-non-normal-quantile-correction-using-skewness-and-kurtosis">7.4.1 cornish–fisher (CF): non-normal quantile correction using skewness and kurtosis</h3>
 <p>CF starts from the <strong>normal</strong> quantile and adjusts it to reflect <strong>skewness</strong> and <strong>fat tails</strong>.</p>
 </section>
 <section id="a-standardize-returns" class="level3">
@@ -1204,7 +1205,7 @@ and then average sample returns below that cutoff:</p>
 <hr>
 </section>
 <section id="historical-simulation-hs" class="level3">
-<h3 class="anchored" data-anchor-id="historical-simulation-hs">6.4.2 historical simulation (HS)</h3>
+<h3 class="anchored" data-anchor-id="historical-simulation-hs">7.4.2 historical simulation (HS)</h3>
 <p>HS is the most direct approach: it treats the observed return window as the empirical distribution.</p>
 <p>The HS quantile is the empirical quantile</p>
 <p><span class="math display">\[
@@ -1225,7 +1226,7 @@ q_\alpha^{\text{HS}}(r) = \text{EmpQuantile}_\alpha(\{r_t\}_{t=1}^T),
 <hr>
 </section>
 <section id="filtered-historical-simulation-fhs-volatility-adjusted-tail-estimation" class="level3">
-<h3 class="anchored" data-anchor-id="filtered-historical-simulation-fhs-volatility-adjusted-tail-estimation">6.4.3 filtered historical simulation (FHS): volatility-adjusted tail estimation</h3>
+<h3 class="anchored" data-anchor-id="filtered-historical-simulation-fhs-volatility-adjusted-tail-estimation">7.4.3 filtered historical simulation (FHS): volatility-adjusted tail estimation</h3>
 <p>HS assumes the return distribution is stable across time.<br>
 In reality, returns show <strong>volatility clustering</strong> (calm vs turbulent periods).<br>
 With FHS we address this by filtering out time-varying volatility before sampling the tail.</p>
@@ -1421,11 +1422,11 @@ E[\varepsilon \mid \varepsilon \le q_\alpha(\varepsilon)]
 </section>
 </section>
 <section id="var-backtesting-model-risk" class="level2">
-<h2 class="anchored" data-anchor-id="var-backtesting-model-risk">7) VaR backtesting (Model risk)</h2>
+<h2 class="anchored" data-anchor-id="var-backtesting-model-risk">8) VaR backtesting (Model risk)</h2>
 <p>A VaR model makes a testable promise. For a 5% VaR, Losses should exceed the VaR threshold about 5% of the time.</p>
 <p>Backtesting checks whether that promise holds in realized data.</p>
 <section id="breach-indicator-what-counts-as-a-var-failure" class="level3">
-<h3 class="anchored" data-anchor-id="breach-indicator-what-counts-as-a-var-failure">7.1 breach indicator (what counts as a VaR failure)</h3>
+<h3 class="anchored" data-anchor-id="breach-indicator-what-counts-as-a-var-failure">8.1 breach indicator (what counts as a VaR failure)</h3>
 <p>A VaR breach occurs when the realized return is worse than the VaR threshold:</p>
 <p><span class="math display">\[
 r_t &lt; -\text{VaR}_{\alpha,t}.
@@ -1440,7 +1441,7 @@ b_t = \mathbb{1}\!\left[r_t &lt; -\text{VaR}_{\alpha,t}\right],
 <hr>
 </section>
 <section id="kupiec-test-unconditional-coverage-frequency" class="level3">
-<h3 class="anchored" data-anchor-id="kupiec-test-unconditional-coverage-frequency">7.2 Kupiec test: unconditional coverage (frequency)</h3>
+<h3 class="anchored" data-anchor-id="kupiec-test-unconditional-coverage-frequency">8.2 Kupiec test: unconditional coverage (frequency)</h3>
 <p>The <strong>Kupiec (POF)</strong> test checks whether breaches occur with the correct long-run frequency.</p>
 <p>If we have: - <span class="math inline">\(n\)</span> = number of test days - <span class="math inline">\(x\)</span> = number of breaches - <span class="math inline">\(\hat p = x/n\)</span> = observed breach rate - <span class="math inline">\(p = \alpha\)</span> = model-implied breach probability (5%)</p>
 <p>Kupiec’s likelihood ratio statistic is:</p>
@@ -1462,7 +1463,7 @@ b_t = \mathbb{1}\!\left[r_t &lt; -\text{VaR}_{\alpha,t}\right],
 <hr>
 </section>
 <section id="christoffersen-test-independence-clustering" class="level3">
-<h3 class="anchored" data-anchor-id="christoffersen-test-independence-clustering">7.3 Christoffersen test: independence / clustering</h3>
+<h3 class="anchored" data-anchor-id="christoffersen-test-independence-clustering">8.3 Christoffersen test: independence / clustering</h3>
 <p>Correct frequency alone is not enough, breaches should also be independent over time.<br>
 If breaches have clustering, the VaR model may fail during volatility spikes or regime shifts. se we test independence</p>
 <p>The Christoffersen independence test treats the breach sequence <span class="math inline">\(b_t\)</span> as a two-state process (0 = no breach, 1 = breach) and checks whether transitions depend on the previous day.</p>
@@ -2000,7 +2001,7 @@ L_1 =
 </section>
 </section>
 <section id="historical-stress-windows-scenario-slices" class="level2">
-<h2 class="anchored" data-anchor-id="historical-stress-windows-scenario-slices">8) historical stress windows (scenario slices)</h2>
+<h2 class="anchored" data-anchor-id="historical-stress-windows-scenario-slices">9) historical stress windows (scenario slices)</h2>
 <p>instead of hypothetical shocks, we can look at real historical periods like covid crash and see how did each object behave during that exact window, what was the max drawdown inside the window and how much loss we would take in that period if we held these objects.</p>
 <p>for this project we use three periods: - the 4th quarter of 2018 - the Covid crash in the first months of 2020 - inflation of 2022</p>
 <div id="abe4625f" class="cell" data-execution_count="15">
@@ -2189,17 +2190,15 @@ L_1 =
 <span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>    ax.set_title(wname)</span>
 <span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"date"</span>)</span>
 <span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>    ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.2</span>)</span>
-<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Force exactly 3 x-ticks to avoid overlap: start, mid, end.</span></span>
-<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>    ticks <span class="op">=</span> [s, mid, e]</span>
-<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>    ax.set_xticks(ticks)</span>
-<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>    ax.xaxis.set_major_formatter(mdates.DateFormatter(<span class="st">"%Y-%m-</span><span class="sc">%d</span><span class="st">"</span>))</span>
-<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>    ax.tick_params(axis<span class="op">=</span><span class="st">"x"</span>, labelrotation<span class="op">=</span><span class="dv">0</span>, labelsize<span class="op">=</span><span class="dv">8</span>)</span>
-<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"nav (rebased to 1)"</span>)</span>
-<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend(ncol<span class="op">=</span><span class="dv">1</span>, fontsize<span class="op">=</span><span class="dv">8</span>)</span>
-<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>    ticks <span class="op">=</span> [s, mid, e]</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>    ax.set_xticks(ticks)</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>    ax.xaxis.set_major_formatter(mdates.DateFormatter(<span class="st">"%Y-%m-</span><span class="sc">%d</span><span class="st">"</span>))</span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>    ax.tick_params(axis<span class="op">=</span><span class="st">"x"</span>, labelrotation<span class="op">=</span><span class="dv">0</span>, labelsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"nav (rebased to 1)"</span>)</span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend(ncol<span class="op">=</span><span class="dv">1</span>, fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -2212,12 +2211,12 @@ L_1 =
 <hr>
 </section>
 <section id="capm-market-factor-decomposition" class="level2">
-<h2 class="anchored" data-anchor-id="capm-market-factor-decomposition">9) CAPM / market factor decomposition</h2>
+<h2 class="anchored" data-anchor-id="capm-market-factor-decomposition">10) CAPM / market factor decomposition</h2>
 <p>capm explains returns using a single market factor. here, we use spy data that we imported as our market proxy (S&amp;P 500 ETF).</p>
 <p>With this model we assume that any return more than risk free rate of our objects can be explained by market returns and market risk effects on these returns.</p>
 <p>From this relationship we can interpret how much each object’s risk is dependent to market risk and we can see if each object has any returns more than market returns that can’t be explained with market risk.</p>
 <section id="capm-model-daily" class="level3">
-<h3 class="anchored" data-anchor-id="capm-model-daily">9.1 capm model (daily)</h3>
+<h3 class="anchored" data-anchor-id="capm-model-daily">10.1 capm model (daily)</h3>
 <p>using excess returns:</p>
 <p><span class="math display">\[
 r^{ex}_{j,t} = \alpha_j + \beta_j\, r^{ex}_{m,t} + \varepsilon_{j,t}
@@ -2240,7 +2239,7 @@ r^2 = 1 - \frac{\sum_t (r^{ex}_{j,t} - \hat r^{ex}_{j,t})^2}{\sum_t (r^{ex}_{j,t
 \]</span></p>
 </section>
 <section id="active-risk-vs-benchmark-tracking-error-and-information-ratio" class="level3">
-<h3 class="anchored" data-anchor-id="active-risk-vs-benchmark-tracking-error-and-information-ratio">9.2 Active risk vs benchmark (tracking error and information ratio)</h3>
+<h3 class="anchored" data-anchor-id="active-risk-vs-benchmark-tracking-error-and-information-ratio">10.2 Active risk vs benchmark (tracking error and information ratio)</h3>
 <p>We define active return as performance relative to the benchmark:</p>
 <p><span class="math display">\[
 a_t = r_t - m_t
@@ -2258,7 +2257,7 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 </ul>
 </section>
 <section id="up-capture-and-down-capture" class="level3">
-<h3 class="anchored" data-anchor-id="up-capture-and-down-capture">9.3 Up capture and down capture</h3>
+<h3 class="anchored" data-anchor-id="up-capture-and-down-capture">10.3 Up capture and down capture</h3>
 <p>These measure how the object behaves when the market is up vs down.</p>
 <p>Let: - <span class="math inline">\(\mathcal{U}=\{t: m_t&gt;0\}\)</span> (up-market days) - <span class="math inline">\(\mathcal{D}=\{t: m_t&lt;0\}\)</span> (down-market days)</p>
 <p>Then:</p>
@@ -2274,7 +2273,7 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 </ul>
 </section>
 <section id="systematic-variance-share" class="level3">
-<h3 class="anchored" data-anchor-id="systematic-variance-share">9.4 Systematic variance share</h3>
+<h3 class="anchored" data-anchor-id="systematic-variance-share">10.4 Systematic variance share</h3>
 <p>we want to see how much of an object’s risk is market risk. A simple CAPM-based approximation of the market-driven share of variance:</p>
 <p><span class="math display">\[
 \text{SystematicVarShare} \approx \frac{\beta^2\,\text{Var}(m^{ex})}{\text{Var}(r^{ex})}
@@ -2552,10 +2551,10 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 </section>
 </section>
 <section id="risk-attribution" class="level2">
-<h2 class="anchored" data-anchor-id="risk-attribution">10) risk attribution</h2>
+<h2 class="anchored" data-anchor-id="risk-attribution">11) risk attribution</h2>
 <p>We explained this in last notebook. now we repeat it and add another part. for our portfolios we are looking for the assets that have the most share of portfolios risk.</p>
 <section id="volatility-attribution-covariance-based" class="level3">
-<h3 class="anchored" data-anchor-id="volatility-attribution-covariance-based">10.1 volatility attribution (covariance-based)</h3>
+<h3 class="anchored" data-anchor-id="volatility-attribution-covariance-based">11.1 volatility attribution (covariance-based)</h3>
 <p>If portfolio weights are <span class="math inline">\(w\)</span> and covariance matrix is <span class="math inline">\(\Sigma\)</span>. portfolio volatility is:</p>
 <p><span class="math display">\[
 \sigma_p = \sqrt{w^\top \Sigma w}
@@ -2575,7 +2574,7 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <p>this tells us which names drive most of the volatility.</p>
 </section>
 <section id="es-attribution" class="level3">
-<h3 class="anchored" data-anchor-id="es-attribution">10.2 es attribution</h3>
+<h3 class="anchored" data-anchor-id="es-attribution">11.2 es attribution</h3>
 <p>for expected shortfall at level <span class="math inline">\(\alpha\)</span>, identify the set of tail days:</p>
 <p><span class="math display">\[
 \mathcal{t}_\alpha = \{t : r_{p,t} \le q_\alpha(r_p)\}
@@ -2695,7 +2694,7 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 </section>
 </section>
 <section id="correlation-and-diversification-object-to-object" class="level2">
-<h2 class="anchored" data-anchor-id="correlation-and-diversification-object-to-object">13) correlation and diversification (object-to-object)</h2>
+<h2 class="anchored" data-anchor-id="correlation-and-diversification-object-to-object">12) correlation and diversification (object-to-object)</h2>
 <p>correlation is a core ingredient of diversification. for two return series <span class="math inline">\(x_t\)</span> and <span class="math inline">\(y_t\)</span>:</p>
 <p><span class="math display">\[
 \rho_{x,y} = \frac{\text{cov}(x,y)}{\sigma_x\sigma_y}
@@ -2742,7 +2741,7 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 </section>
 <section id="using-mannual-functions-for-risk-measures-and-plots-us-data" class="level2">
 <h2 class="anchored" data-anchor-id="using-mannual-functions-for-risk-measures-and-plots-us-data">1) Using mannual functions for risk measures and plots (US data)</h2>
-<div id="1831ee3e" class="cell">
+<div id="1831ee3e" class="cell" data-execution_count="27">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>

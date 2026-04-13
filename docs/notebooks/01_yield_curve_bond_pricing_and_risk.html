@@ -300,11 +300,11 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grid.alpha"</span>: <span class="fl">0.20</span>,</span>
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>,</span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="dv">14</span>,</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="dv">12</span>,</span>
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="dv">12</span>,</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"xtick.labelsize"</span>: <span class="dv">10</span>,</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ytick.labelsize"</span>: <span class="dv">10</span>,</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">6</span>,</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"xtick.labelsize"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ytick.labelsize"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">7</span>,</span>
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
@@ -872,13 +872,13 @@ Date range: 1990-01-02 to 2026-01-28</code></pre>
 </div>
 </section>
 <section id="discount-factors-zero-rates-and-forward-rates" class="level2">
-<h2 class="anchored" data-anchor-id="discount-factors-zero-rates-and-forward-rates">3) Discount Factors, Zero Rates, and Forward Rates</h2>
+<h2 class="anchored" data-anchor-id="discount-factors-zero-rates-and-forward-rates">2) Discount Factors, Zero Rates, and Forward Rates</h2>
 <section id="discount-factor" class="level3">
-<h3 class="anchored" data-anchor-id="discount-factor">3.1 Discount factor</h3>
+<h3 class="anchored" data-anchor-id="discount-factor">2.1 Discount factor</h3>
 <p><span class="math inline">\(D(t)\)</span> is the present value of receiving 1 unit of currency at time <span class="math inline">\(t\)</span>. For example what does 1 dollar in 20 years worth now.</p>
 </section>
 <section id="zero-rate-continuous-compounding" class="level3">
-<h3 class="anchored" data-anchor-id="zero-rate-continuous-compounding">3.2 Zero rate (continuous compounding)</h3>
+<h3 class="anchored" data-anchor-id="zero-rate-continuous-compounding">2.2 Zero rate (continuous compounding)</h3>
 <p><span class="math inline">\(z(t)\)</span> is the constant rate that discounts a payment in <span class="math inline">\(t\)</span> to present. for example, if we want to know discount factor of 1 dollar in 20 years we need an annual rate to compute the present value. that’s zero rate.</p>
 <p>Define <span class="math inline">\(z(t)\)</span> by <span class="math display">\[
 D(t)=e^{-z(t)t}
@@ -904,7 +904,7 @@ F(t_1,t_2)=\dfrac{\ln D(t_1)-\ln D(t_2)}{t_2-t_1}
 </section>
 </section>
 <section id="par-yield-implied-by-a-curve" class="level2">
-<h2 class="anchored" data-anchor-id="par-yield-implied-by-a-curve">4) Par Yield Implied by a Curve</h2>
+<h2 class="anchored" data-anchor-id="par-yield-implied-by-a-curve">3) Par Yield Implied by a Curve</h2>
 <p>This is used for building yield curve and validation to see if the predicted rate is close to real rate based on curve. We want to know what is the rate that makes the price of bond (PV of cashflows) equal to 1?</p>
 <p>Given a curve <span class="math inline">\(D(t)\)</span>, the par coupon rate for maturity <span class="math inline">\(T\)</span> and frequency <span class="math inline">\(f\)</span> solves</p>
 <p><span class="math inline">\(1=\sum_{i=1}^{n}\dfrac{c}{f}D(t_i)+D(T)\)</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="math inline">\(t_i=i/f\)</span>, <span class="math inline">\(n=fT\)</span>.</p>
@@ -914,10 +914,10 @@ F(t_1,t_2)=\dfrac{\ln D(t_1)-\ln D(t_2)}{t_2-t_1}
 <hr>
 </section>
 <section id="bootstrapping-discount-factors-from-par-yields" class="level2">
-<h2 class="anchored" data-anchor-id="bootstrapping-discount-factors-from-par-yields">5) Bootstrapping Discount Factors from Par Yields</h2>
+<h2 class="anchored" data-anchor-id="bootstrapping-discount-factors-from-par-yields">4) Bootstrapping Discount Factors from Par Yields</h2>
 <p>Bootstrapping constructs <span class="math inline">\(D(T)\)</span> at market tenors from observed par yields. in this way we can have a function of time to discount a payment in any maturity based on the real yields that we have.</p>
 <section id="short-end-1y-convention" class="level3">
-<h3 class="anchored" data-anchor-id="short-end-1y-convention">5.1 Short end (&lt;1Y) convention</h3>
+<h3 class="anchored" data-anchor-id="short-end-1y-convention">4.1 Short end (&lt;1Y) convention</h3>
 <p>For <span class="math inline">\(T&lt;1\)</span> we use the money market convention again. for calculating discount factor:</p>
 <ul>
 <li>continuous convention: <span class="math inline">\(D(T)=e^{-y(T)T}\)</span></li>
@@ -925,7 +925,7 @@ F(t_1,t_2)=\dfrac{\ln D(t_1)-\ln D(t_2)}{t_2-t_1}
 </ul>
 </section>
 <section id="bootstrapping-for-coupon-tenors-t-1" class="level3">
-<h3 class="anchored" data-anchor-id="bootstrapping-for-coupon-tenors-t-1">5.2 Bootstrapping for coupon tenors (T ≥ 1)</h3>
+<h3 class="anchored" data-anchor-id="bootstrapping-for-coupon-tenors-t-1">4.2 Bootstrapping for coupon tenors (T ≥ 1)</h3>
 <p>If <span class="math inline">\(c=y(T)\)</span> is the market par yield at maturity <span class="math inline">\(T\)</span> (used as coupon rate). With frequency <span class="math inline">\(f\)</span> and cashflow times <span class="math inline">\(t_i=i/f\)</span>:</p>
 <p>Par condition (normalized notional 1): <span class="math display">\[
 1=\sum_{i=1}^{n-1}\dfrac{c}{f}D(t_i)+\left(1+\dfrac{c}{f}\right)D(T)
@@ -937,11 +937,11 @@ F(t_1,t_2)=\dfrac{\ln D(t_1)-\ln D(t_2)}{t_2-t_1}
 </section>
 </section>
 <section id="turning-bootstrapped-pillars-into-a-full-curve" class="level2">
-<h2 class="anchored" data-anchor-id="turning-bootstrapped-pillars-into-a-full-curve">6) Turning Bootstrapped Pillars into a Full Curve</h2>
+<h2 class="anchored" data-anchor-id="turning-bootstrapped-pillars-into-a-full-curve">5) Turning Bootstrapped Pillars into a Full Curve</h2>
 <p>After bootstrapping we have pillars <span class="math inline">\((T_j, D(T_j))\)</span> or <span class="math inline">\((T_j, z(T_j))\)</span>. Bootstrapping needs <span class="math inline">\(D(t_i)\)</span> at coupon dates, but you often only have DFs at pillar maturities.</p>
 <p>Now we want to define continuous functions <span class="math inline">\(D(t)\)</span> and <span class="math inline">\(z(t)\)</span> for all <span class="math inline">\(t\)</span>.</p>
 <section id="method-a-log-linear-discount-factors" class="level3">
-<h3 class="anchored" data-anchor-id="method-a-log-linear-discount-factors">6.1 Method A: Log-linear discount factors</h3>
+<h3 class="anchored" data-anchor-id="method-a-log-linear-discount-factors">5.1 Method A: Log-linear discount factors</h3>
 <p>A robust choice is log-linear interpolation: for any <span class="math inline">\(t\)</span> that is between pillars <span class="math inline">\(T_a&lt;t&lt;T_b\)</span>, we have</p>
 <p><span class="math display">\[\ln D(t)=\ln D(T_a)+\dfrac{t-T_a}{T_b-T_a}\left(\ln D(T_b)-\ln D(T_a)\right)
 \]</span></p>
@@ -1353,7 +1353,7 @@ z(t)=\beta_0 +\beta_1\left(\frac{1-e^{-t/\tau_1}}{t/\tau_1}\right) +\beta_2\left
 </div>
 </section>
 <section id="par-yield-implied-by-nss" class="level3">
-<h3 class="anchored" data-anchor-id="par-yield-implied-by-nss">8.3 Par yield implied by NSS</h3>
+<h3 class="anchored" data-anchor-id="par-yield-implied-by-nss">8.2 Par yield implied by NSS</h3>
 <p>For a coupon bond with maturity <span class="math inline">\(T\)</span> and coupon frequency <span class="math inline">\(f\)</span>, coupon rate <span class="math inline">\(c(T)\)</span> is the rate that makes the bond price equal to par (normalize notional to 1):</p>
 <p><span class="math display">\[
 1=\sum_{i=1}^{n}\frac{c(T)}{f}D(t_i)+D(T)
@@ -1403,7 +1403,7 @@ c(T)=f\cdot\frac{1-D(T)}{\sum_{i=1}^{n}D(t_i)}
 </div>
 </section>
 <section id="discount-factor-and-forward-from-nss" class="level3">
-<h3 class="anchored" data-anchor-id="discount-factor-and-forward-from-nss">8.2 Discount factor and forward from NSS</h3>
+<h3 class="anchored" data-anchor-id="discount-factor-and-forward-from-nss">8.3 Discount factor and forward from NSS</h3>
 <p>Once we have <span class="math inline">\(z(t)\)</span>, using continuous compounding:</p>
 <p><span class="math inline">\(D(t)=e^{-z(t)t}\)</span></p>
 <p>and the instantaneous forward rate is:</p>
@@ -1787,166 +1787,144 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    par_full <span class="op">=</span> pillars_full[<span class="st">"par"</span>]</span>
 <span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    labels_full <span class="op">=</span> pillars_full[<span class="st">"labels"</span>]</span>
 <span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    holdouts <span class="op">=</span> [<span class="st">"6M"</span>, <span class="st">"2Y"</span>, <span class="st">"7Y"</span>, <span class="st">"20Y"</span>]</span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    holdout_idx <span class="op">=</span> [labels_full.index(h) <span class="cf">for</span> h <span class="kw">in</span> holdouts <span class="cf">if</span> h <span class="kw">in</span> labels_full]</span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    holdout_idx <span class="op">=</span> <span class="bu">sorted</span>(<span class="bu">set</span>([i <span class="cf">for</span> i <span class="kw">in</span> holdout_idx <span class="cf">if</span> <span class="dv">0</span> <span class="op">&lt;</span> i <span class="op">&lt;</span> <span class="bu">len</span>(labels_full) <span class="op">-</span> <span class="dv">1</span>]))</span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>    min_train <span class="op">=</span> <span class="dv">4</span></span>
-<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(T_full) <span class="op">-</span> <span class="bu">len</span>(holdout_idx) <span class="op">&lt;</span> min_train:</span>
-<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>        holdout_idx <span class="op">=</span> []</span>
-<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(holdout_idx) <span class="op">&gt;</span> <span class="dv">0</span>:</span>
-<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>        mask_train <span class="op">=</span> np.ones(<span class="bu">len</span>(T_full), dtype<span class="op">=</span><span class="bu">bool</span>)</span>
-<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>        mask_train[holdout_idx] <span class="op">=</span> <span class="va">False</span></span>
-<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>        T_tr <span class="op">=</span> T_full[mask_train]</span>
-<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>        par_tr <span class="op">=</span> par_full[mask_train]</span>
-<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a>        labels_tr <span class="op">=</span> [labels_full[i] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(labels_full)) <span class="cf">if</span> mask_train[i]]</span>
-<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a>        pillars <span class="op">=</span> bootstrap_from_inputs(T_tr, par_tr, labels_tr, date<span class="op">=</span>date)</span>
-<span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a>        T_te <span class="op">=</span> T_full[<span class="op">~</span>mask_train]</span>
-<span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a>        par_te <span class="op">=</span> par_full[<span class="op">~</span>mask_train]</span>
-<span id="cb17-33"><a href="#cb17-33" aria-hidden="true" tabindex="-1"></a>        labels_te <span class="op">=</span> [labels_full[i] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(labels_full)) <span class="cf">if</span> <span class="kw">not</span> mask_train[i]]</span>
-<span id="cb17-34"><a href="#cb17-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
-<span id="cb17-35"><a href="#cb17-35" aria-hidden="true" tabindex="-1"></a>        pillars <span class="op">=</span> pillars_full</span>
-<span id="cb17-36"><a href="#cb17-36" aria-hidden="true" tabindex="-1"></a>        T_te <span class="op">=</span> np.array([], dtype<span class="op">=</span><span class="bu">float</span>)</span>
-<span id="cb17-37"><a href="#cb17-37" aria-hidden="true" tabindex="-1"></a>        par_te <span class="op">=</span> np.array([], dtype<span class="op">=</span><span class="bu">float</span>)</span>
-<span id="cb17-38"><a href="#cb17-38" aria-hidden="true" tabindex="-1"></a>        labels_te <span class="op">=</span> []</span>
-<span id="cb17-39"><a href="#cb17-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-40"><a href="#cb17-40" aria-hidden="true" tabindex="-1"></a>    pillars[<span class="st">"T_test"</span>] <span class="op">=</span> T_te</span>
-<span id="cb17-41"><a href="#cb17-41" aria-hidden="true" tabindex="-1"></a>    pillars[<span class="st">"par_test"</span>] <span class="op">=</span> par_te</span>
-<span id="cb17-42"><a href="#cb17-42" aria-hidden="true" tabindex="-1"></a>    pillars[<span class="st">"labels_test"</span>] <span class="op">=</span> labels_te</span>
-<span id="cb17-43"><a href="#cb17-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-44"><a href="#cb17-44" aria-hidden="true" tabindex="-1"></a>    T_d <span class="op">=</span> pillars[<span class="st">"T"</span>]</span>
-<span id="cb17-45"><a href="#cb17-45" aria-hidden="true" tabindex="-1"></a>    par_d <span class="op">=</span> pillars[<span class="st">"par"</span>]</span>
-<span id="cb17-46"><a href="#cb17-46" aria-hidden="true" tabindex="-1"></a>    labels_d <span class="op">=</span> pillars[<span class="st">"labels"</span>]</span>
-<span id="cb17-47"><a href="#cb17-47" aria-hidden="true" tabindex="-1"></a>    dfs_d <span class="op">=</span> pillars[<span class="st">"dfs"</span>]</span>
-<span id="cb17-48"><a href="#cb17-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-49"><a href="#cb17-49" aria-hidden="true" tabindex="-1"></a>    curves_d <span class="op">=</span> {}</span>
-<span id="cb17-50"><a href="#cb17-50" aria-hidden="true" tabindex="-1"></a>    errors <span class="op">=</span> []</span>
-<span id="cb17-51"><a href="#cb17-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-52"><a href="#cb17-52" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
-<span id="cb17-53"><a href="#cb17-53" aria-hidden="true" tabindex="-1"></a>        curves_d[<span class="st">"loglinear"</span>] <span class="op">=</span> loglinear_curve(T_d, dfs_d)</span>
-<span id="cb17-54"><a href="#cb17-54" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
-<span id="cb17-55"><a href="#cb17-55" aria-hidden="true" tabindex="-1"></a>        errors.append({<span class="st">"date"</span>: date, <span class="st">"method"</span>: <span class="st">"loglinear"</span>, <span class="st">"error"</span>: <span class="bu">str</span>(e)})</span>
-<span id="cb17-56"><a href="#cb17-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    holdouts <span class="op">=</span> [<span class="st">"6M"</span>, <span class="st">"2Y"</span>, <span class="st">"7Y"</span>, <span class="st">"20Y"</span>]</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    holdout_idx <span class="op">=</span> [labels_full.index(h) <span class="cf">for</span> h <span class="kw">in</span> holdouts <span class="cf">if</span> h <span class="kw">in</span> labels_full]</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>    holdout_idx <span class="op">=</span> <span class="bu">sorted</span>(<span class="bu">set</span>([i <span class="cf">for</span> i <span class="kw">in</span> holdout_idx <span class="cf">if</span> <span class="dv">0</span> <span class="op">&lt;</span> i <span class="op">&lt;</span> <span class="bu">len</span>(labels_full) <span class="op">-</span> <span class="dv">1</span>]))</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>    min_train <span class="op">=</span> <span class="dv">4</span></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(T_full) <span class="op">-</span> <span class="bu">len</span>(holdout_idx) <span class="op">&lt;</span> min_train:</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>        holdout_idx <span class="op">=</span> []</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(holdout_idx) <span class="op">&gt;</span> <span class="dv">0</span>:</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>        mask_train <span class="op">=</span> np.ones(<span class="bu">len</span>(T_full), dtype<span class="op">=</span><span class="bu">bool</span>)</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>        mask_train[holdout_idx] <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>        T_tr <span class="op">=</span> T_full[mask_train]</span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>        par_tr <span class="op">=</span> par_full[mask_train]</span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>        labels_tr <span class="op">=</span> [labels_full[i] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(labels_full)) <span class="cf">if</span> mask_train[i]]</span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>        pillars <span class="op">=</span> bootstrap_from_inputs(T_tr, par_tr, labels_tr, date<span class="op">=</span>date)</span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>        T_te <span class="op">=</span> T_full[<span class="op">~</span>mask_train]</span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>        par_te <span class="op">=</span> par_full[<span class="op">~</span>mask_train]</span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a>        labels_te <span class="op">=</span> [labels_full[i] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(labels_full)) <span class="cf">if</span> <span class="kw">not</span> mask_train[i]]</span>
+<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a>        pillars <span class="op">=</span> pillars_full</span>
+<span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a>        T_te <span class="op">=</span> np.array([], dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a>        par_te <span class="op">=</span> np.array([], dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a>        labels_te <span class="op">=</span> []</span>
+<span id="cb17-33"><a href="#cb17-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-34"><a href="#cb17-34" aria-hidden="true" tabindex="-1"></a>    pillars[<span class="st">"T_test"</span>] <span class="op">=</span> T_te</span>
+<span id="cb17-35"><a href="#cb17-35" aria-hidden="true" tabindex="-1"></a>    pillars[<span class="st">"par_test"</span>] <span class="op">=</span> par_te</span>
+<span id="cb17-36"><a href="#cb17-36" aria-hidden="true" tabindex="-1"></a>    pillars[<span class="st">"labels_test"</span>] <span class="op">=</span> labels_te</span>
+<span id="cb17-37"><a href="#cb17-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-38"><a href="#cb17-38" aria-hidden="true" tabindex="-1"></a>    T_d <span class="op">=</span> pillars[<span class="st">"T"</span>]</span>
+<span id="cb17-39"><a href="#cb17-39" aria-hidden="true" tabindex="-1"></a>    par_d <span class="op">=</span> pillars[<span class="st">"par"</span>]</span>
+<span id="cb17-40"><a href="#cb17-40" aria-hidden="true" tabindex="-1"></a>    labels_d <span class="op">=</span> pillars[<span class="st">"labels"</span>]</span>
+<span id="cb17-41"><a href="#cb17-41" aria-hidden="true" tabindex="-1"></a>    dfs_d <span class="op">=</span> pillars[<span class="st">"dfs"</span>]</span>
+<span id="cb17-42"><a href="#cb17-42" aria-hidden="true" tabindex="-1"></a>    curves_d <span class="op">=</span> {}</span>
+<span id="cb17-43"><a href="#cb17-43" aria-hidden="true" tabindex="-1"></a>    errors <span class="op">=</span> []</span>
+<span id="cb17-44"><a href="#cb17-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-45"><a href="#cb17-45" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb17-46"><a href="#cb17-46" aria-hidden="true" tabindex="-1"></a>        curves_d[<span class="st">"loglinear"</span>] <span class="op">=</span> loglinear_curve(T_d, dfs_d)</span>
+<span id="cb17-47"><a href="#cb17-47" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb17-48"><a href="#cb17-48" aria-hidden="true" tabindex="-1"></a>        errors.append({<span class="st">"date"</span>: date, <span class="st">"method"</span>: <span class="st">"loglinear"</span>, <span class="st">"error"</span>: <span class="bu">str</span>(e)})</span>
+<span id="cb17-49"><a href="#cb17-49" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb17-50"><a href="#cb17-50" aria-hidden="true" tabindex="-1"></a>        curves_d[<span class="st">"pchip"</span>] <span class="op">=</span> pchip_curve(T_d, dfs_d)</span>
+<span id="cb17-51"><a href="#cb17-51" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb17-52"><a href="#cb17-52" aria-hidden="true" tabindex="-1"></a>        errors.append({<span class="st">"date"</span>: date, <span class="st">"method"</span>: <span class="st">"pchip"</span>, <span class="st">"error"</span>: <span class="bu">str</span>(e)})</span>
+<span id="cb17-53"><a href="#cb17-53" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb17-54"><a href="#cb17-54" aria-hidden="true" tabindex="-1"></a>        curves_d[<span class="st">"nss"</span>] <span class="op">=</span> nss_curve(T_d, par_d)[<span class="dv">0</span>]</span>
+<span id="cb17-55"><a href="#cb17-55" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb17-56"><a href="#cb17-56" aria-hidden="true" tabindex="-1"></a>        errors.append({<span class="st">"date"</span>: date, <span class="st">"method"</span>: <span class="st">"nss"</span>, <span class="st">"error"</span>: <span class="bu">str</span>(e)})</span>
 <span id="cb17-57"><a href="#cb17-57" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
-<span id="cb17-58"><a href="#cb17-58" aria-hidden="true" tabindex="-1"></a>        curves_d[<span class="st">"pchip"</span>] <span class="op">=</span> pchip_curve(T_d, dfs_d)</span>
+<span id="cb17-58"><a href="#cb17-58" aria-hidden="true" tabindex="-1"></a>        curves_d[<span class="st">"qp"</span>] <span class="op">=</span> qp_curve(labels_d, par_d)[<span class="dv">0</span>]</span>
 <span id="cb17-59"><a href="#cb17-59" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
-<span id="cb17-60"><a href="#cb17-60" aria-hidden="true" tabindex="-1"></a>        errors.append({<span class="st">"date"</span>: date, <span class="st">"method"</span>: <span class="st">"pchip"</span>, <span class="st">"error"</span>: <span class="bu">str</span>(e)})</span>
+<span id="cb17-60"><a href="#cb17-60" aria-hidden="true" tabindex="-1"></a>        errors.append({<span class="st">"date"</span>: date, <span class="st">"method"</span>: <span class="st">"qp"</span>, <span class="st">"error"</span>: <span class="bu">str</span>(e)})</span>
 <span id="cb17-61"><a href="#cb17-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-62"><a href="#cb17-62" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
-<span id="cb17-63"><a href="#cb17-63" aria-hidden="true" tabindex="-1"></a>        curves_d[<span class="st">"nss"</span>] <span class="op">=</span> nss_curve(T_d, par_d)[<span class="dv">0</span>]</span>
-<span id="cb17-64"><a href="#cb17-64" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
-<span id="cb17-65"><a href="#cb17-65" aria-hidden="true" tabindex="-1"></a>        errors.append({<span class="st">"date"</span>: date, <span class="st">"method"</span>: <span class="st">"nss"</span>, <span class="st">"error"</span>: <span class="bu">str</span>(e)})</span>
-<span id="cb17-66"><a href="#cb17-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-67"><a href="#cb17-67" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
-<span id="cb17-68"><a href="#cb17-68" aria-hidden="true" tabindex="-1"></a>        curves_d[<span class="st">"qp"</span>] <span class="op">=</span> qp_curve(labels_d, par_d)[<span class="dv">0</span>]</span>
-<span id="cb17-69"><a href="#cb17-69" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
-<span id="cb17-70"><a href="#cb17-70" aria-hidden="true" tabindex="-1"></a>        errors.append({<span class="st">"date"</span>: date, <span class="st">"method"</span>: <span class="st">"qp"</span>, <span class="st">"error"</span>: <span class="bu">str</span>(e)})</span>
-<span id="cb17-71"><a href="#cb17-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-72"><a href="#cb17-72" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pillars, curves_d, errors</span>
-<span id="cb17-73"><a href="#cb17-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-74"><a href="#cb17-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-75"><a href="#cb17-75" aria-hidden="true" tabindex="-1"></a>curve_order <span class="op">=</span> [<span class="st">"loglinear"</span>, <span class="st">"pchip"</span>, <span class="st">"nss"</span>, <span class="st">"qp"</span>]</span>
-<span id="cb17-76"><a href="#cb17-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-77"><a href="#cb17-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-78"><a href="#cb17-78" aria-hidden="true" tabindex="-1"></a>rmse_sse <span class="op">=</span> {k: <span class="fl">0.0</span> <span class="cf">for</span> k <span class="kw">in</span> curve_order}</span>
-<span id="cb17-79"><a href="#cb17-79" aria-hidden="true" tabindex="-1"></a>rmse_count <span class="op">=</span> {k: <span class="dv">0</span> <span class="cf">for</span> k <span class="kw">in</span> curve_order}</span>
-<span id="cb17-80"><a href="#cb17-80" aria-hidden="true" tabindex="-1"></a>rmse_dates <span class="op">=</span> {k: <span class="dv">0</span> <span class="cf">for</span> k <span class="kw">in</span> curve_order}</span>
-<span id="cb17-81"><a href="#cb17-81" aria-hidden="true" tabindex="-1"></a>rmse_sse_oos <span class="op">=</span> {k: <span class="fl">0.0</span> <span class="cf">for</span> k <span class="kw">in</span> curve_order}</span>
-<span id="cb17-82"><a href="#cb17-82" aria-hidden="true" tabindex="-1"></a>rmse_count_oos <span class="op">=</span> {k: <span class="dv">0</span> <span class="cf">for</span> k <span class="kw">in</span> curve_order}</span>
-<span id="cb17-83"><a href="#cb17-83" aria-hidden="true" tabindex="-1"></a>rmse_dates_oos <span class="op">=</span> {k: <span class="dv">0</span> <span class="cf">for</span> k <span class="kw">in</span> curve_order}</span>
-<span id="cb17-84"><a href="#cb17-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-85"><a href="#cb17-85" aria-hidden="true" tabindex="-1"></a>failed <span class="op">=</span> []</span>
-<span id="cb17-86"><a href="#cb17-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-87"><a href="#cb17-87" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> date <span class="kw">in</span> df_dec.index[<span class="op">-</span><span class="dv">100</span>:]:</span>
-<span id="cb17-88"><a href="#cb17-88" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> build_curves_for_date(date)</span>
-<span id="cb17-89"><a href="#cb17-89" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> out <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb17-90"><a href="#cb17-90" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span></span>
+<span id="cb17-62"><a href="#cb17-62" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pillars, curves_d, errors</span>
+<span id="cb17-63"><a href="#cb17-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-64"><a href="#cb17-64" aria-hidden="true" tabindex="-1"></a>curve_order <span class="op">=</span> [<span class="st">"loglinear"</span>, <span class="st">"pchip"</span>, <span class="st">"nss"</span>, <span class="st">"qp"</span>]</span>
+<span id="cb17-65"><a href="#cb17-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-66"><a href="#cb17-66" aria-hidden="true" tabindex="-1"></a>rmse_sse <span class="op">=</span> {k: <span class="fl">0.0</span> <span class="cf">for</span> k <span class="kw">in</span> curve_order}</span>
+<span id="cb17-67"><a href="#cb17-67" aria-hidden="true" tabindex="-1"></a>rmse_count <span class="op">=</span> {k: <span class="dv">0</span> <span class="cf">for</span> k <span class="kw">in</span> curve_order}</span>
+<span id="cb17-68"><a href="#cb17-68" aria-hidden="true" tabindex="-1"></a>rmse_dates <span class="op">=</span> {k: <span class="dv">0</span> <span class="cf">for</span> k <span class="kw">in</span> curve_order}</span>
+<span id="cb17-69"><a href="#cb17-69" aria-hidden="true" tabindex="-1"></a>rmse_sse_oos <span class="op">=</span> {k: <span class="fl">0.0</span> <span class="cf">for</span> k <span class="kw">in</span> curve_order}</span>
+<span id="cb17-70"><a href="#cb17-70" aria-hidden="true" tabindex="-1"></a>rmse_count_oos <span class="op">=</span> {k: <span class="dv">0</span> <span class="cf">for</span> k <span class="kw">in</span> curve_order}</span>
+<span id="cb17-71"><a href="#cb17-71" aria-hidden="true" tabindex="-1"></a>rmse_dates_oos <span class="op">=</span> {k: <span class="dv">0</span> <span class="cf">for</span> k <span class="kw">in</span> curve_order}</span>
+<span id="cb17-72"><a href="#cb17-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-73"><a href="#cb17-73" aria-hidden="true" tabindex="-1"></a>failed <span class="op">=</span> []</span>
+<span id="cb17-74"><a href="#cb17-74" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> date <span class="kw">in</span> df_dec.index[<span class="op">-</span><span class="dv">100</span>:]:</span>
+<span id="cb17-75"><a href="#cb17-75" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> build_curves_for_date(date)</span>
+<span id="cb17-76"><a href="#cb17-76" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> out <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb17-77"><a href="#cb17-77" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span></span>
+<span id="cb17-78"><a href="#cb17-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-79"><a href="#cb17-79" aria-hidden="true" tabindex="-1"></a>    pillars_d, curves_d, errors <span class="op">=</span> out</span>
+<span id="cb17-80"><a href="#cb17-80" aria-hidden="true" tabindex="-1"></a>    failed.extend(errors)</span>
+<span id="cb17-81"><a href="#cb17-81" aria-hidden="true" tabindex="-1"></a>    T_tr <span class="op">=</span> pillars_d[<span class="st">"T"</span>]</span>
+<span id="cb17-82"><a href="#cb17-82" aria-hidden="true" tabindex="-1"></a>    par_tr <span class="op">=</span> pillars_d[<span class="st">"par"</span>]</span>
+<span id="cb17-83"><a href="#cb17-83" aria-hidden="true" tabindex="-1"></a>    T_te <span class="op">=</span> pillars_d[<span class="st">"T_test"</span>]</span>
+<span id="cb17-84"><a href="#cb17-84" aria-hidden="true" tabindex="-1"></a>    par_te <span class="op">=</span> pillars_d[<span class="st">"par_test"</span>]</span>
+<span id="cb17-85"><a href="#cb17-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-86"><a href="#cb17-86" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k <span class="kw">in</span> curve_order:</span>
+<span id="cb17-87"><a href="#cb17-87" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> k <span class="kw">not</span> <span class="kw">in</span> curves_d:</span>
+<span id="cb17-88"><a href="#cb17-88" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb17-89"><a href="#cb17-89" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span>:</span>
+<span id="cb17-90"><a href="#cb17-90" aria-hidden="true" tabindex="-1"></a>            c <span class="op">=</span> curves_d[k]</span>
 <span id="cb17-91"><a href="#cb17-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-92"><a href="#cb17-92" aria-hidden="true" tabindex="-1"></a>    pillars_d, curves_d, errors <span class="op">=</span> out</span>
-<span id="cb17-93"><a href="#cb17-93" aria-hidden="true" tabindex="-1"></a>    failed.extend(errors)</span>
-<span id="cb17-94"><a href="#cb17-94" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-95"><a href="#cb17-95" aria-hidden="true" tabindex="-1"></a>    T_tr <span class="op">=</span> pillars_d[<span class="st">"T"</span>]</span>
-<span id="cb17-96"><a href="#cb17-96" aria-hidden="true" tabindex="-1"></a>    par_tr <span class="op">=</span> pillars_d[<span class="st">"par"</span>]</span>
+<span id="cb17-92"><a href="#cb17-92" aria-hidden="true" tabindex="-1"></a>            par_fit_tr <span class="op">=</span> par_from_d(c[<span class="st">"df_func"</span>], T_tr)</span>
+<span id="cb17-93"><a href="#cb17-93" aria-hidden="true" tabindex="-1"></a>            err_tr <span class="op">=</span> par_fit_tr <span class="op">-</span> par_tr</span>
+<span id="cb17-94"><a href="#cb17-94" aria-hidden="true" tabindex="-1"></a>            rmse_sse[k] <span class="op">+=</span> <span class="bu">float</span>(np.<span class="bu">sum</span>(err_tr<span class="op">**</span><span class="dv">2</span>))</span>
+<span id="cb17-95"><a href="#cb17-95" aria-hidden="true" tabindex="-1"></a>            rmse_count[k] <span class="op">+=</span> <span class="bu">int</span>(<span class="bu">len</span>(err_tr))</span>
+<span id="cb17-96"><a href="#cb17-96" aria-hidden="true" tabindex="-1"></a>            rmse_dates[k] <span class="op">+=</span> <span class="dv">1</span></span>
 <span id="cb17-97"><a href="#cb17-97" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-98"><a href="#cb17-98" aria-hidden="true" tabindex="-1"></a>    T_te <span class="op">=</span> pillars_d[<span class="st">"T_test"</span>]</span>
-<span id="cb17-99"><a href="#cb17-99" aria-hidden="true" tabindex="-1"></a>    par_te <span class="op">=</span> pillars_d[<span class="st">"par_test"</span>]</span>
-<span id="cb17-100"><a href="#cb17-100" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-101"><a href="#cb17-101" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k <span class="kw">in</span> curve_order:</span>
-<span id="cb17-102"><a href="#cb17-102" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> k <span class="kw">not</span> <span class="kw">in</span> curves_d:</span>
-<span id="cb17-103"><a href="#cb17-103" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
-<span id="cb17-104"><a href="#cb17-104" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span>:</span>
-<span id="cb17-105"><a href="#cb17-105" aria-hidden="true" tabindex="-1"></a>            c <span class="op">=</span> curves_d[k]</span>
-<span id="cb17-106"><a href="#cb17-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-98"><a href="#cb17-98" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="bu">len</span>(T_te) <span class="op">&gt;</span> <span class="dv">0</span>:</span>
+<span id="cb17-99"><a href="#cb17-99" aria-hidden="true" tabindex="-1"></a>                par_fit_te <span class="op">=</span> par_from_d(c[<span class="st">"df_func"</span>], T_te)</span>
+<span id="cb17-100"><a href="#cb17-100" aria-hidden="true" tabindex="-1"></a>                err_te <span class="op">=</span> par_fit_te <span class="op">-</span> par_te</span>
+<span id="cb17-101"><a href="#cb17-101" aria-hidden="true" tabindex="-1"></a>                rmse_sse_oos[k] <span class="op">+=</span> <span class="bu">float</span>(np.<span class="bu">sum</span>(err_te<span class="op">**</span><span class="dv">2</span>))</span>
+<span id="cb17-102"><a href="#cb17-102" aria-hidden="true" tabindex="-1"></a>                rmse_count_oos[k] <span class="op">+=</span> <span class="bu">int</span>(<span class="bu">len</span>(err_te))</span>
+<span id="cb17-103"><a href="#cb17-103" aria-hidden="true" tabindex="-1"></a>                rmse_dates_oos[k] <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb17-104"><a href="#cb17-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-105"><a href="#cb17-105" aria-hidden="true" tabindex="-1"></a>        <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb17-106"><a href="#cb17-106" aria-hidden="true" tabindex="-1"></a>            failed.append({<span class="st">"date"</span>: date, <span class="st">"method"</span>: k, <span class="st">"error"</span>: <span class="bu">str</span>(e)})</span>
 <span id="cb17-107"><a href="#cb17-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-108"><a href="#cb17-108" aria-hidden="true" tabindex="-1"></a>            par_fit_tr <span class="op">=</span> par_from_d(c[<span class="st">"df_func"</span>], T_tr)</span>
-<span id="cb17-109"><a href="#cb17-109" aria-hidden="true" tabindex="-1"></a>            err_tr <span class="op">=</span> par_fit_tr <span class="op">-</span> par_tr</span>
-<span id="cb17-110"><a href="#cb17-110" aria-hidden="true" tabindex="-1"></a>            rmse_sse[k] <span class="op">+=</span> <span class="bu">float</span>(np.<span class="bu">sum</span>(err_tr<span class="op">**</span><span class="dv">2</span>))</span>
-<span id="cb17-111"><a href="#cb17-111" aria-hidden="true" tabindex="-1"></a>            rmse_count[k] <span class="op">+=</span> <span class="bu">int</span>(<span class="bu">len</span>(err_tr))</span>
-<span id="cb17-112"><a href="#cb17-112" aria-hidden="true" tabindex="-1"></a>            rmse_dates[k] <span class="op">+=</span> <span class="dv">1</span></span>
-<span id="cb17-113"><a href="#cb17-113" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-114"><a href="#cb17-114" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="bu">len</span>(T_te) <span class="op">&gt;</span> <span class="dv">0</span>:</span>
-<span id="cb17-115"><a href="#cb17-115" aria-hidden="true" tabindex="-1"></a>                par_fit_te <span class="op">=</span> par_from_d(c[<span class="st">"df_func"</span>], T_te)</span>
-<span id="cb17-116"><a href="#cb17-116" aria-hidden="true" tabindex="-1"></a>                err_te <span class="op">=</span> par_fit_te <span class="op">-</span> par_te</span>
-<span id="cb17-117"><a href="#cb17-117" aria-hidden="true" tabindex="-1"></a>                rmse_sse_oos[k] <span class="op">+=</span> <span class="bu">float</span>(np.<span class="bu">sum</span>(err_te<span class="op">**</span><span class="dv">2</span>))</span>
-<span id="cb17-118"><a href="#cb17-118" aria-hidden="true" tabindex="-1"></a>                rmse_count_oos[k] <span class="op">+=</span> <span class="bu">int</span>(<span class="bu">len</span>(err_te))</span>
-<span id="cb17-119"><a href="#cb17-119" aria-hidden="true" tabindex="-1"></a>                rmse_dates_oos[k] <span class="op">+=</span> <span class="dv">1</span></span>
-<span id="cb17-120"><a href="#cb17-120" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-121"><a href="#cb17-121" aria-hidden="true" tabindex="-1"></a>        <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
-<span id="cb17-122"><a href="#cb17-122" aria-hidden="true" tabindex="-1"></a>            failed.append({<span class="st">"date"</span>: date, <span class="st">"method"</span>: k, <span class="st">"error"</span>: <span class="bu">str</span>(e)})</span>
+<span id="cb17-108"><a href="#cb17-108" aria-hidden="true" tabindex="-1"></a>rmse_rows <span class="op">=</span> []</span>
+<span id="cb17-109"><a href="#cb17-109" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> curve_order:</span>
+<span id="cb17-110"><a href="#cb17-110" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> rmse_count[k] <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb17-111"><a href="#cb17-111" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span></span>
+<span id="cb17-112"><a href="#cb17-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-113"><a href="#cb17-113" aria-hidden="true" tabindex="-1"></a>    rmse_in <span class="op">=</span> math.sqrt(rmse_sse[k] <span class="op">/</span> rmse_count[k])</span>
+<span id="cb17-114"><a href="#cb17-114" aria-hidden="true" tabindex="-1"></a>    rmse_out <span class="op">=</span> (math.sqrt(rmse_sse_oos[k] <span class="op">/</span> rmse_count_oos[k])</span>
+<span id="cb17-115"><a href="#cb17-115" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> rmse_count_oos[k] <span class="op">&gt;</span> <span class="dv">0</span></span>
+<span id="cb17-116"><a href="#cb17-116" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span> <span class="bu">float</span>(<span class="st">"nan"</span>))</span>
+<span id="cb17-117"><a href="#cb17-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-118"><a href="#cb17-118" aria-hidden="true" tabindex="-1"></a>    name_val <span class="op">=</span> curves[k][<span class="st">"name"</span>] <span class="cf">if</span> (<span class="st">"curves"</span> <span class="kw">in</span> <span class="bu">globals</span>() <span class="kw">and</span> k <span class="kw">in</span> curves) <span class="cf">else</span> k</span>
+<span id="cb17-119"><a href="#cb17-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-120"><a href="#cb17-120" aria-hidden="true" tabindex="-1"></a>    rmse_rows.append({<span class="st">"method"</span>: k, <span class="st">"name"</span>: name_val, <span class="st">"rmse"</span>: rmse_in, <span class="st">"rmse_oos"</span>: rmse_out,</span>
+<span id="cb17-121"><a href="#cb17-121" aria-hidden="true" tabindex="-1"></a>            <span class="st">"n_obs"</span>: rmse_count[k], <span class="st">"n_obs_oos"</span>: rmse_count_oos[k], <span class="st">"n_dates"</span>: rmse_dates[k],</span>
+<span id="cb17-122"><a href="#cb17-122" aria-hidden="true" tabindex="-1"></a>             <span class="st">"n_dates_oos"</span>: rmse_dates_oos[k],})</span>
 <span id="cb17-123"><a href="#cb17-123" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-124"><a href="#cb17-124" aria-hidden="true" tabindex="-1"></a>rmse_rows <span class="op">=</span> []</span>
-<span id="cb17-125"><a href="#cb17-125" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> curve_order:</span>
-<span id="cb17-126"><a href="#cb17-126" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> rmse_count[k] <span class="op">==</span> <span class="dv">0</span>:</span>
-<span id="cb17-127"><a href="#cb17-127" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span></span>
-<span id="cb17-128"><a href="#cb17-128" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-129"><a href="#cb17-129" aria-hidden="true" tabindex="-1"></a>    rmse_in <span class="op">=</span> math.sqrt(rmse_sse[k] <span class="op">/</span> rmse_count[k])</span>
-<span id="cb17-130"><a href="#cb17-130" aria-hidden="true" tabindex="-1"></a>    rmse_out <span class="op">=</span> (</span>
-<span id="cb17-131"><a href="#cb17-131" aria-hidden="true" tabindex="-1"></a>        math.sqrt(rmse_sse_oos[k] <span class="op">/</span> rmse_count_oos[k])</span>
-<span id="cb17-132"><a href="#cb17-132" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> rmse_count_oos[k] <span class="op">&gt;</span> <span class="dv">0</span></span>
-<span id="cb17-133"><a href="#cb17-133" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span> <span class="bu">float</span>(<span class="st">"nan"</span>)</span>
-<span id="cb17-134"><a href="#cb17-134" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb17-135"><a href="#cb17-135" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-136"><a href="#cb17-136" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-137"><a href="#cb17-137" aria-hidden="true" tabindex="-1"></a>    name_val <span class="op">=</span> curves[k][<span class="st">"name"</span>] <span class="cf">if</span> (<span class="st">"curves"</span> <span class="kw">in</span> <span class="bu">globals</span>() <span class="kw">and</span> k <span class="kw">in</span> curves) <span class="cf">else</span> k</span>
-<span id="cb17-138"><a href="#cb17-138" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-139"><a href="#cb17-139" aria-hidden="true" tabindex="-1"></a>    rmse_rows.append({<span class="st">"method"</span>: k, <span class="st">"name"</span>: name_val, <span class="st">"rmse"</span>: rmse_in, <span class="st">"rmse_oos"</span>: rmse_out,</span>
-<span id="cb17-140"><a href="#cb17-140" aria-hidden="true" tabindex="-1"></a>            <span class="st">"n_obs"</span>: rmse_count[k], <span class="st">"n_obs_oos"</span>: rmse_count_oos[k], <span class="st">"n_dates"</span>: rmse_dates[k], <span class="st">"n_dates_oos"</span>: rmse_dates_oos[k],})</span>
-<span id="cb17-141"><a href="#cb17-141" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-142"><a href="#cb17-142" aria-hidden="true" tabindex="-1"></a>rmse_df <span class="op">=</span> pd.DataFrame(rmse_rows).set_index(<span class="st">"method"</span>)</span>
-<span id="cb17-143"><a href="#cb17-143" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-144"><a href="#cb17-144" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">len</span>(failed) <span class="op">&gt;</span> <span class="dv">0</span>:</span>
-<span id="cb17-145"><a href="#cb17-145" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Failed date-method pairs: </span><span class="sc">{</span><span class="bu">len</span>(failed)<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb17-146"><a href="#cb17-146" aria-hidden="true" tabindex="-1"></a>    display(pd.DataFrame(failed).head())</span>
-<span id="cb17-147"><a href="#cb17-147" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-148"><a href="#cb17-148" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-149"><a href="#cb17-149" aria-hidden="true" tabindex="-1"></a>plot_grid <span class="op">=</span> np.linspace(<span class="bu">max</span>(<span class="dv">1</span> <span class="op">/</span> <span class="dv">12</span>, T.<span class="bu">min</span>()), T.<span class="bu">max</span>(), <span class="dv">200</span>)</span>
-<span id="cb17-150"><a href="#cb17-150" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-151"><a href="#cb17-151" aria-hidden="true" tabindex="-1"></a>plt.figure()</span>
-<span id="cb17-152"><a href="#cb17-152" aria-hidden="true" tabindex="-1"></a>plt.plot(T, par <span class="op">*</span> <span class="fl">100.0</span>, <span class="st">"o"</span>, markersize<span class="op">=</span><span class="dv">5</span>, markeredgecolor<span class="op">=</span><span class="st">"black"</span>, markerfacecolor<span class="op">=</span><span class="st">"white"</span>, label<span class="op">=</span><span class="st">"Market par"</span>, zorder<span class="op">=</span><span class="dv">5</span>)</span>
-<span id="cb17-153"><a href="#cb17-153" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-154"><a href="#cb17-154" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> curve_order:</span>
-<span id="cb17-155"><a href="#cb17-155" aria-hidden="true" tabindex="-1"></a>    c <span class="op">=</span> curves[k]</span>
-<span id="cb17-156"><a href="#cb17-156" aria-hidden="true" tabindex="-1"></a>    par_grid <span class="op">=</span> par_from_d(c[<span class="st">"df_func"</span>], plot_grid)</span>
-<span id="cb17-157"><a href="#cb17-157" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-158"><a href="#cb17-158" aria-hidden="true" tabindex="-1"></a>    rmse_in <span class="op">=</span> rmse_df.loc[k, <span class="st">"rmse"</span>] <span class="cf">if</span> k <span class="kw">in</span> rmse_df.index <span class="cf">else</span> <span class="bu">float</span>(<span class="st">"nan"</span>)</span>
-<span id="cb17-159"><a href="#cb17-159" aria-hidden="true" tabindex="-1"></a>    rmse_out <span class="op">=</span> rmse_df.loc[k, <span class="st">"rmse_oos"</span>] <span class="cf">if</span> k <span class="kw">in</span> rmse_df.index <span class="cf">else</span> <span class="bu">float</span>(<span class="st">"nan"</span>)</span>
-<span id="cb17-160"><a href="#cb17-160" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-161"><a href="#cb17-161" aria-hidden="true" tabindex="-1"></a>    plt.plot(plot_grid, par_grid <span class="op">*</span> <span class="fl">100.0</span>, label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>c[<span class="st">'name'</span>]<span class="sc">}</span><span class="ss"> (IS </span><span class="sc">{</span>rmse_in<span class="sc">:.6f}</span><span class="ss">, OOS </span><span class="sc">{</span>rmse_out<span class="sc">:.6f}</span><span class="ss">)"</span>)</span>
-<span id="cb17-162"><a href="#cb17-162" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-163"><a href="#cb17-163" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Par Yield Curves: Method Comparison (Last Date)"</span>)</span>
-<span id="cb17-164"><a href="#cb17-164" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Maturity"</span>)</span>
-<span id="cb17-165"><a href="#cb17-165" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Par Yield"</span>)</span>
-<span id="cb17-166"><a href="#cb17-166" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
-<span id="cb17-167"><a href="#cb17-167" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
-<span id="cb17-168"><a href="#cb17-168" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-169"><a href="#cb17-169" aria-hidden="true" tabindex="-1"></a>rmse_df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb17-124"><a href="#cb17-124" aria-hidden="true" tabindex="-1"></a>rmse_df <span class="op">=</span> pd.DataFrame(rmse_rows).set_index(<span class="st">"method"</span>)</span>
+<span id="cb17-125"><a href="#cb17-125" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-126"><a href="#cb17-126" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">len</span>(failed) <span class="op">&gt;</span> <span class="dv">0</span>:</span>
+<span id="cb17-127"><a href="#cb17-127" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Failed date-method pairs: </span><span class="sc">{</span><span class="bu">len</span>(failed)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb17-128"><a href="#cb17-128" aria-hidden="true" tabindex="-1"></a>    display(pd.DataFrame(failed).head())</span>
+<span id="cb17-129"><a href="#cb17-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-130"><a href="#cb17-130" aria-hidden="true" tabindex="-1"></a>plot_grid <span class="op">=</span> np.linspace(<span class="bu">max</span>(<span class="dv">1</span> <span class="op">/</span> <span class="dv">12</span>, T.<span class="bu">min</span>()), T.<span class="bu">max</span>(), <span class="dv">200</span>)</span>
+<span id="cb17-131"><a href="#cb17-131" aria-hidden="true" tabindex="-1"></a>plt.figure()</span>
+<span id="cb17-132"><a href="#cb17-132" aria-hidden="true" tabindex="-1"></a>plt.plot(T, par <span class="op">*</span> <span class="fl">100.0</span>, <span class="st">"o"</span>, markersize<span class="op">=</span><span class="dv">5</span>, markeredgecolor<span class="op">=</span><span class="st">"black"</span>, markerfacecolor<span class="op">=</span><span class="st">"white"</span>, label<span class="op">=</span><span class="st">"Market par"</span>, zorder<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb17-133"><a href="#cb17-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-134"><a href="#cb17-134" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> curve_order:</span>
+<span id="cb17-135"><a href="#cb17-135" aria-hidden="true" tabindex="-1"></a>    c <span class="op">=</span> curves[k]</span>
+<span id="cb17-136"><a href="#cb17-136" aria-hidden="true" tabindex="-1"></a>    par_grid <span class="op">=</span> par_from_d(c[<span class="st">"df_func"</span>], plot_grid)</span>
+<span id="cb17-137"><a href="#cb17-137" aria-hidden="true" tabindex="-1"></a>    rmse_in <span class="op">=</span> rmse_df.loc[k, <span class="st">"rmse"</span>] <span class="cf">if</span> k <span class="kw">in</span> rmse_df.index <span class="cf">else</span> <span class="bu">float</span>(<span class="st">"nan"</span>)</span>
+<span id="cb17-138"><a href="#cb17-138" aria-hidden="true" tabindex="-1"></a>    rmse_out <span class="op">=</span> rmse_df.loc[k, <span class="st">"rmse_oos"</span>] <span class="cf">if</span> k <span class="kw">in</span> rmse_df.index <span class="cf">else</span> <span class="bu">float</span>(<span class="st">"nan"</span>)</span>
+<span id="cb17-139"><a href="#cb17-139" aria-hidden="true" tabindex="-1"></a>    plt.plot(plot_grid, par_grid <span class="op">*</span> <span class="fl">100.0</span>, label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>c[<span class="st">'name'</span>]<span class="sc">}</span><span class="ss"> (IS </span><span class="sc">{</span>rmse_in<span class="sc">:.6f}</span><span class="ss">, OOS </span><span class="sc">{</span>rmse_out<span class="sc">:.6f}</span><span class="ss">)"</span>)</span>
+<span id="cb17-140"><a href="#cb17-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-141"><a href="#cb17-141" aria-hidden="true" tabindex="-1"></a>plt.title(<span class="st">"Par Yield Curves: Method Comparison (Last Date)"</span>)</span>
+<span id="cb17-142"><a href="#cb17-142" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Maturity"</span>)</span>
+<span id="cb17-143"><a href="#cb17-143" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Par Yield"</span>)</span>
+<span id="cb17-144"><a href="#cb17-144" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
+<span id="cb17-145"><a href="#cb17-145" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb17-146"><a href="#cb17-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-147"><a href="#cb17-147" aria-hidden="true" tabindex="-1"></a>rmse_df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -2488,9 +2466,9 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 </div>
 </section>
 <section id="risk-and-sensitivity-measures-of-bonds" class="level2">
-<h2 class="anchored" data-anchor-id="risk-and-sensitivity-measures-of-bonds">15) Risk and sensitivity measures of bonds</h2>
+<h2 class="anchored" data-anchor-id="risk-and-sensitivity-measures-of-bonds">13) Risk and sensitivity measures of bonds</h2>
 <section id="pv01-dv01" class="level3">
-<h3 class="anchored" data-anchor-id="pv01-dv01">15.1 PV01/ DV01</h3>
+<h3 class="anchored" data-anchor-id="pv01-dv01">13.1 PV01/ DV01</h3>
 <p>for measuring the risk of these bonds, we can use the sensitivity of the <strong>price of bond</strong> to a little change in interest rates.</p>
 <p>PV01 is the change in PV of the bond when the curve bumps by 1 basis point. DV01 is the value in dollar unit of that which is kind of the same concept</p>
 <p><span class="math display">\[\dfrac{dP}{dy}=-\sum_{i=1}^n CF_i,t_i,D(t_i)\]</span></p>
@@ -2500,7 +2478,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <p><span class="math display">\[PV01=P_0-P_{up}\]</span></p>
 </section>
 <section id="convexity" class="level3">
-<h3 class="anchored" data-anchor-id="convexity">15.2 Convexity</h3>
+<h3 class="anchored" data-anchor-id="convexity">13.2 Convexity</h3>
 <p>convexity is basically the sensitivity of <strong>PV01</strong> to a little change in curve. and it’s the second order partial derivative of price from yield</p>
 <p><span class="math display">\[\dfrac{d^2P}{dy^2}=\sum_{i=1}^n CF_i,t_i^2,D(t_i)\]</span></p>
 <p>Using central differences with shift size <span class="math inline">\(\Delta\)</span>:</p>
@@ -2509,7 +2487,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <hr>
 </section>
 <section id="key-rate-duration-krd" class="level3">
-<h3 class="anchored" data-anchor-id="key-rate-duration-krd">15.3 Key Rate Duration (KRD)</h3>
+<h3 class="anchored" data-anchor-id="key-rate-duration-krd">13.3 Key Rate Duration (KRD)</h3>
 <p>the problem is that we assume that yields parallel shift. but they can twist. if 2Y goes up it doesn’t mean 10Y will go up exactly the same amount. (Duration is a normalized version of PV01)</p>
 <p>So we choose key tenors <span class="math inline">\(k_1&lt;k_2&lt;\dots&lt;k_m\)</span>. as our key rates and measure the sensitivity of them while the other tenors in the curve stay the same.</p>
 <p>Tent / triangular bump shape</p>
