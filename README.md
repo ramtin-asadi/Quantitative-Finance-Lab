@@ -17,10 +17,16 @@ This repository is organized as a **series of end-to-end projects** (research no
 ## Projects (current)
 
 1. **Yield Curve Construction, Bond Pricing, and Risk**
-   - Curve construction with four different models (discount factors / zero rates), simulating a bond portfolio, bond pricing, and risk metrics, duration/convexity, PV sensitivities
+   - Curve construction with four different models (discount factors / zero rates), simulating a bond portfolio, bond pricing, and risk metrics, duration/convexity
 
 2. **Portfolio Optimization (Mean–Variance Models)**
-   -  multiple covariance estimators and mean momentum estimator. implementation of Mean-Variance, Min-Variance and Max-Sharpe models and regularization, with backtesting and rebalancing.
+   -  multiple covariance estimators and mean momentum estimator. implementation of Mean-Variance, Min-Variance and Max-Sharpe models and regularization, with turnover and transaction cost control and penalties, with backtesting and rebalancing.
+
+3. **Risk analysis and CAPM**
+   - Drawdown, VaR and ES estimation with different models and backtesting, stress test, CAPM beta analysis of stocks and portfolios and a pipeline for generating the complete risk report.
+
+4. **Black-Scholes model, Implied volatility, Greeks and hedging**
+   - Stochastic processes and option pricing basics, buiding two fast IV solvers with numba, Greeks computation with approximation and JAX auto differentiation, building delta and delta-gamma hedging strategies.
 
 > New projects will be added continuously with the same structure: clean narrative + reusable code extracted into `quantfinlab`.
 
