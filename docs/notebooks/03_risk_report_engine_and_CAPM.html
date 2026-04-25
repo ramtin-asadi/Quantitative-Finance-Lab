@@ -1996,7 +1996,10 @@ L_1 =
 </div>
 </div>
 </div>
-<p>We can see both CF and FHS models have performed better and more accurate than the Historic VaR estimating. and for 3 of our objects FHS has performed better and for MV_ewma, CF ended up with more accuracy</p>
+<p><strong>FHS is the most robust method</strong>. It delivers accurate unconditional coverage across all tested objects, consistently low quantile loss, and is statistically the best choice 75% of the time. Its use of volatility filtering makes it a lot more adaptive than simple Historical Simulation and less assumption dependent than Cornish-Fisher.</p>
+<p><strong>All models failed independence tests</strong> (except NVDA with FHS). Even the best model produces clustered violations in most portfolios. Relying solely on an unconditional coverage test would be dangerous. a conditional coverage failure means large losses are likely to be followed by more large losses, potentially blowing through capital buffers.</p>
+<p><strong>Cornish-Fisher is fragile</strong> but works better for a stable model like MV_EWMA. Its extreme underprediction on NVDA (8.5% breach rate) shows it can misbehave badly when the return distribution is far from normal (NVDA’s high volatility and potential skewness). It only performs good for the well diversified mv_ewma portfolio where non normality is milder.</p>
+<p><strong>Simple Historical Simulation is a decent fallback</strong>. It was never the worst and never the best. It lacks the adaptiveness of FHS.</p>
 <hr>
 </section>
 </section>
@@ -2514,7 +2517,7 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 </div>
 </div>
 </div>
-<div id="2fe7a8a5" class="cell" data-execution_count="21">
+<div id="2fe7a8a5" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="dv">6</span>), sharex<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name <span class="kw">in</span> obj.keys():</span>
@@ -2530,14 +2533,13 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].plot(roll_store[name][<span class="st">"corr_126"</span>], lw<span class="op">=</span><span class="fl">1.2</span>, color<span class="op">=</span>obj_colors[name], label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss"> 126d"</span>)</span>
 <span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].plot(roll_store[name][<span class="st">"corr_252"</span>], lw<span class="op">=</span><span class="fl">2.0</span>, color<span class="op">=</span>obj_colors[name], alpha<span class="op">=</span><span class="fl">0.6</span>, ls<span class="op">=</span><span class="st">"--"</span>, label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss"> 252d"</span>)</span>
 <span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].axhline(<span class="fl">0.0</span>, color<span class="op">=</span><span class="st">"#444"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"rolling correlation to market (spy)"</span>)</span>
-<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"corr"</span>)</span>
-<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="st">"date"</span>)</span>
-<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend(ncol<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"rolling correlation to market (spy)"</span>)</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"corr"</span>)</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="st">"date"</span>)</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend(ncol<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
