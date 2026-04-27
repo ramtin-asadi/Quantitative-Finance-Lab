@@ -74,7 +74,7 @@
     "href": "overview.html",
     "title": "Overview",
     "section": "",
-    "text": "Purpose\nThis lab is designed to be a long-running series of quantitative finance projects, where each project is:\nThe long-term output is a portfolio of work that demonstrates both research depth and software discipline.",
+    "text": "Purpose\nQuantitative Finance Lab is a project-based research and engineering portfolio in quantitative finance.\nEach project is designed to show more than a final result. The goal is to demonstrate the full workflow behind a quantitative finance problem:\nThe repository is therefore both a research notebook collection and a software-engineering exercise.",
     "crumbs": [
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
     ]
@@ -84,77 +84,77 @@
     "href": "overview.html#purpose",
     "title": "Overview",
     "section": "",
-    "text": "Readable (clear narrative, equations, and interpretation)\n\nReproducible (same inputs → same results, consistent metrics)\n\nReusable (core logic extracted into a Python package)",
+    "text": "understanding the financial question;\ndeveloping the mathematical model;\nimplementing the method in Python;\nworking with real market data;\nevaluating assumptions, diagnostics, and limitations;\ninterpreting results clearly;\nextracting reusable code into a python package named quantfinlab.",
     "crumbs": [
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
     ]
   },
   {
-    "objectID": "overview.html#how-projects-are-structured",
-    "href": "overview.html#how-projects-are-structured",
+    "objectID": "overview.html#design-principle",
+    "href": "overview.html#design-principle",
     "title": "Overview",
-    "section": "How projects are structured",
-    "text": "How projects are structured\nEach project is written as a Quarto notebook and typically follows:\n\nMotivation & problem statement\nMathematical formulation\nImplementation details\nExperiments and comparisons\nDiagnostics + failure modes\nSummary of results & takeaways\n\nAs patterns emerge, reusable components are moved into the quantfinlab package so future projects can build on stable foundations.",
+    "section": "Design principle",
+    "text": "Design principle\nThe central design principle is:\n\nThe notebooks explain and implement the research; the library turns that implementation into reusable code.\n\nA notebook is used when the goal is exploration, explanation, diagnostics, or interpretation. Library code is used when the logic becomes reusable enough to support another dataset, another market, or a later project.\nThis keeps the project honest: the library is not presented as a general-purpose finance library. It is a focused companion package for the workflows developed in the notebooks.",
     "crumbs": [
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
     ]
   },
   {
-    "objectID": "overview.html#repository-layout-conceptual",
-    "href": "overview.html#repository-layout-conceptual",
+    "objectID": "overview.html#how-each-project-is-structured",
+    "href": "overview.html#how-each-project-is-structured",
     "title": "Overview",
-    "section": "Repository layout (conceptual)",
-    "text": "Repository layout (conceptual)\n\nnotebooks/\nProject notebooks (Quarto). These are the public-facing research artifacts.\nquantfinlab/\nReusable Python library modules shared across projects.\ndocs/\nRendered website output (GitHub Pages).\n.github/workflows/, pyproject.toml, .pre-commit-config.yaml\nCode quality + reproducibility tooling (lint/format/tests/CI).",
+    "section": "How each project is structured",
+    "text": "How each project is structured\nA complete project usually contains the following parts.\n\n1. Motivation\nThe notebook starts with the financial problem and explains why the topic matters in practice.\n\n\n2. Mathematical setup\nThe relevant equations, assumptions, and model logic are introduced before the implementation.\n\n\n3. Data and implementation\nThe notebook explains the dataset, cleaning steps, modeling choices, and implementation details.\n\n\n4. Experiments and diagnostics\nThe project compares methods, checks assumptions, and studies model behavior using tables, plots, and diagnostic summaries.\n\n\n5. Interpretation\nResults are interpreted rather than only displayed.\n\n\n6. Library implementation\nThe final section of each notebook applies reusable quantfinlab components to a secondary dataset, market, or workflow. This section is meant to show that the project logic can be refactored and reused, not only executed once inside a notebook.",
     "crumbs": [
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
     ]
   },
   {
-    "objectID": "overview.html#the-quantfinlab-philosophy",
-    "href": "overview.html#the-quantfinlab-philosophy",
+    "objectID": "overview.html#current-project-areas",
+    "href": "overview.html#current-project-areas",
     "title": "Overview",
-    "section": "The quantfinlab philosophy",
-    "text": "The quantfinlab philosophy\nThe design rule is:\n\nNotebooks are clients. The library is the product.\n\nIf code is used in more than one place—or is critical enough to deserve tests—it should live in quantfinlab.\nExamples of what belongs in the library: - curve construction helpers, bond pricing primitives, risk measures - portfolio constraints, optimization wrappers, objective/penalty building blocks - standardized performance metrics and plotting utilities - data validation, common transformations, and safe defaults",
+    "section": "Current project areas",
+    "text": "Current project areas\nThe implemented projects currently cover four areas.\n\nFixed income\nYield curve construction, discount factors, forward rates, bond pricing, duration, convexity, PV01, key-rate duration, and duration-targeted laddering.\n\n\nPortfolio construction\nWalk-forward allocation, liquidity-based universe selection, expected-return estimation, covariance estimation, mean-variance optimization, regularization, transaction costs, turnover control, and performance comparison.\n\n\nRisk analysis\nDrawdowns, volatility, VaR, expected shortfall, VaR backtesting, stress testing, CAPM beta analysis, rolling risk behavior, and risk contribution.\n\n\nOptions and hedging\nBlack–Scholes pricing, put-call parity, quote filtering, implied-volatility solving, analytic Greeks, autodiff Greeks, Greek uncertainty, and hedging P&L analysis.",
     "crumbs": [
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
     ]
   },
   {
-    "objectID": "overview.html#data-reproducibility",
-    "href": "overview.html#data-reproducibility",
+    "objectID": "overview.html#what-belongs-in-quantfinlab",
+    "href": "overview.html#what-belongs-in-quantfinlab",
     "title": "Overview",
-    "section": "Data & reproducibility",
-    "text": "Data & reproducibility\nMany finance datasets are large or licensed, so the repository generally avoids committing raw data.\nRecommended approach - Keep datasets in a local data/ directory (gitignored). - Use clear filenames and a short data note inside each notebook: - required file(s) - expected columns - frequency and timezone assumptions - missing data handling expectations\nStrong reproducibility standard - A notebook should either: - run end-to-end from a clean clone once data is present, or - fail with a clear, friendly message explaining what’s missing and where to put it.",
+    "section": "What belongs in quantfinlab",
+    "text": "What belongs in quantfinlab\nCode is moved into quantfinlab when it is useful beyond one notebook cell.\nExamples include:\n\ncurve construction and bond-pricing utilities;\nportfolio selection, estimation, and optimization helpers;\nrisk metrics and reporting functions;\noptions-pricing, implied-volatility, and Greeks routines;\nplotting and diagnostics used across project sections;\nshared validation, data-cleaning, and result-formatting utilities.\n\nExploratory code can remain in notebooks. Stable logic should move into the library when it improves clarity, reuse, or secondary-market implementation.",
     "crumbs": [
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
     ]
   },
   {
-    "objectID": "overview.html#evaluation-conventions-recommended",
-    "href": "overview.html#evaluation-conventions-recommended",
+    "objectID": "overview.html#data-and-reproducibility",
+    "href": "overview.html#data-and-reproducibility",
     "title": "Overview",
-    "section": "Evaluation conventions (recommended)",
-    "text": "Evaluation conventions (recommended)\nTo keep comparisons consistent across projects, the lab aims to standardize:\n\nReturn definition (close-to-close vs open-to-open, etc.)\nRebalance convention (timing, lookahead prevention)\nTransaction costs model (turnover-based, spread-based, fees)\nMetrics\nAt minimum: CAGR, volatility, Sharpe, max drawdown, turnover, hit rate\nWhen relevant: tail metrics (VaR/CVaR), exposure diagnostics, constraint activity\n\nIf a metric can be misleading, the notebook should highlight it and include at least one complementary diagnostic plot/table.",
+    "section": "Data and reproducibility",
+    "text": "Data and reproducibility\nMany financial datasets are large, licensed, or not suitable for direct redistribution. For that reason, raw data are generally not committed to the repository.\nIn future, the process of data will be made clearer:\n\nThe notebook will specify the required data, including source, format, and expected location.\nA data-processing script will be provided to transform raw data into the required format.",
     "crumbs": [
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
     ]
   },
   {
-    "objectID": "overview.html#quality-checklist-used-in-this-lab",
-    "href": "overview.html#quality-checklist-used-in-this-lab",
+    "objectID": "overview.html#evaluation-conventions",
+    "href": "overview.html#evaluation-conventions",
     "title": "Overview",
-    "section": "Quality checklist used in this lab",
-    "text": "Quality checklist used in this lab\nA project is considered “complete” when it includes:\n\nclear assumptions and constraints\n\nsanity checks and edge-case discussion\n\ncomparison baselines (simple but strong references)\n\nreproducible plots/tables (consistent formatting and labels)\n\nreusable implementation extracted to quantfinlab where appropriate\n\nminimal tests for core functions when feasible",
+    "section": "Evaluation conventions",
+    "text": "Evaluation conventions\nProjects use consistent evaluation ideas where possible.\nFor portfolio and strategy work, important metrics include return, volatility, Sharpe ratio, drawdown, turnover, transaction costs, and benchmark comparison.\nFor risk work, important diagnostics include VaR, expected shortfall, exception counts, backtesting tests, stress windows, contribution analysis, and regime behavior.\nFor options work, important diagnostics include quote filters, parity checks, solver success rates, pricing residuals, Greek consistency, uncertainty bands, and hedging P&L attribution.\nA metric should not be shown alone when it can be misleading. It should be paired with interpretation, diagnostics, or limitations.",
     "crumbs": [
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
     ]
   },
   {
-    "objectID": "overview.html#roadmap-high-level",
-    "href": "overview.html#roadmap-high-level",
+    "objectID": "overview.html#interpretation-standard",
+    "href": "overview.html#interpretation-standard",
     "title": "Overview",
-    "section": "Roadmap (high level)",
-    "text": "Roadmap (high level)\n\nExpand the library into clearer submodules (fixed income, portfolio, risk, datasets)\nAdd test coverage for high-value finance primitives\nAdd standardized experiment configs + results tables at the end of each project\nAdd small sample datasets for “out-of-the-box” runs when possible\nAdd additional projects in areas like:\n\nrisk attribution and factor models\ntransaction cost modeling and turnover control\nrobust optimization and regularization\nstress testing and scenario analysis\nyield curve strategies and bond portfolio PnL attribution",
+    "section": "Interpretation standard",
+    "text": "Interpretation standard\nThe notebooks are intended to be readable research artifacts. A result table or plot is not complete until it is interpreted.\nA strong result discussion should explain:\n\nthe main pattern in the output;\nwhether the result is expected or surprising;\nwhat assumption may be driving it;\nhow it changes the financial interpretation;\nwhat limitation should be kept in mind.\n\nThis is especially important in the final library implementation sections, where the same workflow is applied to a secondary market or dataset. Those sections should not only show that the code runs; they should explain whether the transferred workflow behaves similarly, where it differs, and what that says about the model.",
     "crumbs": [
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
     ]
@@ -164,7 +164,7 @@
     "href": "overview.html#disclaimer",
     "title": "Overview",
     "section": "Disclaimer",
-    "text": "Disclaimer\nThis content is for education and research. It is not investment advice. Any results depend heavily on data quality, assumptions, costs, constraints, and implementation details.",
+    "text": "Disclaimer\nThis project is for research, education, and portfolio demonstration only. Nothing here is investment advice. Results depend on data quality, assumptions, market conditions, transaction costs, constraints, and implementation choices.",
     "crumbs": [
       "<span class='chapter-number'>2</span>  <span class='chapter-title'>Overview</span>"
     ]

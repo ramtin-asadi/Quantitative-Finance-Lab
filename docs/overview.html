@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="How this lab is organized: project template, engineering conventions, and reproducibility guidelines.">
+<meta name="description" content="How Quantitative Finance Lab is organized: project structure, notebook-to-library workflow, reproducibility standards, and interpretation conventions.">
 
 <title>Overview – Quantitative Finance Lab</title>
 <style>
@@ -150,13 +150,27 @@ ul.task-list li input[type="checkbox"] {
    
   <ul>
   <li><a href="#purpose" id="toc-purpose" class="nav-link active" data-scroll-target="#purpose">Purpose</a></li>
-  <li><a href="#how-projects-are-structured" id="toc-how-projects-are-structured" class="nav-link" data-scroll-target="#how-projects-are-structured">How projects are structured</a></li>
-  <li><a href="#repository-layout-conceptual" id="toc-repository-layout-conceptual" class="nav-link" data-scroll-target="#repository-layout-conceptual">Repository layout (conceptual)</a></li>
-  <li><a href="#the-quantfinlab-philosophy" id="toc-the-quantfinlab-philosophy" class="nav-link" data-scroll-target="#the-quantfinlab-philosophy">The <code>quantfinlab</code> philosophy</a></li>
-  <li><a href="#data-reproducibility" id="toc-data-reproducibility" class="nav-link" data-scroll-target="#data-reproducibility">Data &amp; reproducibility</a></li>
-  <li><a href="#evaluation-conventions-recommended" id="toc-evaluation-conventions-recommended" class="nav-link" data-scroll-target="#evaluation-conventions-recommended">Evaluation conventions (recommended)</a></li>
-  <li><a href="#quality-checklist-used-in-this-lab" id="toc-quality-checklist-used-in-this-lab" class="nav-link" data-scroll-target="#quality-checklist-used-in-this-lab">Quality checklist used in this lab</a></li>
-  <li><a href="#roadmap-high-level" id="toc-roadmap-high-level" class="nav-link" data-scroll-target="#roadmap-high-level">Roadmap (high level)</a></li>
+  <li><a href="#design-principle" id="toc-design-principle" class="nav-link" data-scroll-target="#design-principle">Design principle</a></li>
+  <li><a href="#how-each-project-is-structured" id="toc-how-each-project-is-structured" class="nav-link" data-scroll-target="#how-each-project-is-structured">How each project is structured</a>
+  <ul class="collapse">
+  <li><a href="#motivation" id="toc-motivation" class="nav-link" data-scroll-target="#motivation">1. Motivation</a></li>
+  <li><a href="#mathematical-setup" id="toc-mathematical-setup" class="nav-link" data-scroll-target="#mathematical-setup">2. Mathematical setup</a></li>
+  <li><a href="#data-and-implementation" id="toc-data-and-implementation" class="nav-link" data-scroll-target="#data-and-implementation">3. Data and implementation</a></li>
+  <li><a href="#experiments-and-diagnostics" id="toc-experiments-and-diagnostics" class="nav-link" data-scroll-target="#experiments-and-diagnostics">4. Experiments and diagnostics</a></li>
+  <li><a href="#interpretation" id="toc-interpretation" class="nav-link" data-scroll-target="#interpretation">5. Interpretation</a></li>
+  <li><a href="#library-implementation" id="toc-library-implementation" class="nav-link" data-scroll-target="#library-implementation">6. Library implementation</a></li>
+  </ul></li>
+  <li><a href="#current-project-areas" id="toc-current-project-areas" class="nav-link" data-scroll-target="#current-project-areas">Current project areas</a>
+  <ul class="collapse">
+  <li><a href="#fixed-income" id="toc-fixed-income" class="nav-link" data-scroll-target="#fixed-income">Fixed income</a></li>
+  <li><a href="#portfolio-construction" id="toc-portfolio-construction" class="nav-link" data-scroll-target="#portfolio-construction">Portfolio construction</a></li>
+  <li><a href="#risk-analysis" id="toc-risk-analysis" class="nav-link" data-scroll-target="#risk-analysis">Risk analysis</a></li>
+  <li><a href="#options-and-hedging" id="toc-options-and-hedging" class="nav-link" data-scroll-target="#options-and-hedging">Options and hedging</a></li>
+  </ul></li>
+  <li><a href="#what-belongs-in-quantfinlab" id="toc-what-belongs-in-quantfinlab" class="nav-link" data-scroll-target="#what-belongs-in-quantfinlab">What belongs in <code>quantfinlab</code></a></li>
+  <li><a href="#data-and-reproducibility" id="toc-data-and-reproducibility" class="nav-link" data-scroll-target="#data-and-reproducibility">Data and reproducibility</a></li>
+  <li><a href="#evaluation-conventions" id="toc-evaluation-conventions" class="nav-link" data-scroll-target="#evaluation-conventions">Evaluation conventions</a></li>
+  <li><a href="#interpretation-standard" id="toc-interpretation-standard" class="nav-link" data-scroll-target="#interpretation-standard">Interpretation standard</a></li>
   <li><a href="#disclaimer" id="toc-disclaimer" class="nav-link" data-scroll-target="#disclaimer">Disclaimer</a></li>
   </ul>
 </nav>
@@ -185,115 +199,131 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="purpose" class="level2">
 <h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
-<p>This lab is designed to be a <strong>long-running series</strong> of quantitative finance projects, where each project is:</p>
-<ol type="1">
-<li><strong>Readable</strong> (clear narrative, equations, and interpretation)<br>
-</li>
-<li><strong>Reproducible</strong> (same inputs → same results, consistent metrics)<br>
-</li>
-<li><strong>Reusable</strong> (core logic extracted into a Python package)</li>
-</ol>
-<p>The long-term output is a portfolio of work that demonstrates both <strong>research depth</strong> and <strong>software discipline</strong>.</p>
-<hr>
-</section>
-<section id="how-projects-are-structured" class="level2">
-<h2 class="anchored" data-anchor-id="how-projects-are-structured">How projects are structured</h2>
-<p>Each project is written as a Quarto notebook and typically follows:</p>
-<ol type="1">
-<li><strong>Motivation &amp; problem statement</strong></li>
-<li><strong>Mathematical formulation</strong></li>
-<li><strong>Implementation details</strong></li>
-<li><strong>Experiments and comparisons</strong></li>
-<li><strong>Diagnostics + failure modes</strong></li>
-<li><strong>Summary of results &amp; takeaways</strong></li>
-</ol>
-<p>As patterns emerge, reusable components are moved into the <strong><code>quantfinlab</code></strong> package so future projects can build on stable foundations.</p>
-<hr>
-</section>
-<section id="repository-layout-conceptual" class="level2">
-<h2 class="anchored" data-anchor-id="repository-layout-conceptual">Repository layout (conceptual)</h2>
+<p><strong>Quantitative Finance Lab</strong> is a project-based research and engineering portfolio in quantitative finance.</p>
+<p>Each project is designed to show more than a final result. The goal is to demonstrate the full workflow behind a quantitative finance problem:</p>
 <ul>
-<li><p><code>notebooks/</code><br>
-Project notebooks (Quarto). These are the <strong>public-facing</strong> research artifacts.</p></li>
-<li><p><code>quantfinlab/</code><br>
-Reusable Python library modules shared across projects.</p></li>
-<li><p><code>docs/</code><br>
-Rendered website output (GitHub Pages).</p></li>
-<li><p><code>.github/workflows/</code>, <code>pyproject.toml</code>, <code>.pre-commit-config.yaml</code><br>
-Code quality + reproducibility tooling (lint/format/tests/CI).</p></li>
+<li>understanding the financial question;</li>
+<li>developing the mathematical model;</li>
+<li>implementing the method in Python;</li>
+<li>working with real market data;</li>
+<li>evaluating assumptions, diagnostics, and limitations;</li>
+<li>interpreting results clearly;</li>
+<li>extracting reusable code into a python package named <code>quantfinlab</code>.</li>
 </ul>
+<p>The repository is therefore both a research notebook collection and a software-engineering exercise.</p>
 <hr>
 </section>
-<section id="the-quantfinlab-philosophy" class="level2">
-<h2 class="anchored" data-anchor-id="the-quantfinlab-philosophy">The <code>quantfinlab</code> philosophy</h2>
-<p>The design rule is:</p>
+<section id="design-principle" class="level2">
+<h2 class="anchored" data-anchor-id="design-principle">Design principle</h2>
+<p>The central design principle is:</p>
 <blockquote class="blockquote">
-<p><strong>Notebooks are clients. The library is the product.</strong></p>
+<p><strong>The notebooks explain and implement the research; the library turns that implementation into reusable code.</strong></p>
 </blockquote>
-<p>If code is used in more than one place—or is critical enough to deserve tests—it should live in <code>quantfinlab</code>.</p>
-<p>Examples of what belongs in the library: - curve construction helpers, bond pricing primitives, risk measures - portfolio constraints, optimization wrappers, objective/penalty building blocks - standardized performance metrics and plotting utilities - data validation, common transformations, and safe defaults</p>
+<p>A notebook is used when the goal is exploration, explanation, diagnostics, or interpretation. Library code is used when the logic becomes reusable enough to support another dataset, another market, or a later project.</p>
+<p>This keeps the project honest: the library is not presented as a general-purpose finance library. It is a focused companion package for the workflows developed in the notebooks.</p>
 <hr>
 </section>
-<section id="data-reproducibility" class="level2">
-<h2 class="anchored" data-anchor-id="data-reproducibility">Data &amp; reproducibility</h2>
-<p>Many finance datasets are large or licensed, so the repository generally avoids committing raw data.</p>
-<p><strong>Recommended approach</strong> - Keep datasets in a local <code>data/</code> directory (gitignored). - Use clear filenames and a short data note inside each notebook: - required file(s) - expected columns - frequency and timezone assumptions - missing data handling expectations</p>
-<p><strong>Strong reproducibility standard</strong> - A notebook should either: - run end-to-end from a clean clone once data is present, or - fail with a clear, friendly message explaining what’s missing and where to put it.</p>
+<section id="how-each-project-is-structured" class="level2">
+<h2 class="anchored" data-anchor-id="how-each-project-is-structured">How each project is structured</h2>
+<p>A complete project usually contains the following parts.</p>
+<section id="motivation" class="level3">
+<h3 class="anchored" data-anchor-id="motivation">1. Motivation</h3>
+<p>The notebook starts with the financial problem and explains why the topic matters in practice.</p>
+</section>
+<section id="mathematical-setup" class="level3">
+<h3 class="anchored" data-anchor-id="mathematical-setup">2. Mathematical setup</h3>
+<p>The relevant equations, assumptions, and model logic are introduced before the implementation.</p>
+</section>
+<section id="data-and-implementation" class="level3">
+<h3 class="anchored" data-anchor-id="data-and-implementation">3. Data and implementation</h3>
+<p>The notebook explains the dataset, cleaning steps, modeling choices, and implementation details.</p>
+</section>
+<section id="experiments-and-diagnostics" class="level3">
+<h3 class="anchored" data-anchor-id="experiments-and-diagnostics">4. Experiments and diagnostics</h3>
+<p>The project compares methods, checks assumptions, and studies model behavior using tables, plots, and diagnostic summaries.</p>
+</section>
+<section id="interpretation" class="level3">
+<h3 class="anchored" data-anchor-id="interpretation">5. Interpretation</h3>
+<p>Results are interpreted rather than only displayed.</p>
+</section>
+<section id="library-implementation" class="level3">
+<h3 class="anchored" data-anchor-id="library-implementation">6. Library implementation</h3>
+<p>The final section of each notebook applies reusable <code>quantfinlab</code> components to a secondary dataset, market, or workflow. This section is meant to show that the project logic can be refactored and reused, not only executed once inside a notebook.</p>
 <hr>
 </section>
-<section id="evaluation-conventions-recommended" class="level2">
-<h2 class="anchored" data-anchor-id="evaluation-conventions-recommended">Evaluation conventions (recommended)</h2>
-<p>To keep comparisons consistent across projects, the lab aims to standardize:</p>
+</section>
+<section id="current-project-areas" class="level2">
+<h2 class="anchored" data-anchor-id="current-project-areas">Current project areas</h2>
+<p>The implemented projects currently cover four areas.</p>
+<section id="fixed-income" class="level3">
+<h3 class="anchored" data-anchor-id="fixed-income">Fixed income</h3>
+<p>Yield curve construction, discount factors, forward rates, bond pricing, duration, convexity, PV01, key-rate duration, and duration-targeted laddering.</p>
+</section>
+<section id="portfolio-construction" class="level3">
+<h3 class="anchored" data-anchor-id="portfolio-construction">Portfolio construction</h3>
+<p>Walk-forward allocation, liquidity-based universe selection, expected-return estimation, covariance estimation, mean-variance optimization, regularization, transaction costs, turnover control, and performance comparison.</p>
+</section>
+<section id="risk-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="risk-analysis">Risk analysis</h3>
+<p>Drawdowns, volatility, VaR, expected shortfall, VaR backtesting, stress testing, CAPM beta analysis, rolling risk behavior, and risk contribution.</p>
+</section>
+<section id="options-and-hedging" class="level3">
+<h3 class="anchored" data-anchor-id="options-and-hedging">Options and hedging</h3>
+<p>Black–Scholes pricing, put-call parity, quote filtering, implied-volatility solving, analytic Greeks, autodiff Greeks, Greek uncertainty, and hedging P&amp;L analysis.</p>
+<hr>
+</section>
+</section>
+<section id="what-belongs-in-quantfinlab" class="level2">
+<h2 class="anchored" data-anchor-id="what-belongs-in-quantfinlab">What belongs in <code>quantfinlab</code></h2>
+<p>Code is moved into <strong><code>quantfinlab</code></strong> when it is useful beyond one notebook cell.</p>
+<p>Examples include:</p>
 <ul>
-<li><strong>Return definition</strong> (close-to-close vs open-to-open, etc.)</li>
-<li><strong>Rebalance convention</strong> (timing, lookahead prevention)</li>
-<li><strong>Transaction costs model</strong> (turnover-based, spread-based, fees)</li>
-<li><strong>Metrics</strong><br>
-At minimum: CAGR, volatility, Sharpe, max drawdown, turnover, hit rate<br>
-When relevant: tail metrics (VaR/CVaR), exposure diagnostics, constraint activity</li>
+<li>curve construction and bond-pricing utilities;</li>
+<li>portfolio selection, estimation, and optimization helpers;</li>
+<li>risk metrics and reporting functions;</li>
+<li>options-pricing, implied-volatility, and Greeks routines;</li>
+<li>plotting and diagnostics used across project sections;</li>
+<li>shared validation, data-cleaning, and result-formatting utilities.</li>
 </ul>
-<p>If a metric can be misleading, the notebook should highlight it and include at least one complementary diagnostic plot/table.</p>
+<p>Exploratory code can remain in notebooks. Stable logic should move into the library when it improves clarity, reuse, or secondary-market implementation.</p>
 <hr>
 </section>
-<section id="quality-checklist-used-in-this-lab" class="level2">
-<h2 class="anchored" data-anchor-id="quality-checklist-used-in-this-lab">Quality checklist used in this lab</h2>
-<p>A project is considered “complete” when it includes:</p>
-<ul>
-<li>clear assumptions and constraints<br>
-</li>
-<li>sanity checks and edge-case discussion<br>
-</li>
-<li>comparison baselines (simple but strong references)<br>
-</li>
-<li>reproducible plots/tables (consistent formatting and labels)<br>
-</li>
-<li>reusable implementation extracted to <code>quantfinlab</code> where appropriate<br>
-</li>
-<li>minimal tests for core functions when feasible</li>
-</ul>
+<section id="data-and-reproducibility" class="level2">
+<h2 class="anchored" data-anchor-id="data-and-reproducibility">Data and reproducibility</h2>
+<p>Many financial datasets are large, licensed, or not suitable for direct redistribution. For that reason, raw data are generally not committed to the repository.</p>
+<p>In future, the process of data will be made clearer:</p>
+<ol type="1">
+<li>The notebook will specify the required data, including source, format, and expected location.</li>
+<li>A data-processing script will be provided to transform raw data into the required format.</li>
+</ol>
 <hr>
 </section>
-<section id="roadmap-high-level" class="level2">
-<h2 class="anchored" data-anchor-id="roadmap-high-level">Roadmap (high level)</h2>
-<ul>
-<li>Expand the library into clearer submodules (fixed income, portfolio, risk, datasets)</li>
-<li>Add test coverage for high-value finance primitives</li>
-<li>Add standardized experiment configs + results tables at the end of each project</li>
-<li>Add small sample datasets for “out-of-the-box” runs when possible</li>
-<li>Add additional projects in areas like:
-<ul>
-<li>risk attribution and factor models</li>
-<li>transaction cost modeling and turnover control</li>
-<li>robust optimization and regularization</li>
-<li>stress testing and scenario analysis</li>
-<li>yield curve strategies and bond portfolio PnL attribution</li>
-</ul></li>
-</ul>
+<section id="evaluation-conventions" class="level2">
+<h2 class="anchored" data-anchor-id="evaluation-conventions">Evaluation conventions</h2>
+<p>Projects use consistent evaluation ideas where possible.</p>
+<p>For portfolio and strategy work, important metrics include return, volatility, Sharpe ratio, drawdown, turnover, transaction costs, and benchmark comparison.</p>
+<p>For risk work, important diagnostics include VaR, expected shortfall, exception counts, backtesting tests, stress windows, contribution analysis, and regime behavior.</p>
+<p>For options work, important diagnostics include quote filters, parity checks, solver success rates, pricing residuals, Greek consistency, uncertainty bands, and hedging P&amp;L attribution.</p>
+<p>A metric should not be shown alone when it can be misleading. It should be paired with interpretation, diagnostics, or limitations.</p>
+<hr>
+</section>
+<section id="interpretation-standard" class="level2">
+<h2 class="anchored" data-anchor-id="interpretation-standard">Interpretation standard</h2>
+<p>The notebooks are intended to be readable research artifacts. A result table or plot is not complete until it is interpreted.</p>
+<p>A strong result discussion should explain:</p>
+<ol type="1">
+<li>the main pattern in the output;</li>
+<li>whether the result is expected or surprising;</li>
+<li>what assumption may be driving it;</li>
+<li>how it changes the financial interpretation;</li>
+<li>what limitation should be kept in mind.</li>
+</ol>
+<p>This is especially important in the final library implementation sections, where the same workflow is applied to a secondary market or dataset. Those sections should not only show that the code runs; they should explain whether the transferred workflow behaves similarly, where it differs, and what that says about the model.</p>
 <hr>
 </section>
 <section id="disclaimer" class="level2">
 <h2 class="anchored" data-anchor-id="disclaimer">Disclaimer</h2>
-<p>This content is for <strong>education and research</strong>. It is not investment advice. Any results depend heavily on data quality, assumptions, costs, constraints, and implementation details.</p>
+<p>This project is for research, education, and portfolio demonstration only. Nothing here is investment advice. Results depend on data quality, assumptions, market conditions, transaction costs, constraints, and implementation choices.</p>
 
 
 </section>
