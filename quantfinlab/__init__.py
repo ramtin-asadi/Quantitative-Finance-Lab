@@ -1,6 +1,18 @@
 from __future__ import annotations
 
-from . import fixed_income, plots, portfolio, risk
+from . import (
+    backtest,
+    common,
+    fixed_income,
+    options,
+    plots,
+    plotting,
+    portfolio,
+    reports,
+    risk,
+    volatility,
+)
+from .common.errors import BacktestError, DataError
 from .core import (
     BacktestResult,
     Bond,
@@ -20,22 +32,30 @@ from .core import (
 __version__ = "0.0.1"
 
 __all__ = [
-    "__version__",
-    "QuantFinLabError",
-    "InputError",
-    "ModelError",
-    "CurvePillars",
-    "Curve",
-    "Bond",
-    "PortfolioState",
+    "BacktestError",
     "BacktestResult",
+    "Bond",
+    "BookMetrics",
+    "Curve",
+    "CurvePillars",
+    "DataError",
+    "InputError",
+    "IssuanceBook",
+    "IssuedBond",
+    "ModelError",
+    "PortfolioState",
+    "QuantFinLabError",
     "RiskReportArtifacts",
     "StrategyBuildResult",
-    "IssuedBond",
-    "IssuanceBook",
-    "BookMetrics",
+    "__version__",
+    "backtest",
+    "common",
     "fixed_income",
-    "portfolio",
-    "risk",
+    "options",
     "plots",
+    "plotting",
+    "portfolio",
+    "reports",
+    "risk",
+    "volatility",
 ]

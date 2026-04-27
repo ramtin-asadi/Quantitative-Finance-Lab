@@ -278,7 +278,7 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 </section>
 <section id="imports-and-plotting-style-and-loading-data" class="level2">
 <h2 class="anchored" data-anchor-id="imports-and-plotting-style-and-loading-data">Imports and plotting style and loading data</h2>
-<div id="c76fb050" class="cell" data-execution_count="1">
+<div id="c76fb050" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> copy</span>
@@ -290,33 +290,34 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> [<span class="st">"#069AF3"</span>,<span class="st">"#FE420F"</span>, <span class="st">"#00008B"</span>, <span class="st">"#008080"</span>, <span class="st">"#7BC8F6"</span>,<span class="st">"#800080"</span>,<span class="st">"#0072B2"</span>,<span class="st">"#008000"</span>,<span class="st">"#CC79A7"</span>, <span class="st">"#DC143C"</span>, <span class="st">"#04D8B2"</span>]</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"axes.prop_cycle"</span>] <span class="op">=</span> cycler(color<span class="op">=</span>colors)</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">6</span>, <span class="dv">3</span>),</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.dpi"</span>: <span class="dv">300</span>,</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"savefig.dpi"</span>: <span class="dv">300</span>,</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.grid"</span>: <span class="va">True</span>,</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grid.alpha"</span>: <span class="fl">0.20</span>,</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>,</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="dv">12</span>,</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="dv">12</span>,</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"xtick.labelsize"</span>: <span class="dv">9</span>,</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ytick.labelsize"</span>: <span class="dv">9</span>,</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">7</span>,</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> [<span class="st">"#069AF3"</span>,<span class="st">"#FE420F"</span>, <span class="st">"#00008B"</span>, <span class="st">"#008080"</span> , <span class="st">"#CC79A7"</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>          <span class="st">"#9614fa"</span>, <span class="st">"#DC143C"</span>, <span class="st">"#7BC8F6"</span>, <span class="st">"#0072B2"</span>,<span class="st">"#04D8B2"</span>, <span class="st">"#800080"</span>, <span class="st">"#FF8072"</span>]</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"axes.prop_cycle"</span>] <span class="op">=</span> cycler(color<span class="op">=</span>colors)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">6</span>, <span class="dv">3</span>),</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.dpi"</span>: <span class="dv">300</span>,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"savefig.dpi"</span>: <span class="dv">300</span>,</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.grid"</span>: <span class="va">True</span>,</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grid.alpha"</span>: <span class="fl">0.20</span>,</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>,</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="dv">12</span>,</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="dv">12</span>,</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"xtick.labelsize"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ytick.labelsize"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">7</span>,</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="vs">r"</span><span class="dv">..\d</span><span class="vs">ata</span><span class="er">\</span><span class="vs">par-yield-curve-rates-1990-2026</span><span class="dv">.</span><span class="vs">csv"</span>)</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>col_map <span class="op">=</span> {<span class="st">"date"</span>: <span class="st">"Date"</span>,<span class="st">"1 mo"</span>: <span class="st">"1M"</span>,<span class="st">"2 mo"</span>: <span class="st">"2M"</span>,<span class="st">"3 mo"</span>: <span class="st">"3M"</span>,<span class="st">"4 mo"</span>: <span class="st">"4M"</span>,<span class="st">"6 mo"</span>: <span class="st">"6M"</span>,<span class="st">"1 yr"</span>: <span class="st">"1Y"</span>,<span class="st">"2 yr"</span>: <span class="st">"2Y"</span>,<span class="st">"3 yr"</span>: <span class="st">"3Y"</span>,<span class="st">"5 yr"</span>: <span class="st">"5Y"</span>,<span class="st">"7 yr"</span>: <span class="st">"7Y"</span>,<span class="st">"10 yr"</span>: <span class="st">"10Y"</span>,<span class="st">"20 yr"</span>: <span class="st">"20Y"</span>,<span class="st">"30 yr"</span>: <span class="st">"30Y"</span>}</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.rename(columns<span class="op">=</span>{k.lower(): v <span class="cf">for</span> k, v <span class="kw">in</span> col_map.items()})</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Date"</span>] <span class="op">=</span> pd.to_datetime(df[<span class="st">"Date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.dropna(subset<span class="op">=</span>[<span class="st">"Date"</span>], ).set_index(<span class="st">"Date"</span>).sort_index()</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="vs">r"</span><span class="dv">..\d</span><span class="vs">ata</span><span class="er">\</span><span class="vs">par-yield-curve-rates-1990-2026</span><span class="dv">.</span><span class="vs">csv"</span>)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>col_map <span class="op">=</span> {<span class="st">"date"</span>: <span class="st">"Date"</span>,<span class="st">"1 mo"</span>: <span class="st">"1M"</span>,<span class="st">"2 mo"</span>: <span class="st">"2M"</span>,<span class="st">"3 mo"</span>: <span class="st">"3M"</span>,<span class="st">"4 mo"</span>: <span class="st">"4M"</span>,<span class="st">"6 mo"</span>: <span class="st">"6M"</span>,<span class="st">"1 yr"</span>: <span class="st">"1Y"</span>,<span class="st">"2 yr"</span>: <span class="st">"2Y"</span>,<span class="st">"3 yr"</span>: <span class="st">"3Y"</span>,<span class="st">"5 yr"</span>: <span class="st">"5Y"</span>,<span class="st">"7 yr"</span>: <span class="st">"7Y"</span>,<span class="st">"10 yr"</span>: <span class="st">"10Y"</span>,<span class="st">"20 yr"</span>: <span class="st">"20Y"</span>,<span class="st">"30 yr"</span>: <span class="st">"30Y"</span>}</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.rename(columns<span class="op">=</span>{k.lower(): v <span class="cf">for</span> k, v <span class="kw">in</span> col_map.items()})</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Date"</span>] <span class="op">=</span> pd.to_datetime(df[<span class="st">"Date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.dropna(subset<span class="op">=</span>[<span class="st">"Date"</span>], ).set_index(<span class="st">"Date"</span>).sort_index()</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display" data-execution_count="1">
 <div>
 
@@ -3809,158 +3810,239 @@ Strategy comparison summary:</code></pre>
 </section>
 <section id="implementing-the-whole-project-on-japan-data-using-quantfinlab" class="level1">
 <h1>Implementing the whole project on Japan data using quantfinlab</h1>
-<div id="a1824e0d" class="cell" data-execution_count="18">
+<div id="a1824e0d" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display</span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> quantfinlab.fixed_income <span class="im">as</span> fi</span>
-<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> quantfinlab.plots <span class="im">as</span> pl</span>
-<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
-<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>path <span class="op">=</span> Path(<span class="st">"../data/japan_yield_curve_all.csv"</span>)</span>
-<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>first_line <span class="op">=</span> Path(path).read_text(encoding<span class="op">=</span><span class="st">"utf-8"</span>, errors<span class="op">=</span><span class="st">"ignore"</span>).splitlines()[<span class="dv">0</span>].strip().lower()</span>
-<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> first_line.startswith(<span class="st">"interest rate"</span>):</span>
-<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>    raw <span class="op">=</span> pd.read_csv(path, skiprows<span class="op">=</span><span class="dv">1</span>, na_values<span class="op">=</span>[<span class="st">"-"</span>], keep_default_na<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
-<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>    raw <span class="op">=</span> pd.read_csv(path, na_values<span class="op">=</span>[<span class="st">"-"</span>], keep_default_na<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> raw.rename(columns<span class="op">=</span>{c: <span class="bu">str</span>(c).strip() <span class="cf">for</span> c <span class="kw">in</span> raw.columns})</span>
-<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> normalize_tenor_name(c):</span>
-<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> <span class="bu">str</span>(c).strip().upper().replace(<span class="st">" "</span>, <span class="st">""</span>)</span>
-<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> s.replace(<span class="st">"MONTHS"</span>, <span class="st">"M"</span>).replace(<span class="st">"MONTH"</span>, <span class="st">"M"</span>).replace(<span class="st">"MOS"</span>, <span class="st">"M"</span>).replace(<span class="st">"MO"</span>, <span class="st">"M"</span>)</span>
-<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> s.replace(<span class="st">"YEARS"</span>, <span class="st">"Y"</span>).replace(<span class="st">"YEAR"</span>, <span class="st">"Y"</span>).replace(<span class="st">"YRS"</span>, <span class="st">"Y"</span>).replace(<span class="st">"YR"</span>, <span class="st">"Y"</span>)</span>
-<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> s</span>
-<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a>lower_cols <span class="op">=</span> [c.lower() <span class="cf">for</span> c <span class="kw">in</span> raw.columns]</span>
-<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>date_col <span class="op">=</span> raw.columns[lower_cols.index(<span class="st">"date"</span>)] <span class="cf">if</span> <span class="st">"date"</span> <span class="kw">in</span> lower_cols <span class="cf">else</span> raw.columns[<span class="dv">0</span>]</span>
-<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> raw.rename(columns<span class="op">=</span>{date_col: <span class="st">"date"</span>})</span>
-<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>raw[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(raw[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
-<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> raw.dropna(subset<span class="op">=</span>[<span class="st">"date"</span>]).sort_values(<span class="st">"date"</span>).set_index(<span class="st">"date"</span>)</span>
-<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> raw.rename(columns<span class="op">=</span>{c: normalize_tenor_name(c) <span class="cf">for</span> c <span class="kw">in</span> raw.columns})</span>
-<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a>tenor_cols <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> raw.columns <span class="cf">if</span> re.fullmatch(<span class="vs">r"</span><span class="dv">\d</span><span class="op">+</span><span class="kw">(</span><span class="vs">M</span><span class="cf">|</span><span class="vs">Y</span><span class="kw">)</span><span class="vs">"</span>, <span class="bu">str</span>(c))]</span>
-<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a>tenor_cols <span class="op">=</span> <span class="bu">sorted</span>(tenor_cols, key<span class="op">=</span>fi.tenor_to_years)</span>
-<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-39"><a href="#cb31-39" aria-hidden="true" tabindex="-1"></a>par <span class="op">=</span> raw[tenor_cols].<span class="bu">apply</span>(pd.to_numeric, errors<span class="op">=</span><span class="st">"coerce"</span>).dropna(how<span class="op">=</span><span class="st">"all"</span>).sort_index()</span>
-<span id="cb31-40"><a href="#cb31-40" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> np.nanmedian(par.to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)) <span class="op">&gt;</span> <span class="fl">1.0</span>: </span>
-<span id="cb31-41"><a href="#cb31-41" aria-hidden="true" tabindex="-1"></a>    par <span class="op">=</span> par <span class="op">/</span> <span class="fl">100.0</span></span>
-<span id="cb31-42"><a href="#cb31-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.fixed_income <span class="im">import</span> (</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    bootstrap, bond_pricing,</span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>    discounting, duration_overlay,</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>    forwards, ladder, risk,</span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>    smoothers, tenors)</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.backtest <span class="im">import</span> fixed_income <span class="im">as</span> fi_backtest</span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting <span class="im">import</span> curves <span class="im">as</span> curve_plots</span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting <span class="im">import</span> fixed_income <span class="im">as</span> fi_plots</span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>path <span class="op">=</span> Path(<span class="st">"../data/japan_yield_curve_all.csv"</span>)</span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>first_line <span class="op">=</span> path.read_text(encoding<span class="op">=</span><span class="st">"utf-8"</span>, errors<span class="op">=</span><span class="st">"ignore"</span>).splitlines()[<span class="dv">0</span>].strip().lower()</span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> first_line.startswith(<span class="st">"interest rate"</span>):</span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>    raw <span class="op">=</span> pd.read_csv(path, skiprows<span class="op">=</span><span class="dv">1</span>, na_values<span class="op">=</span>[<span class="st">"-"</span>], keep_default_na<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>    raw <span class="op">=</span> pd.read_csv(path, na_values<span class="op">=</span>[<span class="st">"-"</span>], keep_default_na<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> raw.rename(columns<span class="op">=</span>{c: <span class="bu">str</span>(c).strip() <span class="cf">for</span> c <span class="kw">in</span> raw.columns})</span>
+<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> normalize_tenor_name(c):</span>
+<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> <span class="bu">str</span>(c).strip().upper().replace(<span class="st">" "</span>, <span class="st">""</span>)</span>
+<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> s.replace(<span class="st">"MONTHS"</span>, <span class="st">"M"</span>).replace(<span class="st">"MONTH"</span>, <span class="st">"M"</span>).replace(<span class="st">"MOS"</span>, <span class="st">"M"</span>).replace(<span class="st">"MO"</span>, <span class="st">"M"</span>)</span>
+<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> s.replace(<span class="st">"YEARS"</span>, <span class="st">"Y"</span>).replace(<span class="st">"YEAR"</span>, <span class="st">"Y"</span>).replace(<span class="st">"YRS"</span>, <span class="st">"Y"</span>).replace(<span class="st">"YR"</span>, <span class="st">"Y"</span>)</span>
+<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> s</span>
+<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a>lower_cols <span class="op">=</span> [c.lower() <span class="cf">for</span> c <span class="kw">in</span> raw.columns]</span>
+<span id="cb31-39"><a href="#cb31-39" aria-hidden="true" tabindex="-1"></a>date_col <span class="op">=</span> raw.columns[lower_cols.index(<span class="st">"date"</span>)] <span class="cf">if</span> <span class="st">"date"</span> <span class="kw">in</span> lower_cols <span class="cf">else</span> raw.columns[<span class="dv">0</span>]</span>
+<span id="cb31-40"><a href="#cb31-40" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> raw.rename(columns<span class="op">=</span>{date_col: <span class="st">"date"</span>})</span>
+<span id="cb31-41"><a href="#cb31-41" aria-hidden="true" tabindex="-1"></a>raw[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(raw[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
+<span id="cb31-42"><a href="#cb31-42" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> raw.dropna(subset<span class="op">=</span>[<span class="st">"date"</span>]).sort_values(<span class="st">"date"</span>).set_index(<span class="st">"date"</span>)</span>
 <span id="cb31-43"><a href="#cb31-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-44"><a href="#cb31-44" aria-hidden="true" tabindex="-1"></a>methods <span class="op">=</span> [<span class="st">"loglinear"</span>, <span class="st">"pchip"</span>, <span class="st">"nss"</span>, <span class="st">"qp"</span>]</span>
-<span id="cb31-45"><a href="#cb31-45" aria-hidden="true" tabindex="-1"></a>holdouts <span class="op">=</span> [<span class="st">"2Y"</span>, <span class="st">"7Y"</span>, <span class="st">"20Y"</span>, <span class="st">"30Y"</span>]</span>
-<span id="cb31-46"><a href="#cb31-46" aria-hidden="true" tabindex="-1"></a>keys <span class="op">=</span> [<span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">30</span>]</span>
-<span id="cb31-47"><a href="#cb31-47" aria-hidden="true" tabindex="-1"></a>freq <span class="op">=</span> <span class="dv">2</span></span>
-<span id="cb31-48"><a href="#cb31-48" aria-hidden="true" tabindex="-1"></a>short_end <span class="op">=</span> <span class="st">"continuous"</span></span>
-<span id="cb31-49"><a href="#cb31-49" aria-hidden="true" tabindex="-1"></a>asof <span class="op">=</span> fi.resolve_asof(par.index)</span>
-<span id="cb31-50"><a href="#cb31-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-51"><a href="#cb31-51" aria-hidden="true" tabindex="-1"></a>pillars <span class="op">=</span> fi.bootstrap_pillars(par.loc[asof], asof<span class="op">=</span>asof, tenor_cols<span class="op">=</span>tenor_cols, freq<span class="op">=</span>freq, short_end<span class="op">=</span>short_end)</span>
-<span id="cb31-52"><a href="#cb31-52" aria-hidden="true" tabindex="-1"></a>curves <span class="op">=</span> fi.fit_curves(pillars, methods<span class="op">=</span>methods, freq<span class="op">=</span>freq)</span>
+<span id="cb31-44"><a href="#cb31-44" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> raw.rename(columns<span class="op">=</span>{c: normalize_tenor_name(c) <span class="cf">for</span> c <span class="kw">in</span> raw.columns})</span>
+<span id="cb31-45"><a href="#cb31-45" aria-hidden="true" tabindex="-1"></a>tenor_cols <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> raw.columns <span class="cf">if</span> re.fullmatch(<span class="vs">r"</span><span class="dv">\d</span><span class="op">+</span><span class="kw">(</span><span class="vs">M</span><span class="cf">|</span><span class="vs">Y</span><span class="kw">)</span><span class="vs">"</span>, <span class="bu">str</span>(c))]</span>
+<span id="cb31-46"><a href="#cb31-46" aria-hidden="true" tabindex="-1"></a>tenor_cols <span class="op">=</span> <span class="bu">sorted</span>(tenor_cols, key<span class="op">=</span>tenors.tenor_to_years)</span>
+<span id="cb31-47"><a href="#cb31-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-48"><a href="#cb31-48" aria-hidden="true" tabindex="-1"></a>par <span class="op">=</span> raw[tenor_cols].<span class="bu">apply</span>(pd.to_numeric, errors<span class="op">=</span><span class="st">"coerce"</span>).dropna(how<span class="op">=</span><span class="st">"all"</span>).sort_index()</span>
+<span id="cb31-49"><a href="#cb31-49" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> np.nanmedian(par.to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)) <span class="op">&gt;</span> <span class="fl">1.0</span>:</span>
+<span id="cb31-50"><a href="#cb31-50" aria-hidden="true" tabindex="-1"></a>    par <span class="op">=</span> par <span class="op">/</span> <span class="fl">100.0</span></span>
+<span id="cb31-51"><a href="#cb31-51" aria-hidden="true" tabindex="-1"></a>par <span class="op">=</span> bootstrap.normalize_par_yields(par, tenor_cols<span class="op">=</span>tenor_cols, assume_percent<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb31-52"><a href="#cb31-52" aria-hidden="true" tabindex="-1"></a>tenor_cols <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> tenor_cols <span class="cf">if</span> c <span class="kw">in</span> par.columns]</span>
 <span id="cb31-53"><a href="#cb31-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-54"><a href="#cb31-54" aria-hidden="true" tabindex="-1"></a>curve_t_max <span class="op">=</span> <span class="bu">max</span>(<span class="fl">30.0</span>, <span class="bu">float</span>(pillars.T.<span class="bu">max</span>()))</span>
-<span id="cb31-55"><a href="#cb31-55" aria-hidden="true" tabindex="-1"></a>plot_grid <span class="op">=</span> np.linspace(<span class="bu">max</span>(<span class="dv">1</span> <span class="op">/</span> <span class="dv">12</span>, <span class="bu">float</span>(pillars.T.<span class="bu">min</span>())), <span class="bu">float</span>(pillars.T.<span class="bu">max</span>()), <span class="dv">250</span>)</span>
-<span id="cb31-56"><a href="#cb31-56" aria-hidden="true" tabindex="-1"></a>par_fit_table <span class="op">=</span> fi.par_curve_table(curves, grid<span class="op">=</span>plot_grid, freq<span class="op">=</span>freq)</span>
-<span id="cb31-57"><a href="#cb31-57" aria-hidden="true" tabindex="-1"></a>zero_table <span class="op">=</span> fi.zero_curve_table(curves, t_min<span class="op">=</span><span class="dv">1</span> <span class="op">/</span> <span class="dv">12</span>, t_max<span class="op">=</span>curve_t_max, points<span class="op">=</span><span class="dv">400</span>)</span>
-<span id="cb31-58"><a href="#cb31-58" aria-hidden="true" tabindex="-1"></a>df_table <span class="op">=</span> fi.discount_curve_table(curves, t_min<span class="op">=</span><span class="dv">1</span> <span class="op">/</span> <span class="dv">12</span>, t_max<span class="op">=</span>curve_t_max, points<span class="op">=</span><span class="dv">400</span>)</span>
-<span id="cb31-59"><a href="#cb31-59" aria-hidden="true" tabindex="-1"></a>fwd_table <span class="op">=</span> fi.forward_curve_table(curves, t_min<span class="op">=</span><span class="dv">1</span> <span class="op">/</span> <span class="dv">12</span>, t_max<span class="op">=</span>curve_t_max, points<span class="op">=</span><span class="dv">400</span>)</span>
-<span id="cb31-60"><a href="#cb31-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-61"><a href="#cb31-61" aria-hidden="true" tabindex="-1"></a>rmse <span class="op">=</span> fi.rmse_backtest(par.tail(<span class="dv">100</span>), methods<span class="op">=</span>methods, holdouts<span class="op">=</span>holdouts, freq<span class="op">=</span>freq, short_end<span class="op">=</span>short_end,</span>
-<span id="cb31-62"><a href="#cb31-62" aria-hidden="true" tabindex="-1"></a>    tenor_cols<span class="op">=</span>tenor_cols)</span>
+<span id="cb31-54"><a href="#cb31-54" aria-hidden="true" tabindex="-1"></a>methods <span class="op">=</span> [<span class="st">"loglinear"</span>, <span class="st">"pchip"</span>, <span class="st">"nss"</span>, <span class="st">"qp"</span>]</span>
+<span id="cb31-55"><a href="#cb31-55" aria-hidden="true" tabindex="-1"></a>holdouts <span class="op">=</span> [<span class="st">"2Y"</span>, <span class="st">"7Y"</span>, <span class="st">"20Y"</span>, <span class="st">"30Y"</span>]</span>
+<span id="cb31-56"><a href="#cb31-56" aria-hidden="true" tabindex="-1"></a>keys <span class="op">=</span> [<span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">30</span>]</span>
+<span id="cb31-57"><a href="#cb31-57" aria-hidden="true" tabindex="-1"></a>target_weights <span class="op">=</span> {<span class="dv">2</span>: <span class="fl">0.25</span>, <span class="dv">5</span>: <span class="fl">0.25</span>, <span class="dv">10</span>: <span class="fl">0.25</span>, <span class="dv">30</span>: <span class="fl">0.25</span>}</span>
+<span id="cb31-58"><a href="#cb31-58" aria-hidden="true" tabindex="-1"></a>risk_bucket_bounds <span class="op">=</span> {<span class="dv">2</span>: (<span class="fl">0.0</span>, <span class="fl">3.5</span>), <span class="dv">5</span>: (<span class="fl">3.5</span>, <span class="fl">7.5</span>), <span class="dv">10</span>: (<span class="fl">7.5</span>, <span class="fl">20.0</span>), <span class="dv">30</span>: (<span class="fl">20.0</span>, <span class="fl">30.0</span>)}</span>
+<span id="cb31-59"><a href="#cb31-59" aria-hidden="true" tabindex="-1"></a>freq <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb31-60"><a href="#cb31-60" aria-hidden="true" tabindex="-1"></a>short_end <span class="op">=</span> <span class="st">"continuous"</span></span>
+<span id="cb31-61"><a href="#cb31-61" aria-hidden="true" tabindex="-1"></a>duration_target <span class="op">=</span> <span class="fl">5.0</span></span>
+<span id="cb31-62"><a href="#cb31-62" aria-hidden="true" tabindex="-1"></a>duration_band <span class="op">=</span> <span class="fl">0.30</span></span>
 <span id="cb31-63"><a href="#cb31-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-64"><a href="#cb31-64" aria-hidden="true" tabindex="-1"></a>rmse_sorted <span class="op">=</span> fi.sort_rmse_table(rmse, methods<span class="op">=</span>methods)</span>
-<span id="cb31-65"><a href="#cb31-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-66"><a href="#cb31-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-67"><a href="#cb31-67" aria-hidden="true" tabindex="-1"></a>month_end <span class="op">=</span> par.resample(<span class="st">"ME"</span>).last().dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
-<span id="cb31-68"><a href="#cb31-68" aria-hidden="true" tabindex="-1"></a>book <span class="op">=</span> fi.synthetic_issuance_book(month_end, maturities<span class="op">=</span>keys, freq<span class="op">=</span>freq)</span>
-<span id="cb31-69"><a href="#cb31-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-70"><a href="#cb31-70" aria-hidden="true" tabindex="-1"></a>curves_for_dates <span class="op">=</span> fi.curves_by_valuation_date(month_end.index, par, methods<span class="op">=</span>methods, freq<span class="op">=</span>freq,</span>
-<span id="cb31-71"><a href="#cb31-71" aria-hidden="true" tabindex="-1"></a>    short_end<span class="op">=</span>short_end, tenor_cols<span class="op">=</span>tenor_cols)</span>
-<span id="cb31-72"><a href="#cb31-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-73"><a href="#cb31-73" aria-hidden="true" tabindex="-1"></a>pv_total, pv_buckets <span class="op">=</span> fi.book_pv_timeseries(book, curves_for_dates)</span>
-<span id="cb31-74"><a href="#cb31-74" aria-hidden="true" tabindex="-1"></a>risk_df <span class="op">=</span> fi.book_parallel_risk_timeseries(book, curves_for_dates, bump_bp<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb31-75"><a href="#cb31-75" aria-hidden="true" tabindex="-1"></a>krd_df <span class="op">=</span> fi.book_krd_timeseries(book, curves_for_dates, keys<span class="op">=</span>keys, bump_bp<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb31-76"><a href="#cb31-76" aria-hidden="true" tabindex="-1"></a>metrics <span class="op">=</span> fi.make_book_metrics(pv_total, pv_buckets, risk_df)</span>
-<span id="cb31-77"><a href="#cb31-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-78"><a href="#cb31-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-79"><a href="#cb31-79" aria-hidden="true" tabindex="-1"></a>bond, used_tenor <span class="op">=</span> fi.bond_from_par_curve_row(par.loc[asof], maturity_years<span class="op">=</span><span class="dv">10</span>, tenor_cols<span class="op">=</span>tenor_cols, freq<span class="op">=</span>freq)</span>
-<span id="cb31-80"><a href="#cb31-80" aria-hidden="true" tabindex="-1"></a>bond_tbl <span class="op">=</span> fi.bond_price_and_risk(bond,curves, bump_bp<span class="op">=</span><span class="fl">1.0</span>, key_tenors<span class="op">=</span>keys).reindex(methods)</span>
-<span id="cb31-81"><a href="#cb31-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-82"><a href="#cb31-82" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="bu">len</span>(par.index)</span>
-<span id="cb31-83"><a href="#cb31-83" aria-hidden="true" tabindex="-1"></a>sample_dates <span class="op">=</span> [par.index[<span class="dv">0</span>], par.index[n <span class="op">//</span> <span class="dv">3</span>], par.index[(<span class="dv">2</span> <span class="op">*</span> n) <span class="op">//</span> <span class="dv">3</span>], par.index[<span class="op">-</span><span class="dv">1</span>]]</span>
-<span id="cb31-84"><a href="#cb31-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-85"><a href="#cb31-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-86"><a href="#cb31-86" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>(<span class="dv">22</span>, <span class="dv">16</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb31-87"><a href="#cb31-87" aria-hidden="true" tabindex="-1"></a>gs <span class="op">=</span> fig.add_gridspec(<span class="dv">4</span>, <span class="dv">4</span>)</span>
-<span id="cb31-88"><a href="#cb31-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-89"><a href="#cb31-89" aria-hidden="true" tabindex="-1"></a>ax_all <span class="op">=</span> fig.add_subplot(gs[<span class="dv">0</span>, <span class="dv">0</span>])</span>
-<span id="cb31-90"><a href="#cb31-90" aria-hidden="true" tabindex="-1"></a>pl.plot_par_yields_history(ax_all, par, title<span class="op">=</span><span class="st">"Par Yields Over Time"</span>)</span>
-<span id="cb31-91"><a href="#cb31-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-92"><a href="#cb31-92" aria-hidden="true" tabindex="-1"></a>ax_snap <span class="op">=</span> fig.add_subplot(gs[<span class="dv">0</span>, <span class="dv">1</span>])</span>
-<span id="cb31-93"><a href="#cb31-93" aria-hidden="true" tabindex="-1"></a>pl.plot_yield_curve_snapshots(ax_snap, par, tenor_cols<span class="op">=</span>tenor_cols, sample_dates<span class="op">=</span>sample_dates, title<span class="op">=</span><span class="st">"Yield Curve Snapshots"</span>)</span>
-<span id="cb31-94"><a href="#cb31-94" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-95"><a href="#cb31-95" aria-hidden="true" tabindex="-1"></a>ax_par <span class="op">=</span> fig.add_subplot(gs[<span class="dv">0</span>, <span class="dv">2</span>])</span>
-<span id="cb31-96"><a href="#cb31-96" aria-hidden="true" tabindex="-1"></a>pl.draw_market_par_points(ax_par, pillars.T, pillars.par)</span>
-<span id="cb31-97"><a href="#cb31-97" aria-hidden="true" tabindex="-1"></a>rmse_label_map <span class="op">=</span> {</span>
-<span id="cb31-98"><a href="#cb31-98" aria-hidden="true" tabindex="-1"></a>    m: <span class="ss">f"</span><span class="sc">{</span>m<span class="sc">}</span><span class="ss"> (IS </span><span class="sc">{</span>rmse<span class="sc">.</span>loc[m, <span class="st">'rmse'</span>]<span class="sc">:.6f}</span><span class="ss">, OOS </span><span class="sc">{</span>rmse<span class="sc">.</span>loc[m, <span class="st">'rmse_oos'</span>]<span class="sc">:.6f}</span><span class="ss">)"</span> <span class="cf">if</span> m <span class="kw">in</span> rmse.index <span class="cf">else</span> m</span>
-<span id="cb31-99"><a href="#cb31-99" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> m <span class="kw">in</span> methods</span>
-<span id="cb31-100"><a href="#cb31-100" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb31-101"><a href="#cb31-101" aria-hidden="true" tabindex="-1"></a>pl.draw_curve_lines(ax_par, par_fit_table, scale<span class="op">=</span><span class="fl">100.0</span>, label_map<span class="op">=</span>rmse_label_map)</span>
-<span id="cb31-102"><a href="#cb31-102" aria-hidden="true" tabindex="-1"></a>pl.style_axis(ax_par, title<span class="op">=</span><span class="st">"Par Yield Curve Fit"</span>, xlabel<span class="op">=</span><span class="st">"Maturity (Years)"</span>, ylabel<span class="op">=</span><span class="st">"Par Yield (%)"</span>)</span>
-<span id="cb31-103"><a href="#cb31-103" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-104"><a href="#cb31-104" aria-hidden="true" tabindex="-1"></a>ax_zero <span class="op">=</span> fig.add_subplot(gs[<span class="dv">0</span>, <span class="dv">3</span>])</span>
-<span id="cb31-105"><a href="#cb31-105" aria-hidden="true" tabindex="-1"></a>pl.plot_zero_curves(ax_zero, zero_table, title<span class="op">=</span><span class="st">"Zero Curves"</span>)</span>
-<span id="cb31-106"><a href="#cb31-106" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-107"><a href="#cb31-107" aria-hidden="true" tabindex="-1"></a>ax_df <span class="op">=</span> fig.add_subplot(gs[<span class="dv">1</span>, <span class="dv">0</span>])</span>
-<span id="cb31-108"><a href="#cb31-108" aria-hidden="true" tabindex="-1"></a>pl.plot_discount_curves(ax_df, df_table, title<span class="op">=</span><span class="st">"Discount Curves"</span>)</span>
-<span id="cb31-109"><a href="#cb31-109" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-110"><a href="#cb31-110" aria-hidden="true" tabindex="-1"></a>ax_fwd <span class="op">=</span> fig.add_subplot(gs[<span class="dv">1</span>, <span class="dv">1</span>])</span>
-<span id="cb31-111"><a href="#cb31-111" aria-hidden="true" tabindex="-1"></a>pl.plot_forward_curves(ax_fwd, fwd_table, title<span class="op">=</span><span class="st">"Forward Curves"</span>)</span>
-<span id="cb31-112"><a href="#cb31-112" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-113"><a href="#cb31-113" aria-hidden="true" tabindex="-1"></a>ax_total <span class="op">=</span> fig.add_subplot(gs[<span class="dv">1</span>, <span class="dv">2</span>])</span>
-<span id="cb31-114"><a href="#cb31-114" aria-hidden="true" tabindex="-1"></a>pl.plot_total_pv(ax_total, metrics.total_pv, title<span class="op">=</span><span class="st">"Synthetic Book Total PV"</span>)</span>
+<span id="cb31-64"><a href="#cb31-64" aria-hidden="true" tabindex="-1"></a>asof <span class="op">=</span> discounting.resolve_asof(par.index)</span>
+<span id="cb31-65"><a href="#cb31-65" aria-hidden="true" tabindex="-1"></a>pillars <span class="op">=</span> bootstrap.bootstrap_pillars(</span>
+<span id="cb31-66"><a href="#cb31-66" aria-hidden="true" tabindex="-1"></a>    par.loc[asof],</span>
+<span id="cb31-67"><a href="#cb31-67" aria-hidden="true" tabindex="-1"></a>    asof<span class="op">=</span>asof,</span>
+<span id="cb31-68"><a href="#cb31-68" aria-hidden="true" tabindex="-1"></a>    tenor_cols<span class="op">=</span>tenor_cols,</span>
+<span id="cb31-69"><a href="#cb31-69" aria-hidden="true" tabindex="-1"></a>    freq<span class="op">=</span>freq,</span>
+<span id="cb31-70"><a href="#cb31-70" aria-hidden="true" tabindex="-1"></a>    short_end<span class="op">=</span>short_end)</span>
+<span id="cb31-71"><a href="#cb31-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-72"><a href="#cb31-72" aria-hidden="true" tabindex="-1"></a>curves <span class="op">=</span> smoothers.fit_curves(pillars, methods<span class="op">=</span>methods, freq<span class="op">=</span>freq)</span>
+<span id="cb31-73"><a href="#cb31-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-74"><a href="#cb31-74" aria-hidden="true" tabindex="-1"></a>curve_t_max <span class="op">=</span> <span class="bu">max</span>(<span class="fl">30.0</span>, <span class="bu">float</span>(pillars.T.<span class="bu">max</span>()))</span>
+<span id="cb31-75"><a href="#cb31-75" aria-hidden="true" tabindex="-1"></a>plot_grid <span class="op">=</span> np.linspace(<span class="bu">max</span>(<span class="dv">1</span> <span class="op">/</span> <span class="dv">12</span>, <span class="bu">float</span>(pillars.T.<span class="bu">min</span>())), <span class="bu">float</span>(pillars.T.<span class="bu">max</span>()), <span class="dv">250</span>)</span>
+<span id="cb31-76"><a href="#cb31-76" aria-hidden="true" tabindex="-1"></a>par_fit_table <span class="op">=</span> discounting.par_curve_table(curves, grid<span class="op">=</span>plot_grid, freq<span class="op">=</span>freq)</span>
+<span id="cb31-77"><a href="#cb31-77" aria-hidden="true" tabindex="-1"></a>zero_table <span class="op">=</span> discounting.zero_curve_table(curves, t_min<span class="op">=</span><span class="dv">1</span> <span class="op">/</span> <span class="dv">12</span>, t_max<span class="op">=</span>curve_t_max, points<span class="op">=</span><span class="dv">400</span>)</span>
+<span id="cb31-78"><a href="#cb31-78" aria-hidden="true" tabindex="-1"></a>fwd_table <span class="op">=</span> forwards.forward_curve_table(curves, t_min<span class="op">=</span><span class="dv">1</span> <span class="op">/</span> <span class="dv">12</span>, t_max<span class="op">=</span>curve_t_max, points<span class="op">=</span><span class="dv">400</span>)</span>
+<span id="cb31-79"><a href="#cb31-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-80"><a href="#cb31-80" aria-hidden="true" tabindex="-1"></a>rmse <span class="op">=</span> bootstrap.rmse_backtest(</span>
+<span id="cb31-81"><a href="#cb31-81" aria-hidden="true" tabindex="-1"></a>    par.tail(<span class="dv">100</span>), methods<span class="op">=</span>methods, holdouts<span class="op">=</span>holdouts,</span>
+<span id="cb31-82"><a href="#cb31-82" aria-hidden="true" tabindex="-1"></a>    freq<span class="op">=</span>freq, short_end<span class="op">=</span>short_end, tenor_cols<span class="op">=</span>tenor_cols)</span>
+<span id="cb31-83"><a href="#cb31-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-84"><a href="#cb31-84" aria-hidden="true" tabindex="-1"></a>primary_curve_method, primary_curve_name, rmse_rank <span class="op">=</span> bootstrap.select_primary_curve(</span>
+<span id="cb31-85"><a href="#cb31-85" aria-hidden="true" tabindex="-1"></a>    rmse, methods<span class="op">=</span>methods, curves<span class="op">=</span>curves)</span>
+<span id="cb31-86"><a href="#cb31-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-87"><a href="#cb31-87" aria-hidden="true" tabindex="-1"></a>example_bond, used_tenor <span class="op">=</span> bond_pricing.bond_from_par_curve_row(</span>
+<span id="cb31-88"><a href="#cb31-88" aria-hidden="true" tabindex="-1"></a>    par.loc[asof], maturity_years<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb31-89"><a href="#cb31-89" aria-hidden="true" tabindex="-1"></a>    tenor_cols<span class="op">=</span>tenor_cols, freq<span class="op">=</span>freq)</span>
+<span id="cb31-90"><a href="#cb31-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-91"><a href="#cb31-91" aria-hidden="true" tabindex="-1"></a>bond_tbl <span class="op">=</span> risk.bond_price_and_risk(example_bond, curves, bump_bp<span class="op">=</span><span class="fl">1.0</span>, key_tenors<span class="op">=</span>keys).reindex(methods)</span>
+<span id="cb31-92"><a href="#cb31-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-93"><a href="#cb31-93" aria-hidden="true" tabindex="-1"></a>primary_curve_lookup <span class="op">=</span> ladder.make_curve_lookup(</span>
+<span id="cb31-94"><a href="#cb31-94" aria-hidden="true" tabindex="-1"></a>    par, curve_method<span class="op">=</span>primary_curve_method,</span>
+<span id="cb31-95"><a href="#cb31-95" aria-hidden="true" tabindex="-1"></a>    tenor_cols<span class="op">=</span>tenor_cols, freq<span class="op">=</span>freq, short_end<span class="op">=</span>short_end)</span>
+<span id="cb31-96"><a href="#cb31-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-97"><a href="#cb31-97" aria-hidden="true" tabindex="-1"></a>baseline_ladder <span class="op">=</span> fi_backtest.run_bond_ladder_backtest(</span>
+<span id="cb31-98"><a href="#cb31-98" aria-hidden="true" tabindex="-1"></a>    par_yields<span class="op">=</span>par, strategy_name<span class="op">=</span><span class="st">"baseline_ladder"</span>,</span>
+<span id="cb31-99"><a href="#cb31-99" aria-hidden="true" tabindex="-1"></a>    curve_method<span class="op">=</span>primary_curve_method, curve_lookup<span class="op">=</span>primary_curve_lookup,</span>
+<span id="cb31-100"><a href="#cb31-100" aria-hidden="true" tabindex="-1"></a>    buckets<span class="op">=</span>keys, target_weights<span class="op">=</span>target_weights, rebalance_band<span class="op">=</span><span class="fl">0.05</span>,</span>
+<span id="cb31-101"><a href="#cb31-101" aria-hidden="true" tabindex="-1"></a>    trading_cost_bps<span class="op">=</span><span class="fl">1.0</span>, duration_target<span class="op">=</span><span class="va">None</span>, freq<span class="op">=</span>freq,</span>
+<span id="cb31-102"><a href="#cb31-102" aria-hidden="true" tabindex="-1"></a>    short_end<span class="op">=</span>short_end, tenor_cols<span class="op">=</span>tenor_cols,</span>
+<span id="cb31-103"><a href="#cb31-103" aria-hidden="true" tabindex="-1"></a>    risk_bucket_bounds<span class="op">=</span>risk_bucket_bounds)</span>
+<span id="cb31-104"><a href="#cb31-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-105"><a href="#cb31-105" aria-hidden="true" tabindex="-1"></a>duration_ladder <span class="op">=</span> fi_backtest.run_bond_ladder_backtest(</span>
+<span id="cb31-106"><a href="#cb31-106" aria-hidden="true" tabindex="-1"></a>    par_yields<span class="op">=</span>par, strategy_name<span class="op">=</span><span class="st">"duration_target_ladder"</span>,</span>
+<span id="cb31-107"><a href="#cb31-107" aria-hidden="true" tabindex="-1"></a>    curve_method<span class="op">=</span>primary_curve_method,</span>
+<span id="cb31-108"><a href="#cb31-108" aria-hidden="true" tabindex="-1"></a>    curve_lookup<span class="op">=</span>primary_curve_lookup, buckets<span class="op">=</span>keys,</span>
+<span id="cb31-109"><a href="#cb31-109" aria-hidden="true" tabindex="-1"></a>    target_weights<span class="op">=</span>target_weights, rebalance_band<span class="op">=</span><span class="fl">0.05</span>,</span>
+<span id="cb31-110"><a href="#cb31-110" aria-hidden="true" tabindex="-1"></a>    trading_cost_bps<span class="op">=</span><span class="fl">1.0</span>, duration_target<span class="op">=</span>duration_target,</span>
+<span id="cb31-111"><a href="#cb31-111" aria-hidden="true" tabindex="-1"></a>    duration_band<span class="op">=</span>duration_band,</span>
+<span id="cb31-112"><a href="#cb31-112" aria-hidden="true" tabindex="-1"></a>    overlay_fn<span class="op">=</span>duration_overlay.duration_switch_overlay,</span>
+<span id="cb31-113"><a href="#cb31-113" aria-hidden="true" tabindex="-1"></a>    freq<span class="op">=</span>freq, short_end<span class="op">=</span>short_end, tenor_cols<span class="op">=</span>tenor_cols,</span>
+<span id="cb31-114"><a href="#cb31-114" aria-hidden="true" tabindex="-1"></a>    risk_bucket_bounds<span class="op">=</span>risk_bucket_bounds)</span>
 <span id="cb31-115"><a href="#cb31-115" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-116"><a href="#cb31-116" aria-hidden="true" tabindex="-1"></a>ax_bucket <span class="op">=</span> fig.add_subplot(gs[<span class="dv">1</span>, <span class="dv">3</span>])</span>
-<span id="cb31-117"><a href="#cb31-117" aria-hidden="true" tabindex="-1"></a>pl.plot_bucket_pv(ax_bucket, metrics.bucket_pv, title<span class="op">=</span><span class="st">"Bucket PV (Last Date)"</span>)</span>
-<span id="cb31-118"><a href="#cb31-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-119"><a href="#cb31-119" aria-hidden="true" tabindex="-1"></a>ax_pv01 <span class="op">=</span> fig.add_subplot(gs[<span class="dv">2</span>, <span class="dv">0</span>])</span>
-<span id="cb31-120"><a href="#cb31-120" aria-hidden="true" tabindex="-1"></a>pl.plot_risk_metric(ax_pv01, metrics.risk, metric<span class="op">=</span><span class="st">"pv01"</span>, title<span class="op">=</span><span class="st">"PV01"</span>)</span>
-<span id="cb31-121"><a href="#cb31-121" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-122"><a href="#cb31-122" aria-hidden="true" tabindex="-1"></a>ax_conv <span class="op">=</span> fig.add_subplot(gs[<span class="dv">2</span>, <span class="dv">1</span>])</span>
-<span id="cb31-123"><a href="#cb31-123" aria-hidden="true" tabindex="-1"></a>pl.plot_risk_metric(ax_conv, metrics.risk, metric<span class="op">=</span><span class="st">"convexity"</span>, title<span class="op">=</span><span class="st">"Convexity"</span>)</span>
-<span id="cb31-124"><a href="#cb31-124" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-125"><a href="#cb31-125" aria-hidden="true" tabindex="-1"></a>ax_rmse <span class="op">=</span> fig.add_subplot(gs[<span class="dv">2</span>, <span class="dv">2</span>])</span>
-<span id="cb31-126"><a href="#cb31-126" aria-hidden="true" tabindex="-1"></a>pl.plot_rmse_bars(ax_rmse, rmse_sorted, title<span class="op">=</span><span class="st">"RMSE (IS/OOS)"</span>)</span>
-<span id="cb31-127"><a href="#cb31-127" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-128"><a href="#cb31-128" aria-hidden="true" tabindex="-1"></a>ax_bond <span class="op">=</span> fig.add_subplot(gs[<span class="dv">2</span>, <span class="dv">3</span>])</span>
-<span id="cb31-129"><a href="#cb31-129" aria-hidden="true" tabindex="-1"></a>pl.plot_bond_metric_bar(ax_bond, bond_tbl, metric<span class="op">=</span><span class="st">"pv01"</span>, title<span class="op">=</span><span class="ss">f"Bond PV01 (</span><span class="sc">{</span>used_tenor<span class="sc">}</span><span class="ss"> coupon)"</span>)</span>
+<span id="cb31-116"><a href="#cb31-116" aria-hidden="true" tabindex="-1"></a>baseline_strategy <span class="op">=</span> baseline_ladder.diagnostics[<span class="st">"strategy"</span>]</span>
+<span id="cb31-117"><a href="#cb31-117" aria-hidden="true" tabindex="-1"></a>duration_strategy <span class="op">=</span> duration_ladder.diagnostics[<span class="st">"strategy"</span>]</span>
+<span id="cb31-118"><a href="#cb31-118" aria-hidden="true" tabindex="-1"></a>baseline_risk <span class="op">=</span> baseline_ladder.diagnostics[<span class="st">"risk"</span>]</span>
+<span id="cb31-119"><a href="#cb31-119" aria-hidden="true" tabindex="-1"></a>duration_risk <span class="op">=</span> duration_ladder.diagnostics[<span class="st">"risk"</span>]</span>
+<span id="cb31-120"><a href="#cb31-120" aria-hidden="true" tabindex="-1"></a>baseline_krd <span class="op">=</span> baseline_ladder.diagnostics[<span class="st">"krd"</span>]</span>
+<span id="cb31-121"><a href="#cb31-121" aria-hidden="true" tabindex="-1"></a>duration_krd <span class="op">=</span> duration_ladder.diagnostics[<span class="st">"krd"</span>]</span>
+<span id="cb31-122"><a href="#cb31-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-123"><a href="#cb31-123" aria-hidden="true" tabindex="-1"></a>comparison_summary <span class="op">=</span> pd.concat(</span>
+<span id="cb31-124"><a href="#cb31-124" aria-hidden="true" tabindex="-1"></a>    [ladder.ladder_performance_table(baseline_strategy),</span>
+<span id="cb31-125"><a href="#cb31-125" aria-hidden="true" tabindex="-1"></a>    ladder.ladder_performance_table(duration_strategy)], axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb31-126"><a href="#cb31-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-127"><a href="#cb31-127" aria-hidden="true" tabindex="-1"></a>duration_tracking <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb31-128"><a href="#cb31-128" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"Baseline"</span>: baseline_risk[<span class="st">"effective_duration"</span>],</span>
+<span id="cb31-129"><a href="#cb31-129" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Duration Targeted"</span>: duration_risk[<span class="st">"effective_duration"</span>]})</span>
 <span id="cb31-130"><a href="#cb31-130" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-131"><a href="#cb31-131" aria-hidden="true" tabindex="-1"></a>krd_axes <span class="op">=</span> [fig.add_subplot(gs[<span class="dv">3</span>, i]) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">4</span>)]</span>
-<span id="cb31-132"><a href="#cb31-132" aria-hidden="true" tabindex="-1"></a>ims <span class="op">=</span> []</span>
-<span id="cb31-133"><a href="#cb31-133" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, method <span class="kw">in</span> <span class="bu">zip</span>(krd_axes, methods, strict<span class="op">=</span><span class="va">False</span>):</span>
-<span id="cb31-134"><a href="#cb31-134" aria-hidden="true" tabindex="-1"></a>    im <span class="op">=</span> pl.plot_krd_heatmap(ax, krd_df, method<span class="op">=</span>method, keys<span class="op">=</span>keys, title<span class="op">=</span><span class="ss">f"KRD - </span><span class="sc">{</span>method<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb31-135"><a href="#cb31-135" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> im <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb31-136"><a href="#cb31-136" aria-hidden="true" tabindex="-1"></a>        ims.append(im)</span>
-<span id="cb31-137"><a href="#cb31-137" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> ims:</span>
-<span id="cb31-138"><a href="#cb31-138" aria-hidden="true" tabindex="-1"></a>    fig.colorbar(ims[<span class="dv">0</span>], ax<span class="op">=</span>krd_axes, shrink<span class="op">=</span><span class="fl">0.8</span>, location<span class="op">=</span><span class="st">"right"</span>, label<span class="op">=</span><span class="st">"KRD"</span>)</span>
-<span id="cb31-139"><a href="#cb31-139" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-140"><a href="#cb31-140" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">"Project 01 - Yield Curve, Pricing, and Risk (Japan Data)"</span>, y<span class="op">=</span><span class="fl">1.02</span>)</span>
-<span id="cb31-141"><a href="#cb31-141" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb31-131"><a href="#cb31-131" aria-hidden="true" tabindex="-1"></a>latest_krd <span class="op">=</span> risk.latest_krd_table(duration_krd)</span>
+<span id="cb31-132"><a href="#cb31-132" aria-hidden="true" tabindex="-1"></a>duration_sanity <span class="op">=</span> risk.duration_sanity_table(duration_risk, duration_krd)</span>
+<span id="cb31-133"><a href="#cb31-133" aria-hidden="true" tabindex="-1"></a>pv01_sanity <span class="op">=</span> risk.pv01_sanity_table(duration_risk, duration_krd)</span>
+<span id="cb31-134"><a href="#cb31-134" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-135"><a href="#cb31-135" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="bu">len</span>(par.index)</span>
+<span id="cb31-136"><a href="#cb31-136" aria-hidden="true" tabindex="-1"></a>sample_dates <span class="op">=</span> [par.index[<span class="dv">0</span>], par.index[n <span class="op">//</span> <span class="dv">3</span>], par.index[(<span class="dv">2</span> <span class="op">*</span> n) <span class="op">//</span> <span class="dv">3</span>], par.index[<span class="op">-</span><span class="dv">1</span>]]</span>
+<span id="cb31-137"><a href="#cb31-137" aria-hidden="true" tabindex="-1"></a>rmse_label_map <span class="op">=</span> {</span>
+<span id="cb31-138"><a href="#cb31-138" aria-hidden="true" tabindex="-1"></a>    m: <span class="ss">f"</span><span class="sc">{</span>rmse_rank<span class="sc">.</span>loc[m, <span class="st">'name'</span>]<span class="sc">}</span><span class="ss"> (IS </span><span class="sc">{</span>rmse_rank<span class="sc">.</span>loc[m, <span class="st">'rmse'</span>]<span class="sc">:.6f}</span><span class="ss">, OOS </span><span class="sc">{</span>rmse_rank<span class="sc">.</span>loc[m, <span class="st">'rmse_oos'</span>]<span class="sc">:.6f}</span><span class="ss">)"</span></span>
+<span id="cb31-139"><a href="#cb31-139" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> m <span class="kw">in</span> rmse_rank.index</span>
+<span id="cb31-140"><a href="#cb31-140" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span> m</span>
+<span id="cb31-141"><a href="#cb31-141" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> m <span class="kw">in</span> methods}</span>
 <span id="cb31-142"><a href="#cb31-142" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-143"><a href="#cb31-143" aria-hidden="true" tabindex="-1"></a>display(bond_tbl)</span>
-<span id="cb31-144"><a href="#cb31-144" aria-hidden="true" tabindex="-1"></a>display(rmse_sorted)</span>
-<span id="cb31-145"><a href="#cb31-145" aria-hidden="true" tabindex="-1"></a></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb31-143"><a href="#cb31-143" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>(<span class="dv">22</span>, <span class="dv">14</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb31-144"><a href="#cb31-144" aria-hidden="true" tabindex="-1"></a>gs <span class="op">=</span> fig.add_gridspec(<span class="dv">3</span>, <span class="dv">4</span>)</span>
+<span id="cb31-145"><a href="#cb31-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-146"><a href="#cb31-146" aria-hidden="true" tabindex="-1"></a>ax_all <span class="op">=</span> fig.add_subplot(gs[<span class="dv">0</span>, <span class="dv">0</span>])</span>
+<span id="cb31-147"><a href="#cb31-147" aria-hidden="true" tabindex="-1"></a>curve_plots.plot_par_yields_history(ax_all, par, title<span class="op">=</span><span class="st">"Par Yields Over Time"</span>)</span>
+<span id="cb31-148"><a href="#cb31-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-149"><a href="#cb31-149" aria-hidden="true" tabindex="-1"></a>ax_snap <span class="op">=</span> fig.add_subplot(gs[<span class="dv">0</span>, <span class="dv">1</span>])</span>
+<span id="cb31-150"><a href="#cb31-150" aria-hidden="true" tabindex="-1"></a>curve_plots.plot_yield_curve_snapshots(</span>
+<span id="cb31-151"><a href="#cb31-151" aria-hidden="true" tabindex="-1"></a>    ax_snap,</span>
+<span id="cb31-152"><a href="#cb31-152" aria-hidden="true" tabindex="-1"></a>    par,</span>
+<span id="cb31-153"><a href="#cb31-153" aria-hidden="true" tabindex="-1"></a>    tenor_cols<span class="op">=</span>tenor_cols,</span>
+<span id="cb31-154"><a href="#cb31-154" aria-hidden="true" tabindex="-1"></a>    sample_dates<span class="op">=</span>sample_dates,</span>
+<span id="cb31-155"><a href="#cb31-155" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Yield Curve Snapshots"</span>)</span>
+<span id="cb31-156"><a href="#cb31-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-157"><a href="#cb31-157" aria-hidden="true" tabindex="-1"></a>ax_par <span class="op">=</span> fig.add_subplot(gs[<span class="dv">0</span>, <span class="dv">2</span>])</span>
+<span id="cb31-158"><a href="#cb31-158" aria-hidden="true" tabindex="-1"></a>curve_plots.draw_market_par_points(ax_par, pillars.T, pillars.par)</span>
+<span id="cb31-159"><a href="#cb31-159" aria-hidden="true" tabindex="-1"></a>curve_plots.draw_curve_lines(ax_par, par_fit_table, scale<span class="op">=</span><span class="fl">100.0</span>, label_map<span class="op">=</span>rmse_label_map)</span>
+<span id="cb31-160"><a href="#cb31-160" aria-hidden="true" tabindex="-1"></a>curve_plots.style_axis(</span>
+<span id="cb31-161"><a href="#cb31-161" aria-hidden="true" tabindex="-1"></a>    ax_par,</span>
+<span id="cb31-162"><a href="#cb31-162" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="ss">f"Par Fit (Primary: </span><span class="sc">{</span>primary_curve_method<span class="sc">}</span><span class="ss">)"</span>, xlabel<span class="op">=</span><span class="st">"Maturity (Years)"</span>, ylabel<span class="op">=</span><span class="st">"Par Yield (%)"</span>)</span>
+<span id="cb31-163"><a href="#cb31-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-164"><a href="#cb31-164" aria-hidden="true" tabindex="-1"></a>ax_rmse <span class="op">=</span> fig.add_subplot(gs[<span class="dv">0</span>, <span class="dv">3</span>])</span>
+<span id="cb31-165"><a href="#cb31-165" aria-hidden="true" tabindex="-1"></a>curve_plots.plot_rmse_bars(ax_rmse, rmse_rank, title<span class="op">=</span><span class="st">"Curve Fit RMSE"</span>)</span>
+<span id="cb31-166"><a href="#cb31-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-167"><a href="#cb31-167" aria-hidden="true" tabindex="-1"></a>ax_zero <span class="op">=</span> fig.add_subplot(gs[<span class="dv">1</span>, <span class="dv">0</span>])</span>
+<span id="cb31-168"><a href="#cb31-168" aria-hidden="true" tabindex="-1"></a>curve_plots.plot_zero_curves(ax_zero, zero_table, title<span class="op">=</span><span class="st">"Zero Curves"</span>)</span>
+<span id="cb31-169"><a href="#cb31-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-170"><a href="#cb31-170" aria-hidden="true" tabindex="-1"></a>ax_fwd <span class="op">=</span> fig.add_subplot(gs[<span class="dv">1</span>, <span class="dv">1</span>])</span>
+<span id="cb31-171"><a href="#cb31-171" aria-hidden="true" tabindex="-1"></a>curve_plots.plot_forward_curves(ax_fwd, fwd_table, title<span class="op">=</span><span class="st">"Forward Curves"</span>)</span>
+<span id="cb31-172"><a href="#cb31-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-173"><a href="#cb31-173" aria-hidden="true" tabindex="-1"></a>ax_pv01 <span class="op">=</span> fig.add_subplot(gs[<span class="dv">1</span>, <span class="dv">2</span>])</span>
+<span id="cb31-174"><a href="#cb31-174" aria-hidden="true" tabindex="-1"></a>fi_plots.plot_risk_timeseries(</span>
+<span id="cb31-175"><a href="#cb31-175" aria-hidden="true" tabindex="-1"></a>    ax_pv01,</span>
+<span id="cb31-176"><a href="#cb31-176" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"Baseline"</span>: baseline_risk, <span class="st">"Duration Targeted"</span>: duration_risk},</span>
+<span id="cb31-177"><a href="#cb31-177" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"pv01"</span>, title<span class="op">=</span><span class="st">"Ladder PV01"</span>)</span>
+<span id="cb31-178"><a href="#cb31-178" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-179"><a href="#cb31-179" aria-hidden="true" tabindex="-1"></a>ax_krd <span class="op">=</span> fig.add_subplot(gs[<span class="dv">1</span>, <span class="dv">3</span>])</span>
+<span id="cb31-180"><a href="#cb31-180" aria-hidden="true" tabindex="-1"></a>fi_plots.plot_krd_lines(</span>
+<span id="cb31-181"><a href="#cb31-181" aria-hidden="true" tabindex="-1"></a>    ax_krd, duration_krd, value<span class="op">=</span><span class="st">"krd"</span>, keys<span class="op">=</span>keys,</span>
+<span id="cb31-182"><a href="#cb31-182" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Duration-Target Key-Rate Duration"</span>)</span>
+<span id="cb31-183"><a href="#cb31-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-184"><a href="#cb31-184" aria-hidden="true" tabindex="-1"></a>ax_nav <span class="op">=</span> fig.add_subplot(gs[<span class="dv">2</span>, <span class="dv">0</span>])</span>
+<span id="cb31-185"><a href="#cb31-185" aria-hidden="true" tabindex="-1"></a>fi_plots.plot_ladder_nav(ax_nav,</span>
+<span id="cb31-186"><a href="#cb31-186" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"Baseline"</span>: baseline_ladder.nav, <span class="st">"Duration Targeted"</span>: duration_ladder.nav},</span>
+<span id="cb31-187"><a href="#cb31-187" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Ladder NAV"</span>)</span>
+<span id="cb31-188"><a href="#cb31-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-189"><a href="#cb31-189" aria-hidden="true" tabindex="-1"></a>ax_convexity <span class="op">=</span> fig.add_subplot(gs[<span class="dv">2</span>, <span class="dv">1</span>])</span>
+<span id="cb31-190"><a href="#cb31-190" aria-hidden="true" tabindex="-1"></a>fi_plots.plot_risk_timeseries(ax_convexity,</span>
+<span id="cb31-191"><a href="#cb31-191" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"Baseline"</span>: baseline_risk, <span class="st">"Duration Targeted"</span>: duration_risk},</span>
+<span id="cb31-192"><a href="#cb31-192" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"convexity"</span>, title<span class="op">=</span><span class="st">"Ladder Convexity"</span>)</span>
+<span id="cb31-193"><a href="#cb31-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-194"><a href="#cb31-194" aria-hidden="true" tabindex="-1"></a>ax_duration <span class="op">=</span> fig.add_subplot(gs[<span class="dv">2</span>, <span class="dv">2</span>])</span>
+<span id="cb31-195"><a href="#cb31-195" aria-hidden="true" tabindex="-1"></a>fi_plots.plot_duration_tracking( ax_duration, duration_tracking,</span>
+<span id="cb31-196"><a href="#cb31-196" aria-hidden="true" tabindex="-1"></a>    target<span class="op">=</span>duration_target, band<span class="op">=</span>duration_band,</span>
+<span id="cb31-197"><a href="#cb31-197" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Effective Duration Tracking"</span>)</span>
+<span id="cb31-198"><a href="#cb31-198" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-199"><a href="#cb31-199" aria-hidden="true" tabindex="-1"></a>ax_carry <span class="op">=</span> fig.add_subplot(gs[<span class="dv">2</span>, <span class="dv">3</span>])</span>
+<span id="cb31-200"><a href="#cb31-200" aria-hidden="true" tabindex="-1"></a>fi_plots.plot_carry_return_contributions( ax_carry,</span>
+<span id="cb31-201"><a href="#cb31-201" aria-hidden="true" tabindex="-1"></a>    duration_ladder.diagnostics[<span class="st">"carry"</span>], cumulative<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb31-202"><a href="#cb31-202" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Duration-Target Cumulative Carry / Roll / Curve Move"</span>)</span>
+<span id="cb31-203"><a href="#cb31-203" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-204"><a href="#cb31-204" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">"Project 01 - Curves, Bond Risk, and Ladder Duration Targeting (Japan Data)"</span>, y<span class="op">=</span><span class="fl">1.02</span>)</span>
+<span id="cb31-205"><a href="#cb31-205" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb31-206"><a href="#cb31-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-207"><a href="#cb31-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-208"><a href="#cb31-208" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Asof date: </span><span class="sc">{</span>asof<span class="sc">.</span>date()<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb31-209"><a href="#cb31-209" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Primary curve selected for ladder: </span><span class="sc">{</span>primary_curve_method<span class="sc">}</span><span class="ss"> (</span><span class="sc">{</span>primary_curve_name<span class="sc">}</span><span class="ss">)"</span>)</span>
+<span id="cb31-210"><a href="#cb31-210" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Bond price/risk table:"</span>)</span>
+<span id="cb31-211"><a href="#cb31-211" aria-hidden="true" tabindex="-1"></a>display(bond_tbl)</span>
+<span id="cb31-212"><a href="#cb31-212" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"RMSE ranking:"</span>)</span>
+<span id="cb31-213"><a href="#cb31-213" aria-hidden="true" tabindex="-1"></a>display(rmse_rank)</span>
+<span id="cb31-214"><a href="#cb31-214" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Ladder comparison summary:"</span>)</span>
+<span id="cb31-215"><a href="#cb31-215" aria-hidden="true" tabindex="-1"></a>display(comparison_summary)</span>
+<span id="cb31-216"><a href="#cb31-216" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Latest duration-target ladder KRD:"</span>)</span>
+<span id="cb31-217"><a href="#cb31-217" aria-hidden="true" tabindex="-1"></a>display(latest_krd)</span>
+<span id="cb31-218"><a href="#cb31-218" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Duration sanity check:"</span>)</span>
+<span id="cb31-219"><a href="#cb31-219" aria-hidden="true" tabindex="-1"></a>display(duration_sanity.tail())</span>
+<span id="cb31-220"><a href="#cb31-220" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"PV01 sanity check:"</span>)</span>
+<span id="cb31-221"><a href="#cb31-221" aria-hidden="true" tabindex="-1"></a>display(pv01_sanity.tail())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
 <p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-19-output-1.png" class="img-fluid figure-img"></p>
 </figure>
 </div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Asof date: 2025-12-30
+Primary curve selected for ladder: nss (NSS)
+Bond price/risk table:</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
@@ -4035,6 +4117,9 @@ Strategy comparison summary:</code></pre>
 
 </div>
 </div>
+<div class="cell-output cell-output-stdout">
+<pre><code>RMSE ranking:</code></pre>
+</div>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4043,6 +4128,7 @@ Strategy comparison summary:</code></pre>
 <thead>
 <tr class="header">
 <th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">name</th>
 <th data-quarto-table-cell-role="th">rmse</th>
 <th data-quarto-table-cell-role="th">rmse_oos</th>
 <th data-quarto-table-cell-role="th">n_obs</th>
@@ -4060,11 +4146,24 @@ Strategy comparison summary:</code></pre>
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th"></th>
 <th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
+<th data-quarto-table-cell-role="th">nss</th>
+<td>NSS</td>
+<td>3.241647e-04</td>
+<td>0.000265</td>
+<td>1100</td>
+<td>400</td>
+<td>100</td>
+<td>100</td>
+<td>0</td>
+</tr>
+<tr class="even">
 <th data-quarto-table-cell-role="th">qp</th>
+<td>QP DF</td>
 <td>2.833055e-09</td>
 <td>0.000426</td>
 <td>1100</td>
@@ -4073,18 +4172,9 @@ Strategy comparison summary:</code></pre>
 <td>100</td>
 <td>0</td>
 </tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">loglinear</th>
-<td>8.669301e-06</td>
-<td>0.000515</td>
-<td>1100</td>
-<td>400</td>
-<td>100</td>
-<td>100</td>
-<td>0</td>
-</tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">pchip</th>
+<td>PCHIP zero</td>
 <td>3.874855e-05</td>
 <td>0.000440</td>
 <td>1100</td>
@@ -4094,14 +4184,207 @@ Strategy comparison summary:</code></pre>
 <td>0</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">nss</th>
-<td>3.241647e-04</td>
-<td>0.000265</td>
+<th data-quarto-table-cell-role="th">loglinear</th>
+<td>Log-linear DF</td>
+<td>8.669301e-06</td>
+<td>0.000515</td>
 <td>1100</td>
 <td>400</td>
 <td>100</td>
 <td>100</td>
 <td>0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Ladder comparison summary:</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">final_nav</th>
+<th data-quarto-table-cell-role="th">annualized_return</th>
+<th data-quarto-table-cell-role="th">annualized_vol</th>
+<th data-quarto-table-cell-role="th">max_drawdown</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">baseline_ladder</th>
+<td>124.657202</td>
+<td>0.008637</td>
+<td>0.027709</td>
+<td>-0.190989</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">duration_target_ladder</th>
+<td>115.472215</td>
+<td>0.005701</td>
+<td>0.014242</td>
+<td>-0.084307</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Latest duration-target ladder KRD:</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">key</th>
+<th data-quarto-table-cell-role="th">krd</th>
+<th data-quarto-table-cell-role="th">key_rate_pv01</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">1260</th>
+<td>2</td>
+<td>0.875942</td>
+<td>0.010115</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1261</th>
+<td>5</td>
+<td>1.181746</td>
+<td>0.013646</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">1262</th>
+<td>10</td>
+<td>2.077895</td>
+<td>0.023994</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1263</th>
+<td>30</td>
+<td>0.816305</td>
+<td>0.009426</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Duration sanity check:</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">krd_sum</th>
+<th data-quarto-table-cell-role="th">effective_duration</th>
+<th data-quarto-table-cell-role="th">modified_duration</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">date</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2025-08-31</th>
+<td>4.964034</td>
+<td>4.959127</td>
+<td>4.926961</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">2025-09-30</th>
+<td>4.956324</td>
+<td>4.956324</td>
+<td>4.921390</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2025-10-31</th>
+<td>4.955246</td>
+<td>4.955246</td>
+<td>4.921839</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">2025-11-30</th>
+<td>4.969994</td>
+<td>4.955872</td>
+<td>4.920005</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2025-12-31</th>
+<td>4.951888</td>
+<td>4.951888</td>
+<td>4.910377</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>PV01 sanity check:</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">key_rate_pv01_sum</th>
+<th data-quarto-table-cell-role="th">pv01</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">date</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2025-08-31</th>
+<td>0.058108</td>
+<td>0.058050</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">2025-09-30</th>
+<td>0.057848</td>
+<td>0.057848</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2025-10-31</th>
+<td>0.057965</td>
+<td>0.057965</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">2025-11-30</th>
+<td>0.057875</td>
+<td>0.057711</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2025-12-31</th>
+<td>0.057181</td>
+<td>0.057181</td>
 </tr>
 </tbody>
 </table>
