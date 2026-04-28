@@ -110,6 +110,7 @@ from .risk import (
     turn_off_unused_axes,
 )
 from .volatility import (
+    format_date_axis,
     plot_iv_forecast_vol,
     plot_overlay_drawdowns,
     plot_overlay_nav,
@@ -135,6 +136,7 @@ __all__ = [
     "draw_market_par_points",
     "fixed_income",
     "format_portfolio_time_axis",
+    "format_date_axis",
     "make_color_map",
     "options",
     "plot_bond_metric_bar",

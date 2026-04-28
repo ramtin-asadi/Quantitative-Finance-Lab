@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -25,6 +26,25 @@ def _date_values(frame: pd.DataFrame, date_col: str = "date") -> pd.Series:
     return pd.to_datetime(frame[date_col], errors="coerce")
 
 
+def format_date_axis(
+    ax: plt.Axes,
+    *,
+    max_ticks: int = 4,
+    labelsize: float = 8.0,
+    rotation: float = 0.0,
+) -> plt.Axes:
+    """Use compact date ticks that fit inside small subplot panels."""
+    locator = mdates.AutoDateLocator(minticks=3, maxticks=max(3, int(max_ticks)), interval_multiples=True)
+    formatter = mdates.ConciseDateFormatter(locator)
+    ax.xaxis.set_major_locator(locator)
+    ax.xaxis.set_major_formatter(formatter)
+    ax.tick_params(axis="x", labelsize=labelsize, rotation=rotation, pad=2)
+    for label in ax.get_xticklabels():
+        label.set_horizontalalignment("right" if rotation else "center")
+    ax.margins(x=0.01)
+    return ax
+
+
 def plot_spot_and_realized_vol(
     ax: plt.Axes,
     spot: pd.Series,
@@ -45,6 +65,7 @@ def plot_spot_and_realized_vol(
     ax_vol.plot(rv.index, rv.values, lw=0.85, alpha=0.7, color=LAB_COLORS[3], label=f"{vol_window}d RV")
     ax_vol.set_ylabel("Ann. vol")
     ax.set_title(title)
+    format_date_axis(ax)
     return ax
 
 
@@ -80,6 +101,7 @@ def plot_iv_forecast_vol(
     ax.set_title(title)
     ax.set_ylabel("Ann. vol")
     ax.legend(loc="best")
+    format_date_axis(ax)
     return ax
 
 
@@ -102,6 +124,7 @@ def plot_vrp_variance_spread(
     ax.axhline(0.0, color="#222222", ls="--", lw=0.8)
     ax.set_title(title)
     ax.set_ylabel("Variance spread")
+    format_date_axis(ax)
     return ax
 
 
@@ -127,6 +150,7 @@ def plot_vrp_rank_zscore(
         ax.plot(dates, pd.to_numeric(vrp_panel[z_col], errors="coerce"), lw=0.9, alpha=0.8, label="z")
     ax.set_title(title)
     ax.legend(loc="best")
+    format_date_axis(ax)
     return ax
 
 
@@ -151,6 +175,7 @@ def plot_overlay_nav(
     ax.set_title(title)
     ax.set_ylabel("NAV")
     ax.legend(loc="best")
+    format_date_axis(ax)
     return ax
 
 
@@ -181,6 +206,7 @@ def plot_overlay_drawdowns(
     ax.axhline(0.0, color="#222222", lw=0.8)
     ax.set_title(title)
     ax.set_ylabel("Drawdown")
+    format_date_axis(ax)
     return ax
 
 
@@ -313,11 +339,12 @@ def plot_volatility_transfer_grid(
     plot_selected_model_counts_by_horizon(axes[6], selected_model_counts, title="Selected model counts by horizon")
     plot_qlike_heatmap(axes[7], score_pivot, model_order=model_order, title="QLIKE heatmap")
     plot_summary_pnl_drawdown_bars(axes[8], summary, title="Total P&L and max drawdown")
-    fig.tight_layout()
+    fig.tight_layout(pad=1.2, w_pad=1.2, h_pad=1.4)
     return fig, axes
 
 
 __all__ = [
+    "format_date_axis",
     "plot_iv_forecast_vol",
     "plot_overlay_drawdowns",
     "plot_overlay_nav",
