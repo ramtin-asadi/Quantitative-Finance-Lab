@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from ..core import Bond, BookMetrics, Curve, CurvePillars, InputError, IssuanceBook, IssuedBond
+from ..common.contracts import Bond, BookMetrics, Curve, CurvePillars, IssuanceBook, IssuedBond
+from ..common.errors import InputError
 from . import (
     bond_pricing,
     bootstrap,

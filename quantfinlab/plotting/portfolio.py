@@ -241,10 +241,17 @@ def plot_finalist_metric_bar(
     metric: str = "Sharpe",
     ax=None,
     title: str | None = None,
+    baseline: str = "EW",
+    include_baseline: bool = True,
 ):
+    strategies_use = (
+        selection.with_baseline(strategies, available=grid_results.index, baseline=baseline)
+        if include_baseline
+        else list(strategies)
+    )
     return plot_metric_bar(
         grid_results,
-        strategies,
+        strategies_use,
         metric=metric,
         ax=ax,
         title=title or f"Finalist {metric}",
@@ -351,8 +358,42 @@ def plot_fixed_cov_mu_comparison(nav: pd.DataFrame, strategies: Sequence[str], *
 
 plot_nav = plot_strategy_nav
 plot_drawdowns = plot_strategy_drawdowns
-plot_finalist_nav = plot_strategy_nav
-plot_finalist_drawdowns = plot_strategy_drawdowns
+def plot_finalist_nav(
+    nav: pd.DataFrame,
+    strategies: Sequence[str],
+    *,
+    ax=None,
+    title: str | None = None,
+    labels: Sequence[str] | None = None,
+    summary: pd.DataFrame | None = None,
+    baseline: str = "EW",
+    include_baseline: bool = True,
+):
+    strategies_use = (
+        selection.with_baseline(strategies, available=nav.columns, baseline=baseline)
+        if include_baseline
+        else list(strategies)
+    )
+    return plot_strategy_nav(nav, strategies_use, ax=ax, title=title, labels=labels, summary=summary)
+
+
+def plot_finalist_drawdowns(
+    nav: pd.DataFrame,
+    strategies: Sequence[str],
+    *,
+    ax=None,
+    title: str | None = None,
+    labels: Sequence[str] | None = None,
+    summary: pd.DataFrame | None = None,
+    baseline: str = "EW",
+    include_baseline: bool = True,
+):
+    strategies_use = (
+        selection.with_baseline(strategies, available=nav.columns, baseline=baseline)
+        if include_baseline
+        else list(strategies)
+    )
+    return plot_strategy_drawdowns(nav, strategies_use, ax=ax, title=title, labels=labels, summary=summary)
 
 
 __all__ = [

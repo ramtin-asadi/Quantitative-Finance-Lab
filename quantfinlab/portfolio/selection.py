@@ -7,8 +7,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from quantfinlab.common.contracts import BacktestResult
 from quantfinlab.common.errors import InputError
-from quantfinlab.core import BacktestResult
 from quantfinlab.portfolio.attribution import effective_number_of_holdings
 
 DEFAULT_ANNUALIZATION = 252.0
@@ -312,6 +312,22 @@ def append_or_select_frontiergrid(finalists: Sequence[str], results: pd.DataFram
     return out
 
 
+def with_baseline(
+    strategies: Sequence[str],
+    *,
+    available: Sequence[str] | pd.Index | None = None,
+    baseline: str = "EW",
+) -> list[str]:
+    """Return strategies with a benchmark baseline first when it is available."""
+    out = list(dict.fromkeys(str(x) for x in strategies))
+    base = str(baseline)
+    if available is not None and base not in {str(x) for x in available}:
+        return out
+    if base in out:
+        out.remove(base)
+    return [base, *out]
+
+
 def select_finalists(
     results: pd.DataFrame,
     *,
@@ -320,9 +336,11 @@ def select_finalists(
     ridge_n: int = 1,
     maxsharpe_n: int = 1,
     include_frontier: bool = True,
+    include_baseline: bool = True,
+    baseline: str = "EW",
     metric: str = "Sharpe",
 ) -> list[str]:
-    """Notebook 2 finalist rule: top families plus FrontierGrid in the same set."""
+    """Notebook 2 finalist rule: EW baseline plus top families and FrontierGrid."""
     picks: list[str] = []
     family_specs = [
         ("MinVar", minvar_n),
@@ -336,6 +354,8 @@ def select_finalists(
     picks = list(dict.fromkeys(picks))
     if include_frontier:
         picks = append_or_select_frontiergrid(picks, results)
+    if include_baseline:
+        picks = with_baseline(picks, available=results.index, baseline=baseline)
     return picks
 
 
@@ -372,8 +392,15 @@ def fixed_cov_mu_comparison(
     return out
 
 
-def finalist_summary(results: pd.DataFrame, finalists: Sequence[str]) -> pd.DataFrame:
-    present = [name for name in finalists if name in results.index]
+def finalist_summary(
+    results: pd.DataFrame,
+    finalists: Sequence[str],
+    *,
+    baseline: str = "EW",
+    include_baseline: bool = True,
+) -> pd.DataFrame:
+    names = with_baseline(finalists, available=results.index, baseline=baseline) if include_baseline else list(finalists)
+    present = [name for name in names if name in results.index]
     out = results.loc[present].copy()
     out.insert(0, "Label", [strategy_display_label(name, out.loc[name].to_dict()) for name in out.index])
     return out
@@ -406,4 +433,5 @@ __all__ = [
     "strategy_display_label",
     "strategy_family",
     "summarize_results",
+    "with_baseline",
 ]

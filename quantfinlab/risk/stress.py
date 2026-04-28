@@ -6,7 +6,7 @@ from typing import Any, Literal
 import numpy as np
 import pandas as pd
 
-from quantfinlab.core import InputError
+from quantfinlab.common.errors import InputError
 from quantfinlab.risk.performance import nav_series
 from quantfinlab.risk.utils import _coerce_objects, _to_datetime_if_possible
 

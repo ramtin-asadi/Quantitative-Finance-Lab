@@ -7,19 +7,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-DFCallable = Callable[[np.ndarray], np.ndarray]
-
-
-class QuantFinLabError(Exception):
-    """Base exception for the library."""
-
-
-class InputError(QuantFinLabError):
-    """Raised when inputs are missing, malformed, or inconsistent."""
-
-
-class ModelError(QuantFinLabError):
-    """Raised when a model fit or solve fails."""
+from .errors import InputError
+from .types import DFCallable
 
 
 @dataclass(frozen=True)
@@ -217,12 +206,9 @@ __all__ = [
     "Curve",
     "CurvePillars",
     "DFCallable",
-    "InputError",
     "IssuanceBook",
     "IssuedBond",
-    "ModelError",
     "PortfolioState",
-    "QuantFinLabError",
     "RiskReportArtifacts",
     "StrategyBuildResult",
     "as_1d_float_array",

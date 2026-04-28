@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from . import curves, diagrams, fixed_income, options, portfolio, risk
+from . import curves, diagrams, fixed_income, options, portfolio, risk, volatility
 from .curves import (
     LAB_COLORS,
     choose_heatmap_cmap,
@@ -109,6 +109,18 @@ from .risk import (
     plot_var_method_bars,
     turn_off_unused_axes,
 )
+from .volatility import (
+    plot_iv_forecast_vol,
+    plot_overlay_drawdowns,
+    plot_overlay_nav,
+    plot_qlike_heatmap,
+    plot_selected_model_counts_by_horizon,
+    plot_spot_and_realized_vol,
+    plot_summary_pnl_drawdown_bars,
+    plot_volatility_transfer_grid,
+    plot_vrp_rank_zscore,
+    plot_vrp_variance_spread,
+)
 
 plot_bsm_comp_graph = plot_computation_dag
 
@@ -160,6 +172,7 @@ __all__ = [
     "plot_hedging_rolling_volatility",
     "plot_iv_bid_ask_band",
     "plot_iv_failure_rate_by_log_moneyness",
+    "plot_iv_forecast_vol",
     "plot_iv_iterations_by_log_moneyness",
     "plot_iv_smile",
     "plot_iv_term_structure",
@@ -175,11 +188,14 @@ __all__ = [
     "plot_moneyness_dte_coverage",
     "plot_nav_compare",
     "plot_numpy_jax_greek_comparison",
+    "plot_overlay_drawdowns",
+    "plot_overlay_nav",
     "plot_par_fit",
     "plot_par_yields_history",
     "plot_parity_error_by_moneyness",
     "plot_pricing_error_hist",
     "plot_quote_filter_waterfall",
+    "plot_qlike_heatmap",
     "plot_realized_vs_implied_vol",
     "plot_risk_metric",
     "plot_risk_return_scatter",
@@ -195,6 +211,8 @@ __all__ = [
     "plot_single_day_parity_forward_extraction",
     "plot_solver_runtime",
     "plot_solver_success",
+    "plot_selected_model_counts_by_horizon",
+    "plot_spot_and_realized_vol",
     "plot_strategy_drawdowns",
     "plot_strategy_nav",
     "plot_stress_bar",
@@ -203,12 +221,16 @@ __all__ = [
     "plot_top_contrib",
     "plot_total_pv",
     "plot_trade_summary",
+    "plot_summary_pnl_drawdown_bars",
     "plot_turnover",
     "plot_turnover_bar",
     "plot_var_backtest",
     "plot_var_backtest_summary",
     "plot_var_exceptions",
     "plot_var_method_bars",
+    "plot_volatility_transfer_grid",
+    "plot_vrp_rank_zscore",
+    "plot_vrp_variance_spread",
     "plot_weights",
     "plot_yield_curve_snapshots",
     "plot_zero_curves",
@@ -218,4 +240,5 @@ __all__ = [
     "show_portfolio_xaxis_like_risk_module",
     "style_axis",
     "turn_off_unused_axes",
+    "volatility",
 ]

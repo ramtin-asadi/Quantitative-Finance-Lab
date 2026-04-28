@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from quantfinlab.core import RiskReportArtifacts
+from quantfinlab.common.contracts import RiskReportArtifacts
 
 from .risk_report import executive_bullets, risk_report
 

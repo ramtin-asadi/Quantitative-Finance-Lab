@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from cycler import cycler
 
-from ..core import Curve
+from ..common.contracts import Curve
 from ..fixed_income import bootstrap, discounting
 
 LAB_COLORS = ["#069AF3","#FE420F", "#00008B", "#008080" , "#CC79A7",

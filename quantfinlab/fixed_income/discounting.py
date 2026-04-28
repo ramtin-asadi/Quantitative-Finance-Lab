@@ -7,7 +7,8 @@ from typing import Any, Literal
 import numpy as np
 import pandas as pd
 
-from ..core import Curve, InputError
+from ..common.contracts import Curve
+from ..common.errors import InputError
 from .tenors import DEFAULT_METHODS, TENOR_PATTERN, tenor_to_years
 
 

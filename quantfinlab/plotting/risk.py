@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from quantfinlab.core import InputError
+from quantfinlab.common.errors import InputError
 from quantfinlab.risk import (
     capm as capm_mod,
     drawdown as drawdown_mod,

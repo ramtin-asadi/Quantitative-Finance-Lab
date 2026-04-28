@@ -5,7 +5,7 @@ import re
 import numpy as np
 import pandas as pd
 
-from ..core import InputError
+from ..common.errors import InputError
 
 TENOR_PATTERN = re.compile(r"^\d+[MY]$")
 DEFAULT_METHODS = ("loglinear", "pchip", "nss", "qp")

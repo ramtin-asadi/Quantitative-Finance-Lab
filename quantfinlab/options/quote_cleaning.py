@@ -240,6 +240,102 @@ def normalize_btc_deribit_option_schema(raw: pd.DataFrame, underlying_default: s
     return normalize_option_quote_schema(raw, profile="btc_deribit", underlying_default=underlying_default)
 
 
+def wide_option_chain_to_long(
+    raw: pd.DataFrame,
+    *,
+    underlying_default: str | None = "SPX",
+    include_greeks: bool = True,
+) -> pd.DataFrame:
+    """
+    Convert one-row-per-strike call/put chains into the long option quote schema.
+
+    The SPX OptionDx files used in Projects 4 and 5 store call and put quotes in
+    separate ``c_*`` and ``p_*`` columns on the same row. Most reusable option
+    helpers expect one row per option contract, so this function is the adapter
+    between the vendor-shaped file and the Project 4 cleaning, parity, IV, and
+    Greek modules.
+    """
+    if raw.empty:
+        return raw.copy()
+
+    cols = set(raw.columns)
+    if {"option_type", "bid", "ask"}.issubset(cols):
+        return normalize_option_quote_schema(raw, underlying_default=underlying_default)
+    if not ({"c_bid", "c_ask", "p_bid", "p_ask"} & cols):
+        return normalize_option_quote_schema(raw, underlying_default=underlying_default)
+
+    data = raw.copy()
+    if "source_index" not in data.columns:
+        data["source_index"] = data.index
+
+    common_candidates = {
+        "date": ["quote_date", "date", "QUOTE_DATE"],
+        "timestamp": ["quote_readtime", "timestamp", "QUOTE_READTIME", "quote_unixtime", "QUOTE_UNIXTIME"],
+        "expiry": ["expire_date", "expiry", "EXPIRY_DT", "expiryDate"],
+        "strike": ["strike", "STRIKE_PR", "STRIKE_PRICE"],
+        "spot": ["underlying_last", "underlying_price", "spot", "Spot"],
+        "underlying": ["underlying", "symbol", "Symbol", "SYMBOL"],
+        "dte": ["dte", "DTE"],
+    }
+
+    common: dict[str, Any] = {"source_index": "source_index"}
+    for standard, candidates in common_candidates.items():
+        source = _find_column(data.columns, candidates)
+        if source is not None:
+            common[standard] = source
+
+    option_maps = {
+        "call": {
+            "bid": "c_bid",
+            "ask": "c_ask",
+            "last": "c_last",
+            "volume": "c_volume",
+            "open_interest": "c_open_interest",
+            "iv": "c_iv",
+            "delta": "c_delta",
+            "gamma": "c_gamma",
+            "vega": "c_vega",
+            "theta": "c_theta",
+            "rho": "c_rho",
+        },
+        "put": {
+            "bid": "p_bid",
+            "ask": "p_ask",
+            "last": "p_last",
+            "volume": "p_volume",
+            "open_interest": "p_open_interest",
+            "iv": "p_iv",
+            "delta": "p_delta",
+            "gamma": "p_gamma",
+            "vega": "p_vega",
+            "theta": "p_theta",
+            "rho": "p_rho",
+        },
+    }
+
+    pieces: list[pd.DataFrame] = []
+    for option_type, mapping in option_maps.items():
+        frame = pd.DataFrame(index=data.index)
+        for standard, source in common.items():
+            frame[standard] = data[source]
+        frame["option_type"] = option_type
+        for standard, source in mapping.items():
+            if source not in data.columns:
+                continue
+            if not include_greeks and standard in _GREEK_COLUMNS:
+                continue
+            frame[standard] = data[source]
+        pieces.append(frame)
+
+    out = pd.concat(pieces, ignore_index=True)
+    if underlying_default is not None:
+        if "underlying" not in out.columns:
+            out["underlying"] = underlying_default
+        else:
+            out["underlying"] = out["underlying"].fillna(underlying_default)
+    return normalize_option_quote_schema(out, underlying_default=underlying_default)
+
+
 def ensure_option_mid_quotes(quotes: pd.DataFrame) -> pd.DataFrame:
     """Create a usable mid quote from bid/ask, close, or last prices."""
     out = quotes.copy()
@@ -724,4 +820,5 @@ __all__ = [
     "prepare_underlying_series",
     "select_hedging_option_path",
     "split_calls_puts",
+    "wide_option_chain_to_long",
 ]

@@ -1,6 +1,16 @@
 from __future__ import annotations
 
-from ..core import InputError, ModelError, QuantFinLabError
+
+class QuantFinLabError(Exception):
+    """Base exception for the library."""
+
+
+class InputError(QuantFinLabError):
+    """Raised when inputs are missing, malformed, or inconsistent."""
+
+
+class ModelError(QuantFinLabError):
+    """Raised when a model fit or solve fails."""
 
 
 class DataError(QuantFinLabError):

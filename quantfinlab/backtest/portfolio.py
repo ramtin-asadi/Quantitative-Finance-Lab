@@ -6,8 +6,8 @@ from typing import Any, Literal
 import numpy as np
 import pandas as pd
 
+from quantfinlab.common.contracts import BacktestResult, PortfolioState
 from quantfinlab.common.errors import InputError
-from quantfinlab.core import BacktestResult, PortfolioState
 from quantfinlab.portfolio.constraints import normalize_weights
 from quantfinlab.portfolio.optimizers import equal_weight
 

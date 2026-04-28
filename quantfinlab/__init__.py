@@ -5,29 +5,25 @@ from . import (
     common,
     fixed_income,
     options,
-    plots,
     plotting,
     portfolio,
     reports,
     risk,
     volatility,
 )
-from .common.errors import BacktestError, DataError
-from .core import (
+from .common.contracts import (
     BacktestResult,
     Bond,
     BookMetrics,
     Curve,
     CurvePillars,
-    InputError,
     IssuanceBook,
     IssuedBond,
-    ModelError,
     PortfolioState,
-    QuantFinLabError,
     RiskReportArtifacts,
     StrategyBuildResult,
 )
+from .common.errors import BacktestError, DataError, InputError, ModelError, QuantFinLabError
 
 __version__ = "0.0.1"
 
@@ -52,7 +48,6 @@ __all__ = [
     "common",
     "fixed_income",
     "options",
-    "plots",
     "plotting",
     "portfolio",
     "reports",

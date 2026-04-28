@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from quantfinlab.core import InputError
+from quantfinlab.common.errors import InputError
 from quantfinlab.risk.utils import (
     DEFAULT_ANNUALIZATION,
     _align_pair,

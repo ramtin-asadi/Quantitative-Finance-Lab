@@ -9,7 +9,8 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
-from ..core import CurvePillars, InputError
+from ..common.contracts import CurvePillars
+from ..common.errors import InputError
 from .discounting import par_from_df
 from .smoothers import fit_curves
 from .tenors import _COLUMN_ALIASES, DEFAULT_METHODS, TENOR_PATTERN, tenor_to_years

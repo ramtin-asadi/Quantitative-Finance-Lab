@@ -8,7 +8,7 @@ from typing import Any, Literal
 import numpy as np
 import pandas as pd
 
-from quantfinlab.core import InputError
+from quantfinlab.common.errors import InputError
 from quantfinlab.risk.utils import (
     VAR_BACKTEST_METHODS,
     _coerce_objects,

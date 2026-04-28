@@ -4,7 +4,7 @@ from collections.abc import Callable, Iterable
 
 import numpy as np
 
-from ..core import Curve, CurvePillars
+from ..common.contracts import Curve, CurvePillars
 from .discounting import par_from_df
 from .tenors import tenor_to_years
 

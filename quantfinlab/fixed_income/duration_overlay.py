@@ -5,7 +5,7 @@ from collections.abc import Callable
 import numpy as np
 import pandas as pd
 
-from ..core import InputError
+from ..common.errors import InputError
 from . import risk
 from .bond_pricing import bond_position_value, position_values_by_bucket
 from .tenors import DEFAULT_ISSUE_MATURITIES

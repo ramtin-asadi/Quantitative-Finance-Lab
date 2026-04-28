@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from quantfinlab.core import RiskReportArtifacts
+from quantfinlab.common.contracts import RiskReportArtifacts
 from quantfinlab.risk.capm import capm_table
 from quantfinlab.risk.contributions import attribution_tables
 from quantfinlab.risk.correlation import corr_matrix

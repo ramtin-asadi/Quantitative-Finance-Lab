@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 
 from quantfinlab.backtest.portfolio import run_rebalanced_portfolio_backtest
+from quantfinlab.common.contracts import BacktestResult
 from quantfinlab.common.errors import InputError
-from quantfinlab.core import BacktestResult
 from quantfinlab.portfolio import (
     covariance,
     expected_returns,

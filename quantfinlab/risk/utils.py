@@ -6,7 +6,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from quantfinlab.core import BacktestResult, InputError, PortfolioState
+from quantfinlab.common.contracts import BacktestResult, PortfolioState
+from quantfinlab.common.errors import InputError
 
 DEFAULT_ANNUALIZATION = 252.0
 VAR_BACKTEST_METHODS = ("hist", "cf", "fhs")

@@ -5,8 +5,8 @@ from collections.abc import Callable
 import numpy as np
 import pandas as pd
 
+from ..common.contracts import Bond, Curve, IssuanceBook, IssuedBond
 from ..common.dates import yearfrac
-from ..core import Bond, Curve, IssuanceBook, IssuedBond
 from .tenors import DEFAULT_ISSUE_MATURITIES, nearest_tenor_label
 
 

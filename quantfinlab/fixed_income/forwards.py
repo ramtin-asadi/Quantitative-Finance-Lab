@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from ..core import Curve
+from ..common.contracts import Curve
 from .discounting import curve_value_table
 
 
