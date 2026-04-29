@@ -16,7 +16,7 @@ from .curves import (
     set_plot_style,
     style_axis,
 )
-from .diagrams import plot_computation_dag
+from .diagrams import plot_computation_dag, plot_straddle_payoff
 from .fixed_income import (
     plot_bond_metric_bar,
     plot_bucket_pv,
@@ -219,6 +219,7 @@ __all__ = [
     "plot_strategy_nav",
     "plot_stress_bar",
     "plot_stress_heatmap",
+    "plot_straddle_payoff",
     "plot_tail_shape_bars",
     "plot_top_contrib",
     "plot_total_pv",

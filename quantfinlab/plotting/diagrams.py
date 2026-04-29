@@ -264,6 +264,119 @@ def plot_computation_dag(
     return fig, ax
 
 
+def plot_straddle_payoff(
+    ax=None,
+    *,
+    spot: float = 100.0,
+    strike: float | None = None,
+    call_premium: float = 6.0,
+    put_premium: float = 5.0,
+    side: str = "long",
+    price_range: tuple[float, float] | None = None,
+    n_points: int = 301,
+    title: str | None = None,
+    figsize: tuple[float, float] = (10.5, 5.8),
+):
+    """
+    Plot a plain-vanilla straddle payoff diagram.
+
+    The default is a long ATM straddle: buy one call and one put with the same
+    strike and expiry. Set ``side="short"`` to show the short-straddle mirror.
+    """
+    set_plot_style()
+    side_norm = str(side).lower().strip()
+    if side_norm not in {"long", "short"}:
+        raise ValueError("side must be 'long' or 'short'.")
+
+    k = float(spot if strike is None else strike)
+    premium = float(call_premium) + float(put_premium)
+    if price_range is None:
+        lo = max(0.0, k - 4.0 * max(premium, 0.15 * k))
+        hi = k + 4.0 * max(premium, 0.15 * k)
+    else:
+        lo, hi = map(float, price_range)
+    s_grid = np.linspace(lo, hi, int(n_points))
+
+    call_payoff = np.maximum(s_grid - k, 0.0) - float(call_premium)
+    put_payoff = np.maximum(k - s_grid, 0.0) - float(put_premium)
+    long_straddle = call_payoff + put_payoff
+    net_payoff = long_straddle if side_norm == "long" else -long_straddle
+
+    left_be = k - premium
+    right_be = k + premium
+
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.get_figure()
+
+    ax.axhline(0.0, color="#222222", lw=1.0)
+    ax.axvline(k, color="#444444", lw=1.0, ls="--", label="strike")
+    if left_be > lo:
+        ax.axvline(left_be, color=LAB_COLORS[3], lw=0.9, ls=":", label="break-even")
+    if right_be < hi:
+        ax.axvline(right_be, color=LAB_COLORS[3], lw=0.9, ls=":")
+
+    ax.plot(s_grid, call_payoff, lw=1.0, ls="--", alpha=0.65, color=LAB_COLORS[0], label="call leg")
+    ax.plot(s_grid, put_payoff, lw=1.0, ls="--", alpha=0.65, color=LAB_COLORS[1], label="put leg")
+    ax.plot(
+        s_grid,
+        net_payoff,
+        lw=2.4,
+        color=LAB_COLORS[2],
+        label=f"{side_norm} straddle net payoff",
+    )
+
+    if side_norm == "long":
+        ax.fill_between(
+            s_grid,
+            net_payoff,
+            0.0,
+            where=net_payoff < 0,
+            color=LAB_COLORS[3],
+            alpha=0.16,
+            label="premium at risk",
+        )
+        ax.fill_between(s_grid, net_payoff, 0.0, where=net_payoff > 0, color=LAB_COLORS[4], alpha=0.12)
+        ax.annotate(
+            f"max loss = premium paid\n{premium:,.2f}",
+            xy=(k, -premium),
+            xytext=(k, -premium - 0.22 * max(premium, 1.0)),
+            ha="center",
+            va="top",
+            arrowprops={"arrowstyle": "->", "lw": 1.0, "color": "#333333"},
+        )
+    else:
+        ax.fill_between(
+            s_grid,
+            net_payoff,
+            0.0,
+            where=net_payoff > 0,
+            color=LAB_COLORS[4],
+            alpha=0.16,
+            label="premium received",
+        )
+        ax.fill_between(s_grid, net_payoff, 0.0, where=net_payoff < 0, color=LAB_COLORS[3], alpha=0.12)
+        ax.annotate(
+            f"max gain = premium received\n{premium:,.2f}",
+            xy=(k, premium),
+            xytext=(k, premium + 0.18 * max(premium, 1.0)),
+            ha="center",
+            va="bottom",
+            arrowprops={"arrowstyle": "->", "lw": 1.0, "color": "#333333"},
+        )
+
+    ax.text(left_be, 0.0, f"  {left_be:,.1f}", va="bottom", fontsize=8, color=LAB_COLORS[3])
+    ax.text(right_be, 0.0, f"  {right_be:,.1f}", va="bottom", fontsize=8, color=LAB_COLORS[3])
+    ax.text(k, 0.0, f"  K={k:,.1f}", va="top", fontsize=8, color="#333333")
+    ax.set_xlabel("Underlying price at expiry")
+    ax.set_ylabel("Profit / loss per straddle")
+    ax.set_title(title or f"{side_norm.title()} straddle payoff: call + put, same strike and expiry")
+    ax.legend(loc="best", ncol=2)
+    fig.tight_layout()
+    return fig, ax
+
+
 plot_bsm_comp_graph = plot_computation_dag
 
-__all__ = ["plot_bsm_comp_graph", "plot_computation_dag"]
+__all__ = ["plot_bsm_comp_graph", "plot_computation_dag", "plot_straddle_payoff"]
