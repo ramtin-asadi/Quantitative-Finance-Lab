@@ -307,42 +307,6 @@ def plot_summary_pnl_drawdown_bars(
     return ax
 
 
-def plot_volatility_transfer_grid(
-    *,
-    spot: pd.Series,
-    returns: pd.Series,
-    vrp_panel: pd.DataFrame,
-    equity: pd.DataFrame,
-    selected_model_counts: pd.DataFrame,
-    score_pivot: pd.DataFrame,
-    summary: pd.DataFrame,
-    model_order: Sequence[str] | None = None,
-    annualization: float = 252.0,
-    figsize: tuple[float, float] = (15.0, 11.0),
-) -> tuple[plt.Figure, np.ndarray]:
-    """Create the 3x3 volatility forecasting/VRP/overlay transfer plot grid."""
-    set_plot_style()
-    fig, axes = plt.subplots(3, 3, figsize=figsize)
-    axes = axes.ravel()
-    plot_spot_and_realized_vol(
-        axes[0],
-        spot,
-        returns,
-        annualization=annualization,
-        title="Spot and 21d realized vol",
-    )
-    plot_selected_model_counts_by_horizon(axes[1], selected_model_counts, title="Selected model counts by horizon")
-    plot_qlike_heatmap(axes[2], score_pivot, model_order=model_order, title="QLIKE heatmap")
-    plot_iv_forecast_vol(axes[3], vrp_panel, title="IV vs forecast vol")
-    plot_vrp_variance_spread(axes[4], vrp_panel, title="VRP variance spread")
-    plot_vrp_rank_zscore(axes[5], vrp_panel, title="VRP rank/z")
-    plot_overlay_nav(axes[6], equity, title="Strategy NAV")
-    plot_overlay_drawdowns(axes[7], equity, title="Drawdowns")
-    plot_summary_pnl_drawdown_bars(axes[8], summary, title="Total P&L and max drawdown")
-    fig.tight_layout(pad=1.2, w_pad=1.2, h_pad=1.4)
-    return fig, axes
-
-
 __all__ = [
     "format_date_axis",
     "plot_iv_forecast_vol",
@@ -352,7 +316,6 @@ __all__ = [
     "plot_selected_model_counts_by_horizon",
     "plot_spot_and_realized_vol",
     "plot_summary_pnl_drawdown_bars",
-    "plot_volatility_transfer_grid",
     "plot_vrp_rank_zscore",
     "plot_vrp_variance_spread",
 ]

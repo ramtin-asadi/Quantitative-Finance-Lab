@@ -215,6 +215,8 @@ def build_atm_iv_panel_from_option_quotes(
     )
     clean_report = clean_report.copy()
     clean_report["step"] = "long-form " + clean_report["step"].astype(str)
+    if not clean_report.empty:
+        clean_report.loc[clean_report.index[0], "removed"] = 0
     report = pd.concat([wide_report, clean_report], ignore_index=True)
     if "price_unit_detected" in clean.columns:
         unit_counts = clean["price_unit_detected"].astype(str).value_counts(dropna=False)
@@ -226,7 +228,7 @@ def build_atm_iv_panel_from_option_quotes(
                         {
                             "step": f"price unit detected: {unit}",
                             "rows": int(count),
-                            "removed": np.nan,
+                            "removed": 0,
                         }
                         for unit, count in unit_counts.items()
                     ]
@@ -258,7 +260,7 @@ def build_atm_iv_panel_from_option_quotes(
                     {
                         "step": "valid forward/parity slices",
                         "rows": int(forward_table["forward"].notna().sum()) if "forward" in forward_table else 0,
-                        "removed": np.nan,
+                        "removed": 0,
                     }
                 ]
             ),
@@ -363,7 +365,7 @@ def build_atm_iv_panel_from_option_quotes(
     ]
     out = selected[[c for c in preferred if c in selected.columns]].sort_values(["date", "expiry"]).reset_index(drop=True)
     report = pd.concat(
-        [report, pd.DataFrame([{"step": "final ATM panel rows", "rows": int(len(out)), "removed": np.nan}])],
+        [report, pd.DataFrame([{"step": "final ATM panel rows", "rows": int(len(out)), "removed": 0}])],
         ignore_index=True,
     )
     out.attrs["cleaning_report"] = report

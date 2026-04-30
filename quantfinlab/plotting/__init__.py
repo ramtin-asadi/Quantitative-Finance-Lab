@@ -118,7 +118,6 @@ from .volatility import (
     plot_selected_model_counts_by_horizon,
     plot_spot_and_realized_vol,
     plot_summary_pnl_drawdown_bars,
-    plot_volatility_transfer_grid,
     plot_vrp_rank_zscore,
     plot_vrp_variance_spread,
 )
@@ -231,7 +230,6 @@ __all__ = [
     "plot_var_backtest_summary",
     "plot_var_exceptions",
     "plot_var_method_bars",
-    "plot_volatility_transfer_grid",
     "plot_vrp_rank_zscore",
     "plot_vrp_variance_spread",
     "plot_weights",

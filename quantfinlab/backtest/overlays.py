@@ -10,7 +10,24 @@ from quantfinlab.options import quote_cleaning
 
 def _as_price_series(underlying: pd.Series | pd.DataFrame) -> pd.Series:
     if isinstance(underlying, pd.DataFrame):
-        series = quote_cleaning.prepare_underlying_series(underlying)
+        data = underlying.copy()
+        lookup = {str(c).strip().lower().replace(" ", "_"): c for c in data.columns}
+        date_col = lookup.get("date", data.columns[0])
+        price_col = None
+        for candidate in ["adj_close", "close", "price", "spot"]:
+            if candidate in lookup:
+                price_col = lookup[candidate]
+                break
+        if price_col is None:
+            numeric_cols = data.select_dtypes(include=[np.number]).columns
+            if len(numeric_cols) == 0:
+                raise ValueError("Could not infer a numeric underlying price column.")
+            price_col = numeric_cols[0]
+        series = pd.Series(
+            pd.to_numeric(data[price_col], errors="coerce").to_numpy(dtype=float),
+            index=pd.to_datetime(data[date_col], errors="coerce").dt.normalize(),
+            name=str(price_col),
+        )
     else:
         series = pd.Series(underlying, copy=True)
         series.index = pd.to_datetime(series.index, errors="coerce")

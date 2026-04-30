@@ -338,13 +338,17 @@ def plot_straddle_payoff(
             label="premium at risk",
         )
         ax.fill_between(s_grid, net_payoff, 0.0, where=net_payoff > 0, color=LAB_COLORS[4], alpha=0.12)
+        text_x = k + 0.18 * (hi - lo)
+        text_y = -premium - 0.18 * max(hi - lo, premium)
         ax.annotate(
-            f"max loss = premium paid\n{premium:,.2f}",
+            f"Max loss\npremium paid = {premium:,.2f}",
             xy=(k, -premium),
-            xytext=(k, -premium - 0.22 * max(premium, 1.0)),
-            ha="center",
+            xytext=(text_x, text_y),
+            ha="left",
             va="top",
+            linespacing=1.35,
             arrowprops={"arrowstyle": "->", "lw": 1.0, "color": "#333333"},
+            bbox={"boxstyle": "round,pad=0.30", "fc": "white", "ec": "#bbbbbb", "alpha": 0.92},
         )
     else:
         ax.fill_between(

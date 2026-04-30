@@ -417,45 +417,6 @@ def attach_spot_from_series(
     return out
 
 
-def prepare_underlying_series(
-    raw: pd.DataFrame,
-    date_col: str = "date",
-    price_col: str | None = None,
-    name: str | None = None,
-) -> pd.Series:
-    """Build a clean daily underlying price series from an already-loaded table."""
-    if raw.empty:
-        raise ValueError("raw underlying table is empty.")
-    data = raw.copy()
-    lookup = _normalized_lookup(data.columns)
-    date_source = data.columns[0] if date_col not in data.columns else date_col
-    if _normalize_key(date_col) in lookup:
-        date_source = lookup[_normalize_key(date_col)]
-    if price_col is None:
-        for candidate in ["adj_close", "Adj Close", "close", "Close", "price", "spot"]:
-            key = _normalize_key(candidate)
-            if key in lookup:
-                price_col = lookup[key]
-                break
-    elif _normalize_key(price_col) in lookup:
-        price_col = lookup[_normalize_key(price_col)]
-    if price_col is None:
-        numeric_cols = data.select_dtypes(include=[np.number]).columns
-        if len(numeric_cols) == 0:
-            raise ValueError("Could not infer a numeric underlying price column.")
-        price_col = numeric_cols[0]
-    dates = pd.to_datetime(data[date_source], errors="coerce").dt.normalize()
-    values = pd.to_numeric(data[price_col], errors="coerce")
-    series = pd.Series(values.to_numpy(dtype=float), index=dates, name=name or str(price_col))
-    series = series[~series.index.isna()].dropna().sort_index()
-    series = series[series > 0]
-    if series.index.has_duplicates:
-        series = series.groupby(level=0).last()
-    if series.empty:
-        raise ValueError("No positive underlying prices remain after cleaning.")
-    return series
-
-
 def extract_spot_series(quotes: pd.DataFrame, date_col: str = "date", spot_col: str = "spot") -> pd.Series:
     """Extract one spot observation per quote date from normalized quotes."""
     if date_col not in quotes.columns or spot_col not in quotes.columns:
@@ -817,7 +778,6 @@ __all__ = [
     "normalize_spx_option_schema",
     "pair_put_call_quotes",
     "parse_option_type",
-    "prepare_underlying_series",
     "select_hedging_option_path",
     "split_calls_puts",
     "wide_option_chain_to_long",
