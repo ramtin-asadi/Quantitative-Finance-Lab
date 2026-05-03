@@ -508,7 +508,7 @@ def plot_corr_heatmap(
     if annotate:
         for i in range(corr.shape[0]):
             for j in range(corr.shape[1]):
-                ax.text(j, i, f"{corr.values[i, j]:.2f}", ha="center", va="center", fontsize=10, color="white")
+                ax.text(j, i, f"{corr.values[i, j]:.2f}", ha="center", va="center", fontsize=8, color="black")
     ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
     return ax
 

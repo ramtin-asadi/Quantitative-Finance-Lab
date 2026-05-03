@@ -18,19 +18,19 @@ The notebooks are the main research artifacts. The library extracts the parts th
 
 ## Current projects
 
-### 01 — Yield Curve Construction, Bond Pricing, and Risk
+### 01. Yield Curve Construction, Bond Pricing, and Risk
 
 Builds yield curves from market rate data, converts rates into discount factors and forward curves, prices bond portfolios, and analyzes fixed-income risk through duration, convexity, PV01, and key-rate duration. The project also studies a duration-targeted ladder strategy and applies the reusable fixed-income workflow to a secondary interest-rate market.
 
-### 02 — Portfolio Construction: Mean Variance models
+### 02. Portfolio Construction: Mean Variance models
 
 Compares equal-weight, minimum-variance, mean-variance, max-Sharpe, and frontier-style allocation methods under walk-forward rebalancing. The project includes liquidity-based universe selection, different expected-return estimators and covariance estimators, regularization, transaction costs, turnover control, grid search, and performance diagnostics. The reusable portfolio workflow is then applied to a secondary equity market.
 
-### 03 — Risk Report Engine and CAPM
+### 03. Risk Report Engine and CAPM
 
 Builds an institutional style risk analysis workflow for assets and strategy portfolios. The report covers performance, drawdowns, distribution diagnostics, VaR and expected shortfall, VaR backtesting, stress testing, CAPM beta analysis, rolling beta behavior, and risk contribution. The project connects the portfolio outputs from Project 02 to a reusable risk-reporting pipeline.
 
-### 04 — Black–Scholes, Implied Volatility, Greeks, and Hedging
+### 04. Black–Scholes, Implied Volatility, Greeks, and Hedging
 
 Develops a market-facing options workflow around Black–Scholes pricing, put-call parity, implied volatility, bid/ask-aware quote cleaning, fast IV solvers, analytic and autodiff Greeks, Greek uncertainty, and hedging P&L. The project compares numerical solvers, evaluates quote quality, and applies the reusable options workflow to a secondary options dataset.
 

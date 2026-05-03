@@ -204,7 +204,7 @@ def normalize_covariance_method(method: str) -> CovarianceMethod:
 
 def estimate_covariance(
     window: pd.DataFrame,
-    method: str = "LedoitWolf",
+    method: str = "EWMA",
     *,
     annualization: float = DEFAULT_ANNUALIZATION,
     ewma_lambda: float = 0.94,

@@ -99,7 +99,7 @@ def fit_arch_model(
     """Fit one ARCH-family model using the optional ``arch`` dependency."""
     try:
         from arch import arch_model
-    except Exception as exc:  # pragma: no cover - optional dependency
+    except Exception as exc:
         raise ImportError("rolling_arch_forecasts_weekly requires the 'arch' package.") from exc
 
     model = arch_model(

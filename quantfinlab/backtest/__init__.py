@@ -4,9 +4,11 @@ from . import costs, fixed_income, options, overlays, portfolio, results
 from .costs import bps_cost, turnover_cost
 from .fixed_income import run_bond_ladder_backtest
 from .portfolio import (
+    run_many_weights_backtests,
     run_rebalanced_portfolio_backtest,
     run_strategy_backtest,
     run_strategy_grid_backtests,
+    run_weights_backtest,
 )
 from .results import SimpleBacktestResult
 from .overlays import (
@@ -27,9 +29,11 @@ __all__ = [
     "portfolio",
     "results",
     "run_bond_ladder_backtest",
+    "run_many_weights_backtests",
     "run_rebalanced_portfolio_backtest",
     "run_strategy_backtest",
     "run_strategy_grid_backtests",
+    "run_weights_backtest",
     "turnover_cost",
     "summarize_overlay_trades",
 ]
