@@ -12,6 +12,8 @@ book:
     - notebooks/02_portfolio_optimization_MV_models.ipynb
     - notebooks/03_risk_report_engine_and_CAPM.ipynb
     - notebooks/04_BSM_IV_greeks_hedging.ipynb
+    - notebooks/05_GARCH_forecasting_VRP.ipynb
+    - notebooks/06_portfolio_black_littreman.ipynb
 
 format:
   html:

@@ -205,6 +205,16 @@ window.Quarto = {
   <a href="../notebooks/04_BSM_IV_greeks_hedging.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">4. black–scholes, implied volatility, greeks and hedging</span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/05_GARCH_forecasting_VRP.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">5. Volatility Forecasting with GARCH and Variance Risk Premium</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/06_portfolio_black_littreman.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">06_portfolio_black_littreman.html</span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -2432,7 +2442,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>maxsharpe_candidates <span class="op">=</span> [name <span class="cf">for</span> name <span class="kw">in</span> all_results <span class="cf">if</span> strategy_family(name) <span class="op">==</span> <span class="st">"MaxSharpe"</span>]</span>
 <span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>frontier_candidates <span class="op">=</span> [name <span class="cf">for</span> name <span class="kw">in</span> all_results <span class="cf">if</span> strategy_family(name) <span class="op">==</span> <span class="st">"MaxSharpe (FrontierGrid)"</span>]</span>
 <span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>finalist_sources <span class="op">=</span> []</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>finalist_sources <span class="op">=</span> [<span class="st">"EW"</span>] <span class="cf">if</span> <span class="st">"EW"</span> <span class="kw">in</span> all_results <span class="cf">else</span> []</span>
 <span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>finalist_sources <span class="op">+=</span> pick_top_by_sharpe(all_summary_df, minvar_candidates, <span class="dv">2</span>, <span class="st">"MinVar"</span>)</span>
 <span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>finalist_sources <span class="op">+=</span> pick_top_by_sharpe(all_summary_df, mv_candidates, <span class="dv">2</span>, <span class="st">"MV"</span>)</span>
 <span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>finalist_sources <span class="op">+=</span> pick_top_by_sharpe(all_summary_df, ridge_candidates, <span class="dv">1</span>, <span class="st">"Ridge MV"</span>)</span>
@@ -2530,6 +2540,19 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 </thead>
 <tbody>
 <tr class="odd">
+<th data-quarto-table-cell-role="th">EW [LedoitWolf]</th>
+<td>EW</td>
+<td>-</td>
+<td>LedoitWolf</td>
+<td>0.146696</td>
+<td>0.252972</td>
+<td>0.512775</td>
+<td>-0.461640</td>
+<td>0.049642</td>
+<td>0.003154</td>
+<td>100.000004</td>
+</tr>
+<tr class="even">
 <th data-quarto-table-cell-role="th">MinVar [EWMA]</th>
 <td>MinVar</td>
 <td>-</td>
@@ -2542,7 +2565,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <td>0.004660</td>
 <td>9.764906</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <th data-quarto-table-cell-role="th">MinVar [SampleCov]</th>
 <td>MinVar</td>
 <td>-</td>
@@ -2555,7 +2578,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <td>0.001357</td>
 <td>10.153306</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <th data-quarto-table-cell-role="th">MV [EWMA, Momentum]</th>
 <td>MV</td>
 <td>Momentum</td>
@@ -2568,7 +2591,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <td>0.011907</td>
 <td>9.626846</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <th data-quarto-table-cell-role="th">MV [EWMA, BayesSteinMomentum]</th>
 <td>MV</td>
 <td>BayesSteinMomentum</td>
@@ -2581,7 +2604,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <td>0.011789</td>
 <td>9.671297</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <th data-quarto-table-cell-role="th">Ridge MV [EWMA, Momentum]</th>
 <td>Ridge MV</td>
 <td>Momentum</td>
@@ -2594,7 +2617,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <td>0.010756</td>
 <td>14.338037</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <th data-quarto-table-cell-role="th">MaxSharpe [EWMA, Momentum]</th>
 <td>MaxSharpe</td>
 <td>Momentum</td>
@@ -2607,7 +2630,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <td>0.015824</td>
 <td>7.434901</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <th data-quarto-table-cell-role="th">FrontierGrid [EWMA, Momentum]</th>
 <td>MaxSharpe (FrontierGrid)</td>
 <td>Momentum</td>
@@ -2916,7 +2939,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <span id="cb38-206"><a href="#cb38-206" aria-hidden="true" tabindex="-1"></a>display(mu_diagnostics_df)</span>
 <span id="cb38-207"><a href="#cb38-207" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-208"><a href="#cb38-208" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Finalist strategy summary"</span>)</span>
-<span id="cb38-209"><a href="#cb38-209" aria-hidden="true" tabindex="-1"></a>display(selection.finalist_summary(grid.results, finalists))</span>
+<span id="cb38-209"><a href="#cb38-209" aria-hidden="true" tabindex="-1"></a>display(selection.finalist_summary(grid.results, finalists, include_baseline<span class="op">=</span><span class="va">False</span>))</span>
 <span id="cb38-210"><a href="#cb38-210" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-211"><a href="#cb38-211" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Fixed mu = BayesSteinMomentum, MV covariance comparison"</span>)</span>
 <span id="cb38-212"><a href="#cb38-212" aria-hidden="true" tabindex="-1"></a>display(selection.comparison_summary(grid.results, fixed_mu_mv))</span>
@@ -3097,6 +3120,24 @@ Expected-return diagnostics</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
+<th data-quarto-table-cell-role="th">EW</th>
+<td>EW</td>
+<td>EW</td>
+<td>-</td>
+<td>-</td>
+<td>0.074085</td>
+<td>0.225613</td>
+<td>0.256760</td>
+<td>-0.412990</td>
+<td>0.179387</td>
+<td>0.354335</td>
+<td>0.045115</td>
+<td>4.917503</td>
+<td>0.003299</td>
+<td>60.000000</td>
+<td>0</td>
+</tr>
+<tr class="even">
 <th data-quarto-table-cell-role="th">MinVar (Sample)</th>
 <td>MinVar [Sample]</td>
 <td>MinVar</td>
@@ -3114,7 +3155,7 @@ Expected-return diagnostics</code></pre>
 <td>8.140833</td>
 <td>0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <th data-quarto-table-cell-role="th">MinVar (LedoitWolf)</th>
 <td>MinVar [LedoitWolf]</td>
 <td>MinVar</td>
@@ -3132,7 +3173,7 @@ Expected-return diagnostics</code></pre>
 <td>10.034409</td>
 <td>0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <th data-quarto-table-cell-role="th">MV (EWMA, BayesStein)</th>
 <td>MV [EWMA, BayesStein]</td>
 <td>MV</td>
@@ -3150,7 +3191,7 @@ Expected-return diagnostics</code></pre>
 <td>6.638002</td>
 <td>0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <th data-quarto-table-cell-role="th">MV (EWMA, Momentum)</th>
 <td>MV [EWMA, Momentum]</td>
 <td>MV</td>
@@ -3168,7 +3209,7 @@ Expected-return diagnostics</code></pre>
 <td>6.654745</td>
 <td>0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <th data-quarto-table-cell-role="th">RidgeMV (LedoitWolf, BayesStein)</th>
 <td>RidgeMV [LedoitWolf, BayesStein]</td>
 <td>RidgeMV</td>
@@ -3186,7 +3227,7 @@ Expected-return diagnostics</code></pre>
 <td>12.925863</td>
 <td>0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <th data-quarto-table-cell-role="th">MaxSharpe (LedoitWolf, BayesStein)</th>
 <td>MaxSharpe [LedoitWolf, BayesStein]</td>
 <td>MaxSharpe</td>
@@ -3204,7 +3245,7 @@ Expected-return diagnostics</code></pre>
 <td>5.604556</td>
 <td>0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <th data-quarto-table-cell-role="th">MaxSharpe (FrontierGrid) (LedoitWolf, BayesStein)</th>
 <td>FrontierGrid [LedoitWolf, BayesStein]</td>
 <td>FrontierGrid</td>

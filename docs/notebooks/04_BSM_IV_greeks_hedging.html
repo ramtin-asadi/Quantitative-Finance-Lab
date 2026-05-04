@@ -65,6 +65,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
+<link href="../notebooks/05_GARCH_forecasting_VRP.html" rel="next">
 <link href="../notebooks/03_risk_report_engine_and_CAPM.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -202,6 +203,16 @@ window.Quarto = {
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../notebooks/04_BSM_IV_greeks_hedging.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">4. black–scholes, implied volatility, greeks and hedging</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/05_GARCH_forecasting_VRP.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">5. Volatility Forecasting with GARCH and Variance Risk Premium</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/06_portfolio_black_littreman.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">06_portfolio_black_littreman.html</span></a>
   </div>
 </li>
     </ul>
@@ -4728,384 +4739,317 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
 <span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>DATA_DIR <span class="op">=</span> Path(<span class="st">"../data"</span>)</span>
-<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>BTC_OPTIONS_FILE <span class="op">=</span> DATA_DIR <span class="op">/</span> <span class="st">"btc_deribit_optiondx_2024_01_09.parquet"</span></span>
-<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>BTC_DAILY_FILE <span class="op">=</span> DATA_DIR <span class="op">/</span> <span class="st">"btc_usd_yfinance_2023_10_01_2024_10_15.csv"</span></span>
-<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>US_TREASURY_FILE <span class="op">=</span> DATA_DIR <span class="op">/</span> <span class="st">"par-yield-curve-rates-1990-2026.csv"</span></span>
-<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>raw_btc_options <span class="op">=</span> pd.read_parquet(BTC_OPTIONS_FILE)</span>
-<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>raw_btc_daily <span class="op">=</span> pd.read_csv(BTC_DAILY_FILE)</span>
-<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>us_par_raw <span class="op">=</span> pd.read_csv(US_TREASURY_FILE)</span>
-<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a>btc_spot <span class="op">=</span> quote_cleaning.prepare_underlying_series(</span>
-<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a>    raw_btc_daily,</span>
-<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>    date_col<span class="op">=</span><span class="st">"date"</span>,</span>
-<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>    price_col<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">"BTC"</span>,</span>
-<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>btc_returns <span class="op">=</span> realized.log_returns(btc_spot)</span>
-<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a>quotes <span class="op">=</span> quote_cleaning.normalize_option_quote_schema(</span>
-<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a>    raw_btc_options,</span>
-<span id="cb31-39"><a href="#cb31-39" aria-hidden="true" tabindex="-1"></a>    profile<span class="op">=</span><span class="st">"btc_deribit"</span>,</span>
-<span id="cb31-40"><a href="#cb31-40" aria-hidden="true" tabindex="-1"></a>    underlying_default<span class="op">=</span><span class="st">"BTC"</span>,</span>
-<span id="cb31-41"><a href="#cb31-41" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-42"><a href="#cb31-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-43"><a href="#cb31-43" aria-hidden="true" tabindex="-1"></a>quotes <span class="op">=</span> quote_cleaning.ensure_option_mid_quotes(quotes)</span>
-<span id="cb31-44"><a href="#cb31-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-45"><a href="#cb31-45" aria-hidden="true" tabindex="-1"></a>quotes <span class="op">=</span> quote_cleaning.attach_spot_from_series(</span>
-<span id="cb31-46"><a href="#cb31-46" aria-hidden="true" tabindex="-1"></a>    quotes,</span>
-<span id="cb31-47"><a href="#cb31-47" aria-hidden="true" tabindex="-1"></a>    spot_series<span class="op">=</span>btc_spot,</span>
-<span id="cb31-48"><a href="#cb31-48" aria-hidden="true" tabindex="-1"></a>    date_col<span class="op">=</span><span class="st">"date"</span>,</span>
-<span id="cb31-49"><a href="#cb31-49" aria-hidden="true" tabindex="-1"></a>    spot_col<span class="op">=</span><span class="st">"spot"</span>,</span>
-<span id="cb31-50"><a href="#cb31-50" aria-hidden="true" tabindex="-1"></a>    method<span class="op">=</span><span class="st">"previous"</span>,</span>
-<span id="cb31-51"><a href="#cb31-51" aria-hidden="true" tabindex="-1"></a>    overwrite<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb31-52"><a href="#cb31-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-53"><a href="#cb31-53" aria-hidden="true" tabindex="-1"></a>quotes <span class="op">=</span> quote_cleaning.convert_quotes_to_usd_equivalent(</span>
-<span id="cb31-54"><a href="#cb31-54" aria-hidden="true" tabindex="-1"></a>    quotes,</span>
-<span id="cb31-55"><a href="#cb31-55" aria-hidden="true" tabindex="-1"></a>    spot_col<span class="op">=</span><span class="st">"spot"</span>,</span>
-<span id="cb31-56"><a href="#cb31-56" aria-hidden="true" tabindex="-1"></a>    price_cols<span class="op">=</span>(<span class="st">"bid"</span>, <span class="st">"ask"</span>, <span class="st">"mid"</span>, <span class="st">"last"</span>, <span class="st">"mark"</span>),</span>
-<span id="cb31-57"><a href="#cb31-57" aria-hidden="true" tabindex="-1"></a>    unit<span class="op">=</span><span class="st">"auto"</span>,</span>
-<span id="cb31-58"><a href="#cb31-58" aria-hidden="true" tabindex="-1"></a>    contract_size<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb31-59"><a href="#cb31-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-60"><a href="#cb31-60" aria-hidden="true" tabindex="-1"></a>quotes <span class="op">=</span> quote_cleaning.add_time_to_expiry(</span>
-<span id="cb31-61"><a href="#cb31-61" aria-hidden="true" tabindex="-1"></a>    quotes,</span>
-<span id="cb31-62"><a href="#cb31-62" aria-hidden="true" tabindex="-1"></a>    date_col<span class="op">=</span><span class="st">"date"</span>,</span>
-<span id="cb31-63"><a href="#cb31-63" aria-hidden="true" tabindex="-1"></a>    expiry_col<span class="op">=</span><span class="st">"expiry"</span>,</span>
-<span id="cb31-64"><a href="#cb31-64" aria-hidden="true" tabindex="-1"></a>    annualization_days<span class="op">=</span><span class="dv">365</span>)</span>
-<span id="cb31-65"><a href="#cb31-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-66"><a href="#cb31-66" aria-hidden="true" tabindex="-1"></a>quotes <span class="op">=</span> quote_cleaning.add_moneyness(</span>
-<span id="cb31-67"><a href="#cb31-67" aria-hidden="true" tabindex="-1"></a>    quotes,</span>
-<span id="cb31-68"><a href="#cb31-68" aria-hidden="true" tabindex="-1"></a>    spot_col<span class="op">=</span><span class="st">"spot"</span>,</span>
-<span id="cb31-69"><a href="#cb31-69" aria-hidden="true" tabindex="-1"></a>    strike_col<span class="op">=</span><span class="st">"strike"</span>)</span>
-<span id="cb31-70"><a href="#cb31-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-71"><a href="#cb31-71" aria-hidden="true" tabindex="-1"></a>clean_quotes, filter_report <span class="op">=</span> quote_cleaning.clean_option_quotes(</span>
-<span id="cb31-72"><a href="#cb31-72" aria-hidden="true" tabindex="-1"></a>    quotes,</span>
-<span id="cb31-73"><a href="#cb31-73" aria-hidden="true" tabindex="-1"></a>    min_dte<span class="op">=</span><span class="dv">7</span>,</span>
-<span id="cb31-74"><a href="#cb31-74" aria-hidden="true" tabindex="-1"></a>    max_dte<span class="op">=</span><span class="dv">120</span>,</span>
-<span id="cb31-75"><a href="#cb31-75" aria-hidden="true" tabindex="-1"></a>    moneyness_range<span class="op">=</span>(<span class="fl">0.85</span>, <span class="fl">1.15</span>),</span>
-<span id="cb31-76"><a href="#cb31-76" aria-hidden="true" tabindex="-1"></a>    max_relative_spread<span class="op">=</span><span class="fl">0.20</span>,</span>
-<span id="cb31-77"><a href="#cb31-77" aria-hidden="true" tabindex="-1"></a>    closest_atm_pairs<span class="op">=</span><span class="dv">25</span>,</span>
-<span id="cb31-78"><a href="#cb31-78" aria-hidden="true" tabindex="-1"></a>    min_pairs_per_expiry<span class="op">=</span><span class="dv">10</span>,</span>
-<span id="cb31-79"><a href="#cb31-79" aria-hidden="true" tabindex="-1"></a>    annualization_days<span class="op">=</span><span class="dv">365</span>)</span>
-<span id="cb31-80"><a href="#cb31-80" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-81"><a href="#cb31-81" aria-hidden="true" tabindex="-1"></a>us_par <span class="op">=</span> bootstrap.normalize_par_yields(us_par_raw)</span>
-<span id="cb31-82"><a href="#cb31-82" aria-hidden="true" tabindex="-1"></a>rate_start <span class="op">=</span> clean_quotes[<span class="st">"date"</span>].<span class="bu">min</span>() <span class="op">-</span> pd.Timedelta(days<span class="op">=</span><span class="dv">30</span>)</span>
-<span id="cb31-83"><a href="#cb31-83" aria-hidden="true" tabindex="-1"></a>rate_end <span class="op">=</span> clean_quotes[<span class="st">"date"</span>].<span class="bu">max</span>()</span>
-<span id="cb31-84"><a href="#cb31-84" aria-hidden="true" tabindex="-1"></a>us_par <span class="op">=</span> us_par.loc[(us_par.index <span class="op">&gt;=</span> rate_start) <span class="op">&amp;</span> (us_par.index <span class="op">&lt;=</span> rate_end)]</span>
-<span id="cb31-85"><a href="#cb31-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-86"><a href="#cb31-86" aria-hidden="true" tabindex="-1"></a>us_zero_curve_panel <span class="op">=</span> bootstrap.build_zero_curve_panel_from_par_yields(</span>
-<span id="cb31-87"><a href="#cb31-87" aria-hidden="true" tabindex="-1"></a>    us_par,</span>
-<span id="cb31-88"><a href="#cb31-88" aria-hidden="true" tabindex="-1"></a>    method<span class="op">=</span><span class="st">"pchip"</span>,</span>
-<span id="cb31-89"><a href="#cb31-89" aria-hidden="true" tabindex="-1"></a>    as_continuous<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>btc_options <span class="op">=</span><span class="st">"../data/btc_deribit_optiondx_2024_01_09.parquet"</span></span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>btc_daily <span class="op">=</span> <span class="st">"../data/btc_usd_yfinance_2023_10_01_2024_10_15.csv"</span></span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>treasury <span class="op">=</span><span class="st">"../data/par-yield-curve-rates-1990-2026.csv"</span></span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>raw_btc_options <span class="op">=</span> pd.read_parquet(btc_options)</span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>raw_btc_daily <span class="op">=</span> pd.read_csv(btc_daily)</span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>us_par_raw <span class="op">=</span> pd.read_csv(treasury)</span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>btc_daily <span class="op">=</span> raw_btc_daily.copy()</span>
+<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>btc_daily.columns <span class="op">=</span> [<span class="bu">str</span>(c).strip().lower().replace(<span class="st">" "</span>, <span class="st">"_"</span>) <span class="cf">for</span> c <span class="kw">in</span> btc_daily.columns]</span>
+<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="st">"date"</span> <span class="kw">not</span> <span class="kw">in</span> btc_daily.columns:</span>
+<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"BTC daily file must contain a date column."</span>)</span>
+<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>btc_daily[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(btc_daily[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>).dt.normalize()</span>
+<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>btc_price_col <span class="op">=</span> <span class="st">"adj_close"</span> <span class="cf">if</span> <span class="st">"adj_close"</span> <span class="kw">in</span> btc_daily.columns <span class="cf">else</span> <span class="st">"close"</span> <span class="cf">if</span> <span class="st">"close"</span> <span class="kw">in</span> btc_daily.columns <span class="cf">else</span> <span class="va">None</span></span>
+<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> btc_price_col <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>    btc_numeric_cols <span class="op">=</span> btc_daily.select_dtypes(include<span class="op">=</span>[np.number]).columns</span>
+<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(btc_numeric_cols) <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"BTC daily file has no numeric price column."</span>)</span>
+<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a>    btc_price_col <span class="op">=</span> btc_numeric_cols[<span class="dv">0</span>]</span>
+<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a>btc_daily[btc_price_col] <span class="op">=</span> pd.to_numeric(btc_daily[btc_price_col], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
+<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a>btc_spot <span class="op">=</span> (</span>
+<span id="cb31-39"><a href="#cb31-39" aria-hidden="true" tabindex="-1"></a>    btc_daily.dropna(subset<span class="op">=</span>[<span class="st">"date"</span>, btc_price_col])</span>
+<span id="cb31-40"><a href="#cb31-40" aria-hidden="true" tabindex="-1"></a>    .sort_values(<span class="st">"date"</span>)</span>
+<span id="cb31-41"><a href="#cb31-41" aria-hidden="true" tabindex="-1"></a>    .drop_duplicates(<span class="st">"date"</span>, keep<span class="op">=</span><span class="st">"last"</span>)</span>
+<span id="cb31-42"><a href="#cb31-42" aria-hidden="true" tabindex="-1"></a>    .set_index(<span class="st">"date"</span>)[btc_price_col]</span>
+<span id="cb31-43"><a href="#cb31-43" aria-hidden="true" tabindex="-1"></a>    .astype(<span class="bu">float</span>))</span>
+<span id="cb31-44"><a href="#cb31-44" aria-hidden="true" tabindex="-1"></a>btc_spot <span class="op">=</span> btc_spot[btc_spot <span class="op">&gt;</span> <span class="dv">0</span>].rename(<span class="st">"BTC"</span>)</span>
+<span id="cb31-45"><a href="#cb31-45" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> btc_spot.empty:</span>
+<span id="cb31-46"><a href="#cb31-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"BTC spot series is empty after cleaning."</span>)</span>
+<span id="cb31-47"><a href="#cb31-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-48"><a href="#cb31-48" aria-hidden="true" tabindex="-1"></a>btc_returns <span class="op">=</span> realized.log_returns(btc_spot)</span>
+<span id="cb31-49"><a href="#cb31-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-50"><a href="#cb31-50" aria-hidden="true" tabindex="-1"></a>quotes <span class="op">=</span> quote_cleaning.normalize_option_quote_schema(</span>
+<span id="cb31-51"><a href="#cb31-51" aria-hidden="true" tabindex="-1"></a>    raw_btc_options,</span>
+<span id="cb31-52"><a href="#cb31-52" aria-hidden="true" tabindex="-1"></a>    profile<span class="op">=</span><span class="st">"btc_deribit"</span>,</span>
+<span id="cb31-53"><a href="#cb31-53" aria-hidden="true" tabindex="-1"></a>    underlying_default<span class="op">=</span><span class="st">"BTC"</span>)</span>
+<span id="cb31-54"><a href="#cb31-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-55"><a href="#cb31-55" aria-hidden="true" tabindex="-1"></a>quotes <span class="op">=</span> quote_cleaning.ensure_option_mid_quotes(quotes)</span>
+<span id="cb31-56"><a href="#cb31-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-57"><a href="#cb31-57" aria-hidden="true" tabindex="-1"></a>quotes <span class="op">=</span> quote_cleaning.attach_spot_from_series(</span>
+<span id="cb31-58"><a href="#cb31-58" aria-hidden="true" tabindex="-1"></a>    quotes, spot_series<span class="op">=</span>btc_spot, date_col<span class="op">=</span><span class="st">"date"</span>,</span>
+<span id="cb31-59"><a href="#cb31-59" aria-hidden="true" tabindex="-1"></a>    spot_col<span class="op">=</span><span class="st">"spot"</span>, method<span class="op">=</span><span class="st">"previous"</span>, overwrite<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb31-60"><a href="#cb31-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-61"><a href="#cb31-61" aria-hidden="true" tabindex="-1"></a>quotes <span class="op">=</span> quote_cleaning.convert_quotes_to_usd_equivalent(</span>
+<span id="cb31-62"><a href="#cb31-62" aria-hidden="true" tabindex="-1"></a>    quotes, spot_col<span class="op">=</span><span class="st">"spot"</span>, price_cols<span class="op">=</span>(<span class="st">"bid"</span>, <span class="st">"ask"</span>, <span class="st">"mid"</span>, <span class="st">"last"</span>, <span class="st">"mark"</span>),</span>
+<span id="cb31-63"><a href="#cb31-63" aria-hidden="true" tabindex="-1"></a>    unit<span class="op">=</span><span class="st">"auto"</span>, contract_size<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb31-64"><a href="#cb31-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-65"><a href="#cb31-65" aria-hidden="true" tabindex="-1"></a>quotes <span class="op">=</span> quote_cleaning.add_time_to_expiry(</span>
+<span id="cb31-66"><a href="#cb31-66" aria-hidden="true" tabindex="-1"></a>    quotes, date_col<span class="op">=</span><span class="st">"date"</span>, expiry_col<span class="op">=</span><span class="st">"expiry"</span>,</span>
+<span id="cb31-67"><a href="#cb31-67" aria-hidden="true" tabindex="-1"></a>    annualization_days<span class="op">=</span><span class="dv">365</span>)</span>
+<span id="cb31-68"><a href="#cb31-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-69"><a href="#cb31-69" aria-hidden="true" tabindex="-1"></a>quotes <span class="op">=</span> quote_cleaning.add_moneyness(</span>
+<span id="cb31-70"><a href="#cb31-70" aria-hidden="true" tabindex="-1"></a>    quotes, spot_col<span class="op">=</span><span class="st">"spot"</span>, strike_col<span class="op">=</span><span class="st">"strike"</span>)</span>
+<span id="cb31-71"><a href="#cb31-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-72"><a href="#cb31-72" aria-hidden="true" tabindex="-1"></a>clean_quotes, filter_report <span class="op">=</span> quote_cleaning.clean_option_quotes(</span>
+<span id="cb31-73"><a href="#cb31-73" aria-hidden="true" tabindex="-1"></a>    quotes, min_dte<span class="op">=</span><span class="dv">7</span>, max_dte<span class="op">=</span><span class="dv">120</span>, moneyness_range<span class="op">=</span>(<span class="fl">0.85</span>, <span class="fl">1.15</span>),</span>
+<span id="cb31-74"><a href="#cb31-74" aria-hidden="true" tabindex="-1"></a>    max_relative_spread<span class="op">=</span><span class="fl">0.20</span>, closest_atm_pairs<span class="op">=</span><span class="dv">25</span>,</span>
+<span id="cb31-75"><a href="#cb31-75" aria-hidden="true" tabindex="-1"></a>    min_pairs_per_expiry<span class="op">=</span><span class="dv">10</span>, annualization_days<span class="op">=</span><span class="dv">365</span>)</span>
+<span id="cb31-76"><a href="#cb31-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-77"><a href="#cb31-77" aria-hidden="true" tabindex="-1"></a>us_par <span class="op">=</span> bootstrap.normalize_par_yields(us_par_raw)</span>
+<span id="cb31-78"><a href="#cb31-78" aria-hidden="true" tabindex="-1"></a>rate_start <span class="op">=</span> clean_quotes[<span class="st">"date"</span>].<span class="bu">min</span>() <span class="op">-</span> pd.Timedelta(days<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb31-79"><a href="#cb31-79" aria-hidden="true" tabindex="-1"></a>rate_end <span class="op">=</span> clean_quotes[<span class="st">"date"</span>].<span class="bu">max</span>()</span>
+<span id="cb31-80"><a href="#cb31-80" aria-hidden="true" tabindex="-1"></a>us_par <span class="op">=</span> us_par.loc[(us_par.index <span class="op">&gt;=</span> rate_start) <span class="op">&amp;</span> (us_par.index <span class="op">&lt;=</span> rate_end)]</span>
+<span id="cb31-81"><a href="#cb31-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-82"><a href="#cb31-82" aria-hidden="true" tabindex="-1"></a>us_zero_curve_panel <span class="op">=</span> bootstrap.build_zero_curve_panel_from_par_yields(</span>
+<span id="cb31-83"><a href="#cb31-83" aria-hidden="true" tabindex="-1"></a>    us_par, method<span class="op">=</span><span class="st">"pchip"</span>, as_continuous<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb31-84"><a href="#cb31-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-85"><a href="#cb31-85" aria-hidden="true" tabindex="-1"></a>clean_quotes[<span class="st">"rate"</span>], clean_quotes[<span class="st">"rate_source_date"</span>] <span class="op">=</span> (</span>
+<span id="cb31-86"><a href="#cb31-86" aria-hidden="true" tabindex="-1"></a>    discounting.map_curve_rates_to_dates_and_taus(</span>
+<span id="cb31-87"><a href="#cb31-87" aria-hidden="true" tabindex="-1"></a>        curve_panel<span class="op">=</span>us_zero_curve_panel, dates<span class="op">=</span>clean_quotes[<span class="st">"date"</span>],</span>
+<span id="cb31-88"><a href="#cb31-88" aria-hidden="true" tabindex="-1"></a>        taus<span class="op">=</span>clean_quotes[<span class="st">"tau"</span>], method<span class="op">=</span><span class="st">"previous"</span>,</span>
+<span id="cb31-89"><a href="#cb31-89" aria-hidden="true" tabindex="-1"></a>        interpolation<span class="op">=</span><span class="st">"linear"</span>, return_source_dates<span class="op">=</span><span class="va">True</span>))</span>
 <span id="cb31-90"><a href="#cb31-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-91"><a href="#cb31-91" aria-hidden="true" tabindex="-1"></a>clean_quotes[<span class="st">"rate"</span>], clean_quotes[<span class="st">"rate_source_date"</span>] <span class="op">=</span> (</span>
-<span id="cb31-92"><a href="#cb31-92" aria-hidden="true" tabindex="-1"></a>    discounting.map_curve_rates_to_dates_and_taus(</span>
-<span id="cb31-93"><a href="#cb31-93" aria-hidden="true" tabindex="-1"></a>        curve_panel<span class="op">=</span>us_zero_curve_panel,</span>
-<span id="cb31-94"><a href="#cb31-94" aria-hidden="true" tabindex="-1"></a>        dates<span class="op">=</span>clean_quotes[<span class="st">"date"</span>],</span>
-<span id="cb31-95"><a href="#cb31-95" aria-hidden="true" tabindex="-1"></a>        taus<span class="op">=</span>clean_quotes[<span class="st">"tau"</span>],</span>
-<span id="cb31-96"><a href="#cb31-96" aria-hidden="true" tabindex="-1"></a>        method<span class="op">=</span><span class="st">"previous"</span>,</span>
-<span id="cb31-97"><a href="#cb31-97" aria-hidden="true" tabindex="-1"></a>        interpolation<span class="op">=</span><span class="st">"linear"</span>,</span>
-<span id="cb31-98"><a href="#cb31-98" aria-hidden="true" tabindex="-1"></a>        return_source_dates<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb31-99"><a href="#cb31-99" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb31-100"><a href="#cb31-100" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb31-91"><a href="#cb31-91" aria-hidden="true" tabindex="-1"></a>clean_quotes[<span class="st">"discount_factor"</span>] <span class="op">=</span> discounting.discount_factor_from_rate(</span>
+<span id="cb31-92"><a href="#cb31-92" aria-hidden="true" tabindex="-1"></a>    clean_quotes[<span class="st">"rate"</span>], clean_quotes[<span class="st">"tau"</span>], compounding<span class="op">=</span><span class="st">"continuous"</span>)</span>
+<span id="cb31-93"><a href="#cb31-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-94"><a href="#cb31-94" aria-hidden="true" tabindex="-1"></a>analysis_date <span class="op">=</span> parity.choose_liquid_single_day(</span>
+<span id="cb31-95"><a href="#cb31-95" aria-hidden="true" tabindex="-1"></a>    clean_quotes, min_pairs<span class="op">=</span><span class="dv">20</span>, prefer_dte_range<span class="op">=</span>(<span class="dv">21</span>, <span class="dv">60</span>))</span>
+<span id="cb31-96"><a href="#cb31-96" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-97"><a href="#cb31-97" aria-hidden="true" tabindex="-1"></a>single_day_quotes <span class="op">=</span> clean_quotes.loc[clean_quotes[<span class="st">"date"</span>].dt.normalize().eq(analysis_date)].copy()</span>
+<span id="cb31-98"><a href="#cb31-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-99"><a href="#cb31-99" aria-hidden="true" tabindex="-1"></a>single_day_forward <span class="op">=</span> parity.infer_single_day_forward_curve(</span>
+<span id="cb31-100"><a href="#cb31-100" aria-hidden="true" tabindex="-1"></a>    single_day_quotes, price_col<span class="op">=</span><span class="st">"mid"</span>, rate_col<span class="op">=</span><span class="st">"rate"</span>)</span>
 <span id="cb31-101"><a href="#cb31-101" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-102"><a href="#cb31-102" aria-hidden="true" tabindex="-1"></a>clean_quotes[<span class="st">"discount_factor"</span>] <span class="op">=</span> discounting.discount_factor_from_rate(</span>
-<span id="cb31-103"><a href="#cb31-103" aria-hidden="true" tabindex="-1"></a>    clean_quotes[<span class="st">"rate"</span>],</span>
-<span id="cb31-104"><a href="#cb31-104" aria-hidden="true" tabindex="-1"></a>    clean_quotes[<span class="st">"tau"</span>],</span>
-<span id="cb31-105"><a href="#cb31-105" aria-hidden="true" tabindex="-1"></a>    compounding<span class="op">=</span><span class="st">"continuous"</span>,</span>
-<span id="cb31-106"><a href="#cb31-106" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-107"><a href="#cb31-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-108"><a href="#cb31-108" aria-hidden="true" tabindex="-1"></a>analysis_date <span class="op">=</span> parity.choose_liquid_single_day(</span>
-<span id="cb31-109"><a href="#cb31-109" aria-hidden="true" tabindex="-1"></a>    clean_quotes,</span>
-<span id="cb31-110"><a href="#cb31-110" aria-hidden="true" tabindex="-1"></a>    min_pairs<span class="op">=</span><span class="dv">20</span>,</span>
-<span id="cb31-111"><a href="#cb31-111" aria-hidden="true" tabindex="-1"></a>    prefer_dte_range<span class="op">=</span>(<span class="dv">21</span>, <span class="dv">60</span>),</span>
-<span id="cb31-112"><a href="#cb31-112" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-113"><a href="#cb31-113" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-114"><a href="#cb31-114" aria-hidden="true" tabindex="-1"></a>single_day_quotes <span class="op">=</span> clean_quotes.loc[clean_quotes[<span class="st">"date"</span>].dt.normalize().eq(analysis_date)].copy()</span>
+<span id="cb31-102"><a href="#cb31-102" aria-hidden="true" tabindex="-1"></a>forward_table <span class="op">=</span> parity.infer_forwards_from_put_call_parity(</span>
+<span id="cb31-103"><a href="#cb31-103" aria-hidden="true" tabindex="-1"></a>    clean_quotes, price_col<span class="op">=</span><span class="st">"mid"</span>)</span>
+<span id="cb31-104"><a href="#cb31-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-105"><a href="#cb31-105" aria-hidden="true" tabindex="-1"></a>clean_quotes <span class="op">=</span> clean_quotes.merge(</span>
+<span id="cb31-106"><a href="#cb31-106" aria-hidden="true" tabindex="-1"></a>    forward_table[[<span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"forward"</span>, <span class="st">"implied_carry"</span>]],</span>
+<span id="cb31-107"><a href="#cb31-107" aria-hidden="true" tabindex="-1"></a>    on<span class="op">=</span>[<span class="st">"date"</span>, <span class="st">"expiry"</span>], how<span class="op">=</span><span class="st">"left"</span>)</span>
+<span id="cb31-108"><a href="#cb31-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-109"><a href="#cb31-109" aria-hidden="true" tabindex="-1"></a>rv_table <span class="op">=</span> realized.realized_volatility_table(</span>
+<span id="cb31-110"><a href="#cb31-110" aria-hidden="true" tabindex="-1"></a>    btc_returns, windows<span class="op">=</span>[<span class="dv">7</span>, <span class="dv">30</span>], annualization<span class="op">=</span><span class="dv">365</span>)</span>
+<span id="cb31-111"><a href="#cb31-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-112"><a href="#cb31-112" aria-hidden="true" tabindex="-1"></a>rv_pricing <span class="op">=</span> diagnostics.realized_vol_forward_bsm_pricing_comparison(</span>
+<span id="cb31-113"><a href="#cb31-113" aria-hidden="true" tabindex="-1"></a>    quotes<span class="op">=</span>clean_quotes, realized_vol<span class="op">=</span>rv_table,</span>
+<span id="cb31-114"><a href="#cb31-114" aria-hidden="true" tabindex="-1"></a>    vol_window<span class="op">=</span><span class="dv">30</span>, price_col<span class="op">=</span><span class="st">"mid"</span>, annualization_days<span class="op">=</span><span class="dv">365</span>)</span>
 <span id="cb31-115"><a href="#cb31-115" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-116"><a href="#cb31-116" aria-hidden="true" tabindex="-1"></a>single_day_forward <span class="op">=</span> parity.infer_single_day_forward_curve(</span>
-<span id="cb31-117"><a href="#cb31-117" aria-hidden="true" tabindex="-1"></a>    single_day_quotes,</span>
-<span id="cb31-118"><a href="#cb31-118" aria-hidden="true" tabindex="-1"></a>    price_col<span class="op">=</span><span class="st">"mid"</span>,</span>
-<span id="cb31-119"><a href="#cb31-119" aria-hidden="true" tabindex="-1"></a>    rate_col<span class="op">=</span><span class="st">"rate"</span>,</span>
-<span id="cb31-120"><a href="#cb31-120" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-121"><a href="#cb31-121" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-122"><a href="#cb31-122" aria-hidden="true" tabindex="-1"></a>forward_table <span class="op">=</span> parity.infer_forwards_from_put_call_parity(</span>
-<span id="cb31-123"><a href="#cb31-123" aria-hidden="true" tabindex="-1"></a>    clean_quotes,</span>
-<span id="cb31-124"><a href="#cb31-124" aria-hidden="true" tabindex="-1"></a>    price_col<span class="op">=</span><span class="st">"mid"</span>,</span>
-<span id="cb31-125"><a href="#cb31-125" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-126"><a href="#cb31-126" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-127"><a href="#cb31-127" aria-hidden="true" tabindex="-1"></a>clean_quotes <span class="op">=</span> clean_quotes.merge(</span>
-<span id="cb31-128"><a href="#cb31-128" aria-hidden="true" tabindex="-1"></a>    forward_table[[<span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"forward"</span>, <span class="st">"implied_carry"</span>]],</span>
-<span id="cb31-129"><a href="#cb31-129" aria-hidden="true" tabindex="-1"></a>    on<span class="op">=</span>[<span class="st">"date"</span>, <span class="st">"expiry"</span>],</span>
-<span id="cb31-130"><a href="#cb31-130" aria-hidden="true" tabindex="-1"></a>    how<span class="op">=</span><span class="st">"left"</span>,</span>
-<span id="cb31-131"><a href="#cb31-131" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-132"><a href="#cb31-132" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-133"><a href="#cb31-133" aria-hidden="true" tabindex="-1"></a>rv_table <span class="op">=</span> realized.realized_volatility_table(</span>
-<span id="cb31-134"><a href="#cb31-134" aria-hidden="true" tabindex="-1"></a>    btc_returns,</span>
-<span id="cb31-135"><a href="#cb31-135" aria-hidden="true" tabindex="-1"></a>    windows<span class="op">=</span>[<span class="dv">7</span>, <span class="dv">30</span>],</span>
-<span id="cb31-136"><a href="#cb31-136" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span><span class="dv">365</span>,</span>
-<span id="cb31-137"><a href="#cb31-137" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-138"><a href="#cb31-138" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-139"><a href="#cb31-139" aria-hidden="true" tabindex="-1"></a>rv_pricing <span class="op">=</span> diagnostics.realized_vol_forward_bsm_pricing_comparison(</span>
-<span id="cb31-140"><a href="#cb31-140" aria-hidden="true" tabindex="-1"></a>    quotes<span class="op">=</span>clean_quotes,</span>
-<span id="cb31-141"><a href="#cb31-141" aria-hidden="true" tabindex="-1"></a>    realized_vol<span class="op">=</span>rv_table,</span>
-<span id="cb31-142"><a href="#cb31-142" aria-hidden="true" tabindex="-1"></a>    vol_window<span class="op">=</span><span class="dv">30</span>,</span>
-<span id="cb31-143"><a href="#cb31-143" aria-hidden="true" tabindex="-1"></a>    price_col<span class="op">=</span><span class="st">"mid"</span>,</span>
-<span id="cb31-144"><a href="#cb31-144" aria-hidden="true" tabindex="-1"></a>    annualization_days<span class="op">=</span><span class="dv">365</span>,</span>
-<span id="cb31-145"><a href="#cb31-145" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-146"><a href="#cb31-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-147"><a href="#cb31-147" aria-hidden="true" tabindex="-1"></a>iv_t0 <span class="op">=</span> time.perf_counter()</span>
-<span id="cb31-148"><a href="#cb31-148" aria-hidden="true" tabindex="-1"></a>iv_lbr <span class="op">=</span> iv.compute_iv_table(</span>
-<span id="cb31-149"><a href="#cb31-149" aria-hidden="true" tabindex="-1"></a>    clean_quotes,</span>
-<span id="cb31-150"><a href="#cb31-150" aria-hidden="true" tabindex="-1"></a>    solver<span class="op">=</span><span class="st">"lbr_lite"</span>,</span>
-<span id="cb31-151"><a href="#cb31-151" aria-hidden="true" tabindex="-1"></a>    engine<span class="op">=</span><span class="st">"auto"</span>,</span>
-<span id="cb31-152"><a href="#cb31-152" aria-hidden="true" tabindex="-1"></a>    price_cols<span class="op">=</span>(<span class="st">"bid"</span>, <span class="st">"mid"</span>, <span class="st">"ask"</span>),</span>
-<span id="cb31-153"><a href="#cb31-153" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-154"><a href="#cb31-154" aria-hidden="true" tabindex="-1"></a>iv_lbr_elapsed <span class="op">=</span> time.perf_counter() <span class="op">-</span> iv_t0</span>
-<span id="cb31-155"><a href="#cb31-155" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-156"><a href="#cb31-156" aria-hidden="true" tabindex="-1"></a>iv_t0 <span class="op">=</span> time.perf_counter()</span>
-<span id="cb31-157"><a href="#cb31-157" aria-hidden="true" tabindex="-1"></a>iv_nb <span class="op">=</span> iv.compute_iv_table(</span>
-<span id="cb31-158"><a href="#cb31-158" aria-hidden="true" tabindex="-1"></a>    clean_quotes,</span>
-<span id="cb31-159"><a href="#cb31-159" aria-hidden="true" tabindex="-1"></a>    solver<span class="op">=</span><span class="st">"newton_bisection"</span>,</span>
-<span id="cb31-160"><a href="#cb31-160" aria-hidden="true" tabindex="-1"></a>    engine<span class="op">=</span><span class="st">"auto"</span>,</span>
-<span id="cb31-161"><a href="#cb31-161" aria-hidden="true" tabindex="-1"></a>    price_cols<span class="op">=</span>(<span class="st">"bid"</span>, <span class="st">"mid"</span>, <span class="st">"ask"</span>),</span>
-<span id="cb31-162"><a href="#cb31-162" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-163"><a href="#cb31-163" aria-hidden="true" tabindex="-1"></a>iv_nb_elapsed <span class="op">=</span> time.perf_counter() <span class="op">-</span> iv_t0</span>
-<span id="cb31-164"><a href="#cb31-164" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-165"><a href="#cb31-165" aria-hidden="true" tabindex="-1"></a>iv_solver_comparison <span class="op">=</span> pd.DataFrame(</span>
-<span id="cb31-166"><a href="#cb31-166" aria-hidden="true" tabindex="-1"></a>    [</span>
-<span id="cb31-167"><a href="#cb31-167" aria-hidden="true" tabindex="-1"></a>        {</span>
-<span id="cb31-168"><a href="#cb31-168" aria-hidden="true" tabindex="-1"></a>            <span class="st">"solver"</span>: <span class="st">"LBR-lite"</span>,</span>
-<span id="cb31-169"><a href="#cb31-169" aria-hidden="true" tabindex="-1"></a>            <span class="st">"engine_used"</span>: iv_lbr.attrs.get(<span class="st">"engine_used"</span>, <span class="st">"unknown"</span>),</span>
-<span id="cb31-170"><a href="#cb31-170" aria-hidden="true" tabindex="-1"></a>            <span class="st">"success_rate"</span>: <span class="bu">float</span>(np.nanmean(iv_lbr[<span class="st">"iv_mid_success"</span>])),</span>
-<span id="cb31-171"><a href="#cb31-171" aria-hidden="true" tabindex="-1"></a>            <span class="st">"elapsed_sec"</span>: <span class="bu">float</span>(iv_lbr_elapsed),</span>
-<span id="cb31-172"><a href="#cb31-172" aria-hidden="true" tabindex="-1"></a>            <span class="st">"quotes_per_sec"</span>: <span class="bu">float</span>(<span class="bu">len</span>(iv_lbr) <span class="op">/</span> <span class="bu">max</span>(iv_lbr_elapsed, <span class="fl">1e-12</span>)),</span>
-<span id="cb31-173"><a href="#cb31-173" aria-hidden="true" tabindex="-1"></a>            <span class="st">"median_iterations"</span>: <span class="bu">float</span>(np.nanmedian(iv_lbr.loc[iv_lbr[<span class="st">"iv_mid_success"</span>], <span class="st">"iv_mid_iters"</span>])),</span>
-<span id="cb31-174"><a href="#cb31-174" aria-hidden="true" tabindex="-1"></a>            <span class="st">"median_abs_price_error"</span>: <span class="bu">float</span>(np.nanmedian(iv_lbr.loc[iv_lbr[<span class="st">"iv_mid_success"</span>], <span class="st">"iv_mid_abs_price_error"</span>])),</span>
-<span id="cb31-175"><a href="#cb31-175" aria-hidden="true" tabindex="-1"></a>        },</span>
-<span id="cb31-176"><a href="#cb31-176" aria-hidden="true" tabindex="-1"></a>        {</span>
-<span id="cb31-177"><a href="#cb31-177" aria-hidden="true" tabindex="-1"></a>            <span class="st">"solver"</span>: <span class="st">"Newton-bisection"</span>,</span>
-<span id="cb31-178"><a href="#cb31-178" aria-hidden="true" tabindex="-1"></a>            <span class="st">"engine_used"</span>: iv_nb.attrs.get(<span class="st">"engine_used"</span>, <span class="st">"unknown"</span>),</span>
-<span id="cb31-179"><a href="#cb31-179" aria-hidden="true" tabindex="-1"></a>            <span class="st">"success_rate"</span>: <span class="bu">float</span>(np.nanmean(iv_nb[<span class="st">"iv_mid_success"</span>])),</span>
-<span id="cb31-180"><a href="#cb31-180" aria-hidden="true" tabindex="-1"></a>            <span class="st">"elapsed_sec"</span>: <span class="bu">float</span>(iv_nb_elapsed),</span>
-<span id="cb31-181"><a href="#cb31-181" aria-hidden="true" tabindex="-1"></a>            <span class="st">"quotes_per_sec"</span>: <span class="bu">float</span>(<span class="bu">len</span>(iv_nb) <span class="op">/</span> <span class="bu">max</span>(iv_nb_elapsed, <span class="fl">1e-12</span>)),</span>
-<span id="cb31-182"><a href="#cb31-182" aria-hidden="true" tabindex="-1"></a>            <span class="st">"median_iterations"</span>: <span class="bu">float</span>(np.nanmedian(iv_nb.loc[iv_nb[<span class="st">"iv_mid_success"</span>], <span class="st">"iv_mid_iters"</span>])),</span>
-<span id="cb31-183"><a href="#cb31-183" aria-hidden="true" tabindex="-1"></a>            <span class="st">"median_abs_price_error"</span>: <span class="bu">float</span>(np.nanmedian(iv_nb.loc[iv_nb[<span class="st">"iv_mid_success"</span>], <span class="st">"iv_mid_abs_price_error"</span>])),</span>
-<span id="cb31-184"><a href="#cb31-184" aria-hidden="true" tabindex="-1"></a>        },</span>
-<span id="cb31-185"><a href="#cb31-185" aria-hidden="true" tabindex="-1"></a>    ]</span>
-<span id="cb31-186"><a href="#cb31-186" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb31-116"><a href="#cb31-116" aria-hidden="true" tabindex="-1"></a>iv_t0 <span class="op">=</span> time.perf_counter()</span>
+<span id="cb31-117"><a href="#cb31-117" aria-hidden="true" tabindex="-1"></a>iv_lbr <span class="op">=</span> iv.compute_iv_table(</span>
+<span id="cb31-118"><a href="#cb31-118" aria-hidden="true" tabindex="-1"></a>    clean_quotes, solver<span class="op">=</span><span class="st">"lbr_lite"</span>, engine<span class="op">=</span><span class="st">"auto"</span>,</span>
+<span id="cb31-119"><a href="#cb31-119" aria-hidden="true" tabindex="-1"></a>    price_cols<span class="op">=</span>(<span class="st">"bid"</span>, <span class="st">"mid"</span>, <span class="st">"ask"</span>))</span>
+<span id="cb31-120"><a href="#cb31-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-121"><a href="#cb31-121" aria-hidden="true" tabindex="-1"></a>iv_lbr_elapsed <span class="op">=</span> time.perf_counter() <span class="op">-</span> iv_t0</span>
+<span id="cb31-122"><a href="#cb31-122" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-123"><a href="#cb31-123" aria-hidden="true" tabindex="-1"></a>iv_t0 <span class="op">=</span> time.perf_counter()</span>
+<span id="cb31-124"><a href="#cb31-124" aria-hidden="true" tabindex="-1"></a>iv_nb <span class="op">=</span> iv.compute_iv_table(</span>
+<span id="cb31-125"><a href="#cb31-125" aria-hidden="true" tabindex="-1"></a>    clean_quotes,</span>
+<span id="cb31-126"><a href="#cb31-126" aria-hidden="true" tabindex="-1"></a>    solver<span class="op">=</span><span class="st">"newton_bisection"</span>, engine<span class="op">=</span><span class="st">"auto"</span>,</span>
+<span id="cb31-127"><a href="#cb31-127" aria-hidden="true" tabindex="-1"></a>    price_cols<span class="op">=</span>(<span class="st">"bid"</span>, <span class="st">"mid"</span>, <span class="st">"ask"</span>))</span>
+<span id="cb31-128"><a href="#cb31-128" aria-hidden="true" tabindex="-1"></a>iv_nb_elapsed <span class="op">=</span> time.perf_counter() <span class="op">-</span> iv_t0</span>
+<span id="cb31-129"><a href="#cb31-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-130"><a href="#cb31-130" aria-hidden="true" tabindex="-1"></a>iv_solver_comparison <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb31-131"><a href="#cb31-131" aria-hidden="true" tabindex="-1"></a>    [{<span class="st">"solver"</span>: <span class="st">"LBR-lite"</span>,</span>
+<span id="cb31-132"><a href="#cb31-132" aria-hidden="true" tabindex="-1"></a>      <span class="st">"engine_used"</span>: iv_lbr.attrs.get(<span class="st">"engine_used"</span>, <span class="st">"unknown"</span>),</span>
+<span id="cb31-133"><a href="#cb31-133" aria-hidden="true" tabindex="-1"></a>      <span class="st">"success_rate"</span>: <span class="bu">float</span>(np.nanmean(iv_lbr[<span class="st">"iv_mid_success"</span>])),</span>
+<span id="cb31-134"><a href="#cb31-134" aria-hidden="true" tabindex="-1"></a>      <span class="st">"elapsed_sec"</span>: <span class="bu">float</span>(iv_lbr_elapsed),</span>
+<span id="cb31-135"><a href="#cb31-135" aria-hidden="true" tabindex="-1"></a>      <span class="st">"quotes_per_sec"</span>: <span class="bu">float</span>(<span class="bu">len</span>(iv_lbr) <span class="op">/</span> <span class="bu">max</span>(iv_lbr_elapsed, <span class="fl">1e-12</span>)),</span>
+<span id="cb31-136"><a href="#cb31-136" aria-hidden="true" tabindex="-1"></a>      <span class="st">"median_iterations"</span>: <span class="bu">float</span>(np.nanmedian(iv_lbr.loc[iv_lbr[<span class="st">"iv_mid_success"</span>], <span class="st">"iv_mid_iters"</span>])),</span>
+<span id="cb31-137"><a href="#cb31-137" aria-hidden="true" tabindex="-1"></a>      <span class="st">"median_abs_price_error"</span>: <span class="bu">float</span>(np.nanmedian(iv_lbr.loc[iv_lbr[<span class="st">"iv_mid_success"</span>], <span class="st">"iv_mid_abs_price_error"</span>]))},</span>
+<span id="cb31-138"><a href="#cb31-138" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"solver"</span>: <span class="st">"Newton-bisection"</span>,</span>
+<span id="cb31-139"><a href="#cb31-139" aria-hidden="true" tabindex="-1"></a>        <span class="st">"engine_used"</span>: iv_nb.attrs.get(<span class="st">"engine_used"</span>, <span class="st">"unknown"</span>),</span>
+<span id="cb31-140"><a href="#cb31-140" aria-hidden="true" tabindex="-1"></a>        <span class="st">"success_rate"</span>: <span class="bu">float</span>(np.nanmean(iv_nb[<span class="st">"iv_mid_success"</span>])),</span>
+<span id="cb31-141"><a href="#cb31-141" aria-hidden="true" tabindex="-1"></a>        <span class="st">"elapsed_sec"</span>: <span class="bu">float</span>(iv_nb_elapsed),</span>
+<span id="cb31-142"><a href="#cb31-142" aria-hidden="true" tabindex="-1"></a>        <span class="st">"quotes_per_sec"</span>: <span class="bu">float</span>(<span class="bu">len</span>(iv_nb) <span class="op">/</span> <span class="bu">max</span>(iv_nb_elapsed, <span class="fl">1e-12</span>)),</span>
+<span id="cb31-143"><a href="#cb31-143" aria-hidden="true" tabindex="-1"></a>        <span class="st">"median_iterations"</span>: <span class="bu">float</span>(np.nanmedian(iv_nb.loc[iv_nb[<span class="st">"iv_mid_success"</span>], <span class="st">"iv_mid_iters"</span>])),</span>
+<span id="cb31-144"><a href="#cb31-144" aria-hidden="true" tabindex="-1"></a>        <span class="st">"median_abs_price_error"</span>: <span class="bu">float</span>(np.nanmedian(iv_nb.loc[iv_nb[<span class="st">"iv_mid_success"</span>], <span class="st">"iv_mid_abs_price_error"</span>]))}])</span>
+<span id="cb31-145"><a href="#cb31-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-146"><a href="#cb31-146" aria-hidden="true" tabindex="-1"></a>solver_diagnostics <span class="op">=</span> diagnostics.iv_solver_diagnostics(</span>
+<span id="cb31-147"><a href="#cb31-147" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"LBR-lite"</span>: iv_lbr,</span>
+<span id="cb31-148"><a href="#cb31-148" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Newton-bisection"</span>: iv_nb},</span>
+<span id="cb31-149"><a href="#cb31-149" aria-hidden="true" tabindex="-1"></a>    x_col<span class="op">=</span><span class="st">"log_moneyness"</span>)</span>
+<span id="cb31-150"><a href="#cb31-150" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-151"><a href="#cb31-151" aria-hidden="true" tabindex="-1"></a>iv_table <span class="op">=</span> iv_lbr.copy()</span>
+<span id="cb31-152"><a href="#cb31-152" aria-hidden="true" tabindex="-1"></a>single_day_iv <span class="op">=</span> iv_table.loc[iv_table[<span class="st">"date"</span>].dt.normalize().eq(analysis_date)].copy()</span>
+<span id="cb31-153"><a href="#cb31-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-154"><a href="#cb31-154" aria-hidden="true" tabindex="-1"></a>greeks_np <span class="op">=</span> greeks.compute_greeks_numpy(</span>
+<span id="cb31-155"><a href="#cb31-155" aria-hidden="true" tabindex="-1"></a>    iv_table, iv_col<span class="op">=</span><span class="st">"iv_mid"</span>, price_model<span class="op">=</span><span class="st">"forward_bsm"</span>)</span>
+<span id="cb31-156"><a href="#cb31-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-157"><a href="#cb31-157" aria-hidden="true" tabindex="-1"></a>greek_slice <span class="op">=</span> greeks_np.loc[</span>
+<span id="cb31-158"><a href="#cb31-158" aria-hidden="true" tabindex="-1"></a>    greeks_np[<span class="st">"date"</span>].dt.normalize().eq(analysis_date)</span>
+<span id="cb31-159"><a href="#cb31-159" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span> greeks_np[<span class="st">"option_type"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"call"</span>)</span>
+<span id="cb31-160"><a href="#cb31-160" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span> greeks_np[<span class="st">"iv_success"</span>].astype(<span class="bu">bool</span>)].copy()</span>
+<span id="cb31-161"><a href="#cb31-161" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-162"><a href="#cb31-162" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">len</span>(greek_slice) <span class="op">&lt;</span> <span class="dv">10</span>:</span>
+<span id="cb31-163"><a href="#cb31-163" aria-hidden="true" tabindex="-1"></a>    dense <span class="op">=</span> (</span>
+<span id="cb31-164"><a href="#cb31-164" aria-hidden="true" tabindex="-1"></a>        greeks_np.loc[</span>
+<span id="cb31-165"><a href="#cb31-165" aria-hidden="true" tabindex="-1"></a>            greeks_np[<span class="st">"option_type"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"call"</span>)</span>
+<span id="cb31-166"><a href="#cb31-166" aria-hidden="true" tabindex="-1"></a>            <span class="op">&amp;</span> greeks_np[<span class="st">"iv_success"</span>].astype(<span class="bu">bool</span>)</span>
+<span id="cb31-167"><a href="#cb31-167" aria-hidden="true" tabindex="-1"></a>        ]</span>
+<span id="cb31-168"><a href="#cb31-168" aria-hidden="true" tabindex="-1"></a>        .groupby([<span class="st">"date"</span>, <span class="st">"expiry"</span>])</span>
+<span id="cb31-169"><a href="#cb31-169" aria-hidden="true" tabindex="-1"></a>        .size()</span>
+<span id="cb31-170"><a href="#cb31-170" aria-hidden="true" tabindex="-1"></a>        .rename(<span class="st">"n"</span>)</span>
+<span id="cb31-171"><a href="#cb31-171" aria-hidden="true" tabindex="-1"></a>        .reset_index()</span>
+<span id="cb31-172"><a href="#cb31-172" aria-hidden="true" tabindex="-1"></a>        .sort_values(<span class="st">"n"</span>, ascending<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb31-173"><a href="#cb31-173" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(dense):</span>
+<span id="cb31-174"><a href="#cb31-174" aria-hidden="true" tabindex="-1"></a>        dense_row <span class="op">=</span> dense.iloc[<span class="dv">0</span>]</span>
+<span id="cb31-175"><a href="#cb31-175" aria-hidden="true" tabindex="-1"></a>        greek_slice <span class="op">=</span> greeks_np.loc[</span>
+<span id="cb31-176"><a href="#cb31-176" aria-hidden="true" tabindex="-1"></a>            greeks_np[<span class="st">"date"</span>].eq(dense_row[<span class="st">"date"</span>])</span>
+<span id="cb31-177"><a href="#cb31-177" aria-hidden="true" tabindex="-1"></a>            <span class="op">&amp;</span> greeks_np[<span class="st">"expiry"</span>].eq(dense_row[<span class="st">"expiry"</span>])</span>
+<span id="cb31-178"><a href="#cb31-178" aria-hidden="true" tabindex="-1"></a>            <span class="op">&amp;</span> greeks_np[<span class="st">"option_type"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"call"</span>)</span>
+<span id="cb31-179"><a href="#cb31-179" aria-hidden="true" tabindex="-1"></a>            <span class="op">&amp;</span> greeks_np[<span class="st">"iv_success"</span>].astype(<span class="bu">bool</span>)</span>
+<span id="cb31-180"><a href="#cb31-180" aria-hidden="true" tabindex="-1"></a>        ].copy()</span>
+<span id="cb31-181"><a href="#cb31-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-182"><a href="#cb31-182" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="st">"expiry"</span> <span class="kw">in</span> greek_slice.columns <span class="kw">and</span> <span class="bu">len</span>(greek_slice):</span>
+<span id="cb31-183"><a href="#cb31-183" aria-hidden="true" tabindex="-1"></a>    selected_expiry <span class="op">=</span> greek_slice.groupby(<span class="st">"expiry"</span>).size().sort_values(ascending<span class="op">=</span><span class="va">False</span>).index[<span class="dv">0</span>]</span>
+<span id="cb31-184"><a href="#cb31-184" aria-hidden="true" tabindex="-1"></a>    greek_slice <span class="op">=</span> greek_slice.loc[greek_slice[<span class="st">"expiry"</span>].eq(selected_expiry)].copy()</span>
+<span id="cb31-185"><a href="#cb31-185" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-186"><a href="#cb31-186" aria-hidden="true" tabindex="-1"></a>greek_slice <span class="op">=</span> greek_slice.sort_values(<span class="st">"log_moneyness"</span>).copy()</span>
 <span id="cb31-187"><a href="#cb31-187" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-188"><a href="#cb31-188" aria-hidden="true" tabindex="-1"></a>solver_diagnostics <span class="op">=</span> diagnostics.iv_solver_diagnostics(</span>
-<span id="cb31-189"><a href="#cb31-189" aria-hidden="true" tabindex="-1"></a>    {</span>
-<span id="cb31-190"><a href="#cb31-190" aria-hidden="true" tabindex="-1"></a>        <span class="st">"LBR-lite"</span>: iv_lbr,</span>
-<span id="cb31-191"><a href="#cb31-191" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Newton-bisection"</span>: iv_nb,</span>
-<span id="cb31-192"><a href="#cb31-192" aria-hidden="true" tabindex="-1"></a>    },</span>
-<span id="cb31-193"><a href="#cb31-193" aria-hidden="true" tabindex="-1"></a>    x_col<span class="op">=</span><span class="st">"log_moneyness"</span>,</span>
-<span id="cb31-194"><a href="#cb31-194" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-195"><a href="#cb31-195" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-196"><a href="#cb31-196" aria-hidden="true" tabindex="-1"></a>iv_table <span class="op">=</span> iv_lbr.copy()</span>
-<span id="cb31-197"><a href="#cb31-197" aria-hidden="true" tabindex="-1"></a>single_day_iv <span class="op">=</span> iv_table.loc[iv_table[<span class="st">"date"</span>].dt.normalize().eq(analysis_date)].copy()</span>
-<span id="cb31-198"><a href="#cb31-198" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-199"><a href="#cb31-199" aria-hidden="true" tabindex="-1"></a>greeks_np <span class="op">=</span> greeks.compute_greeks_numpy(</span>
-<span id="cb31-200"><a href="#cb31-200" aria-hidden="true" tabindex="-1"></a>    iv_table,</span>
-<span id="cb31-201"><a href="#cb31-201" aria-hidden="true" tabindex="-1"></a>    iv_col<span class="op">=</span><span class="st">"iv_mid"</span>,</span>
-<span id="cb31-202"><a href="#cb31-202" aria-hidden="true" tabindex="-1"></a>    price_model<span class="op">=</span><span class="st">"forward_bsm"</span>,</span>
-<span id="cb31-203"><a href="#cb31-203" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb31-188"><a href="#cb31-188" aria-hidden="true" tabindex="-1"></a>greeks_jax <span class="op">=</span> greeks.compute_greeks_jax(</span>
+<span id="cb31-189"><a href="#cb31-189" aria-hidden="true" tabindex="-1"></a>    greek_slice,</span>
+<span id="cb31-190"><a href="#cb31-190" aria-hidden="true" tabindex="-1"></a>    iv_col<span class="op">=</span><span class="st">"iv_mid"</span>,</span>
+<span id="cb31-191"><a href="#cb31-191" aria-hidden="true" tabindex="-1"></a>    price_model<span class="op">=</span><span class="st">"forward_bsm"</span>,</span>
+<span id="cb31-192"><a href="#cb31-192" aria-hidden="true" tabindex="-1"></a>    on_missing<span class="op">=</span><span class="st">"warn"</span>)</span>
+<span id="cb31-193"><a href="#cb31-193" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-194"><a href="#cb31-194" aria-hidden="true" tabindex="-1"></a>greek_bands <span class="op">=</span> greeks.compute_greek_bands_from_iv_band(</span>
+<span id="cb31-195"><a href="#cb31-195" aria-hidden="true" tabindex="-1"></a>    greek_slice,</span>
+<span id="cb31-196"><a href="#cb31-196" aria-hidden="true" tabindex="-1"></a>    iv_low_col<span class="op">=</span><span class="st">"iv_bid"</span>,</span>
+<span id="cb31-197"><a href="#cb31-197" aria-hidden="true" tabindex="-1"></a>    iv_mid_col<span class="op">=</span><span class="st">"iv_mid"</span>,</span>
+<span id="cb31-198"><a href="#cb31-198" aria-hidden="true" tabindex="-1"></a>    iv_high_col<span class="op">=</span><span class="st">"iv_ask"</span>,</span>
+<span id="cb31-199"><a href="#cb31-199" aria-hidden="true" tabindex="-1"></a>    price_model<span class="op">=</span><span class="st">"forward_bsm"</span>)</span>
+<span id="cb31-200"><a href="#cb31-200" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-201"><a href="#cb31-201" aria-hidden="true" tabindex="-1"></a>greek_comparison <span class="op">=</span> greeks.compare_numpy_jax_greeks(</span>
+<span id="cb31-202"><a href="#cb31-202" aria-hidden="true" tabindex="-1"></a>    greek_slice, greeks_jax,</span>
+<span id="cb31-203"><a href="#cb31-203" aria-hidden="true" tabindex="-1"></a>    greek_bands<span class="op">=</span>greek_bands)</span>
 <span id="cb31-204"><a href="#cb31-204" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-205"><a href="#cb31-205" aria-hidden="true" tabindex="-1"></a>greek_slice <span class="op">=</span> greeks_np.loc[</span>
-<span id="cb31-206"><a href="#cb31-206" aria-hidden="true" tabindex="-1"></a>    greeks_np[<span class="st">"date"</span>].dt.normalize().eq(analysis_date)</span>
-<span id="cb31-207"><a href="#cb31-207" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span> greeks_np[<span class="st">"option_type"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"call"</span>)</span>
-<span id="cb31-208"><a href="#cb31-208" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span> greeks_np[<span class="st">"iv_success"</span>].astype(<span class="bu">bool</span>)</span>
-<span id="cb31-209"><a href="#cb31-209" aria-hidden="true" tabindex="-1"></a>].copy()</span>
-<span id="cb31-210"><a href="#cb31-210" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-211"><a href="#cb31-211" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">len</span>(greek_slice) <span class="op">&lt;</span> <span class="dv">10</span>:</span>
-<span id="cb31-212"><a href="#cb31-212" aria-hidden="true" tabindex="-1"></a>    dense <span class="op">=</span> (</span>
-<span id="cb31-213"><a href="#cb31-213" aria-hidden="true" tabindex="-1"></a>        greeks_np.loc[</span>
-<span id="cb31-214"><a href="#cb31-214" aria-hidden="true" tabindex="-1"></a>            greeks_np[<span class="st">"option_type"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"call"</span>)</span>
-<span id="cb31-215"><a href="#cb31-215" aria-hidden="true" tabindex="-1"></a>            <span class="op">&amp;</span> greeks_np[<span class="st">"iv_success"</span>].astype(<span class="bu">bool</span>)</span>
-<span id="cb31-216"><a href="#cb31-216" aria-hidden="true" tabindex="-1"></a>        ]</span>
-<span id="cb31-217"><a href="#cb31-217" aria-hidden="true" tabindex="-1"></a>        .groupby([<span class="st">"date"</span>, <span class="st">"expiry"</span>])</span>
-<span id="cb31-218"><a href="#cb31-218" aria-hidden="true" tabindex="-1"></a>        .size()</span>
-<span id="cb31-219"><a href="#cb31-219" aria-hidden="true" tabindex="-1"></a>        .rename(<span class="st">"n"</span>)</span>
-<span id="cb31-220"><a href="#cb31-220" aria-hidden="true" tabindex="-1"></a>        .reset_index()</span>
-<span id="cb31-221"><a href="#cb31-221" aria-hidden="true" tabindex="-1"></a>        .sort_values(<span class="st">"n"</span>, ascending<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb31-222"><a href="#cb31-222" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb31-223"><a href="#cb31-223" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(dense):</span>
-<span id="cb31-224"><a href="#cb31-224" aria-hidden="true" tabindex="-1"></a>        dense_row <span class="op">=</span> dense.iloc[<span class="dv">0</span>]</span>
-<span id="cb31-225"><a href="#cb31-225" aria-hidden="true" tabindex="-1"></a>        greek_slice <span class="op">=</span> greeks_np.loc[</span>
-<span id="cb31-226"><a href="#cb31-226" aria-hidden="true" tabindex="-1"></a>            greeks_np[<span class="st">"date"</span>].eq(dense_row[<span class="st">"date"</span>])</span>
-<span id="cb31-227"><a href="#cb31-227" aria-hidden="true" tabindex="-1"></a>            <span class="op">&amp;</span> greeks_np[<span class="st">"expiry"</span>].eq(dense_row[<span class="st">"expiry"</span>])</span>
-<span id="cb31-228"><a href="#cb31-228" aria-hidden="true" tabindex="-1"></a>            <span class="op">&amp;</span> greeks_np[<span class="st">"option_type"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().eq(<span class="st">"call"</span>)</span>
-<span id="cb31-229"><a href="#cb31-229" aria-hidden="true" tabindex="-1"></a>            <span class="op">&amp;</span> greeks_np[<span class="st">"iv_success"</span>].astype(<span class="bu">bool</span>)</span>
-<span id="cb31-230"><a href="#cb31-230" aria-hidden="true" tabindex="-1"></a>        ].copy()</span>
-<span id="cb31-231"><a href="#cb31-231" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-232"><a href="#cb31-232" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="st">"expiry"</span> <span class="kw">in</span> greek_slice.columns <span class="kw">and</span> <span class="bu">len</span>(greek_slice):</span>
-<span id="cb31-233"><a href="#cb31-233" aria-hidden="true" tabindex="-1"></a>    selected_expiry <span class="op">=</span> greek_slice.groupby(<span class="st">"expiry"</span>).size().sort_values(ascending<span class="op">=</span><span class="va">False</span>).index[<span class="dv">0</span>]</span>
-<span id="cb31-234"><a href="#cb31-234" aria-hidden="true" tabindex="-1"></a>    greek_slice <span class="op">=</span> greek_slice.loc[greek_slice[<span class="st">"expiry"</span>].eq(selected_expiry)].copy()</span>
-<span id="cb31-235"><a href="#cb31-235" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-236"><a href="#cb31-236" aria-hidden="true" tabindex="-1"></a>greek_slice <span class="op">=</span> greek_slice.sort_values(<span class="st">"log_moneyness"</span>).copy()</span>
-<span id="cb31-237"><a href="#cb31-237" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-238"><a href="#cb31-238" aria-hidden="true" tabindex="-1"></a>greeks_jax <span class="op">=</span> greeks.compute_greeks_jax(</span>
-<span id="cb31-239"><a href="#cb31-239" aria-hidden="true" tabindex="-1"></a>    greek_slice,</span>
-<span id="cb31-240"><a href="#cb31-240" aria-hidden="true" tabindex="-1"></a>    iv_col<span class="op">=</span><span class="st">"iv_mid"</span>,</span>
-<span id="cb31-241"><a href="#cb31-241" aria-hidden="true" tabindex="-1"></a>    price_model<span class="op">=</span><span class="st">"forward_bsm"</span>,</span>
-<span id="cb31-242"><a href="#cb31-242" aria-hidden="true" tabindex="-1"></a>    on_missing<span class="op">=</span><span class="st">"warn"</span>,</span>
-<span id="cb31-243"><a href="#cb31-243" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-244"><a href="#cb31-244" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-245"><a href="#cb31-245" aria-hidden="true" tabindex="-1"></a>greek_bands <span class="op">=</span> greeks.compute_greek_bands_from_iv_band(</span>
-<span id="cb31-246"><a href="#cb31-246" aria-hidden="true" tabindex="-1"></a>    greek_slice,</span>
-<span id="cb31-247"><a href="#cb31-247" aria-hidden="true" tabindex="-1"></a>    iv_low_col<span class="op">=</span><span class="st">"iv_bid"</span>,</span>
-<span id="cb31-248"><a href="#cb31-248" aria-hidden="true" tabindex="-1"></a>    iv_mid_col<span class="op">=</span><span class="st">"iv_mid"</span>,</span>
-<span id="cb31-249"><a href="#cb31-249" aria-hidden="true" tabindex="-1"></a>    iv_high_col<span class="op">=</span><span class="st">"iv_ask"</span>,</span>
-<span id="cb31-250"><a href="#cb31-250" aria-hidden="true" tabindex="-1"></a>    price_model<span class="op">=</span><span class="st">"forward_bsm"</span>,</span>
-<span id="cb31-251"><a href="#cb31-251" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-252"><a href="#cb31-252" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-253"><a href="#cb31-253" aria-hidden="true" tabindex="-1"></a>greek_comparison <span class="op">=</span> greeks.compare_numpy_jax_greeks(</span>
-<span id="cb31-254"><a href="#cb31-254" aria-hidden="true" tabindex="-1"></a>    greek_slice,</span>
-<span id="cb31-255"><a href="#cb31-255" aria-hidden="true" tabindex="-1"></a>    greeks_jax,</span>
-<span id="cb31-256"><a href="#cb31-256" aria-hidden="true" tabindex="-1"></a>    greek_bands<span class="op">=</span>greek_bands,</span>
-<span id="cb31-257"><a href="#cb31-257" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb31-258"><a href="#cb31-258" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-259"><a href="#cb31-259" aria-hidden="true" tabindex="-1"></a>greek_band_summary <span class="op">=</span> greeks.greek_summary_table(greek_slice, greek_bands)</span>
-<span id="cb31-260"><a href="#cb31-260" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-261"><a href="#cb31-261" aria-hidden="true" tabindex="-1"></a>hedge_option_book <span class="op">=</span> greeks_np.loc[greeks_np[<span class="st">"iv_success"</span>].astype(<span class="bu">bool</span>)].copy()</span>
-<span id="cb31-262"><a href="#cb31-262" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-263"><a href="#cb31-263" aria-hidden="true" tabindex="-1"></a>hedge_market_summary <span class="op">=</span> pd.DataFrame(</span>
-<span id="cb31-264"><a href="#cb31-264" aria-hidden="true" tabindex="-1"></a>    [</span>
-<span id="cb31-265"><a href="#cb31-265" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"hedge_symbol"</span>, <span class="st">"value"</span>: <span class="st">"BTC spot/index"</span>},</span>
-<span id="cb31-266"><a href="#cb31-266" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"valuation_currency"</span>, <span class="st">"value"</span>: <span class="st">"USD"</span>},</span>
-<span id="cb31-267"><a href="#cb31-267" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"pnl_mode"</span>, <span class="st">"value"</span>: <span class="st">"usd_equivalent"</span>},</span>
-<span id="cb31-268"><a href="#cb31-268" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"entry_dte_lo"</span>, <span class="st">"value"</span>: <span class="fl">21.0</span>},</span>
-<span id="cb31-269"><a href="#cb31-269" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"entry_dte_hi"</span>, <span class="st">"value"</span>: <span class="fl">60.0</span>},</span>
-<span id="cb31-270"><a href="#cb31-270" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"exit_dte_days"</span>, <span class="st">"value"</span>: <span class="fl">7.0</span>},</span>
-<span id="cb31-271"><a href="#cb31-271" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"target_abs_delta"</span>, <span class="st">"value"</span>: <span class="fl">0.50</span>},</span>
-<span id="cb31-272"><a href="#cb31-272" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"delta_outer_band_btc"</span>, <span class="st">"value"</span>: <span class="fl">0.05</span>},</span>
-<span id="cb31-273"><a href="#cb31-273" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"delta_inner_band_btc"</span>, <span class="st">"value"</span>: <span class="fl">0.0125</span>},</span>
-<span id="cb31-274"><a href="#cb31-274" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"vega_outer_ratio"</span>, <span class="st">"value"</span>: <span class="fl">0.85</span>},</span>
-<span id="cb31-275"><a href="#cb31-275" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"vega_inner_ratio"</span>, <span class="st">"value"</span>: <span class="fl">0.45</span>},</span>
-<span id="cb31-276"><a href="#cb31-276" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"vega_rehedge_every_days"</span>, <span class="st">"value"</span>: <span class="dv">5</span>},</span>
-<span id="cb31-277"><a href="#cb31-277" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"vega_min_hold_days"</span>, <span class="st">"value"</span>: <span class="dv">5</span>},</span>
-<span id="cb31-278"><a href="#cb31-278" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"vega_contract_step"</span>, <span class="st">"value"</span>: <span class="fl">0.25</span>},</span>
-<span id="cb31-279"><a href="#cb31-279" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"max_vega_contracts"</span>, <span class="st">"value"</span>: <span class="fl">1.5</span>},</span>
-<span id="cb31-280"><a href="#cb31-280" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"missing_option_mark"</span>, <span class="st">"value"</span>: <span class="st">"skip_day"</span>},</span>
-<span id="cb31-281"><a href="#cb31-281" aria-hidden="true" tabindex="-1"></a>        {<span class="st">"metric"</span>: <span class="st">"min_future_quote_days"</span>, <span class="st">"value"</span>: <span class="dv">5</span>},</span>
-<span id="cb31-282"><a href="#cb31-282" aria-hidden="true" tabindex="-1"></a>    ]</span>
-<span id="cb31-283"><a href="#cb31-283" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb31-205"><a href="#cb31-205" aria-hidden="true" tabindex="-1"></a>greek_band_summary <span class="op">=</span> greeks.greek_summary_table(greek_slice, greek_bands)</span>
+<span id="cb31-206"><a href="#cb31-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-207"><a href="#cb31-207" aria-hidden="true" tabindex="-1"></a>hedge_option_book <span class="op">=</span> greeks_np.loc[greeks_np[<span class="st">"iv_success"</span>].astype(<span class="bu">bool</span>)].copy()</span>
+<span id="cb31-208"><a href="#cb31-208" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-209"><a href="#cb31-209" aria-hidden="true" tabindex="-1"></a>hedge_market_summary <span class="op">=</span> pd.DataFrame(</span>
+<span id="cb31-210"><a href="#cb31-210" aria-hidden="true" tabindex="-1"></a>    [{<span class="st">"metric"</span>: <span class="st">"hedge_symbol"</span>, <span class="st">"value"</span>: <span class="st">"BTC spot/index"</span>},</span>
+<span id="cb31-211"><a href="#cb31-211" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"valuation_currency"</span>, <span class="st">"value"</span>: <span class="st">"USD"</span>},</span>
+<span id="cb31-212"><a href="#cb31-212" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"pnl_mode"</span>, <span class="st">"value"</span>: <span class="st">"usd_equivalent"</span>},</span>
+<span id="cb31-213"><a href="#cb31-213" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"entry_dte_lo"</span>, <span class="st">"value"</span>: <span class="fl">21.0</span>},</span>
+<span id="cb31-214"><a href="#cb31-214" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"entry_dte_hi"</span>, <span class="st">"value"</span>: <span class="fl">60.0</span>},</span>
+<span id="cb31-215"><a href="#cb31-215" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"exit_dte_days"</span>, <span class="st">"value"</span>: <span class="fl">7.0</span>},</span>
+<span id="cb31-216"><a href="#cb31-216" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"target_abs_delta"</span>, <span class="st">"value"</span>: <span class="fl">0.50</span>},</span>
+<span id="cb31-217"><a href="#cb31-217" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"delta_outer_band_btc"</span>, <span class="st">"value"</span>: <span class="fl">0.05</span>},</span>
+<span id="cb31-218"><a href="#cb31-218" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"delta_inner_band_btc"</span>, <span class="st">"value"</span>: <span class="fl">0.0125</span>},</span>
+<span id="cb31-219"><a href="#cb31-219" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"vega_outer_ratio"</span>, <span class="st">"value"</span>: <span class="fl">0.85</span>},</span>
+<span id="cb31-220"><a href="#cb31-220" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"vega_inner_ratio"</span>, <span class="st">"value"</span>: <span class="fl">0.45</span>},</span>
+<span id="cb31-221"><a href="#cb31-221" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"vega_rehedge_every_days"</span>, <span class="st">"value"</span>: <span class="dv">5</span>},</span>
+<span id="cb31-222"><a href="#cb31-222" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"vega_min_hold_days"</span>, <span class="st">"value"</span>: <span class="dv">5</span>},</span>
+<span id="cb31-223"><a href="#cb31-223" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"vega_contract_step"</span>, <span class="st">"value"</span>: <span class="fl">0.25</span>},</span>
+<span id="cb31-224"><a href="#cb31-224" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"max_vega_contracts"</span>, <span class="st">"value"</span>: <span class="fl">1.5</span>},</span>
+<span id="cb31-225"><a href="#cb31-225" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"missing_option_mark"</span>, <span class="st">"value"</span>: <span class="st">"skip_day"</span>},</span>
+<span id="cb31-226"><a href="#cb31-226" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"min_future_quote_days"</span>, <span class="st">"value"</span>: <span class="dv">5</span>}])</span>
+<span id="cb31-227"><a href="#cb31-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-228"><a href="#cb31-228" aria-hidden="true" tabindex="-1"></a>hedge_results <span class="op">=</span> opt_backtest.run_option_hedging_backtest(</span>
+<span id="cb31-229"><a href="#cb31-229" aria-hidden="true" tabindex="-1"></a>    option_path<span class="op">=</span>hedge_option_book,</span>
+<span id="cb31-230"><a href="#cb31-230" aria-hidden="true" tabindex="-1"></a>    spot_series<span class="op">=</span>btc_spot,</span>
+<span id="cb31-231"><a href="#cb31-231" aria-hidden="true" tabindex="-1"></a>    greeks<span class="op">=</span>hedge_option_book,</span>
+<span id="cb31-232"><a href="#cb31-232" aria-hidden="true" tabindex="-1"></a>    vega_hedge_path<span class="op">=</span>hedge_option_book,</span>
+<span id="cb31-233"><a href="#cb31-233" aria-hidden="true" tabindex="-1"></a>    strategies<span class="op">=</span>[<span class="st">"unhedged"</span>, <span class="st">"delta"</span>, <span class="st">"delta_vega"</span>],</span>
+<span id="cb31-234"><a href="#cb31-234" aria-hidden="true" tabindex="-1"></a>    delta_band<span class="op">=</span><span class="fl">0.05</span>,</span>
+<span id="cb31-235"><a href="#cb31-235" aria-hidden="true" tabindex="-1"></a>    delta_inner_band<span class="op">=</span><span class="fl">0.0125</span>,</span>
+<span id="cb31-236"><a href="#cb31-236" aria-hidden="true" tabindex="-1"></a>    delta_share_lot<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb31-237"><a href="#cb31-237" aria-hidden="true" tabindex="-1"></a>    delta_cooldown_days<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb31-238"><a href="#cb31-238" aria-hidden="true" tabindex="-1"></a>    vega_band<span class="op">=</span><span class="fl">0.85</span>,</span>
+<span id="cb31-239"><a href="#cb31-239" aria-hidden="true" tabindex="-1"></a>    vega_inner_ratio<span class="op">=</span><span class="fl">0.45</span>,</span>
+<span id="cb31-240"><a href="#cb31-240" aria-hidden="true" tabindex="-1"></a>    vega_rehedge_every<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb31-241"><a href="#cb31-241" aria-hidden="true" tabindex="-1"></a>    vega_min_hold_days<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb31-242"><a href="#cb31-242" aria-hidden="true" tabindex="-1"></a>    vega_contract_step<span class="op">=</span><span class="fl">0.25</span>,</span>
+<span id="cb31-243"><a href="#cb31-243" aria-hidden="true" tabindex="-1"></a>    max_vega_contracts<span class="op">=</span><span class="fl">1.5</span>,</span>
+<span id="cb31-244"><a href="#cb31-244" aria-hidden="true" tabindex="-1"></a>    entry_dte_range<span class="op">=</span>(<span class="dv">21</span>, <span class="dv">60</span>),</span>
+<span id="cb31-245"><a href="#cb31-245" aria-hidden="true" tabindex="-1"></a>    exit_dte_days<span class="op">=</span><span class="dv">7</span>,</span>
+<span id="cb31-246"><a href="#cb31-246" aria-hidden="true" tabindex="-1"></a>    preferred_option_type<span class="op">=</span><span class="st">"call"</span>,</span>
+<span id="cb31-247"><a href="#cb31-247" aria-hidden="true" tabindex="-1"></a>    target_abs_delta<span class="op">=</span><span class="fl">0.50</span>,</span>
+<span id="cb31-248"><a href="#cb31-248" aria-hidden="true" tabindex="-1"></a>    hedge_symbol<span class="op">=</span><span class="st">"BTC"</span>,</span>
+<span id="cb31-249"><a href="#cb31-249" aria-hidden="true" tabindex="-1"></a>    trading_cost_bps<span class="op">=</span><span class="fl">1.0</span>,</span>
+<span id="cb31-250"><a href="#cb31-250" aria-hidden="true" tabindex="-1"></a>    use_bid_ask_costs<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb31-251"><a href="#cb31-251" aria-hidden="true" tabindex="-1"></a>    valuation_currency<span class="op">=</span><span class="st">"USD"</span>,</span>
+<span id="cb31-252"><a href="#cb31-252" aria-hidden="true" tabindex="-1"></a>    pnl_mode<span class="op">=</span><span class="st">"usd_equivalent"</span>,</span>
+<span id="cb31-253"><a href="#cb31-253" aria-hidden="true" tabindex="-1"></a>    quote_price_unit<span class="op">=</span><span class="st">"usd"</span>,</span>
+<span id="cb31-254"><a href="#cb31-254" aria-hidden="true" tabindex="-1"></a>    annualization_days<span class="op">=</span><span class="dv">365</span>,</span>
+<span id="cb31-255"><a href="#cb31-255" aria-hidden="true" tabindex="-1"></a>    contract_size<span class="op">=</span><span class="fl">1.0</span>,</span>
+<span id="cb31-256"><a href="#cb31-256" aria-hidden="true" tabindex="-1"></a>    on_missing_vega_hedge<span class="op">=</span><span class="st">"skip"</span>,</span>
+<span id="cb31-257"><a href="#cb31-257" aria-hidden="true" tabindex="-1"></a>    missing_option_mark<span class="op">=</span><span class="st">"skip_day"</span>,</span>
+<span id="cb31-258"><a href="#cb31-258" aria-hidden="true" tabindex="-1"></a>    min_future_quote_days<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb31-259"><a href="#cb31-259" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-260"><a href="#cb31-260" aria-hidden="true" tabindex="-1"></a>hedge_diag <span class="op">=</span> opt_backtest.hedging_diagnostics(hedge_results)</span>
+<span id="cb31-261"><a href="#cb31-261" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-262"><a href="#cb31-262" aria-hidden="true" tabindex="-1"></a>display(filter_report)</span>
+<span id="cb31-263"><a href="#cb31-263" aria-hidden="true" tabindex="-1"></a>display(single_day_forward.head())</span>
+<span id="cb31-264"><a href="#cb31-264" aria-hidden="true" tabindex="-1"></a>display(rv_pricing[<span class="st">"summary"</span>] <span class="cf">if</span> <span class="bu">isinstance</span>(rv_pricing, <span class="bu">dict</span>) <span class="cf">else</span> rv_pricing.head())</span>
+<span id="cb31-265"><a href="#cb31-265" aria-hidden="true" tabindex="-1"></a>display(iv_solver_comparison)</span>
+<span id="cb31-266"><a href="#cb31-266" aria-hidden="true" tabindex="-1"></a>display(solver_diagnostics[<span class="st">"summary"</span>])</span>
+<span id="cb31-267"><a href="#cb31-267" aria-hidden="true" tabindex="-1"></a>display(greek_comparison[<span class="st">"summary"</span>])</span>
+<span id="cb31-268"><a href="#cb31-268" aria-hidden="true" tabindex="-1"></a>display(greek_band_summary)</span>
+<span id="cb31-269"><a href="#cb31-269" aria-hidden="true" tabindex="-1"></a>display(hedge_market_summary)</span>
+<span id="cb31-270"><a href="#cb31-270" aria-hidden="true" tabindex="-1"></a>display(hedge_results[<span class="st">"summary"</span>])</span>
+<span id="cb31-271"><a href="#cb31-271" aria-hidden="true" tabindex="-1"></a>display(hedge_diag)</span>
+<span id="cb31-272"><a href="#cb31-272" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-273"><a href="#cb31-273" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">4</span>, <span class="dv">4</span>, figsize<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">18</span>))</span>
+<span id="cb31-274"><a href="#cb31-274" aria-hidden="true" tabindex="-1"></a>axes <span class="op">=</span> axes.ravel()</span>
+<span id="cb31-275"><a href="#cb31-275" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-276"><a href="#cb31-276" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_single_day_parity_forward_extraction(</span>
+<span id="cb31-277"><a href="#cb31-277" aria-hidden="true" tabindex="-1"></a>    single_day_quotes,</span>
+<span id="cb31-278"><a href="#cb31-278" aria-hidden="true" tabindex="-1"></a>    single_day_forward,</span>
+<span id="cb31-279"><a href="#cb31-279" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">0</span>])</span>
+<span id="cb31-280"><a href="#cb31-280" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-281"><a href="#cb31-281" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_single_day_forward_iv_skew(</span>
+<span id="cb31-282"><a href="#cb31-282" aria-hidden="true" tabindex="-1"></a>    single_day_iv,</span>
+<span id="cb31-283"><a href="#cb31-283" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">1</span>])</span>
 <span id="cb31-284"><a href="#cb31-284" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-285"><a href="#cb31-285" aria-hidden="true" tabindex="-1"></a>hedge_results <span class="op">=</span> opt_backtest.run_option_hedging_backtest(</span>
-<span id="cb31-286"><a href="#cb31-286" aria-hidden="true" tabindex="-1"></a>    option_path<span class="op">=</span>hedge_option_book,</span>
-<span id="cb31-287"><a href="#cb31-287" aria-hidden="true" tabindex="-1"></a>    spot_series<span class="op">=</span>btc_spot,</span>
-<span id="cb31-288"><a href="#cb31-288" aria-hidden="true" tabindex="-1"></a>    greeks<span class="op">=</span>hedge_option_book,</span>
-<span id="cb31-289"><a href="#cb31-289" aria-hidden="true" tabindex="-1"></a>    vega_hedge_path<span class="op">=</span>hedge_option_book,</span>
-<span id="cb31-290"><a href="#cb31-290" aria-hidden="true" tabindex="-1"></a>    strategies<span class="op">=</span>[<span class="st">"unhedged"</span>, <span class="st">"delta"</span>, <span class="st">"delta_vega"</span>],</span>
-<span id="cb31-291"><a href="#cb31-291" aria-hidden="true" tabindex="-1"></a>    delta_band<span class="op">=</span><span class="fl">0.05</span>,</span>
-<span id="cb31-292"><a href="#cb31-292" aria-hidden="true" tabindex="-1"></a>    delta_inner_band<span class="op">=</span><span class="fl">0.0125</span>,</span>
-<span id="cb31-293"><a href="#cb31-293" aria-hidden="true" tabindex="-1"></a>    delta_share_lot<span class="op">=</span><span class="va">None</span>,</span>
-<span id="cb31-294"><a href="#cb31-294" aria-hidden="true" tabindex="-1"></a>    delta_cooldown_days<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb31-295"><a href="#cb31-295" aria-hidden="true" tabindex="-1"></a>    vega_band<span class="op">=</span><span class="fl">0.85</span>,</span>
-<span id="cb31-296"><a href="#cb31-296" aria-hidden="true" tabindex="-1"></a>    vega_inner_ratio<span class="op">=</span><span class="fl">0.45</span>,</span>
-<span id="cb31-297"><a href="#cb31-297" aria-hidden="true" tabindex="-1"></a>    vega_rehedge_every<span class="op">=</span><span class="dv">5</span>,</span>
-<span id="cb31-298"><a href="#cb31-298" aria-hidden="true" tabindex="-1"></a>    vega_min_hold_days<span class="op">=</span><span class="dv">5</span>,</span>
-<span id="cb31-299"><a href="#cb31-299" aria-hidden="true" tabindex="-1"></a>    vega_contract_step<span class="op">=</span><span class="fl">0.25</span>,</span>
-<span id="cb31-300"><a href="#cb31-300" aria-hidden="true" tabindex="-1"></a>    max_vega_contracts<span class="op">=</span><span class="fl">1.5</span>,</span>
-<span id="cb31-301"><a href="#cb31-301" aria-hidden="true" tabindex="-1"></a>    entry_dte_range<span class="op">=</span>(<span class="dv">21</span>, <span class="dv">60</span>),</span>
-<span id="cb31-302"><a href="#cb31-302" aria-hidden="true" tabindex="-1"></a>    exit_dte_days<span class="op">=</span><span class="dv">7</span>,</span>
-<span id="cb31-303"><a href="#cb31-303" aria-hidden="true" tabindex="-1"></a>    preferred_option_type<span class="op">=</span><span class="st">"call"</span>,</span>
-<span id="cb31-304"><a href="#cb31-304" aria-hidden="true" tabindex="-1"></a>    target_abs_delta<span class="op">=</span><span class="fl">0.50</span>,</span>
-<span id="cb31-305"><a href="#cb31-305" aria-hidden="true" tabindex="-1"></a>    hedge_symbol<span class="op">=</span><span class="st">"BTC"</span>,</span>
-<span id="cb31-306"><a href="#cb31-306" aria-hidden="true" tabindex="-1"></a>    trading_cost_bps<span class="op">=</span><span class="fl">1.0</span>,</span>
-<span id="cb31-307"><a href="#cb31-307" aria-hidden="true" tabindex="-1"></a>    use_bid_ask_costs<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb31-308"><a href="#cb31-308" aria-hidden="true" tabindex="-1"></a>    valuation_currency<span class="op">=</span><span class="st">"USD"</span>,</span>
-<span id="cb31-309"><a href="#cb31-309" aria-hidden="true" tabindex="-1"></a>    pnl_mode<span class="op">=</span><span class="st">"usd_equivalent"</span>,</span>
-<span id="cb31-310"><a href="#cb31-310" aria-hidden="true" tabindex="-1"></a>    quote_price_unit<span class="op">=</span><span class="st">"usd"</span>,</span>
-<span id="cb31-311"><a href="#cb31-311" aria-hidden="true" tabindex="-1"></a>    annualization_days<span class="op">=</span><span class="dv">365</span>,</span>
-<span id="cb31-312"><a href="#cb31-312" aria-hidden="true" tabindex="-1"></a>    contract_size<span class="op">=</span><span class="fl">1.0</span>,</span>
-<span id="cb31-313"><a href="#cb31-313" aria-hidden="true" tabindex="-1"></a>    on_missing_vega_hedge<span class="op">=</span><span class="st">"skip"</span>,</span>
-<span id="cb31-314"><a href="#cb31-314" aria-hidden="true" tabindex="-1"></a>    missing_option_mark<span class="op">=</span><span class="st">"skip_day"</span>,</span>
-<span id="cb31-315"><a href="#cb31-315" aria-hidden="true" tabindex="-1"></a>    min_future_quote_days<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb31-285"><a href="#cb31-285" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_market_mid_vs_realized_vol_forward_bsm(</span>
+<span id="cb31-286"><a href="#cb31-286" aria-hidden="true" tabindex="-1"></a>    rv_pricing,</span>
+<span id="cb31-287"><a href="#cb31-287" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">2</span>])</span>
+<span id="cb31-288"><a href="#cb31-288" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-289"><a href="#cb31-289" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_iv_failure_rate_by_log_moneyness(</span>
+<span id="cb31-290"><a href="#cb31-290" aria-hidden="true" tabindex="-1"></a>    solver_diagnostics,</span>
+<span id="cb31-291"><a href="#cb31-291" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">3</span>])</span>
+<span id="cb31-292"><a href="#cb31-292" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-293"><a href="#cb31-293" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_iv_iterations_by_log_moneyness(</span>
+<span id="cb31-294"><a href="#cb31-294" aria-hidden="true" tabindex="-1"></a>    solver_diagnostics,</span>
+<span id="cb31-295"><a href="#cb31-295" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">4</span>])</span>
+<span id="cb31-296"><a href="#cb31-296" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-297"><a href="#cb31-297" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, greek_name <span class="kw">in</span> <span class="bu">zip</span>(</span>
+<span id="cb31-298"><a href="#cb31-298" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">5</span>:<span class="dv">12</span>],</span>
+<span id="cb31-299"><a href="#cb31-299" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"delta"</span>, <span class="st">"gamma"</span>, <span class="st">"vega"</span>, <span class="st">"volga"</span>, <span class="st">"vanna"</span>, <span class="st">"rho"</span>, <span class="st">"theta"</span>]):</span>
+<span id="cb31-300"><a href="#cb31-300" aria-hidden="true" tabindex="-1"></a>    opt_plots.plot_numpy_jax_greek_comparison(</span>
+<span id="cb31-301"><a href="#cb31-301" aria-hidden="true" tabindex="-1"></a>        greek_comparison, greek<span class="op">=</span>greek_name, ax<span class="op">=</span>ax,</span>
+<span id="cb31-302"><a href="#cb31-302" aria-hidden="true" tabindex="-1"></a>        title<span class="op">=</span>greek_name)</span>
+<span id="cb31-303"><a href="#cb31-303" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-304"><a href="#cb31-304" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_hedging_net_equity(</span>
+<span id="cb31-305"><a href="#cb31-305" aria-hidden="true" tabindex="-1"></a>    hedge_results, ax<span class="op">=</span>axes[<span class="dv">12</span>],</span>
+<span id="cb31-306"><a href="#cb31-306" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"net equity: cost-aware banded hedge comparison (BTC hedge)"</span>)</span>
+<span id="cb31-307"><a href="#cb31-307" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-308"><a href="#cb31-308" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_hedging_rolling_volatility(</span>
+<span id="cb31-309"><a href="#cb31-309" aria-hidden="true" tabindex="-1"></a>    hedge_results, window<span class="op">=</span><span class="dv">21</span>,</span>
+<span id="cb31-310"><a href="#cb31-310" aria-hidden="true" tabindex="-1"></a>    annualization_days<span class="op">=</span><span class="dv">365</span>, annualize<span class="op">=</span><span class="va">False</span>, ax<span class="op">=</span>axes[<span class="dv">13</span>],</span>
+<span id="cb31-311"><a href="#cb31-311" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"rolling 21 day pnl volatility"</span>)</span>
+<span id="cb31-312"><a href="#cb31-312" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-313"><a href="#cb31-313" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_rolling_residual_delta(</span>
+<span id="cb31-314"><a href="#cb31-314" aria-hidden="true" tabindex="-1"></a>    hedge_results, window<span class="op">=</span><span class="dv">21</span>, ax<span class="op">=</span>axes[<span class="dv">14</span>],</span>
+<span id="cb31-315"><a href="#cb31-315" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"rolling mean absolute residual delta"</span>)</span>
 <span id="cb31-316"><a href="#cb31-316" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-317"><a href="#cb31-317" aria-hidden="true" tabindex="-1"></a>hedge_diag <span class="op">=</span> opt_backtest.hedging_diagnostics(hedge_results)</span>
-<span id="cb31-318"><a href="#cb31-318" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-319"><a href="#cb31-319" aria-hidden="true" tabindex="-1"></a>display(filter_report)</span>
-<span id="cb31-320"><a href="#cb31-320" aria-hidden="true" tabindex="-1"></a>display(single_day_forward.head())</span>
-<span id="cb31-321"><a href="#cb31-321" aria-hidden="true" tabindex="-1"></a>display(rv_pricing[<span class="st">"summary"</span>] <span class="cf">if</span> <span class="bu">isinstance</span>(rv_pricing, <span class="bu">dict</span>) <span class="cf">else</span> rv_pricing.head())</span>
-<span id="cb31-322"><a href="#cb31-322" aria-hidden="true" tabindex="-1"></a>display(iv_solver_comparison)</span>
-<span id="cb31-323"><a href="#cb31-323" aria-hidden="true" tabindex="-1"></a>display(solver_diagnostics[<span class="st">"summary"</span>])</span>
-<span id="cb31-324"><a href="#cb31-324" aria-hidden="true" tabindex="-1"></a>display(greek_comparison[<span class="st">"summary"</span>])</span>
-<span id="cb31-325"><a href="#cb31-325" aria-hidden="true" tabindex="-1"></a>display(greek_band_summary)</span>
-<span id="cb31-326"><a href="#cb31-326" aria-hidden="true" tabindex="-1"></a>display(hedge_market_summary)</span>
-<span id="cb31-327"><a href="#cb31-327" aria-hidden="true" tabindex="-1"></a>display(hedge_results[<span class="st">"summary"</span>])</span>
-<span id="cb31-328"><a href="#cb31-328" aria-hidden="true" tabindex="-1"></a>display(hedge_diag)</span>
-<span id="cb31-329"><a href="#cb31-329" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-330"><a href="#cb31-330" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">4</span>, <span class="dv">4</span>, figsize<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">18</span>))</span>
-<span id="cb31-331"><a href="#cb31-331" aria-hidden="true" tabindex="-1"></a>axes <span class="op">=</span> axes.ravel()</span>
-<span id="cb31-332"><a href="#cb31-332" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-333"><a href="#cb31-333" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_single_day_parity_forward_extraction(</span>
-<span id="cb31-334"><a href="#cb31-334" aria-hidden="true" tabindex="-1"></a>    single_day_quotes,</span>
-<span id="cb31-335"><a href="#cb31-335" aria-hidden="true" tabindex="-1"></a>    single_day_forward,</span>
-<span id="cb31-336"><a href="#cb31-336" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">0</span>])</span>
-<span id="cb31-337"><a href="#cb31-337" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-338"><a href="#cb31-338" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_single_day_forward_iv_skew(</span>
-<span id="cb31-339"><a href="#cb31-339" aria-hidden="true" tabindex="-1"></a>    single_day_iv,</span>
-<span id="cb31-340"><a href="#cb31-340" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">1</span>])</span>
-<span id="cb31-341"><a href="#cb31-341" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-342"><a href="#cb31-342" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_market_mid_vs_realized_vol_forward_bsm(</span>
-<span id="cb31-343"><a href="#cb31-343" aria-hidden="true" tabindex="-1"></a>    rv_pricing,</span>
-<span id="cb31-344"><a href="#cb31-344" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">2</span>])</span>
-<span id="cb31-345"><a href="#cb31-345" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-346"><a href="#cb31-346" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_iv_failure_rate_by_log_moneyness(</span>
-<span id="cb31-347"><a href="#cb31-347" aria-hidden="true" tabindex="-1"></a>    solver_diagnostics,</span>
-<span id="cb31-348"><a href="#cb31-348" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">3</span>])</span>
-<span id="cb31-349"><a href="#cb31-349" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-350"><a href="#cb31-350" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_iv_iterations_by_log_moneyness(</span>
-<span id="cb31-351"><a href="#cb31-351" aria-hidden="true" tabindex="-1"></a>    solver_diagnostics,</span>
-<span id="cb31-352"><a href="#cb31-352" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">4</span>])</span>
-<span id="cb31-353"><a href="#cb31-353" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-354"><a href="#cb31-354" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, greek_name <span class="kw">in</span> <span class="bu">zip</span>(</span>
-<span id="cb31-355"><a href="#cb31-355" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">5</span>:<span class="dv">12</span>],</span>
-<span id="cb31-356"><a href="#cb31-356" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"delta"</span>, <span class="st">"gamma"</span>, <span class="st">"vega"</span>, <span class="st">"volga"</span>, <span class="st">"vanna"</span>, <span class="st">"rho"</span>, <span class="st">"theta"</span>]):</span>
-<span id="cb31-357"><a href="#cb31-357" aria-hidden="true" tabindex="-1"></a>    opt_plots.plot_numpy_jax_greek_comparison(</span>
-<span id="cb31-358"><a href="#cb31-358" aria-hidden="true" tabindex="-1"></a>        greek_comparison,</span>
-<span id="cb31-359"><a href="#cb31-359" aria-hidden="true" tabindex="-1"></a>        greek<span class="op">=</span>greek_name,</span>
-<span id="cb31-360"><a href="#cb31-360" aria-hidden="true" tabindex="-1"></a>        ax<span class="op">=</span>ax,</span>
-<span id="cb31-361"><a href="#cb31-361" aria-hidden="true" tabindex="-1"></a>        title<span class="op">=</span>greek_name)</span>
-<span id="cb31-362"><a href="#cb31-362" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-363"><a href="#cb31-363" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_hedging_net_equity(</span>
-<span id="cb31-364"><a href="#cb31-364" aria-hidden="true" tabindex="-1"></a>    hedge_results,</span>
-<span id="cb31-365"><a href="#cb31-365" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">12</span>],</span>
-<span id="cb31-366"><a href="#cb31-366" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"net equity: cost-aware banded hedge comparison (BTC hedge)"</span>)</span>
-<span id="cb31-367"><a href="#cb31-367" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-368"><a href="#cb31-368" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_hedging_rolling_volatility(</span>
-<span id="cb31-369"><a href="#cb31-369" aria-hidden="true" tabindex="-1"></a>    hedge_results,</span>
-<span id="cb31-370"><a href="#cb31-370" aria-hidden="true" tabindex="-1"></a>    window<span class="op">=</span><span class="dv">21</span>,</span>
-<span id="cb31-371"><a href="#cb31-371" aria-hidden="true" tabindex="-1"></a>    annualization_days<span class="op">=</span><span class="dv">365</span>,</span>
-<span id="cb31-372"><a href="#cb31-372" aria-hidden="true" tabindex="-1"></a>    annualize<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb31-373"><a href="#cb31-373" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">13</span>],</span>
-<span id="cb31-374"><a href="#cb31-374" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"rolling 21 day pnl volatility"</span>)</span>
-<span id="cb31-375"><a href="#cb31-375" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-376"><a href="#cb31-376" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_rolling_residual_delta(</span>
-<span id="cb31-377"><a href="#cb31-377" aria-hidden="true" tabindex="-1"></a>    hedge_results,</span>
-<span id="cb31-378"><a href="#cb31-378" aria-hidden="true" tabindex="-1"></a>    window<span class="op">=</span><span class="dv">21</span>,</span>
-<span id="cb31-379"><a href="#cb31-379" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">14</span>],</span>
-<span id="cb31-380"><a href="#cb31-380" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"rolling mean absolute residual delta"</span>)</span>
-<span id="cb31-381"><a href="#cb31-381" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-382"><a href="#cb31-382" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_rolling_residual_vega(</span>
-<span id="cb31-383"><a href="#cb31-383" aria-hidden="true" tabindex="-1"></a>    hedge_results,</span>
-<span id="cb31-384"><a href="#cb31-384" aria-hidden="true" tabindex="-1"></a>    window<span class="op">=</span><span class="dv">21</span>,</span>
-<span id="cb31-385"><a href="#cb31-385" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">15</span>],</span>
-<span id="cb31-386"><a href="#cb31-386" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"rolling mean absolute residual vega"</span>)</span>
-<span id="cb31-387"><a href="#cb31-387" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-388"><a href="#cb31-388" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> axes:</span>
-<span id="cb31-389"><a href="#cb31-389" aria-hidden="true" tabindex="-1"></a>    ax.title.set_fontsize(<span class="dv">10</span>)</span>
-<span id="cb31-390"><a href="#cb31-390" aria-hidden="true" tabindex="-1"></a>    ax.tick_params(axis<span class="op">=</span><span class="st">"both"</span>, labelsize<span class="op">=</span><span class="dv">8</span>)</span>
-<span id="cb31-391"><a href="#cb31-391" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-392"><a href="#cb31-392" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">"BTC Deribit USD-equivalent forward-BSM, IV, Greeks, and hedging"</span>, fontsize<span class="op">=</span><span class="dv">14</span>, y<span class="op">=</span><span class="fl">0.995</span>)</span>
-<span id="cb31-393"><a href="#cb31-393" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(rect<span class="op">=</span>(<span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">0.985</span>), h_pad<span class="op">=</span><span class="fl">2.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb31-394"><a href="#cb31-394" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb31-317"><a href="#cb31-317" aria-hidden="true" tabindex="-1"></a>opt_plots.plot_rolling_residual_vega(</span>
+<span id="cb31-318"><a href="#cb31-318" aria-hidden="true" tabindex="-1"></a>    hedge_results, window<span class="op">=</span><span class="dv">21</span>, ax<span class="op">=</span>axes[<span class="dv">15</span>],</span>
+<span id="cb31-319"><a href="#cb31-319" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"rolling mean absolute residual vega"</span>)</span>
+<span id="cb31-320"><a href="#cb31-320" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-321"><a href="#cb31-321" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> axes:</span>
+<span id="cb31-322"><a href="#cb31-322" aria-hidden="true" tabindex="-1"></a>    ax.title.set_fontsize(<span class="dv">10</span>)</span>
+<span id="cb31-323"><a href="#cb31-323" aria-hidden="true" tabindex="-1"></a>    ax.tick_params(axis<span class="op">=</span><span class="st">"both"</span>, labelsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb31-324"><a href="#cb31-324" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-325"><a href="#cb31-325" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">"BTC Deribit USD-equivalent forward-BSM, IV, Greeks, and hedging"</span>, fontsize<span class="op">=</span><span class="dv">14</span>, y<span class="op">=</span><span class="fl">0.995</span>)</span>
+<span id="cb31-326"><a href="#cb31-326" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(rect<span class="op">=</span>(<span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">0.985</span>), h_pad<span class="op">=</span><span class="fl">2.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb31-327"><a href="#cb31-327" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5314,8 +5258,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <td>LBR-lite</td>
 <td>numba</td>
 <td>0.999858</td>
-<td>1.858686</td>
-<td>18966.086795</td>
+<td>4.249196</td>
+<td>8296.157283</td>
 <td>4.0</td>
 <td>4.547474e-12</td>
 </tr>
@@ -5324,8 +5268,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <td>Newton-bisection</td>
 <td>numba</td>
 <td>0.999858</td>
-<td>0.158944</td>
-<td>221788.387548</td>
+<td>0.220486</td>
+<td>159883.022194</td>
 <td>5.0</td>
 <td>5.456968e-12</td>
 </tr>
@@ -6187,6 +6131,9 @@ df_pairs with forward shape: (299214, 41)</code></pre>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
+      <a href="../notebooks/05_GARCH_forecasting_VRP.html" class="pagination-link" aria-label="5. Volatility Forecasting with GARCH and Variance Risk Premium">
+        <span class="nav-page-text"><span class="chapter-title">5. Volatility Forecasting with GARCH and Variance Risk Premium</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
   </div>
 </nav>
 </div> <!-- /content -->
