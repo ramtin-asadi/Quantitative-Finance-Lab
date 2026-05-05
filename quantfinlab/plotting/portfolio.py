@@ -338,6 +338,234 @@ def plot_weights(weights: pd.DataFrame, *, ax=None, title: str | None = None, to
     return ax
 
 
+def plot_active_nav(
+    returns: pd.DataFrame,
+    strategy: str,
+    benchmark: str,
+    *,
+    ax=None,
+    title: str | None = None,
+):
+    set_plot_style()
+    ax = _get_ax(ax)
+    if returns.empty or strategy not in returns.columns or benchmark not in returns.columns:
+        ax.text(0.5, 0.5, "Missing active returns", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    active = returns[strategy].reindex(returns.index).fillna(0.0) - returns[benchmark].reindex(returns.index).fillna(0.0)
+    nav = (1.0 + active).cumprod()
+    ax.plot(nav.index, nav.values, color="#0072B2", lw=1.4)
+    ax.axhline(1.0, color="black", lw=0.8, alpha=0.5)
+    ax.set_title(title or f"Active NAV: {strategy} vs {benchmark}")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Active growth")
+    ax.grid(True, alpha=0.3)
+    return _format_date_axis(ax)
+
+
+def plot_rolling_active_metrics(
+    returns: pd.DataFrame,
+    strategy: str,
+    benchmark: str,
+    *,
+    window: int = 126,
+    metric: str = "active_return",
+    annualization: float = 252.0,
+    ax=None,
+    title: str | None = None,
+):
+    set_plot_style()
+    ax = _get_ax(ax)
+    if returns.empty or strategy not in returns.columns or benchmark not in returns.columns:
+        ax.text(0.5, 0.5, "Missing active returns", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    active = returns[strategy].reindex(returns.index).fillna(0.0) - returns[benchmark].reindex(returns.index).fillna(0.0)
+    if metric.lower() in {"ir", "information_ratio", "rolling_ir"}:
+        roll = active.rolling(int(window)).mean() * float(annualization)
+        te = active.rolling(int(window)).std() * np.sqrt(float(annualization))
+        series = (roll / te.replace(0.0, np.nan)).rename("Rolling IR")
+        ylabel = "Information ratio"
+    else:
+        series = (active.rolling(int(window)).mean() * float(annualization)).rename("Rolling active return")
+        ylabel = "Annualized active return"
+    ax.plot(series.index, series.values, color="#CC79A7", lw=1.2)
+    ax.axhline(0.0, color="black", lw=0.8, alpha=0.5)
+    ax.set_title(title or series.name)
+    ax.set_xlabel("Date")
+    ax.set_ylabel(ylabel)
+    ax.grid(True, alpha=0.3)
+    return _format_date_axis(ax)
+
+
+def plot_active_weights_heatmap(
+    weights: pd.DataFrame,
+    benchmark_weights: pd.Series | dict[str, float] | None = None,
+    *,
+    last_n: int = 48,
+    ax=None,
+    title: str | None = None,
+    cmap: str = "coolwarm",
+):
+    set_plot_style()
+    ax = _get_ax(ax)
+    if weights.empty:
+        ax.text(0.5, 0.5, "No weights", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    W = weights.tail(int(last_n)).copy().astype(float)
+    if benchmark_weights is not None:
+        bench = pd.Series(benchmark_weights, dtype=float).reindex(W.columns).fillna(0.0)
+        W = W.subtract(bench, axis=1)
+    W = W.loc[:, W.abs().sum(axis=0).sort_values(ascending=False).index]
+    vals = W.T.to_numpy(dtype=float)
+    vmax = np.nanmax(np.abs(vals)) if vals.size else 0.0
+    vmax = max(float(vmax), 0.01)
+    im = ax.imshow(vals, aspect="auto", cmap=cmap, vmin=-vmax, vmax=vmax)
+    ax.set_title(title or "Active weights")
+    ax.set_yticks(range(len(W.columns)))
+    ax.set_yticklabels(W.columns)
+    step = max(1, len(W.index) // 8)
+    locs = list(range(0, len(W.index), step))
+    ax.set_xticks(locs)
+    ax.set_xticklabels([pd.Timestamp(W.index[i]).strftime("%Y-%m") for i in locs], rotation=45, ha="right", fontsize=7)
+    ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    return ax
+
+
+def plot_latest_weights(
+    weights: pd.DataFrame,
+    benchmark_weights: pd.Series | dict[str, float],
+    *,
+    ax=None,
+    title: str | None = None,
+    mode: str = "side_by_side",
+):
+    set_plot_style()
+    ax = _get_ax(ax)
+    if weights.empty:
+        ax.text(0.5, 0.5, "No weights", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    latest = weights.iloc[-1].astype(float)
+    bench = pd.Series(benchmark_weights, dtype=float).reindex(latest.index).fillna(0.0)
+    order = (latest - bench).abs().sort_values(ascending=True).index
+    if mode == "active":
+        vals = (latest - bench).reindex(order)
+        ax.barh(vals.index, vals.values, color=np.where(vals.values >= 0, "#0072B2", "#D55E00"))
+        ax.axvline(0.0, color="black", lw=0.8)
+        ax.set_xlabel("Active weight")
+    else:
+        y = np.arange(len(order))
+        ax.barh(y - 0.18, bench.reindex(order).values, height=0.35, label="Benchmark", color="#999999")
+        ax.barh(y + 0.18, latest.reindex(order).values, height=0.35, label="BL", color="#0072B2")
+        ax.set_yticks(y)
+        ax.set_yticklabels(order)
+        ax.legend(loc="best", fontsize=8)
+        ax.set_xlabel("Weight")
+    ax.set_title(title or "Latest weights")
+    ax.grid(True, axis="x", alpha=0.3)
+    return ax
+
+
+def plot_view_selection_counts(selection_log: pd.DataFrame, *, ax=None, title: str | None = None):
+    set_plot_style()
+    ax = _get_ax(ax)
+    if selection_log is None or selection_log.empty:
+        ax.text(0.5, 0.5, "No selection log", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    counts = selection_log[selection_log["kept"].astype(bool)].groupby("view_family").size().sort_values()
+    ax.barh(counts.index, counts.values, color="#009E73")
+    ax.set_title(title or "Selected views by family")
+    ax.set_xlabel("Selections")
+    ax.grid(True, axis="x", alpha=0.3)
+    return ax
+
+
+def plot_view_q_and_confidence(
+    view_log: pd.DataFrame,
+    confidence_log: pd.DataFrame | None = None,
+    *,
+    ax=None,
+    title: str | None = None,
+):
+    set_plot_style()
+    ax = _get_ax(ax)
+    if view_log is None or view_log.empty:
+        ax.text(0.5, 0.5, "No view log", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    q_col = "q_tilt_final" if "q_tilt_final" in view_log.columns else "q_tilt"
+    q = view_log.groupby("view_family")[q_col].agg(lambda x: np.mean(np.abs(pd.to_numeric(x, errors="coerce")))).sort_values()
+    ax.barh(q.index, q.values, color="#0072B2", alpha=0.85, label="Avg abs q")
+    ax.set_xlabel("Average absolute q")
+    ax.set_title(title or "View q tilt")
+    ax.grid(True, axis="x", alpha=0.3)
+    if confidence_log is not None and not confidence_log.empty and "confidence" in confidence_log.columns:
+        ax2 = ax.twiny()
+        conf = confidence_log.groupby("view_family")["confidence"].mean().reindex(q.index)
+        ax2.plot(conf.values, range(len(conf.index)), marker="o", color="#D55E00", lw=1.0, label="Confidence")
+        ax2.set_xlabel("Avg confidence")
+        ax2.set_xlim(0, 1)
+    return ax
+
+
+def plot_stress_summary(
+    stress_summary: pd.DataFrame,
+    *,
+    value_col: str = "return",
+    ax=None,
+    title: str | None = None,
+):
+    set_plot_style()
+    ax = _get_ax(ax)
+    if stress_summary is None or stress_summary.empty:
+        ax.text(0.5, 0.5, "No stress summary", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    mat = stress_summary.pivot_table(index="window", columns="strategy", values=value_col, aggfunc="mean")
+    mat.plot(kind="bar", ax=ax, width=0.82)
+    ax.axhline(0.0, color="black", lw=0.8)
+    ax.set_title(title or "Stress-window performance")
+    ax.set_xlabel("")
+    ax.set_ylabel(value_col.replace("_", " ").title())
+    ax.tick_params(axis="x", labelrotation=35)
+    ax.legend(loc="best", fontsize=7)
+    ax.grid(True, axis="y", alpha=0.3)
+    return ax
+
+
+def plot_posterior_shift_heatmap(
+    posterior_mu: pd.DataFrame,
+    prior_mu: pd.DataFrame,
+    *,
+    last_n: int = 36,
+    ax=None,
+    title: str | None = None,
+):
+    set_plot_style()
+    ax = _get_ax(ax)
+    if posterior_mu.empty or prior_mu.empty:
+        ax.text(0.5, 0.5, "No posterior shifts", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    shift = posterior_mu.subtract(prior_mu, fill_value=0.0).tail(int(last_n))
+    shift = shift.loc[:, shift.abs().sum(axis=0).sort_values(ascending=False).index]
+    vals = shift.T.to_numpy(dtype=float)
+    vmax = max(float(np.nanmax(np.abs(vals))) if vals.size else 0.0, 0.01)
+    im = ax.imshow(vals, aspect="auto", cmap="coolwarm", vmin=-vmax, vmax=vmax)
+    ax.set_title(title or "Posterior return shifts")
+    ax.set_yticks(range(len(shift.columns)))
+    ax.set_yticklabels(shift.columns)
+    step = max(1, len(shift.index) // 8)
+    locs = list(range(0, len(shift.index), step))
+    ax.set_xticks(locs)
+    ax.set_xticklabels([pd.Timestamp(shift.index[i]).strftime("%Y-%m") for i in locs], rotation=45, ha="right", fontsize=7)
+    ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    return ax
+
+
 def plot_fixed_mu_covariance_comparison(nav: pd.DataFrame, strategies: Sequence[str], *, ax=None, title: str | None = None):
     return plot_strategy_nav(
         nav,
@@ -400,6 +628,8 @@ __all__ = [
     "apply_portfolio_subplot_layout",
     "format_portfolio_time_axis",
     "heatmap_matrix",
+    "plot_active_nav",
+    "plot_active_weights_heatmap",
     "plot_drawdowns",
     "plot_effective_n_bar",
     "plot_finalist_drawdowns",
@@ -410,11 +640,17 @@ __all__ = [
     "plot_grid_heatmap",
     "plot_metric_bar",
     "plot_nav",
+    "plot_latest_weights",
+    "plot_posterior_shift_heatmap",
     "plot_risk_return_scatter",
+    "plot_rolling_active_metrics",
+    "plot_stress_summary",
     "plot_strategy_drawdowns",
     "plot_strategy_nav",
     "plot_turnover",
     "plot_turnover_bar",
+    "plot_view_q_and_confidence",
+    "plot_view_selection_counts",
     "plot_weights",
     "show_portfolio_xaxis_like_risk_module",
 ]

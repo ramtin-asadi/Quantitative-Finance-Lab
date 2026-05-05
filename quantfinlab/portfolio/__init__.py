@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from . import (
     attribution,
+    black_litterman,
+    confidence,
     constraints,
     costs,
     covariance,
@@ -9,6 +11,7 @@ from . import (
     optimizers,
     selection,
     universe,
+    views,
 )
 from .attribution import concentration, effective_number_of_holdings, max_weight, risk_contribution
 from .constraints import constraints_feasible, long_only_box_constraints, normalize_weights
@@ -88,11 +91,13 @@ __all__ = [
     "bayes_stein_momentum_mu",
     "bayes_stein_mu",
     "best_strategy_by_sharpe",
+    "black_litterman",
     "build_liquid_universe_by_date",
     "build_mu_excess_ann",
     "build_scaled_mu_from_raw",
     "calc_drawdown",
     "clean_close_volume_panels",
+    "confidence",
     "concentration",
     "constraints",
     "constraints_feasible",
@@ -134,6 +139,7 @@ __all__ = [
     "summarize_results",
     "transaction_cost_from_turnover",
     "universe",
+    "views",
     "walkforward",
     "weights_equal",
     "weights_maxsharpe_frontier_grid",
