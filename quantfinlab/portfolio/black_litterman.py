@@ -812,9 +812,17 @@ def selection_summary_table(selection_log: pd.DataFrame) -> pd.DataFrame:
     counts = selection_log.groupby("scale_reason").size().rename("count").sort_values(ascending=False).to_frame()
     counts["share"] = counts["count"] / counts["count"].sum()
     monthly = selection_log.groupby("date").agg(candidate_views=("view_family", "size"), selected_views=("kept", "sum"))
-    counts.loc["average selected views", "count"] = float(monthly["selected_views"].mean()) if not monthly.empty else np.nan
-    counts.loc["average candidate views", "count"] = float(monthly["candidate_views"].mean()) if not monthly.empty else np.nan
-    return counts
+    average_rows = pd.DataFrame(
+        {
+            "count": [
+                float(monthly["selected_views"].mean()) if not monthly.empty else 0.0,
+                float(monthly["candidate_views"].mean()) if not monthly.empty else 0.0,
+            ],
+            "share": [0.0, 0.0],
+        },
+        index=["average selected views", "average candidate views"],
+    )
+    return pd.concat([counts, average_rows], axis=0).fillna({"share": 0.0})
 
 
 def latest_weight_table(

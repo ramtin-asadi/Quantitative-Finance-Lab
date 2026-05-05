@@ -36,16 +36,16 @@ DEFAULT_PRIMARY_DISPLAY_NAMES = {
 }
 
 DEFAULT_SECTOR_FAMILY_Q_CAPS = {
-    "sector_momentum": 0.030,
-    "growth_leadership": 0.026,
-    "defensive_rotation": 0.024,
-    "cyclical_breadth": 0.026,
-    "credit_beta": 0.018,
-    "inflation_beneficiaries": 0.022,
-    "duration_sensitive": 0.018,
-    "small_cap_risk_on": 0.020,
-    "quality_defensive": 0.018,
-    "sector_reversal": 0.014,
+    "sector_momentum": 0.012,
+    "growth_leadership": 0.030,
+    "defensive_rotation": 0.006,
+    "cyclical_breadth": 0.020,
+    "credit_beta": 0.012,
+    "inflation_beneficiaries": 0.008,
+    "duration_sensitive": 0.014,
+    "small_cap_risk_on": 0.010,
+    "quality_defensive": 0.004,
+    "sector_reversal": 0.004,
 }
 
 DEFAULT_SECTOR_DISPLAY_NAMES = {
@@ -788,8 +788,11 @@ def sector_momentum(state: Any, roles: Mapping[str, Any], settings: ViewSettings
     longs = list(table.sort_values("sector_score", ascending=False).head(3).index)
     shorts = list(table.sort_values("sector_score").head(3).index)
     strength = float(table.reindex(longs)["sector_score"].mean() - table.reindex(shorts)["sector_score"].mean())
-    if strength > settings.entry_z:
-        return make_view("sector_momentum", "Sector momentum", "cross-sectional sector relative strength", longs, shorts, strength, "neutral", roles=roles, settings=settings, priority=0.90, diagnostics={"score_spread": strength, "long_scores": table.reindex(longs)["sector_score"].to_dict(), "short_scores": table.reindex(shorts)["sector_score"].to_dict()}, confluence_score=min(1.0, strength / 2.5), view_state="relative_strength")
+    score_dispersion = float(table["sector_score"].max() - table["sector_score"].min())
+    min_score_spread = max(settings.entry_z * 4.0, 2.00)
+    min_score_dispersion = max(settings.entry_z * 5.6, 2.80)
+    if strength > min_score_spread or score_dispersion > min_score_dispersion:
+        return make_view("sector_momentum", "Sector momentum", "cross-sectional sector relative strength", longs, shorts, strength, "neutral", roles=roles, settings=settings, priority=0.90, diagnostics={"score_spread": strength, "score_dispersion": score_dispersion, "min_score_spread": min_score_spread, "min_score_dispersion": min_score_dispersion, "long_scores": table.reindex(longs)["sector_score"].to_dict(), "short_scores": table.reindex(shorts)["sector_score"].to_dict()}, confluence_score=min(1.0, max(strength / 2.5, score_dispersion / 3.5)), view_state="relative_strength")
     return None
 
 
