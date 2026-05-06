@@ -34,7 +34,7 @@ def set_plot_style(colors: list[str] | None = None) -> None:
 
 
 def choose_heatmap_cmap(metric_name: str | None = None, kind: str | None = None) -> str:
-    return "plasma"
+    return "coolwarm"
 
 
 def draw_market_par_points(

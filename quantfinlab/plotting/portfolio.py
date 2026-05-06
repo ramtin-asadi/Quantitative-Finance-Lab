@@ -152,7 +152,7 @@ def _annotate_heatmap(ax, values: np.ndarray, fmt: str):
         for j in range(values.shape[1]):
             val = values[i, j]
             if np.isfinite(val):
-                ax.text(j, i, format(val, fmt), ha="center", va="center", fontsize=10, color="white")
+                ax.text(j, i, format(val, fmt), ha="center", va="center", fontsize=10, color="black")
 
 
 def plot_grid_heatmap(

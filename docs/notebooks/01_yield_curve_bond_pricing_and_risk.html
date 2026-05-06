@@ -301,7 +301,7 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 </section>
 <section id="imports-and-plotting-style-and-loading-data" class="level2">
 <h2 class="anchored" data-anchor-id="imports-and-plotting-style-and-loading-data">Imports and plotting style and loading data</h2>
-<div id="c76fb050" class="cell" data-execution_count="24">
+<div id="c76fb050" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> copy</span>
@@ -340,7 +340,7 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 <span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.dropna(subset<span class="op">=</span>[<span class="st">"Date"</span>], ).set_index(<span class="st">"Date"</span>).sort_index()</span>
 <span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="24">
+<div class="cell-output cell-output-display" data-execution_count="1">
 <div>
 
 
@@ -563,7 +563,7 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 </div>
 </div>
 </div>
-<div id="fe483000" class="cell" data-execution_count="25">
+<div id="fe483000" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>tenor_cols <span class="op">=</span> [<span class="st">"1M"</span>,<span class="st">"2M"</span>,<span class="st">"3M"</span>,<span class="st">"4M"</span>,<span class="st">"6M"</span>,<span class="st">"1Y"</span>,<span class="st">"2Y"</span>,<span class="st">"3Y"</span>,<span class="st">"5Y"</span>,<span class="st">"7Y"</span>,<span class="st">"10Y"</span>,<span class="st">"20Y"</span>,<span class="st">"30Y"</span>]</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> tenor_cols:</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    df[c] <span class="op">=</span> pd.to_numeric(df[c], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
@@ -861,7 +861,7 @@ Date range: 1990-01-02 to 2026-01-28</code></pre>
 </div>
 </div>
 </div>
-<div id="96e2f700" class="cell" data-execution_count="26">
+<div id="96e2f700" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sample_dates <span class="op">=</span> [</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    df.index[<span class="dv">0</span>],</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    df.index[<span class="bu">len</span>(df)<span class="op">//</span><span class="dv">2</span>],</span>
@@ -979,7 +979,7 @@ F(t_1,t_2)=\dfrac{\ln D(t_1)-\ln D(t_2)}{t_2-t_1}
 <p>So Discount Factor is: <span class="math display">\[D(t)=\exp\left(\ln D(t)\right)
 \]</span></p>
 <p>and zero rate is: <span class="math display">\[z(t)=-\dfrac{\ln D(t)}{t}\]</span></p>
-<div id="66bfc6d0" class="cell" data-execution_count="27">
+<div id="66bfc6d0" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>df_dec <span class="op">=</span> df.copy()</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>df_dec[tenor_cols] <span class="op">=</span> df_dec[tenor_cols] <span class="op">/</span> <span class="fl">100.0</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1169,7 +1169,7 @@ First 5 pillar DFs: [0.99687157 0.99383574 0.99084219 0.98774241 0.98201372 0.96
 <p>For the last available date, <strong>2026-01-28</strong>, the bootstrapped pillar discount factors decrease from approximately <strong>0.9969 at 1M</strong> to approximately <strong>0.2257 at 30Y</strong>.</p>
 <p>This makes ense in time value of money. receiving one dollar farther in the future is worth less today. The very low 30Y discount factor reflects the cumulative effect of discounting over a long horizon. Even if the annual rate is only a few percent, compounding over 30 years produces a large present-value reduction.</p>
 <p>We have transformed market coupon rates into a pricing object: a discount curve.</p>
-<div id="db56b670" class="cell" data-execution_count="28">
+<div id="db56b670" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> loglinear_curve(T, dfs):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    loglinear_log_dfs <span class="op">=</span> np.log(dfs)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1256,7 +1256,7 @@ p_j(t)=a_j(t-x_j)^3+b_j(t-x_j)^2+c_j(t-x_j)+d_j  \quad t\in[x_j,x_{j+1}]
 <p>then <span class="math display">\[D(t)=e^{-z(t)t}\]</span></p>
 <p>PCHIP is designed to reduce overshooting. This is useful for yield curves because unrealistic oscillations can create strange discount factors or forward rates.</p>
 <p>Compared with log-linear discount interpolation, PCHIP usually produces a smoother zero curve. The tradeoff is that the curve no longer has the same simple piecewise-forward interpretation and may not exactly reproduce all par-yield relationships after transformation back into coupon-bond pricing.</p>
-<div id="b886b647" class="cell" data-execution_count="29">
+<div id="b886b647" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.interpolate <span class="im">import</span> PchipInterpolator</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1358,7 +1358,7 @@ z(t)=\beta_0 +\beta_1\left(\frac{1-e^{-t/\tau_1}}{t/\tau_1}\right) +\beta_2\left
 <li><p><span class="math inline">\(\tau_1,\tau_2&gt;0\)</span> control where humps occur</p></li>
 </ul>
 <p>NSS is not just an interpolation method. It is a parametric curve model. This means it can smooth noisy observations and generate a clean curve, but it may not exactly match every quoted maturity. Its usefulness depends on whether the smooth parametric structure captures the actual shape of the market curve.</p>
-<div id="f4f26f9a" class="cell" data-execution_count="30">
+<div id="f4f26f9a" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> nss_zero(t, b0,b1,b2,b3,tau1,tau2):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> np.array(t, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    x1 <span class="op">=</span> t <span class="op">/</span> tau1</span>
@@ -1383,7 +1383,7 @@ c(T)=f\cdot\frac{1-D(T)}{\sum_{i=1}^{n}D(t_i)}
 <p>continuous: <span class="math inline">\(y(T)=-\ln D(T)/T\)</span></p>
 <p>simple: <span class="math inline">\(y(T)=(1/D(T)-1)/T\)</span></p>
 <p>but first we have to have <span class="math inline">\(D(t)\)</span></p>
-<div id="e4aa8609" class="cell" data-execution_count="31">
+<div id="e4aa8609" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> par_from_d(df_func, T_list, f<span class="op">=</span><span class="dv">2</span>):</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    T_arr <span class="op">=</span> np.asarray(T_list, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> np.full_like(T_arr, np.nan, dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -1455,7 +1455,7 @@ y^{model}(T_j;\theta)-y^{mkt}(T_j)
 \]</span></p>
 <p>This is a nonlinear optimization problem because the NSS parameters affect zero rates, discount factors, and then par yields. The implementation uses L-BFGS-B, a limited-memory quasi-Newton method that is appropriate for smooth optimization problems with a small number of parameters.</p>
 <p>We use the long-end yield level as part of the initial guess because <span class="math inline">\(\beta_0\)</span> behaves like a long-run level parameter. This improves stability and gives the optimizer a reasonable starting point.</p>
-<div id="edfbf229" class="cell" data-execution_count="32">
+<div id="edfbf229" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.optimize <span class="im">import</span> minimize</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1598,7 +1598,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <p>Positivity: <span class="math display">\[D(t_k)\ge D_{min}\]</span></p>
 <p>Monotone decreasing: <span class="math display">\[D(t_{k+1})\le D(t_k)\]</span></p>
 <p>These are linear inequalities, so the problem stays convex and QP-solvable.</p>
-<div id="e7a07a0f" class="cell" data-execution_count="33">
+<div id="e7a07a0f" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1666,7 +1666,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <p>Once we have <span class="math inline">\(D(t)\)</span> on a grid:</p>
 <p><span class="math display">\[z(t_k)=-\ln D(t_k)/t_k\]</span></p>
 <p><span class="math display">\[f(t_k)\approx -\dfrac{\ln D(t_{k+1})-\ln D(t_k)}{t_{k+1}-t_k}\]</span></p>
-<div id="102a4fab" class="cell" data-execution_count="34">
+<div id="102a4fab" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> qp_solve(t_grid, d, constraints, par_mkt, f, min_d):</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    lam <span class="op">=</span> <span class="fl">1e4</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    eps <span class="op">=</span> <span class="fl">1e-4</span></span>
@@ -1794,7 +1794,7 @@ The model is evaluated on the tenors used to fit the curve.</p></li>
 Some tenors are held out during fitting, and the model is evaluated on those held-out maturities.</p></li>
 </ol>
 <p>The out-of-sample check is especially important. A method that exactly reproduces fitted tenors is not automatically the best method if it performs poorly between those points.</p>
-<div id="ed42bb6d" class="cell" data-execution_count="35">
+<div id="ed42bb6d" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_curves_for_date(date):</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    pillars_full <span class="op">=</span> bootstrap_pillars(date)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> pillars_full <span class="kw">is</span> <span class="va">None</span>:</span>
@@ -2083,7 +2083,7 @@ c_t(T) = y_t(T)
 <section id="duration-overlay-optional" class="level4">
 <h4 class="anchored" data-anchor-id="duration-overlay-optional">11.4.2 Duration Overlay (Optional)</h4>
 <p>In addition to the weight‑based rebalancing, we may impose a <strong>duration target</strong>. The effective duration of the portfolio is computed via a parallel shift of the discount curve. If the current duration deviates from the target <span class="math inline">\(D^*\)</span> by more than a band <span class="math inline">\(\Delta_D\)</span>, we trade between the shortest and longest maturities (2Y and 30Y) to bring duration back into line. This overlay is applied <em>after</em> the standard rebalancing.</p>
-<div id="e8091d22" class="cell" data-execution_count="36">
+<div id="e8091d22" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>issue_maturities <span class="op">=</span> [<span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">30</span>]</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>issue_labels <span class="op">=</span> {<span class="dv">2</span>: <span class="st">"2Y"</span>, <span class="dv">5</span>: <span class="st">"5Y"</span>, <span class="dv">10</span>: <span class="st">"10Y"</span>, <span class="dv">30</span>: <span class="st">"30Y"</span>}</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2310,7 +2310,7 @@ KPV01_j = P_0 \times KRD_j \times 0.0001.
 \sum_j KRD_j \approx D_{\text{eff}}.
 \]</span></p>
 <p>This equality is not exacttly the same in every numerical solution because the bump functions, interpolation, maturity grid, and finite difference options can be different and create small differences.</p>
-<div id="92823cf8" class="cell" data-execution_count="37">
+<div id="92823cf8" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bond_position_value(bond, valuation_date, df_func):</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> bond <span class="kw">is</span> <span class="va">None</span> <span class="kw">or</span> bond.get(<span class="st">"units"</span>, <span class="fl">0.0</span>) <span class="op">&lt;=</span> <span class="dv">0</span>:</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fl">0.0</span></span>
@@ -2545,7 +2545,7 @@ R_{t+1} = \frac{NAV_{t+1}}{NAV_t} - 1.
 NAV_{t+1}^{\text{actual}} - NAV_t = \underbrace{\text{CouponIncome} + \text{CashCarry}}_{\text{income}} + \underbrace{\text{RollDown}}_{\text{time decay}} + \underbrace{\text{CurveMove}}_{\text{rate changes}}.
 \]</span></p>
 <p>The <strong>roll‑down</strong> shows the fact that a bond’s price increases as it gets closer to maturity (if the yield curve is sloping upward), even if yields remain unchanged.</p>
-<div id="c1214d6e" class="cell" data-execution_count="38">
+<div id="c1214d6e" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_trade(positions, cash, date, df_func, maturity, target_value_delta, trade_rows, reason):</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    tc <span class="op">=</span> trade_cost_bp <span class="op">/</span> <span class="fl">10000.0</span></span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> maturity <span class="kw">not</span> <span class="kw">in</span> positions <span class="kw">or</span> positions[maturity] <span class="kw">is</span> <span class="va">None</span>:</span>
@@ -2666,7 +2666,7 @@ w_t^{\text{bond}}
 \]</span></p>
 <p>with the remaining cash we hold or short duration exposure. In a more realistic ladder implementation, the adjustment is done through bond selection and rebalancing rather than a single continuous scaling factor, but the idea is the same. If the ladder duration is above the target, we reduce long duration exposure. If it is below the target, we allow more duration.</p>
 <p>But there is always trade off. Duration targeting usually reduces risk and controls portfolio’s sensitivity to interest rates, but it can also reduce carry and curve exposure. Since longer duration bonds often carry higher yields and stronger roll down potential, cutting duration can lower expected return. Therefore, the right question is not whether targeting increases return. The right question is whether the reduction in risk is worth the reduction in return.</p>
-<div id="0af0d60e" class="cell" data-execution_count="39">
+<div id="0af0d60e" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_duration_overlay(positions, cash, date, df_func, target_duration, duration_band):</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> target_duration <span class="kw">is</span> <span class="va">None</span>:</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> positions, cash, [], np.nan</span>
@@ -2705,24 +2705,22 @@ w_t^{\text{bond}}
 </section>
 <section id="backtesting-and-metrics" class="level2">
 <h2 class="anchored" data-anchor-id="backtesting-and-metrics">15) Backtesting and metrics</h2>
-<p>We now implement the baseline ladder strategy using the selected primary curve without actively targeting one specific duration.</p>
-<p>Reminder: At each rebalance date, the portfolio value is</p>
-<p><span class="math display">\[
-NAV_t = C_t + \sum_{i=1}^{N_t} q_{i,t} P_{i,t},
-\]</span></p>
-<p>where <span class="math inline">\(C_t\)</span> is cash, <span class="math inline">\(q_{i,t}\)</span> is the quantity of bond <span class="math inline">\(i\)</span>, and <span class="math inline">\(P_{i,t}\)</span> is the model price of that bond at date <span class="math inline">\(t\)</span>. The monthly return is then the percentage of NAV that changed from each month to next:</p>
+<p>We now implement the baseline ladder strategy using the selected primary curve (log-linear) without targeting one specific duration.</p>
+<section id="statistics" class="level3">
+<h3 class="anchored" data-anchor-id="statistics">15.1 Statistics</h3>
+<p>The monthly return is the percentage of NAV that changed from each month to next:</p>
 <p><span class="math display">\[
 r_{t+1}^{p}=\frac{NAV_{t+1}-NAV_t}{NAV_t}.
 \]</span></p>
-<p>The cumulative wealth path is</p>
+<p>The cumulative wealth is all the gained return from start to a specific time</p>
 <p><span class="math display">\[
 W_t = \prod_{s \leq t}(1+r_s^p),
 \]</span></p>
-<p>and the drawdown process is</p>
+<p>and the drawdown is amount we have fell from the peak of cumulative wealth</p>
 <p><span class="math display">\[
 DD_t = \frac{W_t}{\max_{u \leq t} W_u}-1.
 \]</span></p>
-<p>From this return series, the standard strategy statistics follow:</p>
+<p>From this return series, the standard strategy statistics are:</p>
 <p><span class="math display">\[
 \text{Annualized Return} = W_T^{12/N}-1,
 \]</span></p>
@@ -2732,11 +2730,15 @@ DD_t = \frac{W_t}{\max_{u \leq t} W_u}-1.
 <p><span class="math display">\[
 \text{Max Drawdown}=\min_t DD_t.
 \]</span></p>
+<p>Volatility or standard deviation of returns is the main measure of risk. Max drawdown shows the most we fall from the peak wealth.</p>
+</section>
 <section id="transaction-costs-and-turnover" class="level3">
-<h3 class="anchored" data-anchor-id="transaction-costs-and-turnover">11.10 Transaction Costs and Turnover</h3>
-<p>Every trade (buy or sell) incurs a cost. We model it as a <strong>proportional cost</strong> on the traded notional value. Let <span class="math inline">\(\kappa = \text{trade\_cost\_bp} / 10000\)</span>. For a sell of notional <span class="math inline">\(V\)</span>, the cash received is <span class="math inline">\(V \cdot (1 - \kappa)\)</span>. For a buy, the cash paid is <span class="math inline">\(V \cdot (1 + \kappa)\)</span>. The difference is lost to the strategy.</p>
-<p><strong>Turnover</strong> for a period is defined as the sum of absolute notional values of all trades during that period, divided by the starting NAV. High turnover may erode returns if the strategy rebalances too aggressively.</p>
-<div id="4605ef85" class="cell" data-execution_count="40">
+<h3 class="anchored" data-anchor-id="transaction-costs-and-turnover">15.2 Transaction Costs and Turnover</h3>
+<p>Every trade (buy or sell) includes a cost. We model it as a proportional cost on the traded notional value.</p>
+<p><span class="math display">\[\kappa = \text{trade cost bp} / 10000\]</span></p>
+<p>For a sell of notional <span class="math inline">\(V\)</span>, the cash received is <span class="math inline">\(V \cdot (1 - \kappa)\)</span>. For a buy, the cash paid is <span class="math inline">\(V \cdot (1 + \kappa)\)</span>. The difference is lost to the strategy.</p>
+<p><strong>Turnover</strong> for a period is the sum of absolute notional values of all trades during that period, divided by the starting NAV. High turnover may erode returns if the strategy rebalances too aggressively.</p>
+<div id="4605ef85" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_ladder_strategy(strategy_name, target_weights, duration_target<span class="op">=</span><span class="va">None</span>, duration_band<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    all_valid_dates <span class="op">=</span> []</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> d <span class="kw">in</span> issue_dates:</span>
@@ -2759,169 +2761,152 @@ DD_t = \frac{W_t}{\max_{u \leq t} W_u}-1.
 <span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(</span>
 <span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>        <span class="ss">f"</span><span class="sc">{</span>strategy_name<span class="sc">}</span><span class="ss">: using contiguous block "</span></span>
 <span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>        <span class="ss">f"</span><span class="sc">{</span>valid_dates[<span class="dv">0</span>]<span class="sc">.</span>date()<span class="sc">}</span><span class="ss"> -&gt; </span><span class="sc">{</span>valid_dates[<span class="op">-</span><span class="dv">1</span>]<span class="sc">.</span>date()<span class="sc">}</span><span class="ss"> "</span></span>
-<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>        <span class="ss">f"(</span><span class="sc">{</span><span class="bu">len</span>(valid_dates)<span class="sc">}</span><span class="ss"> dates)"</span></span>
-<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a>    start_date <span class="op">=</span> valid_dates[<span class="dv">0</span>]</span>
-<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a>    positions <span class="op">=</span> {}</span>
-<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a>    cash <span class="op">=</span> <span class="bu">float</span>(initial_nav)</span>
-<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> T <span class="kw">in</span> issue_maturities:</span>
-<span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a>        coupon <span class="op">=</span> get_current_par_yield(start_date, T)</span>
-<span id="cb23-32"><a href="#cb23-32" aria-hidden="true" tabindex="-1"></a>        units <span class="op">=</span> initial_nav <span class="op">*</span> target_weights[T]</span>
-<span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a>        positions[T] <span class="op">=</span> make_synthetic_bond(start_date, T, coupon, units<span class="op">=</span>units, f<span class="op">=</span>f)</span>
-<span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a>        cash <span class="op">-=</span> units</span>
-<span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
-<span id="cb23-37"><a href="#cb23-37" aria-hidden="true" tabindex="-1"></a>    bucket_rows <span class="op">=</span> []</span>
-<span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a>    trade_rows <span class="op">=</span> []</span>
-<span id="cb23-39"><a href="#cb23-39" aria-hidden="true" tabindex="-1"></a>    carry_rows <span class="op">=</span> []</span>
-<span id="cb23-40"><a href="#cb23-40" aria-hidden="true" tabindex="-1"></a>    snapshots <span class="op">=</span> {}</span>
-<span id="cb23-41"><a href="#cb23-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-42"><a href="#cb23-42" aria-hidden="true" tabindex="-1"></a>    start_curve <span class="op">=</span> get_primary_curve_for(curve_date_for(start_date))</span>
-<span id="cb23-43"><a href="#cb23-43" aria-hidden="true" tabindex="-1"></a>    df_start <span class="op">=</span> start_curve[<span class="st">"df_func"</span>]</span>
-<span id="cb23-44"><a href="#cb23-44" aria-hidden="true" tabindex="-1"></a>    start_bucket_values <span class="op">=</span> position_values_by_bucket(positions, start_date, df_start)</span>
-<span id="cb23-45"><a href="#cb23-45" aria-hidden="true" tabindex="-1"></a>    start_nav <span class="op">=</span> cash <span class="op">+</span> <span class="bu">sum</span>(start_bucket_values.values())</span>
-<span id="cb23-46"><a href="#cb23-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-47"><a href="#cb23-47" aria-hidden="true" tabindex="-1"></a>    rows.append({</span>
-<span id="cb23-48"><a href="#cb23-48" aria-hidden="true" tabindex="-1"></a>        <span class="st">"date"</span>: start_date,</span>
-<span id="cb23-49"><a href="#cb23-49" aria-hidden="true" tabindex="-1"></a>        <span class="st">"strategy"</span>: strategy_name,</span>
-<span id="cb23-50"><a href="#cb23-50" aria-hidden="true" tabindex="-1"></a>        <span class="st">"nav"</span>: start_nav,</span>
-<span id="cb23-51"><a href="#cb23-51" aria-hidden="true" tabindex="-1"></a>        <span class="st">"cash"</span>: cash,</span>
-<span id="cb23-52"><a href="#cb23-52" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ret"</span>: np.nan,</span>
-<span id="cb23-53"><a href="#cb23-53" aria-hidden="true" tabindex="-1"></a>        <span class="st">"coupon_income"</span>: <span class="fl">0.0</span>,</span>
-<span id="cb23-54"><a href="#cb23-54" aria-hidden="true" tabindex="-1"></a>        <span class="st">"principal_income"</span>: <span class="fl">0.0</span>,</span>
-<span id="cb23-55"><a href="#cb23-55" aria-hidden="true" tabindex="-1"></a>        <span class="st">"cash_carry"</span>: <span class="fl">0.0</span>,</span>
-<span id="cb23-56"><a href="#cb23-56" aria-hidden="true" tabindex="-1"></a>        <span class="st">"curve_move_pnl"</span>: <span class="fl">0.0</span>,</span>
-<span id="cb23-57"><a href="#cb23-57" aria-hidden="true" tabindex="-1"></a>        <span class="st">"carry_roll_pnl"</span>: <span class="fl">0.0</span>,</span>
-<span id="cb23-58"><a href="#cb23-58" aria-hidden="true" tabindex="-1"></a>        <span class="st">"turnover"</span>: <span class="fl">0.0</span>,</span>
-<span id="cb23-59"><a href="#cb23-59" aria-hidden="true" tabindex="-1"></a>    })</span>
-<span id="cb23-60"><a href="#cb23-60" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> T <span class="kw">in</span> issue_maturities:</span>
-<span id="cb23-61"><a href="#cb23-61" aria-hidden="true" tabindex="-1"></a>        bucket_rows.append({</span>
-<span id="cb23-62"><a href="#cb23-62" aria-hidden="true" tabindex="-1"></a>            <span class="st">"date"</span>: start_date,</span>
-<span id="cb23-63"><a href="#cb23-63" aria-hidden="true" tabindex="-1"></a>            <span class="st">"strategy"</span>: strategy_name,</span>
-<span id="cb23-64"><a href="#cb23-64" aria-hidden="true" tabindex="-1"></a>            <span class="st">"maturity"</span>: T,</span>
-<span id="cb23-65"><a href="#cb23-65" aria-hidden="true" tabindex="-1"></a>            <span class="st">"pv"</span>: start_bucket_values[T],</span>
-<span id="cb23-66"><a href="#cb23-66" aria-hidden="true" tabindex="-1"></a>            <span class="st">"weight"</span>: start_bucket_values[T] <span class="op">/</span> start_nav <span class="cf">if</span> start_nav <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan,</span>
-<span id="cb23-67"><a href="#cb23-67" aria-hidden="true" tabindex="-1"></a>        })</span>
-<span id="cb23-68"><a href="#cb23-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-69"><a href="#cb23-69" aria-hidden="true" tabindex="-1"></a>    snapshots[start_date] <span class="op">=</span> {<span class="st">"positions"</span>: clone_positions(positions), <span class="st">"cash"</span>: <span class="bu">float</span>(cash)}</span>
-<span id="cb23-70"><a href="#cb23-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-71"><a href="#cb23-71" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="bu">len</span>(valid_dates)):</span>
-<span id="cb23-72"><a href="#cb23-72" aria-hidden="true" tabindex="-1"></a>        prev_date <span class="op">=</span> valid_dates[i <span class="op">-</span> <span class="dv">1</span>]</span>
-<span id="cb23-73"><a href="#cb23-73" aria-hidden="true" tabindex="-1"></a>        date <span class="op">=</span> valid_dates[i]</span>
-<span id="cb23-74"><a href="#cb23-74" aria-hidden="true" tabindex="-1"></a>        gap_days <span class="op">=</span> (date <span class="op">-</span> prev_date).days</span>
-<span id="cb23-75"><a href="#cb23-75" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> gap_days <span class="op">&gt;</span> max_rebalance_gap_days:</span>
-<span id="cb23-76"><a href="#cb23-76" aria-hidden="true" tabindex="-1"></a>            <span class="cf">raise</span> <span class="pp">RuntimeError</span>(</span>
-<span id="cb23-77"><a href="#cb23-77" aria-hidden="true" tabindex="-1"></a>                <span class="ss">f"Gap of </span><span class="sc">{</span>gap_days<span class="sc">}</span><span class="ss"> days detected between </span><span class="sc">{</span>prev_date<span class="sc">.</span>date()<span class="sc">}</span><span class="ss"> and </span><span class="sc">{</span>date<span class="sc">.</span>date()<span class="sc">}</span><span class="ss"> "</span></span>
-<span id="cb23-78"><a href="#cb23-78" aria-hidden="true" tabindex="-1"></a>                <span class="ss">f"in </span><span class="sc">{</span>strategy_name<span class="sc">}</span><span class="ss">. The backtest should not cross structural gaps."</span>)</span>
-<span id="cb23-79"><a href="#cb23-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-80"><a href="#cb23-80" aria-hidden="true" tabindex="-1"></a>        prev_curve <span class="op">=</span> get_primary_curve_for(curve_date_for(prev_date))</span>
-<span id="cb23-81"><a href="#cb23-81" aria-hidden="true" tabindex="-1"></a>        current_curve <span class="op">=</span> get_primary_curve_for(curve_date_for(date))</span>
-<span id="cb23-82"><a href="#cb23-82" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> prev_curve <span class="kw">is</span> <span class="va">None</span> <span class="kw">or</span> current_curve <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb23-83"><a href="#cb23-83" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>        <span class="ss">f"(</span><span class="sc">{</span><span class="bu">len</span>(valid_dates)<span class="sc">}</span><span class="ss"> dates)"</span>)</span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a>    start_date <span class="op">=</span> valid_dates[<span class="dv">0</span>]</span>
+<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a>    positions <span class="op">=</span> {}</span>
+<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a>    cash <span class="op">=</span> <span class="bu">float</span>(initial_nav)</span>
+<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> T <span class="kw">in</span> issue_maturities:</span>
+<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a>        coupon <span class="op">=</span> get_current_par_yield(start_date, T)</span>
+<span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a>        units <span class="op">=</span> initial_nav <span class="op">*</span> target_weights[T]</span>
+<span id="cb23-32"><a href="#cb23-32" aria-hidden="true" tabindex="-1"></a>        positions[T] <span class="op">=</span> make_synthetic_bond(start_date, T, coupon, units<span class="op">=</span>units, f<span class="op">=</span>f)</span>
+<span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a>        cash <span class="op">-=</span> units</span>
+<span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
+<span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a>    bucket_rows <span class="op">=</span> []</span>
+<span id="cb23-37"><a href="#cb23-37" aria-hidden="true" tabindex="-1"></a>    trade_rows <span class="op">=</span> []</span>
+<span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a>    carry_rows <span class="op">=</span> []</span>
+<span id="cb23-39"><a href="#cb23-39" aria-hidden="true" tabindex="-1"></a>    snapshots <span class="op">=</span> {}</span>
+<span id="cb23-40"><a href="#cb23-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-41"><a href="#cb23-41" aria-hidden="true" tabindex="-1"></a>    start_curve <span class="op">=</span> get_primary_curve_for(curve_date_for(start_date))</span>
+<span id="cb23-42"><a href="#cb23-42" aria-hidden="true" tabindex="-1"></a>    df_start <span class="op">=</span> start_curve[<span class="st">"df_func"</span>]</span>
+<span id="cb23-43"><a href="#cb23-43" aria-hidden="true" tabindex="-1"></a>    start_bucket_values <span class="op">=</span> position_values_by_bucket(positions, start_date, df_start)</span>
+<span id="cb23-44"><a href="#cb23-44" aria-hidden="true" tabindex="-1"></a>    start_nav <span class="op">=</span> cash <span class="op">+</span> <span class="bu">sum</span>(start_bucket_values.values())</span>
+<span id="cb23-45"><a href="#cb23-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-46"><a href="#cb23-46" aria-hidden="true" tabindex="-1"></a>    rows.append({</span>
+<span id="cb23-47"><a href="#cb23-47" aria-hidden="true" tabindex="-1"></a>        <span class="st">"date"</span>: start_date, <span class="st">"strategy"</span>: strategy_name,</span>
+<span id="cb23-48"><a href="#cb23-48" aria-hidden="true" tabindex="-1"></a>        <span class="st">"nav"</span>: start_nav, <span class="st">"cash"</span>: cash, <span class="st">"ret"</span>: np.nan,</span>
+<span id="cb23-49"><a href="#cb23-49" aria-hidden="true" tabindex="-1"></a>        <span class="st">"coupon_income"</span>: <span class="fl">0.0</span>, <span class="st">"principal_income"</span>: <span class="fl">0.0</span>,</span>
+<span id="cb23-50"><a href="#cb23-50" aria-hidden="true" tabindex="-1"></a>        <span class="st">"cash_carry"</span>: <span class="fl">0.0</span>, <span class="st">"curve_move_pnl"</span>: <span class="fl">0.0</span>,</span>
+<span id="cb23-51"><a href="#cb23-51" aria-hidden="true" tabindex="-1"></a>        <span class="st">"carry_roll_pnl"</span>: <span class="fl">0.0</span>, <span class="st">"turnover"</span>: <span class="fl">0.0</span>})</span>
+<span id="cb23-52"><a href="#cb23-52" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb23-53"><a href="#cb23-53" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> T <span class="kw">in</span> issue_maturities:</span>
+<span id="cb23-54"><a href="#cb23-54" aria-hidden="true" tabindex="-1"></a>        bucket_rows.append({</span>
+<span id="cb23-55"><a href="#cb23-55" aria-hidden="true" tabindex="-1"></a>            <span class="st">"date"</span>: start_date, <span class="st">"strategy"</span>: strategy_name,</span>
+<span id="cb23-56"><a href="#cb23-56" aria-hidden="true" tabindex="-1"></a>            <span class="st">"maturity"</span>: T, <span class="st">"pv"</span>: start_bucket_values[T],</span>
+<span id="cb23-57"><a href="#cb23-57" aria-hidden="true" tabindex="-1"></a>            <span class="st">"weight"</span>: start_bucket_values[T] <span class="op">/</span> start_nav <span class="cf">if</span> start_nav <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan})</span>
+<span id="cb23-58"><a href="#cb23-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-59"><a href="#cb23-59" aria-hidden="true" tabindex="-1"></a>    snapshots[start_date] <span class="op">=</span> {<span class="st">"positions"</span>: clone_positions(positions), <span class="st">"cash"</span>: <span class="bu">float</span>(cash)}</span>
+<span id="cb23-60"><a href="#cb23-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-61"><a href="#cb23-61" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="bu">len</span>(valid_dates)):</span>
+<span id="cb23-62"><a href="#cb23-62" aria-hidden="true" tabindex="-1"></a>        prev_date <span class="op">=</span> valid_dates[i <span class="op">-</span> <span class="dv">1</span>]</span>
+<span id="cb23-63"><a href="#cb23-63" aria-hidden="true" tabindex="-1"></a>        date <span class="op">=</span> valid_dates[i]</span>
+<span id="cb23-64"><a href="#cb23-64" aria-hidden="true" tabindex="-1"></a>        gap_days <span class="op">=</span> (date <span class="op">-</span> prev_date).days</span>
+<span id="cb23-65"><a href="#cb23-65" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> gap_days <span class="op">&gt;</span> max_rebalance_gap_days:</span>
+<span id="cb23-66"><a href="#cb23-66" aria-hidden="true" tabindex="-1"></a>            <span class="cf">raise</span> <span class="pp">RuntimeError</span>(</span>
+<span id="cb23-67"><a href="#cb23-67" aria-hidden="true" tabindex="-1"></a>                <span class="ss">f"Gap of </span><span class="sc">{</span>gap_days<span class="sc">}</span><span class="ss"> days detected between </span><span class="sc">{</span>prev_date<span class="sc">.</span>date()<span class="sc">}</span><span class="ss"> and </span><span class="sc">{</span>date<span class="sc">.</span>date()<span class="sc">}</span><span class="ss"> "</span></span>
+<span id="cb23-68"><a href="#cb23-68" aria-hidden="true" tabindex="-1"></a>                <span class="ss">f"in </span><span class="sc">{</span>strategy_name<span class="sc">}</span><span class="ss">. The backtest should not cross structural gaps."</span>)</span>
+<span id="cb23-69"><a href="#cb23-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-70"><a href="#cb23-70" aria-hidden="true" tabindex="-1"></a>        prev_curve <span class="op">=</span> get_primary_curve_for(curve_date_for(prev_date))</span>
+<span id="cb23-71"><a href="#cb23-71" aria-hidden="true" tabindex="-1"></a>        current_curve <span class="op">=</span> get_primary_curve_for(curve_date_for(date))</span>
+<span id="cb23-72"><a href="#cb23-72" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> prev_curve <span class="kw">is</span> <span class="va">None</span> <span class="kw">or</span> current_curve <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb23-73"><a href="#cb23-73" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb23-74"><a href="#cb23-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-75"><a href="#cb23-75" aria-hidden="true" tabindex="-1"></a>        df_prev <span class="op">=</span> prev_curve[<span class="st">"df_func"</span>]</span>
+<span id="cb23-76"><a href="#cb23-76" aria-hidden="true" tabindex="-1"></a>        df_now <span class="op">=</span> current_curve[<span class="st">"df_func"</span>]</span>
+<span id="cb23-77"><a href="#cb23-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-78"><a href="#cb23-78" aria-hidden="true" tabindex="-1"></a>        positions_start <span class="op">=</span> clone_positions(positions)</span>
+<span id="cb23-79"><a href="#cb23-79" aria-hidden="true" tabindex="-1"></a>        cash_start <span class="op">=</span> <span class="bu">float</span>(cash)</span>
+<span id="cb23-80"><a href="#cb23-80" aria-hidden="true" tabindex="-1"></a>        nav_start <span class="op">=</span> cash_start <span class="op">+</span> <span class="bu">sum</span>(position_values_by_bucket(positions_start, prev_date, df_prev).values())</span>
+<span id="cb23-81"><a href="#cb23-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-82"><a href="#cb23-82" aria-hidden="true" tabindex="-1"></a>        cash <span class="op">=</span> grow_cash(cash, prev_date, date)</span>
+<span id="cb23-83"><a href="#cb23-83" aria-hidden="true" tabindex="-1"></a>        cash_carry <span class="op">=</span> cash <span class="op">-</span> cash_start</span>
 <span id="cb23-84"><a href="#cb23-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-85"><a href="#cb23-85" aria-hidden="true" tabindex="-1"></a>        df_prev <span class="op">=</span> prev_curve[<span class="st">"df_func"</span>]</span>
-<span id="cb23-86"><a href="#cb23-86" aria-hidden="true" tabindex="-1"></a>        df_now <span class="op">=</span> current_curve[<span class="st">"df_func"</span>]</span>
-<span id="cb23-87"><a href="#cb23-87" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-88"><a href="#cb23-88" aria-hidden="true" tabindex="-1"></a>        positions_start <span class="op">=</span> clone_positions(positions)</span>
-<span id="cb23-89"><a href="#cb23-89" aria-hidden="true" tabindex="-1"></a>        cash_start <span class="op">=</span> <span class="bu">float</span>(cash)</span>
-<span id="cb23-90"><a href="#cb23-90" aria-hidden="true" tabindex="-1"></a>        nav_start <span class="op">=</span> cash_start <span class="op">+</span> <span class="bu">sum</span>(position_values_by_bucket(positions_start, prev_date, df_prev).values())</span>
-<span id="cb23-91"><a href="#cb23-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-92"><a href="#cb23-92" aria-hidden="true" tabindex="-1"></a>        cash <span class="op">=</span> grow_cash(cash, prev_date, date)</span>
-<span id="cb23-93"><a href="#cb23-93" aria-hidden="true" tabindex="-1"></a>        cash_carry <span class="op">=</span> cash <span class="op">-</span> cash_start</span>
-<span id="cb23-94"><a href="#cb23-94" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-95"><a href="#cb23-95" aria-hidden="true" tabindex="-1"></a>        coupon_income <span class="op">=</span> <span class="fl">0.0</span></span>
-<span id="cb23-96"><a href="#cb23-96" aria-hidden="true" tabindex="-1"></a>        principal_income <span class="op">=</span> <span class="fl">0.0</span></span>
-<span id="cb23-97"><a href="#cb23-97" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> T <span class="kw">in</span> <span class="bu">list</span>(positions.keys()):</span>
-<span id="cb23-98"><a href="#cb23-98" aria-hidden="true" tabindex="-1"></a>            gross, coupon, principal <span class="op">=</span> bond_cashflows_between(positions[T], prev_date, date)</span>
-<span id="cb23-99"><a href="#cb23-99" aria-hidden="true" tabindex="-1"></a>            cash <span class="op">+=</span> gross</span>
-<span id="cb23-100"><a href="#cb23-100" aria-hidden="true" tabindex="-1"></a>            coupon_income <span class="op">+=</span> coupon</span>
-<span id="cb23-101"><a href="#cb23-101" aria-hidden="true" tabindex="-1"></a>            principal_income <span class="op">+=</span> principal</span>
-<span id="cb23-102"><a href="#cb23-102" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-103"><a href="#cb23-103" aria-hidden="true" tabindex="-1"></a>        same_curve_positions <span class="op">=</span> <span class="bu">sum</span>(position_values_by_bucket(positions_start, date, df_prev).values())</span>
-<span id="cb23-104"><a href="#cb23-104" aria-hidden="true" tabindex="-1"></a>        same_curve_nav <span class="op">=</span> cash_start <span class="op">+</span> cash_carry <span class="op">+</span> coupon_income <span class="op">+</span> principal_income <span class="op">+</span> same_curve_positions</span>
-<span id="cb23-105"><a href="#cb23-105" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-106"><a href="#cb23-106" aria-hidden="true" tabindex="-1"></a>        actual_positions_pretrade <span class="op">=</span> <span class="bu">sum</span>(position_values_by_bucket(positions, date, df_now).values())</span>
-<span id="cb23-107"><a href="#cb23-107" aria-hidden="true" tabindex="-1"></a>        actual_nav_pretrade <span class="op">=</span> cash <span class="op">+</span> actual_positions_pretrade</span>
+<span id="cb23-85"><a href="#cb23-85" aria-hidden="true" tabindex="-1"></a>        coupon_income <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb23-86"><a href="#cb23-86" aria-hidden="true" tabindex="-1"></a>        principal_income <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb23-87"><a href="#cb23-87" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> T <span class="kw">in</span> <span class="bu">list</span>(positions.keys()):</span>
+<span id="cb23-88"><a href="#cb23-88" aria-hidden="true" tabindex="-1"></a>            gross, coupon, principal <span class="op">=</span> bond_cashflows_between(positions[T], prev_date, date)</span>
+<span id="cb23-89"><a href="#cb23-89" aria-hidden="true" tabindex="-1"></a>            cash <span class="op">+=</span> gross</span>
+<span id="cb23-90"><a href="#cb23-90" aria-hidden="true" tabindex="-1"></a>            coupon_income <span class="op">+=</span> coupon</span>
+<span id="cb23-91"><a href="#cb23-91" aria-hidden="true" tabindex="-1"></a>            principal_income <span class="op">+=</span> principal</span>
+<span id="cb23-92"><a href="#cb23-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-93"><a href="#cb23-93" aria-hidden="true" tabindex="-1"></a>        same_curve_positions <span class="op">=</span> <span class="bu">sum</span>(position_values_by_bucket(positions_start, date, df_prev).values())</span>
+<span id="cb23-94"><a href="#cb23-94" aria-hidden="true" tabindex="-1"></a>        same_curve_nav <span class="op">=</span> cash_start <span class="op">+</span> cash_carry <span class="op">+</span> coupon_income <span class="op">+</span> principal_income <span class="op">+</span> same_curve_positions</span>
+<span id="cb23-95"><a href="#cb23-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-96"><a href="#cb23-96" aria-hidden="true" tabindex="-1"></a>        actual_positions_pretrade <span class="op">=</span> <span class="bu">sum</span>(position_values_by_bucket(positions, date, df_now).values())</span>
+<span id="cb23-97"><a href="#cb23-97" aria-hidden="true" tabindex="-1"></a>        actual_nav_pretrade <span class="op">=</span> cash <span class="op">+</span> actual_positions_pretrade</span>
+<span id="cb23-98"><a href="#cb23-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-99"><a href="#cb23-99" aria-hidden="true" tabindex="-1"></a>        carry_roll_pnl <span class="op">=</span> same_curve_nav <span class="op">-</span> nav_start</span>
+<span id="cb23-100"><a href="#cb23-100" aria-hidden="true" tabindex="-1"></a>        curve_move_pnl <span class="op">=</span> actual_nav_pretrade <span class="op">-</span> same_curve_nav</span>
+<span id="cb23-101"><a href="#cb23-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-102"><a href="#cb23-102" aria-hidden="true" tabindex="-1"></a>        positions, cash, roll_trades <span class="op">=</span> roll_bucket_positions(positions, cash, date, df_now)</span>
+<span id="cb23-103"><a href="#cb23-103" aria-hidden="true" tabindex="-1"></a>        period_trades <span class="op">=</span> <span class="bu">list</span>(roll_trades)</span>
+<span id="cb23-104"><a href="#cb23-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-105"><a href="#cb23-105" aria-hidden="true" tabindex="-1"></a>        positions, cash, rebalance_trades <span class="op">=</span> rebalance_to_targets(</span>
+<span id="cb23-106"><a href="#cb23-106" aria-hidden="true" tabindex="-1"></a>            positions, cash, date, df_now, target_weights, reason<span class="op">=</span><span class="st">"rebalance"</span>)</span>
+<span id="cb23-107"><a href="#cb23-107" aria-hidden="true" tabindex="-1"></a>        period_trades.extend(rebalance_trades)</span>
 <span id="cb23-108"><a href="#cb23-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-109"><a href="#cb23-109" aria-hidden="true" tabindex="-1"></a>        carry_roll_pnl <span class="op">=</span> same_curve_nav <span class="op">-</span> nav_start</span>
-<span id="cb23-110"><a href="#cb23-110" aria-hidden="true" tabindex="-1"></a>        curve_move_pnl <span class="op">=</span> actual_nav_pretrade <span class="op">-</span> same_curve_nav</span>
-<span id="cb23-111"><a href="#cb23-111" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-112"><a href="#cb23-112" aria-hidden="true" tabindex="-1"></a>        positions, cash, roll_trades <span class="op">=</span> roll_bucket_positions(positions, cash, date, df_now)</span>
-<span id="cb23-113"><a href="#cb23-113" aria-hidden="true" tabindex="-1"></a>        period_trades <span class="op">=</span> <span class="bu">list</span>(roll_trades)</span>
-<span id="cb23-114"><a href="#cb23-114" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-115"><a href="#cb23-115" aria-hidden="true" tabindex="-1"></a>        positions, cash, rebalance_trades <span class="op">=</span> rebalance_to_targets(</span>
-<span id="cb23-116"><a href="#cb23-116" aria-hidden="true" tabindex="-1"></a>            positions, cash, date, df_now, target_weights, reason<span class="op">=</span><span class="st">"rebalance"</span></span>
-<span id="cb23-117"><a href="#cb23-117" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb23-118"><a href="#cb23-118" aria-hidden="true" tabindex="-1"></a>        period_trades.extend(rebalance_trades)</span>
+<span id="cb23-109"><a href="#cb23-109" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> duration_target <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb23-110"><a href="#cb23-110" aria-hidden="true" tabindex="-1"></a>            positions, cash, overlay_trades, _ <span class="op">=</span> apply_duration_overlay(</span>
+<span id="cb23-111"><a href="#cb23-111" aria-hidden="true" tabindex="-1"></a>                positions, cash, date, df_now, duration_target, duration_band)</span>
+<span id="cb23-112"><a href="#cb23-112" aria-hidden="true" tabindex="-1"></a>            period_trades.extend(overlay_trades)</span>
+<span id="cb23-113"><a href="#cb23-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-114"><a href="#cb23-114" aria-hidden="true" tabindex="-1"></a>        bucket_values <span class="op">=</span> position_values_by_bucket(positions, date, df_now)</span>
+<span id="cb23-115"><a href="#cb23-115" aria-hidden="true" tabindex="-1"></a>        end_nav <span class="op">=</span> cash <span class="op">+</span> <span class="bu">sum</span>(bucket_values.values())</span>
+<span id="cb23-116"><a href="#cb23-116" aria-hidden="true" tabindex="-1"></a>        turnover <span class="op">=</span> (</span>
+<span id="cb23-117"><a href="#cb23-117" aria-hidden="true" tabindex="-1"></a>            <span class="bu">sum</span>(tr[<span class="st">"notional"</span>] <span class="cf">for</span> tr <span class="kw">in</span> period_trades) <span class="op">/</span> nav_start</span>
+<span id="cb23-118"><a href="#cb23-118" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> nav_start <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan)</span>
 <span id="cb23-119"><a href="#cb23-119" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-120"><a href="#cb23-120" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> duration_target <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb23-121"><a href="#cb23-121" aria-hidden="true" tabindex="-1"></a>            positions, cash, overlay_trades, _ <span class="op">=</span> apply_duration_overlay(</span>
-<span id="cb23-122"><a href="#cb23-122" aria-hidden="true" tabindex="-1"></a>                positions, cash, date, df_now, duration_target, duration_band</span>
-<span id="cb23-123"><a href="#cb23-123" aria-hidden="true" tabindex="-1"></a>            )</span>
-<span id="cb23-124"><a href="#cb23-124" aria-hidden="true" tabindex="-1"></a>            period_trades.extend(overlay_trades)</span>
-<span id="cb23-125"><a href="#cb23-125" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-126"><a href="#cb23-126" aria-hidden="true" tabindex="-1"></a>        bucket_values <span class="op">=</span> position_values_by_bucket(positions, date, df_now)</span>
-<span id="cb23-127"><a href="#cb23-127" aria-hidden="true" tabindex="-1"></a>        end_nav <span class="op">=</span> cash <span class="op">+</span> <span class="bu">sum</span>(bucket_values.values())</span>
-<span id="cb23-128"><a href="#cb23-128" aria-hidden="true" tabindex="-1"></a>        turnover <span class="op">=</span> (</span>
-<span id="cb23-129"><a href="#cb23-129" aria-hidden="true" tabindex="-1"></a>            <span class="bu">sum</span>(tr[<span class="st">"notional"</span>] <span class="cf">for</span> tr <span class="kw">in</span> period_trades) <span class="op">/</span> nav_start</span>
-<span id="cb23-130"><a href="#cb23-130" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> nav_start <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan</span>
-<span id="cb23-131"><a href="#cb23-131" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb23-120"><a href="#cb23-120" aria-hidden="true" tabindex="-1"></a>        rows.append({</span>
+<span id="cb23-121"><a href="#cb23-121" aria-hidden="true" tabindex="-1"></a>            <span class="st">"date"</span>: date,</span>
+<span id="cb23-122"><a href="#cb23-122" aria-hidden="true" tabindex="-1"></a>            <span class="st">"strategy"</span>: strategy_name,</span>
+<span id="cb23-123"><a href="#cb23-123" aria-hidden="true" tabindex="-1"></a>            <span class="st">"nav"</span>: end_nav,</span>
+<span id="cb23-124"><a href="#cb23-124" aria-hidden="true" tabindex="-1"></a>            <span class="st">"cash"</span>: cash,</span>
+<span id="cb23-125"><a href="#cb23-125" aria-hidden="true" tabindex="-1"></a>            <span class="st">"ret"</span>: (end_nav <span class="op">/</span> nav_start <span class="op">-</span> <span class="fl">1.0</span>) <span class="cf">if</span> nav_start <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan,</span>
+<span id="cb23-126"><a href="#cb23-126" aria-hidden="true" tabindex="-1"></a>            <span class="st">"coupon_income"</span>: coupon_income,</span>
+<span id="cb23-127"><a href="#cb23-127" aria-hidden="true" tabindex="-1"></a>            <span class="st">"principal_income"</span>: principal_income,</span>
+<span id="cb23-128"><a href="#cb23-128" aria-hidden="true" tabindex="-1"></a>            <span class="st">"cash_carry"</span>: cash_carry,</span>
+<span id="cb23-129"><a href="#cb23-129" aria-hidden="true" tabindex="-1"></a>            <span class="st">"curve_move_pnl"</span>: curve_move_pnl,</span>
+<span id="cb23-130"><a href="#cb23-130" aria-hidden="true" tabindex="-1"></a>            <span class="st">"carry_roll_pnl"</span>: carry_roll_pnl,</span>
+<span id="cb23-131"><a href="#cb23-131" aria-hidden="true" tabindex="-1"></a>            <span class="st">"turnover"</span>: turnover})</span>
 <span id="cb23-132"><a href="#cb23-132" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-133"><a href="#cb23-133" aria-hidden="true" tabindex="-1"></a>        rows.append({</span>
-<span id="cb23-134"><a href="#cb23-134" aria-hidden="true" tabindex="-1"></a>            <span class="st">"date"</span>: date,</span>
-<span id="cb23-135"><a href="#cb23-135" aria-hidden="true" tabindex="-1"></a>            <span class="st">"strategy"</span>: strategy_name,</span>
-<span id="cb23-136"><a href="#cb23-136" aria-hidden="true" tabindex="-1"></a>            <span class="st">"nav"</span>: end_nav,</span>
-<span id="cb23-137"><a href="#cb23-137" aria-hidden="true" tabindex="-1"></a>            <span class="st">"cash"</span>: cash,</span>
-<span id="cb23-138"><a href="#cb23-138" aria-hidden="true" tabindex="-1"></a>            <span class="st">"ret"</span>: (end_nav <span class="op">/</span> nav_start <span class="op">-</span> <span class="fl">1.0</span>) <span class="cf">if</span> nav_start <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan,</span>
-<span id="cb23-139"><a href="#cb23-139" aria-hidden="true" tabindex="-1"></a>            <span class="st">"coupon_income"</span>: coupon_income,</span>
-<span id="cb23-140"><a href="#cb23-140" aria-hidden="true" tabindex="-1"></a>            <span class="st">"principal_income"</span>: principal_income,</span>
-<span id="cb23-141"><a href="#cb23-141" aria-hidden="true" tabindex="-1"></a>            <span class="st">"cash_carry"</span>: cash_carry,</span>
-<span id="cb23-142"><a href="#cb23-142" aria-hidden="true" tabindex="-1"></a>            <span class="st">"curve_move_pnl"</span>: curve_move_pnl,</span>
-<span id="cb23-143"><a href="#cb23-143" aria-hidden="true" tabindex="-1"></a>            <span class="st">"carry_roll_pnl"</span>: carry_roll_pnl,</span>
-<span id="cb23-144"><a href="#cb23-144" aria-hidden="true" tabindex="-1"></a>            <span class="st">"turnover"</span>: turnover,</span>
-<span id="cb23-145"><a href="#cb23-145" aria-hidden="true" tabindex="-1"></a>        })</span>
+<span id="cb23-133"><a href="#cb23-133" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> T <span class="kw">in</span> issue_maturities:</span>
+<span id="cb23-134"><a href="#cb23-134" aria-hidden="true" tabindex="-1"></a>            bucket_rows.append({</span>
+<span id="cb23-135"><a href="#cb23-135" aria-hidden="true" tabindex="-1"></a>                <span class="st">"date"</span>: date, <span class="st">"strategy"</span>: strategy_name,</span>
+<span id="cb23-136"><a href="#cb23-136" aria-hidden="true" tabindex="-1"></a>                <span class="st">"maturity"</span>: T, <span class="st">"pv"</span>: bucket_values[T],</span>
+<span id="cb23-137"><a href="#cb23-137" aria-hidden="true" tabindex="-1"></a>                <span class="st">"weight"</span>: bucket_values[T] <span class="op">/</span> end_nav <span class="cf">if</span> end_nav <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan})</span>
+<span id="cb23-138"><a href="#cb23-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-139"><a href="#cb23-139" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> tr <span class="kw">in</span> period_trades:</span>
+<span id="cb23-140"><a href="#cb23-140" aria-hidden="true" tabindex="-1"></a>            tr[<span class="st">"strategy"</span>] <span class="op">=</span> strategy_name</span>
+<span id="cb23-141"><a href="#cb23-141" aria-hidden="true" tabindex="-1"></a>            trade_rows.append(tr)</span>
+<span id="cb23-142"><a href="#cb23-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-143"><a href="#cb23-143" aria-hidden="true" tabindex="-1"></a>        coupon_carry_pnl <span class="op">=</span> coupon_income <span class="op">+</span> cash_carry</span>
+<span id="cb23-144"><a href="#cb23-144" aria-hidden="true" tabindex="-1"></a>        roll_pnl <span class="op">=</span> carry_roll_pnl <span class="op">-</span> coupon_carry_pnl</span>
+<span id="cb23-145"><a href="#cb23-145" aria-hidden="true" tabindex="-1"></a>        nav_denom <span class="op">=</span> nav_start <span class="cf">if</span> nav_start <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan</span>
 <span id="cb23-146"><a href="#cb23-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-147"><a href="#cb23-147" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> T <span class="kw">in</span> issue_maturities:</span>
-<span id="cb23-148"><a href="#cb23-148" aria-hidden="true" tabindex="-1"></a>            bucket_rows.append({</span>
-<span id="cb23-149"><a href="#cb23-149" aria-hidden="true" tabindex="-1"></a>                <span class="st">"date"</span>: date,</span>
-<span id="cb23-150"><a href="#cb23-150" aria-hidden="true" tabindex="-1"></a>                <span class="st">"strategy"</span>: strategy_name,</span>
-<span id="cb23-151"><a href="#cb23-151" aria-hidden="true" tabindex="-1"></a>                <span class="st">"maturity"</span>: T,</span>
-<span id="cb23-152"><a href="#cb23-152" aria-hidden="true" tabindex="-1"></a>                <span class="st">"pv"</span>: bucket_values[T],</span>
-<span id="cb23-153"><a href="#cb23-153" aria-hidden="true" tabindex="-1"></a>                <span class="st">"weight"</span>: bucket_values[T] <span class="op">/</span> end_nav <span class="cf">if</span> end_nav <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan,</span>
-<span id="cb23-154"><a href="#cb23-154" aria-hidden="true" tabindex="-1"></a>            })</span>
-<span id="cb23-155"><a href="#cb23-155" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-156"><a href="#cb23-156" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> tr <span class="kw">in</span> period_trades:</span>
-<span id="cb23-157"><a href="#cb23-157" aria-hidden="true" tabindex="-1"></a>            tr[<span class="st">"strategy"</span>] <span class="op">=</span> strategy_name</span>
-<span id="cb23-158"><a href="#cb23-158" aria-hidden="true" tabindex="-1"></a>            trade_rows.append(tr)</span>
-<span id="cb23-159"><a href="#cb23-159" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-160"><a href="#cb23-160" aria-hidden="true" tabindex="-1"></a>        coupon_carry_pnl <span class="op">=</span> coupon_income <span class="op">+</span> cash_carry</span>
-<span id="cb23-161"><a href="#cb23-161" aria-hidden="true" tabindex="-1"></a>        roll_pnl <span class="op">=</span> carry_roll_pnl <span class="op">-</span> coupon_carry_pnl</span>
-<span id="cb23-162"><a href="#cb23-162" aria-hidden="true" tabindex="-1"></a>        nav_denom <span class="op">=</span> nav_start <span class="cf">if</span> nav_start <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan</span>
-<span id="cb23-163"><a href="#cb23-163" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-164"><a href="#cb23-164" aria-hidden="true" tabindex="-1"></a>        carry_rows.append({</span>
-<span id="cb23-165"><a href="#cb23-165" aria-hidden="true" tabindex="-1"></a>            <span class="st">"date"</span>: date,</span>
-<span id="cb23-166"><a href="#cb23-166" aria-hidden="true" tabindex="-1"></a>            <span class="st">"strategy"</span>: strategy_name,</span>
-<span id="cb23-167"><a href="#cb23-167" aria-hidden="true" tabindex="-1"></a>            <span class="st">"coupon_carry_pnl"</span>: coupon_carry_pnl,</span>
-<span id="cb23-168"><a href="#cb23-168" aria-hidden="true" tabindex="-1"></a>            <span class="st">"roll_pnl"</span>: roll_pnl,</span>
-<span id="cb23-169"><a href="#cb23-169" aria-hidden="true" tabindex="-1"></a>            <span class="st">"curve_move_pnl"</span>: curve_move_pnl,</span>
-<span id="cb23-170"><a href="#cb23-170" aria-hidden="true" tabindex="-1"></a>            <span class="st">"coupon_carry_ret"</span>: coupon_carry_pnl <span class="op">/</span> nav_denom <span class="cf">if</span> nav_start <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan,</span>
-<span id="cb23-171"><a href="#cb23-171" aria-hidden="true" tabindex="-1"></a>            <span class="st">"roll_ret"</span>: roll_pnl <span class="op">/</span> nav_denom <span class="cf">if</span> nav_start <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan,</span>
-<span id="cb23-172"><a href="#cb23-172" aria-hidden="true" tabindex="-1"></a>            <span class="st">"curve_move_ret"</span>: curve_move_pnl <span class="op">/</span> nav_denom <span class="cf">if</span> nav_start <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan,</span>
-<span id="cb23-173"><a href="#cb23-173" aria-hidden="true" tabindex="-1"></a>            <span class="st">"explained_ret"</span>: (coupon_carry_pnl <span class="op">+</span> roll_pnl <span class="op">+</span> curve_move_pnl) <span class="op">/</span> nav_denom <span class="cf">if</span> nav_start <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan,</span>
-<span id="cb23-174"><a href="#cb23-174" aria-hidden="true" tabindex="-1"></a>        })</span>
-<span id="cb23-175"><a href="#cb23-175" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-176"><a href="#cb23-176" aria-hidden="true" tabindex="-1"></a>        snapshots[date] <span class="op">=</span> {<span class="st">"positions"</span>: clone_positions(positions), <span class="st">"cash"</span>: <span class="bu">float</span>(cash)}</span>
-<span id="cb23-177"><a href="#cb23-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-178"><a href="#cb23-178" aria-hidden="true" tabindex="-1"></a>    strategy_df <span class="op">=</span> pd.DataFrame(rows).set_index(<span class="st">"date"</span>).sort_index()</span>
-<span id="cb23-179"><a href="#cb23-179" aria-hidden="true" tabindex="-1"></a>    bucket_df <span class="op">=</span> pd.DataFrame(bucket_rows).sort_values([<span class="st">"date"</span>, <span class="st">"maturity"</span>])</span>
-<span id="cb23-180"><a href="#cb23-180" aria-hidden="true" tabindex="-1"></a>    trade_df <span class="op">=</span> pd.DataFrame(trade_rows)</span>
-<span id="cb23-181"><a href="#cb23-181" aria-hidden="true" tabindex="-1"></a>    carry_df <span class="op">=</span> pd.DataFrame(carry_rows).set_index(<span class="st">"date"</span>).sort_index()</span>
-<span id="cb23-182"><a href="#cb23-182" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-183"><a href="#cb23-183" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> strategy_df, bucket_df, trade_df, carry_df, snapshots</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb23-147"><a href="#cb23-147" aria-hidden="true" tabindex="-1"></a>        carry_rows.append({</span>
+<span id="cb23-148"><a href="#cb23-148" aria-hidden="true" tabindex="-1"></a>            <span class="st">"date"</span>: date,</span>
+<span id="cb23-149"><a href="#cb23-149" aria-hidden="true" tabindex="-1"></a>            <span class="st">"strategy"</span>: strategy_name,</span>
+<span id="cb23-150"><a href="#cb23-150" aria-hidden="true" tabindex="-1"></a>            <span class="st">"coupon_carry_pnl"</span>: coupon_carry_pnl,</span>
+<span id="cb23-151"><a href="#cb23-151" aria-hidden="true" tabindex="-1"></a>            <span class="st">"roll_pnl"</span>: roll_pnl,</span>
+<span id="cb23-152"><a href="#cb23-152" aria-hidden="true" tabindex="-1"></a>            <span class="st">"curve_move_pnl"</span>: curve_move_pnl,</span>
+<span id="cb23-153"><a href="#cb23-153" aria-hidden="true" tabindex="-1"></a>            <span class="st">"coupon_carry_ret"</span>: coupon_carry_pnl <span class="op">/</span> nav_denom <span class="cf">if</span> nav_start <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan,</span>
+<span id="cb23-154"><a href="#cb23-154" aria-hidden="true" tabindex="-1"></a>            <span class="st">"roll_ret"</span>: roll_pnl <span class="op">/</span> nav_denom <span class="cf">if</span> nav_start <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan,</span>
+<span id="cb23-155"><a href="#cb23-155" aria-hidden="true" tabindex="-1"></a>            <span class="st">"curve_move_ret"</span>: curve_move_pnl <span class="op">/</span> nav_denom <span class="cf">if</span> nav_start <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan,</span>
+<span id="cb23-156"><a href="#cb23-156" aria-hidden="true" tabindex="-1"></a>            <span class="st">"explained_ret"</span>: (coupon_carry_pnl <span class="op">+</span> roll_pnl <span class="op">+</span> curve_move_pnl) <span class="op">/</span> nav_denom <span class="cf">if</span> nav_start <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan,</span>
+<span id="cb23-157"><a href="#cb23-157" aria-hidden="true" tabindex="-1"></a>        })</span>
+<span id="cb23-158"><a href="#cb23-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-159"><a href="#cb23-159" aria-hidden="true" tabindex="-1"></a>        snapshots[date] <span class="op">=</span> {<span class="st">"positions"</span>: clone_positions(positions), <span class="st">"cash"</span>: <span class="bu">float</span>(cash)}</span>
+<span id="cb23-160"><a href="#cb23-160" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-161"><a href="#cb23-161" aria-hidden="true" tabindex="-1"></a>    strategy_df <span class="op">=</span> pd.DataFrame(rows).set_index(<span class="st">"date"</span>).sort_index()</span>
+<span id="cb23-162"><a href="#cb23-162" aria-hidden="true" tabindex="-1"></a>    bucket_df <span class="op">=</span> pd.DataFrame(bucket_rows).sort_values([<span class="st">"date"</span>, <span class="st">"maturity"</span>])</span>
+<span id="cb23-163"><a href="#cb23-163" aria-hidden="true" tabindex="-1"></a>    trade_df <span class="op">=</span> pd.DataFrame(trade_rows)</span>
+<span id="cb23-164"><a href="#cb23-164" aria-hidden="true" tabindex="-1"></a>    carry_df <span class="op">=</span> pd.DataFrame(carry_rows).set_index(<span class="st">"date"</span>).sort_index()</span>
+<span id="cb23-165"><a href="#cb23-165" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-166"><a href="#cb23-166" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> strategy_df, bucket_df, trade_df, carry_df, snapshots</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="f934d23c" class="cell" data-execution_count="41">
+<div id="f934d23c" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> strategy_summary_table(strategy_df):</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    rets <span class="op">=</span> strategy_df[<span class="st">"ret"</span>].dropna()</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(rets) <span class="op">==</span> <span class="dv">0</span>:</span>
@@ -2960,7 +2945,7 @@ DD_t = \frac{W_t}{\max_{u \leq t} W_u}-1.
 <span id="cb24-36"><a href="#cb24-36" aria-hidden="true" tabindex="-1"></a>baseline_carry_cum <span class="op">=</span> baseline_carry_df[[<span class="st">"coupon_carry_ret"</span>, <span class="st">"roll_ret"</span>, <span class="st">"curve_move_ret"</span>]].fillna(<span class="fl">0.0</span>).cumsum()</span>
 <span id="cb24-37"><a href="#cb24-37" aria-hidden="true" tabindex="-1"></a>baseline_carry_cum_plot <span class="op">=</span> gap_safe_frame(baseline_carry_cum)</span>
 <span id="cb24-38"><a href="#cb24-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-39"><a href="#cb24-39" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">6</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb24-39"><a href="#cb24-39" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">5</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb24-40"><a href="#cb24-40" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].plot(baseline_cumret_plot.index, baseline_cumret_plot.values)</span>
 <span id="cb24-41"><a href="#cb24-41" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].axhline(<span class="fl">0.0</span>, color<span class="op">=</span><span class="st">"black"</span>, linewidth<span class="op">=</span><span class="fl">0.8</span>)</span>
 <span id="cb24-42"><a href="#cb24-42" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="ss">f"Baseline rolling ladder cumulative return (</span><span class="sc">{</span>primary_curve_method<span class="sc">}</span><span class="ss">)"</span>)</span>
@@ -2969,7 +2954,7 @@ DD_t = \frac{W_t}{\max_{u \leq t} W_u}-1.
 <span id="cb24-45"><a href="#cb24-45" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb24-46"><a href="#cb24-46" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> T <span class="kw">in</span> issue_maturities:</span>
 <span id="cb24-47"><a href="#cb24-47" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">1</span>].plot(baseline_weights_plot.index, baseline_weights_plot[T], label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>T<span class="sc">}</span><span class="ss">Y"</span>)</span>
-<span id="cb24-48"><a href="#cb24-48" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Baseline bucket weights"</span>)</span>
+<span id="cb24-48"><a href="#cb24-48" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Baseline weights"</span>)</span>
 <span id="cb24-49"><a href="#cb24-49" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="st">"Date"</span>)</span>
 <span id="cb24-50"><a href="#cb24-50" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"Weight"</span>)</span>
 <span id="cb24-51"><a href="#cb24-51" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend()</span>
@@ -2977,7 +2962,7 @@ DD_t = \frac{W_t}{\max_{u \leq t} W_u}-1.
 <span id="cb24-53"><a href="#cb24-53" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> col <span class="kw">in</span> baseline_carry_cum_plot.columns:</span>
 <span id="cb24-54"><a href="#cb24-54" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">2</span>].plot(baseline_carry_cum_plot.index, baseline_carry_cum_plot[col], label<span class="op">=</span>col)</span>
 <span id="cb24-55"><a href="#cb24-55" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].axhline(<span class="fl">0.0</span>, color<span class="op">=</span><span class="st">"black"</span>, linewidth<span class="op">=</span><span class="fl">0.8</span>)</span>
-<span id="cb24-56"><a href="#cb24-56" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_title(<span class="st">"Baseline cumulative carry / roll / curve-move return contribution"</span>)</span>
+<span id="cb24-56"><a href="#cb24-56" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_title(<span class="st">"Baseline cumulative carry &amp; roll &amp; curve-move"</span>)</span>
 <span id="cb24-57"><a href="#cb24-57" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_xlabel(<span class="st">"Date"</span>)</span>
 <span id="cb24-58"><a href="#cb24-58" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_ylabel(<span class="st">"Cumulative return contribution"</span>)</span>
 <span id="cb24-59"><a href="#cb24-59" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].legend()</span>
@@ -3195,7 +3180,7 @@ Baseline strategy summary:</code></pre>
 </div>
 </div>
 </div>
-<p>As we can see from the baseline ladder results, the simulation uses a long contiguous monthly block from <strong>2006-02-28 to 2026-01-31</strong>, which gives the strategy a meaningful test across very different rate environments. This is not only a calm-period exercise. It includes the pre-GFC period, the zero-rate regime, the post-2021 inflation shock, and the later high-rate stabilization period.</p>
+<p>The simulation and backtesting is for a time window of monthly data from <strong>2006-02-28 to 2026-01-31</strong>. This is not only a calm period window. It includes the Financial crisis period, the zero rate regime and the post 2021 inflation shock.</p>
 <p>The baseline ladder summary shows:</p>
 <table class="caption-top table">
 <colgroup>
@@ -3224,11 +3209,9 @@ Baseline strategy summary:</code></pre>
 </tr>
 </tbody>
 </table>
-<p>This output is economically reasonable for a broad Treasury ladder. The annualized return is positive but not equity-like, the volatility is materially lower than a stock portfolio, and the drawdown is still meaningful because intermediate and long-duration bonds can lose substantial value when rates rise quickly.</p>
-<p>The most important interpretation is that the ladder is not riskless. A ladder is often described as conservative because coupon income and maturity diversification smooth the path, but the strategy still has duration exposure. When the yield curve shifts upward, the present value of the remaining cash flows declines. The decomposition confirms this point: coupon income and carry/roll effects are usually stabilizing, but curve-move P&amp;L can dominate in months where rates move sharply.</p>
-<p>The final rows also show this mechanism clearly. For example, around late 2025 and early 2026, coupon and carry/roll components remain positive, while curve-move P&amp;L changes sign across months. A month like 2025-12-31 shows negative return behavior because the curve-move component is strongly negative, even though carry/roll remains positive. In contrast, months with positive curve repricing add to the coupon and carry income and produce a stronger NAV increase.</p>
-<p>This is exactly why the next section matters. A NAV chart alone tells us whether the strategy made or lost money. The risk section tells us <em>why</em> the strategy is exposed to those moves: how much portfolio value is lost for a basis-point rate increase, where along the curve the portfolio is most exposed, and whether the exposure is concentrated in one maturity bucket or distributed across the curve.</p>
-<div id="35b1dafa" class="cell" data-execution_count="42">
+<p>This output is expected for a Treasury ladder. The annualized return is positive but not like equity, the volatility is lower than a stock portfolio, and the drawdown is still meaningful because intermediate and long duration bonds can lose lots of their value when rates rise quickly.</p>
+<p>The most important detail is that the ladder is not riskless. A ladder is often described as conservative because coupon income and maturity diversification smooth the path, but the strategy still has duration exposure. When the yield curve shifts upward, the present value of the remaining cash flows falls. Coupon income and carry/roll effects are usually stabilizing, but curve-move P&amp;L can dominate in months where rates move sharply.</p>
+<div id="35b1dafa" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> strategy_risk_timeseries(strategy_df, snapshots):</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    risk_rows <span class="op">=</span> []</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    krd_rows <span class="op">=</span> []</span>
@@ -3265,7 +3248,7 @@ Baseline strategy summary:</code></pre>
 <span id="cb27-34"><a href="#cb27-34" aria-hidden="true" tabindex="-1"></a>    krd_df <span class="op">=</span> pd.concat(krd_rows, axis<span class="op">=</span><span class="dv">0</span>, ignore_index<span class="op">=</span><span class="va">True</span>) <span class="cf">if</span> <span class="bu">len</span>(krd_rows) <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> pd.DataFrame()</span>
 <span id="cb27-35"><a href="#cb27-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> risk_df, krd_df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="c8c071bf" class="cell" data-execution_count="43">
+<div id="c8c071bf" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>baseline_risk_df, baseline_krd_df <span class="op">=</span> strategy_risk_timeseries(baseline_df, baseline_snapshots)</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Baseline risk summary:"</span>)</span>
@@ -3460,62 +3443,9 @@ Baseline strategy summary:</code></pre>
 </div>
 </div>
 </div>
-</section>
-</section>
-<section id="baseline-risk-results-what-the-ladder-is-really-exposed-to" class="level2">
-<h2 class="anchored" data-anchor-id="baseline-risk-results-what-the-ladder-is-really-exposed-to">Baseline Risk Results: What the Ladder Is Really Exposed To</h2>
-<p>As we can see from the baseline risk summary, the portfolio carries a modified duration around the mid-six-year area near the end of the sample. The last few observations show modified duration around <strong>6.57 to 6.81</strong>, effective duration around <strong>6.67 to 6.91</strong>, and convexity around <strong>81 to 85</strong>. This is a meaningful amount of rate sensitivity.</p>
-<p>The latest baseline risk rows are approximately:</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Date</th>
-<th style="text-align: right;">PV01</th>
-<th style="text-align: right;">Modified duration</th>
-<th style="text-align: right;">Effective duration</th>
-<th style="text-align: right;">Convexity</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>2025-09-30</td>
-<td style="text-align: right;">0.12197</td>
-<td style="text-align: right;">6.6382</td>
-<td style="text-align: right;">6.7375</td>
-<td style="text-align: right;">85.04</td>
-</tr>
-<tr class="even">
-<td>2025-10-31</td>
-<td style="text-align: right;">0.12181</td>
-<td style="text-align: right;">6.5850</td>
-<td style="text-align: right;">6.6838</td>
-<td style="text-align: right;">84.57</td>
-</tr>
-<tr class="odd">
-<td>2025-11-30</td>
-<td style="text-align: right;">0.12678</td>
-<td style="text-align: right;">6.8130</td>
-<td style="text-align: right;">6.9101</td>
-<td style="text-align: right;">84.81</td>
-</tr>
-<tr class="even">
-<td>2025-12-31</td>
-<td style="text-align: right;">0.12313</td>
-<td style="text-align: right;">6.6602</td>
-<td style="text-align: right;">6.7568</td>
-<td style="text-align: right;">82.18</td>
-</tr>
-<tr class="odd">
-<td>2026-01-31</td>
-<td style="text-align: right;">0.12164</td>
-<td style="text-align: right;">6.5732</td>
-<td style="text-align: right;">6.6743</td>
-<td style="text-align: right;">81.16</td>
-</tr>
-</tbody>
-</table>
-<p>This tells us that a <span class="math inline">\(1\)</span> bp parallel increase in rates near the end of the sample costs roughly <strong>0.12 NAV units</strong> for the baseline ladder. In percentage terms, the modified-duration estimate says that a <span class="math inline">\(100\)</span> bp parallel rate shock would create approximately a <strong>6.6%</strong> first-order loss before convexity.</p>
-<p>The key-rate output gives a more detailed picture. The latest key-rate durations are:</p>
+<p>As we can see, the portfolio carries a modified duration around the mid six year area near the end. The last few observations show modified duration around <strong>6.57 to 6.81</strong>, effective duration around <strong>6.67 to 6.91</strong>, and convexity around <strong>81 to 85</strong>.</p>
+<p>The PV01 tells us that a <span class="math inline">\(1\)</span> bp parallel increase in rates near the end of our window costs about <strong>0.12 NAV units</strong> for the baseline ladder. In percentage terms, the modified duration estimate says that a <span class="math inline">\(100\)</span> bp parallel rate shock would create approximately a <strong>6.6%</strong> first order loss.</p>
+<p>The latest key-rate durations are:</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -3547,10 +3477,10 @@ Baseline strategy summary:</code></pre>
 </tr>
 </tbody>
 </table>
-<p>The interpretation is clear. The baseline ladder is not concentrated only at the short end. Even though the ladder includes short and intermediate maturities, a large share of the rate exposure sits in the <strong>10Y and 30Y key-rate buckets</strong>. This happens because long cash flows carry much larger duration per unit of market value. A small notional in a long bond can contribute a lot to total interest-rate risk.</p>
-<p>As we can see, the <span class="math inline">\(30\)</span>Y key-rate duration is the largest single key-rate bucket, followed by the <span class="math inline">\(10\)</span>Y bucket. Together they explain most of the rate sensitivity. This is exactly why the baseline ladder suffered a meaningful drawdown in the rising-rate environment. Coupon income helps, but coupon income is not large enough to fully offset a rapid repricing of long-duration cash flows.</p>
-<p>This section also gives us a natural reason to test duration targeting. If the baseline strategy has duration around <span class="math inline">\(6.6\)</span> to <span class="math inline">\(6.9\)</span>, and much of that exposure comes from the long end, then a portfolio manager may want to reduce and stabilize the duration profile. The next section asks whether a duration-targeted overlay can lower volatility and drawdown, and what return cost we pay for that risk control.</p>
-<div id="cafe8744" class="cell" data-execution_count="44">
+<p>The baseline ladder is not concentrated only at the short end. Even though the ladder includes short and intermediate maturities, a large share of the rate exposure sits in the <strong>10Y and 30Y key rate weights</strong>. This happens because long cash flows carry much larger duration per unit of market value. A small notional in a long bond can contribute a lot to total interest rate risk.</p>
+<p>As we can see, the <span class="math inline">\(30\)</span>Y key rate duration is the largest, followed by the <span class="math inline">\(10\)</span>Y bucket. Together they explain most of the rate sensitivity. This is exactly why the baseline ladder suffered a meaningful drawdown in the rising rate times. Coupon income helps, but coupon income is not large enough to fully offset a rapid repricing of long duration cash flows.</p>
+<p>This section also gives us a natural reason to test duration targeting. If the baseline strategy has duration around <span class="math inline">\(6.6\)</span> to <span class="math inline">\(6.9\)</span>, and much of that exposure comes from the long end, then we may want to reduce the duration an stabilize it. We now see if a duration-targeted overlay can lower volatility and drawdown, and what return reduction we accept for that risk control.</p>
+<div id="cafe8744" class="cell" data-execution_count="21">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>duration_df, duration_bucket_df, duration_trades_df, duration_carry_df, duration_snapshots <span class="op">=</span> run_ladder_strategy(</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    strategy_name<span class="op">=</span><span class="st">"duration_target_ladder"</span>, target_weights<span class="op">=</span>target_weights,</span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    duration_target<span class="op">=</span>duration_target, duration_band<span class="op">=</span>duration_band)</span>
@@ -3888,7 +3818,7 @@ Strategy comparison summary:</code></pre>
 </div>
 </div>
 </div>
-<p>The comparison output shows an important trade-off:</p>
+<p>From both strategies, we can see an important trade-off:</p>
 <table class="caption-top table">
 <colgroup>
 <col style="width: 15%">
@@ -3923,63 +3853,16 @@ Strategy comparison summary:</code></pre>
 </tr>
 </tbody>
 </table>
-<p>As we can see, the duration-targeted version gives up return: annualized return falls from about <strong>3.06%</strong> to about <strong>2.67%</strong>, and the final NAV is lower. But the risk reduction is substantial. Annualized volatility drops from about <strong>6.07%</strong> to about <strong>4.07%</strong>, and the max drawdown improves from about <strong>-20.26%</strong> to about <strong>-13.53%</strong>.</p>
-<p>This is the expected fixed-income result. Reducing duration reduces the exposure to rate shocks, and the lower volatility confirms that the overlay is doing what it is designed to do. The cost is lower exposure to the parts of the curve that generated carry and long-end return during favorable periods.</p>
-<p>The duration-targeted risk table confirms that the overlay keeps the portfolio much closer to the target. Near the end of the sample, the effective duration is almost exactly around <strong>4.98</strong>, while the modified duration is around <strong>4.90</strong>:</p>
-<table class="caption-top table">
-<thead>
-<tr class="header">
-<th>Date</th>
-<th style="text-align: right;">PV01</th>
-<th style="text-align: right;">Modified duration</th>
-<th style="text-align: right;">Effective duration</th>
-<th style="text-align: right;">Convexity</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>2025-09-30</td>
-<td style="text-align: right;">0.08351</td>
-<td style="text-align: right;">4.9007</td>
-<td style="text-align: right;">4.9807</td>
-<td style="text-align: right;">48.42</td>
-</tr>
-<tr class="even">
-<td>2025-10-31</td>
-<td style="text-align: right;">0.08396</td>
-<td style="text-align: right;">4.9014</td>
-<td style="text-align: right;">4.9811</td>
-<td style="text-align: right;">49.32</td>
-</tr>
-<tr class="odd">
-<td>2025-11-30</td>
-<td style="text-align: right;">0.08450</td>
-<td style="text-align: right;">4.9030</td>
-<td style="text-align: right;">4.9808</td>
-<td style="text-align: right;">45.88</td>
-</tr>
-<tr class="even">
-<td>2025-12-31</td>
-<td style="text-align: right;">0.08424</td>
-<td style="text-align: right;">4.9031</td>
-<td style="text-align: right;">4.9817</td>
-<td style="text-align: right;">46.75</td>
-</tr>
-<tr class="odd">
-<td>2026-01-31</td>
-<td style="text-align: right;">0.08423</td>
-<td style="text-align: right;">4.8985</td>
-<td style="text-align: right;">4.9800</td>
-<td style="text-align: right;">47.59</td>
-</tr>
-</tbody>
-</table>
-<p>This is a very clean result. The baseline ladder drifts around the mid-six-year area, while the duration-targeted ladder remains tightly anchored around five years of effective duration. Convexity also falls from the baseline level around the low-to-mid eighties to around the high forties. That reduction is natural because shortening duration reduces exposure to long cash flows, and long cash flows are the main source of convexity.</p>
-<p>The conclusion is that duration targeting works as a <strong>risk-shaping tool</strong>. It does not magically improve every metric. Instead, it gives the investor a different portfolio: lower return, lower volatility, lower drawdown, lower convexity, and a more controlled interest-rate exposure.</p>
+<p>As we can see, the duration-targeted version gives up return: annualized return falls from about 3.06% to about 2.67%, and the final NAV is lower. But the risk reduction is substantial. Annualized volatility drops from about <strong>6.07%</strong> to about <strong>4.07%</strong>, and the max drawdown improves from about -20.26% to about -13.53%.</p>
+<p>This is the expected fixed-income result. Reducing duration reduces the exposure to rate shocks, and the lower volatility confirms that the overlay is doing what it is designed to do. The cost is lower exposure to the parts of the curve that generated carry and long-end return during periods that could have more returns.</p>
+<p>Near the end of the sample, the effective duration is almost exactly around <strong>4.98</strong>, while the modified duration is around <strong>4.90</strong>:</p>
+<p>The baseline ladder drifts around the mid-six-year area, while the duration-targeted ladder remains tightly anchored around five years of effective duration. Convexity also falls from the baseline level around 80 to around 40. That reduction is natural because shortening duration reduces exposure to long cash flows, and long cash flows are the main source of convexity.</p>
+<p>The conclusion is that duration targeting works as a <strong>risk control extension</strong>. It does not magically improve every metric. Instead, it gives the investor a different portfolio: lower return, lower volatility, lower drawdown, lower convexity, and a more controlled interest-rate exposure.</p>
+</section>
 </section>
 <section id="implementing-the-whole-project-on-japan-data-using-quantfinlab" class="level1">
 <h1>Implementing the whole project on Japan data using quantfinlab</h1>
-<div id="a1824e0d" class="cell" data-execution_count="45">
+<div id="a1824e0d" class="cell" data-execution_count="22">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> re</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
@@ -4561,7 +4444,7 @@ Bond price/risk table:</code></pre>
 </div>
 </div>
 </div>
-<p>The Japanese yield curve has a different level, slope behavior, policy history, and long-end structure. If the functions are well designed, the workflow should still run without rewriting the project from scratch.</p>
+<p>The Japanese yield curve has a different behavior, policy history, and long-end structure.</p>
 <p>The curve-selection output shows that the primary curve for the Japan ladder is <strong>NSS</strong>, not the same curve chosen in the U.S. case. The RMSE ranking is:</p>
 <table class="caption-top table">
 <thead>
@@ -4594,8 +4477,8 @@ Bond price/risk table:</code></pre>
 </tr>
 </tbody>
 </table>
-<p>This is an important point. The library does not force one smoother to be globally best. It lets the data decide. The QP method has almost zero in-sample error, but its out-of-sample error is worse than NSS. That is a classic sign that very flexible curve fitting can interpolate today’s curve extremely well while generalizing less well to held-out instruments or maturities. NSS has a worse in-sample fit but the best out-of-sample behavior, so it is selected as the primary curve for the ladder.</p>
-<p>The bond price and risk table also confirms that the pricing functions are internally stable. For the sample bond, clean prices are close to par across methods, and PV01/convexity are very similar. The <span class="math inline">\(10\)</span>Y key-rate exposure dominates because the bond being inspected is centered around a long/intermediate maturity. The NSS price is slightly below one, which reflects the smoother’s different fitted curve shape at the relevant cash-flow dates.</p>
+<p>This is an important point. maybe more complexity and smoothness was not worth it for treasury, but for Japan interest rate, it does. The QP method has almost zero in-sample error, but its out-of-sample error is worse than NSS. That means it can interpolate today’s curve extremely well but didn’t generalize to held-out instruments or maturities. NSS has a worse in-sample fit but the best out-of-sample behavior, so it is selected as the primary curve for the ladder.</p>
+<p>For the sample bond, clean prices are close to par across methods, and PV01/convexity are very similar. The <span class="math inline">\(10\)</span>Y key-rate exposure dominates because the bond being inspected is centered around a long/intermediate maturity. The NSS price is slightly below one, which reflects the smoother’s different fitted curve shape at the relevant cash-flow dates.</p>
 <p>The Japan ladder summary is:</p>
 <table class="caption-top table">
 <colgroup>
@@ -4631,8 +4514,8 @@ Bond price/risk table:</code></pre>
 </tr>
 </tbody>
 </table>
-<p>As we can see, the Japan version produces a lower-return and lower-volatility environment than the U.S. case. That is economically intuitive given the long low-rate period in Japan. The baseline ladder still has a large drawdown, which reminds us that low yields do not eliminate duration risk. If yields are low, the coupon cushion is also low, so curve repricing can still be painful.</p>
-<p>The duration-targeted ladder again reduces risk strongly. Volatility falls from <strong>2.77%</strong> to <strong>1.42%</strong>, and max drawdown improves from about <strong>-19.10%</strong> to <strong>-8.43%</strong>. The cost is lower annualized return and lower final NAV. This mirrors the U.S. result and supports the general conclusion: duration targeting is a consistent risk-control mechanism across markets.</p>
+<p>As we can see, the Japan version produces a lower-return and lower-volatility portfolio than the US case. That is undersandable based on the long low rate period in Japan. If yields are low, the coupon cushion is also low, so curve repricing can still be painful.</p>
+<p>The duration-targeted ladder again reduces risk strongly. Volatility falls from <strong>2.77%</strong> to <strong>1.42%</strong>, and max drawdown improves from about <strong>-19.10%</strong> to <strong>-8.43%</strong>. The cost is lower annualized return and lower final NAV. This is same as US result and the general conclusion can be that duration targeting is a consistent risk control mechanism across markets.</p>
 <p>The latest Japan duration-targeted key-rate table shows:</p>
 <table class="caption-top table">
 <thead>
@@ -4665,9 +4548,8 @@ Bond price/risk table:</code></pre>
 </tr>
 </tbody>
 </table>
-<p>This exposure profile is different from the U.S. baseline ladder. The <span class="math inline">\(10\)</span>Y bucket is the largest, but the <span class="math inline">\(30\)</span>Y bucket is not dominant in the same way. This makes sense because the duration-targeting overlay and the Japan curve/bond universe create a different maturity-risk distribution.</p>
-<p>The sanity checks are also important. The sum of key-rate PV01 values is close to the total PV01, and the sum of key-rate durations is close to effective duration. For example, near the end of the sample the key-rate duration sum is around <strong>4.95</strong>, and effective duration is also around <strong>4.95</strong>. This means the key-rate decomposition is not just visually appealing; it is numerically consistent with the parallel-shock duration calculation.</p>
-<p>The final takeaway from the library implementation is that the fixed-income project is now reusable. The notebook does not only demonstrate a U.S. Treasury ladder. It provides a portable framework for curve construction, bond pricing, ladder backtesting, duration targeting, and fixed-income risk reporting across markets.</p>
+<p>This exposure is different from the US baseline ladder. The <span class="math inline">\(10\)</span>Y bucket is the largest, but the <span class="math inline">\(30\)</span>Y bucket is not the most in the same way. This makes sense because the duration-targeting overlay and the Japan bank bonds create a different maturity risk distribution.</p>
+<p>The sum of key-rate PV01 values is close to the total PV01, and the sum of key-rate durations is close to effective duration which can approve estimations.</p>
 
 
 </section>

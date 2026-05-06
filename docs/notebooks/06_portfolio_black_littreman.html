@@ -6646,1900 +6646,363 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <p>Data selection and cleaning remain visible here. The BL engine, view objects, learned confidence, table helpers, plotting helpers, walk-forward baselines, and common backtest timing/cost handling are delegated to the library. The goal is transferability of the engine, not a claim that sector rotation is the same problem as the cross-asset allocation above.</p>
 <section id="a.-imports" class="level3">
 <h3 class="anchored" data-anchor-id="a.-imports">A. Imports</h3>
-<div id="d13896f2" class="cell" data-execution_count="43">
+<div id="d13896f2" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio <span class="im">import</span> black_litterman <span class="im">as</span> bl</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio <span class="im">import</span> views <span class="im">as</span> bl_views</span>
 <span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting <span class="im">import</span> portfolio <span class="im">as</span> port_plots</span>
 <span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.backtest.portfolio <span class="im">import</span> run_many_weights_backtests</span>
 <span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio.walkforward <span class="im">import</span> run_walkforward_grid</span>
-<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio <span class="im">import</span> prices_to_returns, make_rebalance_dates</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="b.-sector-data-setup" class="level3">
-<h3 class="anchored" data-anchor-id="b.-sector-data-setup">B. Sector data setup</h3>
-<div id="47fc1104" class="cell" data-execution_count="44">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>sector_start <span class="op">=</span> <span class="st">"2018-07-01"</span></span>
-<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>requested_sector_assets <span class="op">=</span> [</span>
-<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"XLK"</span>, <span class="st">"XLC"</span>, <span class="st">"XLY"</span>, <span class="st">"XLF"</span>, <span class="st">"XLI"</span>,</span>
-<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"XLE"</span>, <span class="st">"XLB"</span>, <span class="st">"XLV"</span>, <span class="st">"XLP"</span>, <span class="st">"XLU"</span>, <span class="st">"XLRE"</span>,</span>
-<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>requested_signal_assets <span class="op">=</span> [</span>
-<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"SPY"</span>, <span class="st">"QQQ"</span>, <span class="st">"IWM"</span>,</span>
-<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TLT"</span>, <span class="st">"IEF"</span>, <span class="st">"SHY"</span>,</span>
-<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"LQD"</span>, <span class="st">"HYG"</span>,</span>
-<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"GLD"</span>, <span class="st">"DBC"</span>, <span class="st">"UUP"</span>,</span>
-<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>sector_assets <span class="op">=</span> [ticker <span class="cf">for</span> ticker <span class="kw">in</span> requested_sector_assets <span class="cf">if</span> ticker <span class="kw">in</span> close_all.columns]</span>
-<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a>sector_signal_assets <span class="op">=</span> [ticker <span class="cf">for</span> ticker <span class="kw">in</span> requested_signal_assets <span class="cf">if</span> ticker <span class="kw">in</span> close_all.columns]</span>
-<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">len</span>(sector_assets) <span class="op">&lt;</span> <span class="dv">8</span>:</span>
-<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"not enough sector ETFs are available: </span><span class="sc">{</span>sector_assets<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>sector_coverage <span class="op">=</span> bl.data_coverage_table(</span>
-<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a>    close_all,</span>
-<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a>    tradable_assets<span class="op">=</span>sector_assets,</span>
-<span id="cb49-23"><a href="#cb49-23" aria-hidden="true" tabindex="-1"></a>    signal_assets<span class="op">=</span>sector_signal_assets,</span>
-<span id="cb49-24"><a href="#cb49-24" aria-hidden="true" tabindex="-1"></a>    start<span class="op">=</span>sector_start,</span>
-<span id="cb49-25"><a href="#cb49-25" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb49-26"><a href="#cb49-26" aria-hidden="true" tabindex="-1"></a>display(sector_coverage.<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb49-27"><a href="#cb49-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-28"><a href="#cb49-28" aria-hidden="true" tabindex="-1"></a>sector_close_raw <span class="op">=</span> close_all.loc[pd.Timestamp(sector_start):, sector_assets].copy()</span>
-<span id="cb49-29"><a href="#cb49-29" aria-hidden="true" tabindex="-1"></a>sector_close <span class="op">=</span> sector_close_raw.ffill(limit<span class="op">=</span><span class="dv">3</span>).dropna(how<span class="op">=</span><span class="st">"any"</span>)</span>
-<span id="cb49-30"><a href="#cb49-30" aria-hidden="true" tabindex="-1"></a>sector_returns <span class="op">=</span> prices_to_returns(sector_close, kind<span class="op">=</span><span class="st">"simple"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).dropna(how<span class="op">=</span><span class="st">"all"</span>).fillna(<span class="fl">0.0</span>)</span>
-<span id="cb49-31"><a href="#cb49-31" aria-hidden="true" tabindex="-1"></a>sector_close <span class="op">=</span> sector_close.reindex(sector_returns.index).ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
-<span id="cb49-32"><a href="#cb49-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-33"><a href="#cb49-33" aria-hidden="true" tabindex="-1"></a>sector_signal_tickers <span class="op">=</span> <span class="bu">list</span>(<span class="bu">dict</span>.fromkeys(sector_assets <span class="op">+</span> sector_signal_assets))</span>
-<span id="cb49-34"><a href="#cb49-34" aria-hidden="true" tabindex="-1"></a>sector_signal_close <span class="op">=</span> (</span>
-<span id="cb49-35"><a href="#cb49-35" aria-hidden="true" tabindex="-1"></a>    close_all.loc[sector_returns.index.<span class="bu">min</span>():, sector_signal_tickers]</span>
-<span id="cb49-36"><a href="#cb49-36" aria-hidden="true" tabindex="-1"></a>    .ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
-<span id="cb49-37"><a href="#cb49-37" aria-hidden="true" tabindex="-1"></a>    .reindex(sector_returns.index)</span>
-<span id="cb49-38"><a href="#cb49-38" aria-hidden="true" tabindex="-1"></a>    .ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
-<span id="cb49-39"><a href="#cb49-39" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb49-40"><a href="#cb49-40" aria-hidden="true" tabindex="-1"></a>sector_signal_returns <span class="op">=</span> (</span>
-<span id="cb49-41"><a href="#cb49-41" aria-hidden="true" tabindex="-1"></a>    prices_to_returns(sector_signal_close, kind<span class="op">=</span><span class="st">"simple"</span>)</span>
-<span id="cb49-42"><a href="#cb49-42" aria-hidden="true" tabindex="-1"></a>    .replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
-<span id="cb49-43"><a href="#cb49-43" aria-hidden="true" tabindex="-1"></a>    .reindex(sector_returns.index)</span>
-<span id="cb49-44"><a href="#cb49-44" aria-hidden="true" tabindex="-1"></a>    .fillna(<span class="fl">0.0</span>)</span>
-<span id="cb49-45"><a href="#cb49-45" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb49-46"><a href="#cb49-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-47"><a href="#cb49-47" aria-hidden="true" tabindex="-1"></a>sector_rebalance_dates <span class="op">=</span> make_rebalance_dates(sector_returns.index, freq<span class="op">=</span><span class="st">"ME"</span>, min_history_days<span class="op">=</span><span class="dv">504</span>)</span>
-<span id="cb49-48"><a href="#cb49-48" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector assets:"</span>, sector_assets)</span>
-<span id="cb49-49"><a href="#cb49-49" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector signal assets:"</span>, sector_signal_assets)</span>
-<span id="cb49-50"><a href="#cb49-50" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector return panel:"</span>, sector_returns.shape, sector_returns.index.<span class="bu">min</span>().date(), <span class="st">"to"</span>, sector_returns.index.<span class="bu">max</span>().date())</span>
-<span id="cb49-51"><a href="#cb49-51" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector rebalance dates:"</span>, <span class="bu">len</span>(sector_rebalance_dates), sector_rebalance_dates[<span class="dv">0</span>].date(), <span class="st">"to"</span>, sector_rebalance_dates[<span class="op">-</span><span class="dv">1</span>].date())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">ticker</th>
-<th data-quarto-table-cell-role="th">role</th>
-<th data-quarto-table-cell-role="th">first_date</th>
-<th data-quarto-table-cell-role="th">last_date</th>
-<th data-quarto-table-cell-role="th">observations</th>
-<th data-quarto-table-cell-role="th">missing_pct_after_first_valid</th>
-<th data-quarto-table-cell-role="th">included</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">0</th>
-<td>XLK</td>
-<td>tradable</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">1</th>
-<td>XLC</td>
-<td>tradable</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">2</th>
-<td>XLY</td>
-<td>tradable</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">3</th>
-<td>XLF</td>
-<td>tradable</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">4</th>
-<td>XLI</td>
-<td>tradable</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">5</th>
-<td>XLE</td>
-<td>tradable</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">6</th>
-<td>XLB</td>
-<td>tradable</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">7</th>
-<td>XLV</td>
-<td>tradable</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">8</th>
-<td>XLP</td>
-<td>tradable</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">9</th>
-<td>XLU</td>
-<td>tradable</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">10</th>
-<td>XLRE</td>
-<td>tradable</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">11</th>
-<td>SPY</td>
-<td>signal</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">12</th>
-<td>QQQ</td>
-<td>signal</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">13</th>
-<td>IWM</td>
-<td>signal</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">14</th>
-<td>TLT</td>
-<td>signal</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">15</th>
-<td>IEF</td>
-<td>signal</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">16</th>
-<td>SHY</td>
-<td>signal</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">17</th>
-<td>LQD</td>
-<td>signal</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">18</th>
-<td>HYG</td>
-<td>signal</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">19</th>
-<td>GLD</td>
-<td>signal</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">20</th>
-<td>DBC</td>
-<td>signal</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">21</th>
-<td>UUP</td>
-<td>signal</td>
-<td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
-<td>0.0</td>
-<td>True</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>sector assets: ['XLK', 'XLC', 'XLY', 'XLF', 'XLI', 'XLE', 'XLB', 'XLV', 'XLP', 'XLU', 'XLRE']
-sector signal assets: ['SPY', 'QQQ', 'IWM', 'TLT', 'IEF', 'SHY', 'LQD', 'HYG', 'GLD', 'DBC', 'UUP']
-sector return panel: (1968, 11) 2018-07-03 to 2026-05-01
-sector rebalance dates: 71 2020-07-31 to 2026-05-01</code></pre>
-</div>
-</div>
-</section>
-<section id="c.-sector-benchmark-roles-and-settings" class="level3">
-<h3 class="anchored" data-anchor-id="c.-sector-benchmark-roles-and-settings">C. Sector benchmark, roles, and settings</h3>
-<div id="3426ed1c" class="cell" data-execution_count="45">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>sector_benchmark_w <span class="op">=</span> pd.Series(<span class="fl">1.0</span> <span class="op">/</span> <span class="bu">len</span>(sector_assets), index<span class="op">=</span>sector_assets, dtype<span class="op">=</span><span class="bu">float</span>)</span>
-<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>sector_roles_raw <span class="op">=</span> {</span>
-<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"assets"</span>: sector_assets,</span>
-<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"growth"</span>: [<span class="st">"XLK"</span>, <span class="st">"XLC"</span>, <span class="st">"XLY"</span>],</span>
-<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"defensive"</span>: [<span class="st">"XLP"</span>, <span class="st">"XLU"</span>, <span class="st">"XLV"</span>],</span>
-<span id="cb51-7"><a href="#cb51-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cyclical"</span>: [<span class="st">"XLI"</span>, <span class="st">"XLF"</span>, <span class="st">"XLB"</span>, <span class="st">"XLE"</span>],</span>
-<span id="cb51-8"><a href="#cb51-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inflation_beneficiaries"</span>: [<span class="st">"XLE"</span>, <span class="st">"XLB"</span>],</span>
-<span id="cb51-9"><a href="#cb51-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"rate_sensitive"</span>: [<span class="st">"XLU"</span>, <span class="st">"XLV"</span>, <span class="st">"XLRE"</span>],</span>
-<span id="cb51-10"><a href="#cb51-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"credit_sensitive"</span>: [<span class="st">"XLF"</span>, <span class="st">"XLY"</span>, <span class="st">"XLI"</span>],</span>
-<span id="cb51-11"><a href="#cb51-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quality_defensive"</span>: [<span class="st">"XLV"</span>, <span class="st">"XLP"</span>],</span>
-<span id="cb51-12"><a href="#cb51-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"small_cap_sensitive"</span>: [<span class="st">"XLI"</span>, <span class="st">"XLF"</span>, <span class="st">"XLY"</span>],</span>
-<span id="cb51-13"><a href="#cb51-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"risky"</span>: sector_assets,</span>
-<span id="cb51-14"><a href="#cb51-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sleeve_map"</span>: {ticker: <span class="st">"Sector"</span> <span class="cf">for</span> ticker <span class="kw">in</span> sector_assets},</span>
-<span id="cb51-15"><a href="#cb51-15" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb51-16"><a href="#cb51-16" aria-hidden="true" tabindex="-1"></a>sector_roles <span class="op">=</span> {</span>
-<span id="cb51-17"><a href="#cb51-17" aria-hidden="true" tabindex="-1"></a>    key: ([ticker <span class="cf">for</span> ticker <span class="kw">in</span> value <span class="cf">if</span> ticker <span class="kw">in</span> sector_assets] <span class="cf">if</span> <span class="bu">isinstance</span>(value, <span class="bu">list</span>) <span class="cf">else</span> value)</span>
-<span id="cb51-18"><a href="#cb51-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> key, value <span class="kw">in</span> sector_roles_raw.items()</span>
-<span id="cb51-19"><a href="#cb51-19" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb51-20"><a href="#cb51-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-21"><a href="#cb51-21" aria-hidden="true" tabindex="-1"></a>sector_family_caps <span class="op">=</span> {</span>
-<span id="cb51-22"><a href="#cb51-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sector_momentum"</span>: <span class="fl">0.012</span>,</span>
-<span id="cb51-23"><a href="#cb51-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"growth_leadership"</span>: <span class="fl">0.030</span>,</span>
-<span id="cb51-24"><a href="#cb51-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"defensive_rotation"</span>: <span class="fl">0.006</span>,</span>
-<span id="cb51-25"><a href="#cb51-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cyclical_breadth"</span>: <span class="fl">0.020</span>,</span>
-<span id="cb51-26"><a href="#cb51-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"credit_beta"</span>: <span class="fl">0.012</span>,</span>
-<span id="cb51-27"><a href="#cb51-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inflation_beneficiaries"</span>: <span class="fl">0.008</span>,</span>
-<span id="cb51-28"><a href="#cb51-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"duration_sensitive"</span>: <span class="fl">0.014</span>,</span>
-<span id="cb51-29"><a href="#cb51-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">"small_cap_risk_on"</span>: <span class="fl">0.010</span>,</span>
-<span id="cb51-30"><a href="#cb51-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quality_defensive"</span>: <span class="fl">0.004</span>,</span>
-<span id="cb51-31"><a href="#cb51-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sector_reversal"</span>: <span class="fl">0.004</span>,</span>
-<span id="cb51-32"><a href="#cb51-32" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb51-33"><a href="#cb51-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-34"><a href="#cb51-34" aria-hidden="true" tabindex="-1"></a>sector_view_settings <span class="op">=</span> bl_views.ViewSettings(</span>
-<span id="cb51-35"><a href="#cb51-35" aria-hidden="true" tabindex="-1"></a>    family_q_caps<span class="op">=</span>sector_family_caps,</span>
-<span id="cb51-36"><a href="#cb51-36" aria-hidden="true" tabindex="-1"></a>    family_display_names<span class="op">=</span>bl_views.DEFAULT_SECTOR_DISPLAY_NAMES,</span>
-<span id="cb51-37"><a href="#cb51-37" aria-hidden="true" tabindex="-1"></a>    assets<span class="op">=</span>sector_assets,</span>
-<span id="cb51-38"><a href="#cb51-38" aria-hidden="true" tabindex="-1"></a>    entry_z<span class="op">=</span><span class="fl">0.50</span>,</span>
-<span id="cb51-39"><a href="#cb51-39" aria-hidden="true" tabindex="-1"></a>    q_strength_scale<span class="op">=</span><span class="fl">1.25</span>,</span>
-<span id="cb51-40"><a href="#cb51-40" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>annualization,</span>
-<span id="cb51-41"><a href="#cb51-41" aria-hidden="true" tabindex="-1"></a>    view_horizon_days<span class="op">=</span><span class="dv">21</span>,</span>
-<span id="cb51-42"><a href="#cb51-42" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb51-43"><a href="#cb51-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-44"><a href="#cb51-44" aria-hidden="true" tabindex="-1"></a>sector_bl_settings <span class="op">=</span> bl.BLSettings(</span>
-<span id="cb51-45"><a href="#cb51-45" aria-hidden="true" tabindex="-1"></a>    cov_lookback<span class="op">=</span><span class="dv">504</span>,</span>
-<span id="cb51-46"><a href="#cb51-46" aria-hidden="true" tabindex="-1"></a>    mu_lookback<span class="op">=</span><span class="dv">252</span>,</span>
-<span id="cb51-47"><a href="#cb51-47" aria-hidden="true" tabindex="-1"></a>    risk_free_rate_annual<span class="op">=</span><span class="fl">0.04</span>,</span>
-<span id="cb51-48"><a href="#cb51-48" aria-hidden="true" tabindex="-1"></a>    transaction_cost_bps<span class="op">=</span><span class="fl">10.0</span>,</span>
-<span id="cb51-49"><a href="#cb51-49" aria-hidden="true" tabindex="-1"></a>    tau<span class="op">=</span><span class="fl">0.05</span>,</span>
-<span id="cb51-50"><a href="#cb51-50" aria-hidden="true" tabindex="-1"></a>    ewma_lambda<span class="op">=</span><span class="fl">0.97</span>,</span>
-<span id="cb51-51"><a href="#cb51-51" aria-hidden="true" tabindex="-1"></a>    max_weight<span class="op">=</span><span class="fl">0.35</span>,</span>
-<span id="cb51-52"><a href="#cb51-52" aria-hidden="true" tabindex="-1"></a>    active_weight_limit<span class="op">=</span><span class="fl">0.15</span>,</span>
-<span id="cb51-53"><a href="#cb51-53" aria-hidden="true" tabindex="-1"></a>    active_weight_relaxed<span class="op">=</span><span class="fl">0.22</span>,</span>
-<span id="cb51-54"><a href="#cb51-54" aria-hidden="true" tabindex="-1"></a>    max_selected_views<span class="op">=</span><span class="dv">5</span>,</span>
-<span id="cb51-55"><a href="#cb51-55" aria-hidden="true" tabindex="-1"></a>    redundancy_similarity<span class="op">=</span><span class="fl">0.85</span>,</span>
-<span id="cb51-56"><a href="#cb51-56" aria-hidden="true" tabindex="-1"></a>    max_same_direction<span class="op">=</span><span class="dv">3</span>,</span>
-<span id="cb51-57"><a href="#cb51-57" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb51-58"><a href="#cb51-58" aria-hidden="true" tabindex="-1"></a>sector_rf_daily <span class="op">=</span> bl.risk_free_daily(sector_bl_settings.risk_free_rate_annual, sector_bl_settings.annualization)</span>
-<span id="cb51-59"><a href="#cb51-59" aria-hidden="true" tabindex="-1"></a>sector_asset_caps <span class="op">=</span> pd.Series(sector_bl_settings.max_weight, index<span class="op">=</span>sector_assets, dtype<span class="op">=</span><span class="bu">float</span>)</span>
-<span id="cb51-60"><a href="#cb51-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb51-61"><a href="#cb51-61" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame({<span class="st">"benchmark_weight"</span>: sector_benchmark_w}).<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb51-62"><a href="#cb51-62" aria-hidden="true" tabindex="-1"></a>display(bl.view_spec_table(bl_views.SECTOR_VIEW_SPECS, sector_family_caps, bl_views.DEFAULT_SECTOR_DISPLAY_NAMES).<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">benchmark_weight</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLK</th>
-<td>0.0909</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLC</th>
-<td>0.0909</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLY</th>
-<td>0.0909</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLF</th>
-<td>0.0909</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLI</th>
-<td>0.0909</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLE</th>
-<td>0.0909</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLB</th>
-<td>0.0909</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLV</th>
-<td>0.0909</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLP</th>
-<td>0.0909</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLU</th>
-<td>0.0909</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLRE</th>
-<td>0.0909</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">family</th>
-<th data-quarto-table-cell-role="th">display_name</th>
-<th data-quarto-table-cell-role="th">cap</th>
-<th data-quarto-table-cell-role="th">function</th>
-<th data-quarto-table-cell-role="th">economic_idea</th>
-<th data-quarto-table-cell-role="th">typical_long</th>
-<th data-quarto-table-cell-role="th">typical_short</th>
-<th data-quarto-table-cell-role="th">main_signal</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">0</th>
-<td>sector_momentum</td>
-<td>Sector momentum</td>
-<td>0.012</td>
-<td>sector_momentum</td>
-<td>Cross-sectional relative sector strength.</td>
-<td>Top 3 sectors by momentum/vol score</td>
-<td>Bottom 3 sectors by momentum/vol score</td>
-<td>63d/126d sector momentum minus volatility</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">1</th>
-<td>growth_leadership</td>
-<td>Growth leadership</td>
-<td>0.030</td>
-<td>growth_leadership</td>
-<td>Growth sectors lead when QQQ and growth basket...</td>
-<td>XLK, XLC, XLY</td>
-<td>XLP, XLU, XLV</td>
-<td>QQQ/SPY and growth/defensive relative momentum</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">2</th>
-<td>defensive_rotation</td>
-<td>Defensive rotation</td>
-<td>0.006</td>
-<td>defensive_rotation</td>
-<td>Defensive sectors outperform in equity stress.</td>
-<td>XLP, XLU, XLV</td>
-<td>Growth sectors and weak cyclicals</td>
-<td>SPY drawdown, SPY momentum, defensive relative...</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">3</th>
-<td>cyclical_breadth</td>
-<td>Cyclical breadth</td>
-<td>0.020</td>
-<td>cyclical_breadth</td>
-<td>Cyclicals lead when participation broadens.</td>
-<td>XLI, XLF, XLB, XLE</td>
-<td>XLP, XLU, XLV</td>
-<td>Cyclical breadth and cyclical/defensive relati...</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">4</th>
-<td>credit_beta</td>
-<td>Credit beta</td>
-<td>0.012</td>
-<td>credit_beta</td>
-<td>Credit-sensitive sectors benefit when high-yie...</td>
-<td>XLF, XLY, XLI</td>
-<td>XLV, XLP, XLU</td>
-<td>HYG/LQD, HYG/SHY, HYG momentum</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">5</th>
-<td>inflation_beneficiaries</td>
-<td>Inflation beneficiaries</td>
-<td>0.008</td>
-<td>inflation_beneficiaries</td>
-<td>Energy and materials benefit from commodity/in...</td>
-<td>XLE, XLB</td>
-<td>XLK, XLY</td>
-<td>DBC/GLD momentum and inflation basket leadership</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">6</th>
-<td>duration_sensitive</td>
-<td>Duration sensitive</td>
-<td>0.014</td>
-<td>duration_sensitive</td>
-<td>Rate-sensitive sectors respond to duration reg...</td>
-<td>XLU, XLV, XLRE</td>
-<td>XLF, XLE</td>
-<td>TLT/SHY, IEF/SHY, rate-sensitive relative stre...</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">7</th>
-<td>small_cap_risk_on</td>
-<td>Small-cap risk-on</td>
-<td>0.010</td>
-<td>small_cap_risk_on</td>
-<td>IWM/SPY leadership supports domestic cyclicals.</td>
-<td>XLI, XLF, XLY</td>
-<td>XLP, XLU, XLV</td>
-<td>IWM/SPY and small-cap-sensitive leadership</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">8</th>
-<td>quality_defensive</td>
-<td>Quality defensive</td>
-<td>0.004</td>
-<td>quality_defensive</td>
-<td>Quality defensive sectors lead under volatilit...</td>
-<td>XLV, XLP</td>
-<td>XLE, XLF, XLY</td>
-<td>SPY volatility z-score and sector correlation</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">9</th>
-<td>sector_reversal</td>
-<td>Sector reversal</td>
-<td>0.004</td>
-<td>sector_reversal</td>
-<td>Short-term sector extremes mean-revert after h...</td>
-<td>Short-term laggards with acceptable 126d trend</td>
-<td>Overextended 21d winners</td>
-<td>21d sector dispersion and 126d trend filter</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-</div>
-</section>
-<section id="d.-latest-sector-view-preview" class="level3">
-<h3 class="anchored" data-anchor-id="d.-latest-sector-view-preview">D. Latest sector-view preview</h3>
-<div id="135c2730" class="cell" data-execution_count="46">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>latest_sector_rebalance_date <span class="op">=</span> sector_rebalance_dates[<span class="op">-</span><span class="dv">1</span>]</span>
-<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>sector_latest_state <span class="op">=</span> bl.market_state(</span>
-<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>sector_returns,</span>
-<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>    signal_returns<span class="op">=</span>sector_signal_returns,</span>
-<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>    date<span class="op">=</span>latest_sector_rebalance_date,</span>
-<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>    roles<span class="op">=</span>sector_roles,</span>
-<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a>    settings<span class="op">=</span>sector_bl_settings,</span>
-<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a>    view_settings<span class="op">=</span>sector_view_settings,</span>
-<span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb52-10"><a href="#cb52-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb52-11"><a href="#cb52-11" aria-hidden="true" tabindex="-1"></a>sector_momentum_view <span class="op">=</span> bl_views.sector_momentum(sector_latest_state, sector_roles, sector_view_settings)</span>
-<span id="cb52-12"><a href="#cb52-12" aria-hidden="true" tabindex="-1"></a>growth_leadership_view <span class="op">=</span> bl_views.growth_leadership(sector_latest_state, sector_roles, sector_view_settings)</span>
-<span id="cb52-13"><a href="#cb52-13" aria-hidden="true" tabindex="-1"></a>defensive_rotation_view <span class="op">=</span> bl_views.defensive_rotation(sector_latest_state, sector_roles, sector_view_settings)</span>
-<span id="cb52-14"><a href="#cb52-14" aria-hidden="true" tabindex="-1"></a>cyclical_breadth_view <span class="op">=</span> bl_views.cyclical_breadth(sector_latest_state, sector_roles, sector_view_settings)</span>
-<span id="cb52-15"><a href="#cb52-15" aria-hidden="true" tabindex="-1"></a>credit_beta_view <span class="op">=</span> bl_views.credit_beta(sector_latest_state, sector_roles, sector_view_settings)</span>
-<span id="cb52-16"><a href="#cb52-16" aria-hidden="true" tabindex="-1"></a>inflation_beneficiaries_view <span class="op">=</span> bl_views.inflation_beneficiaries(sector_latest_state, sector_roles, sector_view_settings)</span>
-<span id="cb52-17"><a href="#cb52-17" aria-hidden="true" tabindex="-1"></a>duration_sensitive_view <span class="op">=</span> bl_views.duration_sensitive(sector_latest_state, sector_roles, sector_view_settings)</span>
-<span id="cb52-18"><a href="#cb52-18" aria-hidden="true" tabindex="-1"></a>small_cap_risk_on_view <span class="op">=</span> bl_views.small_cap_risk_on(sector_latest_state, sector_roles, sector_view_settings)</span>
-<span id="cb52-19"><a href="#cb52-19" aria-hidden="true" tabindex="-1"></a>quality_defensive_view <span class="op">=</span> bl_views.quality_defensive(sector_latest_state, sector_roles, sector_view_settings)</span>
-<span id="cb52-20"><a href="#cb52-20" aria-hidden="true" tabindex="-1"></a>sector_reversal_view <span class="op">=</span> bl_views.sector_reversal(sector_latest_state, sector_roles, sector_view_settings)</span>
-<span id="cb52-21"><a href="#cb52-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb52-22"><a href="#cb52-22" aria-hidden="true" tabindex="-1"></a>latest_sector_views <span class="op">=</span> bl_views.view_rows([</span>
-<span id="cb52-23"><a href="#cb52-23" aria-hidden="true" tabindex="-1"></a>    sector_momentum_view,</span>
-<span id="cb52-24"><a href="#cb52-24" aria-hidden="true" tabindex="-1"></a>    growth_leadership_view,</span>
-<span id="cb52-25"><a href="#cb52-25" aria-hidden="true" tabindex="-1"></a>    defensive_rotation_view,</span>
-<span id="cb52-26"><a href="#cb52-26" aria-hidden="true" tabindex="-1"></a>    cyclical_breadth_view,</span>
-<span id="cb52-27"><a href="#cb52-27" aria-hidden="true" tabindex="-1"></a>    credit_beta_view,</span>
-<span id="cb52-28"><a href="#cb52-28" aria-hidden="true" tabindex="-1"></a>    inflation_beneficiaries_view,</span>
-<span id="cb52-29"><a href="#cb52-29" aria-hidden="true" tabindex="-1"></a>    duration_sensitive_view,</span>
-<span id="cb52-30"><a href="#cb52-30" aria-hidden="true" tabindex="-1"></a>    small_cap_risk_on_view,</span>
-<span id="cb52-31"><a href="#cb52-31" aria-hidden="true" tabindex="-1"></a>    quality_defensive_view,</span>
-<span id="cb52-32"><a href="#cb52-32" aria-hidden="true" tabindex="-1"></a>    sector_reversal_view,</span>
-<span id="cb52-33"><a href="#cb52-33" aria-hidden="true" tabindex="-1"></a>])</span>
-<span id="cb52-34"><a href="#cb52-34" aria-hidden="true" tabindex="-1"></a>display(sector_latest_state.signal_table[[<span class="st">"sleeve"</span>, <span class="st">"mom_3_0"</span>, <span class="st">"mom_6_1"</span>, <span class="st">"trend_200"</span>, <span class="st">"vol_63"</span>, <span class="st">"dd_252"</span>, <span class="st">"score"</span>]].<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb52-35"><a href="#cb52-35" aria-hidden="true" tabindex="-1"></a>display(bl.latest_view_table(latest_sector_views).<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">sleeve</th>
-<th data-quarto-table-cell-role="th">mom_3_0</th>
-<th data-quarto-table-cell-role="th">mom_6_1</th>
-<th data-quarto-table-cell-role="th">trend_200</th>
-<th data-quarto-table-cell-role="th">vol_63</th>
-<th data-quarto-table-cell-role="th">dd_252</th>
-<th data-quarto-table-cell-role="th">score</th>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">ticker</th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">DBC</th>
-<td>Other</td>
-<td>0.2612</td>
-<td>0.3158</td>
-<td>0.2975</td>
-<td>0.2512</td>
-<td>-0.0093</td>
-<td>1.7123</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLE</th>
-<td>Sector</td>
-<td>0.1603</td>
-<td>0.3401</td>
-<td>0.2263</td>
-<td>0.2309</td>
-<td>-0.0593</td>
-<td>1.6359</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLK</th>
-<td>Sector</td>
-<td>0.1264</td>
-<td>-0.0401</td>
-<td>0.1501</td>
-<td>0.2590</td>
-<td>0.0000</td>
-<td>0.5436</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">IWM</th>
-<td>Other</td>
-<td>0.0775</td>
-<td>0.0367</td>
-<td>0.1299</td>
-<td>0.2157</td>
-<td>0.0000</td>
-<td>0.4581</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLB</th>
-<td>Sector</td>
-<td>0.0469</td>
-<td>0.1369</td>
-<td>0.0991</td>
-<td>0.1923</td>
-<td>-0.0381</td>
-<td>0.3542</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLU</th>
-<td>Sector</td>
-<td>0.0838</td>
-<td>0.0728</td>
-<td>0.0648</td>
-<td>0.1748</td>
-<td>-0.0179</td>
-<td>0.3278</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">QQQ</th>
-<td>Other</td>
-<td>0.0854</td>
-<td>-0.0243</td>
-<td>0.1182</td>
-<td>0.1969</td>
-<td>0.0000</td>
-<td>0.3266</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLI</th>
-<td>Sector</td>
-<td>0.0484</td>
-<td>0.0728</td>
-<td>0.0902</td>
-<td>0.2050</td>
-<td>-0.0305</td>
-<td>0.2744</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">GLD</th>
-<td>Other</td>
-<td>-0.0489</td>
-<td>0.2317</td>
-<td>0.0808</td>
-<td>0.3438</td>
-<td>-0.1466</td>
-<td>0.0905</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">SPY</th>
-<td>Other</td>
-<td>0.0443</td>
-<td>-0.0108</td>
-<td>0.0789</td>
-<td>0.1514</td>
-<td>0.0000</td>
-<td>0.0509</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLRE</th>
-<td>Sector</td>
-<td>0.0769</td>
-<td>-0.0108</td>
-<td>0.0743</td>
-<td>0.1553</td>
-<td>-0.0072</td>
-<td>-0.0635</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">HYG</th>
-<td>Other</td>
-<td>0.0068</td>
-<td>0.0112</td>
-<td>0.0200</td>
-<td>0.0524</td>
-<td>-0.0021</td>
-<td>-0.2305</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">UUP</th>
-<td>Other</td>
-<td>0.0209</td>
-<td>0.0424</td>
-<td>0.0138</td>
-<td>0.0626</td>
-<td>-0.0204</td>
-<td>-0.2486</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">SHY</th>
-<td>Other</td>
-<td>0.0027</td>
-<td>0.0134</td>
-<td>0.0092</td>
-<td>0.0158</td>
-<td>-0.0026</td>
-<td>-0.3205</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLP</th>
-<td>Sector</td>
-<td>0.0136</td>
-<td>0.0537</td>
-<td>0.0488</td>
-<td>0.1538</td>
-<td>-0.0596</td>
-<td>-0.3281</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">IEF</th>
-<td>Other</td>
-<td>0.0002</td>
-<td>0.0071</td>
-<td>0.0014</td>
-<td>0.0533</td>
-<td>-0.0239</td>
-<td>-0.4042</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">LQD</th>
-<td>Other</td>
-<td>-0.0028</td>
-<td>0.0006</td>
-<td>0.0029</td>
-<td>0.0624</td>
-<td>-0.0167</td>
-<td>-0.4140</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLC</th>
-<td>Sector</td>
-<td>-0.0249</td>
-<td>-0.0542</td>
-<td>0.0244</td>
-<td>0.1509</td>
-<td>-0.0249</td>
-<td>-0.5660</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">TLT</th>
-<td>Other</td>
-<td>-0.0028</td>
-<td>-0.0097</td>
-<td>-0.0102</td>
-<td>0.0997</td>
-<td>-0.0469</td>
-<td>-0.6332</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLV</th>
-<td>Sector</td>
-<td>-0.0581</td>
-<td>0.0704</td>
-<td>-0.0056</td>
-<td>0.1565</td>
-<td>-0.0902</td>
-<td>-0.7566</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLY</th>
-<td>Sector</td>
-<td>-0.0190</td>
-<td>-0.0800</td>
-<td>0.0184</td>
-<td>0.2086</td>
-<td>-0.0454</td>
-<td>-0.7846</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLF</th>
-<td>Sector</td>
-<td>-0.0234</td>
-<td>-0.0743</td>
-<td>-0.0073</td>
-<td>0.1750</td>
-<td>-0.0747</td>
-<td>-1.0247</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">family</th>
-<th data-quarto-table-cell-role="th">name</th>
-<th data-quarto-table-cell-role="th">state</th>
-<th data-quarto-table-cell-role="th">strength</th>
-<th data-quarto-table-cell-role="th">raw_q</th>
-<th data-quarto-table-cell-role="th">final_q</th>
-<th data-quarto-table-cell-role="th">confidence</th>
-<th data-quarto-table-cell-role="th">long_assets</th>
-<th data-quarto-table-cell-role="th">short_assets</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">0</th>
-<td>growth_leadership</td>
-<td>Growth leadership</td>
-<td>growth_leadership</td>
-<td>1.1652</td>
-<td>0.0219</td>
-<td>0.0219</td>
-<td>NaN</td>
-<td>XLK, XLC, XLY</td>
-<td>XLP, XLU, XLV</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">1</th>
-<td>cyclical_breadth</td>
-<td>Cyclical breadth</td>
-<td>cyclical_risk_on</td>
-<td>1.0593</td>
-<td>0.0138</td>
-<td>0.0138</td>
-<td>NaN</td>
-<td>XLI, XLF, XLB, XLE</td>
-<td>XLP, XLU, XLV</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">2</th>
-<td>inflation_beneficiaries</td>
-<td>Inflation beneficiaries</td>
-<td>inflation_pressure</td>
-<td>0.8415</td>
-<td>0.0047</td>
-<td>0.0047</td>
-<td>NaN</td>
-<td>XLE, XLB</td>
-<td>XLK, XLY</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">3</th>
-<td>small_cap_risk_on</td>
-<td>Small-cap risk-on</td>
-<td>domestic_risk_on</td>
-<td>0.6728</td>
-<td>0.0049</td>
-<td>0.0049</td>
-<td>NaN</td>
-<td>XLI, XLF, XLY</td>
-<td>XLP, XLU, XLV</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">4</th>
-<td>sector_reversal</td>
-<td>Sector reversal</td>
-<td>short_horizon_reversal</td>
-<td>1.4100</td>
-<td>0.0032</td>
-<td>0.0032</td>
-<td>NaN</td>
-<td>XLV, XLE</td>
-<td>XLK, XLRE</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-</div>
-</section>
-<section id="e.-walk-forward-sector-minvar-and-mv-baselines" class="level3">
-<h3 class="anchored" data-anchor-id="e.-walk-forward-sector-minvar-and-mv-baselines">E. Walk-forward sector MinVar and MV baselines</h3>
-<div id="791f17c1" class="cell" data-execution_count="47">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>sector_fixed_universe_by_date <span class="op">=</span> {</span>
-<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>    pd.Timestamp(dt): {<span class="st">"tickers"</span>: <span class="bu">list</span>(sector_assets), <span class="st">"avg_dollar_volume"</span>: pd.Series(<span class="fl">1.0</span>, index<span class="op">=</span>sector_assets)}</span>
-<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> dt <span class="kw">in</span> sector_rebalance_dates</span>
-<span id="cb53-4"><a href="#cb53-4" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb53-5"><a href="#cb53-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-6"><a href="#cb53-6" aria-hidden="true" tabindex="-1"></a>sector_walkforward_grid <span class="op">=</span> run_walkforward_grid(</span>
-<span id="cb53-7"><a href="#cb53-7" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>sector_returns,</span>
-<span id="cb53-8"><a href="#cb53-8" aria-hidden="true" tabindex="-1"></a>    close<span class="op">=</span>sector_close,</span>
-<span id="cb53-9"><a href="#cb53-9" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>sector_rebalance_dates,</span>
-<span id="cb53-10"><a href="#cb53-10" aria-hidden="true" tabindex="-1"></a>    universe_by_date<span class="op">=</span>sector_fixed_universe_by_date,</span>
-<span id="cb53-11"><a href="#cb53-11" aria-hidden="true" tabindex="-1"></a>    cov_lookback<span class="op">=</span>sector_bl_settings.cov_lookback,</span>
-<span id="cb53-12"><a href="#cb53-12" aria-hidden="true" tabindex="-1"></a>    mu_lookback<span class="op">=</span>sector_bl_settings.mu_lookback,</span>
-<span id="cb53-13"><a href="#cb53-13" aria-hidden="true" tabindex="-1"></a>    min_cov_observations<span class="op">=</span>sector_bl_settings.cov_lookback <span class="op">-</span> <span class="dv">1</span>,</span>
-<span id="cb53-14"><a href="#cb53-14" aria-hidden="true" tabindex="-1"></a>    min_mu_observations<span class="op">=</span>sector_bl_settings.mu_lookback <span class="op">-</span> <span class="dv">1</span>,</span>
-<span id="cb53-15"><a href="#cb53-15" aria-hidden="true" tabindex="-1"></a>    max_weight<span class="op">=</span>sector_bl_settings.max_weight,</span>
-<span id="cb53-16"><a href="#cb53-16" aria-hidden="true" tabindex="-1"></a>    min_weight<span class="op">=</span>sector_bl_settings.min_weight,</span>
-<span id="cb53-17"><a href="#cb53-17" aria-hidden="true" tabindex="-1"></a>    long_only<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb53-18"><a href="#cb53-18" aria-hidden="true" tabindex="-1"></a>    trading_cost_bps<span class="op">=</span>sector_bl_settings.transaction_cost_bps,</span>
-<span id="cb53-19"><a href="#cb53-19" aria-hidden="true" tabindex="-1"></a>    turnover_penalty_bps<span class="op">=</span>sector_bl_settings.transaction_cost_bps,</span>
-<span id="cb53-20"><a href="#cb53-20" aria-hidden="true" tabindex="-1"></a>    fallback<span class="op">=</span><span class="st">"equal"</span>,</span>
-<span id="cb53-21"><a href="#cb53-21" aria-hidden="true" tabindex="-1"></a>    rf_daily<span class="op">=</span>sector_rf_daily,</span>
-<span id="cb53-22"><a href="#cb53-22" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>sector_bl_settings.annualization,</span>
-<span id="cb53-23"><a href="#cb53-23" aria-hidden="true" tabindex="-1"></a>    optimizer_params<span class="op">=</span>{</span>
-<span id="cb53-24"><a href="#cb53-24" aria-hidden="true" tabindex="-1"></a>        <span class="st">"MV"</span>: {<span class="st">"mv_lambda"</span>: bl_mv_lambda},</span>
-<span id="cb53-25"><a href="#cb53-25" aria-hidden="true" tabindex="-1"></a>        <span class="st">"RidgeMV"</span>: {<span class="st">"mv_lambda"</span>: bl_mv_lambda},</span>
-<span id="cb53-26"><a href="#cb53-26" aria-hidden="true" tabindex="-1"></a>        <span class="st">"FrontierGrid"</span>: {<span class="st">"grid_n"</span>: <span class="dv">15</span>},</span>
-<span id="cb53-27"><a href="#cb53-27" aria-hidden="true" tabindex="-1"></a>    },</span>
-<span id="cb53-28"><a href="#cb53-28" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb53-29"><a href="#cb53-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-30"><a href="#cb53-30" aria-hidden="true" tabindex="-1"></a>sector_minvar_candidates <span class="op">=</span> sector_walkforward_grid.results[sector_walkforward_grid.results[<span class="st">"Optimizer"</span>].eq(<span class="st">"MinVar"</span>)].replace([np.inf, <span class="op">-</span>np.inf], np.nan).dropna(subset<span class="op">=</span>[<span class="st">"Sharpe"</span>])</span>
-<span id="cb53-31"><a href="#cb53-31" aria-hidden="true" tabindex="-1"></a>sector_mv_candidates <span class="op">=</span> sector_walkforward_grid.results[sector_walkforward_grid.results[<span class="st">"Optimizer"</span>].eq(<span class="st">"MV"</span>)].replace([np.inf, <span class="op">-</span>np.inf], np.nan).dropna(subset<span class="op">=</span>[<span class="st">"Sharpe"</span>])</span>
-<span id="cb53-32"><a href="#cb53-32" aria-hidden="true" tabindex="-1"></a>sector_best_minvar_name <span class="op">=</span> <span class="bu">str</span>(sector_minvar_candidates.sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Turnover"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">True</span>]).index[<span class="dv">0</span>])</span>
-<span id="cb53-33"><a href="#cb53-33" aria-hidden="true" tabindex="-1"></a>sector_best_mv_name <span class="op">=</span> <span class="bu">str</span>(sector_mv_candidates.sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Turnover"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">True</span>]).index[<span class="dv">0</span>])</span>
-<span id="cb53-34"><a href="#cb53-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb53-35"><a href="#cb53-35" aria-hidden="true" tabindex="-1"></a>sector_baseline_summary <span class="op">=</span> sector_walkforward_grid.results.loc[[sector_best_minvar_name, sector_best_mv_name]].copy()</span>
-<span id="cb53-36"><a href="#cb53-36" aria-hidden="true" tabindex="-1"></a>sector_baseline_summary.index <span class="op">=</span> [<span class="st">"Sector MinVar (best grid)"</span>, <span class="st">"Sector MV (best grid)"</span>]</span>
-<span id="cb53-37"><a href="#cb53-37" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector grid strategies:"</span>, <span class="bu">len</span>(sector_walkforward_grid.results))</span>
-<span id="cb53-38"><a href="#cb53-38" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"selected sector baselines:"</span>, sector_best_minvar_name, <span class="st">"and"</span>, sector_best_mv_name)</span>
-<span id="cb53-39"><a href="#cb53-39" aria-hidden="true" tabindex="-1"></a>display(sector_baseline_summary.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>sector grid strategies: 41
-selected sector baselines: MinVar (LedoitWolf) and MV (EWMA, BayesStein)</code></pre>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">Optimizer</th>
-<th data-quarto-table-cell-role="th">Mu model</th>
-<th data-quarto-table-cell-role="th">Covariance model</th>
-<th data-quarto-table-cell-role="th">CAGR</th>
-<th data-quarto-table-cell-role="th">Vol</th>
-<th data-quarto-table-cell-role="th">Sharpe</th>
-<th data-quarto-table-cell-role="th">Max Drawdown</th>
-<th data-quarto-table-cell-role="th">Calmar</th>
-<th data-quarto-table-cell-role="th">Sortino</th>
-<th data-quarto-table-cell-role="th">Turnover</th>
-<th data-quarto-table-cell-role="th">Total Turnover</th>
-<th data-quarto-table-cell-role="th">Cost Drag</th>
-<th data-quarto-table-cell-role="th">Effective N</th>
-<th data-quarto-table-cell-role="th">Fallbacks</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">Sector MinVar (best grid)</th>
-<td>MinVar</td>
-<td>-</td>
-<td>LedoitWolf</td>
-<td>0.1000</td>
-<td>0.1288</td>
-<td>0.4989</td>
-<td>-0.1867</td>
-<td>0.5357</td>
-<td>0.6950</td>
-<td>0.0070</td>
-<td>0.4971</td>
-<td>0.0003</td>
-<td>5.2616</td>
-<td>0</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">Sector MV (best grid)</th>
-<td>MV</td>
-<td>BayesStein</td>
-<td>EWMA</td>
-<td>0.1211</td>
-<td>0.1394</td>
-<td>0.6042</td>
-<td>-0.1445</td>
-<td>0.8383</td>
-<td>0.8245</td>
-<td>0.1391</td>
-<td>9.8735</td>
-<td>0.0071</td>
-<td>3.9598</td>
-<td>0</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-</div>
-</section>
-<section id="f.-learned-confidence-bl-sector-weights" class="level3">
-<h3 class="anchored" data-anchor-id="f.-learned-confidence-bl-sector-weights">F. Learned-Confidence BL sector weights</h3>
-<div id="d4d65226" class="cell" data-execution_count="48">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>sector_view_functions <span class="op">=</span> (</span>
-<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>    bl_views.sector_momentum,</span>
-<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>    bl_views.growth_leadership,</span>
-<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>    bl_views.defensive_rotation,</span>
-<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>    bl_views.cyclical_breadth,</span>
-<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>    bl_views.credit_beta,</span>
-<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a>    bl_views.inflation_beneficiaries,</span>
-<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a>    bl_views.duration_sensitive,</span>
-<span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a>    bl_views.small_cap_risk_on,</span>
-<span id="cb55-10"><a href="#cb55-10" aria-hidden="true" tabindex="-1"></a>    bl_views.quality_defensive,</span>
-<span id="cb55-11"><a href="#cb55-11" aria-hidden="true" tabindex="-1"></a>    bl_views.sector_reversal,</span>
-<span id="cb55-12"><a href="#cb55-12" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb55-13"><a href="#cb55-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-14"><a href="#cb55-14" aria-hidden="true" tabindex="-1"></a>sector_bl_run <span class="op">=</span> bl.learned_confidence_bl(</span>
-<span id="cb55-15"><a href="#cb55-15" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>sector_returns,</span>
-<span id="cb55-16"><a href="#cb55-16" aria-hidden="true" tabindex="-1"></a>    signal_returns<span class="op">=</span>sector_signal_returns,</span>
-<span id="cb55-17"><a href="#cb55-17" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>sector_rebalance_dates,</span>
-<span id="cb55-18"><a href="#cb55-18" aria-hidden="true" tabindex="-1"></a>    benchmark_weights<span class="op">=</span>sector_benchmark_w,</span>
-<span id="cb55-19"><a href="#cb55-19" aria-hidden="true" tabindex="-1"></a>    roles<span class="op">=</span>sector_roles,</span>
-<span id="cb55-20"><a href="#cb55-20" aria-hidden="true" tabindex="-1"></a>    view_functions<span class="op">=</span>sector_view_functions,</span>
-<span id="cb55-21"><a href="#cb55-21" aria-hidden="true" tabindex="-1"></a>    view_settings<span class="op">=</span>sector_view_settings,</span>
-<span id="cb55-22"><a href="#cb55-22" aria-hidden="true" tabindex="-1"></a>    settings<span class="op">=</span>sector_bl_settings,</span>
-<span id="cb55-23"><a href="#cb55-23" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>{<span class="st">"asset_caps"</span>: sector_asset_caps},</span>
-<span id="cb55-24"><a href="#cb55-24" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb55-25"><a href="#cb55-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-26"><a href="#cb55-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector BL weights:"</span>, sector_bl_run.weights.shape)</span>
-<span id="cb55-27"><a href="#cb55-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"candidate views:"</span>, <span class="bu">len</span>(sector_bl_run.candidate_view_log), <span class="st">"selected views:"</span>, <span class="bu">len</span>(sector_bl_run.selected_view_log))</span>
-<span id="cb55-28"><a href="#cb55-28" aria-hidden="true" tabindex="-1"></a>display(sector_bl_run.weights.tail().<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>sector BL weights: (70, 11)
-candidate views: 307 selected views: 251</code></pre>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">XLK</th>
-<th data-quarto-table-cell-role="th">XLC</th>
-<th data-quarto-table-cell-role="th">XLY</th>
-<th data-quarto-table-cell-role="th">XLF</th>
-<th data-quarto-table-cell-role="th">XLI</th>
-<th data-quarto-table-cell-role="th">XLE</th>
-<th data-quarto-table-cell-role="th">XLB</th>
-<th data-quarto-table-cell-role="th">XLV</th>
-<th data-quarto-table-cell-role="th">XLP</th>
-<th data-quarto-table-cell-role="th">XLU</th>
-<th data-quarto-table-cell-role="th">XLRE</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">2025-12-31</th>
-<td>0.1026</td>
-<td>0.1506</td>
-<td>0.0813</td>
-<td>0.0575</td>
-<td>0.0455</td>
-<td>0.0939</td>
-<td>0.1561</td>
-<td>0.0736</td>
-<td>0.0876</td>
-<td>0.0816</td>
-<td>0.0696</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">2026-01-30</th>
-<td>0.0971</td>
-<td>0.1256</td>
-<td>0.0876</td>
-<td>0.1452</td>
-<td>0.0555</td>
-<td>0.0946</td>
-<td>0.0853</td>
-<td>0.0732</td>
-<td>0.0876</td>
-<td>0.0786</td>
-<td>0.0696</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">2026-02-27</th>
-<td>0.0976</td>
-<td>0.1070</td>
-<td>0.0749</td>
-<td>0.1071</td>
-<td>0.0736</td>
-<td>0.1125</td>
-<td>0.0996</td>
-<td>0.0750</td>
-<td>0.0877</td>
-<td>0.0876</td>
-<td>0.0774</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">2026-03-31</th>
-<td>0.1015</td>
-<td>0.1070</td>
-<td>0.0749</td>
-<td>0.1071</td>
-<td>0.0736</td>
-<td>0.1076</td>
-<td>0.0896</td>
-<td>0.0750</td>
-<td>0.0877</td>
-<td>0.0986</td>
-<td>0.0774</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">2026-04-30</th>
-<td>0.1164</td>
-<td>0.1537</td>
-<td>0.0874</td>
-<td>0.0839</td>
-<td>0.0452</td>
-<td>0.1077</td>
-<td>0.0968</td>
-<td>0.0654</td>
-<td>0.0822</td>
-<td>0.0838</td>
-<td>0.0774</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-</div>
-</section>
-<section id="g.-common-backtest-for-all-final-sector-strategies" class="level3">
-<h3 class="anchored" data-anchor-id="g.-common-backtest-for-all-final-sector-strategies">G. Common backtest for all final sector strategies</h3>
-<div id="6de7b74a" class="cell" data-execution_count="49">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>sector_benchmark_weights <span class="op">=</span> pd.DataFrame([</span>
-<span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>    sector_benchmark_w.rename(pd.Timestamp(dt))</span>
-<span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> dt <span class="kw">in</span> sector_rebalance_dates[:<span class="op">-</span><span class="dv">1</span>]</span>
-<span id="cb57-4"><a href="#cb57-4" aria-hidden="true" tabindex="-1"></a>])</span>
-<span id="cb57-5"><a href="#cb57-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb57-6"><a href="#cb57-6" aria-hidden="true" tabindex="-1"></a>sector_weights_by_strategy <span class="op">=</span> {</span>
-<span id="cb57-7"><a href="#cb57-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector Benchmark"</span>: sector_benchmark_weights,</span>
-<span id="cb57-8"><a href="#cb57-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector MinVar (best grid)"</span>: sector_walkforward_grid.weights[sector_best_minvar_name],</span>
-<span id="cb57-9"><a href="#cb57-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector MV (best grid)"</span>: sector_walkforward_grid.weights[sector_best_mv_name],</span>
-<span id="cb57-10"><a href="#cb57-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector Learned-Confidence BL"</span>: sector_bl_run.weights,</span>
-<span id="cb57-11"><a href="#cb57-11" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb57-12"><a href="#cb57-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb57-13"><a href="#cb57-13" aria-hidden="true" tabindex="-1"></a>sector_backtests <span class="op">=</span> run_many_weights_backtests(</span>
-<span id="cb57-14"><a href="#cb57-14" aria-hidden="true" tabindex="-1"></a>    sector_weights_by_strategy,</span>
-<span id="cb57-15"><a href="#cb57-15" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>sector_returns,</span>
-<span id="cb57-16"><a href="#cb57-16" aria-hidden="true" tabindex="-1"></a>    cost_bps<span class="op">=</span>sector_bl_settings.transaction_cost_bps,</span>
-<span id="cb57-17"><a href="#cb57-17" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>sector_bl_settings.min_weight,</span>
-<span id="cb57-18"><a href="#cb57-18" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>sector_bl_settings.max_weight,</span>
-<span id="cb57-19"><a href="#cb57-19" aria-hidden="true" tabindex="-1"></a>    long_only<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb57-20"><a href="#cb57-20" aria-hidden="true" tabindex="-1"></a>    normalize<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb57-21"><a href="#cb57-21" aria-hidden="true" tabindex="-1"></a>    weight_timing<span class="op">=</span><span class="st">"next_close"</span>,</span>
-<span id="cb57-22"><a href="#cb57-22" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb57-23"><a href="#cb57-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb57-24"><a href="#cb57-24" aria-hidden="true" tabindex="-1"></a>sector_strategy_names <span class="op">=</span> [</span>
-<span id="cb57-25"><a href="#cb57-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector Benchmark"</span>,</span>
-<span id="cb57-26"><a href="#cb57-26" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector MinVar (best grid)"</span>,</span>
-<span id="cb57-27"><a href="#cb57-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector MV (best grid)"</span>,</span>
-<span id="cb57-28"><a href="#cb57-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector Learned-Confidence BL"</span>,</span>
-<span id="cb57-29"><a href="#cb57-29" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb57-30"><a href="#cb57-30" aria-hidden="true" tabindex="-1"></a>sector_nav <span class="op">=</span> pd.concat({name: sector_backtests[name].net_values <span class="cf">for</span> name <span class="kw">in</span> sector_strategy_names}, axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb57-31"><a href="#cb57-31" aria-hidden="true" tabindex="-1"></a>sector_returns_by_strategy <span class="op">=</span> pd.concat({name: sector_backtests[name].net_returns <span class="cf">for</span> name <span class="kw">in</span> sector_strategy_names}, axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb57-32"><a href="#cb57-32" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector backtests use the same run_many_weights_backtests engine:"</span>, <span class="bu">list</span>(sector_backtests))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>sector backtests use the same run_many_weights_backtests engine: ['Sector Benchmark', 'Sector MinVar (best grid)', 'Sector MV (best grid)', 'Sector Learned-Confidence BL']</code></pre>
-</div>
-</div>
-</section>
-<section id="h.-tables" class="level3">
-<h3 class="anchored" data-anchor-id="h.-tables">H. Tables</h3>
-<div id="cca0dce1" class="cell" data-execution_count="50">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>sector_model_comparison <span class="op">=</span> bl.model_comparison_table(</span>
-<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>    sector_backtests,</span>
-<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>    benchmark_name<span class="op">=</span><span class="st">"Sector Benchmark"</span>,</span>
-<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>    rf_daily<span class="op">=</span>sector_rf_daily,</span>
-<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>sector_bl_settings.annualization,</span>
-<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a>display(sector_model_comparison.<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb59-8"><a href="#cb59-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-9"><a href="#cb59-9" aria-hidden="true" tabindex="-1"></a>sector_active_summary <span class="op">=</span> bl.active_summary_table(</span>
-<span id="cb59-10"><a href="#cb59-10" aria-hidden="true" tabindex="-1"></a>    sector_backtests[<span class="st">"Sector Learned-Confidence BL"</span>],</span>
-<span id="cb59-11"><a href="#cb59-11" aria-hidden="true" tabindex="-1"></a>    sector_backtests[<span class="st">"Sector Benchmark"</span>],</span>
-<span id="cb59-12"><a href="#cb59-12" aria-hidden="true" tabindex="-1"></a>    strategy_name<span class="op">=</span><span class="st">"Sector Learned-Confidence BL"</span>,</span>
-<span id="cb59-13"><a href="#cb59-13" aria-hidden="true" tabindex="-1"></a>    benchmark_name<span class="op">=</span><span class="st">"Sector Benchmark"</span>,</span>
-<span id="cb59-14"><a href="#cb59-14" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>sector_bl_settings.annualization,</span>
-<span id="cb59-15"><a href="#cb59-15" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb59-16"><a href="#cb59-16" aria-hidden="true" tabindex="-1"></a>display(sector_active_summary.<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb59-17"><a href="#cb59-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-18"><a href="#cb59-18" aria-hidden="true" tabindex="-1"></a>sector_view_reliability <span class="op">=</span> bl.view_reliability_table(sector_bl_run)</span>
-<span id="cb59-19"><a href="#cb59-19" aria-hidden="true" tabindex="-1"></a>display(sector_view_reliability.<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb59-20"><a href="#cb59-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-21"><a href="#cb59-21" aria-hidden="true" tabindex="-1"></a>sector_selection_summary <span class="op">=</span> bl.selection_summary_table(sector_bl_run.selection_log)</span>
-<span id="cb59-22"><a href="#cb59-22" aria-hidden="true" tabindex="-1"></a>display(sector_selection_summary.<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb59-23"><a href="#cb59-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-24"><a href="#cb59-24" aria-hidden="true" tabindex="-1"></a>sector_latest_weight_table <span class="op">=</span> bl.latest_weight_table(sector_bl_run.weights, sector_benchmark_w)</span>
-<span id="cb59-25"><a href="#cb59-25" aria-hidden="true" tabindex="-1"></a>display(sector_latest_weight_table.<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb59-26"><a href="#cb59-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-27"><a href="#cb59-27" aria-hidden="true" tabindex="-1"></a>sector_stress_summary <span class="op">=</span> bl.stress_summary_table(</span>
-<span id="cb59-28"><a href="#cb59-28" aria-hidden="true" tabindex="-1"></a>    sector_backtests,</span>
-<span id="cb59-29"><a href="#cb59-29" aria-hidden="true" tabindex="-1"></a>    benchmark_name<span class="op">=</span><span class="st">"Sector Benchmark"</span>,</span>
-<span id="cb59-30"><a href="#cb59-30" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb59-31"><a href="#cb59-31" aria-hidden="true" tabindex="-1"></a>display(sector_stress_summary.pivot_table(index<span class="op">=</span><span class="st">"window"</span>, columns<span class="op">=</span><span class="st">"strategy"</span>, values<span class="op">=</span><span class="st">"return"</span>, aggfunc<span class="op">=</span><span class="st">"mean"</span>).<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">Net CAGR</th>
-<th data-quarto-table-cell-role="th">Volatility</th>
-<th data-quarto-table-cell-role="th">Sharpe</th>
-<th data-quarto-table-cell-role="th">Max Drawdown</th>
-<th data-quarto-table-cell-role="th">Calmar</th>
-<th data-quarto-table-cell-role="th">Avg turnover</th>
-<th data-quarto-table-cell-role="th">Total turnover</th>
-<th data-quarto-table-cell-role="th">Cost drag</th>
-<th data-quarto-table-cell-role="th">Active return</th>
-<th data-quarto-table-cell-role="th">Tracking error</th>
-<th data-quarto-table-cell-role="th">Information ratio</th>
-<th data-quarto-table-cell-role="th">Hit rate vs benchmark</th>
-<th data-quarto-table-cell-role="th">Correlation to benchmark</th>
-<th data-quarto-table-cell-role="th">Beta to benchmark</th>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">Strategy</th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">Sector Benchmark</th>
-<td>0.1483</td>
-<td>0.1485</td>
-<td>0.7413</td>
-<td>-0.1925</td>
-<td>0.7704</td>
-<td>0.0206</td>
-<td>1.4430</td>
-<td>0.0009</td>
-<td>0.0000</td>
-<td>0.0000</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">Sector MinVar (best grid)</th>
-<td>0.0998</td>
-<td>0.1289</td>
-<td>0.5013</td>
-<td>-0.1870</td>
-<td>0.5337</td>
-<td>0.0135</td>
-<td>0.9430</td>
-<td>0.0006</td>
-<td>-0.0454</td>
-<td>0.0524</td>
-<td>-0.8671</td>
-<td>0.4681</td>
-<td>0.9382</td>
-<td>0.8145</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">Sector MV (best grid)</th>
-<td>0.1231</td>
-<td>0.1394</td>
-<td>0.6159</td>
-<td>-0.1461</td>
-<td>0.8426</td>
-<td>0.1433</td>
-<td>10.0300</td>
-<td>0.0071</td>
-<td>-0.0242</td>
-<td>0.0683</td>
-<td>-0.3542</td>
-<td>0.5145</td>
-<td>0.8893</td>
-<td>0.8352</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">Sector Learned-Confidence BL</th>
-<td>0.1536</td>
-<td>0.1501</td>
-<td>0.7673</td>
-<td>-0.1824</td>
-<td>0.8418</td>
-<td>0.1983</td>
-<td>13.8845</td>
-<td>0.0093</td>
-<td>0.0051</td>
-<td>0.0358</td>
-<td>0.1426</td>
-<td>0.5097</td>
-<td>0.9713</td>
-<td>0.9820</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">Active return</th>
-<th data-quarto-table-cell-role="th">Tracking error</th>
-<th data-quarto-table-cell-role="th">Information ratio</th>
-<th data-quarto-table-cell-role="th">Hit rate vs benchmark</th>
-<th data-quarto-table-cell-role="th">Correlation to benchmark</th>
-<th data-quarto-table-cell-role="th">Beta to benchmark</th>
-<th data-quarto-table-cell-role="th">Active max drawdown</th>
-<th data-quarto-table-cell-role="th">Avg active weight distance</th>
-<th data-quarto-table-cell-role="th">Benchmark</th>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">Strategy</th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">Sector Learned-Confidence BL</th>
-<td>0.0051</td>
-<td>0.0358</td>
-<td>0.1426</td>
-<td>0.5097</td>
-<td>0.9713</td>
-<td>0.982</td>
-<td>-0.0744</td>
-<td>0.5977</td>
-<td>Sector Benchmark</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">display_name</th>
-<th data-quarto-table-cell-role="th">candidate_count</th>
-<th data-quarto-table-cell-role="th">selected_count</th>
-<th data-quarto-table-cell-role="th">selected_share</th>
-<th data-quarto-table-cell-role="th">hit_rate</th>
-<th data-quarto-table-cell-role="th">avg_payoff</th>
-<th data-quarto-table-cell-role="th">payoff_vol</th>
-<th data-quarto-table-cell-role="th">payoff_ir</th>
-<th data-quarto-table-cell-role="th">avg_q</th>
-<th data-quarto-table-cell-role="th">avg_abs_q</th>
-<th data-quarto-table-cell-role="th">avg_confidence</th>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">view_family</th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">small_cap_risk_on</th>
-<td>Small-cap risk-on</td>
-<td>50</td>
-<td>39</td>
-<td>0.7800</td>
-<td>0.5200</td>
-<td>-0.0057</td>
-<td>0.5093</td>
-<td>-0.0113</td>
-<td>0.0068</td>
-<td>0.0068</td>
-<td>0.5563</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">duration_sensitive</th>
-<td>Duration sensitive</td>
-<td>45</td>
-<td>38</td>
-<td>0.8444</td>
-<td>0.4889</td>
-<td>0.0181</td>
-<td>0.7521</td>
-<td>0.0241</td>
-<td>0.0094</td>
-<td>0.0094</td>
-<td>0.5063</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">cyclical_breadth</th>
-<td>Cyclical breadth</td>
-<td>43</td>
-<td>38</td>
-<td>0.8837</td>
-<td>0.4524</td>
-<td>0.0298</td>
-<td>0.4621</td>
-<td>0.0645</td>
-<td>0.0086</td>
-<td>0.0086</td>
-<td>0.5071</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">growth_leadership</th>
-<td>Growth leadership</td>
-<td>37</td>
-<td>34</td>
-<td>0.9189</td>
-<td>0.6389</td>
-<td>0.0947</td>
-<td>0.5370</td>
-<td>0.1763</td>
-<td>0.0213</td>
-<td>0.0213</td>
-<td>0.5630</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">inflation_beneficiaries</th>
-<td>Inflation beneficiaries</td>
-<td>30</td>
-<td>28</td>
-<td>0.9333</td>
-<td>0.3793</td>
-<td>-0.0200</td>
-<td>0.9717</td>
-<td>-0.0206</td>
-<td>0.0023</td>
-<td>0.0023</td>
-<td>0.4090</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">credit_beta</th>
-<td>Credit beta</td>
-<td>38</td>
-<td>18</td>
-<td>0.4737</td>
-<td>0.5526</td>
-<td>0.0081</td>
-<td>0.5104</td>
-<td>0.0158</td>
-<td>0.0059</td>
-<td>0.0059</td>
-<td>0.5491</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">sector_momentum</th>
-<td>Sector momentum</td>
-<td>18</td>
-<td>18</td>
-<td>1.0000</td>
-<td>0.4444</td>
-<td>-0.0522</td>
-<td>0.7376</td>
-<td>-0.0707</td>
-<td>0.0080</td>
-<td>0.0080</td>
-<td>0.5068</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">defensive_rotation</th>
-<td>Defensive rotation</td>
-<td>16</td>
-<td>15</td>
-<td>0.9375</td>
-<td>0.5625</td>
-<td>-0.1214</td>
-<td>0.5831</td>
-<td>-0.2082</td>
-<td>0.0024</td>
-<td>0.0024</td>
-<td>0.4925</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">quality_defensive</th>
-<td>Quality defensive</td>
-<td>18</td>
-<td>13</td>
-<td>0.7222</td>
-<td>0.2778</td>
-<td>-0.3002</td>
-<td>0.6932</td>
-<td>-0.4330</td>
-<td>0.0010</td>
-<td>0.0010</td>
-<td>0.3349</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">sector_reversal</th>
-<td>Sector reversal</td>
-<td>12</td>
-<td>10</td>
-<td>0.8333</td>
-<td>0.3636</td>
-<td>-0.3671</td>
-<td>0.8126</td>
-<td>-0.4518</td>
-<td>0.0017</td>
-<td>0.0017</td>
-<td>0.3537</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">count</th>
-<th data-quarto-table-cell-role="th">share</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">kept</th>
-<td>251.0000</td>
-<td>0.8176</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">redundancy gate: exposure cosine similarity</th>
-<td>30.0000</td>
-<td>0.0977</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">direction crowding gate</th>
-<td>15.0000</td>
-<td>0.0489</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">below top selected views</th>
-<td>11.0000</td>
-<td>0.0358</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">average selected views</th>
-<td>3.5857</td>
-<td>0.0000</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">average candidate views</th>
-<td>4.3857</td>
-<td>0.0000</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">benchmark_weight</th>
-<th data-quarto-table-cell-role="th">bl_weight</th>
-<th data-quarto-table-cell-role="th">active_weight</th>
-<th data-quarto-table-cell-role="th">abs_active_weight</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLC</th>
-<td>0.0909</td>
-<td>0.1537</td>
-<td>0.0628</td>
-<td>0.0628</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLI</th>
-<td>0.0909</td>
-<td>0.0452</td>
-<td>-0.0457</td>
-<td>0.0457</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLK</th>
-<td>0.0909</td>
-<td>0.1164</td>
-<td>0.0255</td>
-<td>0.0255</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLV</th>
-<td>0.0909</td>
-<td>0.0654</td>
-<td>-0.0255</td>
-<td>0.0255</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLE</th>
-<td>0.0909</td>
-<td>0.1077</td>
-<td>0.0168</td>
-<td>0.0168</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLRE</th>
-<td>0.0909</td>
-<td>0.0774</td>
-<td>-0.0135</td>
-<td>0.0135</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLP</th>
-<td>0.0909</td>
-<td>0.0822</td>
-<td>-0.0087</td>
-<td>0.0087</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLU</th>
-<td>0.0909</td>
-<td>0.0838</td>
-<td>-0.0071</td>
-<td>0.0071</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLF</th>
-<td>0.0909</td>
-<td>0.0839</td>
-<td>-0.0070</td>
-<td>0.0070</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLB</th>
-<td>0.0909</td>
-<td>0.0968</td>
-<td>0.0059</td>
-<td>0.0059</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLY</th>
-<td>0.0909</td>
-<td>0.0874</td>
-<td>-0.0035</td>
-<td>0.0035</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-<div class="cell-output cell-output-display">
-<div>
-
-
-<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
-<thead>
-<tr class="header">
-<th data-quarto-table-cell-role="th">strategy</th>
-<th data-quarto-table-cell-role="th">Sector Benchmark</th>
-<th data-quarto-table-cell-role="th">Sector Learned-Confidence BL</th>
-<th data-quarto-table-cell-role="th">Sector MV (best grid)</th>
-<th data-quarto-table-cell-role="th">Sector MinVar (best grid)</th>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">window</th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th"></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">2022 rates/inflation</th>
-<td>-0.1820</td>
-<td>-0.1547</td>
-<td>-0.0770</td>
-<td>-0.1861</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">2023 growth rebound</th>
-<td>0.1379</td>
-<td>0.2016</td>
-<td>0.0322</td>
-<td>0.0748</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">2024-2025 cycle</th>
-<td>0.3182</td>
-<td>0.2978</td>
-<td>0.3418</td>
-<td>0.2312</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-</div>
-</section>
-<section id="i.-hero-dashboard" class="level3">
-<h3 class="anchored" data-anchor-id="i.-hero-dashboard">I. Hero dashboard</h3>
-<div id="52e6220b" class="cell" data-execution_count="51">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">3</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">17</span>, <span class="fl">12.5</span>))</span>
-<span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>axes <span class="op">=</span> axes.ravel()</span>
-<span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb60-4"><a href="#cb60-4" aria-hidden="true" tabindex="-1"></a>port_plots.plot_strategy_nav(</span>
-<span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>    sector_nav,</span>
-<span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a>    sector_strategy_names,</span>
-<span id="cb60-7"><a href="#cb60-7" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">0</span>],</span>
-<span id="cb60-8"><a href="#cb60-8" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Sector ETF net NAV comparison"</span>,</span>
-<span id="cb60-9"><a href="#cb60-9" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>sector_strategy_names,</span>
-<span id="cb60-10"><a href="#cb60-10" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb60-11"><a href="#cb60-11" aria-hidden="true" tabindex="-1"></a>port_plots.plot_strategy_drawdowns(</span>
-<span id="cb60-12"><a href="#cb60-12" aria-hidden="true" tabindex="-1"></a>    sector_nav,</span>
-<span id="cb60-13"><a href="#cb60-13" aria-hidden="true" tabindex="-1"></a>    sector_strategy_names,</span>
-<span id="cb60-14"><a href="#cb60-14" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">1</span>],</span>
-<span id="cb60-15"><a href="#cb60-15" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Sector ETF drawdown comparison"</span>,</span>
-<span id="cb60-16"><a href="#cb60-16" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>sector_strategy_names,</span>
-<span id="cb60-17"><a href="#cb60-17" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb60-18"><a href="#cb60-18" aria-hidden="true" tabindex="-1"></a>port_plots.plot_active_nav(</span>
-<span id="cb60-19"><a href="#cb60-19" aria-hidden="true" tabindex="-1"></a>    sector_returns_by_strategy,</span>
-<span id="cb60-20"><a href="#cb60-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector Learned-Confidence BL"</span>,</span>
-<span id="cb60-21"><a href="#cb60-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector Benchmark"</span>,</span>
-<span id="cb60-22"><a href="#cb60-22" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">2</span>],</span>
-<span id="cb60-23"><a href="#cb60-23" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"BL active NAV vs sector benchmark"</span>,</span>
-<span id="cb60-24"><a href="#cb60-24" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb60-25"><a href="#cb60-25" aria-hidden="true" tabindex="-1"></a>port_plots.plot_metric_bar(</span>
-<span id="cb60-26"><a href="#cb60-26" aria-hidden="true" tabindex="-1"></a>    sector_model_comparison,</span>
-<span id="cb60-27"><a href="#cb60-27" aria-hidden="true" tabindex="-1"></a>    sector_strategy_names,</span>
-<span id="cb60-28"><a href="#cb60-28" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"Sharpe"</span>,</span>
-<span id="cb60-29"><a href="#cb60-29" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">3</span>],</span>
-<span id="cb60-30"><a href="#cb60-30" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Sharpe comparison"</span>,</span>
-<span id="cb60-31"><a href="#cb60-31" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>sector_strategy_names,</span>
-<span id="cb60-32"><a href="#cb60-32" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb60-33"><a href="#cb60-33" aria-hidden="true" tabindex="-1"></a>port_plots.plot_rolling_active_metrics(</span>
-<span id="cb60-34"><a href="#cb60-34" aria-hidden="true" tabindex="-1"></a>    sector_returns_by_strategy,</span>
-<span id="cb60-35"><a href="#cb60-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector Learned-Confidence BL"</span>,</span>
-<span id="cb60-36"><a href="#cb60-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector Benchmark"</span>,</span>
-<span id="cb60-37"><a href="#cb60-37" aria-hidden="true" tabindex="-1"></a>    window<span class="op">=</span><span class="dv">126</span>,</span>
-<span id="cb60-38"><a href="#cb60-38" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"active_return"</span>,</span>
-<span id="cb60-39"><a href="#cb60-39" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>sector_bl_settings.annualization,</span>
-<span id="cb60-40"><a href="#cb60-40" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">4</span>],</span>
-<span id="cb60-41"><a href="#cb60-41" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Rolling 126d active return"</span>,</span>
-<span id="cb60-42"><a href="#cb60-42" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb60-43"><a href="#cb60-43" aria-hidden="true" tabindex="-1"></a>port_plots.plot_stress_summary(</span>
-<span id="cb60-44"><a href="#cb60-44" aria-hidden="true" tabindex="-1"></a>    sector_stress_summary,</span>
-<span id="cb60-45"><a href="#cb60-45" aria-hidden="true" tabindex="-1"></a>    value_col<span class="op">=</span><span class="st">"return"</span>,</span>
-<span id="cb60-46"><a href="#cb60-46" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">5</span>],</span>
-<span id="cb60-47"><a href="#cb60-47" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Stress-window sector returns"</span>,</span>
-<span id="cb60-48"><a href="#cb60-48" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb60-49"><a href="#cb60-49" aria-hidden="true" tabindex="-1"></a>port_plots.plot_active_weights_heatmap(</span>
-<span id="cb60-50"><a href="#cb60-50" aria-hidden="true" tabindex="-1"></a>    sector_bl_run.weights,</span>
-<span id="cb60-51"><a href="#cb60-51" aria-hidden="true" tabindex="-1"></a>    sector_benchmark_w,</span>
-<span id="cb60-52"><a href="#cb60-52" aria-hidden="true" tabindex="-1"></a>    last_n<span class="op">=</span><span class="dv">48</span>,</span>
-<span id="cb60-53"><a href="#cb60-53" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">6</span>],</span>
-<span id="cb60-54"><a href="#cb60-54" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"BL active weights, last 48 rebalances"</span>,</span>
-<span id="cb60-55"><a href="#cb60-55" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb60-56"><a href="#cb60-56" aria-hidden="true" tabindex="-1"></a>port_plots.plot_latest_weights(</span>
-<span id="cb60-57"><a href="#cb60-57" aria-hidden="true" tabindex="-1"></a>    sector_bl_run.weights,</span>
-<span id="cb60-58"><a href="#cb60-58" aria-hidden="true" tabindex="-1"></a>    sector_benchmark_w,</span>
-<span id="cb60-59"><a href="#cb60-59" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">7</span>],</span>
-<span id="cb60-60"><a href="#cb60-60" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Latest sector weights"</span>,</span>
-<span id="cb60-61"><a href="#cb60-61" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb60-62"><a href="#cb60-62" aria-hidden="true" tabindex="-1"></a>port_plots.plot_view_q_and_confidence(</span>
-<span id="cb60-63"><a href="#cb60-63" aria-hidden="true" tabindex="-1"></a>    sector_bl_run.selected_view_log,</span>
-<span id="cb60-64"><a href="#cb60-64" aria-hidden="true" tabindex="-1"></a>    sector_bl_run.confidence_log,</span>
-<span id="cb60-65"><a href="#cb60-65" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">8</span>],</span>
-<span id="cb60-66"><a href="#cb60-66" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Sector view q and confidence"</span>,</span>
-<span id="cb60-67"><a href="#cb60-67" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb60-68"><a href="#cb60-68" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb60-69"><a href="#cb60-69" aria-hidden="true" tabindex="-1"></a>port_plots.apply_portfolio_subplot_layout(fig, axes, hspace<span class="op">=</span><span class="fl">0.60</span>, wspace<span class="op">=</span><span class="fl">0.34</span>, bottom<span class="op">=</span><span class="fl">0.08</span>, top<span class="op">=</span><span class="fl">0.94</span>)</span>
-<span id="cb60-70"><a href="#cb60-70" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-45-output-1.png" class="img-fluid figure-img"></p>
-</figure>
-</div>
-</div>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio <span class="im">import</span> prices_to_returns, make_rebalance_dates</span>
+<span id="cb48-7"><a href="#cb48-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-8"><a href="#cb48-8" aria-hidden="true" tabindex="-1"></a>sector_start <span class="op">=</span> <span class="st">"2018-07-01"</span></span>
+<span id="cb48-9"><a href="#cb48-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>requested_sector_assets <span class="op">=</span> [</span>
+<span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"XLK"</span>, <span class="st">"XLC"</span>, <span class="st">"XLY"</span>, <span class="st">"XLF"</span>, <span class="st">"XLI"</span>,</span>
+<span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"XLE"</span>, <span class="st">"XLB"</span>, <span class="st">"XLV"</span>, <span class="st">"XLP"</span>, <span class="st">"XLU"</span>, <span class="st">"XLRE"</span>,</span>
+<span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb48-14"><a href="#cb48-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-15"><a href="#cb48-15" aria-hidden="true" tabindex="-1"></a>requested_signal_assets <span class="op">=</span> [</span>
+<span id="cb48-16"><a href="#cb48-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"SPY"</span>, <span class="st">"QQQ"</span>, <span class="st">"IWM"</span>,</span>
+<span id="cb48-17"><a href="#cb48-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TLT"</span>, <span class="st">"IEF"</span>, <span class="st">"SHY"</span>,</span>
+<span id="cb48-18"><a href="#cb48-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"LQD"</span>, <span class="st">"HYG"</span>,</span>
+<span id="cb48-19"><a href="#cb48-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"GLD"</span>, <span class="st">"DBC"</span>, <span class="st">"UUP"</span>,</span>
+<span id="cb48-20"><a href="#cb48-20" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb48-21"><a href="#cb48-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-22"><a href="#cb48-22" aria-hidden="true" tabindex="-1"></a>sector_assets <span class="op">=</span> [ticker <span class="cf">for</span> ticker <span class="kw">in</span> requested_sector_assets <span class="cf">if</span> ticker <span class="kw">in</span> close_all.columns]</span>
+<span id="cb48-23"><a href="#cb48-23" aria-hidden="true" tabindex="-1"></a>sector_signal_assets <span class="op">=</span> [ticker <span class="cf">for</span> ticker <span class="kw">in</span> requested_signal_assets <span class="cf">if</span> ticker <span class="kw">in</span> close_all.columns]</span>
+<span id="cb48-24"><a href="#cb48-24" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">len</span>(sector_assets) <span class="op">&lt;</span> <span class="dv">8</span>:</span>
+<span id="cb48-25"><a href="#cb48-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"not enough sector ETFs are available: </span><span class="sc">{</span>sector_assets<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb48-26"><a href="#cb48-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-27"><a href="#cb48-27" aria-hidden="true" tabindex="-1"></a>sector_coverage <span class="op">=</span> bl.data_coverage_table(</span>
+<span id="cb48-28"><a href="#cb48-28" aria-hidden="true" tabindex="-1"></a>    close_all,</span>
+<span id="cb48-29"><a href="#cb48-29" aria-hidden="true" tabindex="-1"></a>    tradable_assets<span class="op">=</span>sector_assets,</span>
+<span id="cb48-30"><a href="#cb48-30" aria-hidden="true" tabindex="-1"></a>    signal_assets<span class="op">=</span>sector_signal_assets,</span>
+<span id="cb48-31"><a href="#cb48-31" aria-hidden="true" tabindex="-1"></a>    start<span class="op">=</span>sector_start,</span>
+<span id="cb48-32"><a href="#cb48-32" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-33"><a href="#cb48-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-34"><a href="#cb48-34" aria-hidden="true" tabindex="-1"></a>sector_close_raw <span class="op">=</span> close_all.loc[pd.Timestamp(sector_start):, sector_assets].copy()</span>
+<span id="cb48-35"><a href="#cb48-35" aria-hidden="true" tabindex="-1"></a>sector_close <span class="op">=</span> sector_close_raw.ffill(limit<span class="op">=</span><span class="dv">3</span>).dropna(how<span class="op">=</span><span class="st">"any"</span>)</span>
+<span id="cb48-36"><a href="#cb48-36" aria-hidden="true" tabindex="-1"></a>sector_returns <span class="op">=</span> prices_to_returns(sector_close, kind<span class="op">=</span><span class="st">"simple"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).dropna(how<span class="op">=</span><span class="st">"all"</span>).fillna(<span class="fl">0.0</span>)</span>
+<span id="cb48-37"><a href="#cb48-37" aria-hidden="true" tabindex="-1"></a>sector_close <span class="op">=</span> sector_close.reindex(sector_returns.index).ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb48-38"><a href="#cb48-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-39"><a href="#cb48-39" aria-hidden="true" tabindex="-1"></a>sector_signal_tickers <span class="op">=</span> <span class="bu">list</span>(<span class="bu">dict</span>.fromkeys(sector_assets <span class="op">+</span> sector_signal_assets))</span>
+<span id="cb48-40"><a href="#cb48-40" aria-hidden="true" tabindex="-1"></a>sector_signal_close <span class="op">=</span> (</span>
+<span id="cb48-41"><a href="#cb48-41" aria-hidden="true" tabindex="-1"></a>    close_all.loc[sector_returns.index.<span class="bu">min</span>():, sector_signal_tickers]</span>
+<span id="cb48-42"><a href="#cb48-42" aria-hidden="true" tabindex="-1"></a>    .ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb48-43"><a href="#cb48-43" aria-hidden="true" tabindex="-1"></a>    .reindex(sector_returns.index)</span>
+<span id="cb48-44"><a href="#cb48-44" aria-hidden="true" tabindex="-1"></a>    .ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb48-45"><a href="#cb48-45" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-46"><a href="#cb48-46" aria-hidden="true" tabindex="-1"></a>sector_signal_returns <span class="op">=</span> (</span>
+<span id="cb48-47"><a href="#cb48-47" aria-hidden="true" tabindex="-1"></a>    prices_to_returns(sector_signal_close, kind<span class="op">=</span><span class="st">"simple"</span>)</span>
+<span id="cb48-48"><a href="#cb48-48" aria-hidden="true" tabindex="-1"></a>    .replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
+<span id="cb48-49"><a href="#cb48-49" aria-hidden="true" tabindex="-1"></a>    .reindex(sector_returns.index)</span>
+<span id="cb48-50"><a href="#cb48-50" aria-hidden="true" tabindex="-1"></a>    .fillna(<span class="fl">0.0</span>)</span>
+<span id="cb48-51"><a href="#cb48-51" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-52"><a href="#cb48-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-53"><a href="#cb48-53" aria-hidden="true" tabindex="-1"></a>sector_rebalance_dates <span class="op">=</span> make_rebalance_dates(sector_returns.index, freq<span class="op">=</span><span class="st">"ME"</span>, min_history_days<span class="op">=</span><span class="dv">504</span>)</span>
+<span id="cb48-54"><a href="#cb48-54" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector assets:"</span>, sector_assets)</span>
+<span id="cb48-55"><a href="#cb48-55" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector signal assets:"</span>, sector_signal_assets)</span>
+<span id="cb48-56"><a href="#cb48-56" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector return panel:"</span>, sector_returns.shape, sector_returns.index.<span class="bu">min</span>().date(), <span class="st">"to"</span>, sector_returns.index.<span class="bu">max</span>().date())</span>
+<span id="cb48-57"><a href="#cb48-57" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector rebalance dates:"</span>, <span class="bu">len</span>(sector_rebalance_dates), sector_rebalance_dates[<span class="dv">0</span>].date(), <span class="st">"to"</span>, sector_rebalance_dates[<span class="op">-</span><span class="dv">1</span>].date())</span>
+<span id="cb48-58"><a href="#cb48-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-59"><a href="#cb48-59" aria-hidden="true" tabindex="-1"></a>sector_benchmark_w <span class="op">=</span> pd.Series(<span class="fl">1.0</span> <span class="op">/</span> <span class="bu">len</span>(sector_assets), index<span class="op">=</span>sector_assets, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb48-60"><a href="#cb48-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-61"><a href="#cb48-61" aria-hidden="true" tabindex="-1"></a>sector_roles_raw <span class="op">=</span> {</span>
+<span id="cb48-62"><a href="#cb48-62" aria-hidden="true" tabindex="-1"></a>    <span class="st">"assets"</span>: sector_assets,</span>
+<span id="cb48-63"><a href="#cb48-63" aria-hidden="true" tabindex="-1"></a>    <span class="st">"growth"</span>: [<span class="st">"XLK"</span>, <span class="st">"XLC"</span>, <span class="st">"XLY"</span>],</span>
+<span id="cb48-64"><a href="#cb48-64" aria-hidden="true" tabindex="-1"></a>    <span class="st">"defensive"</span>: [<span class="st">"XLP"</span>, <span class="st">"XLU"</span>, <span class="st">"XLV"</span>],</span>
+<span id="cb48-65"><a href="#cb48-65" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cyclical"</span>: [<span class="st">"XLI"</span>, <span class="st">"XLF"</span>, <span class="st">"XLB"</span>, <span class="st">"XLE"</span>],</span>
+<span id="cb48-66"><a href="#cb48-66" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inflation_beneficiaries"</span>: [<span class="st">"XLE"</span>, <span class="st">"XLB"</span>],</span>
+<span id="cb48-67"><a href="#cb48-67" aria-hidden="true" tabindex="-1"></a>    <span class="st">"rate_sensitive"</span>: [<span class="st">"XLU"</span>, <span class="st">"XLV"</span>, <span class="st">"XLRE"</span>],</span>
+<span id="cb48-68"><a href="#cb48-68" aria-hidden="true" tabindex="-1"></a>    <span class="st">"credit_sensitive"</span>: [<span class="st">"XLF"</span>, <span class="st">"XLY"</span>, <span class="st">"XLI"</span>],</span>
+<span id="cb48-69"><a href="#cb48-69" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quality_defensive"</span>: [<span class="st">"XLV"</span>, <span class="st">"XLP"</span>],</span>
+<span id="cb48-70"><a href="#cb48-70" aria-hidden="true" tabindex="-1"></a>    <span class="st">"small_cap_sensitive"</span>: [<span class="st">"XLI"</span>, <span class="st">"XLF"</span>, <span class="st">"XLY"</span>],</span>
+<span id="cb48-71"><a href="#cb48-71" aria-hidden="true" tabindex="-1"></a>    <span class="st">"risky"</span>: sector_assets,</span>
+<span id="cb48-72"><a href="#cb48-72" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sleeve_map"</span>: {ticker: <span class="st">"Sector"</span> <span class="cf">for</span> ticker <span class="kw">in</span> sector_assets},</span>
+<span id="cb48-73"><a href="#cb48-73" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb48-74"><a href="#cb48-74" aria-hidden="true" tabindex="-1"></a>sector_roles <span class="op">=</span> {</span>
+<span id="cb48-75"><a href="#cb48-75" aria-hidden="true" tabindex="-1"></a>    key: ([ticker <span class="cf">for</span> ticker <span class="kw">in</span> value <span class="cf">if</span> ticker <span class="kw">in</span> sector_assets] <span class="cf">if</span> <span class="bu">isinstance</span>(value, <span class="bu">list</span>) <span class="cf">else</span> value)</span>
+<span id="cb48-76"><a href="#cb48-76" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> key, value <span class="kw">in</span> sector_roles_raw.items()</span>
+<span id="cb48-77"><a href="#cb48-77" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb48-78"><a href="#cb48-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-79"><a href="#cb48-79" aria-hidden="true" tabindex="-1"></a>sector_family_caps <span class="op">=</span> {</span>
+<span id="cb48-80"><a href="#cb48-80" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sector_momentum"</span>: <span class="fl">0.012</span>,</span>
+<span id="cb48-81"><a href="#cb48-81" aria-hidden="true" tabindex="-1"></a>    <span class="st">"growth_leadership"</span>: <span class="fl">0.030</span>,</span>
+<span id="cb48-82"><a href="#cb48-82" aria-hidden="true" tabindex="-1"></a>    <span class="st">"defensive_rotation"</span>: <span class="fl">0.006</span>,</span>
+<span id="cb48-83"><a href="#cb48-83" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cyclical_breadth"</span>: <span class="fl">0.020</span>,</span>
+<span id="cb48-84"><a href="#cb48-84" aria-hidden="true" tabindex="-1"></a>    <span class="st">"credit_beta"</span>: <span class="fl">0.012</span>,</span>
+<span id="cb48-85"><a href="#cb48-85" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inflation_beneficiaries"</span>: <span class="fl">0.008</span>,</span>
+<span id="cb48-86"><a href="#cb48-86" aria-hidden="true" tabindex="-1"></a>    <span class="st">"duration_sensitive"</span>: <span class="fl">0.014</span>,</span>
+<span id="cb48-87"><a href="#cb48-87" aria-hidden="true" tabindex="-1"></a>    <span class="st">"small_cap_risk_on"</span>: <span class="fl">0.010</span>,</span>
+<span id="cb48-88"><a href="#cb48-88" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quality_defensive"</span>: <span class="fl">0.004</span>,</span>
+<span id="cb48-89"><a href="#cb48-89" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sector_reversal"</span>: <span class="fl">0.004</span>,</span>
+<span id="cb48-90"><a href="#cb48-90" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb48-91"><a href="#cb48-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-92"><a href="#cb48-92" aria-hidden="true" tabindex="-1"></a>sector_view_settings <span class="op">=</span> bl_views.ViewSettings(</span>
+<span id="cb48-93"><a href="#cb48-93" aria-hidden="true" tabindex="-1"></a>    family_q_caps<span class="op">=</span>sector_family_caps,</span>
+<span id="cb48-94"><a href="#cb48-94" aria-hidden="true" tabindex="-1"></a>    family_display_names<span class="op">=</span>bl_views.DEFAULT_SECTOR_DISPLAY_NAMES,</span>
+<span id="cb48-95"><a href="#cb48-95" aria-hidden="true" tabindex="-1"></a>    assets<span class="op">=</span>sector_assets,</span>
+<span id="cb48-96"><a href="#cb48-96" aria-hidden="true" tabindex="-1"></a>    entry_z<span class="op">=</span><span class="fl">0.50</span>,</span>
+<span id="cb48-97"><a href="#cb48-97" aria-hidden="true" tabindex="-1"></a>    q_strength_scale<span class="op">=</span><span class="fl">1.25</span>,</span>
+<span id="cb48-98"><a href="#cb48-98" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>annualization,</span>
+<span id="cb48-99"><a href="#cb48-99" aria-hidden="true" tabindex="-1"></a>    view_horizon_days<span class="op">=</span><span class="dv">21</span>,</span>
+<span id="cb48-100"><a href="#cb48-100" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-101"><a href="#cb48-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-102"><a href="#cb48-102" aria-hidden="true" tabindex="-1"></a>sector_bl_settings <span class="op">=</span> bl.BLSettings(</span>
+<span id="cb48-103"><a href="#cb48-103" aria-hidden="true" tabindex="-1"></a>    cov_lookback<span class="op">=</span><span class="dv">504</span>,</span>
+<span id="cb48-104"><a href="#cb48-104" aria-hidden="true" tabindex="-1"></a>    mu_lookback<span class="op">=</span><span class="dv">252</span>,</span>
+<span id="cb48-105"><a href="#cb48-105" aria-hidden="true" tabindex="-1"></a>    risk_free_rate_annual<span class="op">=</span><span class="fl">0.04</span>,</span>
+<span id="cb48-106"><a href="#cb48-106" aria-hidden="true" tabindex="-1"></a>    transaction_cost_bps<span class="op">=</span><span class="fl">10.0</span>,</span>
+<span id="cb48-107"><a href="#cb48-107" aria-hidden="true" tabindex="-1"></a>    tau<span class="op">=</span><span class="fl">0.05</span>,</span>
+<span id="cb48-108"><a href="#cb48-108" aria-hidden="true" tabindex="-1"></a>    ewma_lambda<span class="op">=</span><span class="fl">0.97</span>,</span>
+<span id="cb48-109"><a href="#cb48-109" aria-hidden="true" tabindex="-1"></a>    max_weight<span class="op">=</span><span class="fl">0.35</span>,</span>
+<span id="cb48-110"><a href="#cb48-110" aria-hidden="true" tabindex="-1"></a>    active_weight_limit<span class="op">=</span><span class="fl">0.15</span>,</span>
+<span id="cb48-111"><a href="#cb48-111" aria-hidden="true" tabindex="-1"></a>    active_weight_relaxed<span class="op">=</span><span class="fl">0.22</span>,</span>
+<span id="cb48-112"><a href="#cb48-112" aria-hidden="true" tabindex="-1"></a>    max_selected_views<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb48-113"><a href="#cb48-113" aria-hidden="true" tabindex="-1"></a>    redundancy_similarity<span class="op">=</span><span class="fl">0.85</span>,</span>
+<span id="cb48-114"><a href="#cb48-114" aria-hidden="true" tabindex="-1"></a>    max_same_direction<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb48-115"><a href="#cb48-115" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-116"><a href="#cb48-116" aria-hidden="true" tabindex="-1"></a>sector_rf_daily <span class="op">=</span> bl.risk_free_daily(sector_bl_settings.risk_free_rate_annual, sector_bl_settings.annualization)</span>
+<span id="cb48-117"><a href="#cb48-117" aria-hidden="true" tabindex="-1"></a>sector_asset_caps <span class="op">=</span> pd.Series(sector_bl_settings.max_weight, index<span class="op">=</span>sector_assets, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb48-118"><a href="#cb48-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-119"><a href="#cb48-119" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame({<span class="st">"benchmark_weight"</span>: sector_benchmark_w}).<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb48-120"><a href="#cb48-120" aria-hidden="true" tabindex="-1"></a>display(bl.view_spec_table(bl_views.SECTOR_VIEW_SPECS, sector_family_caps, bl_views.DEFAULT_SECTOR_DISPLAY_NAMES).<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb48-121"><a href="#cb48-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-122"><a href="#cb48-122" aria-hidden="true" tabindex="-1"></a>latest_sector_rebalance_date <span class="op">=</span> sector_rebalance_dates[<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb48-123"><a href="#cb48-123" aria-hidden="true" tabindex="-1"></a>sector_latest_state <span class="op">=</span> bl.market_state(</span>
+<span id="cb48-124"><a href="#cb48-124" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>sector_returns,</span>
+<span id="cb48-125"><a href="#cb48-125" aria-hidden="true" tabindex="-1"></a>    signal_returns<span class="op">=</span>sector_signal_returns,</span>
+<span id="cb48-126"><a href="#cb48-126" aria-hidden="true" tabindex="-1"></a>    date<span class="op">=</span>latest_sector_rebalance_date,</span>
+<span id="cb48-127"><a href="#cb48-127" aria-hidden="true" tabindex="-1"></a>    roles<span class="op">=</span>sector_roles,</span>
+<span id="cb48-128"><a href="#cb48-128" aria-hidden="true" tabindex="-1"></a>    settings<span class="op">=</span>sector_bl_settings,</span>
+<span id="cb48-129"><a href="#cb48-129" aria-hidden="true" tabindex="-1"></a>    view_settings<span class="op">=</span>sector_view_settings,</span>
+<span id="cb48-130"><a href="#cb48-130" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-131"><a href="#cb48-131" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-132"><a href="#cb48-132" aria-hidden="true" tabindex="-1"></a>sector_momentum_view <span class="op">=</span> bl_views.sector_momentum(sector_latest_state, sector_roles, sector_view_settings)</span>
+<span id="cb48-133"><a href="#cb48-133" aria-hidden="true" tabindex="-1"></a>growth_leadership_view <span class="op">=</span> bl_views.growth_leadership(sector_latest_state, sector_roles, sector_view_settings)</span>
+<span id="cb48-134"><a href="#cb48-134" aria-hidden="true" tabindex="-1"></a>defensive_rotation_view <span class="op">=</span> bl_views.defensive_rotation(sector_latest_state, sector_roles, sector_view_settings)</span>
+<span id="cb48-135"><a href="#cb48-135" aria-hidden="true" tabindex="-1"></a>cyclical_breadth_view <span class="op">=</span> bl_views.cyclical_breadth(sector_latest_state, sector_roles, sector_view_settings)</span>
+<span id="cb48-136"><a href="#cb48-136" aria-hidden="true" tabindex="-1"></a>credit_beta_view <span class="op">=</span> bl_views.credit_beta(sector_latest_state, sector_roles, sector_view_settings)</span>
+<span id="cb48-137"><a href="#cb48-137" aria-hidden="true" tabindex="-1"></a>inflation_beneficiaries_view <span class="op">=</span> bl_views.inflation_beneficiaries(sector_latest_state, sector_roles, sector_view_settings)</span>
+<span id="cb48-138"><a href="#cb48-138" aria-hidden="true" tabindex="-1"></a>duration_sensitive_view <span class="op">=</span> bl_views.duration_sensitive(sector_latest_state, sector_roles, sector_view_settings)</span>
+<span id="cb48-139"><a href="#cb48-139" aria-hidden="true" tabindex="-1"></a>small_cap_risk_on_view <span class="op">=</span> bl_views.small_cap_risk_on(sector_latest_state, sector_roles, sector_view_settings)</span>
+<span id="cb48-140"><a href="#cb48-140" aria-hidden="true" tabindex="-1"></a>quality_defensive_view <span class="op">=</span> bl_views.quality_defensive(sector_latest_state, sector_roles, sector_view_settings)</span>
+<span id="cb48-141"><a href="#cb48-141" aria-hidden="true" tabindex="-1"></a>sector_reversal_view <span class="op">=</span> bl_views.sector_reversal(sector_latest_state, sector_roles, sector_view_settings)</span>
+<span id="cb48-142"><a href="#cb48-142" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-143"><a href="#cb48-143" aria-hidden="true" tabindex="-1"></a>latest_sector_views <span class="op">=</span> bl_views.view_rows([</span>
+<span id="cb48-144"><a href="#cb48-144" aria-hidden="true" tabindex="-1"></a>    sector_momentum_view,</span>
+<span id="cb48-145"><a href="#cb48-145" aria-hidden="true" tabindex="-1"></a>    growth_leadership_view,</span>
+<span id="cb48-146"><a href="#cb48-146" aria-hidden="true" tabindex="-1"></a>    defensive_rotation_view,</span>
+<span id="cb48-147"><a href="#cb48-147" aria-hidden="true" tabindex="-1"></a>    cyclical_breadth_view,</span>
+<span id="cb48-148"><a href="#cb48-148" aria-hidden="true" tabindex="-1"></a>    credit_beta_view,</span>
+<span id="cb48-149"><a href="#cb48-149" aria-hidden="true" tabindex="-1"></a>    inflation_beneficiaries_view,</span>
+<span id="cb48-150"><a href="#cb48-150" aria-hidden="true" tabindex="-1"></a>    duration_sensitive_view,</span>
+<span id="cb48-151"><a href="#cb48-151" aria-hidden="true" tabindex="-1"></a>    small_cap_risk_on_view,</span>
+<span id="cb48-152"><a href="#cb48-152" aria-hidden="true" tabindex="-1"></a>    quality_defensive_view,</span>
+<span id="cb48-153"><a href="#cb48-153" aria-hidden="true" tabindex="-1"></a>    sector_reversal_view,</span>
+<span id="cb48-154"><a href="#cb48-154" aria-hidden="true" tabindex="-1"></a>])</span>
+<span id="cb48-155"><a href="#cb48-155" aria-hidden="true" tabindex="-1"></a>display(sector_latest_state.signal_table[[<span class="st">"sleeve"</span>, <span class="st">"mom_3_0"</span>, <span class="st">"mom_6_1"</span>, <span class="st">"trend_200"</span>, <span class="st">"vol_63"</span>, <span class="st">"dd_252"</span>, <span class="st">"score"</span>]].<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb48-156"><a href="#cb48-156" aria-hidden="true" tabindex="-1"></a>display(bl.latest_view_table(latest_sector_views).<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb48-157"><a href="#cb48-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-158"><a href="#cb48-158" aria-hidden="true" tabindex="-1"></a>sector_fixed_universe_by_date <span class="op">=</span> {</span>
+<span id="cb48-159"><a href="#cb48-159" aria-hidden="true" tabindex="-1"></a>    pd.Timestamp(dt): {<span class="st">"tickers"</span>: <span class="bu">list</span>(sector_assets), <span class="st">"avg_dollar_volume"</span>: pd.Series(<span class="fl">1.0</span>, index<span class="op">=</span>sector_assets)}</span>
+<span id="cb48-160"><a href="#cb48-160" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> dt <span class="kw">in</span> sector_rebalance_dates</span>
+<span id="cb48-161"><a href="#cb48-161" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb48-162"><a href="#cb48-162" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-163"><a href="#cb48-163" aria-hidden="true" tabindex="-1"></a>sector_walkforward_grid <span class="op">=</span> run_walkforward_grid(</span>
+<span id="cb48-164"><a href="#cb48-164" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>sector_returns,</span>
+<span id="cb48-165"><a href="#cb48-165" aria-hidden="true" tabindex="-1"></a>    close<span class="op">=</span>sector_close,</span>
+<span id="cb48-166"><a href="#cb48-166" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>sector_rebalance_dates,</span>
+<span id="cb48-167"><a href="#cb48-167" aria-hidden="true" tabindex="-1"></a>    universe_by_date<span class="op">=</span>sector_fixed_universe_by_date,</span>
+<span id="cb48-168"><a href="#cb48-168" aria-hidden="true" tabindex="-1"></a>    cov_lookback<span class="op">=</span>sector_bl_settings.cov_lookback,</span>
+<span id="cb48-169"><a href="#cb48-169" aria-hidden="true" tabindex="-1"></a>    mu_lookback<span class="op">=</span>sector_bl_settings.mu_lookback,</span>
+<span id="cb48-170"><a href="#cb48-170" aria-hidden="true" tabindex="-1"></a>    min_cov_observations<span class="op">=</span>sector_bl_settings.cov_lookback <span class="op">-</span> <span class="dv">1</span>,</span>
+<span id="cb48-171"><a href="#cb48-171" aria-hidden="true" tabindex="-1"></a>    min_mu_observations<span class="op">=</span>sector_bl_settings.mu_lookback <span class="op">-</span> <span class="dv">1</span>,</span>
+<span id="cb48-172"><a href="#cb48-172" aria-hidden="true" tabindex="-1"></a>    max_weight<span class="op">=</span>sector_bl_settings.max_weight,</span>
+<span id="cb48-173"><a href="#cb48-173" aria-hidden="true" tabindex="-1"></a>    min_weight<span class="op">=</span>sector_bl_settings.min_weight,</span>
+<span id="cb48-174"><a href="#cb48-174" aria-hidden="true" tabindex="-1"></a>    long_only<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb48-175"><a href="#cb48-175" aria-hidden="true" tabindex="-1"></a>    trading_cost_bps<span class="op">=</span>sector_bl_settings.transaction_cost_bps,</span>
+<span id="cb48-176"><a href="#cb48-176" aria-hidden="true" tabindex="-1"></a>    turnover_penalty_bps<span class="op">=</span>sector_bl_settings.transaction_cost_bps,</span>
+<span id="cb48-177"><a href="#cb48-177" aria-hidden="true" tabindex="-1"></a>    fallback<span class="op">=</span><span class="st">"equal"</span>,</span>
+<span id="cb48-178"><a href="#cb48-178" aria-hidden="true" tabindex="-1"></a>    rf_daily<span class="op">=</span>sector_rf_daily,</span>
+<span id="cb48-179"><a href="#cb48-179" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>sector_bl_settings.annualization,</span>
+<span id="cb48-180"><a href="#cb48-180" aria-hidden="true" tabindex="-1"></a>    optimizer_params<span class="op">=</span>{</span>
+<span id="cb48-181"><a href="#cb48-181" aria-hidden="true" tabindex="-1"></a>        <span class="st">"MV"</span>: {<span class="st">"mv_lambda"</span>: bl_mv_lambda},</span>
+<span id="cb48-182"><a href="#cb48-182" aria-hidden="true" tabindex="-1"></a>        <span class="st">"RidgeMV"</span>: {<span class="st">"mv_lambda"</span>: bl_mv_lambda},</span>
+<span id="cb48-183"><a href="#cb48-183" aria-hidden="true" tabindex="-1"></a>        <span class="st">"FrontierGrid"</span>: {<span class="st">"grid_n"</span>: <span class="dv">15</span>},</span>
+<span id="cb48-184"><a href="#cb48-184" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb48-185"><a href="#cb48-185" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-186"><a href="#cb48-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-187"><a href="#cb48-187" aria-hidden="true" tabindex="-1"></a>sector_minvar_candidates <span class="op">=</span> sector_walkforward_grid.results[sector_walkforward_grid.results[<span class="st">"Optimizer"</span>].eq(<span class="st">"MinVar"</span>)].replace([np.inf, <span class="op">-</span>np.inf], np.nan).dropna(subset<span class="op">=</span>[<span class="st">"Sharpe"</span>])</span>
+<span id="cb48-188"><a href="#cb48-188" aria-hidden="true" tabindex="-1"></a>sector_mv_candidates <span class="op">=</span> sector_walkforward_grid.results[sector_walkforward_grid.results[<span class="st">"Optimizer"</span>].eq(<span class="st">"MV"</span>)].replace([np.inf, <span class="op">-</span>np.inf], np.nan).dropna(subset<span class="op">=</span>[<span class="st">"Sharpe"</span>])</span>
+<span id="cb48-189"><a href="#cb48-189" aria-hidden="true" tabindex="-1"></a>sector_best_minvar_name <span class="op">=</span> <span class="bu">str</span>(sector_minvar_candidates.sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Turnover"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">True</span>]).index[<span class="dv">0</span>])</span>
+<span id="cb48-190"><a href="#cb48-190" aria-hidden="true" tabindex="-1"></a>sector_best_mv_name <span class="op">=</span> <span class="bu">str</span>(sector_mv_candidates.sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Turnover"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">True</span>]).index[<span class="dv">0</span>])</span>
+<span id="cb48-191"><a href="#cb48-191" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-192"><a href="#cb48-192" aria-hidden="true" tabindex="-1"></a>sector_baseline_summary <span class="op">=</span> sector_walkforward_grid.results.loc[[sector_best_minvar_name, sector_best_mv_name]].copy()</span>
+<span id="cb48-193"><a href="#cb48-193" aria-hidden="true" tabindex="-1"></a>sector_baseline_summary.index <span class="op">=</span> [<span class="st">"Sector MinVar (best grid)"</span>, <span class="st">"Sector MV (best grid)"</span>]</span>
+<span id="cb48-194"><a href="#cb48-194" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector grid strategies:"</span>, <span class="bu">len</span>(sector_walkforward_grid.results))</span>
+<span id="cb48-195"><a href="#cb48-195" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"selected sector baselines:"</span>, sector_best_minvar_name, <span class="st">"and"</span>, sector_best_mv_name)</span>
+<span id="cb48-196"><a href="#cb48-196" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-197"><a href="#cb48-197" aria-hidden="true" tabindex="-1"></a>sector_view_functions <span class="op">=</span> (</span>
+<span id="cb48-198"><a href="#cb48-198" aria-hidden="true" tabindex="-1"></a>    bl_views.sector_momentum,</span>
+<span id="cb48-199"><a href="#cb48-199" aria-hidden="true" tabindex="-1"></a>    bl_views.growth_leadership,</span>
+<span id="cb48-200"><a href="#cb48-200" aria-hidden="true" tabindex="-1"></a>    bl_views.defensive_rotation,</span>
+<span id="cb48-201"><a href="#cb48-201" aria-hidden="true" tabindex="-1"></a>    bl_views.cyclical_breadth,</span>
+<span id="cb48-202"><a href="#cb48-202" aria-hidden="true" tabindex="-1"></a>    bl_views.credit_beta,</span>
+<span id="cb48-203"><a href="#cb48-203" aria-hidden="true" tabindex="-1"></a>    bl_views.inflation_beneficiaries,</span>
+<span id="cb48-204"><a href="#cb48-204" aria-hidden="true" tabindex="-1"></a>    bl_views.duration_sensitive,</span>
+<span id="cb48-205"><a href="#cb48-205" aria-hidden="true" tabindex="-1"></a>    bl_views.small_cap_risk_on,</span>
+<span id="cb48-206"><a href="#cb48-206" aria-hidden="true" tabindex="-1"></a>    bl_views.quality_defensive,</span>
+<span id="cb48-207"><a href="#cb48-207" aria-hidden="true" tabindex="-1"></a>    bl_views.sector_reversal,</span>
+<span id="cb48-208"><a href="#cb48-208" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-209"><a href="#cb48-209" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-210"><a href="#cb48-210" aria-hidden="true" tabindex="-1"></a>sector_bl_run <span class="op">=</span> bl.learned_confidence_bl(</span>
+<span id="cb48-211"><a href="#cb48-211" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>sector_returns,</span>
+<span id="cb48-212"><a href="#cb48-212" aria-hidden="true" tabindex="-1"></a>    signal_returns<span class="op">=</span>sector_signal_returns,</span>
+<span id="cb48-213"><a href="#cb48-213" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>sector_rebalance_dates,</span>
+<span id="cb48-214"><a href="#cb48-214" aria-hidden="true" tabindex="-1"></a>    benchmark_weights<span class="op">=</span>sector_benchmark_w,</span>
+<span id="cb48-215"><a href="#cb48-215" aria-hidden="true" tabindex="-1"></a>    roles<span class="op">=</span>sector_roles,</span>
+<span id="cb48-216"><a href="#cb48-216" aria-hidden="true" tabindex="-1"></a>    view_functions<span class="op">=</span>sector_view_functions,</span>
+<span id="cb48-217"><a href="#cb48-217" aria-hidden="true" tabindex="-1"></a>    view_settings<span class="op">=</span>sector_view_settings,</span>
+<span id="cb48-218"><a href="#cb48-218" aria-hidden="true" tabindex="-1"></a>    settings<span class="op">=</span>sector_bl_settings,</span>
+<span id="cb48-219"><a href="#cb48-219" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>{<span class="st">"asset_caps"</span>: sector_asset_caps},</span>
+<span id="cb48-220"><a href="#cb48-220" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-221"><a href="#cb48-221" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-222"><a href="#cb48-222" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector BL weights:"</span>, sector_bl_run.weights.shape)</span>
+<span id="cb48-223"><a href="#cb48-223" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"candidate views:"</span>, <span class="bu">len</span>(sector_bl_run.candidate_view_log), <span class="st">"selected views:"</span>, <span class="bu">len</span>(sector_bl_run.selected_view_log))</span>
+<span id="cb48-224"><a href="#cb48-224" aria-hidden="true" tabindex="-1"></a>display(sector_bl_run.weights.tail().<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb48-225"><a href="#cb48-225" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-226"><a href="#cb48-226" aria-hidden="true" tabindex="-1"></a>sector_benchmark_weights <span class="op">=</span> pd.DataFrame([</span>
+<span id="cb48-227"><a href="#cb48-227" aria-hidden="true" tabindex="-1"></a>    sector_benchmark_w.rename(pd.Timestamp(dt))</span>
+<span id="cb48-228"><a href="#cb48-228" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> dt <span class="kw">in</span> sector_rebalance_dates[:<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb48-229"><a href="#cb48-229" aria-hidden="true" tabindex="-1"></a>])</span>
+<span id="cb48-230"><a href="#cb48-230" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-231"><a href="#cb48-231" aria-hidden="true" tabindex="-1"></a>sector_weights_by_strategy <span class="op">=</span> {</span>
+<span id="cb48-232"><a href="#cb48-232" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Benchmark"</span>: sector_benchmark_weights,</span>
+<span id="cb48-233"><a href="#cb48-233" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MinVar (best grid)"</span>: sector_walkforward_grid.weights[sector_best_minvar_name],</span>
+<span id="cb48-234"><a href="#cb48-234" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MV (best grid)"</span>: sector_walkforward_grid.weights[sector_best_mv_name],</span>
+<span id="cb48-235"><a href="#cb48-235" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Learned-Confidence BL"</span>: sector_bl_run.weights,</span>
+<span id="cb48-236"><a href="#cb48-236" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb48-237"><a href="#cb48-237" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-238"><a href="#cb48-238" aria-hidden="true" tabindex="-1"></a>sector_backtests <span class="op">=</span> run_many_weights_backtests(</span>
+<span id="cb48-239"><a href="#cb48-239" aria-hidden="true" tabindex="-1"></a>    sector_weights_by_strategy,</span>
+<span id="cb48-240"><a href="#cb48-240" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>sector_returns,</span>
+<span id="cb48-241"><a href="#cb48-241" aria-hidden="true" tabindex="-1"></a>    cost_bps<span class="op">=</span>sector_bl_settings.transaction_cost_bps,</span>
+<span id="cb48-242"><a href="#cb48-242" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>sector_bl_settings.min_weight,</span>
+<span id="cb48-243"><a href="#cb48-243" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>sector_bl_settings.max_weight,</span>
+<span id="cb48-244"><a href="#cb48-244" aria-hidden="true" tabindex="-1"></a>    long_only<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb48-245"><a href="#cb48-245" aria-hidden="true" tabindex="-1"></a>    normalize<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb48-246"><a href="#cb48-246" aria-hidden="true" tabindex="-1"></a>    weight_timing<span class="op">=</span><span class="st">"next_close"</span>,</span>
+<span id="cb48-247"><a href="#cb48-247" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-248"><a href="#cb48-248" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-249"><a href="#cb48-249" aria-hidden="true" tabindex="-1"></a>sector_strategy_names <span class="op">=</span> [</span>
+<span id="cb48-250"><a href="#cb48-250" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Benchmark"</span>,</span>
+<span id="cb48-251"><a href="#cb48-251" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MinVar (best grid)"</span>,</span>
+<span id="cb48-252"><a href="#cb48-252" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MV (best grid)"</span>,</span>
+<span id="cb48-253"><a href="#cb48-253" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Learned-Confidence BL"</span>,</span>
+<span id="cb48-254"><a href="#cb48-254" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb48-255"><a href="#cb48-255" aria-hidden="true" tabindex="-1"></a>sector_nav <span class="op">=</span> pd.concat({name: sector_backtests[name].net_values <span class="cf">for</span> name <span class="kw">in</span> sector_strategy_names}, axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb48-256"><a href="#cb48-256" aria-hidden="true" tabindex="-1"></a>sector_returns_by_strategy <span class="op">=</span> pd.concat({name: sector_backtests[name].net_returns <span class="cf">for</span> name <span class="kw">in</span> sector_strategy_names}, axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb48-257"><a href="#cb48-257" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector backtests use the same run_many_weights_backtests engine:"</span>, <span class="bu">list</span>(sector_backtests))</span>
+<span id="cb48-258"><a href="#cb48-258" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-259"><a href="#cb48-259" aria-hidden="true" tabindex="-1"></a>sector_model_comparison <span class="op">=</span> bl.model_comparison_table(</span>
+<span id="cb48-260"><a href="#cb48-260" aria-hidden="true" tabindex="-1"></a>    sector_backtests,</span>
+<span id="cb48-261"><a href="#cb48-261" aria-hidden="true" tabindex="-1"></a>    benchmark_name<span class="op">=</span><span class="st">"Benchmark"</span>,</span>
+<span id="cb48-262"><a href="#cb48-262" aria-hidden="true" tabindex="-1"></a>    rf_daily<span class="op">=</span>sector_rf_daily,</span>
+<span id="cb48-263"><a href="#cb48-263" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>sector_bl_settings.annualization,</span>
+<span id="cb48-264"><a href="#cb48-264" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-265"><a href="#cb48-265" aria-hidden="true" tabindex="-1"></a>display(sector_model_comparison.<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb48-266"><a href="#cb48-266" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-267"><a href="#cb48-267" aria-hidden="true" tabindex="-1"></a>sector_active_summary <span class="op">=</span> bl.active_summary_table(</span>
+<span id="cb48-268"><a href="#cb48-268" aria-hidden="true" tabindex="-1"></a>    sector_backtests[<span class="st">"Learned-Confidence BL"</span>],</span>
+<span id="cb48-269"><a href="#cb48-269" aria-hidden="true" tabindex="-1"></a>    sector_backtests[<span class="st">"Benchmark"</span>],</span>
+<span id="cb48-270"><a href="#cb48-270" aria-hidden="true" tabindex="-1"></a>    strategy_name<span class="op">=</span><span class="st">"Learned-Confidence BL"</span>,</span>
+<span id="cb48-271"><a href="#cb48-271" aria-hidden="true" tabindex="-1"></a>    benchmark_name<span class="op">=</span><span class="st">"Benchmark"</span>,</span>
+<span id="cb48-272"><a href="#cb48-272" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>sector_bl_settings.annualization,</span>
+<span id="cb48-273"><a href="#cb48-273" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-274"><a href="#cb48-274" aria-hidden="true" tabindex="-1"></a>display(sector_active_summary.<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb48-275"><a href="#cb48-275" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-276"><a href="#cb48-276" aria-hidden="true" tabindex="-1"></a>sector_view_reliability <span class="op">=</span> bl.view_reliability_table(sector_bl_run)</span>
+<span id="cb48-277"><a href="#cb48-277" aria-hidden="true" tabindex="-1"></a>display(sector_view_reliability.<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb48-278"><a href="#cb48-278" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-279"><a href="#cb48-279" aria-hidden="true" tabindex="-1"></a>sector_latest_weight_table <span class="op">=</span> bl.latest_weight_table(sector_bl_run.weights, sector_benchmark_w)</span>
+<span id="cb48-280"><a href="#cb48-280" aria-hidden="true" tabindex="-1"></a>display(sector_latest_weight_table.<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb48-281"><a href="#cb48-281" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-282"><a href="#cb48-282" aria-hidden="true" tabindex="-1"></a>sector_stress_summary <span class="op">=</span> bl.stress_summary_table(</span>
+<span id="cb48-283"><a href="#cb48-283" aria-hidden="true" tabindex="-1"></a>    sector_backtests,</span>
+<span id="cb48-284"><a href="#cb48-284" aria-hidden="true" tabindex="-1"></a>    benchmark_name<span class="op">=</span><span class="st">"Benchmark"</span>,</span>
+<span id="cb48-285"><a href="#cb48-285" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-286"><a href="#cb48-286" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-287"><a href="#cb48-287" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">3</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">17</span>, <span class="fl">12.5</span>))</span>
+<span id="cb48-288"><a href="#cb48-288" aria-hidden="true" tabindex="-1"></a>axes <span class="op">=</span> axes.ravel()</span>
+<span id="cb48-289"><a href="#cb48-289" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-290"><a href="#cb48-290" aria-hidden="true" tabindex="-1"></a>port_plots.plot_strategy_nav(</span>
+<span id="cb48-291"><a href="#cb48-291" aria-hidden="true" tabindex="-1"></a>    sector_nav,</span>
+<span id="cb48-292"><a href="#cb48-292" aria-hidden="true" tabindex="-1"></a>    sector_strategy_names,</span>
+<span id="cb48-293"><a href="#cb48-293" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">0</span>],</span>
+<span id="cb48-294"><a href="#cb48-294" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Sector ETF net NAV comparison"</span>,</span>
+<span id="cb48-295"><a href="#cb48-295" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>sector_strategy_names,</span>
+<span id="cb48-296"><a href="#cb48-296" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-297"><a href="#cb48-297" aria-hidden="true" tabindex="-1"></a>port_plots.plot_strategy_drawdowns(</span>
+<span id="cb48-298"><a href="#cb48-298" aria-hidden="true" tabindex="-1"></a>    sector_nav,</span>
+<span id="cb48-299"><a href="#cb48-299" aria-hidden="true" tabindex="-1"></a>    sector_strategy_names,</span>
+<span id="cb48-300"><a href="#cb48-300" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">1</span>],</span>
+<span id="cb48-301"><a href="#cb48-301" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Sector ETF drawdown comparison"</span>,</span>
+<span id="cb48-302"><a href="#cb48-302" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>sector_strategy_names,</span>
+<span id="cb48-303"><a href="#cb48-303" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-304"><a href="#cb48-304" aria-hidden="true" tabindex="-1"></a>port_plots.plot_active_nav(</span>
+<span id="cb48-305"><a href="#cb48-305" aria-hidden="true" tabindex="-1"></a>    sector_returns_by_strategy,</span>
+<span id="cb48-306"><a href="#cb48-306" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector Learned-Confidence BL"</span>,</span>
+<span id="cb48-307"><a href="#cb48-307" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector Benchmark"</span>,</span>
+<span id="cb48-308"><a href="#cb48-308" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">2</span>],</span>
+<span id="cb48-309"><a href="#cb48-309" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"BL active NAV vs sector benchmark"</span>,</span>
+<span id="cb48-310"><a href="#cb48-310" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-311"><a href="#cb48-311" aria-hidden="true" tabindex="-1"></a>port_plots.plot_metric_bar(</span>
+<span id="cb48-312"><a href="#cb48-312" aria-hidden="true" tabindex="-1"></a>    sector_model_comparison,</span>
+<span id="cb48-313"><a href="#cb48-313" aria-hidden="true" tabindex="-1"></a>    sector_strategy_names,</span>
+<span id="cb48-314"><a href="#cb48-314" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"Sharpe"</span>,</span>
+<span id="cb48-315"><a href="#cb48-315" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">3</span>],</span>
+<span id="cb48-316"><a href="#cb48-316" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Sharpe comparison"</span>,</span>
+<span id="cb48-317"><a href="#cb48-317" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>sector_strategy_names,</span>
+<span id="cb48-318"><a href="#cb48-318" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-319"><a href="#cb48-319" aria-hidden="true" tabindex="-1"></a>port_plots.plot_rolling_active_metrics(</span>
+<span id="cb48-320"><a href="#cb48-320" aria-hidden="true" tabindex="-1"></a>    sector_returns_by_strategy,</span>
+<span id="cb48-321"><a href="#cb48-321" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector Learned-Confidence BL"</span>,</span>
+<span id="cb48-322"><a href="#cb48-322" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sector Benchmark"</span>,</span>
+<span id="cb48-323"><a href="#cb48-323" aria-hidden="true" tabindex="-1"></a>    window<span class="op">=</span><span class="dv">126</span>,</span>
+<span id="cb48-324"><a href="#cb48-324" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"active_return"</span>,</span>
+<span id="cb48-325"><a href="#cb48-325" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>sector_bl_settings.annualization,</span>
+<span id="cb48-326"><a href="#cb48-326" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">4</span>],</span>
+<span id="cb48-327"><a href="#cb48-327" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Rolling 126d active return"</span>,</span>
+<span id="cb48-328"><a href="#cb48-328" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-329"><a href="#cb48-329" aria-hidden="true" tabindex="-1"></a>port_plots.plot_stress_summary(</span>
+<span id="cb48-330"><a href="#cb48-330" aria-hidden="true" tabindex="-1"></a>    sector_stress_summary,</span>
+<span id="cb48-331"><a href="#cb48-331" aria-hidden="true" tabindex="-1"></a>    value_col<span class="op">=</span><span class="st">"return"</span>,</span>
+<span id="cb48-332"><a href="#cb48-332" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">5</span>],</span>
+<span id="cb48-333"><a href="#cb48-333" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Stress-window sector returns"</span>,</span>
+<span id="cb48-334"><a href="#cb48-334" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-335"><a href="#cb48-335" aria-hidden="true" tabindex="-1"></a>port_plots.plot_active_weights_heatmap(</span>
+<span id="cb48-336"><a href="#cb48-336" aria-hidden="true" tabindex="-1"></a>    sector_bl_run.weights,</span>
+<span id="cb48-337"><a href="#cb48-337" aria-hidden="true" tabindex="-1"></a>    sector_benchmark_w,</span>
+<span id="cb48-338"><a href="#cb48-338" aria-hidden="true" tabindex="-1"></a>    last_n<span class="op">=</span><span class="dv">48</span>,</span>
+<span id="cb48-339"><a href="#cb48-339" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">6</span>],</span>
+<span id="cb48-340"><a href="#cb48-340" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"BL active weights, last 48 rebalances"</span>,</span>
+<span id="cb48-341"><a href="#cb48-341" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-342"><a href="#cb48-342" aria-hidden="true" tabindex="-1"></a>port_plots.plot_latest_weights(</span>
+<span id="cb48-343"><a href="#cb48-343" aria-hidden="true" tabindex="-1"></a>    sector_bl_run.weights,</span>
+<span id="cb48-344"><a href="#cb48-344" aria-hidden="true" tabindex="-1"></a>    sector_benchmark_w,</span>
+<span id="cb48-345"><a href="#cb48-345" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">7</span>],</span>
+<span id="cb48-346"><a href="#cb48-346" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Latest sector weights"</span>,</span>
+<span id="cb48-347"><a href="#cb48-347" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-348"><a href="#cb48-348" aria-hidden="true" tabindex="-1"></a>port_plots.plot_view_q_and_confidence(</span>
+<span id="cb48-349"><a href="#cb48-349" aria-hidden="true" tabindex="-1"></a>    sector_bl_run.selected_view_log,</span>
+<span id="cb48-350"><a href="#cb48-350" aria-hidden="true" tabindex="-1"></a>    sector_bl_run.confidence_log,</span>
+<span id="cb48-351"><a href="#cb48-351" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">8</span>],</span>
+<span id="cb48-352"><a href="#cb48-352" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Sector view q and confidence"</span>,</span>
+<span id="cb48-353"><a href="#cb48-353" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb48-354"><a href="#cb48-354" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb48-355"><a href="#cb48-355" aria-hidden="true" tabindex="-1"></a>port_plots.apply_portfolio_subplot_layout(fig, axes, hspace<span class="op">=</span><span class="fl">0.60</span>, wspace<span class="op">=</span><span class="fl">0.34</span>, bottom<span class="op">=</span><span class="fl">0.08</span>, top<span class="op">=</span><span class="fl">0.94</span>)</span>
+<span id="cb48-356"><a href="#cb48-356" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 
 

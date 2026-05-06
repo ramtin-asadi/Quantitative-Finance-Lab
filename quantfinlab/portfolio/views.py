@@ -117,7 +117,6 @@ class View:
             "confluence_score": float(self.confluence_score),
             "q_tilt": float(self.q_tilt),
             "q": float(self.q_tilt),
-            "confidence": float(self.confidence) if np.isfinite(self.confidence) else np.nan,
             "risk_orientation": self.risk_orientation,
             "source": self.source,
             "priority": float(self.economic_priority),
