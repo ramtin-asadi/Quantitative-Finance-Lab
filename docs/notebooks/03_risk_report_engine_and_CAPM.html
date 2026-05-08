@@ -1961,9 +1961,9 @@ L_1 =
 </div>
 </div>
 </div>
-<p><strong>FHS is the most robust method</strong>. It delivers accurate unconditional coverage across all tested objects, consistently low quantile loss, and is statistically the best choice 75% of the time. Its use of volatility filtering makes it a lot more adaptive than simple Historical Simulation and less assumption dependent than Cornish-Fisher.</p>
+<p><strong>FHS is the most robust method</strong>. It delivers accurate unconditional coverage across all tested objects, consistently low quantile loss, and is statistically the best choice in all these 4 objects. Its use of volatility filtering makes it a lot more adaptive than simple Historical Simulation and less assumption dependent than Cornish-Fisher.</p>
 <p><strong>All models failed independence tests</strong> (except NVDA with FHS). Even the best model produces clustered violations in most portfolios. Relying solely on an unconditional coverage test would be dangerous. a conditional coverage failure means large losses are likely to be followed by more large losses, potentially blowing through capital buffers.</p>
-<p><strong>Cornish-Fisher is fragile</strong> but works better for a stable model like MinVar EWMA. Its extreme underprediction on NVDA (8.5% breach rate) shows it can misbehave badly when the return distribution is far from normal (NVDA’s high volatility and potential skewness). It only performs good for the well diversified MinVar EWMA portfolio where non normality is milder.</p>
+<p><strong>Cornish-Fisher is fragile</strong> but works better than Hist in some cases. Its extreme underprediction on NVDA (8.5% breach rate) shows it can misbehave badly when the return distribution is far from normal (NVDA’s high volatility and potential skewness). It only performs good for the well diversified MinVar EWMA portfolio where non normality is milder.</p>
 <p><strong>Simple Historical Simulation is a decent fallback</strong>. It was never the worst and never the best. It lacks the adaptiveness of FHS.</p>
 <hr>
 </section>
@@ -2711,8 +2711,8 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 </ul>
 <p>In both cases, the Project 2 finalist portfolio names are listed explicitly. The notebook builds those known finalists directly instead of running the full grid search again and re-selecting winners.</p>
 </section>
-<section id="using-manual-functions-for-known-us-finalist-risk-measures-and-plots" class="level2">
-<h2 class="anchored" data-anchor-id="using-manual-functions-for-known-us-finalist-risk-measures-and-plots">1) Using manual functions for known US finalist risk measures and plots</h2>
+<section id="using-manual-functions-for-known-us-best-portfolios-functions-for-risk-measures-and-plots" class="level2">
+<h2 class="anchored" data-anchor-id="using-manual-functions-for-known-us-best-portfolios-functions-for-risk-measures-and-plots">1) Using manual functions for known US best portfolios (functions for risk measures and plots)</h2>
 <div id="1831ee3e" class="cell" data-execution_count="27">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -4237,9 +4237,15 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <pre><code>US finalists in risk analysis: ['EW', 'MinVar EWMA', 'MinVar Samp', 'MV EWMA Mom', 'MV EWMA BSM', 'Ridge EWMA Mom', 'MS EWMA Mom', 'MS-FG EWMA Mom']</code></pre>
 </div>
 </div>
+<p>We can see from the U.S.results that the MinVar EWMA strategy remains one of the strongest candidates in risk terms. It has a volatility around <strong>15.45%</strong>, Sharpe around <strong>0.84</strong>, and max drawdown around <strong>-28.68%</strong>. The aggressive MaxSharpe and FrontierGrid strategies can generate stronger returns, but they also carry deeper and longer drawdowns.</p>
+<p>The drawdown episode table is especially important. The MinVar and MV strategies have their worst drawdowns around the 2020 stress period, with durations closer to a few months. By contrast, the MaxSharpe and FrontierGrid strategies experience drawdown episodes that last around <strong>977 days</strong>, starting in 2021 and extending into 2025. This is a major practical distinction. A strategy with high CAGR but a multi-year underwater period may be much harder to hold than a slightly lower-return strategy with faster drawdown recovery.</p>
+<p>The tail-risk table also shows how strategy aggressiveness appears in the left tail. For example, the more aggressive strategies have larger historical VaR and ES magnitudes. MaxSharpe and FrontierGrid have historical ES around <strong>3.8%</strong> and <strong>4.4%</strong> daily in the reported output, while the lower volatility MV and MinVar strategies have historical ES around <strong>2.1% to 2.3%</strong>.</p>
+<p>The VaR backtest adds another layer. A good VaR model should not simply produce a large number. It should produce breach frequencies close to the target. The filtered historical simulation method performs well for many strategies, with breach rates near the expected <span class="math inline">\(5\%\)</span> level.</p>
+<p>where historical standardized residuals are rescaled by the current volatility estimate. This method keeps empirical tail behavior but adjusts the volatility level to the current regime.</p>
+<p>So we can see that Annualized volatility and Sharpe ratio don’t show us some important sides of risk and we need to see if a portfolio has a fall from peak and how much is it and how long it takes to go back to peak and how much is the probability of extreme losses. These metrics show important details that makes us see the real performance of portfolios better tha just comparing Sharpe ratio.</p>
 </section>
-<section id="using-the-risk-report-function-for-known-hkex-finalist-results" class="level2">
-<h2 class="anchored" data-anchor-id="using-the-risk-report-function-for-known-hkex-finalist-results">2) Using the risk report function for known HKEX finalist results</h2>
+<section id="using-the-risk-report-function-for-known-hkex-best-portfolios" class="level2">
+<h2 class="anchored" data-anchor-id="using-the-risk-report-function-for-known-hkex-best-portfolios">2) Using the risk report function for known HKEX best portfolios</h2>
 <p>The data used in this part can be downloaded from here (<a href="https://stooq.com/db/h/">Stooq HKEX daily market data</a>).</p>
 <p>For the CAPM benchmark we build the EW portfolio as a benchmark when needed, but the reported risk objects are exactly the listed HKEX finalists.</p>
 <div id="01393ddd" class="cell" data-execution_count="28">
@@ -5599,6 +5605,19 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 HKEX report tables: ['attribution_es', 'attribution_overlap', 'attribution_vol', 'capm', 'corr', 'drawdown_episodes', 'drawdown_summary', 'performance', 'shape', 'stress', 'var_backtest', 'var_es']</code></pre>
 </div>
 </div>
+<p>As we can see, FrontierGrid has the highest realized Sharpe ratio and the highest CAGR, but it also has high volatility and a large drawdown. Ridge LedoitWolf BayesStein has the least severe max drawdown at around <strong>-27.72%</strong>, but its Sharpe is much lower than the aggressive strategies. MV EWMA BayesStein looks like a balanced middle candidate. It has lower return than MaxSharpe/FrontierGrid, but much lower volatility and drawdown.</p>
+<p>The distribution table is very important because most strategies show negative skewness and high excess kurtosis. Negative skew means the left tail is heavier or more extreme than the right tail which means extreme losses are more likely to happen than exteme profits. Excess kurtosis means extreme observations (positive or negative) happen more often than a normal distribution would suggest. This is why normal VaR alone is not enough.</p>
+<p>FrontierGrid has the highest beta, around <strong>0.92</strong>, while MV EWMA BayesStein has a much lower beta, around <strong>0.48</strong>. This tells us that the aggressive strategy is more market exposed (but still less than 1), while the balanced MV strategy is less dependent on benchmark direction. The CAPM alpha is also largest for FrontierGrid, but that alpha comes with much higher volatility and drawdown risk.</p>
+<p>A high beta strategy may look good during positive and calm market regimes but can become vulnerable during broad market selloffs. That is why upside/downside capture and drawdown metrics can be important together with alpha.</p>
+<p>The executive bullets summarize the decision problem:</p>
+<ul>
+<li>FrontierGrid has the highest realized Sharpe.</li>
+<li>Ridge LedoitWolf BayesStein has the least severe drawdown.</li>
+<li>MV EWMA BayesStein has lower historical ES tail risk.</li>
+<li>FrontierGrid has the highest market beta.</li>
+<li>Some strategies show potential VaR instability.</li>
+</ul>
+<p>At the end, there is trade off everywhere when it comes to portfolios and we can’t say which portfolio is the true best and it completely depends on investor’s decision. If the investor wants maximum realized Sharpe, FrontierGrid is attractive. If the investor wants drawdown control, Ridge or MV BayesStein is more attractive. If the investor wants lower tail risk, MV BayesStein is the better candidate. If the investor wants lower beta, MV BayesStein again looks stronger than the aggressive strategies.</p>
 
 
 </section>

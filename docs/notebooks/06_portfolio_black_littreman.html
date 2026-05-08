@@ -108,6 +108,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -213,72 +242,85 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<div id="64e3efcd" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:02.483324Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:02.483324Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:05.813906Z&quot;}}" data-execution_count="2">
+<p>In this project we will</p>
+<ul>
+<li>clean the ETF data and understand the market instruments.</li>
+<li>build a strategic benchmark and the covariance estimates needed for portfolio risk.</li>
+<li>introduce the Black-Litterman prior and define views.</li>
+<li>build the view matrix, learn confidence from realized historical payoffs, and finally convert the posterior expected returns into portfolio weights.</li>
+<li>repeat the same idea on sector ETFs through the library implementation.</li>
+</ul>
+<section id="mathematic-background-bayes-rule" class="level2">
+<h2 class="anchored" data-anchor-id="mathematic-background-bayes-rule">1) mathematic background: Bayes Rule</h2>
+<p>Black-Litterman is easier to understand if we start with this topic. Imagine we have an initial belief about something uncertain. Then we observe new evidence. We should not throw away the initial belief completely, and we should not ignore the evidence either. We should update the belief.</p>
+<p>That is the whole Bayesian idea. The prior is what we believed before the new information. The likelihood describes how compatible the new information is with possible states of the world. The posterior is what we believe after combining both.</p>
+<p><span class="math display">\[
+P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
+\]</span></p>
+<p>Here <span class="math inline">\(P(A)\)</span> is the prior belief, <span class="math inline">\(P(B\mid A)\)</span> is the likelihood of observing the evidence if <span class="math inline">\(A\)</span> were true, and <span class="math inline">\(P(A\mid B)\)</span> is the posterior belief after seeing the evidence.</p>
+<p>Here, the uncertain object is not a class label or a coin probability. It is the vector of <strong>expected returns</strong>. Expected returns are hard to estimate, so we do not want to trust raw historical averages too much. We can first define a <strong>benchmark</strong> that gives us a conservative starting point. Then we use some <strong>views</strong> about the financial markets and economic situations that will have effect on expected returns. views give us new information. Then there is <strong>confidence</strong> for each view which decides how much the views should move us away from the benchmark.</p>
+<p><span class="math display">\[
+\mathrm{posterior\ belief}\propto\mathrm{prior\ belief}\times\mathrm{new\ evidence}
+\]</span></p>
+<p>So the process is: - start with a reasonable neutral belief - listen to evidence - update in proportion to confidence.</p>
+<p>Since this notebook is a portfolio optimization related topic, i highly recommend reading notebook <a href="https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/02_portfolio_optimization_MV_models.html">2. Portfolio optimization with Mean-Variance models</a> first for better understanding of project.</p>
+<section id="imports-and-pltting-style" class="level3">
+<h3 class="anchored" data-anchor-id="imports-and-pltting-style">Imports and pltting style</h3>
+<div id="64e3efcd" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:02.483324Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:02.483324Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:05.813906Z&quot;}}">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">Exception</span>:</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    cp <span class="op">=</span> <span class="va">None</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> cycler <span class="im">import</span> cycler</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> cycler <span class="im">import</span> cycler</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio <span class="im">import</span> (</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    prices_to_returns, make_rebalance_dates,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    estimate_covariance, make_psd, equal_weight)</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio <span class="im">import</span> (</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    prices_to_returns,</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    make_rebalance_dates,</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    estimate_covariance,</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    make_psd,</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    equal_weight,</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    risk_contribution,</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio.walkforward <span class="im">import</span> run_walkforward_grid</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.risk <span class="im">import</span> (</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    corr_matrix,</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    rolling_volatility,</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    drawdown_summary_table,</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>    stress_table,</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    var_es_table,</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    var_backtest_table,</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    best_var_methods,</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    rolling_var,</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting <span class="im">import</span> (</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    plot_corr_heatmap,</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    plot_strategy_nav,</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    plot_strategy_drawdowns,</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    plot_stress_bar,</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.backtest.portfolio <span class="im">import</span> run_many_weights_backtests</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.reports.risk_report <span class="im">import</span> risk_report</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">"display.max_columns"</span>, <span class="dv">80</span>)</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">"display.width"</span>, <span class="dv">180</span>)</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> [<span class="st">"#069AF3"</span>, <span class="st">"#FE420F"</span>, <span class="st">"#00008B"</span>, <span class="st">"#008080"</span>, <span class="st">"#CC79A7"</span>,</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>          <span class="st">"#DC143C"</span>, <span class="st">"#9614fa"</span>, <span class="st">"#0072B2"</span>, <span class="st">"#7BC8F6"</span>, <span class="st">"#04D8B2"</span>, <span class="st">"#800080"</span>, <span class="st">"#FF8072"</span>]</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> cycler <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>    plt.rcParams[<span class="st">"axes.prop_cycle"</span>] <span class="op">=</span> cycler(color<span class="op">=</span>colors)</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">7</span>, <span class="fl">3.5</span>),</span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.dpi"</span>: <span class="dv">140</span>,</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>    <span class="st">"savefig.dpi"</span>: <span class="dv">250</span>,</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.grid"</span>: <span class="va">True</span>,</span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grid.alpha"</span>: <span class="fl">0.20</span>,</span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>,</span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="dv">11</span>,</span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="dv">10</span>,</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">8</span>,</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio.walkforward <span class="im">import</span> run_walkforward_grid</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.risk <span class="im">import</span> (</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    corr_matrix, rolling_volatility,</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    drawdown_summary_table,</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    stress_table, var_es_table,</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    var_backtest_table, best_var_methods, rolling_var)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting <span class="im">import</span> (</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    plot_corr_heatmap, plot_strategy_nav,</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    plot_strategy_drawdowns, plot_stress_bar)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.backtest.portfolio <span class="im">import</span> run_many_weights_backtests</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">"display.max_columns"</span>, <span class="dv">80</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">"display.width"</span>, <span class="dv">180</span>)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> [<span class="st">"#069AF3"</span>, <span class="st">"#FE420F"</span>, <span class="st">"#00008B"</span>, <span class="st">"#008080"</span>, <span class="st">"#CC79A7"</span>,</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>          <span class="st">"#DC143C"</span>, <span class="st">"#9614fa"</span>, <span class="st">"#0072B2"</span>, <span class="st">"#7BC8F6"</span>, <span class="st">"#04D8B2"</span>, <span class="st">"#800080"</span>, <span class="st">"#FF8072"</span>]</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> cycler <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>    plt.rcParams[<span class="st">"axes.prop_cycle"</span>] <span class="op">=</span> cycler(color<span class="op">=</span>colors)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">7</span>, <span class="fl">3.5</span>),</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.dpi"</span>: <span class="dv">140</span>,</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"savefig.dpi"</span>: <span class="dv">250</span>,</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.grid"</span>: <span class="va">True</span>,</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grid.alpha"</span>: <span class="fl">0.20</span>,</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>,</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="dv">11</span>,</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="dv">10</span>,</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">8</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="5b24c87f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:05.976053Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:05.976053Z&quot;}}" data-execution_count="3">
+</section>
+</section>
+<section id="data" class="level2">
+<h2 class="anchored" data-anchor-id="data">2) Data</h2>
+<p>For this project, we could’ve used the same nasdaq data from notebook 2, but that wouldn’t be the best choice for Black-Litterman and the economic interpretation and building views wouldn’t be as good. So we use a dataset of famous ETFs (investement funds that are tradable like exchanges) which is collected from yahoo-finance API. A script for reproducing the dataset will be available soon. The dataset contains history of these ETFs from the start of 2010, but we use the data from the start of 2013 cause we don’t want to deal with missing prices of one of the ETFs.</p>
+<div id="5b24c87f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:05.976053Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:05.976053Z&quot;}}">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data/ETF_data.csv"</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> data_path.exists():</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    data_path <span class="op">=</span> Path(<span class="st">"data/ETF_data.csv"</span>)</span>
@@ -324,10 +366,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>    action_parts.append(splits_part)</span>
 <span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>actions_all <span class="op">=</span> pd.concat(action_parts, axis<span class="op">=</span><span class="dv">1</span>).sort_index(axis<span class="op">=</span><span class="dv">1</span>) <span class="cf">if</span> action_parts <span class="cf">else</span> pd.DataFrame(index<span class="op">=</span>raw.index)</span>
 <span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"data file:"</span>, data_path)</span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"close panel:"</span>, close_all.shape, close_all.index.<span class="bu">min</span>().date(), <span class="st">"to"</span>, close_all.index.<span class="bu">max</span>().date())</span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"auto_adjust=True in the data script, so close is the adjusted price input used below"</span>)</span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"volume panel:"</span>, volume_all.shape)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"close panel:"</span>, close_all.shape, close_all.index.<span class="bu">min</span>().date(), <span class="st">"to"</span>, close_all.index.<span class="bu">max</span>().date())</span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"volume panel:"</span>, volume_all.shape)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>data file: ..\data\ETF_data.csv
 close panel: (4107, 56) 2010-01-04 to 2026-05-01
@@ -335,6 +375,101 @@ auto_adjust=True in the data script, so close is the adjusted price input used b
 volume panel: (4107, 56)</code></pre>
 </div>
 </div>
+<p>The loaded data has <span class="math inline">\(4107\)</span> trading days and <span class="math inline">\(56\)</span> adjusted close columns before we select the project’s ETFs. We are not going to use all <span class="math inline">\(56\)</span> ETFs and most of them are for later projects and secondary data for this project like sector ETFs.</p>
+<section id="choosing-the-etfs" class="level3">
+<h3 class="anchored" data-anchor-id="choosing-the-etfs">2.1 Choosing the ETFs</h3>
+<p>We now choose the ETFs we are going to analyze for this notebook. The tradable assets are:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Ticker</th>
+<th>Role</th>
+<th>What it represents</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>SPY</td>
+<td>U.S. equity core</td>
+<td>Large-cap US equities, commonly used as the broad US stock-market proxy.</td>
+</tr>
+<tr class="even">
+<td>QQQ</td>
+<td>U.S. growth leadership</td>
+<td>Nasdaq-100 exposure, usually more growth and technology heavy than SPY.</td>
+</tr>
+<tr class="odd">
+<td>IWM</td>
+<td>U.S. small caps</td>
+<td>Russell 2000 small-cap US equities, more cyclical and domestically sensitive.</td>
+</tr>
+<tr class="even">
+<td>EFA</td>
+<td>Developed international equity</td>
+<td>Developed international equities outside North America.</td>
+</tr>
+<tr class="odd">
+<td>EEM</td>
+<td>Emerging markets equity</td>
+<td>Higher-risk Emerging-market equities, usually more sensitive to global growth, dollar strength, and commodity cycles.</td>
+</tr>
+<tr class="even">
+<td>TLT</td>
+<td>Long duration Treasuries</td>
+<td>Long-duration US Treasuries, very sensitive to changes in long-term interest rates.</td>
+</tr>
+<tr class="odd">
+<td>IEF</td>
+<td>Intermediate Treasuries</td>
+<td>Intermediate Treasury exposure, less duration risk than TLT.</td>
+</tr>
+<tr class="even">
+<td>SHY</td>
+<td>Short Treasuries</td>
+<td>Short-duration Treasury exposure and a defensive cash-like sleeve. Usually low volatility and low return.</td>
+</tr>
+<tr class="odd">
+<td>AGG</td>
+<td>Core bonds</td>
+<td>Broad US aggregate bond exposure, a core bond allocation.</td>
+</tr>
+<tr class="even">
+<td>LQD</td>
+<td>Investment-grade credit</td>
+<td>corporate bonds, combining rate exposure and credit exposure.</td>
+</tr>
+<tr class="odd">
+<td>HYG</td>
+<td>High-yield credit</td>
+<td>High-yield corporate bonds, more equity like and more sensitive to credit conditions.</td>
+</tr>
+<tr class="even">
+<td>GLD</td>
+<td>Gold</td>
+<td>Gold exposure, often treated as a real asset or crisis/inflation hedge.</td>
+</tr>
+<tr class="odd">
+<td>VNQ</td>
+<td>Real estate</td>
+<td>US real estate investment trusts, rate-sensitive and equity-sensitive.</td>
+</tr>
+<tr class="even">
+<td>DBC</td>
+<td>Commodities</td>
+<td>Broad commodities futures exposure, often connected to inflation and global real activity.</td>
+</tr>
+<tr class="odd">
+<td>UUP</td>
+<td>Dollar signal only</td>
+<td>US dollar exposure, used as an information variable rather than a tradable portfolio asset here.</td>
+</tr>
+</tbody>
+</table>
 <div id="86fdb0a5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.037675Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.037675Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;}}" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>start_date <span class="op">=</span> <span class="st">"2013-01-01"</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -6640,6 +6775,8 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 </div>
 </div>
 </div>
+</section>
+</section>
 <section id="sector-etf-transfer-with-quantfinlab" class="level2">
 <h2 class="anchored" data-anchor-id="sector-etf-transfer-with-quantfinlab">Sector ETF transfer with QuantFinLab</h2>
 <p>The primary Learned-Confidence Black-Litterman model above was developed on the cross-asset ETF universe and is left intact as the accepted result. This final section uses the reusable QuantFinLab components on a secondary sector ETF universe.</p>

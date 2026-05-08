@@ -243,13 +243,13 @@ window.Quarto = {
 </header>
 
 
-<p>This notebook builds and backtests long-only portfolios under a realistic workflow:</p>
+<p>In this notebook we will:</p>
 <ol type="1">
-<li><strong>Pick a tradable universe</strong> using liquidity (average dollar volume) and “seasoning” (minimum history).</li>
-<li>Estimate <strong>expected returns</strong> <span class="math inline">\(\mu_t\)</span> (a simple momentum model).</li>
-<li>Estimate <strong>risk</strong> with a covariance matrix <span class="math inline">\(\Sigma_t\)</span> (multiple estimators).</li>
+<li><strong>Pick a tradable subset</strong> of the market using liquidity (average dollar volume) and minimum history.</li>
+<li>Estimate <strong>expected returns</strong> <span class="math inline">\(\mu_t\)</span> (momentum, Bayes Stein shrinkage, Bayes Stein Momentum).</li>
+<li>Estimate risk with a <strong>covariance</strong> matrix <span class="math inline">\(\Sigma_t\)</span> (Sample, LedoitWolf, OAS, EWMA estimators).</li>
 <li>Compute portfolio weights by solving <strong>constrained optimization</strong> problems (min-var, mean–variance, max-Sharpe via frontier grid).</li>
-<li>Apply <strong>transaction costs</strong> based on turnover and simulate realistic portfolio wealth over time.</li>
+<li><strong>Backtest</strong> portfolio in realistic market conditions</li>
 </ol>
 <hr>
 <section id="introduction" class="level2">
