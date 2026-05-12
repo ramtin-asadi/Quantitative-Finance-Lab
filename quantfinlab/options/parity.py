@@ -167,6 +167,160 @@ def infer_forwards_from_put_call_parity(
     ].sort_values(["date", "expiry"]).reset_index(drop=True)
 
 
+def infer_forwards_from_parity(
+    quotes: pd.DataFrame,
+    *,
+    date_col: str = "date",
+    expiry_col: str = "expiry",
+    strike_col: str = "strike",
+    option_type_col: str = "option_type",
+    mid_col: str = "mid",
+    discount_col: str = "discount_factor",
+    spot_col: str = "spot",
+    out_col: str = "forward",
+) -> pd.DataFrame:
+    """Infer parity forwards and merge them back onto the quote table."""
+    data = quotes.copy()
+    rename = {}
+    for src, dst in [
+        (date_col, "date"),
+        (expiry_col, "expiry"),
+        (strike_col, "strike"),
+        (option_type_col, "option_type"),
+        (mid_col, "mid"),
+        (spot_col, "spot"),
+    ]:
+        if src != dst and src in data.columns:
+            rename[src] = dst
+    data = data.rename(columns=rename)
+    if "rate" not in data.columns and discount_col in data.columns and "tau" in data.columns:
+        data["rate"] = discounting.continuous_rate_from_discount_factor(data[discount_col], data["tau"])
+    forward_table = infer_forwards_from_put_call_parity(data, price_col="mid")
+    out = quotes.copy()
+    key_cols = ["date", "expiry"]
+    fwd = forward_table[key_cols + ["forward", "implied_carry", "n_pairs", "parity_error_median", "parity_error_mad", "parity_error_iqr"]].copy()
+    if out_col != "forward":
+        fwd = fwd.rename(columns={"forward": out_col})
+    out = _datetime_keys_ns(out, keys=(date_col, expiry_col))
+    fwd = _datetime_keys_ns(fwd, keys=tuple(key_cols))
+    merge_left = [date_col, expiry_col]
+    if merge_left != key_cols:
+        fwd = fwd.rename(columns={"date": date_col, "expiry": expiry_col})
+    return out.merge(fwd, on=merge_left, how="left")
+
+
+def infer_forwards_from_paired_quotes(
+    pairs: pd.DataFrame,
+    *,
+    call_mid_col: str = "c_mid",
+    put_mid_col: str = "p_mid",
+) -> pd.DataFrame:
+    """Infer forwards from an already paired wide call/put quote table."""
+    if pairs.empty:
+        return pd.DataFrame(
+            columns=[
+                "date",
+                "expiry",
+                "tau",
+                "spot",
+                "rate",
+                "forward",
+                "implied_carry",
+                "n_pairs",
+                "parity_error_median",
+                "parity_error_mad",
+                "parity_error_iqr",
+            ],
+        )
+
+    data = _datetime_keys_ns(pairs)
+    needed = ["date", "expiry", "strike", "tau", "spot", "rate", call_mid_col, put_mid_col]
+    missing = [col for col in needed if col not in data.columns]
+    if missing:
+        raise ValueError(f"paired quotes are missing required columns: {missing}")
+
+    df = discounting.discount_factor_from_rate(data["rate"], data["tau"])
+    data = data.copy()
+    data["pair_forward"] = data["strike"] + (
+        pd.to_numeric(data[call_mid_col], errors="coerce")
+        - pd.to_numeric(data[put_mid_col], errors="coerce")
+    ) / np.asarray(df, dtype=float)
+
+    finite = (
+        data["date"].notna()
+        & data["expiry"].notna()
+        & np.isfinite(pd.to_numeric(data["pair_forward"], errors="coerce"))
+        & (pd.to_numeric(data["tau"], errors="coerce") > 0)
+        & (pd.to_numeric(data["spot"], errors="coerce") > 0)
+    )
+    data = data.loc[finite].copy()
+    if data.empty:
+        return pd.DataFrame(
+            columns=[
+                "date",
+                "expiry",
+                "tau",
+                "spot",
+                "rate",
+                "forward",
+                "implied_carry",
+                "n_pairs",
+                "parity_error_median",
+                "parity_error_mad",
+                "parity_error_iqr",
+            ],
+        )
+
+    group_cols = ["date", "expiry"]
+    grouped = data.groupby(group_cols, dropna=False)
+    out = grouped.agg(
+        tau=("tau", "median"),
+        spot=("spot", "median"),
+        rate=("rate", "median"),
+        forward=("pair_forward", "median"),
+        n_pairs=("pair_forward", "size"),
+    ).reset_index()
+
+    data = data.merge(out[group_cols + ["forward"]], on=group_cols, how="left")
+    data["parity_error"] = data["pair_forward"] - data["forward"]
+    err_grouped = data.groupby(group_cols, dropna=False)["parity_error"]
+    err = err_grouped.agg(parity_error_median="median").reset_index()
+    med = err_grouped.transform("median")
+    data["parity_error_abs_dev"] = np.abs(data["parity_error"] - med)
+    mad = (
+        data.groupby(group_cols, dropna=False)["parity_error_abs_dev"]
+        .median()
+        .rename("parity_error_mad")
+        .reset_index()
+    )
+    q = err_grouped.quantile([0.25, 0.75]).unstack()
+    q.columns = ["q25", "q75"]
+    q["parity_error_iqr"] = q["q75"] - q["q25"]
+    q = q[["parity_error_iqr"]].reset_index()
+
+    out = (
+        out.merge(err, on=group_cols, how="left")
+        .merge(mad, on=group_cols, how="left")
+        .merge(q, on=group_cols, how="left")
+    )
+    out["implied_carry"] = rates_dividends.infer_carry_from_forward(out["spot"], out["forward"], out["tau"])
+    return out[
+        [
+            "date",
+            "expiry",
+            "tau",
+            "spot",
+            "rate",
+            "forward",
+            "implied_carry",
+            "n_pairs",
+            "parity_error_median",
+            "parity_error_mad",
+            "parity_error_iqr",
+        ]
+    ].sort_values(["date", "expiry"]).reset_index(drop=True)
+
+
 def choose_liquid_single_day(
     quotes: pd.DataFrame,
     min_pairs: int = 20,
@@ -238,6 +392,8 @@ def parity_error_table(
 __all__ = [
     "choose_liquid_single_day",
     "infer_forward_from_put_call_pair",
+    "infer_forwards_from_parity",
+    "infer_forwards_from_paired_quotes",
     "infer_forwards_from_put_call_parity",
     "infer_single_day_forward_curve",
     "parity_error_table",

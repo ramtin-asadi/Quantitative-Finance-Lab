@@ -470,73 +470,78 @@ volume panel: (4107, 56)</code></pre>
 </tr>
 </tbody>
 </table>
-<div id="86fdb0a5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.037675Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.037675Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;}}" data-execution_count="4">
+</section>
+<section id="behaviour-of-these-etfs" class="level3">
+<h3 class="anchored" data-anchor-id="behaviour-of-these-etfs">2.2 behaviour of these ETFs</h3>
+<p><strong>SPY, QQQ, and IWM</strong> are all <strong>equity</strong> ETFs, but they do not behave the same. SPY is the broad large cap core. QQQ is more growth and technology heavy, so it usually benefits when investors reward long duration growth cash flows, innovations, and cap leadership. IWM is small cap exposure, so it tends to be more sensitive to growth and financing conditions</p>
+<p><strong>EFA and EEM</strong> give <strong>international</strong> exposure. EFA is developed market equity, while EEM is emerging market equity. Emerging markets are often more sensitive to dollar strength, global liquidity and commodity cycles. That is why UUP is useful as a signal asset. If the dollar is strengthening aggressively, emerging markets can face pressure even if they look attractive based on their local currency.</p>
+<p>The <strong>bond</strong> ETFs: <strong>SHY</strong> is short Treasury exposure, <strong>IEF</strong> is intermediate Treasury exposure, and <strong>TLT</strong> is long Treasury exposure. As we can remembe from the notebook 1 and fixed income risk measures implementation, The longer the duration, the more sensitive the ETF is to interest rate changes. If rates rise sharply, long duration bonds can suffer large falls in their value. If rates fall during a growth scare, duration can help stabilize the portfolio.</p>
+<p><strong>Credit</strong> ETFs sit between bonds and equities. <strong>LQD</strong> is investment grade credit, while <strong>HYG</strong> is high yield credit. HYG is especially important because it can behave like a risky asset. In calm markets, high yield can earn carry. In stress markets, it can sell off with equities because credit spreads widen.</p>
+<p><strong>GLD, VNQ, and DBC</strong> have real asset and inflation sensitive exposures. <strong>Gold</strong> can behave as a diversifier when confidence in financial assets weakens and the situation is uncertain, although it is not a perfect hedge. <strong>VNQ</strong> is real estate and is sensitive to both growth and rates. <strong>DBC</strong> is broad commodities and can perform well during inflationary commodity cycles, but it can also be very painful in long disinflationary periods.</p>
+<p>This financial interpretation matters because the later views are not arbitrary and we use these relations to build economically reasonable views.</p>
+<div id="86fdb0a5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.037675Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.037675Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;}}">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>start_date <span class="op">=</span> <span class="st">"2013-01-01"</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>assets <span class="op">=</span> [</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"SPY"</span>, <span class="st">"QQQ"</span>, <span class="st">"IWM"</span>,</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EFA"</span>, <span class="st">"EEM"</span>,</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TLT"</span>, <span class="st">"IEF"</span>, <span class="st">"SHY"</span>, <span class="st">"AGG"</span>,</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"LQD"</span>, <span class="st">"HYG"</span>,</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"GLD"</span>, <span class="st">"VNQ"</span>, <span class="st">"DBC"</span>,</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>signal_only_assets <span class="op">=</span> [<span class="st">"UUP"</span>] <span class="cf">if</span> <span class="st">"UUP"</span> <span class="kw">in</span> close_all.columns <span class="cf">else</span> []</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>sleeve_map <span class="op">=</span> {</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"SPY"</span>: <span class="st">"US equity"</span>, <span class="st">"QQQ"</span>: <span class="st">"US equity"</span>, <span class="st">"IWM"</span>: <span class="st">"US equity"</span>,</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EFA"</span>: <span class="st">"International equity"</span>, <span class="st">"EEM"</span>: <span class="st">"International equity"</span>,</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TLT"</span>: <span class="st">"Duration bonds"</span>, <span class="st">"IEF"</span>: <span class="st">"Duration bonds"</span>, <span class="st">"SHY"</span>: <span class="st">"Short bonds"</span>,</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"AGG"</span>: <span class="st">"Core bonds"</span>, <span class="st">"LQD"</span>: <span class="st">"Credit"</span>, <span class="st">"HYG"</span>: <span class="st">"Credit"</span>,</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"GLD"</span>: <span class="st">"Real assets"</span>, <span class="st">"VNQ"</span>: <span class="st">"Real assets"</span>, <span class="st">"DBC"</span>: <span class="st">"Commodities"</span>,</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"UUP"</span>: <span class="st">"Dollar"</span>,</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> missing_after_first_valid(series):</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    first <span class="op">=</span> series.first_valid_index()</span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> first <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> np.nan</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(series.loc[first:].isna().mean())</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>close_after_start <span class="op">=</span> close_all.loc[pd.Timestamp(start_date):].copy()</span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>missing_assets <span class="op">=</span> [ticker <span class="cf">for</span> ticker <span class="kw">in</span> assets <span class="cf">if</span> ticker <span class="kw">not</span> <span class="kw">in</span> close_after_start.columns]</span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> missing_assets:</span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"missing required tradable adjusted close columns: </span><span class="sc">{</span>missing_assets<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>filter_rows <span class="op">=</span> []</span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ticker <span class="kw">in</span> assets <span class="op">+</span> signal_only_assets:</span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>    px <span class="op">=</span> close_after_start[ticker]</span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>    valid <span class="op">=</span> px.dropna()</span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>    filter_rows.append({</span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ticker"</span>: ticker,</span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>        <span class="st">"observations"</span>: <span class="bu">len</span>(valid),</span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>        <span class="st">"first_date"</span>: valid.index.<span class="bu">min</span>() <span class="cf">if</span> <span class="bu">len</span>(valid) <span class="cf">else</span> pd.NaT,</span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>        <span class="st">"last_date"</span>: valid.index.<span class="bu">max</span>() <span class="cf">if</span> <span class="bu">len</span>(valid) <span class="cf">else</span> pd.NaT,</span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>        <span class="st">"missing_pct_after_first_valid"</span>: missing_after_first_valid(px),</span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>        <span class="st">"tradable"</span>: ticker <span class="kw">in</span> assets,</span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>    })</span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame(filter_rows).<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"SPY"</span>, <span class="st">"QQQ"</span>, <span class="st">"IWM"</span>, <span class="st">"EFA"</span>, <span class="st">"EEM"</span>, </span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TLT"</span>, <span class="st">"IEF"</span>, <span class="st">"SHY"</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"AGG"</span>, <span class="st">"LQD"</span>, <span class="st">"HYG"</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"GLD"</span>, <span class="st">"VNQ"</span>, <span class="st">"DBC"</span>]</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>signal_only_assets <span class="op">=</span> [<span class="st">"UUP"</span>] <span class="cf">if</span> <span class="st">"UUP"</span> <span class="kw">in</span> close_all.columns <span class="cf">else</span> []</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>sleeve_map <span class="op">=</span> {</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"SPY"</span>: <span class="st">"US equity"</span>, <span class="st">"QQQ"</span>: <span class="st">"US equity"</span>, <span class="st">"IWM"</span>: <span class="st">"US equity"</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EFA"</span>: <span class="st">"International equity"</span>, <span class="st">"EEM"</span>: <span class="st">"International equity"</span>,</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TLT"</span>: <span class="st">"Duration bonds"</span>, <span class="st">"IEF"</span>: <span class="st">"Duration bonds"</span>, <span class="st">"SHY"</span>: <span class="st">"Short bonds"</span>,</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"AGG"</span>: <span class="st">"Core bonds"</span>, <span class="st">"LQD"</span>: <span class="st">"Credit"</span>, <span class="st">"HYG"</span>: <span class="st">"Credit"</span>,</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"GLD"</span>: <span class="st">"Real assets"</span>, <span class="st">"VNQ"</span>: <span class="st">"Real assets"</span>, <span class="st">"DBC"</span>: <span class="st">"Commodities"</span>,</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"UUP"</span>: <span class="st">"Dollar"</span>}</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> missing_after_first_valid(series):</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    first <span class="op">=</span> series.first_valid_index()</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> first <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> np.nan</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(series.loc[first:].isna().mean())</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>close_after_start <span class="op">=</span> close_all.loc[pd.Timestamp(start_date):].copy()</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>missing_assets <span class="op">=</span> [ticker <span class="cf">for</span> ticker <span class="kw">in</span> assets <span class="cf">if</span> ticker <span class="kw">not</span> <span class="kw">in</span> close_after_start.columns]</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> missing_assets:</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"missing required tradable adjusted close columns: </span><span class="sc">{</span>missing_assets<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>filter_rows <span class="op">=</span> []</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ticker <span class="kw">in</span> assets <span class="op">+</span> signal_only_assets:</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    px <span class="op">=</span> close_after_start[ticker]</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>    valid <span class="op">=</span> px.dropna()</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>    filter_rows.append({</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ticker"</span>: ticker, <span class="st">"observations"</span>: <span class="bu">len</span>(valid),</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>        <span class="st">"first_date"</span>: valid.index.<span class="bu">min</span>() <span class="cf">if</span> <span class="bu">len</span>(valid) <span class="cf">else</span> pd.NaT,</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>        <span class="st">"last_date"</span>: valid.index.<span class="bu">max</span>() <span class="cf">if</span> <span class="bu">len</span>(valid) <span class="cf">else</span> pd.NaT,</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>        <span class="st">"missing_pct_after_first_valid"</span>: missing_after_first_valid(px),</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>        <span class="st">"tradable"</span>: ticker <span class="kw">in</span> assets,</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame(filter_rows).<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>first_all_valid <span class="op">=</span> close_after_start[assets].dropna(how<span class="op">=</span><span class="st">"any"</span>).index.<span class="bu">min</span>()</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> pd.isna(first_all_valid):</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"no date where all tradable ETF close columns are available"</span>)</span>
 <span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>first_all_valid <span class="op">=</span> close_after_start[assets].dropna(how<span class="op">=</span><span class="st">"any"</span>).index.<span class="bu">min</span>()</span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> pd.isna(first_all_valid):</span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"no date where all tradable ETF close columns are available"</span>)</span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>close <span class="op">=</span> close_after_start.loc[first_all_valid:, assets].ffill(limit<span class="op">=</span><span class="dv">3</span>).dropna(how<span class="op">=</span><span class="st">"any"</span>)</span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>returns <span class="op">=</span> prices_to_returns(close, kind<span class="op">=</span><span class="st">"simple"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>remaining_return_gaps <span class="op">=</span> <span class="bu">int</span>(returns.isna().<span class="bu">sum</span>().<span class="bu">sum</span>())</span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> remaining_return_gaps:</span>
-<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"filling </span><span class="sc">{</span>remaining_return_gaps<span class="sc">}</span><span class="ss"> isolated post-inception return gaps with 0.0 after adjusted-price cleaning"</span>)</span>
-<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>returns <span class="op">=</span> returns.fillna(<span class="fl">0.0</span>)</span>
-<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>close <span class="op">=</span> close.reindex(returns.index).ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>close <span class="op">=</span> close_after_start.loc[first_all_valid:, assets].ffill(limit<span class="op">=</span><span class="dv">3</span>).dropna(how<span class="op">=</span><span class="st">"any"</span>)</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>returns <span class="op">=</span> prices_to_returns(close, kind<span class="op">=</span><span class="st">"simple"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>remaining_return_gaps <span class="op">=</span> <span class="bu">int</span>(returns.isna().<span class="bu">sum</span>().<span class="bu">sum</span>())</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> remaining_return_gaps:</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"filling </span><span class="sc">{</span>remaining_return_gaps<span class="sc">}</span><span class="ss"> isolated post-inception return gaps with 0.0 after adjusted-price cleaning"</span>)</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>returns <span class="op">=</span> returns.fillna(<span class="fl">0.0</span>)</span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>close <span class="op">=</span> close.reindex(returns.index).ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>signal_tickers <span class="op">=</span> <span class="bu">list</span>(<span class="bu">dict</span>.fromkeys(assets <span class="op">+</span> signal_only_assets))</span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>signal_close <span class="op">=</span> close_after_start.loc[first_all_valid:, signal_tickers].ffill(limit<span class="op">=</span><span class="dv">3</span>).reindex(returns.index).ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>signal_returns <span class="op">=</span> signal_close.pct_change(fill_method<span class="op">=</span><span class="va">None</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).reindex(returns.index).fillna(<span class="fl">0.0</span>)</span>
 <span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>signal_tickers <span class="op">=</span> <span class="bu">list</span>(<span class="bu">dict</span>.fromkeys(assets <span class="op">+</span> signal_only_assets))</span>
-<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>signal_close <span class="op">=</span> close_after_start.loc[first_all_valid:, signal_tickers].ffill(limit<span class="op">=</span><span class="dv">3</span>).reindex(returns.index).ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
-<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a>signal_returns <span class="op">=</span> signal_close.pct_change(fill_method<span class="op">=</span><span class="va">None</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).reindex(returns.index).fillna(<span class="fl">0.0</span>)</span>
-<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"assets:"</span>, assets)</span>
-<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"signal assets:"</span>, <span class="bu">list</span>(signal_returns.columns))</span>
-<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"return panel:"</span>, returns.shape, returns.index.<span class="bu">min</span>().date(), <span class="st">"to"</span>, returns.index.<span class="bu">max</span>().date())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"assets:"</span>, assets)</span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"signal assets:"</span>, <span class="bu">list</span>(signal_returns.columns))</span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"return panel:"</span>, returns.shape, returns.index.<span class="bu">min</span>().date(), <span class="st">"to"</span>, returns.index.<span class="bu">max</span>().date())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -713,35 +718,28 @@ return panel: (3352, 14) 2013-01-03 to 2026-05-01</code></pre>
 first: 2016-01-29 last: 2026-05-01</code></pre>
 </div>
 </div>
-<div id="e9976116" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.110139Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.110139Z&quot;}}" data-execution_count="6">
+<p>We made monthly rebalance dates and we can see that even though our data starts from 2013, we need a lookback window for estimating covariance and mean, so the first rebalance date happens at the first month of 2016.</p>
+<div id="e9976116" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.110139Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.110139Z&quot;}}">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>annualization <span class="op">=</span> <span class="dv">252</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> max_drawdown_from_nav(nav):</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    nav <span class="op">=</span> pd.Series(nav).dropna()</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> nav.empty:</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> np.nan</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>((nav <span class="op">/</span> nav.cummax() <span class="op">-</span> <span class="fl">1.0</span>).<span class="bu">min</span>())</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ticker <span class="kw">in</span> assets:</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    px <span class="op">=</span> close[ticker].dropna()</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    ret <span class="op">=</span> returns[ticker].dropna()</span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    years <span class="op">=</span> <span class="bu">max</span>(<span class="bu">len</span>(ret) <span class="op">/</span> annualization, <span class="fl">1e-9</span>)</span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    nav <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> ret).cumprod()</span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    rows.append({</span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ticker"</span>: ticker,</span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>        <span class="st">"sleeve"</span>: sleeve_map.get(ticker, <span class="st">"Other"</span>),</span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">"first_date"</span>: px.index.<span class="bu">min</span>(),</span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>        <span class="st">"last_date"</span>: px.index.<span class="bu">max</span>(),</span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>        <span class="st">"observations"</span>: <span class="bu">int</span>(px.shape[<span class="dv">0</span>]),</span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ann_return"</span>: <span class="bu">float</span>(nav.iloc[<span class="op">-</span><span class="dv">1</span>] <span class="op">**</span> (<span class="fl">1.0</span> <span class="op">/</span> years) <span class="op">-</span> <span class="fl">1.0</span>) <span class="cf">if</span> <span class="bu">len</span>(nav) <span class="cf">else</span> np.nan,</span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ann_vol"</span>: <span class="bu">float</span>(ret.std() <span class="op">*</span> math.sqrt(annualization)) <span class="cf">if</span> <span class="bu">len</span>(ret) <span class="cf">else</span> np.nan,</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>        <span class="st">"max_drawdown"</span>: max_drawdown_from_nav(nav),</span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>    })</span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>table <span class="op">=</span> pd.DataFrame(rows).sort_values(<span class="st">"ticker"</span>)</span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>display(table.<span class="bu">round</span>({<span class="st">"ann_return"</span>: <span class="dv">4</span>, <span class="st">"ann_vol"</span>: <span class="dv">4</span>, <span class="st">"max_drawdown"</span>: <span class="dv">4</span>}))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ticker <span class="kw">in</span> assets:</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    px <span class="op">=</span> close[ticker].dropna()</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    ret <span class="op">=</span> returns[ticker].dropna()</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    years <span class="op">=</span> <span class="bu">max</span>(<span class="bu">len</span>(ret) <span class="op">/</span> annualization, <span class="fl">1e-9</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    nav <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> ret).cumprod()</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    rows.append({</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ticker"</span>: ticker,</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>        <span class="st">"sleeve"</span>: sleeve_map.get(ticker, <span class="st">"Other"</span>),</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>        <span class="st">"first_date"</span>: px.index.<span class="bu">min</span>(),</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">"last_date"</span>: px.index.<span class="bu">max</span>(),</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>        <span class="st">"observations"</span>: <span class="bu">int</span>(px.shape[<span class="dv">0</span>]),</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ann_return"</span>: <span class="bu">float</span>(nav.iloc[<span class="op">-</span><span class="dv">1</span>] <span class="op">**</span> (<span class="fl">1.0</span> <span class="op">/</span> years) <span class="op">-</span> <span class="fl">1.0</span>) <span class="cf">if</span> <span class="bu">len</span>(nav) <span class="cf">else</span> np.nan,</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ann_vol"</span>: <span class="bu">float</span>(ret.std() <span class="op">*</span> math.sqrt(annualization)) <span class="cf">if</span> <span class="bu">len</span>(ret) <span class="cf">else</span> np.nan,</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        <span class="st">"max_drawdown"</span>: <span class="bu">float</span>((nav <span class="op">/</span> nav.cummax() <span class="op">-</span> <span class="fl">1.0</span>).<span class="bu">min</span>())})</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>table <span class="op">=</span> pd.DataFrame(rows).sort_values(<span class="st">"ticker"</span>)</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>display(table.<span class="bu">round</span>({<span class="st">"ann_return"</span>: <span class="dv">4</span>, <span class="st">"ann_vol"</span>: <span class="dv">4</span>, <span class="st">"max_drawdown"</span>: <span class="dv">4</span>}))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -921,6 +919,14 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 </div>
 </div>
 </div>
+</section>
+<section id="performance-of-etfs" class="level3">
+<h3 class="anchored" data-anchor-id="performance-of-etfs">2.3 Performance of ETFs</h3>
+<p>As we can see, <strong>QQQ</strong> has been the strongest asset in the sample, with an annualized return close to 20% and volatility around 21%. <strong>SPY</strong> also performs strongly, with lower return and lower volatility than QQQ. <strong>IWM</strong> has a positive return but much higher drawdown, which is typical of small cap exposure especially in our sample where large cap growth leadership has been very strong.</p>
+<p>The international equity ETFs are weaker. <strong>EFA and EEM</strong> both have large drawdowns and volatility, but their returns are much lower than U.S. equities. This already tells us that a simple global equity diversification story is not enough. International exposure may still be useful, but an efficient model should not blindly assume that all equities and markets deserve the same allocation.</p>
+<p>The bond ETFs show very different behavior. <strong>SHY</strong> has very low volatility around <span class="math inline">\(1.4\%\)</span> and a much smaller drawdown around <span class="math inline">\(-5.7\%\)</span>, but the return is also low. <strong>TLT</strong> is the opposite of what someone might expect from “bonds”. It has a very large drawdown around <span class="math inline">\(-48.5\%\)</span> in this sample because as we said earlier, long duration bonds are sensitive to interest rate changes. TLT fell hard by the post-2021 rate shock.</p>
+<p><strong>DBC</strong> has a very large drawdown around <span class="math inline">\(-62.2\%\)</span>, which can be from the long weak cycles. <strong>GLD and VNQ</strong> sit somewhere between diversifiers and risk assets. They have meaningful volatility and large drawdowns, but they also bring different economic exposure.</p>
+<p>An efficient active model like Black-Litterman should know when to lean into growth, when to prefer real assets, when to reduce long duration, and when to stay close to the benchmark so it can control risk and gain the high return based on the state and information given to it each time it’s rabalancing.</p>
 <div id="b73a6bc4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.113543Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.113136Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;}}" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>normalized_prices <span class="op">=</span> close <span class="op">/</span> close.ffill().bfill().iloc[<span class="dv">0</span>]</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> normalized_prices.plot(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="dv">4</span>), lw<span class="op">=</span><span class="fl">1.1</span>)</span>
@@ -969,68 +975,94 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 </div>
 </div>
 </div>
-<div id="f57f0d31" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.101896Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.101896Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;}}" data-execution_count="9">
+<p>As we can see, volatility jumps during crisis periods, especially around the COVID shock. Equity and real asset ETFs show much larger volatility spikes than short duration bonds. SHY remains the lowest volatility instrument throughout the sample.</p>
+<p>U.S. equity ETFs are highly correlated with each other. SPY and QQQ move very closely, and IWM also has strong equity market correlation. Developed and emerging market equity ETFs also connect strongly to the US equity. This means that simply owning SPY, QQQ, IWM, EFA, and EEM is not as diversified as the number of tickers suggests.</p>
+<p>The bond holding ETFs are different. TLT, IEF, SHY, AGG, and LQD have their own internal structure. TLT and IEF are strongly related because both are Treasury duration exposures. TLT has negative correlation with SPY around <span class="math inline">\(-0.19\)</span>, which shows why long Treasuries historically helped in some equity selloffs. But the correlation is not fixed forever. In inflation shocks, stocks and bonds can fall together.</p>
+<p>AGG and LQD are also connected to the broader bond and credit market. HYG behaves more like risky credit and often correlates more with equities than with pure Treasuries.</p>
+<p>Gold and commodities contain a different kind of exposure. GLD has weaker relationships with most assets, which can make it a good diversifier. DBC has a different inflation and commodity cycle profile, so it can help when inflation sensitive assets are leading, but it can also be very difficult to hold during long weak commodity regimes.</p>
+<p>If the optimizer only sees a covariance matrix and expected returns, it may concentrate in a few assets. The human portfolio manager might add economic sanity to the model instead of just relying on estimation. This is why Black-Litterman can be great for combining economic ideas and views into a portfolio optimization model.</p>
+</section>
+</section>
+<section id="building-the-strategic-benchmark-and-prior" class="level2">
+<h2 class="anchored" data-anchor-id="building-the-strategic-benchmark-and-prior">3) Building the strategic benchmark and Prior</h2>
+<p>If we remember the bayes rule from earlier, we want to update our belief when new information arrives. We first need an intial belief or a starting point that is going to change with with the new information.</p>
+<section id="benchmark-portfolio" class="level3">
+<h3 class="anchored" data-anchor-id="benchmark-portfolio">3.1 Benchmark portfolio</h3>
+<p>We First define a neutral portfolio. This is not supposed to be the smartest portfolio in the notebook. It is the anchor. In Black-Litterman, the benchmark exists because it represents the <strong>starting belief about how capital should be allocated</strong> before any active views are added.</p>
+<p>The benchmark we use is a portfolio with pre-defined fixed weights and the weights are based on what we think can be reasonable for these ETFs based on their performance, behaviour and what they hold. It gives meaningful weight to US equities, international equities, bonds, credit, gold, real estate, and commodities. It is also constrained by asset caps and constraints. These caps protect the optimization from unrealistic concentration.</p>
+<p>For example, even if QQQ has a strong historical return, we probably do not want a mult asset benchmark to become almost entirely QQQ. Likewise, even if short Treasuries have low volatility, a diversified benchmark should not become a pure cash substitute.</p>
+<p>We don’t want the optimizer to do whatever it wants. We want it to stay inside a realistic multi asset allocation structure. That’s why we use bounds and caps for weights on each asset.</p>
+<p>Since we already know from notebook 2, A benchmark weight vector looks like this:</p>
+<p><span class="math display">\[
+w_b=\begin{bmatrix}w_{b,\mathrm{SPY}} &amp; w_{b,\mathrm{QQQ}} &amp; \cdots &amp; w_{b,\mathrm{DBC}}\end{bmatrix}^{\top}
+\]</span></p>
+<p>with the full investment condition</p>
+<p><span class="math display">\[
+\sum_{i=1}^{N}w_{b,i}=1
+\]</span></p>
+<p>And the benchmark is long-only, so all weights are nonnegative:</p>
+<p><span class="math display">\[
+w_{b,i}\geq 0
+\]</span></p>
+<div id="f57f0d31" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.101896Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.101896Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;}}">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>w_min <span class="op">=</span> <span class="fl">0.0</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>w_max <span class="op">=</span> <span class="fl">0.40</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>fixed_benchmark_weights <span class="op">=</span> {</span>
 <span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"SPY"</span>: <span class="fl">0.22</span>, <span class="st">"QQQ"</span>: <span class="fl">0.08</span>, <span class="st">"IWM"</span>: <span class="fl">0.04</span>, <span class="st">"EFA"</span>: <span class="fl">0.09</span>, <span class="st">"EEM"</span>: <span class="fl">0.05</span>,</span>
 <span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TLT"</span>: <span class="fl">0.08</span>, <span class="st">"IEF"</span>: <span class="fl">0.08</span>, <span class="st">"SHY"</span>: <span class="fl">0.05</span>, <span class="st">"AGG"</span>: <span class="fl">0.10</span>, <span class="st">"LQD"</span>: <span class="fl">0.05</span>,</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"HYG"</span>: <span class="fl">0.04</span>, <span class="st">"GLD"</span>: <span class="fl">0.05</span>, <span class="st">"VNQ"</span>: <span class="fl">0.04</span>, <span class="st">"DBC"</span>: <span class="fl">0.02</span>,</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>asset_cap_map <span class="op">=</span> {</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"SPY"</span>: <span class="fl">0.35</span>, <span class="st">"QQQ"</span>: <span class="fl">0.25</span>, <span class="st">"IWM"</span>: <span class="fl">0.15</span>, <span class="st">"EFA"</span>: <span class="fl">0.20</span>, <span class="st">"EEM"</span>: <span class="fl">0.15</span>,</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TLT"</span>: <span class="fl">0.25</span>, <span class="st">"IEF"</span>: <span class="fl">0.25</span>, <span class="st">"SHY"</span>: <span class="fl">0.20</span>, <span class="st">"AGG"</span>: <span class="fl">0.25</span>,</span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"LQD"</span>: <span class="fl">0.15</span>, <span class="st">"HYG"</span>: <span class="fl">0.08</span>, <span class="st">"GLD"</span>: <span class="fl">0.10</span>, <span class="st">"VNQ"</span>: <span class="fl">0.08</span>, <span class="st">"DBC"</span>: <span class="fl">0.05</span>,</span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"HYG"</span>: <span class="fl">0.04</span>, <span class="st">"GLD"</span>: <span class="fl">0.05</span>, <span class="st">"VNQ"</span>: <span class="fl">0.04</span>, <span class="st">"DBC"</span>: <span class="fl">0.02</span>}</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>asset_cap_map <span class="op">=</span> {</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"SPY"</span>: <span class="fl">0.35</span>, <span class="st">"QQQ"</span>: <span class="fl">0.25</span>, <span class="st">"IWM"</span>: <span class="fl">0.15</span>, <span class="st">"EFA"</span>: <span class="fl">0.20</span>, <span class="st">"EEM"</span>: <span class="fl">0.15</span>,</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"TLT"</span>: <span class="fl">0.25</span>, <span class="st">"IEF"</span>: <span class="fl">0.25</span>, <span class="st">"SHY"</span>: <span class="fl">0.20</span>, <span class="st">"AGG"</span>: <span class="fl">0.25</span>,</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"LQD"</span>: <span class="fl">0.15</span>, <span class="st">"HYG"</span>: <span class="fl">0.08</span>, <span class="st">"GLD"</span>: <span class="fl">0.10</span>, <span class="st">"VNQ"</span>: <span class="fl">0.08</span>, <span class="st">"DBC"</span>: <span class="fl">0.05</span>}</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>asset_caps <span class="op">=</span> pd.Series({asset: asset_cap_map.get(asset, w_max) <span class="cf">for</span> asset <span class="kw">in</span> assets}, index<span class="op">=</span>assets, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>asset_caps <span class="op">=</span> pd.Series({asset: asset_cap_map.get(asset, w_max) <span class="cf">for</span> asset <span class="kw">in</span> assets}, index<span class="op">=</span>assets, dtype<span class="op">=</span><span class="bu">float</span>)</span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>sleeve_constraints <span class="op">=</span> {</span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"equity"</span>: {<span class="st">"assets"</span>: [<span class="st">"SPY"</span>, <span class="st">"QQQ"</span>, <span class="st">"IWM"</span>, <span class="st">"EFA"</span>, <span class="st">"EEM"</span>], <span class="st">"min"</span>: <span class="fl">0.35</span>, <span class="st">"max"</span>: <span class="fl">0.75</span>},</span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"bonds"</span>: {<span class="st">"assets"</span>: [<span class="st">"TLT"</span>, <span class="st">"IEF"</span>, <span class="st">"SHY"</span>, <span class="st">"AGG"</span>], <span class="st">"min"</span>: <span class="fl">0.15</span>, <span class="st">"max"</span>: <span class="fl">0.55</span>},</span>
-<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"credit"</span>: {<span class="st">"assets"</span>: [<span class="st">"LQD"</span>, <span class="st">"HYG"</span>], <span class="st">"min"</span>: <span class="fl">0.00</span>, <span class="st">"max"</span>: <span class="fl">0.18</span>},</span>
-<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"real_assets"</span>: {<span class="st">"assets"</span>: [<span class="st">"GLD"</span>, <span class="st">"VNQ"</span>, <span class="st">"DBC"</span>], <span class="st">"min"</span>: <span class="fl">0.00</span>, <span class="st">"max"</span>: <span class="fl">0.22</span>},</span>
-<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> normalize_box_weights(raw_weights, index, lower<span class="op">=</span><span class="fl">0.0</span>, upper<span class="op">=</span><span class="fl">0.25</span>):</span>
-<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> pd.Series(raw_weights, index<span class="op">=</span>index, dtype<span class="op">=</span><span class="bu">float</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).fillna(<span class="fl">0.0</span>)</span>
-<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>    upper_s <span class="op">=</span> pd.Series(upper, index<span class="op">=</span>index, dtype<span class="op">=</span><span class="bu">float</span>) <span class="cf">if</span> np.isscalar(upper) <span class="cf">else</span> pd.Series(upper, index<span class="op">=</span>index, dtype<span class="op">=</span><span class="bu">float</span>).reindex(index).fillna(w_max)</span>
-<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> w.clip(lower<span class="op">=</span><span class="bu">max</span>(lower, <span class="fl">0.0</span>), upper<span class="op">=</span>upper_s)</span>
-<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> w.<span class="bu">sum</span>() <span class="op">&lt;=</span> <span class="dv">0</span>:</span>
-<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>        w <span class="op">=</span> pd.Series(<span class="fl">1.0</span> <span class="op">/</span> <span class="bu">len</span>(index), index<span class="op">=</span>index).clip(upper<span class="op">=</span>upper_s)</span>
-<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
-<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>        w <span class="op">=</span> w <span class="op">/</span> w.<span class="bu">sum</span>()</span>
-<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> upper_s.<span class="bu">sum</span>() <span class="op">&lt;</span> <span class="fl">1.0</span> <span class="op">-</span> <span class="fl">1e-10</span>:</span>
-<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.Series(<span class="fl">1.0</span> <span class="op">/</span> <span class="bu">len</span>(index), index<span class="op">=</span>index)</span>
-<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>):</span>
-<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>        over <span class="op">=</span> w <span class="op">&gt;</span> upper_s <span class="op">+</span> <span class="fl">1e-12</span></span>
-<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> over.<span class="bu">any</span>():</span>
-<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
-<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>        excess <span class="op">=</span> <span class="bu">float</span>((w[over] <span class="op">-</span> upper_s[over]).<span class="bu">sum</span>())</span>
-<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>        w[over] <span class="op">=</span> upper_s[over]</span>
-<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>        room <span class="op">=</span> (upper_s[<span class="op">~</span>over] <span class="op">-</span> w[<span class="op">~</span>over]).clip(lower<span class="op">=</span><span class="fl">0.0</span>)</span>
-<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> room.<span class="bu">sum</span>() <span class="op">&lt;=</span> <span class="fl">1e-12</span>:</span>
-<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
-<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>        w.loc[room.index] <span class="op">=</span> w.loc[room.index] <span class="op">+</span> excess <span class="op">*</span> room <span class="op">/</span> room.<span class="bu">sum</span>()</span>
-<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> w.clip(lower<span class="op">=</span>lower, upper<span class="op">=</span>upper_s)</span>
-<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> w <span class="op">/</span> w.<span class="bu">sum</span>() <span class="cf">if</span> w.<span class="bu">sum</span>() <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> pd.Series(<span class="fl">1.0</span> <span class="op">/</span> <span class="bu">len</span>(index), index<span class="op">=</span>index)</span>
-<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> w</span>
-<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a>benchmark_raw <span class="op">=</span> {ticker: fixed_benchmark_weights.get(ticker, <span class="fl">0.0</span>) <span class="cf">for</span> ticker <span class="kw">in</span> assets}</span>
-<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a>benchmark_w <span class="op">=</span> normalize_box_weights(benchmark_raw, assets, lower<span class="op">=</span>w_min, upper<span class="op">=</span>asset_caps)</span>
-<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (benchmark_w <span class="op">&gt;</span> asset_caps <span class="op">+</span> <span class="fl">1e-6</span>).<span class="bu">any</span>() <span class="kw">or</span> <span class="bu">abs</span>(benchmark_w.<span class="bu">sum</span>() <span class="op">-</span> <span class="fl">1.0</span>) <span class="op">&gt;</span> <span class="fl">1e-6</span>:</span>
-<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a>    benchmark_w <span class="op">=</span> normalize_box_weights(pd.Series(<span class="fl">1.0</span>, index<span class="op">=</span>assets), assets, lower<span class="op">=</span>w_min, upper<span class="op">=</span>asset_caps)</span>
-<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a>benchmark_table <span class="op">=</span> pd.DataFrame({</span>
-<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a>    <span class="st">"asset"</span>: benchmark_w.index,</span>
-<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sleeve"</span>: [sleeve_map.get(ticker, <span class="st">"Other"</span>) <span class="cf">for</span> ticker <span class="kw">in</span> benchmark_w.index],</span>
-<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a>    <span class="st">"benchmark_weight"</span>: benchmark_w.values,</span>
-<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a>    <span class="st">"asset_cap"</span>: asset_caps.reindex(benchmark_w.index).values,</span>
-<span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a>display(benchmark_table.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>sleeve_constraints <span class="op">=</span> {</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"equity"</span>: {<span class="st">"assets"</span>: [<span class="st">"SPY"</span>, <span class="st">"QQQ"</span>, <span class="st">"IWM"</span>, <span class="st">"EFA"</span>, <span class="st">"EEM"</span>], <span class="st">"min"</span>: <span class="fl">0.35</span>, <span class="st">"max"</span>: <span class="fl">0.75</span>},</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"bonds"</span>: {<span class="st">"assets"</span>: [<span class="st">"TLT"</span>, <span class="st">"IEF"</span>, <span class="st">"SHY"</span>, <span class="st">"AGG"</span>], <span class="st">"min"</span>: <span class="fl">0.15</span>, <span class="st">"max"</span>: <span class="fl">0.55</span>},</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"credit"</span>: {<span class="st">"assets"</span>: [<span class="st">"LQD"</span>, <span class="st">"HYG"</span>], <span class="st">"min"</span>: <span class="fl">0.00</span>, <span class="st">"max"</span>: <span class="fl">0.18</span>},</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"real_assets"</span>: {<span class="st">"assets"</span>: [<span class="st">"GLD"</span>, <span class="st">"VNQ"</span>, <span class="st">"DBC"</span>], <span class="st">"min"</span>: <span class="fl">0.00</span>, <span class="st">"max"</span>: <span class="fl">0.22</span>}}</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> normalize_box_weights(raw_weights, index, lower<span class="op">=</span><span class="fl">0.0</span>, upper<span class="op">=</span><span class="fl">0.25</span>):</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> pd.Series(raw_weights, index<span class="op">=</span>index, dtype<span class="op">=</span><span class="bu">float</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).fillna(<span class="fl">0.0</span>)</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    upper_s <span class="op">=</span> pd.Series(upper, index<span class="op">=</span>index, dtype<span class="op">=</span><span class="bu">float</span>) <span class="cf">if</span> np.isscalar(upper) <span class="cf">else</span> pd.Series(upper, index<span class="op">=</span>index, dtype<span class="op">=</span><span class="bu">float</span>).reindex(index).fillna(w_max)</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> w.clip(lower<span class="op">=</span><span class="bu">max</span>(lower, <span class="fl">0.0</span>), upper<span class="op">=</span>upper_s)</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> w.<span class="bu">sum</span>() <span class="op">&lt;=</span> <span class="dv">0</span>:</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>        w <span class="op">=</span> pd.Series(<span class="fl">1.0</span> <span class="op">/</span> <span class="bu">len</span>(index), index<span class="op">=</span>index).clip(upper<span class="op">=</span>upper_s)</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>        w <span class="op">=</span> w <span class="op">/</span> w.<span class="bu">sum</span>()</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> upper_s.<span class="bu">sum</span>() <span class="op">&lt;</span> <span class="fl">1.0</span> <span class="op">-</span> <span class="fl">1e-10</span>:</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.Series(<span class="fl">1.0</span> <span class="op">/</span> <span class="bu">len</span>(index), index<span class="op">=</span>index)</span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>):</span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>        over <span class="op">=</span> w <span class="op">&gt;</span> upper_s <span class="op">+</span> <span class="fl">1e-12</span></span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> over.<span class="bu">any</span>():</span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>        excess <span class="op">=</span> <span class="bu">float</span>((w[over] <span class="op">-</span> upper_s[over]).<span class="bu">sum</span>())</span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>        w[over] <span class="op">=</span> upper_s[over]</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>        room <span class="op">=</span> (upper_s[<span class="op">~</span>over] <span class="op">-</span> w[<span class="op">~</span>over]).clip(lower<span class="op">=</span><span class="fl">0.0</span>)</span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> room.<span class="bu">sum</span>() <span class="op">&lt;=</span> <span class="fl">1e-12</span>:</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>        w.loc[room.index] <span class="op">=</span> w.loc[room.index] <span class="op">+</span> excess <span class="op">*</span> room <span class="op">/</span> room.<span class="bu">sum</span>()</span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> w.clip(lower<span class="op">=</span>lower, upper<span class="op">=</span>upper_s)</span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> w <span class="op">/</span> w.<span class="bu">sum</span>() <span class="cf">if</span> w.<span class="bu">sum</span>() <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> pd.Series(<span class="fl">1.0</span> <span class="op">/</span> <span class="bu">len</span>(index), index<span class="op">=</span>index)</span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> w</span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a>benchmark_raw <span class="op">=</span> {ticker: fixed_benchmark_weights.get(ticker, <span class="fl">0.0</span>) <span class="cf">for</span> ticker <span class="kw">in</span> assets}</span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a>benchmark_w <span class="op">=</span> normalize_box_weights(benchmark_raw, assets, lower<span class="op">=</span>w_min, upper<span class="op">=</span>asset_caps)</span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (benchmark_w <span class="op">&gt;</span> asset_caps <span class="op">+</span> <span class="fl">1e-6</span>).<span class="bu">any</span>() <span class="kw">or</span> <span class="bu">abs</span>(benchmark_w.<span class="bu">sum</span>() <span class="op">-</span> <span class="fl">1.0</span>) <span class="op">&gt;</span> <span class="fl">1e-6</span>:</span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a>    benchmark_w <span class="op">=</span> normalize_box_weights(pd.Series(<span class="fl">1.0</span>, index<span class="op">=</span>assets), assets, lower<span class="op">=</span>w_min, upper<span class="op">=</span>asset_caps)</span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a>benchmark_table <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a>    <span class="st">"asset"</span>: benchmark_w.index,</span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sleeve"</span>: [sleeve_map.get(ticker, <span class="st">"Other"</span>) <span class="cf">for</span> ticker <span class="kw">in</span> benchmark_w.index],</span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a>    <span class="st">"benchmark_weight"</span>: benchmark_w.values,</span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a>    <span class="st">"asset_cap"</span>: asset_caps.reindex(benchmark_w.index).values,</span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a>display(benchmark_table.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1150,6 +1182,12 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 </div>
 </div>
 </div>
+</section>
+<section id="what-weights-we-used-and-why" class="level3">
+<h3 class="anchored" data-anchor-id="what-weights-we-used-and-why">What weights we used and why</h3>
+<p>As we can see, we set SPY as the largest position at about <strong><span class="math inline">\(22.2\%\)</span></strong>, followed by AGG around <strong><span class="math inline">\(10.1\%\)</span></strong>, EFA around <strong><span class="math inline">\(9.1\%\)</span></strong>, and several exposures around <strong><span class="math inline">\(8.1\%\)</span></strong> or <strong><span class="math inline">\(5.1\%\)</span></strong>. Large weights go to liquid core exposures. SPY for broad US equity, AGG for core bonds, EFA for developed international equities, and intermediate/long Treasuries for duration. Smaller weights go to more specialized or volatile exposures such as DBC, VNQ, HYG, and IWM. This makes sense because those assets can be useful, but we usually do not want them to dominate the portfolio.</p>
+<p>US equity is the largest section at about 34.3%. Duration bonds and international equities are also meaningful. Core bonds, real assets, and credit each have visible allocations, while commodities are intentionally small.</p>
+<p>This looks like a reasonable strategic benchmark for a multi asset project. It is growth oriented enough to participate in equity markets, but it is not a pure equity portfolio. It has bonds, gold, real estate, credit, and commodities. That makes it a useful anchor for active allocation.</p>
 <div id="2fd69cad" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;}}" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">3.5</span>))</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>benchmark_w.sort_values(ascending<span class="op">=</span><span class="va">False</span>).plot(kind<span class="op">=</span><span class="st">"bar"</span>, ax<span class="op">=</span>ax)</span>

@@ -333,7 +333,7 @@ window.Quarto = {
 </section>
 <section id="imports-and-plotting-style" class="level3">
 <h3 class="anchored" data-anchor-id="imports-and-plotting-style">Imports and plotting style</h3>
-<div id="4521701a" class="cell" data-execution_count="1">
+<div id="4521701a" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2755,270 +2755,232 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <section id="implementation-on-hong-kong-stock-market-with-quantfinlab" class="level2">
 <h2 class="anchored" data-anchor-id="implementation-on-hong-kong-stock-market-with-quantfinlab">implementation on Hong Kong stock market with quantfinlab</h2>
 <p>the data used in this part can be downloaded from here (<a href="https://stooq.com/db/h/">Stooq HKEX daily market data</a>)</p>
-<div id="225c0c82" class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> quantfinlab.portfolio <span class="im">as</span> pf</span>
-<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> quantfinlab.risk <span class="im">as</span> rk</span>
-<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab <span class="im">import</span> PortfolioState</span>
-<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio <span class="im">import</span> (</span>
-<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>    universe, expected_returns,</span>
-<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>    covariance, constraints,</span>
-<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>    optimizers, walkforward,</span>
-<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>    selection)</span>
-<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.backtest <span class="im">import</span> portfolio <span class="im">as</span> pf_backtest</span>
-<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting <span class="im">import</span> portfolio <span class="im">as</span> pf_plots</span>
-<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
+<div id="225c0c82" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> quantfinlab.portfolio <span class="im">as</span> pf</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> quantfinlab.risk <span class="im">as</span> rk</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab <span class="im">import</span> PortfolioState</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.dataio <span class="im">import</span> load_yfinance_panel</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio <span class="im">import</span> (</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>    universe, expected_returns,</span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>    covariance, constraints,</span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>    optimizers, walkforward,</span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>    selection)</span>
 <span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
-<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a>rf_annual <span class="op">=</span> <span class="fl">0.04</span></span>
-<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a>rf_daily <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> rf_annual) <span class="op">**</span> (<span class="fl">1.0</span> <span class="op">/</span> <span class="fl">252.0</span>) <span class="op">-</span> <span class="fl">1.0</span></span>
+<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.backtest <span class="im">import</span> portfolio <span class="im">as</span> pf_backtest</span>
+<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting <span class="im">import</span> portfolio <span class="im">as</span> pf_plots</span>
+<span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
 <span id="cb36-23"><a href="#cb36-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-24"><a href="#cb36-24" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> pd.read_csv(<span class="st">"../data/hkex_selected_close_volume.csv"</span>, header<span class="op">=</span>[<span class="dv">0</span>, <span class="dv">1</span>], low_memory<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb36-25"><a href="#cb36-25" aria-hidden="true" tabindex="-1"></a>raw.columns <span class="op">=</span> pd.MultiIndex.from_tuples([(<span class="bu">str</span>(a).strip(), <span class="bu">str</span>(b).strip()) <span class="cf">for</span> a, b <span class="kw">in</span> raw.columns])</span>
+<span id="cb36-24"><a href="#cb36-24" aria-hidden="true" tabindex="-1"></a>rf_annual <span class="op">=</span> <span class="fl">0.04</span></span>
+<span id="cb36-25"><a href="#cb36-25" aria-hidden="true" tabindex="-1"></a>rf_daily <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> rf_annual) <span class="op">**</span> (<span class="fl">1.0</span> <span class="op">/</span> <span class="fl">252.0</span>) <span class="op">-</span> <span class="fl">1.0</span></span>
 <span id="cb36-26"><a href="#cb36-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-27"><a href="#cb36-27" aria-hidden="true" tabindex="-1"></a>date_cols <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> raw.columns <span class="cf">if</span> c[<span class="dv">0</span>].lower() <span class="op">==</span> <span class="st">"date"</span>]</span>
-<span id="cb36-28"><a href="#cb36-28" aria-hidden="true" tabindex="-1"></a>close_cols <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> raw.columns <span class="cf">if</span> c[<span class="dv">1</span>].lower() <span class="op">==</span> <span class="st">"close"</span>]</span>
-<span id="cb36-29"><a href="#cb36-29" aria-hidden="true" tabindex="-1"></a>volume_cols <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> raw.columns <span class="cf">if</span> c[<span class="dv">1</span>].lower() <span class="op">==</span> <span class="st">"volume"</span>]</span>
-<span id="cb36-30"><a href="#cb36-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-31"><a href="#cb36-31" aria-hidden="true" tabindex="-1"></a>dates <span class="op">=</span> pd.to_datetime(raw[date_cols[<span class="dv">0</span>]], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
-<span id="cb36-32"><a href="#cb36-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-33"><a href="#cb36-33" aria-hidden="true" tabindex="-1"></a>close_prices <span class="op">=</span> raw.loc[:, close_cols].copy()</span>
-<span id="cb36-34"><a href="#cb36-34" aria-hidden="true" tabindex="-1"></a>volumes <span class="op">=</span> raw.loc[:, volume_cols].copy()</span>
-<span id="cb36-35"><a href="#cb36-35" aria-hidden="true" tabindex="-1"></a>close_prices.columns <span class="op">=</span> [<span class="bu">str</span>(c[<span class="dv">0</span>]).strip() <span class="cf">for</span> c <span class="kw">in</span> close_cols]</span>
-<span id="cb36-36"><a href="#cb36-36" aria-hidden="true" tabindex="-1"></a>volumes.columns <span class="op">=</span> [<span class="bu">str</span>(c[<span class="dv">0</span>]).strip() <span class="cf">for</span> c <span class="kw">in</span> volume_cols]</span>
+<span id="cb36-27"><a href="#cb36-27" aria-hidden="true" tabindex="-1"></a>panels <span class="op">=</span> load_yfinance_panel(</span>
+<span id="cb36-28"><a href="#cb36-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"../data/hkex_selected_close_volume.csv"</span>,</span>
+<span id="cb36-29"><a href="#cb36-29" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"hkex_csv"</span>,</span>
+<span id="cb36-30"><a href="#cb36-30" aria-hidden="true" tabindex="-1"></a>    fields<span class="op">=</span>(<span class="st">"close"</span>, <span class="st">"volume"</span>))</span>
+<span id="cb36-31"><a href="#cb36-31" aria-hidden="true" tabindex="-1"></a>close_prices <span class="op">=</span> panels[<span class="st">"close"</span>].astype(np.float32)</span>
+<span id="cb36-32"><a href="#cb36-32" aria-hidden="true" tabindex="-1"></a>volumes <span class="op">=</span> panels[<span class="st">"volume"</span>].astype(np.float32)</span>
+<span id="cb36-33"><a href="#cb36-33" aria-hidden="true" tabindex="-1"></a>close_prices, volumes <span class="op">=</span> universe.clean_close_volume_panels(</span>
+<span id="cb36-34"><a href="#cb36-34" aria-hidden="true" tabindex="-1"></a>    close_prices, volumes, start<span class="op">=</span><span class="st">"2016-01-01"</span>)</span>
+<span id="cb36-35"><a href="#cb36-35" aria-hidden="true" tabindex="-1"></a>prices <span class="op">=</span> close_prices.copy()</span>
+<span id="cb36-36"><a href="#cb36-36" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb36-37"><a href="#cb36-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-38"><a href="#cb36-38" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> close_prices.columns.duplicated().<span class="bu">any</span>():</span>
-<span id="cb36-39"><a href="#cb36-39" aria-hidden="true" tabindex="-1"></a>    close_prices <span class="op">=</span> close_prices.T.groupby(level<span class="op">=</span><span class="dv">0</span>).last().T</span>
-<span id="cb36-40"><a href="#cb36-40" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> volumes.columns.duplicated().<span class="bu">any</span>():</span>
-<span id="cb36-41"><a href="#cb36-41" aria-hidden="true" tabindex="-1"></a>    volumes <span class="op">=</span> volumes.T.groupby(level<span class="op">=</span><span class="dv">0</span>).last().T</span>
-<span id="cb36-42"><a href="#cb36-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-43"><a href="#cb36-43" aria-hidden="true" tabindex="-1"></a>close_prices.index <span class="op">=</span> dates</span>
-<span id="cb36-44"><a href="#cb36-44" aria-hidden="true" tabindex="-1"></a>volumes.index <span class="op">=</span> dates</span>
-<span id="cb36-45"><a href="#cb36-45" aria-hidden="true" tabindex="-1"></a>close_prices <span class="op">=</span> (</span>
-<span id="cb36-46"><a href="#cb36-46" aria-hidden="true" tabindex="-1"></a>    close_prices.<span class="bu">apply</span>(pd.to_numeric, errors<span class="op">=</span><span class="st">"coerce"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
-<span id="cb36-47"><a href="#cb36-47" aria-hidden="true" tabindex="-1"></a>    .astype(np.float32))</span>
-<span id="cb36-48"><a href="#cb36-48" aria-hidden="true" tabindex="-1"></a>volumes <span class="op">=</span> (</span>
-<span id="cb36-49"><a href="#cb36-49" aria-hidden="true" tabindex="-1"></a>    volumes.<span class="bu">apply</span>(pd.to_numeric, errors<span class="op">=</span><span class="st">"coerce"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
-<span id="cb36-50"><a href="#cb36-50" aria-hidden="true" tabindex="-1"></a>    .astype(np.float32))</span>
-<span id="cb36-51"><a href="#cb36-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-52"><a href="#cb36-52" aria-hidden="true" tabindex="-1"></a>close_prices <span class="op">=</span> close_prices.where(close_prices <span class="op">&gt;</span> <span class="dv">0</span>)</span>
-<span id="cb36-53"><a href="#cb36-53" aria-hidden="true" tabindex="-1"></a>volumes <span class="op">=</span> volumes.where(volumes <span class="op">&gt;=</span> <span class="dv">0</span>)</span>
-<span id="cb36-54"><a href="#cb36-54" aria-hidden="true" tabindex="-1"></a>close_prices <span class="op">=</span> close_prices[<span class="op">~</span>close_prices.index.isna()].sort_index()</span>
-<span id="cb36-55"><a href="#cb36-55" aria-hidden="true" tabindex="-1"></a>volumes <span class="op">=</span> volumes[<span class="op">~</span>volumes.index.isna()].sort_index()</span>
-<span id="cb36-56"><a href="#cb36-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-57"><a href="#cb36-57" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> close_prices.index.has_duplicates:</span>
-<span id="cb36-58"><a href="#cb36-58" aria-hidden="true" tabindex="-1"></a>    close_prices <span class="op">=</span> close_prices[<span class="op">~</span>close_prices.index.duplicated(keep<span class="op">=</span><span class="st">"last"</span>)]</span>
-<span id="cb36-59"><a href="#cb36-59" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> volumes.index.has_duplicates:</span>
-<span id="cb36-60"><a href="#cb36-60" aria-hidden="true" tabindex="-1"></a>    volumes <span class="op">=</span> volumes[<span class="op">~</span>volumes.index.duplicated(keep<span class="op">=</span><span class="st">"last"</span>)]</span>
-<span id="cb36-61"><a href="#cb36-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-62"><a href="#cb36-62" aria-hidden="true" tabindex="-1"></a>start <span class="op">=</span> pd.Timestamp(<span class="st">"2016-01-01"</span>)</span>
-<span id="cb36-63"><a href="#cb36-63" aria-hidden="true" tabindex="-1"></a>close_prices <span class="op">=</span> close_prices.loc[close_prices.index <span class="op">&gt;=</span> start]</span>
-<span id="cb36-64"><a href="#cb36-64" aria-hidden="true" tabindex="-1"></a>volumes <span class="op">=</span> volumes.loc[volumes.index <span class="op">&gt;=</span> start]</span>
-<span id="cb36-65"><a href="#cb36-65" aria-hidden="true" tabindex="-1"></a>idx <span class="op">=</span> close_prices.index.intersection(volumes.index)</span>
-<span id="cb36-66"><a href="#cb36-66" aria-hidden="true" tabindex="-1"></a>cols <span class="op">=</span> close_prices.columns.intersection(volumes.columns)</span>
-<span id="cb36-67"><a href="#cb36-67" aria-hidden="true" tabindex="-1"></a>close_prices <span class="op">=</span> close_prices.loc[idx, cols]</span>
-<span id="cb36-68"><a href="#cb36-68" aria-hidden="true" tabindex="-1"></a>volumes <span class="op">=</span> volumes.loc[idx, cols]</span>
-<span id="cb36-69"><a href="#cb36-69" aria-hidden="true" tabindex="-1"></a>valid_cols <span class="op">=</span> close_prices.notna().<span class="bu">any</span>(axis<span class="op">=</span><span class="dv">0</span>) <span class="op">&amp;</span> volumes.notna().<span class="bu">any</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb36-70"><a href="#cb36-70" aria-hidden="true" tabindex="-1"></a>close_prices <span class="op">=</span> close_prices.loc[:, valid_cols]</span>
-<span id="cb36-71"><a href="#cb36-71" aria-hidden="true" tabindex="-1"></a>volumes <span class="op">=</span> volumes.loc[:, valid_cols]</span>
-<span id="cb36-72"><a href="#cb36-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-73"><a href="#cb36-73" aria-hidden="true" tabindex="-1"></a>prices <span class="op">=</span> close_prices.copy()</span>
-<span id="cb36-74"><a href="#cb36-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-75"><a href="#cb36-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-76"><a href="#cb36-76" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"close_prices:"</span>, close_prices.shape, <span class="st">"| volumes:"</span>, volumes.shape)</span>
-<span id="cb36-77"><a href="#cb36-77" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Date range:"</span>, close_prices.index.<span class="bu">min</span>().date(), <span class="st">"to"</span>, close_prices.index.<span class="bu">max</span>().date())</span>
-<span id="cb36-78"><a href="#cb36-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-79"><a href="#cb36-79" aria-hidden="true" tabindex="-1"></a>returns <span class="op">=</span> universe.prices_to_returns(prices)</span>
-<span id="cb36-80"><a href="#cb36-80" aria-hidden="true" tabindex="-1"></a>rebalance_dates <span class="op">=</span> universe.make_rebalance_dates(returns.index, freq<span class="op">=</span><span class="st">"ME"</span>, min_history_days<span class="op">=</span><span class="dv">252</span>)</span>
-<span id="cb36-81"><a href="#cb36-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-82"><a href="#cb36-82" aria-hidden="true" tabindex="-1"></a>universe_by_date <span class="op">=</span> universe.build_liquid_universe_by_date(</span>
-<span id="cb36-83"><a href="#cb36-83" aria-hidden="true" tabindex="-1"></a>    close<span class="op">=</span>prices, volume<span class="op">=</span>volumes,</span>
-<span id="cb36-84"><a href="#cb36-84" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates, top_n<span class="op">=</span><span class="dv">60</span>,</span>
-<span id="cb36-85"><a href="#cb36-85" aria-hidden="true" tabindex="-1"></a>    liquidity_lookback<span class="op">=</span><span class="dv">252</span>, min_listing_days<span class="op">=</span><span class="dv">252</span>,</span>
-<span id="cb36-86"><a href="#cb36-86" aria-hidden="true" tabindex="-1"></a>    min_obs<span class="op">=</span><span class="dv">252</span>, min_price<span class="op">=</span><span class="va">None</span>)</span>
-<span id="cb36-87"><a href="#cb36-87" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-88"><a href="#cb36-88" aria-hidden="true" tabindex="-1"></a>mu_models <span class="op">=</span> {</span>
-<span id="cb36-89"><a href="#cb36-89" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Momentum"</span>: expected_returns.momentum_mu,</span>
-<span id="cb36-90"><a href="#cb36-90" aria-hidden="true" tabindex="-1"></a>    <span class="st">"BayesStein"</span>: expected_returns.bayes_stein_mu,</span>
-<span id="cb36-91"><a href="#cb36-91" aria-hidden="true" tabindex="-1"></a>    <span class="st">"BayesSteinMomentum"</span>: expected_returns.bayes_stein_momentum_mu}</span>
-<span id="cb36-92"><a href="#cb36-92" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-93"><a href="#cb36-93" aria-hidden="true" tabindex="-1"></a>cov_models <span class="op">=</span> {</span>
-<span id="cb36-94"><a href="#cb36-94" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sample"</span>: covariance.sample_covariance,</span>
-<span id="cb36-95"><a href="#cb36-95" aria-hidden="true" tabindex="-1"></a>    <span class="st">"LedoitWolf"</span>: covariance.ledoit_wolf_covariance,</span>
-<span id="cb36-96"><a href="#cb36-96" aria-hidden="true" tabindex="-1"></a>    <span class="st">"OAS"</span>: covariance.oas_covariance,</span>
-<span id="cb36-97"><a href="#cb36-97" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EWMA"</span>: covariance.ewma_covariance}</span>
-<span id="cb36-98"><a href="#cb36-98" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-99"><a href="#cb36-99" aria-hidden="true" tabindex="-1"></a>optimizer_grid <span class="op">=</span> {</span>
-<span id="cb36-100"><a href="#cb36-100" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EW"</span>: optimizers.equal_weight,</span>
-<span id="cb36-101"><a href="#cb36-101" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MinVar"</span>: optimizers.minimum_variance,</span>
-<span id="cb36-102"><a href="#cb36-102" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MV"</span>: optimizers.mean_variance,</span>
-<span id="cb36-103"><a href="#cb36-103" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MaxSharpe"</span>: optimizers.max_sharpe_slsqp,</span>
-<span id="cb36-104"><a href="#cb36-104" aria-hidden="true" tabindex="-1"></a>    <span class="st">"RidgeMV"</span>: optimizers.ridge_mean_variance}</span>
-<span id="cb36-105"><a href="#cb36-105" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-106"><a href="#cb36-106" aria-hidden="true" tabindex="-1"></a>hk_solver_order <span class="op">=</span> [<span class="st">"OSQP"</span>, <span class="st">"ECOS"</span>, <span class="st">"SCS"</span>]</span>
-<span id="cb36-107"><a href="#cb36-107" aria-hidden="true" tabindex="-1"></a>hk_cov_lookback <span class="op">=</span> <span class="dv">252</span></span>
-<span id="cb36-108"><a href="#cb36-108" aria-hidden="true" tabindex="-1"></a>hk_mu_lookback <span class="op">=</span> <span class="dv">252</span></span>
-<span id="cb36-109"><a href="#cb36-109" aria-hidden="true" tabindex="-1"></a>hk_momentum_mode <span class="op">=</span> <span class="st">"12-1"</span></span>
-<span id="cb36-110"><a href="#cb36-110" aria-hidden="true" tabindex="-1"></a>hk_cost_bps <span class="op">=</span> <span class="fl">10.0</span></span>
-<span id="cb36-111"><a href="#cb36-111" aria-hidden="true" tabindex="-1"></a>hk_turnover_penalty_bps <span class="op">=</span> <span class="fl">10.0</span></span>
-<span id="cb36-112"><a href="#cb36-112" aria-hidden="true" tabindex="-1"></a>hk_long_only <span class="op">=</span> <span class="va">True</span></span>
-<span id="cb36-113"><a href="#cb36-113" aria-hidden="true" tabindex="-1"></a>hk_w_min <span class="op">=</span> <span class="fl">0.0</span></span>
-<span id="cb36-114"><a href="#cb36-114" aria-hidden="true" tabindex="-1"></a>hk_w_max <span class="op">=</span> <span class="fl">0.40</span></span>
-<span id="cb36-115"><a href="#cb36-115" aria-hidden="true" tabindex="-1"></a>hk_ridge <span class="op">=</span> <span class="fl">1e-4</span></span>
-<span id="cb36-116"><a href="#cb36-116" aria-hidden="true" tabindex="-1"></a>hk_mv_lambda <span class="op">=</span> <span class="fl">6.0</span></span>
-<span id="cb36-117"><a href="#cb36-117" aria-hidden="true" tabindex="-1"></a>hk_ridge_mv_gamma <span class="op">=</span> <span class="fl">12.0</span></span>
-<span id="cb36-118"><a href="#cb36-118" aria-hidden="true" tabindex="-1"></a>hk_mu_target_sharpe_ann <span class="op">=</span> <span class="fl">0.80</span></span>
-<span id="cb36-119"><a href="#cb36-119" aria-hidden="true" tabindex="-1"></a>hk_mu_cap_ann <span class="op">=</span> <span class="fl">0.30</span></span>
-<span id="cb36-120"><a href="#cb36-120" aria-hidden="true" tabindex="-1"></a>hk_mu_winsor_lo, hk_mu_winsor_hi <span class="op">=</span> <span class="fl">0.05</span>, <span class="fl">0.95</span></span>
-<span id="cb36-121"><a href="#cb36-121" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-122"><a href="#cb36-122" aria-hidden="true" tabindex="-1"></a>optimizer_params <span class="op">=</span> {</span>
-<span id="cb36-123"><a href="#cb36-123" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MV"</span>: {<span class="st">"mv_lambda"</span>: hk_mv_lambda},</span>
-<span id="cb36-124"><a href="#cb36-124" aria-hidden="true" tabindex="-1"></a>    <span class="st">"RidgeMV"</span>: {<span class="st">"mv_lambda"</span>: hk_mv_lambda, <span class="st">"gamma_l2"</span>: hk_ridge_mv_gamma, <span class="st">"ridge"</span>: hk_ridge},</span>
-<span id="cb36-125"><a href="#cb36-125" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MaxSharpe"</span>: {<span class="st">"ridge"</span>: hk_ridge},</span>
-<span id="cb36-126"><a href="#cb36-126" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FrontierGrid"</span>: {<span class="st">"grid_n"</span>: <span class="dv">25</span>, <span class="st">"ridge"</span>: hk_ridge}}</span>
-<span id="cb36-127"><a href="#cb36-127" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-128"><a href="#cb36-128" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> walkforward.run_walkforward_grid(</span>
-<span id="cb36-129"><a href="#cb36-129" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>returns, close<span class="op">=</span>prices, volume<span class="op">=</span>volumes,</span>
-<span id="cb36-130"><a href="#cb36-130" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
-<span id="cb36-131"><a href="#cb36-131" aria-hidden="true" tabindex="-1"></a>    universe_by_date<span class="op">=</span>universe_by_date,</span>
-<span id="cb36-132"><a href="#cb36-132" aria-hidden="true" tabindex="-1"></a>    mu_models<span class="op">=</span>mu_models, cov_models<span class="op">=</span>cov_models,</span>
-<span id="cb36-133"><a href="#cb36-133" aria-hidden="true" tabindex="-1"></a>    optimizers<span class="op">=</span>optimizer_grid,</span>
-<span id="cb36-134"><a href="#cb36-134" aria-hidden="true" tabindex="-1"></a>    cov_lookback<span class="op">=</span>hk_cov_lookback,</span>
-<span id="cb36-135"><a href="#cb36-135" aria-hidden="true" tabindex="-1"></a>    mu_lookback<span class="op">=</span>hk_mu_lookback, min_mu_observations<span class="op">=</span><span class="dv">251</span>,</span>
-<span id="cb36-136"><a href="#cb36-136" aria-hidden="true" tabindex="-1"></a>    momentum_mode<span class="op">=</span>hk_momentum_mode, rf_daily<span class="op">=</span>rf_daily,</span>
-<span id="cb36-137"><a href="#cb36-137" aria-hidden="true" tabindex="-1"></a>    target_sharpe_ann<span class="op">=</span>hk_mu_target_sharpe_ann,</span>
-<span id="cb36-138"><a href="#cb36-138" aria-hidden="true" tabindex="-1"></a>    mu_cap_ann<span class="op">=</span>hk_mu_cap_ann,</span>
-<span id="cb36-139"><a href="#cb36-139" aria-hidden="true" tabindex="-1"></a>    winsor_lo<span class="op">=</span>hk_mu_winsor_lo,</span>
-<span id="cb36-140"><a href="#cb36-140" aria-hidden="true" tabindex="-1"></a>    winsor_hi<span class="op">=</span>hk_mu_winsor_hi,</span>
-<span id="cb36-141"><a href="#cb36-141" aria-hidden="true" tabindex="-1"></a>    ewma_lambda<span class="op">=</span><span class="fl">0.97</span>,</span>
-<span id="cb36-142"><a href="#cb36-142" aria-hidden="true" tabindex="-1"></a>    max_weight<span class="op">=</span>hk_w_max,</span>
-<span id="cb36-143"><a href="#cb36-143" aria-hidden="true" tabindex="-1"></a>    min_weight<span class="op">=</span>hk_w_min,</span>
-<span id="cb36-144"><a href="#cb36-144" aria-hidden="true" tabindex="-1"></a>    long_only<span class="op">=</span>hk_long_only,</span>
-<span id="cb36-145"><a href="#cb36-145" aria-hidden="true" tabindex="-1"></a>    trading_cost_bps<span class="op">=</span>hk_cost_bps,</span>
-<span id="cb36-146"><a href="#cb36-146" aria-hidden="true" tabindex="-1"></a>    turnover_penalty_bps<span class="op">=</span>hk_turnover_penalty_bps,</span>
-<span id="cb36-147"><a href="#cb36-147" aria-hidden="true" tabindex="-1"></a>    fallback<span class="op">=</span><span class="st">"equal"</span>,</span>
-<span id="cb36-148"><a href="#cb36-148" aria-hidden="true" tabindex="-1"></a>    solver_order<span class="op">=</span>hk_solver_order,</span>
-<span id="cb36-149"><a href="#cb36-149" aria-hidden="true" tabindex="-1"></a>    optimizer_params<span class="op">=</span>optimizer_params)</span>
-<span id="cb36-150"><a href="#cb36-150" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-151"><a href="#cb36-151" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> walkforward.append_frontiergrid_from_best_maxsharpe(</span>
-<span id="cb36-152"><a href="#cb36-152" aria-hidden="true" tabindex="-1"></a>    grid,</span>
-<span id="cb36-153"><a href="#cb36-153" aria-hidden="true" tabindex="-1"></a>    frontier_optimizer<span class="op">=</span>optimizers.max_sharpe_frontier_grid,</span>
-<span id="cb36-154"><a href="#cb36-154" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"Sharpe"</span>)</span>
-<span id="cb36-155"><a href="#cb36-155" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-156"><a href="#cb36-156" aria-hidden="true" tabindex="-1"></a>finalists <span class="op">=</span> selection.select_finalists(</span>
-<span id="cb36-157"><a href="#cb36-157" aria-hidden="true" tabindex="-1"></a>    grid.results,</span>
-<span id="cb36-158"><a href="#cb36-158" aria-hidden="true" tabindex="-1"></a>    minvar_n<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb36-159"><a href="#cb36-159" aria-hidden="true" tabindex="-1"></a>    mv_n<span class="op">=</span><span class="dv">2</span>,</span>
-<span id="cb36-160"><a href="#cb36-160" aria-hidden="true" tabindex="-1"></a>    ridge_n<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb36-161"><a href="#cb36-161" aria-hidden="true" tabindex="-1"></a>    maxsharpe_n<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb36-162"><a href="#cb36-162" aria-hidden="true" tabindex="-1"></a>    include_frontier<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb36-163"><a href="#cb36-163" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"Sharpe"</span>)</span>
-<span id="cb36-164"><a href="#cb36-164" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-165"><a href="#cb36-165" aria-hidden="true" tabindex="-1"></a>fixed_mu_mv <span class="op">=</span> selection.fixed_mu_covariance_comparison(</span>
-<span id="cb36-166"><a href="#cb36-166" aria-hidden="true" tabindex="-1"></a>    grid.results,</span>
-<span id="cb36-167"><a href="#cb36-167" aria-hidden="true" tabindex="-1"></a>    optimizer<span class="op">=</span><span class="st">"MV"</span>,</span>
-<span id="cb36-168"><a href="#cb36-168" aria-hidden="true" tabindex="-1"></a>    mu_model<span class="op">=</span><span class="st">"BayesSteinMomentum"</span>,</span>
-<span id="cb36-169"><a href="#cb36-169" aria-hidden="true" tabindex="-1"></a>    cov_models<span class="op">=</span><span class="bu">list</span>(cov_models.keys()))</span>
-<span id="cb36-170"><a href="#cb36-170" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-171"><a href="#cb36-171" aria-hidden="true" tabindex="-1"></a>fixed_ewma_mu <span class="op">=</span> selection.fixed_cov_mu_comparison(</span>
-<span id="cb36-172"><a href="#cb36-172" aria-hidden="true" tabindex="-1"></a>    grid.results,</span>
-<span id="cb36-173"><a href="#cb36-173" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span><span class="st">"EWMA"</span>,</span>
-<span id="cb36-174"><a href="#cb36-174" aria-hidden="true" tabindex="-1"></a>    optimizers<span class="op">=</span>[<span class="st">"MV"</span>, <span class="st">"MaxSharpe"</span>],</span>
-<span id="cb36-175"><a href="#cb36-175" aria-hidden="true" tabindex="-1"></a>    mu_models<span class="op">=</span><span class="bu">list</span>(mu_models.keys()))</span>
-<span id="cb36-176"><a href="#cb36-176" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-177"><a href="#cb36-177" aria-hidden="true" tabindex="-1"></a>mu_diagnostics_df <span class="op">=</span> expected_returns.mu_diagnostics(grid.cache, cov_key<span class="op">=</span><span class="st">"LedoitWolf"</span>, mode<span class="op">=</span>hk_momentum_mode)</span>
-<span id="cb36-178"><a href="#cb36-178" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-179"><a href="#cb36-179" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"usable rebalance dates: </span><span class="sc">{</span><span class="bu">len</span>(grid.metadata[<span class="st">'rebalance_dates'</span>])<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb36-180"><a href="#cb36-180" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"avg universe size: </span><span class="sc">{</span>np<span class="sc">.</span>mean([<span class="bu">len</span>(grid.cache[d][<span class="st">'tickers'</span>]) <span class="cf">for</span> d <span class="kw">in</span> grid.metadata[<span class="st">'rebalance_dates'</span>]])<span class="sc">:.1f}</span><span class="ss">"</span>)</span>
-<span id="cb36-181"><a href="#cb36-181" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"computed strategies: </span><span class="sc">{</span><span class="bu">len</span>(grid.backtests)<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb36-182"><a href="#cb36-182" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-183"><a href="#cb36-183" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-184"><a href="#cb36-184" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Expected-return diagnostics"</span>)</span>
-<span id="cb36-185"><a href="#cb36-185" aria-hidden="true" tabindex="-1"></a>display(mu_diagnostics_df)</span>
-<span id="cb36-186"><a href="#cb36-186" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-187"><a href="#cb36-187" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Finalist strategy summary"</span>)</span>
-<span id="cb36-188"><a href="#cb36-188" aria-hidden="true" tabindex="-1"></a>display(selection.finalist_summary(grid.results, finalists, include_baseline<span class="op">=</span><span class="va">False</span>))</span>
-<span id="cb36-189"><a href="#cb36-189" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-190"><a href="#cb36-190" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Fixed mu = BayesSteinMomentum, MV covariance comparison"</span>)</span>
-<span id="cb36-191"><a href="#cb36-191" aria-hidden="true" tabindex="-1"></a>display(selection.comparison_summary(grid.results, fixed_mu_mv))</span>
-<span id="cb36-192"><a href="#cb36-192" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-193"><a href="#cb36-193" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Fixed covariance = EWMA, mu comparison for MV and MaxSharpe"</span>)</span>
-<span id="cb36-194"><a href="#cb36-194" aria-hidden="true" tabindex="-1"></a>display(selection.comparison_summary(grid.results, fixed_ewma_mu))</span>
-<span id="cb36-195"><a href="#cb36-195" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-196"><a href="#cb36-196" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">4</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">24</span>))</span>
-<span id="cb36-197"><a href="#cb36-197" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-198"><a href="#cb36-198" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_strategy_nav(</span>
-<span id="cb36-199"><a href="#cb36-199" aria-hidden="true" tabindex="-1"></a>    grid.nav,</span>
-<span id="cb36-200"><a href="#cb36-200" aria-hidden="true" tabindex="-1"></a>    strategies<span class="op">=</span>finalists,</span>
-<span id="cb36-201"><a href="#cb36-201" aria-hidden="true" tabindex="-1"></a>    summary<span class="op">=</span>grid.results,</span>
-<span id="cb36-202"><a href="#cb36-202" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">0</span>, <span class="dv">0</span>],</span>
-<span id="cb36-203"><a href="#cb36-203" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Finalist strategies: NAV"</span>)</span>
-<span id="cb36-204"><a href="#cb36-204" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-205"><a href="#cb36-205" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_strategy_drawdowns(</span>
-<span id="cb36-206"><a href="#cb36-206" aria-hidden="true" tabindex="-1"></a>    grid.nav,</span>
-<span id="cb36-207"><a href="#cb36-207" aria-hidden="true" tabindex="-1"></a>    strategies<span class="op">=</span>finalists,</span>
-<span id="cb36-208"><a href="#cb36-208" aria-hidden="true" tabindex="-1"></a>    summary<span class="op">=</span>grid.results,</span>
-<span id="cb36-209"><a href="#cb36-209" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">0</span>, <span class="dv">1</span>],</span>
-<span id="cb36-210"><a href="#cb36-210" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Finalist strategies: drawdown"</span>)</span>
-<span id="cb36-211"><a href="#cb36-211" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-212"><a href="#cb36-212" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_finalist_metric_bar(</span>
-<span id="cb36-213"><a href="#cb36-213" aria-hidden="true" tabindex="-1"></a>    grid.results,</span>
-<span id="cb36-214"><a href="#cb36-214" aria-hidden="true" tabindex="-1"></a>    strategies<span class="op">=</span>finalists,</span>
-<span id="cb36-215"><a href="#cb36-215" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"Sharpe"</span>,</span>
-<span id="cb36-216"><a href="#cb36-216" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">1</span>, <span class="dv">0</span>],</span>
-<span id="cb36-217"><a href="#cb36-217" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Finalist strategies: Sharpe"</span>)</span>
-<span id="cb36-218"><a href="#cb36-218" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-219"><a href="#cb36-219" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_risk_return_scatter(</span>
-<span id="cb36-220"><a href="#cb36-220" aria-hidden="true" tabindex="-1"></a>    grid.results,</span>
-<span id="cb36-221"><a href="#cb36-221" aria-hidden="true" tabindex="-1"></a>    strategies<span class="op">=</span>finalists,</span>
-<span id="cb36-222"><a href="#cb36-222" aria-hidden="true" tabindex="-1"></a>    summary<span class="op">=</span>grid.results,</span>
-<span id="cb36-223"><a href="#cb36-223" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">1</span>, <span class="dv">1</span>],</span>
-<span id="cb36-224"><a href="#cb36-224" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Finalist strategies: return vs risk"</span>)</span>
-<span id="cb36-225"><a href="#cb36-225" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-226"><a href="#cb36-226" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_grid_heatmap(</span>
-<span id="cb36-227"><a href="#cb36-227" aria-hidden="true" tabindex="-1"></a>    grid.results,</span>
-<span id="cb36-228"><a href="#cb36-228" aria-hidden="true" tabindex="-1"></a>    optimizer<span class="op">=</span><span class="st">"MV"</span>,</span>
-<span id="cb36-229"><a href="#cb36-229" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"Sharpe"</span>,</span>
-<span id="cb36-230"><a href="#cb36-230" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">2</span>, <span class="dv">0</span>],</span>
-<span id="cb36-231"><a href="#cb36-231" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"MV grid: Sharpe"</span>)</span>
-<span id="cb36-232"><a href="#cb36-232" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-233"><a href="#cb36-233" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_grid_heatmap(</span>
-<span id="cb36-234"><a href="#cb36-234" aria-hidden="true" tabindex="-1"></a>    grid.results,</span>
-<span id="cb36-235"><a href="#cb36-235" aria-hidden="true" tabindex="-1"></a>    optimizer<span class="op">=</span><span class="st">"MaxSharpe"</span>,</span>
-<span id="cb36-236"><a href="#cb36-236" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"Sharpe"</span>,</span>
-<span id="cb36-237"><a href="#cb36-237" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">2</span>, <span class="dv">1</span>],</span>
-<span id="cb36-238"><a href="#cb36-238" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"MaxSharpe grid: Sharpe"</span>)</span>
-<span id="cb36-239"><a href="#cb36-239" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-240"><a href="#cb36-240" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_fixed_mu_covariance_comparison(</span>
-<span id="cb36-241"><a href="#cb36-241" aria-hidden="true" tabindex="-1"></a>    grid.nav,</span>
-<span id="cb36-242"><a href="#cb36-242" aria-hidden="true" tabindex="-1"></a>    strategies<span class="op">=</span>fixed_mu_mv,</span>
-<span id="cb36-243"><a href="#cb36-243" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">3</span>, <span class="dv">0</span>],</span>
-<span id="cb36-244"><a href="#cb36-244" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"MV covariance comparison: fixed E(R) BayesSteinMomentum"</span>)</span>
-<span id="cb36-245"><a href="#cb36-245" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-246"><a href="#cb36-246" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_fixed_cov_mu_comparison(</span>
-<span id="cb36-247"><a href="#cb36-247" aria-hidden="true" tabindex="-1"></a>    grid.nav,</span>
-<span id="cb36-248"><a href="#cb36-248" aria-hidden="true" tabindex="-1"></a>    strategies<span class="op">=</span>fixed_ewma_mu,</span>
-<span id="cb36-249"><a href="#cb36-249" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">3</span>, <span class="dv">1</span>],</span>
-<span id="cb36-250"><a href="#cb36-250" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"E(R) comparison: fixed covariance = EWMA"</span>)</span>
-<span id="cb36-251"><a href="#cb36-251" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-252"><a href="#cb36-252" aria-hidden="true" tabindex="-1"></a>fig.suptitle(</span>
-<span id="cb36-253"><a href="#cb36-253" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Project 02 - Portfolio optimization with MeanVar, MinVar and MaxSharpe models (Hong Kong stock market data)"</span>,</span>
-<span id="cb36-254"><a href="#cb36-254" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="fl">0.985</span>)</span>
-<span id="cb36-255"><a href="#cb36-255" aria-hidden="true" tabindex="-1"></a>pf_plots.apply_portfolio_subplot_layout(</span>
-<span id="cb36-256"><a href="#cb36-256" aria-hidden="true" tabindex="-1"></a>    fig,</span>
-<span id="cb36-257"><a href="#cb36-257" aria-hidden="true" tabindex="-1"></a>    axes,</span>
-<span id="cb36-258"><a href="#cb36-258" aria-hidden="true" tabindex="-1"></a>    top<span class="op">=</span><span class="fl">0.94</span>,</span>
-<span id="cb36-259"><a href="#cb36-259" aria-hidden="true" tabindex="-1"></a>    bottom<span class="op">=</span><span class="fl">0.075</span>,</span>
-<span id="cb36-260"><a href="#cb36-260" aria-hidden="true" tabindex="-1"></a>    hspace<span class="op">=</span><span class="fl">0.48</span>,</span>
-<span id="cb36-261"><a href="#cb36-261" aria-hidden="true" tabindex="-1"></a>    wspace<span class="op">=</span><span class="fl">0.28</span>,</span>
-<span id="cb36-262"><a href="#cb36-262" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb36-263"><a href="#cb36-263" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb36-38"><a href="#cb36-38" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"close_prices:"</span>, close_prices.shape, <span class="st">"| volumes:"</span>, volumes.shape)</span>
+<span id="cb36-39"><a href="#cb36-39" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Date range:"</span>, close_prices.index.<span class="bu">min</span>().date(), <span class="st">"to"</span>, close_prices.index.<span class="bu">max</span>().date())</span>
+<span id="cb36-40"><a href="#cb36-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-41"><a href="#cb36-41" aria-hidden="true" tabindex="-1"></a>returns <span class="op">=</span> universe.prices_to_returns(prices)</span>
+<span id="cb36-42"><a href="#cb36-42" aria-hidden="true" tabindex="-1"></a>rebalance_dates <span class="op">=</span> universe.make_rebalance_dates(returns.index, freq<span class="op">=</span><span class="st">"ME"</span>, min_history_days<span class="op">=</span><span class="dv">252</span>)</span>
+<span id="cb36-43"><a href="#cb36-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-44"><a href="#cb36-44" aria-hidden="true" tabindex="-1"></a>universe_by_date <span class="op">=</span> universe.build_liquid_universe_by_date(</span>
+<span id="cb36-45"><a href="#cb36-45" aria-hidden="true" tabindex="-1"></a>    close<span class="op">=</span>prices, volume<span class="op">=</span>volumes,</span>
+<span id="cb36-46"><a href="#cb36-46" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates, top_n<span class="op">=</span><span class="dv">60</span>,</span>
+<span id="cb36-47"><a href="#cb36-47" aria-hidden="true" tabindex="-1"></a>    liquidity_lookback<span class="op">=</span><span class="dv">252</span>, min_listing_days<span class="op">=</span><span class="dv">252</span>,</span>
+<span id="cb36-48"><a href="#cb36-48" aria-hidden="true" tabindex="-1"></a>    min_obs<span class="op">=</span><span class="dv">252</span>, min_price<span class="op">=</span><span class="va">None</span>)</span>
+<span id="cb36-49"><a href="#cb36-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-50"><a href="#cb36-50" aria-hidden="true" tabindex="-1"></a>mu_models <span class="op">=</span> {</span>
+<span id="cb36-51"><a href="#cb36-51" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Momentum"</span>: expected_returns.momentum_mu,</span>
+<span id="cb36-52"><a href="#cb36-52" aria-hidden="true" tabindex="-1"></a>    <span class="st">"BayesStein"</span>: expected_returns.bayes_stein_mu,</span>
+<span id="cb36-53"><a href="#cb36-53" aria-hidden="true" tabindex="-1"></a>    <span class="st">"BayesSteinMomentum"</span>: expected_returns.bayes_stein_momentum_mu}</span>
+<span id="cb36-54"><a href="#cb36-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-55"><a href="#cb36-55" aria-hidden="true" tabindex="-1"></a>cov_models <span class="op">=</span> {</span>
+<span id="cb36-56"><a href="#cb36-56" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Sample"</span>: covariance.sample_covariance,</span>
+<span id="cb36-57"><a href="#cb36-57" aria-hidden="true" tabindex="-1"></a>    <span class="st">"LedoitWolf"</span>: covariance.ledoit_wolf_covariance,</span>
+<span id="cb36-58"><a href="#cb36-58" aria-hidden="true" tabindex="-1"></a>    <span class="st">"OAS"</span>: covariance.oas_covariance,</span>
+<span id="cb36-59"><a href="#cb36-59" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EWMA"</span>: covariance.ewma_covariance}</span>
+<span id="cb36-60"><a href="#cb36-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-61"><a href="#cb36-61" aria-hidden="true" tabindex="-1"></a>optimizer_grid <span class="op">=</span> {</span>
+<span id="cb36-62"><a href="#cb36-62" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EW"</span>: optimizers.equal_weight,</span>
+<span id="cb36-63"><a href="#cb36-63" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MinVar"</span>: optimizers.minimum_variance,</span>
+<span id="cb36-64"><a href="#cb36-64" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MV"</span>: optimizers.mean_variance,</span>
+<span id="cb36-65"><a href="#cb36-65" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MaxSharpe"</span>: optimizers.max_sharpe_slsqp,</span>
+<span id="cb36-66"><a href="#cb36-66" aria-hidden="true" tabindex="-1"></a>    <span class="st">"RidgeMV"</span>: optimizers.ridge_mean_variance}</span>
+<span id="cb36-67"><a href="#cb36-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-68"><a href="#cb36-68" aria-hidden="true" tabindex="-1"></a>hk_solver_order <span class="op">=</span> [<span class="st">"OSQP"</span>, <span class="st">"ECOS"</span>, <span class="st">"SCS"</span>]</span>
+<span id="cb36-69"><a href="#cb36-69" aria-hidden="true" tabindex="-1"></a>hk_cov_lookback <span class="op">=</span> <span class="dv">252</span></span>
+<span id="cb36-70"><a href="#cb36-70" aria-hidden="true" tabindex="-1"></a>hk_mu_lookback <span class="op">=</span> <span class="dv">252</span></span>
+<span id="cb36-71"><a href="#cb36-71" aria-hidden="true" tabindex="-1"></a>hk_momentum_mode <span class="op">=</span> <span class="st">"12-1"</span></span>
+<span id="cb36-72"><a href="#cb36-72" aria-hidden="true" tabindex="-1"></a>hk_cost_bps <span class="op">=</span> <span class="fl">10.0</span></span>
+<span id="cb36-73"><a href="#cb36-73" aria-hidden="true" tabindex="-1"></a>hk_turnover_penalty_bps <span class="op">=</span> <span class="fl">10.0</span></span>
+<span id="cb36-74"><a href="#cb36-74" aria-hidden="true" tabindex="-1"></a>hk_long_only <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb36-75"><a href="#cb36-75" aria-hidden="true" tabindex="-1"></a>hk_w_min <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb36-76"><a href="#cb36-76" aria-hidden="true" tabindex="-1"></a>hk_w_max <span class="op">=</span> <span class="fl">0.40</span></span>
+<span id="cb36-77"><a href="#cb36-77" aria-hidden="true" tabindex="-1"></a>hk_ridge <span class="op">=</span> <span class="fl">1e-4</span></span>
+<span id="cb36-78"><a href="#cb36-78" aria-hidden="true" tabindex="-1"></a>hk_mv_lambda <span class="op">=</span> <span class="fl">6.0</span></span>
+<span id="cb36-79"><a href="#cb36-79" aria-hidden="true" tabindex="-1"></a>hk_ridge_mv_gamma <span class="op">=</span> <span class="fl">12.0</span></span>
+<span id="cb36-80"><a href="#cb36-80" aria-hidden="true" tabindex="-1"></a>hk_mu_target_sharpe_ann <span class="op">=</span> <span class="fl">0.80</span></span>
+<span id="cb36-81"><a href="#cb36-81" aria-hidden="true" tabindex="-1"></a>hk_mu_cap_ann <span class="op">=</span> <span class="fl">0.30</span></span>
+<span id="cb36-82"><a href="#cb36-82" aria-hidden="true" tabindex="-1"></a>hk_mu_winsor_lo, hk_mu_winsor_hi <span class="op">=</span> <span class="fl">0.05</span>, <span class="fl">0.95</span></span>
+<span id="cb36-83"><a href="#cb36-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-84"><a href="#cb36-84" aria-hidden="true" tabindex="-1"></a>optimizer_params <span class="op">=</span> {</span>
+<span id="cb36-85"><a href="#cb36-85" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MV"</span>: {<span class="st">"mv_lambda"</span>: hk_mv_lambda},</span>
+<span id="cb36-86"><a href="#cb36-86" aria-hidden="true" tabindex="-1"></a>    <span class="st">"RidgeMV"</span>: {<span class="st">"mv_lambda"</span>: hk_mv_lambda, <span class="st">"gamma_l2"</span>: hk_ridge_mv_gamma, <span class="st">"ridge"</span>: hk_ridge},</span>
+<span id="cb36-87"><a href="#cb36-87" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MaxSharpe"</span>: {<span class="st">"ridge"</span>: hk_ridge},</span>
+<span id="cb36-88"><a href="#cb36-88" aria-hidden="true" tabindex="-1"></a>    <span class="st">"FrontierGrid"</span>: {<span class="st">"grid_n"</span>: <span class="dv">25</span>, <span class="st">"ridge"</span>: hk_ridge}}</span>
+<span id="cb36-89"><a href="#cb36-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-90"><a href="#cb36-90" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> walkforward.run_walkforward_grid(</span>
+<span id="cb36-91"><a href="#cb36-91" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>returns, close<span class="op">=</span>prices, volume<span class="op">=</span>volumes,</span>
+<span id="cb36-92"><a href="#cb36-92" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
+<span id="cb36-93"><a href="#cb36-93" aria-hidden="true" tabindex="-1"></a>    universe_by_date<span class="op">=</span>universe_by_date,</span>
+<span id="cb36-94"><a href="#cb36-94" aria-hidden="true" tabindex="-1"></a>    mu_models<span class="op">=</span>mu_models, cov_models<span class="op">=</span>cov_models,</span>
+<span id="cb36-95"><a href="#cb36-95" aria-hidden="true" tabindex="-1"></a>    optimizers<span class="op">=</span>optimizer_grid,</span>
+<span id="cb36-96"><a href="#cb36-96" aria-hidden="true" tabindex="-1"></a>    cov_lookback<span class="op">=</span>hk_cov_lookback,</span>
+<span id="cb36-97"><a href="#cb36-97" aria-hidden="true" tabindex="-1"></a>    mu_lookback<span class="op">=</span>hk_mu_lookback, min_mu_observations<span class="op">=</span><span class="dv">251</span>,</span>
+<span id="cb36-98"><a href="#cb36-98" aria-hidden="true" tabindex="-1"></a>    momentum_mode<span class="op">=</span>hk_momentum_mode, rf_daily<span class="op">=</span>rf_daily,</span>
+<span id="cb36-99"><a href="#cb36-99" aria-hidden="true" tabindex="-1"></a>    target_sharpe_ann<span class="op">=</span>hk_mu_target_sharpe_ann,</span>
+<span id="cb36-100"><a href="#cb36-100" aria-hidden="true" tabindex="-1"></a>    mu_cap_ann<span class="op">=</span>hk_mu_cap_ann,</span>
+<span id="cb36-101"><a href="#cb36-101" aria-hidden="true" tabindex="-1"></a>    winsor_lo<span class="op">=</span>hk_mu_winsor_lo,</span>
+<span id="cb36-102"><a href="#cb36-102" aria-hidden="true" tabindex="-1"></a>    winsor_hi<span class="op">=</span>hk_mu_winsor_hi,</span>
+<span id="cb36-103"><a href="#cb36-103" aria-hidden="true" tabindex="-1"></a>    ewma_lambda<span class="op">=</span><span class="fl">0.97</span>,</span>
+<span id="cb36-104"><a href="#cb36-104" aria-hidden="true" tabindex="-1"></a>    max_weight<span class="op">=</span>hk_w_max,</span>
+<span id="cb36-105"><a href="#cb36-105" aria-hidden="true" tabindex="-1"></a>    min_weight<span class="op">=</span>hk_w_min,</span>
+<span id="cb36-106"><a href="#cb36-106" aria-hidden="true" tabindex="-1"></a>    long_only<span class="op">=</span>hk_long_only,</span>
+<span id="cb36-107"><a href="#cb36-107" aria-hidden="true" tabindex="-1"></a>    trading_cost_bps<span class="op">=</span>hk_cost_bps,</span>
+<span id="cb36-108"><a href="#cb36-108" aria-hidden="true" tabindex="-1"></a>    turnover_penalty_bps<span class="op">=</span>hk_turnover_penalty_bps,</span>
+<span id="cb36-109"><a href="#cb36-109" aria-hidden="true" tabindex="-1"></a>    fallback<span class="op">=</span><span class="st">"equal"</span>,</span>
+<span id="cb36-110"><a href="#cb36-110" aria-hidden="true" tabindex="-1"></a>    solver_order<span class="op">=</span>hk_solver_order,</span>
+<span id="cb36-111"><a href="#cb36-111" aria-hidden="true" tabindex="-1"></a>    optimizer_params<span class="op">=</span>optimizer_params)</span>
+<span id="cb36-112"><a href="#cb36-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-113"><a href="#cb36-113" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> walkforward.append_frontiergrid_from_best_maxsharpe(</span>
+<span id="cb36-114"><a href="#cb36-114" aria-hidden="true" tabindex="-1"></a>    grid,</span>
+<span id="cb36-115"><a href="#cb36-115" aria-hidden="true" tabindex="-1"></a>    frontier_optimizer<span class="op">=</span>optimizers.max_sharpe_frontier_grid,</span>
+<span id="cb36-116"><a href="#cb36-116" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"Sharpe"</span>)</span>
+<span id="cb36-117"><a href="#cb36-117" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-118"><a href="#cb36-118" aria-hidden="true" tabindex="-1"></a>finalists <span class="op">=</span> selection.select_finalists(</span>
+<span id="cb36-119"><a href="#cb36-119" aria-hidden="true" tabindex="-1"></a>    grid.results,</span>
+<span id="cb36-120"><a href="#cb36-120" aria-hidden="true" tabindex="-1"></a>    minvar_n<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb36-121"><a href="#cb36-121" aria-hidden="true" tabindex="-1"></a>    mv_n<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb36-122"><a href="#cb36-122" aria-hidden="true" tabindex="-1"></a>    ridge_n<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb36-123"><a href="#cb36-123" aria-hidden="true" tabindex="-1"></a>    maxsharpe_n<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb36-124"><a href="#cb36-124" aria-hidden="true" tabindex="-1"></a>    include_frontier<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb36-125"><a href="#cb36-125" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"Sharpe"</span>)</span>
+<span id="cb36-126"><a href="#cb36-126" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-127"><a href="#cb36-127" aria-hidden="true" tabindex="-1"></a>fixed_mu_mv <span class="op">=</span> selection.fixed_mu_covariance_comparison(</span>
+<span id="cb36-128"><a href="#cb36-128" aria-hidden="true" tabindex="-1"></a>    grid.results,</span>
+<span id="cb36-129"><a href="#cb36-129" aria-hidden="true" tabindex="-1"></a>    optimizer<span class="op">=</span><span class="st">"MV"</span>,</span>
+<span id="cb36-130"><a href="#cb36-130" aria-hidden="true" tabindex="-1"></a>    mu_model<span class="op">=</span><span class="st">"BayesSteinMomentum"</span>,</span>
+<span id="cb36-131"><a href="#cb36-131" aria-hidden="true" tabindex="-1"></a>    cov_models<span class="op">=</span><span class="bu">list</span>(cov_models.keys()))</span>
+<span id="cb36-132"><a href="#cb36-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-133"><a href="#cb36-133" aria-hidden="true" tabindex="-1"></a>fixed_ewma_mu <span class="op">=</span> selection.fixed_cov_mu_comparison(</span>
+<span id="cb36-134"><a href="#cb36-134" aria-hidden="true" tabindex="-1"></a>    grid.results,</span>
+<span id="cb36-135"><a href="#cb36-135" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span><span class="st">"EWMA"</span>,</span>
+<span id="cb36-136"><a href="#cb36-136" aria-hidden="true" tabindex="-1"></a>    optimizers<span class="op">=</span>[<span class="st">"MV"</span>, <span class="st">"MaxSharpe"</span>],</span>
+<span id="cb36-137"><a href="#cb36-137" aria-hidden="true" tabindex="-1"></a>    mu_models<span class="op">=</span><span class="bu">list</span>(mu_models.keys()))</span>
+<span id="cb36-138"><a href="#cb36-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-139"><a href="#cb36-139" aria-hidden="true" tabindex="-1"></a>mu_diagnostics_df <span class="op">=</span> expected_returns.mu_diagnostics(grid.cache, cov_key<span class="op">=</span><span class="st">"LedoitWolf"</span>, mode<span class="op">=</span>hk_momentum_mode)</span>
+<span id="cb36-140"><a href="#cb36-140" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-141"><a href="#cb36-141" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"usable rebalance dates: </span><span class="sc">{</span><span class="bu">len</span>(grid.metadata[<span class="st">'rebalance_dates'</span>])<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb36-142"><a href="#cb36-142" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"avg universe size: </span><span class="sc">{</span>np<span class="sc">.</span>mean([<span class="bu">len</span>(grid.cache[d][<span class="st">'tickers'</span>]) <span class="cf">for</span> d <span class="kw">in</span> grid.metadata[<span class="st">'rebalance_dates'</span>]])<span class="sc">:.1f}</span><span class="ss">"</span>)</span>
+<span id="cb36-143"><a href="#cb36-143" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"computed strategies: </span><span class="sc">{</span><span class="bu">len</span>(grid.backtests)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb36-144"><a href="#cb36-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-145"><a href="#cb36-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-146"><a href="#cb36-146" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Expected-return diagnostics"</span>)</span>
+<span id="cb36-147"><a href="#cb36-147" aria-hidden="true" tabindex="-1"></a>display(mu_diagnostics_df)</span>
+<span id="cb36-148"><a href="#cb36-148" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-149"><a href="#cb36-149" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Finalist strategy summary"</span>)</span>
+<span id="cb36-150"><a href="#cb36-150" aria-hidden="true" tabindex="-1"></a>display(selection.finalist_summary(grid.results, finalists, include_baseline<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb36-151"><a href="#cb36-151" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-152"><a href="#cb36-152" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Fixed mu = BayesSteinMomentum, MV covariance comparison"</span>)</span>
+<span id="cb36-153"><a href="#cb36-153" aria-hidden="true" tabindex="-1"></a>display(selection.comparison_summary(grid.results, fixed_mu_mv))</span>
+<span id="cb36-154"><a href="#cb36-154" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-155"><a href="#cb36-155" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Fixed covariance = EWMA, mu comparison for MV and MaxSharpe"</span>)</span>
+<span id="cb36-156"><a href="#cb36-156" aria-hidden="true" tabindex="-1"></a>display(selection.comparison_summary(grid.results, fixed_ewma_mu))</span>
+<span id="cb36-157"><a href="#cb36-157" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-158"><a href="#cb36-158" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">4</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">24</span>))</span>
+<span id="cb36-159"><a href="#cb36-159" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-160"><a href="#cb36-160" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_strategy_nav(</span>
+<span id="cb36-161"><a href="#cb36-161" aria-hidden="true" tabindex="-1"></a>    grid.nav,</span>
+<span id="cb36-162"><a href="#cb36-162" aria-hidden="true" tabindex="-1"></a>    strategies<span class="op">=</span>finalists,</span>
+<span id="cb36-163"><a href="#cb36-163" aria-hidden="true" tabindex="-1"></a>    summary<span class="op">=</span>grid.results,</span>
+<span id="cb36-164"><a href="#cb36-164" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">0</span>, <span class="dv">0</span>],</span>
+<span id="cb36-165"><a href="#cb36-165" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Finalist strategies: NAV"</span>)</span>
+<span id="cb36-166"><a href="#cb36-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-167"><a href="#cb36-167" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_strategy_drawdowns(</span>
+<span id="cb36-168"><a href="#cb36-168" aria-hidden="true" tabindex="-1"></a>    grid.nav,</span>
+<span id="cb36-169"><a href="#cb36-169" aria-hidden="true" tabindex="-1"></a>    strategies<span class="op">=</span>finalists,</span>
+<span id="cb36-170"><a href="#cb36-170" aria-hidden="true" tabindex="-1"></a>    summary<span class="op">=</span>grid.results,</span>
+<span id="cb36-171"><a href="#cb36-171" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">0</span>, <span class="dv">1</span>],</span>
+<span id="cb36-172"><a href="#cb36-172" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Finalist strategies: drawdown"</span>)</span>
+<span id="cb36-173"><a href="#cb36-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-174"><a href="#cb36-174" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_finalist_metric_bar(</span>
+<span id="cb36-175"><a href="#cb36-175" aria-hidden="true" tabindex="-1"></a>    grid.results,</span>
+<span id="cb36-176"><a href="#cb36-176" aria-hidden="true" tabindex="-1"></a>    strategies<span class="op">=</span>finalists,</span>
+<span id="cb36-177"><a href="#cb36-177" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"Sharpe"</span>,</span>
+<span id="cb36-178"><a href="#cb36-178" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">1</span>, <span class="dv">0</span>],</span>
+<span id="cb36-179"><a href="#cb36-179" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Finalist strategies: Sharpe"</span>)</span>
+<span id="cb36-180"><a href="#cb36-180" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-181"><a href="#cb36-181" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_risk_return_scatter(</span>
+<span id="cb36-182"><a href="#cb36-182" aria-hidden="true" tabindex="-1"></a>    grid.results,</span>
+<span id="cb36-183"><a href="#cb36-183" aria-hidden="true" tabindex="-1"></a>    strategies<span class="op">=</span>finalists,</span>
+<span id="cb36-184"><a href="#cb36-184" aria-hidden="true" tabindex="-1"></a>    summary<span class="op">=</span>grid.results,</span>
+<span id="cb36-185"><a href="#cb36-185" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">1</span>, <span class="dv">1</span>],</span>
+<span id="cb36-186"><a href="#cb36-186" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Finalist strategies: return vs risk"</span>)</span>
+<span id="cb36-187"><a href="#cb36-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-188"><a href="#cb36-188" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_grid_heatmap(</span>
+<span id="cb36-189"><a href="#cb36-189" aria-hidden="true" tabindex="-1"></a>    grid.results,</span>
+<span id="cb36-190"><a href="#cb36-190" aria-hidden="true" tabindex="-1"></a>    optimizer<span class="op">=</span><span class="st">"MV"</span>,</span>
+<span id="cb36-191"><a href="#cb36-191" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"Sharpe"</span>,</span>
+<span id="cb36-192"><a href="#cb36-192" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">2</span>, <span class="dv">0</span>],</span>
+<span id="cb36-193"><a href="#cb36-193" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"MV grid: Sharpe"</span>)</span>
+<span id="cb36-194"><a href="#cb36-194" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-195"><a href="#cb36-195" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_grid_heatmap(</span>
+<span id="cb36-196"><a href="#cb36-196" aria-hidden="true" tabindex="-1"></a>    grid.results,</span>
+<span id="cb36-197"><a href="#cb36-197" aria-hidden="true" tabindex="-1"></a>    optimizer<span class="op">=</span><span class="st">"MaxSharpe"</span>,</span>
+<span id="cb36-198"><a href="#cb36-198" aria-hidden="true" tabindex="-1"></a>    metric<span class="op">=</span><span class="st">"Sharpe"</span>,</span>
+<span id="cb36-199"><a href="#cb36-199" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">2</span>, <span class="dv">1</span>],</span>
+<span id="cb36-200"><a href="#cb36-200" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"MaxSharpe grid: Sharpe"</span>)</span>
+<span id="cb36-201"><a href="#cb36-201" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-202"><a href="#cb36-202" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_fixed_mu_covariance_comparison(</span>
+<span id="cb36-203"><a href="#cb36-203" aria-hidden="true" tabindex="-1"></a>    grid.nav,</span>
+<span id="cb36-204"><a href="#cb36-204" aria-hidden="true" tabindex="-1"></a>    strategies<span class="op">=</span>fixed_mu_mv,</span>
+<span id="cb36-205"><a href="#cb36-205" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">3</span>, <span class="dv">0</span>],</span>
+<span id="cb36-206"><a href="#cb36-206" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"MV covariance comparison: fixed E(R) BayesSteinMomentum"</span>)</span>
+<span id="cb36-207"><a href="#cb36-207" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-208"><a href="#cb36-208" aria-hidden="true" tabindex="-1"></a>pf_plots.plot_fixed_cov_mu_comparison(</span>
+<span id="cb36-209"><a href="#cb36-209" aria-hidden="true" tabindex="-1"></a>    grid.nav,</span>
+<span id="cb36-210"><a href="#cb36-210" aria-hidden="true" tabindex="-1"></a>    strategies<span class="op">=</span>fixed_ewma_mu,</span>
+<span id="cb36-211"><a href="#cb36-211" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>axes[<span class="dv">3</span>, <span class="dv">1</span>],</span>
+<span id="cb36-212"><a href="#cb36-212" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"E(R) comparison: fixed covariance = EWMA"</span>)</span>
+<span id="cb36-213"><a href="#cb36-213" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-214"><a href="#cb36-214" aria-hidden="true" tabindex="-1"></a>fig.suptitle(</span>
+<span id="cb36-215"><a href="#cb36-215" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Project 02 - Portfolio optimization with MeanVar, MinVar and MaxSharpe models (Hong Kong stock market data)"</span>,</span>
+<span id="cb36-216"><a href="#cb36-216" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="fl">0.985</span>)</span>
+<span id="cb36-217"><a href="#cb36-217" aria-hidden="true" tabindex="-1"></a>pf_plots.apply_portfolio_subplot_layout(</span>
+<span id="cb36-218"><a href="#cb36-218" aria-hidden="true" tabindex="-1"></a>    fig,</span>
+<span id="cb36-219"><a href="#cb36-219" aria-hidden="true" tabindex="-1"></a>    axes,</span>
+<span id="cb36-220"><a href="#cb36-220" aria-hidden="true" tabindex="-1"></a>    top<span class="op">=</span><span class="fl">0.94</span>,</span>
+<span id="cb36-221"><a href="#cb36-221" aria-hidden="true" tabindex="-1"></a>    bottom<span class="op">=</span><span class="fl">0.075</span>,</span>
+<span id="cb36-222"><a href="#cb36-222" aria-hidden="true" tabindex="-1"></a>    hspace<span class="op">=</span><span class="fl">0.48</span>,</span>
+<span id="cb36-223"><a href="#cb36-223" aria-hidden="true" tabindex="-1"></a>    wspace<span class="op">=</span><span class="fl">0.28</span>,</span>
+<span id="cb36-224"><a href="#cb36-224" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb36-225"><a href="#cb36-225" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>close_prices: (2478, 290) | volumes: (2478, 290)
 Date range: 2016-01-04 to 2026-01-28
@@ -3147,16 +3109,16 @@ Expected-return diagnostics</code></pre>
 <td>MinVar</td>
 <td>-</td>
 <td>Sample</td>
-<td>0.083629</td>
+<td>0.083639</td>
 <td>0.149520</td>
-<td>0.348941</td>
-<td>-0.350359</td>
-<td>0.238696</td>
-<td>0.464107</td>
+<td>0.348999</td>
+<td>-0.350347</td>
+<td>0.238732</td>
+<td>0.464176</td>
 <td>0.021731</td>
-<td>2.368720</td>
+<td>2.368730</td>
 <td>0.001445</td>
-<td>8.140833</td>
+<td>8.139897</td>
 <td>0</td>
 </tr>
 <tr class="odd">
@@ -3165,16 +3127,16 @@ Expected-return diagnostics</code></pre>
 <td>MinVar</td>
 <td>-</td>
 <td>LedoitWolf</td>
-<td>0.082240</td>
-<td>0.149504</td>
-<td>0.340454</td>
-<td>-0.341211</td>
-<td>0.241023</td>
-<td>0.457919</td>
+<td>0.082235</td>
+<td>0.149502</td>
+<td>0.340427</td>
+<td>-0.341207</td>
+<td>0.241012</td>
+<td>0.457883</td>
 <td>0.019157</td>
-<td>2.088084</td>
+<td>2.088061</td>
 <td>0.001251</td>
-<td>10.034409</td>
+<td>10.034364</td>
 <td>0</td>
 </tr>
 <tr class="even">
@@ -3185,14 +3147,14 @@ Expected-return diagnostics</code></pre>
 <td>EWMA</td>
 <td>0.113840</td>
 <td>0.149816</td>
-<td>0.532574</td>
+<td>0.532572</td>
 <td>-0.240731</td>
-<td>0.472893</td>
-<td>0.669466</td>
+<td>0.472892</td>
+<td>0.669465</td>
 <td>0.141882</td>
-<td>15.465123</td>
+<td>15.465085</td>
 <td>0.008942</td>
-<td>6.638002</td>
+<td>6.638003</td>
 <td>0</td>
 </tr>
 <tr class="odd">
@@ -3201,16 +3163,16 @@ Expected-return diagnostics</code></pre>
 <td>MV</td>
 <td>Momentum</td>
 <td>EWMA</td>
-<td>0.111860</td>
+<td>0.111859</td>
 <td>0.149524</td>
-<td>0.521720</td>
+<td>0.521717</td>
 <td>-0.251793</td>
-<td>0.444253</td>
-<td>0.656975</td>
+<td>0.444250</td>
+<td>0.656972</td>
 <td>0.144307</td>
-<td>15.729486</td>
+<td>15.729480</td>
 <td>0.009229</td>
-<td>6.654745</td>
+<td>6.654724</td>
 <td>0</td>
 </tr>
 <tr class="even">
@@ -3221,14 +3183,14 @@ Expected-return diagnostics</code></pre>
 <td>LedoitWolf</td>
 <td>0.105342</td>
 <td>0.161124</td>
-<td>0.459098</td>
+<td>0.459093</td>
 <td>-0.294238</td>
-<td>0.358017</td>
-<td>0.596633</td>
-<td>0.072726</td>
-<td>7.927160</td>
+<td>0.358014</td>
+<td>0.596627</td>
+<td>0.072727</td>
+<td>7.927229</td>
 <td>0.004506</td>
-<td>12.925863</td>
+<td>12.925844</td>
 <td>0</td>
 </tr>
 <tr class="odd">
@@ -3237,16 +3199,16 @@ Expected-return diagnostics</code></pre>
 <td>MaxSharpe</td>
 <td>BayesStein</td>
 <td>LedoitWolf</td>
-<td>0.196404</td>
-<td>0.291276</td>
-<td>0.630847</td>
+<td>0.196411</td>
+<td>0.291274</td>
+<td>0.630869</td>
 <td>-0.491999</td>
-<td>0.399197</td>
-<td>0.829426</td>
-<td>0.250620</td>
-<td>27.317620</td>
+<td>0.399210</td>
+<td>0.829460</td>
+<td>0.250619</td>
+<td>27.317501</td>
 <td>0.010985</td>
-<td>5.604556</td>
+<td>5.604564</td>
 <td>0</td>
 </tr>
 <tr class="even">
@@ -3255,16 +3217,16 @@ Expected-return diagnostics</code></pre>
 <td>FrontierGrid</td>
 <td>BayesStein</td>
 <td>LedoitWolf</td>
-<td>0.211631</td>
-<td>0.312752</td>
-<td>0.648752</td>
-<td>-0.519779</td>
-<td>0.407156</td>
-<td>0.866583</td>
-<td>0.215477</td>
-<td>23.487034</td>
-<td>0.009128</td>
-<td>4.989175</td>
+<td>0.206350</td>
+<td>0.312245</td>
+<td>0.635289</td>
+<td>-0.519156</td>
+<td>0.397472</td>
+<td>0.849755</td>
+<td>0.219243</td>
+<td>23.897473</td>
+<td>0.009481</td>
+<td>5.005255</td>
 <td>0</td>
 </tr>
 </tbody>
@@ -3324,14 +3286,14 @@ Expected-return diagnostics</code></pre>
 <td>Sample</td>
 <td>0.088631</td>
 <td>0.149902</td>
-<td>0.380135</td>
-<td>-0.335485</td>
+<td>0.380136</td>
+<td>-0.335486</td>
 <td>0.264186</td>
-<td>0.483207</td>
+<td>0.483208</td>
 <td>0.072034</td>
-<td>7.851755</td>
+<td>7.851746</td>
 <td>0.004838</td>
-<td>5.450273</td>
+<td>5.450244</td>
 <td>0</td>
 </tr>
 <tr class="even">
@@ -3341,14 +3303,14 @@ Expected-return diagnostics</code></pre>
 <td>LedoitWolf</td>
 <td>0.092349</td>
 <td>0.153203</td>
-<td>0.397695</td>
+<td>0.397694</td>
 <td>-0.326380</td>
 <td>0.282950</td>
-<td>0.511393</td>
+<td>0.511392</td>
 <td>0.075285</td>
-<td>8.206094</td>
+<td>8.206085</td>
 <td>0.004941</td>
-<td>7.302437</td>
+<td>7.302441</td>
 <td>0</td>
 </tr>
 <tr class="odd">
@@ -3358,14 +3320,14 @@ Expected-return diagnostics</code></pre>
 <td>OAS</td>
 <td>0.090380</td>
 <td>0.152056</td>
-<td>0.387624</td>
+<td>0.387622</td>
 <td>-0.330993</td>
 <td>0.273058</td>
-<td>0.495982</td>
+<td>0.495980</td>
 <td>0.074696</td>
-<td>8.141852</td>
+<td>8.141864</td>
 <td>0.004979</td>
-<td>6.524150</td>
+<td>6.524156</td>
 <td>0</td>
 </tr>
 <tr class="even">
@@ -3375,14 +3337,14 @@ Expected-return diagnostics</code></pre>
 <td>EWMA</td>
 <td>0.103999</td>
 <td>0.145487</td>
-<td>0.482846</td>
+<td>0.482844</td>
 <td>-0.245302</td>
-<td>0.423964</td>
-<td>0.604597</td>
+<td>0.423962</td>
+<td>0.604594</td>
 <td>0.131343</td>
-<td>14.316381</td>
+<td>14.316340</td>
 <td>0.008555</td>
-<td>6.573137</td>
+<td>6.573148</td>
 <td>0</td>
 </tr>
 </tbody>
@@ -3440,16 +3402,16 @@ Expected-return diagnostics</code></pre>
 <td>MV</td>
 <td>Momentum</td>
 <td>EWMA</td>
-<td>0.111860</td>
+<td>0.111859</td>
 <td>0.149524</td>
-<td>0.521720</td>
+<td>0.521717</td>
 <td>-0.251793</td>
-<td>0.444253</td>
-<td>0.656975</td>
+<td>0.444250</td>
+<td>0.656972</td>
 <td>0.144307</td>
-<td>15.729486</td>
+<td>15.729480</td>
 <td>0.009229</td>
-<td>6.654745</td>
+<td>6.654724</td>
 <td>0</td>
 </tr>
 <tr class="even">
@@ -3459,14 +3421,14 @@ Expected-return diagnostics</code></pre>
 <td>EWMA</td>
 <td>0.113840</td>
 <td>0.149816</td>
-<td>0.532574</td>
+<td>0.532572</td>
 <td>-0.240731</td>
-<td>0.472893</td>
-<td>0.669466</td>
+<td>0.472892</td>
+<td>0.669465</td>
 <td>0.141882</td>
-<td>15.465123</td>
+<td>15.465085</td>
 <td>0.008942</td>
-<td>6.638002</td>
+<td>6.638003</td>
 <td>0</td>
 </tr>
 <tr class="odd">
@@ -3476,14 +3438,14 @@ Expected-return diagnostics</code></pre>
 <td>EWMA</td>
 <td>0.103999</td>
 <td>0.145487</td>
-<td>0.482846</td>
+<td>0.482844</td>
 <td>-0.245302</td>
-<td>0.423964</td>
-<td>0.604597</td>
+<td>0.423962</td>
+<td>0.604594</td>
 <td>0.131343</td>
-<td>14.316381</td>
+<td>14.316340</td>
 <td>0.008555</td>
-<td>6.573137</td>
+<td>6.573148</td>
 <td>0</td>
 </tr>
 <tr class="even">
@@ -3491,16 +3453,16 @@ Expected-return diagnostics</code></pre>
 <td>MaxSharpe</td>
 <td>Momentum</td>
 <td>EWMA</td>
-<td>0.175584</td>
-<td>0.270979</td>
-<td>0.591627</td>
-<td>-0.396527</td>
-<td>0.442804</td>
-<td>0.775191</td>
-<td>0.334532</td>
-<td>36.463996</td>
-<td>0.015643</td>
-<td>5.270529</td>
+<td>0.174988</td>
+<td>0.271061</td>
+<td>0.589660</td>
+<td>-0.399406</td>
+<td>0.438121</td>
+<td>0.772669</td>
+<td>0.334761</td>
+<td>36.488945</td>
+<td>0.015702</td>
+<td>5.266245</td>
 <td>0</td>
 </tr>
 <tr class="odd">
@@ -3510,14 +3472,14 @@ Expected-return diagnostics</code></pre>
 <td>EWMA</td>
 <td>0.185852</td>
 <td>0.270606</td>
-<td>0.624514</td>
+<td>0.624513</td>
 <td>-0.413428</td>
-<td>0.449540</td>
-<td>0.807956</td>
+<td>0.449539</td>
+<td>0.807954</td>
 <td>0.286845</td>
-<td>31.266092</td>
+<td>31.266101</td>
 <td>0.012768</td>
-<td>5.776764</td>
+<td>5.776756</td>
 <td>0</td>
 </tr>
 <tr class="even">
@@ -3525,16 +3487,16 @@ Expected-return diagnostics</code></pre>
 <td>MaxSharpe</td>
 <td>BayesSteinMomentum</td>
 <td>EWMA</td>
-<td>0.186168</td>
-<td>0.281447</td>
-<td>0.611810</td>
-<td>-0.425094</td>
-<td>0.437945</td>
-<td>0.807210</td>
-<td>0.296347</td>
-<td>32.301811</td>
-<td>0.012313</td>
-<td>5.117730</td>
+<td>0.186227</td>
+<td>0.281444</td>
+<td>0.611990</td>
+<td>-0.425080</td>
+<td>0.438098</td>
+<td>0.807463</td>
+<td>0.296400</td>
+<td>32.307637</td>
+<td>0.012314</td>
+<td>5.117716</td>
 <td>0</td>
 </tr>
 </tbody>

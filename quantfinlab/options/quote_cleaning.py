@@ -762,6 +762,198 @@ def select_hedging_option_path(
     return rolling.reset_index(drop=True)
 
 
+def _surface_pdf(x) -> np.ndarray:
+    arr = np.asarray(x, dtype=float)
+    return np.exp(-0.5 * arr * arr) / np.sqrt(2.0 * np.pi)
+
+
+def surface_ready_quotes(
+    quotes,
+    date_col="date",
+    expiry_col="expiry",
+    option_type_col="option_type",
+    strike_col="strike",
+    spot_col="spot",
+    forward_col="forward",
+    tau_col="tau",
+    rate_col="rate",
+    discount_col="discount_factor",
+    iv_bid_col="iv_bid",
+    iv_mid_col="iv_mid",
+    iv_ask_col="iv_ask",
+    rel_spread_col="relative_spread",
+    out_k_col="k",
+    out_k_spot_col="k_spot",
+    out_weight_col="surface_weight",
+    min_iv=0.02,
+    max_iv=2.00,
+    min_tau=7 / 365.25,
+    max_tau=180 / 365.25,
+    min_weight=0.05,
+    max_weight=20.0,
+):
+    """Prepare broad call/put IV observations for volatility-surface fitting."""
+    out = quotes.copy()
+    for col in [date_col, expiry_col]:
+        if col in out.columns:
+            out[col] = pd.to_datetime(out[col], errors="coerce").astype("datetime64[ns]")
+    if option_type_col in out.columns:
+        out[option_type_col] = out[option_type_col].map(parse_option_type)
+
+    for col in [strike_col, spot_col, forward_col, tau_col, rate_col, discount_col, iv_bid_col, iv_mid_col, iv_ask_col]:
+        if col in out.columns:
+            out[col] = pd.to_numeric(out[col], errors="coerce")
+
+    rel_col = rel_spread_col if rel_spread_col in out.columns else "rel_spread" if "rel_spread" in out.columns else rel_spread_col
+    if rel_col not in out.columns:
+        if {"bid", "ask", "mid"}.issubset(out.columns):
+            out[rel_col] = (pd.to_numeric(out["ask"], errors="coerce") - pd.to_numeric(out["bid"], errors="coerce")) / pd.to_numeric(
+                out["mid"],
+                errors="coerce",
+            ).replace(0, np.nan)
+        else:
+            out[rel_col] = np.nan
+    out[rel_spread_col] = pd.to_numeric(out[rel_col], errors="coerce")
+
+    required = [date_col, expiry_col, option_type_col, strike_col, spot_col, forward_col, tau_col, iv_mid_col]
+    missing = [c for c in required if c not in out.columns]
+    if missing:
+        raise ValueError(f"surface_ready_quotes is missing required columns: {missing}")
+
+    mask = (
+        out[option_type_col].isin(["call", "put"])
+        & np.isfinite(out[strike_col])
+        & np.isfinite(out[spot_col])
+        & np.isfinite(out[forward_col])
+        & np.isfinite(out[tau_col])
+        & np.isfinite(out[iv_mid_col])
+        & (out[strike_col] > 0)
+        & (out[spot_col] > 0)
+        & (out[forward_col] > 0)
+        & (out[tau_col] >= float(min_tau))
+        & (out[tau_col] <= float(max_tau))
+        & (out[iv_mid_col] >= float(min_iv))
+        & (out[iv_mid_col] <= float(max_iv))
+    )
+    if rate_col in out.columns:
+        mask &= np.isfinite(out[rate_col])
+    if discount_col in out.columns:
+        mask &= np.isfinite(out[discount_col]) & (out[discount_col] > 0)
+    if {"bid", "ask"}.issubset(out.columns):
+        bid = pd.to_numeric(out["bid"], errors="coerce")
+        ask = pd.to_numeric(out["ask"], errors="coerce")
+        mask &= bid.notna() & ask.notna() & (bid >= 0) & (ask >= bid)
+
+    out = out.loc[mask].copy()
+    out[out_k_col] = np.log(out[strike_col] / out[forward_col])
+    out[out_k_spot_col] = np.log(out[strike_col] / out[spot_col])
+    out["total_variance"] = out[iv_mid_col] * out[iv_mid_col] * out[tau_col]
+    out = out[np.isfinite(out["total_variance"]) & (out["total_variance"] > 0)].copy()
+    out["log_total_variance"] = np.log(out["total_variance"].clip(lower=1e-12))
+
+    sqrt_tau = np.sqrt(out[tau_col].clip(lower=1e-10))
+    sigma = out[iv_mid_col].clip(lower=1e-8)
+    d1 = (-out[out_k_col] + 0.5 * sigma * sigma * out[tau_col]) / (sigma * sqrt_tau)
+    df = out[discount_col] if discount_col in out.columns else 1.0
+    dollar_vega = pd.Series(np.asarray(df, dtype=float) * out[forward_col].to_numpy(dtype=float) * _surface_pdf(d1) * sqrt_tau, index=out.index)
+
+    if iv_bid_col in out.columns and iv_ask_col in out.columns:
+        iv_width = (out[iv_ask_col] - out[iv_bid_col]).where(lambda x: np.isfinite(x) & (x > 0))
+    else:
+        iv_width = pd.Series(np.nan, index=out.index, dtype=float)
+    if {"bid", "ask"}.issubset(out.columns):
+        price_spread = (pd.to_numeric(out["ask"], errors="coerce") - pd.to_numeric(out["bid"], errors="coerce")).clip(lower=0.0)
+        iv_from_price = price_spread / dollar_vega.replace(0, np.nan)
+    else:
+        iv_from_price = pd.Series(np.nan, index=out.index, dtype=float)
+    out["iv_uncertainty"] = iv_width.combine_first(iv_from_price)
+    unc_med = float(np.nanmedian(out["iv_uncertainty"])) if out["iv_uncertainty"].notna().any() else 0.025
+    out["iv_uncertainty"] = out["iv_uncertainty"].fillna(unc_med).clip(lower=0.003, upper=0.50)
+
+    spread = out[rel_spread_col].copy()
+    spread_med = float(np.nanmedian(spread[(spread > 0) & np.isfinite(spread)])) if spread.notna().any() else 0.08
+    spread = spread.fillna(spread_med).clip(lower=0.003, upper=1.0)
+    spread_weight = 1.0 / (spread.to_numpy(dtype=float) ** 2 + 0.02**2)
+    spread_weight /= max(float(np.nanmedian(spread_weight[np.isfinite(spread_weight)])), 1e-12)
+
+    info = dollar_vega.to_numpy(dtype=float)
+    info_med = float(np.nanmedian(info[np.isfinite(info) & (info > 0)])) if np.isfinite(info).any() else 1.0
+    info_weight = np.clip((info / max(info_med, 1e-12)) ** 0.45, 0.20, 3.00)
+    wing_weight = np.exp(-np.maximum(np.abs(out[out_k_col].to_numpy(dtype=float)) - 0.10, 0.0) / 0.45)
+    unc = out["iv_uncertainty"].to_numpy(dtype=float)
+    unc_med = float(np.nanmedian(unc[np.isfinite(unc) & (unc > 0)])) if np.isfinite(unc).any() else 0.025
+    uncertainty_penalty = np.clip(unc / max(unc_med, 1e-12), 0.50, 3.50) ** -0.35
+    weight = spread_weight * info_weight * wing_weight * uncertainty_penalty
+    weight /= max(float(np.nanmedian(weight[np.isfinite(weight)])), 1e-12)
+    out[out_weight_col] = np.clip(weight, float(min_weight), float(max_weight))
+
+    if "dte_days" not in out.columns:
+        if "dte_calendar" in out.columns:
+            out["dte_days"] = out["dte_calendar"]
+        elif "dte" in out.columns:
+            out["dte_days"] = out["dte"]
+        else:
+            out["dte_days"] = out[tau_col] * 365.25
+    return out.sort_values([date_col, expiry_col, strike_col, option_type_col]).reset_index(drop=True)
+
+
+def surface_support_by_date(
+    quotes: pd.DataFrame,
+    *,
+    date_col: str = "date",
+    k_col: str = "k",
+    tau_col: str = "tau",
+    k_quantiles: tuple[float, float] = (0.01, 0.99),
+) -> pd.DataFrame:
+    """Quote support summary by date for support-aware surface grids."""
+    if quotes.empty:
+        return pd.DataFrame(columns=[date_col, "quotes", "k_min", "k_max", "k_lo", "k_hi", "tau_min", "tau_max"])
+    data = quotes[[date_col, k_col, tau_col]].copy()
+    data[date_col] = pd.to_datetime(data[date_col], errors="coerce").dt.normalize()
+    data[k_col] = pd.to_numeric(data[k_col], errors="coerce")
+    data[tau_col] = pd.to_numeric(data[tau_col], errors="coerce")
+    data = data[np.isfinite(data[k_col]) & np.isfinite(data[tau_col])].copy()
+    grouped = data.groupby(date_col)
+    out = grouped.agg(
+        quotes=(k_col, "size"),
+        k_min=(k_col, "min"),
+        k_max=(k_col, "max"),
+        k_lo=(k_col, lambda x: float(np.nanquantile(x, k_quantiles[0]))),
+        k_hi=(k_col, lambda x: float(np.nanquantile(x, k_quantiles[1]))),
+        tau_min=(tau_col, "min"),
+        tau_max=(tau_col, "max"),
+    ).reset_index()
+    return out.sort_values(date_col).reset_index(drop=True)
+
+
+def surface_common_support(
+    quotes: pd.DataFrame,
+    *,
+    date_col: str = "date",
+    k_col: str = "k",
+    tau_col: str = "tau",
+    k_grid=None,
+    tau_grid=None,
+    min_support_share: float = 0.85,
+    k_quantiles: tuple[float, float] = (0.01, 0.99),
+) -> dict:
+    """Common support mask for fixed historical grids."""
+    support = surface_support_by_date(quotes, date_col=date_col, k_col=k_col, tau_col=tau_col, k_quantiles=k_quantiles)
+    if k_grid is None:
+        k_grid = np.linspace(float(support["k_lo"].median()), float(support["k_hi"].median()), 41)
+    if tau_grid is None:
+        tau_grid = np.linspace(float(support["tau_min"].median()), float(support["tau_max"].median()), 21)
+    k_grid = np.asarray(k_grid, dtype=float)
+    tau_grid = np.asarray(tau_grid, dtype=float)
+    kk, tt = np.meshgrid(k_grid, tau_grid)
+    masks = []
+    for _, row in support.iterrows():
+        masks.append((kk >= row["k_lo"]) & (kk <= row["k_hi"]) & (tt >= row["tau_min"]) & (tt <= row["tau_max"]))
+    share = np.mean(np.asarray(masks, dtype=bool), axis=0) if masks else np.zeros_like(kk, dtype=float)
+    mask = share >= float(min_support_share)
+    return {"k": k_grid, "tau": tau_grid, "support_share": share, "support_mask": mask, "support_by_date": support}
+
+
 __all__ = [
     "add_moneyness",
     "add_time_to_expiry",
@@ -779,6 +971,9 @@ __all__ = [
     "pair_put_call_quotes",
     "parse_option_type",
     "select_hedging_option_path",
+    "surface_common_support",
+    "surface_ready_quotes",
+    "surface_support_by_date",
     "split_calls_puts",
     "wide_option_chain_to_long",
 ]

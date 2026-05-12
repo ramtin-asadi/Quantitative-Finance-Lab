@@ -634,6 +634,284 @@ def greek_summary_table(greek_table: pd.DataFrame, greek_bands: pd.DataFrame | N
     return pd.DataFrame(rows)
 
 
+def _surface_price_grid_fd(fit, spot_value, strike, tau, rate, carry, sigma_flat=None):
+    from .surface import surface_iv
+
+    strike = np.asarray(strike, dtype=float)
+    tau = np.asarray(tau, dtype=float)
+    rate = np.asarray(rate, dtype=float)
+    carry = np.asarray(carry, dtype=float)
+    forward = float(spot_value) * np.exp(carry[:, None] * tau[:, None])
+    if sigma_flat is None:
+        model_k = np.log(strike[None, :] / np.maximum(forward, 1e-300))
+        sigma = np.empty_like(model_k)
+        for i, t in enumerate(tau):
+            sigma[i] = surface_iv(fit, model_k[i], np.full_like(strike, t))
+    else:
+        sigma = np.asarray(sigma_flat, dtype=float)
+    price = bsm.black76_price("call", forward, strike[None, :], tau[:, None], sigma, np.exp(-rate[:, None] * tau[:, None]))
+    return np.asarray(price, dtype=float), np.asarray(sigma, dtype=float)
+
+
+def _surface_delta_gamma_fd(fit, spot_value, strike, tau, rate, carry, step):
+    p0, sigma0 = _surface_price_grid_fd(fit, spot_value, strike, tau, rate, carry)
+    pp, _ = _surface_price_grid_fd(fit, spot_value + step, strike, tau, rate, carry)
+    pm, _ = _surface_price_grid_fd(fit, spot_value - step, strike, tau, rate, carry)
+    fp, _ = _surface_price_grid_fd(fit, spot_value + step, strike, tau, rate, carry, sigma_flat=sigma0)
+    fm, _ = _surface_price_grid_fd(fit, spot_value - step, strike, tau, rate, carry, sigma_flat=sigma0)
+    delta_surface = (pp - pm) / (2.0 * step)
+    gamma_surface = (pp - 2.0 * p0 + pm) / (step * step)
+    delta_flat = (fp - fm) / (2.0 * step)
+    gamma_flat = (fp - 2.0 * p0 + fm) / (step * step)
+    return p0, sigma0, delta_surface, gamma_surface, delta_flat, gamma_flat
+
+
+_surface_delta_gamma_eval_jax_cached = None
+
+
+def _surface_fit_arrays_jax(fit: dict) -> dict:
+    import jax.numpy as jnp
+
+    return {
+        "coef": jnp.asarray(fit["coef"]),
+        "knots_x": jnp.asarray(fit.get("knots_x", fit.get("knots_k"))),
+        "knots_y": jnp.asarray(fit.get("knots_y", fit.get("knots_tau"))),
+        "center_x": jnp.asarray(fit.get("center_x", fit.get("center_k", fit.get("k_center")))),
+        "scale_x": jnp.asarray(fit.get("scale_x", fit.get("scale_k", fit.get("k_scale")))),
+        "center_y": jnp.asarray(fit.get("center_y", fit.get("center_tau", fit.get("tau_center")))),
+        "scale_y": jnp.asarray(fit.get("scale_y", fit.get("scale_tau", fit.get("tau_scale")))),
+    }
+
+
+def _surface_delta_gamma_eval_jax_fn():
+    global _surface_delta_gamma_eval_jax_cached
+    if _surface_delta_gamma_eval_jax_cached is not None:
+        return _surface_delta_gamma_eval_jax_cached
+
+    jax, jnp, exc = _jax_modules(strict=True)
+    if exc is not None:
+        raise exc
+
+    from .surface import surface_iv_jax
+
+    def eval_grid(fit_j, spot_value, strike_j, tau_j, rate_j, carry_j):
+        def sigma_from_k(k_value, t_value):
+            return surface_iv_jax(fit_j, k_value, t_value)
+
+        def call_price(s, k_strike, t, r, bcarry, fixed_sigma):
+            fwd = s * jnp.exp(bcarry * t)
+            sig = jnp.where(fixed_sigma > 0, fixed_sigma, sigma_from_k(jnp.log(k_strike / jnp.maximum(fwd, 1e-300)), t))
+            sqrt_t = jnp.sqrt(jnp.maximum(t, 1e-10))
+            d1 = (
+                jnp.log(jnp.maximum(fwd, 1e-300) / jnp.maximum(k_strike, 1e-300))
+                + 0.5 * sig * sig * t
+            ) / (sig * sqrt_t)
+            d2 = d1 - sig * sqrt_t
+            ncdf = lambda x: 0.5 * (1.0 + jax.lax.erf(x / jnp.sqrt(2.0)))
+            return jnp.exp(-r * t) * (fwd * ncdf(d1) - k_strike * ncdf(d2))
+
+        surface_delta = jax.grad(call_price, argnums=0)
+        surface_gamma = jax.grad(surface_delta, argnums=0)
+        tt, kk = jnp.meshgrid(tau_j, strike_j, indexing="ij")
+        rr = rate_j[:, None] + jnp.zeros_like(tt)
+        cc = carry_j[:, None] + jnp.zeros_like(tt)
+        fwd0 = spot_value * jnp.exp(cc * tt)
+        model_k = jnp.log(kk / jnp.maximum(fwd0, 1e-300))
+        sigma0 = jax.vmap(lambda x, t: sigma_from_k(x, t))(model_k.reshape(-1), tt.reshape(-1)).reshape(tt.shape)
+        vm = jax.vmap(
+            lambda k_strike, t, r, bcarry, sig: (
+                call_price(spot_value, k_strike, t, r, bcarry, -1.0),
+                surface_delta(spot_value, k_strike, t, r, bcarry, -1.0),
+                surface_gamma(spot_value, k_strike, t, r, bcarry, -1.0),
+                surface_delta(spot_value, k_strike, t, r, bcarry, sig),
+                surface_gamma(spot_value, k_strike, t, r, bcarry, sig),
+            )
+        )
+        vals = vm(kk.reshape(-1), tt.reshape(-1), rr.reshape(-1), cc.reshape(-1), sigma0.reshape(-1))
+        return [x.reshape(tt.shape) for x in vals], sigma0
+
+    _surface_delta_gamma_eval_jax_cached = jax.jit(eval_grid)
+    return _surface_delta_gamma_eval_jax_cached
+
+
+def _surface_delta_gamma_jax(fit, spot_value, strike, tau, rate, carry):
+    jax, jnp, exc = _jax_modules(strict=True)
+    if exc is not None:
+        raise exc
+
+    strike_j = jnp.asarray(strike)
+    tau_j = jnp.asarray(tau)
+    rate_j = jnp.asarray(rate)
+    carry_j = jnp.asarray(carry)
+    fit_j = _surface_fit_arrays_jax(fit)
+    vals, sigma0 = _surface_delta_gamma_eval_jax_fn()(
+        fit_j,
+        jnp.asarray(float(spot_value)),
+        strike_j,
+        tau_j,
+        rate_j,
+        carry_j,
+    )
+    vals[0].block_until_ready()
+    return [np.asarray(x, dtype=float) for x in vals], np.asarray(sigma0, dtype=float)
+
+
+def surface_delta_gamma_grid(
+    fit,
+    q: pd.DataFrame,
+    *,
+    k_min: float = -0.22,
+    k_max: float = 0.08,
+    n_k: int = 41,
+    tau_days=None,
+    spot_shock: float = 0.01,
+    engine: str = "jax",
+    fallback: bool = True,
+    use_jax: bool | None = None,
+    annualization_days: float = 365.25,
+) -> pd.DataFrame:
+    """Flat-vol vs surface-aware call delta/gamma corrections on a fixed strike grid."""
+    from .local_vol import carry_by_tau, rate_by_tau
+
+    if use_jax is not None:
+        engine = "jax" if use_jax else "numpy"
+    engine_requested = str(engine).lower()
+    if engine_requested == "auto":
+        engine_requested = "jax"
+
+    if tau_days is None:
+        tau_days = np.array([21, 35, 60, 90, 120, 150], dtype=float)
+    tau_days = np.asarray(tau_days, dtype=float)
+    tau = tau_days / float(annualization_days)
+    k_spot = np.linspace(float(k_min), float(k_max), int(n_k))
+    spot_value = float(np.nanmedian(pd.to_numeric(q["spot"], errors="coerce")))
+    strike = spot_value * np.exp(k_spot)
+    rate = rate_by_tau(q, tau)
+    carry = carry_by_tau(q, tau, spot_value=spot_value)
+    shock_abs = spot_value * float(spot_shock)
+
+    fallback_used = False
+    engine_used = engine_requested
+    if engine_requested == "jax":
+        try:
+            vals, sigma0 = _surface_delta_gamma_jax(fit, spot_value, strike, tau, rate, carry)
+            price, delta_surface, gamma_surface, delta_flat, gamma_flat = vals
+            engine_used = "jax"
+        except Exception as exc:
+            if not fallback:
+                raise
+            warnings.warn(
+                "JAX is not installed or failed for surface Greeks; falling back to NumPy finite-difference engine. "
+                "Install a working jax runtime for autodiff surface Greeks.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            fallback_used = True
+            engine_used = "numpy"
+            price, sigma0, delta_surface, gamma_surface, delta_flat, gamma_flat = _surface_delta_gamma_fd(
+                fit,
+                spot_value,
+                strike,
+                tau,
+                rate,
+                carry,
+                shock_abs,
+            )
+    elif engine_requested in {"numpy", "finite_difference", "finite-difference"}:
+        engine_used = "numpy"
+        price, sigma0, delta_surface, gamma_surface, delta_flat, gamma_flat = _surface_delta_gamma_fd(
+            fit,
+            spot_value,
+            strike,
+            tau,
+            rate,
+            carry,
+            shock_abs,
+        )
+    else:
+        raise ValueError("engine must be 'jax', 'auto', 'numpy', or 'finite_difference'.")
+
+    rows = []
+    for i, t in enumerate(tau):
+        forward = spot_value * np.exp(carry[i] * t)
+        k_forward = np.log(strike / forward)
+        for j, ks in enumerate(k_spot):
+            delta_diff = delta_surface[i, j] - delta_flat[i, j]
+            gamma_diff = gamma_surface[i, j] - gamma_flat[i, j]
+            rows.append(
+                {
+                    "tau": float(t),
+                    "tau_days": float(tau_days[i]),
+                    "k": float(k_forward[j]),
+                    "k_spot": float(ks),
+                    "strike": float(strike[j]),
+                    "spot": float(spot_value),
+                    "rate": float(rate[i]),
+                    "carry": float(carry[i]),
+                    "iv": float(sigma0[i, j]),
+                    "price": float(price[i, j]),
+                    "delta_flat": float(delta_flat[i, j]),
+                    "delta_surface": float(delta_surface[i, j]),
+                    "delta_diff": float(delta_diff),
+                    "gamma_flat": float(gamma_flat[i, j]),
+                    "gamma_surface": float(gamma_surface[i, j]),
+                    "gamma_diff": float(gamma_diff),
+                    "delta_pnl": float(delta_diff * shock_abs),
+                    "gamma_pnl": float(0.5 * gamma_diff * shock_abs * shock_abs),
+                },
+            )
+    out = pd.DataFrame(rows)
+    out.attrs["engine_requested"] = engine_requested
+    out.attrs["engine_used"] = engine_used
+    out.attrs["fallback_used"] = bool(fallback_used)
+    return out
+
+
+def surface_delta_gamma_risk(greek_grid: pd.DataFrame) -> pd.DataFrame:
+    """P&L-scaled delta/gamma model-risk summary."""
+    if greek_grid.empty:
+        return pd.DataFrame()
+    g = greek_grid.copy()
+    return pd.DataFrame(
+        [
+            {
+                "delta_pnl_rms": float(np.sqrt(np.nanmean(g["delta_pnl"] ** 2))),
+                "gamma_pnl_rms": float(np.sqrt(np.nanmean(g["gamma_pnl"] ** 2))),
+                "total_greek_pnl_rms": float(np.sqrt(np.nanmean(g["delta_pnl"] ** 2 + g["gamma_pnl"] ** 2))),
+                "max_abs_delta_diff": float(np.nanmax(np.abs(g["delta_diff"]))),
+                "max_abs_gamma_diff": float(np.nanmax(np.abs(g["gamma_diff"]))),
+            },
+        ],
+    )
+
+
+def surface_greek_risk_panel(
+    quotes: pd.DataFrame,
+    *,
+    fits: dict,
+    date_col: str = "date",
+    **kwargs,
+) -> pd.DataFrame:
+    rows = []
+    data = quotes.copy()
+    data[date_col] = pd.to_datetime(data[date_col], errors="coerce").dt.normalize()
+    for date, fit in fits.items():
+        date = pd.Timestamp(date).normalize()
+        q = data[data[date_col].eq(date)].copy()
+        if q.empty:
+            continue
+        try:
+            grid = surface_delta_gamma_grid(fit, q, **kwargs)
+            row = surface_delta_gamma_risk(grid).iloc[0].to_dict()
+            row["date"] = date
+            row["engine_used"] = grid.attrs.get("engine_used", "unknown")
+            row["fallback_used"] = bool(grid.attrs.get("fallback_used", False))
+            rows.append(row)
+        except Exception as exc:
+            rows.append({"date": date, "error": str(exc)[:160]})
+    return pd.DataFrame(rows).sort_values("date").reset_index(drop=True) if rows else pd.DataFrame()
+
+
 black76_delta = bsm.forward_bsm_delta
 black76_gamma = bsm.forward_bsm_gamma
 black76_vega = bsm.forward_bsm_vega
@@ -656,4 +934,7 @@ __all__ = [
     "forward_bsm_greeks_numpy",
     "forward_bsm_price_jax",
     "greek_summary_table",
+    "surface_delta_gamma_grid",
+    "surface_delta_gamma_risk",
+    "surface_greek_risk_panel",
 ]

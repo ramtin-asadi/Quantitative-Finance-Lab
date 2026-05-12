@@ -641,6 +641,18 @@ def compute_implied_vols(quotes: pd.DataFrame, **kwargs: Any) -> pd.DataFrame:
     return compute_iv_table(quotes, **kwargs)
 
 
+def implied_vol_table(
+    quotes: pd.DataFrame,
+    price_cols: tuple[str, ...] = ("bid", "mid", "ask"),
+    *,
+    solver: str = "lbr_lite",
+    engine: str = "auto",
+    **_: Any,
+) -> pd.DataFrame:
+    """Notebook-friendly alias that ignores already-standardized column hints."""
+    return compute_iv_table(quotes, price_cols=price_cols, solver=solver, engine=engine)
+
+
 def implied_vol_bid_mid_ask(quotes: pd.DataFrame, **kwargs: Any) -> pd.DataFrame:
     return compute_iv_table(quotes, price_cols=("bid", "mid", "ask"), **kwargs)
 
@@ -736,6 +748,7 @@ __all__ = [
     "compare_iv_solvers",
     "compute_implied_vols",
     "compute_iv_table",
+    "implied_vol_table",
     "implied_vol",
     "implied_vol_bid_mid_ask",
     "implied_vol_bisection_python",

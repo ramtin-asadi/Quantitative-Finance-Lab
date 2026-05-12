@@ -69,6 +69,13 @@ def attach_rates_to_options(
     return out
 
 
+def attach_rates(quotes: pd.DataFrame, curve_panel: pd.DataFrame | None = None, **kwargs) -> pd.DataFrame:
+    """Short alias used by option notebooks."""
+    if "out_col" in kwargs and "rate_col" not in kwargs:
+        kwargs["rate_col"] = kwargs.pop("out_col")
+    return attach_rates_to_options(quotes, curve_panel=curve_panel, **kwargs)
+
+
 def add_discount_factors(
     quotes: pd.DataFrame,
     rate_col: str = "rate",
@@ -82,12 +89,29 @@ def add_discount_factors(
 
 
 def infer_dividend_yield_from_forward(
-    spot: float | np.ndarray | pd.Series,
-    forward: float | np.ndarray | pd.Series,
-    rate: float | np.ndarray | pd.Series,
-    tau: float | np.ndarray | pd.Series,
-) -> float | np.ndarray | pd.Series:
+    spot: float | np.ndarray | pd.Series | pd.DataFrame,
+    forward: float | np.ndarray | pd.Series | None = None,
+    rate: float | np.ndarray | pd.Series | None = None,
+    tau: float | np.ndarray | pd.Series | None = None,
+    *,
+    spot_col: str = "spot",
+    forward_col: str = "forward",
+    rate_col: str = "rate",
+    tau_col: str = "tau",
+    carry_col: str = "implied_carry",
+    out_col: str | None = None,
+) -> float | np.ndarray | pd.Series | pd.DataFrame:
     """Infer continuous dividend yield q from F = S exp((r - q)T)."""
+    if isinstance(spot, pd.DataFrame):
+        out = spot.copy()
+        if carry_col in out.columns:
+            q = pd.to_numeric(out[rate_col], errors="coerce") - pd.to_numeric(out[carry_col], errors="coerce")
+        else:
+            q = infer_dividend_yield_from_forward(out[spot_col], out[forward_col], out[rate_col], out[tau_col])
+        out[out_col or "implied_dividend_yield"] = q
+        return out
+    if forward is None or rate is None or tau is None:
+        raise ValueError("forward, rate, and tau are required unless spot is a DataFrame.")
     spot_arr, fwd_arr, rate_arr, tau_arr = np.broadcast_arrays(
         np.asarray(spot, dtype=float),
         np.asarray(forward, dtype=float),
@@ -105,11 +129,22 @@ def infer_dividend_yield_from_forward(
 
 
 def infer_carry_from_forward(
-    spot: float | np.ndarray | pd.Series,
-    forward: float | np.ndarray | pd.Series,
-    tau: float | np.ndarray | pd.Series,
-) -> float | np.ndarray | pd.Series:
+    spot: float | np.ndarray | pd.Series | pd.DataFrame,
+    forward: float | np.ndarray | pd.Series | None = None,
+    tau: float | np.ndarray | pd.Series | None = None,
+    *,
+    spot_col: str = "spot",
+    forward_col: str = "forward",
+    tau_col: str = "tau",
+    out_col: str | None = None,
+) -> float | np.ndarray | pd.Series | pd.DataFrame:
     """Infer continuous carry log(F/S)/T from an observed forward."""
+    if isinstance(spot, pd.DataFrame):
+        out = spot.copy()
+        out[out_col or "implied_carry"] = infer_carry_from_forward(out[spot_col], out[forward_col], out[tau_col])
+        return out
+    if forward is None or tau is None:
+        raise ValueError("forward and tau are required unless spot is a DataFrame.")
     spot_arr, fwd_arr, tau_arr = np.broadcast_arrays(
         np.asarray(spot, dtype=float),
         np.asarray(forward, dtype=float),
@@ -127,6 +162,7 @@ def infer_carry_from_forward(
 
 __all__ = [
     "add_discount_factors",
+    "attach_rates",
     "attach_rates_to_options",
     "infer_carry_from_forward",
     "infer_dividend_yield_from_forward",

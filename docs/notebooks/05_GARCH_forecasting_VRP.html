@@ -4430,287 +4430,270 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <p>First, crypto trades every calendar day, so the annualization changes from 252 to 365</p>
 <p>Second, BTC option quotes may be represented in different units, so we detect and converts option prices into USD equivalent before building IV.</p>
 <p>Third, for this case we use fractional units and a contract multiplier of 1 for the backtest, because the BTC option scale is different from SPX index options.</p>
-<div id="1ecba94e" class="cell" data-execution_count="20">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display</span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.options.quote_cleaning <span class="im">import</span> (</span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>    convert_quotes_to_usd_equivalent,</span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>    detect_option_price_unit,</span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>    ensure_option_mid_quotes,</span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>    normalize_option_quote_schema)</span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.options.diagnostics <span class="im">import</span> build_atm_iv_panel_from_option_quotes <span class="im">as</span> build_library_atm_iv_panel</span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.volatility.forecasting <span class="im">import</span> rolling_arch_forecasts_weekly, score_forecasts_by_model, select_forecast_by_rolling_loss</span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.volatility.har <span class="im">import</span> rolling_har_forecasts</span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.volatility.vrp <span class="im">import</span> compute_vrp_panel</span>
-<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.backtest.overlays <span class="im">import</span> backtest_straddle_overlay, summarize_overlay_trades</span>
-<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> quantfinlab.plotting.volatility <span class="im">as</span> vol_plots</span>
-<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>horizons <span class="op">=</span> (<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">21</span>, <span class="dv">42</span>, <span class="dv">63</span>)</span>
-<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a>annualization <span class="op">=</span> <span class="fl">365.25</span></span>
-<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a>eps <span class="op">=</span> <span class="fl">1e-12</span></span>
-<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a>btc_option_path <span class="op">=</span> <span class="vs">r"</span><span class="dv">..\d</span><span class="vs">ata</span><span class="dv">\b</span><span class="vs">tc_deribit_optiondx_2024_01_09</span><span class="dv">.</span><span class="vs">parquet"</span></span>
-<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a>btc_spot_path <span class="op">=</span> <span class="vs">r"</span><span class="dv">..\d</span><span class="vs">ata</span><span class="dv">\b</span><span class="vs">tc_usd_yfinance_2023_10_01_2024_10_15</span><span class="dv">.</span><span class="vs">csv"</span></span>
-<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a>btc_options_raw <span class="op">=</span> pd.read_parquet(btc_option_path)</span>
-<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a>btc_spot_raw <span class="op">=</span> pd.read_csv(btc_spot_path)</span>
-<span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a>btc_spot_data <span class="op">=</span> btc_spot_raw.copy()</span>
-<span id="cb23-32"><a href="#cb23-32" aria-hidden="true" tabindex="-1"></a>btc_spot_data.columns <span class="op">=</span> [<span class="bu">str</span>(c).strip().lower().replace(<span class="st">" "</span>, <span class="st">"_"</span>) <span class="cf">for</span> c <span class="kw">in</span> btc_spot_data.columns]</span>
-<span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="st">"date"</span> <span class="kw">not</span> <span class="kw">in</span> btc_spot_data.columns:</span>
-<span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"BTC spot file must contain a date column."</span>)</span>
-<span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a>btc_spot_data[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(btc_spot_data[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>).dt.normalize()</span>
-<span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a>btc_price_col <span class="op">=</span> <span class="st">"adj_close"</span> <span class="cf">if</span> <span class="st">"adj_close"</span> <span class="kw">in</span> btc_spot_data.columns <span class="cf">else</span> <span class="st">"close"</span> <span class="cf">if</span> <span class="st">"close"</span> <span class="kw">in</span> btc_spot_data.columns <span class="cf">else</span> <span class="va">None</span></span>
-<span id="cb23-37"><a href="#cb23-37" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> btc_price_col <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a>    btc_numeric_cols <span class="op">=</span> btc_spot_data.select_dtypes(include<span class="op">=</span>[np.number]).columns</span>
-<span id="cb23-39"><a href="#cb23-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(btc_numeric_cols) <span class="op">==</span> <span class="dv">0</span>:</span>
-<span id="cb23-40"><a href="#cb23-40" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">"BTC spot file has no numeric price column."</span>)</span>
-<span id="cb23-41"><a href="#cb23-41" aria-hidden="true" tabindex="-1"></a>    btc_price_col <span class="op">=</span> btc_numeric_cols[<span class="dv">0</span>]</span>
-<span id="cb23-42"><a href="#cb23-42" aria-hidden="true" tabindex="-1"></a>btc_spot_data[btc_price_col] <span class="op">=</span> pd.to_numeric(btc_spot_data[btc_price_col], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
-<span id="cb23-43"><a href="#cb23-43" aria-hidden="true" tabindex="-1"></a>btc_spot <span class="op">=</span> (</span>
-<span id="cb23-44"><a href="#cb23-44" aria-hidden="true" tabindex="-1"></a>    btc_spot_data.dropna(subset<span class="op">=</span>[<span class="st">"date"</span>, btc_price_col])</span>
-<span id="cb23-45"><a href="#cb23-45" aria-hidden="true" tabindex="-1"></a>    .sort_values(<span class="st">"date"</span>)</span>
-<span id="cb23-46"><a href="#cb23-46" aria-hidden="true" tabindex="-1"></a>    .drop_duplicates(<span class="st">"date"</span>, keep<span class="op">=</span><span class="st">"last"</span>)</span>
-<span id="cb23-47"><a href="#cb23-47" aria-hidden="true" tabindex="-1"></a>    .set_index(<span class="st">"date"</span>)[btc_price_col]</span>
-<span id="cb23-48"><a href="#cb23-48" aria-hidden="true" tabindex="-1"></a>    .astype(<span class="bu">float</span>)</span>
-<span id="cb23-49"><a href="#cb23-49" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb23-50"><a href="#cb23-50" aria-hidden="true" tabindex="-1"></a>btc_spot <span class="op">=</span> btc_spot[btc_spot <span class="op">&gt;</span> <span class="dv">0</span>].rename(<span class="st">"btc_spot"</span>)</span>
-<span id="cb23-51"><a href="#cb23-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-52"><a href="#cb23-52" aria-hidden="true" tabindex="-1"></a>btc_returns <span class="op">=</span> np.log(btc_spot <span class="op">/</span> btc_spot.shift(<span class="dv">1</span>)).replace([np.inf, <span class="op">-</span>np.inf], np.nan).dropna()</span>
-<span id="cb23-53"><a href="#cb23-53" aria-hidden="true" tabindex="-1"></a>btc_signal_start <span class="op">=</span> btc_returns.index.<span class="bu">min</span>() <span class="op">+</span> pd.Timedelta(days<span class="op">=</span><span class="dv">120</span>)</span>
-<span id="cb23-54"><a href="#cb23-54" aria-hidden="true" tabindex="-1"></a>btc_options_norm <span class="op">=</span> normalize_option_quote_schema(btc_options_raw, underlying_default<span class="op">=</span><span class="st">"BTC"</span>)</span>
-<span id="cb23-55"><a href="#cb23-55" aria-hidden="true" tabindex="-1"></a>btc_options_norm <span class="op">=</span> ensure_option_mid_quotes(btc_options_norm)</span>
-<span id="cb23-56"><a href="#cb23-56" aria-hidden="true" tabindex="-1"></a>btc_unit_before <span class="op">=</span> detect_option_price_unit(btc_options_norm)</span>
-<span id="cb23-57"><a href="#cb23-57" aria-hidden="true" tabindex="-1"></a>btc_options_usd <span class="op">=</span> convert_quotes_to_usd_equivalent(btc_options_norm, unit<span class="op">=</span><span class="st">"auto"</span>)</span>
-<span id="cb23-58"><a href="#cb23-58" aria-hidden="true" tabindex="-1"></a>btc_unit_after <span class="op">=</span> detect_option_price_unit(btc_options_usd)</span>
-<span id="cb23-59"><a href="#cb23-59" aria-hidden="true" tabindex="-1"></a></span>
+<div id="1ecba94e" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.dataio <span class="im">import</span> load_ohlcv, load_option_chain</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.options.quote_cleaning <span class="im">import</span> (</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>    convert_quotes_to_usd_equivalent,</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>    detect_option_price_unit)</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.options.diagnostics <span class="im">import</span> build_atm_iv_panel_from_option_quotes <span class="im">as</span> build_library_atm_iv_panel</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.volatility.forecasting <span class="im">import</span> rolling_arch_forecasts_weekly, score_forecasts_by_model, select_forecast_by_rolling_loss</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.volatility.har <span class="im">import</span> rolling_har_forecasts</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.volatility.vrp <span class="im">import</span> compute_vrp_panel</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.backtest.overlays <span class="im">import</span> backtest_straddle_overlay, summarize_overlay_trades</span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> quantfinlab.plotting.volatility <span class="im">as</span> vol_plots</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>horizons <span class="op">=</span> (<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">21</span>, <span class="dv">42</span>, <span class="dv">63</span>)</span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>annualization <span class="op">=</span> <span class="fl">365.25</span></span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>eps <span class="op">=</span> <span class="fl">1e-12</span></span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a>btc_spot_df <span class="op">=</span> load_ohlcv(</span>
+<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a>    <span class="vs">r"</span><span class="dv">..\d</span><span class="vs">ata</span><span class="dv">\b</span><span class="vs">tc_usd_yfinance_2023_10_01_2024_10_15</span><span class="dv">.</span><span class="vs">csv"</span>,</span>
+<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"yfinance_csv"</span>,</span>
+<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a>    fields<span class="op">=</span>(<span class="st">"close"</span>,))</span>
+<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a>btc_spot <span class="op">=</span> btc_spot_df[<span class="st">"close"</span>].rename(<span class="st">"btc_spot"</span>)</span>
+<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a>btc_spot <span class="op">=</span> btc_spot[btc_spot <span class="op">&gt;</span> <span class="dv">0</span>]</span>
+<span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-32"><a href="#cb23-32" aria-hidden="true" tabindex="-1"></a>btc_returns <span class="op">=</span> np.log(btc_spot <span class="op">/</span> btc_spot.shift(<span class="dv">1</span>)).replace([np.inf, <span class="op">-</span>np.inf], np.nan).dropna()</span>
+<span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a>btc_signal_start <span class="op">=</span> btc_returns.index.<span class="bu">min</span>() <span class="op">+</span> pd.Timedelta(days<span class="op">=</span><span class="dv">120</span>)</span>
+<span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a>btc_options_norm <span class="op">=</span> load_option_chain(</span>
+<span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a>    <span class="vs">r"</span><span class="dv">..\d</span><span class="vs">ata</span><span class="dv">\b</span><span class="vs">tc_deribit_optiondx_2024_01_09</span><span class="dv">.</span><span class="vs">parquet"</span>,</span>
+<span id="cb23-37"><a href="#cb23-37" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"btc_deribit"</span>,</span>
+<span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a>    annualization_days<span class="op">=</span><span class="fl">365.25</span>)</span>
+<span id="cb23-39"><a href="#cb23-39" aria-hidden="true" tabindex="-1"></a>btc_unit_before <span class="op">=</span> detect_option_price_unit(btc_options_norm)</span>
+<span id="cb23-40"><a href="#cb23-40" aria-hidden="true" tabindex="-1"></a>btc_options_usd <span class="op">=</span> convert_quotes_to_usd_equivalent(btc_options_norm, unit<span class="op">=</span><span class="st">"auto"</span>)</span>
+<span id="cb23-41"><a href="#cb23-41" aria-hidden="true" tabindex="-1"></a>btc_unit_after <span class="op">=</span> detect_option_price_unit(btc_options_usd)</span>
+<span id="cb23-42"><a href="#cb23-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-43"><a href="#cb23-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-44"><a href="#cb23-44" aria-hidden="true" tabindex="-1"></a>btc_iv_all <span class="op">=</span> build_library_atm_iv_panel(btc_options_usd, rates<span class="op">=</span><span class="va">None</span>, constant_rate<span class="op">=</span><span class="fl">0.0</span>,</span>
+<span id="cb23-45"><a href="#cb23-45" aria-hidden="true" tabindex="-1"></a>                                        min_dte<span class="op">=</span><span class="dv">7</span>, max_dte<span class="op">=</span><span class="dv">90</span>, moneyness_range<span class="op">=</span>(<span class="fl">0.75</span>, <span class="fl">1.25</span>),</span>
+<span id="cb23-46"><a href="#cb23-46" aria-hidden="true" tabindex="-1"></a>                                        max_relative_spread<span class="op">=</span><span class="fl">0.35</span>, closest_atm_pairs<span class="op">=</span><span class="dv">30</span>,</span>
+<span id="cb23-47"><a href="#cb23-47" aria-hidden="true" tabindex="-1"></a>                                        min_pairs_per_expiry<span class="op">=</span><span class="dv">4</span>, underlying_default<span class="op">=</span><span class="st">"BTC"</span>)</span>
+<span id="cb23-48"><a href="#cb23-48" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> btc_iv_all.empty:</span>
+<span id="cb23-49"><a href="#cb23-49" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">RuntimeError</span>(<span class="st">"BTC ATM IV panel is empty after cleaning."</span>)</span>
+<span id="cb23-50"><a href="#cb23-50" aria-hidden="true" tabindex="-1"></a>btc_iv_daily <span class="op">=</span> (</span>
+<span id="cb23-51"><a href="#cb23-51" aria-hidden="true" tabindex="-1"></a>    btc_iv_all[(btc_iv_all[<span class="st">"dte_calendar"</span>] <span class="op">&gt;=</span> <span class="dv">14</span>) <span class="op">&amp;</span> (btc_iv_all[<span class="st">"dte_calendar"</span>] <span class="op">&lt;=</span> <span class="dv">45</span>)]</span>
+<span id="cb23-52"><a href="#cb23-52" aria-hidden="true" tabindex="-1"></a>    .assign(dte_score<span class="op">=</span><span class="kw">lambda</span> x: (x[<span class="st">"dte_calendar"</span>] <span class="op">-</span> <span class="fl">30.0</span>).<span class="bu">abs</span>())</span>
+<span id="cb23-53"><a href="#cb23-53" aria-hidden="true" tabindex="-1"></a>    .sort_values([<span class="st">"date"</span>, <span class="st">"dte_score"</span>, <span class="st">"quote_quality_score"</span>])</span>
+<span id="cb23-54"><a href="#cb23-54" aria-hidden="true" tabindex="-1"></a>    .groupby(<span class="st">"date"</span>, as_index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb23-55"><a href="#cb23-55" aria-hidden="true" tabindex="-1"></a>    .head(<span class="dv">1</span>)</span>
+<span id="cb23-56"><a href="#cb23-56" aria-hidden="true" tabindex="-1"></a>    .drop(columns<span class="op">=</span>[<span class="st">"dte_score"</span>], errors<span class="op">=</span><span class="st">"ignore"</span>)</span>
+<span id="cb23-57"><a href="#cb23-57" aria-hidden="true" tabindex="-1"></a>    .reset_index(drop<span class="op">=</span><span class="va">True</span>))</span>
+<span id="cb23-58"><a href="#cb23-58" aria-hidden="true" tabindex="-1"></a>btc_iv_cleaning_report <span class="op">=</span> btc_iv_all.attrs.get(<span class="st">"cleaning_report"</span>, pd.DataFrame())</span>
+<span id="cb23-59"><a href="#cb23-59" aria-hidden="true" tabindex="-1"></a>display(btc_iv_cleaning_report)</span>
 <span id="cb23-60"><a href="#cb23-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-61"><a href="#cb23-61" aria-hidden="true" tabindex="-1"></a>btc_iv_all <span class="op">=</span> build_library_atm_iv_panel(btc_options_usd, rates<span class="op">=</span><span class="va">None</span>, constant_rate<span class="op">=</span><span class="fl">0.0</span>,</span>
-<span id="cb23-62"><a href="#cb23-62" aria-hidden="true" tabindex="-1"></a>                                        min_dte<span class="op">=</span><span class="dv">7</span>, max_dte<span class="op">=</span><span class="dv">90</span>, moneyness_range<span class="op">=</span>(<span class="fl">0.75</span>, <span class="fl">1.25</span>),</span>
-<span id="cb23-63"><a href="#cb23-63" aria-hidden="true" tabindex="-1"></a>                                        max_relative_spread<span class="op">=</span><span class="fl">0.35</span>, closest_atm_pairs<span class="op">=</span><span class="dv">30</span>,</span>
-<span id="cb23-64"><a href="#cb23-64" aria-hidden="true" tabindex="-1"></a>                                        min_pairs_per_expiry<span class="op">=</span><span class="dv">4</span>, underlying_default<span class="op">=</span><span class="st">"BTC"</span>)</span>
-<span id="cb23-65"><a href="#cb23-65" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> btc_iv_all.empty:</span>
-<span id="cb23-66"><a href="#cb23-66" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">RuntimeError</span>(<span class="st">"BTC ATM IV panel is empty after cleaning."</span>)</span>
-<span id="cb23-67"><a href="#cb23-67" aria-hidden="true" tabindex="-1"></a>btc_iv_daily <span class="op">=</span> (</span>
-<span id="cb23-68"><a href="#cb23-68" aria-hidden="true" tabindex="-1"></a>    btc_iv_all[(btc_iv_all[<span class="st">"dte_calendar"</span>] <span class="op">&gt;=</span> <span class="dv">14</span>) <span class="op">&amp;</span> (btc_iv_all[<span class="st">"dte_calendar"</span>] <span class="op">&lt;=</span> <span class="dv">45</span>)]</span>
-<span id="cb23-69"><a href="#cb23-69" aria-hidden="true" tabindex="-1"></a>    .assign(dte_score<span class="op">=</span><span class="kw">lambda</span> x: (x[<span class="st">"dte_calendar"</span>] <span class="op">-</span> <span class="fl">30.0</span>).<span class="bu">abs</span>())</span>
-<span id="cb23-70"><a href="#cb23-70" aria-hidden="true" tabindex="-1"></a>    .sort_values([<span class="st">"date"</span>, <span class="st">"dte_score"</span>, <span class="st">"quote_quality_score"</span>])</span>
-<span id="cb23-71"><a href="#cb23-71" aria-hidden="true" tabindex="-1"></a>    .groupby(<span class="st">"date"</span>, as_index<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb23-72"><a href="#cb23-72" aria-hidden="true" tabindex="-1"></a>    .head(<span class="dv">1</span>)</span>
-<span id="cb23-73"><a href="#cb23-73" aria-hidden="true" tabindex="-1"></a>    .drop(columns<span class="op">=</span>[<span class="st">"dte_score"</span>], errors<span class="op">=</span><span class="st">"ignore"</span>)</span>
-<span id="cb23-74"><a href="#cb23-74" aria-hidden="true" tabindex="-1"></a>    .reset_index(drop<span class="op">=</span><span class="va">True</span>))</span>
-<span id="cb23-75"><a href="#cb23-75" aria-hidden="true" tabindex="-1"></a>btc_iv_cleaning_report <span class="op">=</span> btc_iv_all.attrs.get(<span class="st">"cleaning_report"</span>, pd.DataFrame())</span>
-<span id="cb23-76"><a href="#cb23-76" aria-hidden="true" tabindex="-1"></a>display(btc_iv_cleaning_report)</span>
-<span id="cb23-77"><a href="#cb23-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-78"><a href="#cb23-78" aria-hidden="true" tabindex="-1"></a>raw_price_cols <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> [<span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"spot"</span>, <span class="st">"strike"</span>, <span class="st">"call_mid_raw"</span>, <span class="st">"put_mid_raw"</span>, <span class="st">"call_mid"</span>, <span class="st">"put_mid"</span>, <span class="st">"atm_iv_mid"</span>] <span class="cf">if</span> c <span class="kw">in</span> btc_iv_daily.columns]</span>
-<span id="cb23-79"><a href="#cb23-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-80"><a href="#cb23-80" aria-hidden="true" tabindex="-1"></a>btc_train_window <span class="op">=</span> <span class="bu">min</span>(<span class="dv">180</span>, <span class="bu">max</span>(<span class="dv">80</span>, <span class="bu">len</span>(btc_returns) <span class="op">//</span> <span class="dv">2</span>))</span>
-<span id="cb23-81"><a href="#cb23-81" aria-hidden="true" tabindex="-1"></a>btc_garch <span class="op">=</span> rolling_arch_forecasts_weekly(</span>
-<span id="cb23-82"><a href="#cb23-82" aria-hidden="true" tabindex="-1"></a>    btc_returns, horizons<span class="op">=</span>horizons, train_window<span class="op">=</span>btc_train_window,</span>
-<span id="cb23-83"><a href="#cb23-83" aria-hidden="true" tabindex="-1"></a>    signal_step<span class="op">=</span><span class="dv">1</span>, forecast_start<span class="op">=</span>btc_signal_start, </span>
-<span id="cb23-84"><a href="#cb23-84" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>annualization, maxiter<span class="op">=</span><span class="dv">350</span>)</span>
-<span id="cb23-85"><a href="#cb23-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-86"><a href="#cb23-86" aria-hidden="true" tabindex="-1"></a>btc_har <span class="op">=</span> rolling_har_forecasts(btc_returns, horizons<span class="op">=</span>horizons,</span>
-<span id="cb23-87"><a href="#cb23-87" aria-hidden="true" tabindex="-1"></a>                                train_window<span class="op">=</span>btc_train_window, refit_every<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb23-88"><a href="#cb23-88" aria-hidden="true" tabindex="-1"></a>                                annualization<span class="op">=</span>annualization, forecast_start<span class="op">=</span>btc_signal_start)</span>
-<span id="cb23-89"><a href="#cb23-89" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-90"><a href="#cb23-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-91"><a href="#cb23-91" aria-hidden="true" tabindex="-1"></a>btc_fc <span class="op">=</span> pd.concat([btc_garch, btc_har], ignore_index<span class="op">=</span><span class="va">True</span>).sort_values([<span class="st">"date"</span>, <span class="st">"model"</span>, <span class="st">"horizon"</span>])</span>
-<span id="cb23-92"><a href="#cb23-92" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sanitize_btc_forecast_panel(panel, max_annualized_vol<span class="op">=</span><span class="fl">5.0</span>, min_var<span class="op">=</span>eps):</span>
-<span id="cb23-93"><a href="#cb23-93" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> panel.copy().replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
-<span id="cb23-94"><a href="#cb23-94" aria-hidden="true" tabindex="-1"></a>    numeric_cols <span class="op">=</span> [</span>
-<span id="cb23-95"><a href="#cb23-95" aria-hidden="true" tabindex="-1"></a>        <span class="st">"horizon"</span>, <span class="st">"forecast_var_sum"</span>, <span class="st">"forecast_var_ann"</span>, <span class="st">"forecast_vol_ann"</span>,</span>
-<span id="cb23-96"><a href="#cb23-96" aria-hidden="true" tabindex="-1"></a>        <span class="st">"realized_var_sum"</span>, <span class="st">"realized_var_ann"</span>, <span class="st">"realized_vol_ann"</span>]</span>
-<span id="cb23-97"><a href="#cb23-97" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> col <span class="kw">in</span> numeric_cols:</span>
-<span id="cb23-98"><a href="#cb23-98" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> col <span class="kw">in</span> out.columns:</span>
-<span id="cb23-99"><a href="#cb23-99" aria-hidden="true" tabindex="-1"></a>            out[col] <span class="op">=</span> pd.to_numeric(out[col], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
-<span id="cb23-100"><a href="#cb23-100" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> out.dropna(subset<span class="op">=</span>[<span class="st">"date"</span>, <span class="st">"model"</span>, <span class="st">"horizon"</span>, <span class="st">"forecast_var_sum"</span>, <span class="st">"realized_var_sum"</span>]).copy()</span>
-<span id="cb23-101"><a href="#cb23-101" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"horizon"</span>] <span class="op">=</span> out[<span class="st">"horizon"</span>].astype(<span class="bu">int</span>)</span>
-<span id="cb23-102"><a href="#cb23-102" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"forecast_var_sum_raw"</span>] <span class="op">=</span> out[<span class="st">"forecast_var_sum"</span>]</span>
-<span id="cb23-103"><a href="#cb23-103" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"forecast_var_ann_raw"</span>] <span class="op">=</span> out.get(<span class="st">"forecast_var_ann"</span>, annualization <span class="op">/</span> out[<span class="st">"horizon"</span>] <span class="op">*</span> out[<span class="st">"forecast_var_sum"</span>])</span>
-<span id="cb23-104"><a href="#cb23-104" aria-hidden="true" tabindex="-1"></a>    max_var_ann <span class="op">=</span> <span class="bu">float</span>(max_annualized_vol) <span class="op">**</span> <span class="dv">2</span></span>
-<span id="cb23-105"><a href="#cb23-105" aria-hidden="true" tabindex="-1"></a>    cap_sum <span class="op">=</span> max_var_ann <span class="op">*</span> out[<span class="st">"horizon"</span>] <span class="op">/</span> <span class="bu">float</span>(annualization)</span>
-<span id="cb23-106"><a href="#cb23-106" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"forecast_cap_flag"</span>] <span class="op">=</span> (out[<span class="st">"forecast_var_sum"</span>] <span class="op">&gt;</span> cap_sum) <span class="op">|</span> (out[<span class="st">"forecast_var_sum"</span>] <span class="op">&lt;=</span> <span class="dv">0</span>)</span>
-<span id="cb23-107"><a href="#cb23-107" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"forecast_var_sum"</span>] <span class="op">=</span> out[<span class="st">"forecast_var_sum"</span>].clip(lower<span class="op">=</span><span class="bu">float</span>(min_var), upper<span class="op">=</span>cap_sum)</span>
-<span id="cb23-108"><a href="#cb23-108" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"forecast_var_ann"</span>] <span class="op">=</span> annualization <span class="op">/</span> out[<span class="st">"horizon"</span>] <span class="op">*</span> out[<span class="st">"forecast_var_sum"</span>]</span>
-<span id="cb23-109"><a href="#cb23-109" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"forecast_vol_ann"</span>] <span class="op">=</span> np.sqrt(out[<span class="st">"forecast_var_ann"</span>].clip(lower<span class="op">=</span><span class="fl">0.0</span>))</span>
-<span id="cb23-110"><a href="#cb23-110" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"realized_var_ann"</span>] <span class="op">=</span> annualization <span class="op">/</span> out[<span class="st">"horizon"</span>] <span class="op">*</span> out[<span class="st">"realized_var_sum"</span>]</span>
-<span id="cb23-111"><a href="#cb23-111" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"realized_vol_ann"</span>] <span class="op">=</span> np.sqrt(out[<span class="st">"realized_var_ann"</span>].clip(lower<span class="op">=</span><span class="fl">0.0</span>))</span>
-<span id="cb23-112"><a href="#cb23-112" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out.sort_values([<span class="st">"date"</span>, <span class="st">"model"</span>, <span class="st">"horizon"</span>]).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb23-113"><a href="#cb23-113" aria-hidden="true" tabindex="-1"></a>btc_fc <span class="op">=</span> sanitize_btc_forecast_panel(btc_fc, max_annualized_vol<span class="op">=</span><span class="fl">5.0</span>)</span>
-<span id="cb23-114"><a href="#cb23-114" aria-hidden="true" tabindex="-1"></a>btc_forecast_cap_report <span class="op">=</span> (</span>
-<span id="cb23-115"><a href="#cb23-115" aria-hidden="true" tabindex="-1"></a>    btc_fc.groupby(<span class="st">"model"</span>)[<span class="st">"forecast_cap_flag"</span>]</span>
-<span id="cb23-116"><a href="#cb23-116" aria-hidden="true" tabindex="-1"></a>    .agg(n_forecasts<span class="op">=</span><span class="st">"size"</span>, n_capped<span class="op">=</span><span class="st">"sum"</span>, cap_rate<span class="op">=</span><span class="st">"mean"</span>)</span>
-<span id="cb23-117"><a href="#cb23-117" aria-hidden="true" tabindex="-1"></a>    .reset_index()</span>
-<span id="cb23-118"><a href="#cb23-118" aria-hidden="true" tabindex="-1"></a>    .sort_values(<span class="st">"cap_rate"</span>, ascending<span class="op">=</span><span class="va">False</span>))</span>
-<span id="cb23-119"><a href="#cb23-119" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-120"><a href="#cb23-120" aria-hidden="true" tabindex="-1"></a>btc_unstable_cap_threshold <span class="op">=</span> <span class="fl">0.05</span></span>
-<span id="cb23-121"><a href="#cb23-121" aria-hidden="true" tabindex="-1"></a>btc_unstable_models <span class="op">=</span> btc_forecast_cap_report.loc[btc_forecast_cap_report[<span class="st">"cap_rate"</span>].gt(btc_unstable_cap_threshold), <span class="st">"model"</span>].astype(<span class="bu">str</span>).tolist()</span>
-<span id="cb23-122"><a href="#cb23-122" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-123"><a href="#cb23-123" aria-hidden="true" tabindex="-1"></a>btc_fc_model_universe <span class="op">=</span> btc_fc[<span class="op">~</span>btc_fc[<span class="st">"model"</span>].isin(btc_unstable_models)].copy()</span>
-<span id="cb23-124"><a href="#cb23-124" aria-hidden="true" tabindex="-1"></a>btc_forecast_scores <span class="op">=</span> score_forecasts_by_model(btc_fc_model_universe)</span>
-<span id="cb23-125"><a href="#cb23-125" aria-hidden="true" tabindex="-1"></a>btc_score_pivot <span class="op">=</span> btc_forecast_scores.pivot(index<span class="op">=</span><span class="st">"model"</span>, columns<span class="op">=</span><span class="st">"horizon"</span>, values<span class="op">=</span><span class="st">"qlike_var"</span>)</span>
-<span id="cb23-126"><a href="#cb23-126" aria-hidden="true" tabindex="-1"></a>btc_model_ranks <span class="op">=</span> (</span>
-<span id="cb23-127"><a href="#cb23-127" aria-hidden="true" tabindex="-1"></a>    btc_forecast_scores.assign(qlike_rank<span class="op">=</span><span class="kw">lambda</span> x: x.groupby(<span class="st">"horizon"</span>)[<span class="st">"qlike_var"</span>].rank(method<span class="op">=</span><span class="st">"average"</span>))</span>
-<span id="cb23-128"><a href="#cb23-128" aria-hidden="true" tabindex="-1"></a>    .groupby(<span class="st">"model"</span>, as_index<span class="op">=</span><span class="va">False</span>)[<span class="st">"qlike_rank"</span>]</span>
-<span id="cb23-129"><a href="#cb23-129" aria-hidden="true" tabindex="-1"></a>    .mean()</span>
-<span id="cb23-130"><a href="#cb23-130" aria-hidden="true" tabindex="-1"></a>    .sort_values(<span class="st">"qlike_rank"</span>)</span>
-<span id="cb23-131"><a href="#cb23-131" aria-hidden="true" tabindex="-1"></a>    .reset_index(drop<span class="op">=</span><span class="va">True</span>))</span>
-<span id="cb23-132"><a href="#cb23-132" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-133"><a href="#cb23-133" aria-hidden="true" tabindex="-1"></a>display(btc_model_ranks)</span>
-<span id="cb23-134"><a href="#cb23-134" aria-hidden="true" tabindex="-1"></a>display(btc_forecast_scores[btc_forecast_scores[<span class="st">"horizon"</span>].eq(<span class="dv">21</span>)].sort_values([<span class="st">"qlike_var"</span>, <span class="st">"rmse_vol"</span>]).reset_index(drop<span class="op">=</span><span class="va">True</span>))</span>
-<span id="cb23-135"><a href="#cb23-135" aria-hidden="true" tabindex="-1"></a>btc_selected <span class="op">=</span> select_forecast_by_rolling_loss(</span>
-<span id="cb23-136"><a href="#cb23-136" aria-hidden="true" tabindex="-1"></a>    btc_fc_model_universe, horizons<span class="op">=</span>horizons, lookback<span class="op">=</span><span class="dv">63</span>,</span>
-<span id="cb23-137"><a href="#cb23-137" aria-hidden="true" tabindex="-1"></a>    min_obs<span class="op">=</span><span class="dv">15</span>, mode<span class="op">=</span><span class="st">"best"</span>)</span>
-<span id="cb23-138"><a href="#cb23-138" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-139"><a href="#cb23-139" aria-hidden="true" tabindex="-1"></a>btc_selected_model_counts <span class="op">=</span> btc_selected.groupby([<span class="st">"horizon"</span>, <span class="st">"selected_model"</span>]).size().rename(<span class="st">"n"</span>).reset_index()</span>
-<span id="cb23-140"><a href="#cb23-140" aria-hidden="true" tabindex="-1"></a>display(btc_selected_model_counts.pivot_table(index<span class="op">=</span><span class="st">"selected_model"</span>, columns<span class="op">=</span><span class="st">"horizon"</span>, values<span class="op">=</span><span class="st">"n"</span>, fill_value<span class="op">=</span><span class="dv">0</span>))</span>
-<span id="cb23-141"><a href="#cb23-141" aria-hidden="true" tabindex="-1"></a>btc_vrp_rank_window <span class="op">=</span> <span class="dv">45</span></span>
-<span id="cb23-142"><a href="#cb23-142" aria-hidden="true" tabindex="-1"></a>btc_vrp_z_window <span class="op">=</span> <span class="dv">45</span></span>
-<span id="cb23-143"><a href="#cb23-143" aria-hidden="true" tabindex="-1"></a>btc_min_periods <span class="op">=</span> <span class="dv">15</span></span>
-<span id="cb23-144"><a href="#cb23-144" aria-hidden="true" tabindex="-1"></a>btc_base_cheap_rank <span class="op">=</span> <span class="fl">0.10</span></span>
-<span id="cb23-145"><a href="#cb23-145" aria-hidden="true" tabindex="-1"></a>btc_base_rich_rank <span class="op">=</span> <span class="fl">0.50</span></span>
-<span id="cb23-146"><a href="#cb23-146" aria-hidden="true" tabindex="-1"></a>btc_base_holding_days <span class="op">=</span> <span class="dv">3</span></span>
-<span id="cb23-147"><a href="#cb23-147" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
-<span id="cb23-148"><a href="#cb23-148" aria-hidden="true" tabindex="-1"></a>    btc_vrp <span class="op">=</span> compute_vrp_panel(</span>
-<span id="cb23-149"><a href="#cb23-149" aria-hidden="true" tabindex="-1"></a>        btc_iv_daily, btc_selected, dte_col<span class="op">=</span><span class="st">"dte_calendar"</span>,</span>
-<span id="cb23-150"><a href="#cb23-150" aria-hidden="true" tabindex="-1"></a>        iv_col<span class="op">=</span><span class="st">"atm_iv_mid"</span>, annualization<span class="op">=</span>annualization,</span>
-<span id="cb23-151"><a href="#cb23-151" aria-hidden="true" tabindex="-1"></a>        z_window<span class="op">=</span>btc_vrp_z_window, rank_window<span class="op">=</span>btc_vrp_rank_window,</span>
-<span id="cb23-152"><a href="#cb23-152" aria-hidden="true" tabindex="-1"></a>        min_periods<span class="op">=</span>btc_min_periods)</span>
-<span id="cb23-153"><a href="#cb23-153" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb23-154"><a href="#cb23-154" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">TypeError</span> <span class="im">as</span> exc:</span>
-<span id="cb23-155"><a href="#cb23-155" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="st">"rank_window"</span> <span class="kw">not</span> <span class="kw">in</span> <span class="bu">str</span>(exc):</span>
-<span id="cb23-156"><a href="#cb23-156" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span></span>
-<span id="cb23-157"><a href="#cb23-157" aria-hidden="true" tabindex="-1"></a>    btc_vrp <span class="op">=</span> compute_vrp_panel(btc_iv_daily, btc_selected,</span>
-<span id="cb23-158"><a href="#cb23-158" aria-hidden="true" tabindex="-1"></a>                                dte_col<span class="op">=</span><span class="st">"dte_calendar"</span>, iv_col<span class="op">=</span><span class="st">"atm_iv_mid"</span>,</span>
-<span id="cb23-159"><a href="#cb23-159" aria-hidden="true" tabindex="-1"></a>                                annualization<span class="op">=</span>annualization, </span>
-<span id="cb23-160"><a href="#cb23-160" aria-hidden="true" tabindex="-1"></a>                                z_window<span class="op">=</span>btc_vrp_z_window, min_periods<span class="op">=</span>btc_min_periods)</span>
-<span id="cb23-161"><a href="#cb23-161" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb23-162"><a href="#cb23-162" aria-hidden="true" tabindex="-1"></a>btc_vrp <span class="op">=</span> btc_vrp.sort_values(<span class="st">"date"</span>).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb23-163"><a href="#cb23-163" aria-hidden="true" tabindex="-1"></a>vals <span class="op">=</span> btc_vrp[<span class="st">"vrp_var"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
-<span id="cb23-164"><a href="#cb23-164" aria-hidden="true" tabindex="-1"></a>ranks <span class="op">=</span> np.full(<span class="bu">len</span>(vals), np.nan)</span>
-<span id="cb23-165"><a href="#cb23-165" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(vals)):</span>
-<span id="cb23-166"><a href="#cb23-166" aria-hidden="true" tabindex="-1"></a>    hist <span class="op">=</span> vals[<span class="bu">max</span>(<span class="dv">0</span>, i <span class="op">-</span> btc_vrp_rank_window):i]</span>
-<span id="cb23-167"><a href="#cb23-167" aria-hidden="true" tabindex="-1"></a>    hist <span class="op">=</span> hist[np.isfinite(hist)]</span>
-<span id="cb23-168"><a href="#cb23-168" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(hist) <span class="op">&gt;=</span> btc_min_periods <span class="kw">and</span> np.isfinite(vals[i]):</span>
-<span id="cb23-169"><a href="#cb23-169" aria-hidden="true" tabindex="-1"></a>        ranks[i] <span class="op">=</span> np.mean(hist <span class="op">&lt;=</span> vals[i])</span>
-<span id="cb23-170"><a href="#cb23-170" aria-hidden="true" tabindex="-1"></a>btc_vrp[<span class="st">"vrp_rank"</span>] <span class="op">=</span> ranks</span>
-<span id="cb23-171"><a href="#cb23-171" aria-hidden="true" tabindex="-1"></a>btc_feature_frame <span class="op">=</span> pd.DataFrame(index<span class="op">=</span>btc_spot.index)</span>
-<span id="cb23-172"><a href="#cb23-172" aria-hidden="true" tabindex="-1"></a>btc_feature_frame[<span class="st">"btc_spot"</span>] <span class="op">=</span> btc_spot</span>
-<span id="cb23-173"><a href="#cb23-173" aria-hidden="true" tabindex="-1"></a>btc_feature_frame[<span class="st">"ret_1d"</span>] <span class="op">=</span> btc_returns.reindex(btc_feature_frame.index)</span>
-<span id="cb23-174"><a href="#cb23-174" aria-hidden="true" tabindex="-1"></a>btc_feature_frame[<span class="st">"ret_5d"</span>] <span class="op">=</span> np.log(btc_feature_frame[<span class="st">"btc_spot"</span>] <span class="op">/</span> btc_feature_frame[<span class="st">"btc_spot"</span>].shift(<span class="dv">5</span>))</span>
-<span id="cb23-175"><a href="#cb23-175" aria-hidden="true" tabindex="-1"></a>btc_feature_frame[<span class="st">"trailing_rv_21"</span>] <span class="op">=</span> btc_returns.rolling(<span class="dv">21</span>).std() <span class="op">*</span> np.sqrt(annualization)</span>
-<span id="cb23-176"><a href="#cb23-176" aria-hidden="true" tabindex="-1"></a>rv_vals <span class="op">=</span> btc_feature_frame[<span class="st">"trailing_rv_21"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
-<span id="cb23-177"><a href="#cb23-177" aria-hidden="true" tabindex="-1"></a>rv_rank <span class="op">=</span> np.full(<span class="bu">len</span>(rv_vals), np.nan)</span>
-<span id="cb23-178"><a href="#cb23-178" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, value <span class="kw">in</span> <span class="bu">enumerate</span>(rv_vals):</span>
-<span id="cb23-179"><a href="#cb23-179" aria-hidden="true" tabindex="-1"></a>    hist <span class="op">=</span> rv_vals[<span class="bu">max</span>(<span class="dv">0</span>, i <span class="op">-</span> btc_vrp_rank_window):i]</span>
-<span id="cb23-180"><a href="#cb23-180" aria-hidden="true" tabindex="-1"></a>    hist <span class="op">=</span> hist[np.isfinite(hist)]</span>
-<span id="cb23-181"><a href="#cb23-181" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> np.isfinite(value) <span class="kw">and</span> <span class="bu">len</span>(hist) <span class="op">&gt;=</span> btc_min_periods:</span>
-<span id="cb23-182"><a href="#cb23-182" aria-hidden="true" tabindex="-1"></a>        rv_rank[i] <span class="op">=</span> np.mean(hist <span class="op">&lt;=</span> value)</span>
-<span id="cb23-183"><a href="#cb23-183" aria-hidden="true" tabindex="-1"></a>btc_feature_frame[<span class="st">"trailing_rv_rank"</span>] <span class="op">=</span> rv_rank</span>
-<span id="cb23-184"><a href="#cb23-184" aria-hidden="true" tabindex="-1"></a>btc_vrp <span class="op">=</span> btc_vrp.merge(</span>
-<span id="cb23-185"><a href="#cb23-185" aria-hidden="true" tabindex="-1"></a>    btc_feature_frame[[<span class="st">"ret_1d"</span>, <span class="st">"ret_5d"</span>, <span class="st">"trailing_rv_21"</span>, <span class="st">"trailing_rv_rank"</span>]].reset_index().rename(columns<span class="op">=</span>{<span class="st">"index"</span>: <span class="st">"date"</span>}),</span>
-<span id="cb23-186"><a href="#cb23-186" aria-hidden="true" tabindex="-1"></a>    on<span class="op">=</span><span class="st">"date"</span>, how<span class="op">=</span><span class="st">"left"</span>)</span>
-<span id="cb23-187"><a href="#cb23-187" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-188"><a href="#cb23-188" aria-hidden="true" tabindex="-1"></a>btc_vrp[<span class="st">"short_calm_filter"</span>] <span class="op">=</span> (</span>
-<span id="cb23-189"><a href="#cb23-189" aria-hidden="true" tabindex="-1"></a>    btc_vrp[<span class="st">"ret_1d"</span>].<span class="bu">abs</span>().le(<span class="fl">0.05</span>)</span>
-<span id="cb23-190"><a href="#cb23-190" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span> btc_vrp[<span class="st">"ret_5d"</span>].<span class="bu">abs</span>().le(<span class="fl">0.12</span>)</span>
-<span id="cb23-191"><a href="#cb23-191" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span> (btc_vrp[<span class="st">"trailing_rv_rank"</span>].isna() <span class="op">|</span> btc_vrp[<span class="st">"trailing_rv_rank"</span>].le(<span class="fl">0.80</span>)))</span>
-<span id="cb23-192"><a href="#cb23-192" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-193"><a href="#cb23-193" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-194"><a href="#cb23-194" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lib_rule(strategy_name, cheap_rank<span class="op">=</span>btc_base_cheap_rank, rich_rank<span class="op">=</span>btc_base_rich_rank):</span>
-<span id="cb23-195"><a href="#cb23-195" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _rule(row):</span>
-<span id="cb23-196"><a href="#cb23-196" aria-hidden="true" tabindex="-1"></a>        rank <span class="op">=</span> row.get(<span class="st">"vrp_rank"</span>, np.nan)</span>
-<span id="cb23-197"><a href="#cb23-197" aria-hidden="true" tabindex="-1"></a>        cheap <span class="op">=</span> <span class="bu">bool</span>(pd.notna(rank) <span class="kw">and</span> rank <span class="op">&lt;=</span> cheap_rank)</span>
-<span id="cb23-198"><a href="#cb23-198" aria-hidden="true" tabindex="-1"></a>        rich <span class="op">=</span> <span class="bu">bool</span>(pd.notna(rank) <span class="kw">and</span> rank <span class="op">&gt;=</span> rich_rank)</span>
-<span id="cb23-199"><a href="#cb23-199" aria-hidden="true" tabindex="-1"></a>        calm_short <span class="op">=</span> <span class="bu">bool</span>(row.get(<span class="st">"short_calm_filter"</span>, <span class="va">False</span>))</span>
-<span id="cb23-200"><a href="#cb23-200" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> strategy_name <span class="op">==</span> <span class="st">"AlwaysLongStraddle"</span>:</span>
-<span id="cb23-201"><a href="#cb23-201" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"long"</span>}</span>
-<span id="cb23-202"><a href="#cb23-202" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> strategy_name <span class="op">==</span> <span class="st">"LongCheapConvexity"</span>:</span>
-<span id="cb23-203"><a href="#cb23-203" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"long"</span> <span class="cf">if</span> cheap <span class="cf">else</span> <span class="st">"cash"</span>, <span class="st">"skip_reason"</span>: <span class="st">"rank_not_cheap"</span>}</span>
-<span id="cb23-204"><a href="#cb23-204" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> strategy_name <span class="op">==</span> <span class="st">"ShortRichVolatility"</span>:</span>
-<span id="cb23-205"><a href="#cb23-205" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> rich <span class="kw">and</span> calm_short:</span>
-<span id="cb23-206"><a href="#cb23-206" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"short"</span>}</span>
-<span id="cb23-207"><a href="#cb23-207" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> rich <span class="kw">and</span> <span class="kw">not</span> calm_short:</span>
-<span id="cb23-208"><a href="#cb23-208" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"cash"</span>, <span class="st">"skip_reason"</span>: <span class="st">"short_calm_filter"</span>}</span>
-<span id="cb23-209"><a href="#cb23-209" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"cash"</span>, <span class="st">"skip_reason"</span>: <span class="st">"rank_not_rich"</span>}</span>
-<span id="cb23-210"><a href="#cb23-210" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> strategy_name <span class="op">==</span> <span class="st">"TwoSidedVRPSwitcher"</span>:</span>
-<span id="cb23-211"><a href="#cb23-211" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> cheap <span class="kw">and</span> <span class="kw">not</span> rich:</span>
-<span id="cb23-212"><a href="#cb23-212" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"long"</span>}</span>
-<span id="cb23-213"><a href="#cb23-213" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> rich <span class="kw">and</span> <span class="kw">not</span> cheap:</span>
-<span id="cb23-214"><a href="#cb23-214" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"short"</span>} <span class="cf">if</span> calm_short <span class="cf">else</span> {<span class="st">"side"</span>: <span class="st">"cash"</span>, <span class="st">"skip_reason"</span>: <span class="st">"short_calm_filter"</span>}</span>
-<span id="cb23-215"><a href="#cb23-215" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> cheap <span class="kw">and</span> rich:</span>
-<span id="cb23-216"><a href="#cb23-216" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> rank <span class="op">&lt;=</span> <span class="fl">0.50</span>:</span>
-<span id="cb23-217"><a href="#cb23-217" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"long"</span>}</span>
-<span id="cb23-218"><a href="#cb23-218" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"short"</span>} <span class="cf">if</span> calm_short <span class="cf">else</span> {<span class="st">"side"</span>: <span class="st">"cash"</span>, <span class="st">"skip_reason"</span>: <span class="st">"short_calm_filter"</span>}</span>
-<span id="cb23-219"><a href="#cb23-219" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"cash"</span>, <span class="st">"skip_reason"</span>: <span class="st">"neutral_rank"</span>}</span>
-<span id="cb23-220"><a href="#cb23-220" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> _rule</span>
-<span id="cb23-221"><a href="#cb23-221" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-222"><a href="#cb23-222" aria-hidden="true" tabindex="-1"></a>btc_strategy_names <span class="op">=</span> [<span class="st">"AlwaysLongStraddle"</span>, <span class="st">"LongCheapConvexity"</span>, <span class="st">"ShortRichVolatility"</span>, <span class="st">"TwoSidedVRPSwitcher"</span>]</span>
-<span id="cb23-223"><a href="#cb23-223" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-224"><a href="#cb23-224" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_btc_overlay_suite(scenario, cheap_rank, rich_rank, holding_days):</span>
-<span id="cb23-225"><a href="#cb23-225" aria-hidden="true" tabindex="-1"></a>    suite <span class="op">=</span> {</span>
-<span id="cb23-226"><a href="#cb23-226" aria-hidden="true" tabindex="-1"></a>        name: backtest_straddle_overlay(</span>
-<span id="cb23-227"><a href="#cb23-227" aria-hidden="true" tabindex="-1"></a>            btc_vrp, btc_options_usd, btc_spot, strategy_name<span class="op">=</span>name,</span>
-<span id="cb23-228"><a href="#cb23-228" aria-hidden="true" tabindex="-1"></a>            signal_rule<span class="op">=</span>lib_rule(name, cheap_rank<span class="op">=</span>cheap_rank, rich_rank<span class="op">=</span>rich_rank),</span>
-<span id="cb23-229"><a href="#cb23-229" aria-hidden="true" tabindex="-1"></a>            initial_nav<span class="op">=</span><span class="dv">1_000</span>, contract_multiplier<span class="op">=</span><span class="fl">1.0</span>,</span>
-<span id="cb23-230"><a href="#cb23-230" aria-hidden="true" tabindex="-1"></a>            holding_days<span class="op">=</span><span class="bu">int</span>(holding_days), allow_overlap<span class="op">=</span><span class="va">False</span>,</span>
-<span id="cb23-231"><a href="#cb23-231" aria-hidden="true" tabindex="-1"></a>            fractional_units<span class="op">=</span><span class="va">True</span>, long_premium_budget_frac<span class="op">=</span><span class="fl">0.005</span>,</span>
-<span id="cb23-232"><a href="#cb23-232" aria-hidden="true" tabindex="-1"></a>            short_margin_budget_frac<span class="op">=</span><span class="fl">0.02</span>, max_short_notional_frac<span class="op">=</span><span class="fl">1.0</span>)</span>
-<span id="cb23-233"><a href="#cb23-233" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> name <span class="kw">in</span> btc_strategy_names}</span>
-<span id="cb23-234"><a href="#cb23-234" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb23-235"><a href="#cb23-235" aria-hidden="true" tabindex="-1"></a>    summary <span class="op">=</span> summarize_overlay_trades(suite, initial_nav<span class="op">=</span><span class="dv">1_000</span>)</span>
-<span id="cb23-236"><a href="#cb23-236" aria-hidden="true" tabindex="-1"></a>    summary[<span class="st">"scenario"</span>] <span class="op">=</span> scenario</span>
-<span id="cb23-237"><a href="#cb23-237" aria-hidden="true" tabindex="-1"></a>    summary[<span class="st">"cheap_rank"</span>] <span class="op">=</span> cheap_rank</span>
-<span id="cb23-238"><a href="#cb23-238" aria-hidden="true" tabindex="-1"></a>    summary[<span class="st">"rich_rank"</span>] <span class="op">=</span> rich_rank</span>
-<span id="cb23-239"><a href="#cb23-239" aria-hidden="true" tabindex="-1"></a>    summary[<span class="st">"holding_days"</span>] <span class="op">=</span> <span class="bu">int</span>(holding_days)</span>
-<span id="cb23-240"><a href="#cb23-240" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> suite, summary</span>
-<span id="cb23-241"><a href="#cb23-241" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-242"><a href="#cb23-242" aria-hidden="true" tabindex="-1"></a>btc_backtests, btc_summary <span class="op">=</span> run_btc_overlay_suite(</span>
-<span id="cb23-243"><a href="#cb23-243" aria-hidden="true" tabindex="-1"></a>    <span class="st">"base"</span>, cheap_rank<span class="op">=</span>btc_base_cheap_rank,</span>
-<span id="cb23-244"><a href="#cb23-244" aria-hidden="true" tabindex="-1"></a>    rich_rank<span class="op">=</span>btc_base_rich_rank, holding_days<span class="op">=</span>btc_base_holding_days)</span>
-<span id="cb23-245"><a href="#cb23-245" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-246"><a href="#cb23-246" aria-hidden="true" tabindex="-1"></a>btc_sensitivity_specs <span class="op">=</span> [</span>
-<span id="cb23-247"><a href="#cb23-247" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"scenario"</span>: <span class="st">"loose"</span>, <span class="st">"cheap_rank"</span>: <span class="fl">0.40</span>, <span class="st">"rich_rank"</span>: <span class="fl">0.70</span>, <span class="st">"holding_days"</span>: <span class="dv">3</span>},</span>
-<span id="cb23-248"><a href="#cb23-248" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"scenario"</span>: <span class="st">"base"</span>, <span class="st">"cheap_rank"</span>: <span class="fl">0.35</span>, <span class="st">"rich_rank"</span>: <span class="fl">0.80</span>, <span class="st">"holding_days"</span>: <span class="dv">3</span>},</span>
-<span id="cb23-249"><a href="#cb23-249" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"scenario"</span>: <span class="st">"strict"</span>, <span class="st">"cheap_rank"</span>: <span class="fl">0.30</span>, <span class="st">"rich_rank"</span>: <span class="fl">0.90</span>, <span class="st">"holding_days"</span>: <span class="dv">3</span>}]</span>
-<span id="cb23-250"><a href="#cb23-250" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-251"><a href="#cb23-251" aria-hidden="true" tabindex="-1"></a>btc_sensitivity_rows <span class="op">=</span> []</span>
-<span id="cb23-252"><a href="#cb23-252" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> spec <span class="kw">in</span> btc_sensitivity_specs:</span>
-<span id="cb23-253"><a href="#cb23-253" aria-hidden="true" tabindex="-1"></a>    _, sens_summary <span class="op">=</span> run_btc_overlay_suite(<span class="op">**</span>spec)</span>
-<span id="cb23-254"><a href="#cb23-254" aria-hidden="true" tabindex="-1"></a>    btc_sensitivity_rows.append(sens_summary)</span>
-<span id="cb23-255"><a href="#cb23-255" aria-hidden="true" tabindex="-1"></a>btc_sensitivity_table <span class="op">=</span> pd.concat(btc_sensitivity_rows, ignore_index<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb23-256"><a href="#cb23-256" aria-hidden="true" tabindex="-1"></a>display(btc_sensitivity_table[[<span class="st">"scenario"</span>, <span class="st">"strategy"</span>, <span class="st">"cheap_rank"</span>, <span class="st">"rich_rank"</span>, <span class="st">"holding_days"</span>, <span class="st">"total_net_pnl"</span>, <span class="st">"return_on_initial_nav"</span>, <span class="st">"max_drawdown"</span>, <span class="st">"n_trades"</span>, <span class="st">"hit_rate"</span>, <span class="st">"avg_trade_pnl"</span>]])</span>
-<span id="cb23-257"><a href="#cb23-257" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-258"><a href="#cb23-258" aria-hidden="true" tabindex="-1"></a>btc_trades <span class="op">=</span> pd.concat([x[<span class="dv">0</span>] <span class="cf">for</span> x <span class="kw">in</span> btc_backtests.values()], ignore_index<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb23-259"><a href="#cb23-259" aria-hidden="true" tabindex="-1"></a>btc_equity <span class="op">=</span> pd.concat([x[<span class="dv">1</span>] <span class="cf">for</span> x <span class="kw">in</span> btc_backtests.values()], ignore_index<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb23-260"><a href="#cb23-260" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> btc_trades.empty:</span>
-<span id="cb23-261"><a href="#cb23-261" aria-hidden="true" tabindex="-1"></a>    display(btc_trades.groupby([<span class="st">"strategy"</span>, <span class="st">"side"</span>]).agg(n<span class="op">=</span>(<span class="st">"net_pnl"</span>, <span class="st">"size"</span>), total_pnl<span class="op">=</span>(<span class="st">"net_pnl"</span>, <span class="st">"sum"</span>), avg_pnl<span class="op">=</span>(<span class="st">"net_pnl"</span>, <span class="st">"mean"</span>), avg_units<span class="op">=</span>(<span class="st">"units"</span>, <span class="st">"mean"</span>)).reset_index())</span>
-<span id="cb23-262"><a href="#cb23-262" aria-hidden="true" tabindex="-1"></a>    display(btc_trades[[<span class="st">"strategy"</span>, <span class="st">"side"</span>, <span class="st">"entry_date"</span>, <span class="st">"exit_date"</span>, <span class="st">"expiry"</span>, <span class="st">"strike"</span>, <span class="st">"units"</span>, <span class="st">"net_pnl"</span>, <span class="st">"vrp_rank"</span>, <span class="st">"vrp_z"</span>, <span class="st">"selected_model"</span>]].head(<span class="dv">20</span>))</span>
-<span id="cb23-263"><a href="#cb23-263" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-264"><a href="#cb23-264" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">3</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="fl">15.0</span>, <span class="fl">11.0</span>))</span>
-<span id="cb23-265"><a href="#cb23-265" aria-hidden="true" tabindex="-1"></a>axes <span class="op">=</span> axes.ravel()</span>
-<span id="cb23-266"><a href="#cb23-266" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_spot_and_realized_vol(axes[<span class="dv">0</span>], btc_spot, btc_returns, annualization<span class="op">=</span>annualization, title<span class="op">=</span><span class="st">"BTC spot and 21d realized vol"</span>)</span>
-<span id="cb23-267"><a href="#cb23-267" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_selected_model_counts_by_horizon(axes[<span class="dv">1</span>], btc_selected_model_counts, title<span class="op">=</span><span class="st">"BTC selected model counts by horizon"</span>)</span>
-<span id="cb23-268"><a href="#cb23-268" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_qlike_heatmap(</span>
-<span id="cb23-269"><a href="#cb23-269" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">2</span>],</span>
-<span id="cb23-270"><a href="#cb23-270" aria-hidden="true" tabindex="-1"></a>    btc_score_pivot,</span>
-<span id="cb23-271"><a href="#cb23-271" aria-hidden="true" tabindex="-1"></a>    model_order<span class="op">=</span>btc_model_ranks[<span class="st">"model"</span>].tolist() <span class="cf">if</span> <span class="kw">not</span> btc_model_ranks.empty <span class="cf">else</span> <span class="va">None</span>,</span>
-<span id="cb23-272"><a href="#cb23-272" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"BTC QLIKE heatmap"</span>)</span>
-<span id="cb23-273"><a href="#cb23-273" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_iv_forecast_vol(axes[<span class="dv">3</span>], btc_vrp, title<span class="op">=</span><span class="st">"BTC IV vs forecast vol"</span>)</span>
-<span id="cb23-274"><a href="#cb23-274" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_vrp_variance_spread(axes[<span class="dv">4</span>], btc_vrp, title<span class="op">=</span><span class="st">"BTC VRP variance spread"</span>)</span>
-<span id="cb23-275"><a href="#cb23-275" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_vrp_rank_zscore(axes[<span class="dv">5</span>], btc_vrp, title<span class="op">=</span><span class="st">"BTC VRP rank/z"</span>)</span>
-<span id="cb23-276"><a href="#cb23-276" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_overlay_nav(axes[<span class="dv">6</span>], btc_equity, title<span class="op">=</span><span class="st">"BTC strategy NAV"</span>)</span>
-<span id="cb23-277"><a href="#cb23-277" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_overlay_drawdowns(axes[<span class="dv">7</span>], btc_equity, title<span class="op">=</span><span class="st">"BTC drawdowns"</span>)</span>
-<span id="cb23-278"><a href="#cb23-278" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_summary_pnl_drawdown_bars(axes[<span class="dv">8</span>], btc_summary, title<span class="op">=</span><span class="st">"BTC total P&amp;L and max drawdown"</span>)</span>
-<span id="cb23-279"><a href="#cb23-279" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.2</span>, w_pad<span class="op">=</span><span class="fl">1.2</span>, h_pad<span class="op">=</span><span class="fl">1.4</span>)</span>
-<span id="cb23-280"><a href="#cb23-280" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb23-61"><a href="#cb23-61" aria-hidden="true" tabindex="-1"></a>raw_price_cols <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> [<span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"spot"</span>, <span class="st">"strike"</span>, <span class="st">"call_mid_raw"</span>, <span class="st">"put_mid_raw"</span>, <span class="st">"call_mid"</span>, <span class="st">"put_mid"</span>, <span class="st">"atm_iv_mid"</span>] <span class="cf">if</span> c <span class="kw">in</span> btc_iv_daily.columns]</span>
+<span id="cb23-62"><a href="#cb23-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-63"><a href="#cb23-63" aria-hidden="true" tabindex="-1"></a>btc_train_window <span class="op">=</span> <span class="bu">min</span>(<span class="dv">180</span>, <span class="bu">max</span>(<span class="dv">80</span>, <span class="bu">len</span>(btc_returns) <span class="op">//</span> <span class="dv">2</span>))</span>
+<span id="cb23-64"><a href="#cb23-64" aria-hidden="true" tabindex="-1"></a>btc_garch <span class="op">=</span> rolling_arch_forecasts_weekly(</span>
+<span id="cb23-65"><a href="#cb23-65" aria-hidden="true" tabindex="-1"></a>    btc_returns, horizons<span class="op">=</span>horizons, train_window<span class="op">=</span>btc_train_window,</span>
+<span id="cb23-66"><a href="#cb23-66" aria-hidden="true" tabindex="-1"></a>    signal_step<span class="op">=</span><span class="dv">1</span>, forecast_start<span class="op">=</span>btc_signal_start,</span>
+<span id="cb23-67"><a href="#cb23-67" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>annualization, maxiter<span class="op">=</span><span class="dv">350</span>)</span>
+<span id="cb23-68"><a href="#cb23-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-69"><a href="#cb23-69" aria-hidden="true" tabindex="-1"></a>btc_har <span class="op">=</span> rolling_har_forecasts(btc_returns, horizons<span class="op">=</span>horizons,</span>
+<span id="cb23-70"><a href="#cb23-70" aria-hidden="true" tabindex="-1"></a>                                train_window<span class="op">=</span>btc_train_window, refit_every<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb23-71"><a href="#cb23-71" aria-hidden="true" tabindex="-1"></a>                                annualization<span class="op">=</span>annualization, forecast_start<span class="op">=</span>btc_signal_start)</span>
+<span id="cb23-72"><a href="#cb23-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-73"><a href="#cb23-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-74"><a href="#cb23-74" aria-hidden="true" tabindex="-1"></a>btc_fc <span class="op">=</span> pd.concat([btc_garch, btc_har], ignore_index<span class="op">=</span><span class="va">True</span>).sort_values([<span class="st">"date"</span>, <span class="st">"model"</span>, <span class="st">"horizon"</span>])</span>
+<span id="cb23-75"><a href="#cb23-75" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sanitize_btc_forecast_panel(panel, max_annualized_vol<span class="op">=</span><span class="fl">5.0</span>, min_var<span class="op">=</span>eps):</span>
+<span id="cb23-76"><a href="#cb23-76" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> panel.copy().replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
+<span id="cb23-77"><a href="#cb23-77" aria-hidden="true" tabindex="-1"></a>    numeric_cols <span class="op">=</span> [</span>
+<span id="cb23-78"><a href="#cb23-78" aria-hidden="true" tabindex="-1"></a>        <span class="st">"horizon"</span>, <span class="st">"forecast_var_sum"</span>, <span class="st">"forecast_var_ann"</span>, <span class="st">"forecast_vol_ann"</span>,</span>
+<span id="cb23-79"><a href="#cb23-79" aria-hidden="true" tabindex="-1"></a>        <span class="st">"realized_var_sum"</span>, <span class="st">"realized_var_ann"</span>, <span class="st">"realized_vol_ann"</span>]</span>
+<span id="cb23-80"><a href="#cb23-80" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> col <span class="kw">in</span> numeric_cols:</span>
+<span id="cb23-81"><a href="#cb23-81" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> col <span class="kw">in</span> out.columns:</span>
+<span id="cb23-82"><a href="#cb23-82" aria-hidden="true" tabindex="-1"></a>            out[col] <span class="op">=</span> pd.to_numeric(out[col], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
+<span id="cb23-83"><a href="#cb23-83" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> out.dropna(subset<span class="op">=</span>[<span class="st">"date"</span>, <span class="st">"model"</span>, <span class="st">"horizon"</span>, <span class="st">"forecast_var_sum"</span>, <span class="st">"realized_var_sum"</span>]).copy()</span>
+<span id="cb23-84"><a href="#cb23-84" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"horizon"</span>] <span class="op">=</span> out[<span class="st">"horizon"</span>].astype(<span class="bu">int</span>)</span>
+<span id="cb23-85"><a href="#cb23-85" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"forecast_var_sum_raw"</span>] <span class="op">=</span> out[<span class="st">"forecast_var_sum"</span>]</span>
+<span id="cb23-86"><a href="#cb23-86" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"forecast_var_ann_raw"</span>] <span class="op">=</span> out.get(<span class="st">"forecast_var_ann"</span>, annualization <span class="op">/</span> out[<span class="st">"horizon"</span>] <span class="op">*</span> out[<span class="st">"forecast_var_sum"</span>])</span>
+<span id="cb23-87"><a href="#cb23-87" aria-hidden="true" tabindex="-1"></a>    max_var_ann <span class="op">=</span> <span class="bu">float</span>(max_annualized_vol) <span class="op">**</span> <span class="dv">2</span></span>
+<span id="cb23-88"><a href="#cb23-88" aria-hidden="true" tabindex="-1"></a>    cap_sum <span class="op">=</span> max_var_ann <span class="op">*</span> out[<span class="st">"horizon"</span>] <span class="op">/</span> <span class="bu">float</span>(annualization)</span>
+<span id="cb23-89"><a href="#cb23-89" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"forecast_cap_flag"</span>] <span class="op">=</span> (out[<span class="st">"forecast_var_sum"</span>] <span class="op">&gt;</span> cap_sum) <span class="op">|</span> (out[<span class="st">"forecast_var_sum"</span>] <span class="op">&lt;=</span> <span class="dv">0</span>)</span>
+<span id="cb23-90"><a href="#cb23-90" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"forecast_var_sum"</span>] <span class="op">=</span> out[<span class="st">"forecast_var_sum"</span>].clip(lower<span class="op">=</span><span class="bu">float</span>(min_var), upper<span class="op">=</span>cap_sum)</span>
+<span id="cb23-91"><a href="#cb23-91" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"forecast_var_ann"</span>] <span class="op">=</span> annualization <span class="op">/</span> out[<span class="st">"horizon"</span>] <span class="op">*</span> out[<span class="st">"forecast_var_sum"</span>]</span>
+<span id="cb23-92"><a href="#cb23-92" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"forecast_vol_ann"</span>] <span class="op">=</span> np.sqrt(out[<span class="st">"forecast_var_ann"</span>].clip(lower<span class="op">=</span><span class="fl">0.0</span>))</span>
+<span id="cb23-93"><a href="#cb23-93" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"realized_var_ann"</span>] <span class="op">=</span> annualization <span class="op">/</span> out[<span class="st">"horizon"</span>] <span class="op">*</span> out[<span class="st">"realized_var_sum"</span>]</span>
+<span id="cb23-94"><a href="#cb23-94" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"realized_vol_ann"</span>] <span class="op">=</span> np.sqrt(out[<span class="st">"realized_var_ann"</span>].clip(lower<span class="op">=</span><span class="fl">0.0</span>))</span>
+<span id="cb23-95"><a href="#cb23-95" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out.sort_values([<span class="st">"date"</span>, <span class="st">"model"</span>, <span class="st">"horizon"</span>]).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb23-96"><a href="#cb23-96" aria-hidden="true" tabindex="-1"></a>btc_fc <span class="op">=</span> sanitize_btc_forecast_panel(btc_fc, max_annualized_vol<span class="op">=</span><span class="fl">5.0</span>)</span>
+<span id="cb23-97"><a href="#cb23-97" aria-hidden="true" tabindex="-1"></a>btc_forecast_cap_report <span class="op">=</span> (</span>
+<span id="cb23-98"><a href="#cb23-98" aria-hidden="true" tabindex="-1"></a>    btc_fc.groupby(<span class="st">"model"</span>)[<span class="st">"forecast_cap_flag"</span>]</span>
+<span id="cb23-99"><a href="#cb23-99" aria-hidden="true" tabindex="-1"></a>    .agg(n_forecasts<span class="op">=</span><span class="st">"size"</span>, n_capped<span class="op">=</span><span class="st">"sum"</span>, cap_rate<span class="op">=</span><span class="st">"mean"</span>)</span>
+<span id="cb23-100"><a href="#cb23-100" aria-hidden="true" tabindex="-1"></a>    .reset_index()</span>
+<span id="cb23-101"><a href="#cb23-101" aria-hidden="true" tabindex="-1"></a>    .sort_values(<span class="st">"cap_rate"</span>, ascending<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb23-102"><a href="#cb23-102" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-103"><a href="#cb23-103" aria-hidden="true" tabindex="-1"></a>btc_unstable_cap_threshold <span class="op">=</span> <span class="fl">0.05</span></span>
+<span id="cb23-104"><a href="#cb23-104" aria-hidden="true" tabindex="-1"></a>btc_unstable_models <span class="op">=</span> btc_forecast_cap_report.loc[btc_forecast_cap_report[<span class="st">"cap_rate"</span>].gt(btc_unstable_cap_threshold), <span class="st">"model"</span>].astype(<span class="bu">str</span>).tolist()</span>
+<span id="cb23-105"><a href="#cb23-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-106"><a href="#cb23-106" aria-hidden="true" tabindex="-1"></a>btc_fc_model_universe <span class="op">=</span> btc_fc[<span class="op">~</span>btc_fc[<span class="st">"model"</span>].isin(btc_unstable_models)].copy()</span>
+<span id="cb23-107"><a href="#cb23-107" aria-hidden="true" tabindex="-1"></a>btc_forecast_scores <span class="op">=</span> score_forecasts_by_model(btc_fc_model_universe)</span>
+<span id="cb23-108"><a href="#cb23-108" aria-hidden="true" tabindex="-1"></a>btc_score_pivot <span class="op">=</span> btc_forecast_scores.pivot(index<span class="op">=</span><span class="st">"model"</span>, columns<span class="op">=</span><span class="st">"horizon"</span>, values<span class="op">=</span><span class="st">"qlike_var"</span>)</span>
+<span id="cb23-109"><a href="#cb23-109" aria-hidden="true" tabindex="-1"></a>btc_model_ranks <span class="op">=</span> (</span>
+<span id="cb23-110"><a href="#cb23-110" aria-hidden="true" tabindex="-1"></a>    btc_forecast_scores.assign(qlike_rank<span class="op">=</span><span class="kw">lambda</span> x: x.groupby(<span class="st">"horizon"</span>)[<span class="st">"qlike_var"</span>].rank(method<span class="op">=</span><span class="st">"average"</span>))</span>
+<span id="cb23-111"><a href="#cb23-111" aria-hidden="true" tabindex="-1"></a>    .groupby(<span class="st">"model"</span>, as_index<span class="op">=</span><span class="va">False</span>)[<span class="st">"qlike_rank"</span>]</span>
+<span id="cb23-112"><a href="#cb23-112" aria-hidden="true" tabindex="-1"></a>    .mean()</span>
+<span id="cb23-113"><a href="#cb23-113" aria-hidden="true" tabindex="-1"></a>    .sort_values(<span class="st">"qlike_rank"</span>)</span>
+<span id="cb23-114"><a href="#cb23-114" aria-hidden="true" tabindex="-1"></a>    .reset_index(drop<span class="op">=</span><span class="va">True</span>))</span>
+<span id="cb23-115"><a href="#cb23-115" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-116"><a href="#cb23-116" aria-hidden="true" tabindex="-1"></a>display(btc_model_ranks)</span>
+<span id="cb23-117"><a href="#cb23-117" aria-hidden="true" tabindex="-1"></a>display(btc_forecast_scores[btc_forecast_scores[<span class="st">"horizon"</span>].eq(<span class="dv">21</span>)].sort_values([<span class="st">"qlike_var"</span>, <span class="st">"rmse_vol"</span>]).reset_index(drop<span class="op">=</span><span class="va">True</span>))</span>
+<span id="cb23-118"><a href="#cb23-118" aria-hidden="true" tabindex="-1"></a>btc_selected <span class="op">=</span> select_forecast_by_rolling_loss(</span>
+<span id="cb23-119"><a href="#cb23-119" aria-hidden="true" tabindex="-1"></a>    btc_fc_model_universe, horizons<span class="op">=</span>horizons, lookback<span class="op">=</span><span class="dv">63</span>,</span>
+<span id="cb23-120"><a href="#cb23-120" aria-hidden="true" tabindex="-1"></a>    min_obs<span class="op">=</span><span class="dv">15</span>, mode<span class="op">=</span><span class="st">"best"</span>)</span>
+<span id="cb23-121"><a href="#cb23-121" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-122"><a href="#cb23-122" aria-hidden="true" tabindex="-1"></a>btc_selected_model_counts <span class="op">=</span> btc_selected.groupby([<span class="st">"horizon"</span>, <span class="st">"selected_model"</span>]).size().rename(<span class="st">"n"</span>).reset_index()</span>
+<span id="cb23-123"><a href="#cb23-123" aria-hidden="true" tabindex="-1"></a>display(btc_selected_model_counts.pivot_table(index<span class="op">=</span><span class="st">"selected_model"</span>, columns<span class="op">=</span><span class="st">"horizon"</span>, values<span class="op">=</span><span class="st">"n"</span>, fill_value<span class="op">=</span><span class="dv">0</span>))</span>
+<span id="cb23-124"><a href="#cb23-124" aria-hidden="true" tabindex="-1"></a>btc_vrp_rank_window <span class="op">=</span> <span class="dv">45</span></span>
+<span id="cb23-125"><a href="#cb23-125" aria-hidden="true" tabindex="-1"></a>btc_vrp_z_window <span class="op">=</span> <span class="dv">45</span></span>
+<span id="cb23-126"><a href="#cb23-126" aria-hidden="true" tabindex="-1"></a>btc_min_periods <span class="op">=</span> <span class="dv">15</span></span>
+<span id="cb23-127"><a href="#cb23-127" aria-hidden="true" tabindex="-1"></a>btc_base_cheap_rank <span class="op">=</span> <span class="fl">0.10</span></span>
+<span id="cb23-128"><a href="#cb23-128" aria-hidden="true" tabindex="-1"></a>btc_base_rich_rank <span class="op">=</span> <span class="fl">0.50</span></span>
+<span id="cb23-129"><a href="#cb23-129" aria-hidden="true" tabindex="-1"></a>btc_base_holding_days <span class="op">=</span> <span class="dv">3</span></span>
+<span id="cb23-130"><a href="#cb23-130" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb23-131"><a href="#cb23-131" aria-hidden="true" tabindex="-1"></a>    btc_vrp <span class="op">=</span> compute_vrp_panel(</span>
+<span id="cb23-132"><a href="#cb23-132" aria-hidden="true" tabindex="-1"></a>        btc_iv_daily, btc_selected, dte_col<span class="op">=</span><span class="st">"dte_calendar"</span>,</span>
+<span id="cb23-133"><a href="#cb23-133" aria-hidden="true" tabindex="-1"></a>        iv_col<span class="op">=</span><span class="st">"atm_iv_mid"</span>, annualization<span class="op">=</span>annualization,</span>
+<span id="cb23-134"><a href="#cb23-134" aria-hidden="true" tabindex="-1"></a>        z_window<span class="op">=</span>btc_vrp_z_window, rank_window<span class="op">=</span>btc_vrp_rank_window,</span>
+<span id="cb23-135"><a href="#cb23-135" aria-hidden="true" tabindex="-1"></a>        min_periods<span class="op">=</span>btc_min_periods)</span>
+<span id="cb23-136"><a href="#cb23-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-137"><a href="#cb23-137" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">TypeError</span> <span class="im">as</span> exc:</span>
+<span id="cb23-138"><a href="#cb23-138" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="st">"rank_window"</span> <span class="kw">not</span> <span class="kw">in</span> <span class="bu">str</span>(exc):</span>
+<span id="cb23-139"><a href="#cb23-139" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span></span>
+<span id="cb23-140"><a href="#cb23-140" aria-hidden="true" tabindex="-1"></a>    btc_vrp <span class="op">=</span> compute_vrp_panel(btc_iv_daily, btc_selected,</span>
+<span id="cb23-141"><a href="#cb23-141" aria-hidden="true" tabindex="-1"></a>                                dte_col<span class="op">=</span><span class="st">"dte_calendar"</span>, iv_col<span class="op">=</span><span class="st">"atm_iv_mid"</span>,</span>
+<span id="cb23-142"><a href="#cb23-142" aria-hidden="true" tabindex="-1"></a>                                annualization<span class="op">=</span>annualization,</span>
+<span id="cb23-143"><a href="#cb23-143" aria-hidden="true" tabindex="-1"></a>                                z_window<span class="op">=</span>btc_vrp_z_window, min_periods<span class="op">=</span>btc_min_periods)</span>
+<span id="cb23-144"><a href="#cb23-144" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-145"><a href="#cb23-145" aria-hidden="true" tabindex="-1"></a>btc_vrp <span class="op">=</span> btc_vrp.sort_values(<span class="st">"date"</span>).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb23-146"><a href="#cb23-146" aria-hidden="true" tabindex="-1"></a>vals <span class="op">=</span> btc_vrp[<span class="st">"vrp_var"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb23-147"><a href="#cb23-147" aria-hidden="true" tabindex="-1"></a>ranks <span class="op">=</span> np.full(<span class="bu">len</span>(vals), np.nan)</span>
+<span id="cb23-148"><a href="#cb23-148" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(vals)):</span>
+<span id="cb23-149"><a href="#cb23-149" aria-hidden="true" tabindex="-1"></a>    hist <span class="op">=</span> vals[<span class="bu">max</span>(<span class="dv">0</span>, i <span class="op">-</span> btc_vrp_rank_window):i]</span>
+<span id="cb23-150"><a href="#cb23-150" aria-hidden="true" tabindex="-1"></a>    hist <span class="op">=</span> hist[np.isfinite(hist)]</span>
+<span id="cb23-151"><a href="#cb23-151" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(hist) <span class="op">&gt;=</span> btc_min_periods <span class="kw">and</span> np.isfinite(vals[i]):</span>
+<span id="cb23-152"><a href="#cb23-152" aria-hidden="true" tabindex="-1"></a>        ranks[i] <span class="op">=</span> np.mean(hist <span class="op">&lt;=</span> vals[i])</span>
+<span id="cb23-153"><a href="#cb23-153" aria-hidden="true" tabindex="-1"></a>btc_vrp[<span class="st">"vrp_rank"</span>] <span class="op">=</span> ranks</span>
+<span id="cb23-154"><a href="#cb23-154" aria-hidden="true" tabindex="-1"></a>btc_feature_frame <span class="op">=</span> pd.DataFrame(index<span class="op">=</span>btc_spot.index)</span>
+<span id="cb23-155"><a href="#cb23-155" aria-hidden="true" tabindex="-1"></a>btc_feature_frame[<span class="st">"btc_spot"</span>] <span class="op">=</span> btc_spot</span>
+<span id="cb23-156"><a href="#cb23-156" aria-hidden="true" tabindex="-1"></a>btc_feature_frame[<span class="st">"ret_1d"</span>] <span class="op">=</span> btc_returns.reindex(btc_feature_frame.index)</span>
+<span id="cb23-157"><a href="#cb23-157" aria-hidden="true" tabindex="-1"></a>btc_feature_frame[<span class="st">"ret_5d"</span>] <span class="op">=</span> np.log(btc_feature_frame[<span class="st">"btc_spot"</span>] <span class="op">/</span> btc_feature_frame[<span class="st">"btc_spot"</span>].shift(<span class="dv">5</span>))</span>
+<span id="cb23-158"><a href="#cb23-158" aria-hidden="true" tabindex="-1"></a>btc_feature_frame[<span class="st">"trailing_rv_21"</span>] <span class="op">=</span> btc_returns.rolling(<span class="dv">21</span>).std() <span class="op">*</span> np.sqrt(annualization)</span>
+<span id="cb23-159"><a href="#cb23-159" aria-hidden="true" tabindex="-1"></a>rv_vals <span class="op">=</span> btc_feature_frame[<span class="st">"trailing_rv_21"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb23-160"><a href="#cb23-160" aria-hidden="true" tabindex="-1"></a>rv_rank <span class="op">=</span> np.full(<span class="bu">len</span>(rv_vals), np.nan)</span>
+<span id="cb23-161"><a href="#cb23-161" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, value <span class="kw">in</span> <span class="bu">enumerate</span>(rv_vals):</span>
+<span id="cb23-162"><a href="#cb23-162" aria-hidden="true" tabindex="-1"></a>    hist <span class="op">=</span> rv_vals[<span class="bu">max</span>(<span class="dv">0</span>, i <span class="op">-</span> btc_vrp_rank_window):i]</span>
+<span id="cb23-163"><a href="#cb23-163" aria-hidden="true" tabindex="-1"></a>    hist <span class="op">=</span> hist[np.isfinite(hist)]</span>
+<span id="cb23-164"><a href="#cb23-164" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> np.isfinite(value) <span class="kw">and</span> <span class="bu">len</span>(hist) <span class="op">&gt;=</span> btc_min_periods:</span>
+<span id="cb23-165"><a href="#cb23-165" aria-hidden="true" tabindex="-1"></a>        rv_rank[i] <span class="op">=</span> np.mean(hist <span class="op">&lt;=</span> value)</span>
+<span id="cb23-166"><a href="#cb23-166" aria-hidden="true" tabindex="-1"></a>btc_feature_frame[<span class="st">"trailing_rv_rank"</span>] <span class="op">=</span> rv_rank</span>
+<span id="cb23-167"><a href="#cb23-167" aria-hidden="true" tabindex="-1"></a>btc_vrp <span class="op">=</span> btc_vrp.merge(</span>
+<span id="cb23-168"><a href="#cb23-168" aria-hidden="true" tabindex="-1"></a>    btc_feature_frame[[<span class="st">"ret_1d"</span>, <span class="st">"ret_5d"</span>, <span class="st">"trailing_rv_21"</span>, <span class="st">"trailing_rv_rank"</span>]].reset_index().rename(columns<span class="op">=</span>{<span class="st">"index"</span>: <span class="st">"date"</span>}),</span>
+<span id="cb23-169"><a href="#cb23-169" aria-hidden="true" tabindex="-1"></a>    on<span class="op">=</span><span class="st">"date"</span>, how<span class="op">=</span><span class="st">"left"</span>)</span>
+<span id="cb23-170"><a href="#cb23-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-171"><a href="#cb23-171" aria-hidden="true" tabindex="-1"></a>btc_vrp[<span class="st">"short_calm_filter"</span>] <span class="op">=</span> (</span>
+<span id="cb23-172"><a href="#cb23-172" aria-hidden="true" tabindex="-1"></a>    btc_vrp[<span class="st">"ret_1d"</span>].<span class="bu">abs</span>().le(<span class="fl">0.05</span>)</span>
+<span id="cb23-173"><a href="#cb23-173" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span> btc_vrp[<span class="st">"ret_5d"</span>].<span class="bu">abs</span>().le(<span class="fl">0.12</span>)</span>
+<span id="cb23-174"><a href="#cb23-174" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span> (btc_vrp[<span class="st">"trailing_rv_rank"</span>].isna() <span class="op">|</span> btc_vrp[<span class="st">"trailing_rv_rank"</span>].le(<span class="fl">0.80</span>)))</span>
+<span id="cb23-175"><a href="#cb23-175" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-176"><a href="#cb23-176" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-177"><a href="#cb23-177" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lib_rule(strategy_name, cheap_rank<span class="op">=</span>btc_base_cheap_rank, rich_rank<span class="op">=</span>btc_base_rich_rank):</span>
+<span id="cb23-178"><a href="#cb23-178" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _rule(row):</span>
+<span id="cb23-179"><a href="#cb23-179" aria-hidden="true" tabindex="-1"></a>        rank <span class="op">=</span> row.get(<span class="st">"vrp_rank"</span>, np.nan)</span>
+<span id="cb23-180"><a href="#cb23-180" aria-hidden="true" tabindex="-1"></a>        cheap <span class="op">=</span> <span class="bu">bool</span>(pd.notna(rank) <span class="kw">and</span> rank <span class="op">&lt;=</span> cheap_rank)</span>
+<span id="cb23-181"><a href="#cb23-181" aria-hidden="true" tabindex="-1"></a>        rich <span class="op">=</span> <span class="bu">bool</span>(pd.notna(rank) <span class="kw">and</span> rank <span class="op">&gt;=</span> rich_rank)</span>
+<span id="cb23-182"><a href="#cb23-182" aria-hidden="true" tabindex="-1"></a>        calm_short <span class="op">=</span> <span class="bu">bool</span>(row.get(<span class="st">"short_calm_filter"</span>, <span class="va">False</span>))</span>
+<span id="cb23-183"><a href="#cb23-183" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> strategy_name <span class="op">==</span> <span class="st">"AlwaysLongStraddle"</span>:</span>
+<span id="cb23-184"><a href="#cb23-184" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"long"</span>}</span>
+<span id="cb23-185"><a href="#cb23-185" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> strategy_name <span class="op">==</span> <span class="st">"LongCheapConvexity"</span>:</span>
+<span id="cb23-186"><a href="#cb23-186" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"long"</span> <span class="cf">if</span> cheap <span class="cf">else</span> <span class="st">"cash"</span>, <span class="st">"skip_reason"</span>: <span class="st">"rank_not_cheap"</span>}</span>
+<span id="cb23-187"><a href="#cb23-187" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> strategy_name <span class="op">==</span> <span class="st">"ShortRichVolatility"</span>:</span>
+<span id="cb23-188"><a href="#cb23-188" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> rich <span class="kw">and</span> calm_short:</span>
+<span id="cb23-189"><a href="#cb23-189" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"short"</span>}</span>
+<span id="cb23-190"><a href="#cb23-190" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> rich <span class="kw">and</span> <span class="kw">not</span> calm_short:</span>
+<span id="cb23-191"><a href="#cb23-191" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"cash"</span>, <span class="st">"skip_reason"</span>: <span class="st">"short_calm_filter"</span>}</span>
+<span id="cb23-192"><a href="#cb23-192" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"cash"</span>, <span class="st">"skip_reason"</span>: <span class="st">"rank_not_rich"</span>}</span>
+<span id="cb23-193"><a href="#cb23-193" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> strategy_name <span class="op">==</span> <span class="st">"TwoSidedVRPSwitcher"</span>:</span>
+<span id="cb23-194"><a href="#cb23-194" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> cheap <span class="kw">and</span> <span class="kw">not</span> rich:</span>
+<span id="cb23-195"><a href="#cb23-195" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"long"</span>}</span>
+<span id="cb23-196"><a href="#cb23-196" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> rich <span class="kw">and</span> <span class="kw">not</span> cheap:</span>
+<span id="cb23-197"><a href="#cb23-197" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"short"</span>} <span class="cf">if</span> calm_short <span class="cf">else</span> {<span class="st">"side"</span>: <span class="st">"cash"</span>, <span class="st">"skip_reason"</span>: <span class="st">"short_calm_filter"</span>}</span>
+<span id="cb23-198"><a href="#cb23-198" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> cheap <span class="kw">and</span> rich:</span>
+<span id="cb23-199"><a href="#cb23-199" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> rank <span class="op">&lt;=</span> <span class="fl">0.50</span>:</span>
+<span id="cb23-200"><a href="#cb23-200" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"long"</span>}</span>
+<span id="cb23-201"><a href="#cb23-201" aria-hidden="true" tabindex="-1"></a>                <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"short"</span>} <span class="cf">if</span> calm_short <span class="cf">else</span> {<span class="st">"side"</span>: <span class="st">"cash"</span>, <span class="st">"skip_reason"</span>: <span class="st">"short_calm_filter"</span>}</span>
+<span id="cb23-202"><a href="#cb23-202" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> {<span class="st">"side"</span>: <span class="st">"cash"</span>, <span class="st">"skip_reason"</span>: <span class="st">"neutral_rank"</span>}</span>
+<span id="cb23-203"><a href="#cb23-203" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> _rule</span>
+<span id="cb23-204"><a href="#cb23-204" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-205"><a href="#cb23-205" aria-hidden="true" tabindex="-1"></a>btc_strategy_names <span class="op">=</span> [<span class="st">"AlwaysLongStraddle"</span>, <span class="st">"LongCheapConvexity"</span>, <span class="st">"ShortRichVolatility"</span>, <span class="st">"TwoSidedVRPSwitcher"</span>]</span>
+<span id="cb23-206"><a href="#cb23-206" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-207"><a href="#cb23-207" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_btc_overlay_suite(scenario, cheap_rank, rich_rank, holding_days):</span>
+<span id="cb23-208"><a href="#cb23-208" aria-hidden="true" tabindex="-1"></a>    suite <span class="op">=</span> {</span>
+<span id="cb23-209"><a href="#cb23-209" aria-hidden="true" tabindex="-1"></a>        name: backtest_straddle_overlay(</span>
+<span id="cb23-210"><a href="#cb23-210" aria-hidden="true" tabindex="-1"></a>            btc_vrp, btc_options_usd, btc_spot, strategy_name<span class="op">=</span>name,</span>
+<span id="cb23-211"><a href="#cb23-211" aria-hidden="true" tabindex="-1"></a>            signal_rule<span class="op">=</span>lib_rule(name, cheap_rank<span class="op">=</span>cheap_rank, rich_rank<span class="op">=</span>rich_rank),</span>
+<span id="cb23-212"><a href="#cb23-212" aria-hidden="true" tabindex="-1"></a>            initial_nav<span class="op">=</span><span class="dv">1_000</span>, contract_multiplier<span class="op">=</span><span class="fl">1.0</span>,</span>
+<span id="cb23-213"><a href="#cb23-213" aria-hidden="true" tabindex="-1"></a>            holding_days<span class="op">=</span><span class="bu">int</span>(holding_days), allow_overlap<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb23-214"><a href="#cb23-214" aria-hidden="true" tabindex="-1"></a>            fractional_units<span class="op">=</span><span class="va">True</span>, long_premium_budget_frac<span class="op">=</span><span class="fl">0.005</span>,</span>
+<span id="cb23-215"><a href="#cb23-215" aria-hidden="true" tabindex="-1"></a>            short_margin_budget_frac<span class="op">=</span><span class="fl">0.02</span>, max_short_notional_frac<span class="op">=</span><span class="fl">1.0</span>)</span>
+<span id="cb23-216"><a href="#cb23-216" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> name <span class="kw">in</span> btc_strategy_names}</span>
+<span id="cb23-217"><a href="#cb23-217" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-218"><a href="#cb23-218" aria-hidden="true" tabindex="-1"></a>    summary <span class="op">=</span> summarize_overlay_trades(suite, initial_nav<span class="op">=</span><span class="dv">1_000</span>)</span>
+<span id="cb23-219"><a href="#cb23-219" aria-hidden="true" tabindex="-1"></a>    summary[<span class="st">"scenario"</span>] <span class="op">=</span> scenario</span>
+<span id="cb23-220"><a href="#cb23-220" aria-hidden="true" tabindex="-1"></a>    summary[<span class="st">"cheap_rank"</span>] <span class="op">=</span> cheap_rank</span>
+<span id="cb23-221"><a href="#cb23-221" aria-hidden="true" tabindex="-1"></a>    summary[<span class="st">"rich_rank"</span>] <span class="op">=</span> rich_rank</span>
+<span id="cb23-222"><a href="#cb23-222" aria-hidden="true" tabindex="-1"></a>    summary[<span class="st">"holding_days"</span>] <span class="op">=</span> <span class="bu">int</span>(holding_days)</span>
+<span id="cb23-223"><a href="#cb23-223" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> suite, summary</span>
+<span id="cb23-224"><a href="#cb23-224" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-225"><a href="#cb23-225" aria-hidden="true" tabindex="-1"></a>btc_backtests, btc_summary <span class="op">=</span> run_btc_overlay_suite(</span>
+<span id="cb23-226"><a href="#cb23-226" aria-hidden="true" tabindex="-1"></a>    <span class="st">"base"</span>, cheap_rank<span class="op">=</span>btc_base_cheap_rank,</span>
+<span id="cb23-227"><a href="#cb23-227" aria-hidden="true" tabindex="-1"></a>    rich_rank<span class="op">=</span>btc_base_rich_rank, holding_days<span class="op">=</span>btc_base_holding_days)</span>
+<span id="cb23-228"><a href="#cb23-228" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-229"><a href="#cb23-229" aria-hidden="true" tabindex="-1"></a>btc_sensitivity_specs <span class="op">=</span> [</span>
+<span id="cb23-230"><a href="#cb23-230" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"scenario"</span>: <span class="st">"loose"</span>, <span class="st">"cheap_rank"</span>: <span class="fl">0.40</span>, <span class="st">"rich_rank"</span>: <span class="fl">0.70</span>, <span class="st">"holding_days"</span>: <span class="dv">3</span>},</span>
+<span id="cb23-231"><a href="#cb23-231" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"scenario"</span>: <span class="st">"base"</span>, <span class="st">"cheap_rank"</span>: <span class="fl">0.35</span>, <span class="st">"rich_rank"</span>: <span class="fl">0.80</span>, <span class="st">"holding_days"</span>: <span class="dv">3</span>},</span>
+<span id="cb23-232"><a href="#cb23-232" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"scenario"</span>: <span class="st">"strict"</span>, <span class="st">"cheap_rank"</span>: <span class="fl">0.30</span>, <span class="st">"rich_rank"</span>: <span class="fl">0.90</span>, <span class="st">"holding_days"</span>: <span class="dv">3</span>}]</span>
+<span id="cb23-233"><a href="#cb23-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-234"><a href="#cb23-234" aria-hidden="true" tabindex="-1"></a>btc_sensitivity_rows <span class="op">=</span> []</span>
+<span id="cb23-235"><a href="#cb23-235" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> spec <span class="kw">in</span> btc_sensitivity_specs:</span>
+<span id="cb23-236"><a href="#cb23-236" aria-hidden="true" tabindex="-1"></a>    _, sens_summary <span class="op">=</span> run_btc_overlay_suite(<span class="op">**</span>spec)</span>
+<span id="cb23-237"><a href="#cb23-237" aria-hidden="true" tabindex="-1"></a>    btc_sensitivity_rows.append(sens_summary)</span>
+<span id="cb23-238"><a href="#cb23-238" aria-hidden="true" tabindex="-1"></a>btc_sensitivity_table <span class="op">=</span> pd.concat(btc_sensitivity_rows, ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb23-239"><a href="#cb23-239" aria-hidden="true" tabindex="-1"></a>display(btc_sensitivity_table[[<span class="st">"scenario"</span>, <span class="st">"strategy"</span>, <span class="st">"cheap_rank"</span>, <span class="st">"rich_rank"</span>, <span class="st">"holding_days"</span>, <span class="st">"total_net_pnl"</span>, <span class="st">"return_on_initial_nav"</span>, <span class="st">"max_drawdown"</span>, <span class="st">"n_trades"</span>, <span class="st">"hit_rate"</span>, <span class="st">"avg_trade_pnl"</span>]])</span>
+<span id="cb23-240"><a href="#cb23-240" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-241"><a href="#cb23-241" aria-hidden="true" tabindex="-1"></a>btc_trades <span class="op">=</span> pd.concat([x[<span class="dv">0</span>] <span class="cf">for</span> x <span class="kw">in</span> btc_backtests.values()], ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb23-242"><a href="#cb23-242" aria-hidden="true" tabindex="-1"></a>btc_equity <span class="op">=</span> pd.concat([x[<span class="dv">1</span>] <span class="cf">for</span> x <span class="kw">in</span> btc_backtests.values()], ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb23-243"><a href="#cb23-243" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> btc_trades.empty:</span>
+<span id="cb23-244"><a href="#cb23-244" aria-hidden="true" tabindex="-1"></a>    display(btc_trades.groupby([<span class="st">"strategy"</span>, <span class="st">"side"</span>]).agg(n<span class="op">=</span>(<span class="st">"net_pnl"</span>, <span class="st">"size"</span>), total_pnl<span class="op">=</span>(<span class="st">"net_pnl"</span>, <span class="st">"sum"</span>), avg_pnl<span class="op">=</span>(<span class="st">"net_pnl"</span>, <span class="st">"mean"</span>), avg_units<span class="op">=</span>(<span class="st">"units"</span>, <span class="st">"mean"</span>)).reset_index())</span>
+<span id="cb23-245"><a href="#cb23-245" aria-hidden="true" tabindex="-1"></a>    display(btc_trades[[<span class="st">"strategy"</span>, <span class="st">"side"</span>, <span class="st">"entry_date"</span>, <span class="st">"exit_date"</span>, <span class="st">"expiry"</span>, <span class="st">"strike"</span>, <span class="st">"units"</span>, <span class="st">"net_pnl"</span>, <span class="st">"vrp_rank"</span>, <span class="st">"vrp_z"</span>, <span class="st">"selected_model"</span>]].head(<span class="dv">20</span>))</span>
+<span id="cb23-246"><a href="#cb23-246" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-247"><a href="#cb23-247" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">3</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="fl">15.0</span>, <span class="fl">11.0</span>))</span>
+<span id="cb23-248"><a href="#cb23-248" aria-hidden="true" tabindex="-1"></a>axes <span class="op">=</span> axes.ravel()</span>
+<span id="cb23-249"><a href="#cb23-249" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_spot_and_realized_vol(axes[<span class="dv">0</span>], btc_spot, btc_returns, annualization<span class="op">=</span>annualization, title<span class="op">=</span><span class="st">"BTC spot and 21d realized vol"</span>)</span>
+<span id="cb23-250"><a href="#cb23-250" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_selected_model_counts_by_horizon(axes[<span class="dv">1</span>], btc_selected_model_counts, title<span class="op">=</span><span class="st">"BTC selected model counts by horizon"</span>)</span>
+<span id="cb23-251"><a href="#cb23-251" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_qlike_heatmap(</span>
+<span id="cb23-252"><a href="#cb23-252" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">2</span>],</span>
+<span id="cb23-253"><a href="#cb23-253" aria-hidden="true" tabindex="-1"></a>    btc_score_pivot,</span>
+<span id="cb23-254"><a href="#cb23-254" aria-hidden="true" tabindex="-1"></a>    model_order<span class="op">=</span>btc_model_ranks[<span class="st">"model"</span>].tolist() <span class="cf">if</span> <span class="kw">not</span> btc_model_ranks.empty <span class="cf">else</span> <span class="va">None</span>,</span>
+<span id="cb23-255"><a href="#cb23-255" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"BTC QLIKE heatmap"</span>)</span>
+<span id="cb23-256"><a href="#cb23-256" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_iv_forecast_vol(axes[<span class="dv">3</span>], btc_vrp, title<span class="op">=</span><span class="st">"BTC IV vs forecast vol"</span>)</span>
+<span id="cb23-257"><a href="#cb23-257" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_vrp_variance_spread(axes[<span class="dv">4</span>], btc_vrp, title<span class="op">=</span><span class="st">"BTC VRP variance spread"</span>)</span>
+<span id="cb23-258"><a href="#cb23-258" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_vrp_rank_zscore(axes[<span class="dv">5</span>], btc_vrp, title<span class="op">=</span><span class="st">"BTC VRP rank/z"</span>)</span>
+<span id="cb23-259"><a href="#cb23-259" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_overlay_nav(axes[<span class="dv">6</span>], btc_equity, title<span class="op">=</span><span class="st">"BTC strategy NAV"</span>)</span>
+<span id="cb23-260"><a href="#cb23-260" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_overlay_drawdowns(axes[<span class="dv">7</span>], btc_equity, title<span class="op">=</span><span class="st">"BTC drawdowns"</span>)</span>
+<span id="cb23-261"><a href="#cb23-261" aria-hidden="true" tabindex="-1"></a>vol_plots.plot_summary_pnl_drawdown_bars(axes[<span class="dv">8</span>], btc_summary, title<span class="op">=</span><span class="st">"BTC total P&amp;L and max drawdown"</span>)</span>
+<span id="cb23-262"><a href="#cb23-262" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.2</span>, w_pad<span class="op">=</span><span class="fl">1.2</span>, h_pad<span class="op">=</span><span class="fl">1.4</span>)</span>
+<span id="cb23-263"><a href="#cb23-263" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4758,43 +4741,43 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
 <td>long-form after DTE filter</td>
-<td>92808</td>
-<td>94,371.000000</td>
+<td>92124</td>
+<td>95,055.000000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
 <td>long-form after moneyness filter</td>
-<td>56393</td>
-<td>36,415.000000</td>
+<td>56054</td>
+<td>36,070.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
 <td>long-form after ATM-pair selection</td>
-<td>55591</td>
+<td>55252</td>
 <td>802.000000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
 <td>long-form final rows</td>
-<td>55416</td>
-<td>175.000000</td>
+<td>55105</td>
+<td>147.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
 <td>price unit detected: usd</td>
-<td>55416</td>
+<td>55105</td>
 <td>0.000000</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">10</th>
 <td>valid forward/parity slices</td>
-<td>1228</td>
+<td>1219</td>
 <td>0.000000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">11</th>
 <td>final ATM panel rows</td>
-<td>1228</td>
+<td>1219</td>
 <td>0.000000</td>
 </tr>
 </tbody>
@@ -4896,12 +4879,12 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <th data-quarto-table-cell-role="th">1</th>
 <td>egarch11_normal</td>
 <td>21</td>
-<td>-3.147189</td>
-<td>0.008449</td>
-<td>0.006598</td>
-<td>0.145519</td>
-<td>0.112600</td>
-<td>-0.149986</td>
+<td>-3.147296</td>
+<td>0.008447</td>
+<td>0.006593</td>
+<td>0.145456</td>
+<td>0.112508</td>
+<td>-0.144759</td>
 <td>136</td>
 </tr>
 <tr class="odd">
@@ -5011,8 +4994,8 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <th data-quarto-table-cell-role="th">egarch11_normal</th>
 <td>74.000000</td>
 <td>40.000000</td>
-<td>29.000000</td>
-<td>11.000000</td>
+<td>30.000000</td>
+<td>12.000000</td>
 <td>21.000000</td>
 <td>0.000000</td>
 </tr>
@@ -5039,7 +5022,7 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>0.000000</td>
 <td>33.000000</td>
 <td>5.000000</td>
-<td>19.000000</td>
+<td>18.000000</td>
 <td>26.000000</td>
 <td>1.000000</td>
 </tr>
@@ -5056,7 +5039,7 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <th data-quarto-table-cell-role="th">har_rv</th>
 <td>15.000000</td>
 <td>41.000000</td>
-<td>69.000000</td>
+<td>68.000000</td>
 <td>64.000000</td>
 <td>30.000000</td>
 <td>135.000000</td>
@@ -5095,12 +5078,12 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>0.400000</td>
 <td>0.700000</td>
 <td>3</td>
-<td>-2.592525</td>
-<td>-0.002593</td>
-<td>-0.008343</td>
+<td>-8.132240</td>
+<td>-0.008132</td>
+<td>-0.009476</td>
 <td>27</td>
-<td>0.222222</td>
-<td>-0.096019</td>
+<td>0.185185</td>
+<td>-0.301194</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
@@ -5109,12 +5092,12 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>0.400000</td>
 <td>0.700000</td>
 <td>3</td>
-<td>-6.755045</td>
-<td>-0.006755</td>
-<td>-0.006976</td>
+<td>-7.423531</td>
+<td>-0.007424</td>
+<td>-0.007644</td>
 <td>20</td>
-<td>0.250000</td>
-<td>-0.337752</td>
+<td>0.200000</td>
+<td>-0.371177</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
@@ -5137,12 +5120,12 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>0.400000</td>
 <td>0.700000</td>
 <td>3</td>
-<td>-0.929019</td>
-<td>-0.000929</td>
-<td>-0.005083</td>
+<td>-1.601426</td>
+<td>-0.001601</td>
+<td>-0.005752</td>
 <td>22</td>
-<td>0.363636</td>
-<td>-0.042228</td>
+<td>0.318182</td>
+<td>-0.072792</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
@@ -5151,12 +5134,12 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>0.350000</td>
 <td>0.800000</td>
 <td>3</td>
-<td>-2.592525</td>
-<td>-0.002593</td>
-<td>-0.008343</td>
+<td>-8.132240</td>
+<td>-0.008132</td>
+<td>-0.009476</td>
 <td>27</td>
-<td>0.222222</td>
-<td>-0.096019</td>
+<td>0.185185</td>
+<td>-0.301194</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
@@ -5165,12 +5148,12 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>0.350000</td>
 <td>0.800000</td>
 <td>3</td>
-<td>-5.002039</td>
-<td>-0.005002</td>
-<td>-0.005768</td>
+<td>-5.671705</td>
+<td>-0.005672</td>
+<td>-0.006437</td>
 <td>18</td>
-<td>0.277778</td>
-<td>-0.277891</td>
+<td>0.222222</td>
+<td>-0.315095</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
@@ -5193,12 +5176,12 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>0.350000</td>
 <td>0.800000</td>
 <td>3</td>
-<td>-4.850000</td>
-<td>-0.004850</td>
-<td>-0.005768</td>
+<td>-5.519768</td>
+<td>-0.005520</td>
+<td>-0.006437</td>
 <td>19</td>
-<td>0.315789</td>
-<td>-0.255263</td>
+<td>0.263158</td>
+<td>-0.290514</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
@@ -5207,12 +5190,12 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>0.300000</td>
 <td>0.900000</td>
 <td>3</td>
-<td>-2.592525</td>
-<td>-0.002593</td>
-<td>-0.008343</td>
+<td>-8.132240</td>
+<td>-0.008132</td>
+<td>-0.009476</td>
 <td>27</td>
-<td>0.222222</td>
-<td>-0.096019</td>
+<td>0.185185</td>
+<td>-0.301194</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
@@ -5221,12 +5204,12 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>0.300000</td>
 <td>0.900000</td>
 <td>3</td>
-<td>-2.198347</td>
-<td>-0.002198</td>
-<td>-0.006577</td>
+<td>-1.885717</td>
+<td>-0.001886</td>
+<td>-0.006266</td>
 <td>18</td>
 <td>0.222222</td>
-<td>-0.122130</td>
+<td>-0.104762</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">10</th>
@@ -5249,12 +5232,12 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>0.300000</td>
 <td>0.900000</td>
 <td>3</td>
-<td>-2.198347</td>
-<td>-0.002198</td>
-<td>-0.006577</td>
+<td>-1.885717</td>
+<td>-0.001886</td>
+<td>-0.006266</td>
 <td>18</td>
 <td>0.222222</td>
-<td>-0.122130</td>
+<td>-0.104762</td>
 </tr>
 </tbody>
 </table>
@@ -5283,9 +5266,9 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>AlwaysLongStraddle</td>
 <td>long</td>
 <td>27</td>
-<td>-2.592525</td>
-<td>-0.096019</td>
-<td>0.000585</td>
+<td>-8.132240</td>
+<td>-0.301194</td>
+<td>0.000603</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
@@ -5300,28 +5283,28 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <th data-quarto-table-cell-role="th">2</th>
 <td>ShortRichVolatility</td>
 <td>short</td>
-<td>5</td>
-<td>2.462878</td>
-<td>0.492576</td>
-<td>0.001118</td>
+<td>4</td>
+<td>1.663766</td>
+<td>0.415942</td>
+<td>0.001148</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
 <td>TwoSidedVRPSwitcher</td>
 <td>long</td>
-<td>10</td>
-<td>-0.274664</td>
-<td>-0.027466</td>
-<td>0.000682</td>
+<td>11</td>
+<td>-0.936839</td>
+<td>-0.085167</td>
+<td>0.000696</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
 <td>TwoSidedVRPSwitcher</td>
 <td>short</td>
-<td>4</td>
-<td>2.557684</td>
-<td>0.639421</td>
-<td>0.001036</td>
+<td>3</td>
+<td>1.760147</td>
+<td>0.586716</td>
+<td>0.001050</td>
 </tr>
 </tbody>
 </table>
@@ -5396,84 +5379,84 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <th data-quarto-table-cell-role="th">3</th>
 <td>AlwaysLongStraddle</td>
 <td>long</td>
-<td>2024-04-17</td>
-<td>2024-04-20</td>
+<td>2024-04-18</td>
+<td>2024-04-21</td>
 <td>2024-05-31</td>
-<td>65,000.000000</td>
-<td>0.000402</td>
-<td>-0.316612</td>
-<td>0.117647</td>
-<td>-1.124458</td>
+<td>63,000.000000</td>
+<td>0.000418</td>
+<td>-0.003815</td>
+<td>0.166667</td>
+<td>-1.023106</td>
 <td>garch11_normal</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
 <td>AlwaysLongStraddle</td>
 <td>long</td>
-<td>2024-04-21</td>
-<td>2024-04-24</td>
+<td>2024-04-22</td>
+<td>2024-04-25</td>
 <td>2024-05-31</td>
 <td>66,000.000000</td>
-<td>0.000406</td>
-<td>-0.690472</td>
-<td>0.333333</td>
-<td>-0.513804</td>
+<td>0.000412</td>
+<td>-1.014286</td>
+<td>0.318182</td>
+<td>-0.602765</td>
 <td>garch11_normal</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
 <td>AlwaysLongStraddle</td>
 <td>long</td>
-<td>2024-04-25</td>
-<td>2024-04-28</td>
+<td>2024-04-26</td>
+<td>2024-04-29</td>
 <td>2024-05-31</td>
 <td>65,000.000000</td>
-<td>0.000514</td>
-<td>-0.841136</td>
+<td>0.000542</td>
+<td>-0.814834</td>
 <td>0.000000</td>
-<td>-2.241808</td>
-<td>garch11_normal</td>
+<td>-2.301752</td>
+<td>garch22_normal</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
 <td>AlwaysLongStraddle</td>
 <td>long</td>
-<td>2024-04-29</td>
-<td>2024-05-02</td>
+<td>2024-04-30</td>
+<td>2024-05-03</td>
 <td>2024-05-31</td>
-<td>62,000.000000</td>
-<td>0.000613</td>
-<td>0.087032</td>
-<td>0.068966</td>
-<td>-1.958668</td>
+<td>64,000.000000</td>
+<td>0.000644</td>
+<td>0.015991</td>
+<td>0.000000</td>
+<td>-2.173978</td>
 <td>garch22_normal</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
 <td>AlwaysLongStraddle</td>
 <td>long</td>
-<td>2024-05-03</td>
-<td>2024-05-06</td>
+<td>2024-05-04</td>
+<td>2024-05-07</td>
 <td>2024-05-31</td>
-<td>60,000.000000</td>
-<td>0.000701</td>
-<td>0.631579</td>
-<td>0.000000</td>
-<td>-1.905226</td>
+<td>63,000.000000</td>
+<td>0.000663</td>
+<td>-0.493418</td>
+<td>0.058824</td>
+<td>-1.579771</td>
 <td>garch11_normal</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
 <td>AlwaysLongStraddle</td>
 <td>long</td>
-<td>2024-05-07</td>
-<td>2024-05-10</td>
+<td>2024-05-08</td>
+<td>2024-05-11</td>
 <td>2024-05-31</td>
 <td>63,000.000000</td>
-<td>0.000723</td>
-<td>-0.899662</td>
-<td>0.081081</td>
-<td>-1.398910</td>
+<td>0.000773</td>
+<td>-0.389667</td>
+<td>0.026316</td>
+<td>-1.532690</td>
 <td>garch11_normal</td>
 </tr>
 <tr class="even">
@@ -5484,10 +5467,10 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>2024-05-19</td>
 <td>2024-06-28</td>
 <td>65,000.000000</td>
-<td>0.000483</td>
-<td>-0.089335</td>
+<td>0.000482</td>
+<td>-0.089275</td>
 <td>0.377778</td>
-<td>-0.798869</td>
+<td>-0.795503</td>
 <td>garch22_normal</td>
 </tr>
 <tr class="odd">
@@ -5499,9 +5482,9 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>2024-06-28</td>
 <td>70,000.000000</td>
 <td>0.000468</td>
-<td>-0.535097</td>
+<td>-0.534737</td>
 <td>0.000000</td>
-<td>-1.857088</td>
+<td>-1.863133</td>
 <td>garch22_normal</td>
 </tr>
 <tr class="even">
@@ -5513,9 +5496,9 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>2024-06-28</td>
 <td>68,000.000000</td>
 <td>0.000559</td>
-<td>-0.206494</td>
+<td>-0.206355</td>
 <td>0.222222</td>
-<td>-0.887331</td>
+<td>-0.886169</td>
 <td>gjr11_normal</td>
 </tr>
 <tr class="odd">
@@ -5526,10 +5509,10 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>2024-05-31</td>
 <td>2024-06-28</td>
 <td>68,000.000000</td>
-<td>0.000577</td>
-<td>-0.571173</td>
+<td>0.000576</td>
+<td>-0.570789</td>
 <td>0.400000</td>
-<td>-0.535966</td>
+<td>-0.533802</td>
 <td>gjr11_normal</td>
 </tr>
 <tr class="even">
@@ -5541,9 +5524,9 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>2024-06-28</td>
 <td>68,000.000000</td>
 <td>0.000664</td>
-<td>-0.267987</td>
+<td>-0.267807</td>
 <td>0.088889</td>
-<td>-0.796830</td>
+<td>-0.799159</td>
 <td>gjr11_normal</td>
 </tr>
 <tr class="odd">
@@ -5554,80 +5537,80 @@ Running documented sensitivity: cheap rank &lt;= 0.40, rich rank &gt;= 0.60, wit
 <td>2024-06-08</td>
 <td>2024-06-28</td>
 <td>72,000.000000</td>
-<td>0.000628</td>
-<td>-1.111043</td>
+<td>0.000627</td>
+<td>-1.110295</td>
 <td>0.755556</td>
-<td>0.299702</td>
+<td>0.296946</td>
 <td>har_rv</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">15</th>
 <td>AlwaysLongStraddle</td>
 <td>long</td>
-<td>2024-06-12</td>
-<td>2024-06-15</td>
+<td>2024-06-13</td>
+<td>2024-06-16</td>
 <td>2024-07-26</td>
 <td>68,000.000000</td>
-<td>0.000501</td>
-<td>-0.571162</td>
-<td>0.577778</td>
-<td>0.054635</td>
+<td>0.000518</td>
+<td>-0.560650</td>
+<td>0.444444</td>
+<td>-0.247531</td>
 <td>gjr11_normal</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">16</th>
 <td>AlwaysLongStraddle</td>
 <td>long</td>
-<td>2024-06-16</td>
-<td>2024-06-19</td>
+<td>2024-06-17</td>
+<td>2024-06-20</td>
 <td>2024-07-26</td>
 <td>67,000.000000</td>
-<td>0.000580</td>
-<td>-0.191649</td>
-<td>0.177778</td>
-<td>-0.684284</td>
+<td>0.000586</td>
+<td>-0.280044</td>
+<td>0.244444</td>
+<td>-0.522135</td>
 <td>gjr11_normal</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">17</th>
 <td>AlwaysLongStraddle</td>
 <td>long</td>
-<td>2024-06-20</td>
-<td>2024-06-23</td>
+<td>2024-06-21</td>
+<td>2024-06-24</td>
 <td>2024-07-26</td>
-<td>66,000.000000</td>
-<td>0.000613</td>
-<td>-0.588776</td>
-<td>0.400000</td>
-<td>-0.225079</td>
+<td>65,000.000000</td>
+<td>0.000669</td>
+<td>-0.240866</td>
+<td>0.111111</td>
+<td>-1.095648</td>
 <td>gjr11_normal</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">18</th>
 <td>AlwaysLongStraddle</td>
 <td>long</td>
-<td>2024-06-24</td>
-<td>2024-06-27</td>
+<td>2024-06-25</td>
+<td>2024-06-28</td>
 <td>2024-07-26</td>
-<td>63,000.000000</td>
+<td>62,000.000000</td>
 <td>0.000707</td>
-<td>-0.404753</td>
-<td>0.044444</td>
-<td>-1.632832</td>
-<td>gjr11_normal</td>
+<td>-0.602701</td>
+<td>0.111111</td>
+<td>-1.128843</td>
+<td>har_rv</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">19</th>
 <td>AlwaysLongStraddle</td>
 <td>long</td>
-<td>2024-06-28</td>
-<td>2024-07-01</td>
+<td>2024-06-29</td>
+<td>2024-07-02</td>
 <td>2024-07-26</td>
-<td>62,000.000000</td>
-<td>0.000789</td>
-<td>-0.427070</td>
-<td>0.022222</td>
-<td>-1.888404</td>
+<td>61,000.000000</td>
+<td>0.000878</td>
+<td>-0.080057</td>
+<td>0.044444</td>
+<td>-1.738107</td>
 <td>har_rv</td>
 </tr>
 </tbody>

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from . import bsm, diagnostics, greeks, hedging, iv, parity, quote_cleaning, rates_dividends
+from . import bsm, diagnostics, greeks, hedging, iv, local_vol, parity, quote_cleaning, rates_dividends, surface
 from .bsm import black76_price, bsm_price, forward_bsm_price
 from .greeks import compute_greeks, compute_greeks_jax, compute_greeks_numpy
 from .iv import compute_iv_table, iv_lbr_lite, iv_newton_bisection
@@ -22,8 +22,10 @@ __all__ = [
     "iv",
     "iv_lbr_lite",
     "iv_newton_bisection",
+    "local_vol",
     "parity",
     "quote_cleaning",
     "rates_dividends",
+    "surface",
     "wide_option_chain_to_long",
 ]

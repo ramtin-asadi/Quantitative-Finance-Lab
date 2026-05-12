@@ -741,7 +741,215 @@ def plot_hedge_trades(hedge_results: dict, ax=None, title: str | None = None):
     return ax
 
 
+def _finite_limits(x, pad: float = 0.02):
+    arr = np.asarray(x, dtype=float)
+    arr = arr[np.isfinite(arr)]
+    if len(arr) == 0:
+        return None
+    lo, hi = float(np.nanmin(arr)), float(np.nanmax(arr))
+    span = max(hi - lo, 1e-9)
+    return lo - pad * span, hi + pad * span
+
+
+def _grid_xy(grid: dict):
+    k = np.asarray(grid["k"], dtype=float)
+    tau_days = np.asarray(grid.get("tau_days", np.asarray(grid["tau"], dtype=float) * grid.get("annualization_days", 365.25)), dtype=float)
+    return np.meshgrid(k, tau_days)
+
+
+def _sym_lim(arr, q: float = 0.98, floor: float = 1e-10):
+    x = np.abs(np.asarray(arr, dtype=float))
+    x = x[np.isfinite(x)]
+    if len(x) == 0:
+        return floor
+    lim = float(np.nanquantile(x, q))
+    return max(lim, floor)
+
+
+def quote_coverage_map(ax, quotes: pd.DataFrame, k_col: str = "k", tau_col: str = "tau", iv_col: str = "iv_mid", title: str | None = None):
+    ax = _ax(ax)
+    data = quotes.dropna(subset=[k_col, tau_col, iv_col]).copy()
+    if data.empty:
+        ax.text(0.5, 0.5, "No quote data", ha="center", va="center")
+        return ax
+    tau_days = data[tau_col] * float(data.get("annualization_days", pd.Series(365.25, index=data.index)).iloc[0] if "annualization_days" in data else 365.25)
+    hb = ax.hexbin(data[k_col], tau_days, C=data[iv_col], gridsize=(36, 22), mincnt=1, reduce_C_function=np.nanmedian, cmap="viridis")
+    ax.set_xlabel("log strike / forward")
+    ax.set_ylabel("days to expiry")
+    ax.set_title(title or "Quote coverage and median IV")
+    ax.figure.colorbar(hb, ax=ax, pad=0.01, label="median IV")
+    ax.text(0.02, 0.96, f"n={len(data):,}", transform=ax.transAxes, va="top", fontsize=8)
+    return ax
+
+
+def smooth_surface_3d(ax, grid: dict, iv_grid, quotes: pd.DataFrame | None = None, k_col: str = "k", tau_col: str = "tau", iv_col: str = "iv_mid", title: str | None = None, quote_sample: int = 2000, random_state: int | None = None):
+    set_plot_style()
+    x, y = _grid_xy(grid)
+    surf = ax.plot_surface(x, y, np.ma.masked_invalid(iv_grid), cmap="viridis", linewidth=0, antialiased=True, alpha=0.90)
+    if quotes is not None and not quotes.empty:
+        q = quotes.dropna(subset=[k_col, tau_col, iv_col])
+        if len(q) > quote_sample:
+            q = q.sample(int(quote_sample), random_state=random_state)
+        ax.scatter(q[k_col], q[tau_col] * grid.get("annualization_days", 365.25), q[iv_col], s=3, c="black", alpha=0.16)
+    ax.set_xlabel("log strike / forward")
+    ax.set_ylabel("days")
+    ax.set_zlabel("IV")
+    ax.set_title(title or "Smooth fitted IV surface")
+    ax.view_init(elev=26, azim=-130)
+    ax.figure.colorbar(surf, ax=ax, shrink=0.55, pad=0.04, label="IV")
+    return ax
+
+
+def local_vol_surface_3d(ax, lv: dict, x_col: str = "k_spot", z_col: str = "local_vol", title: str | None = None, cap_quantile: float = 0.98):
+    set_plot_style()
+    x_base = np.asarray(lv[x_col], dtype=float)
+    y_base = np.asarray(lv["tau_days"], dtype=float)
+    x, y = np.meshgrid(x_base, y_base)
+    z = np.asarray(lv[z_col], dtype=float)
+    cap = np.nanquantile(z[np.isfinite(z)], cap_quantile) if np.isfinite(z).any() else np.nan
+    z = np.where(z <= cap, z, np.nan)
+    surf = ax.plot_surface(x, y, np.ma.masked_invalid(z), cmap="magma", linewidth=0, antialiased=True, alpha=0.90)
+    ax.set_xlabel("log strike / spot")
+    ax.set_ylabel("days")
+    ax.set_zlabel("local vol")
+    ax.set_title(title or "Dupire local-volatility surface")
+    ax.view_init(elev=27, azim=-130)
+    ax.figure.colorbar(surf, ax=ax, shrink=0.55, pad=0.04, label="local vol")
+    return ax
+
+
+def smile_slices_comparison(ax, grid: dict, pchip_grid, spline_grid, maturities_days=(30, 60, 120), title: str | None = None):
+    ax = _ax(ax)
+    k = np.asarray(grid["k"], dtype=float)
+    tau_days = np.asarray(grid["tau_days"], dtype=float)
+    for i, day in enumerate(maturities_days):
+        idx = int(np.nanargmin(np.abs(tau_days - day)))
+        color = LAB_COLORS[i % len(LAB_COLORS)]
+        ax.plot(k, spline_grid[idx], lw=2.0, color=color, label=f"spline {tau_days[idx]:.0f}d")
+        ax.plot(k, pchip_grid[idx], lw=1.2, ls="--", color=color, alpha=0.8)
+    ax.set_xlabel("log strike / forward")
+    ax.set_ylabel("implied vol")
+    ax.set_title(title or "PCHIP vs spline smiles")
+    ax.legend(fontsize=7)
+    return ax
+
+
+def residual_histogram(ax, residuals: pd.DataFrame, residual_col: str = "residual_visual", title: str | None = None):
+    ax = _ax(ax)
+    x = pd.to_numeric(residuals.get(residual_col), errors="coerce").dropna()
+    if x.empty:
+        ax.text(0.5, 0.5, "No residual data", ha="center", va="center")
+        return ax
+    ax.hist(x, bins=35, alpha=0.75, color=LAB_COLORS[0])
+    ax.axvline(0.0, color="black", lw=1.0)
+    ax.set_xlabel("IV residual")
+    ax.set_ylabel("count")
+    ax.set_title(title or "Residual distribution")
+    return ax
+
+
+def local_vol_ratio_map(ax, lv: dict, x_col: str = "k_spot", title: str | None = None, ratio_bounds=(0.50, 1.80)):
+    ax = _ax(ax)
+    x = np.asarray(lv[x_col], dtype=float)
+    ratio = np.asarray(lv["local_vol_to_iv"], dtype=float)
+    cf = ax.contourf(x, lv["tau_days"], ratio, levels=np.linspace(ratio_bounds[0], ratio_bounds[1], 15), cmap="viridis", extend="both")
+    ax.contour(x, lv["tau_days"], ratio, levels=[1.0], colors="black", linewidths=0.8)
+    ax.set_xlabel("log strike / spot")
+    ax.set_ylabel("days")
+    ax.set_title(title or "Local vol / implied vol")
+    ax.figure.colorbar(cf, ax=ax, pad=0.01, label="ratio")
+    return ax
+
+
+def local_vol_slices(ax, lv: dict, x_col: str = "k_spot", maturities_days=(30, 60, 120), title: str | None = None):
+    ax = _ax(ax)
+    x = np.asarray(lv[x_col], dtype=float)
+    tau_days = np.asarray(lv["tau_days"], dtype=float)
+    for i, day in enumerate(maturities_days):
+        idx = int(np.nanargmin(np.abs(tau_days - day)))
+        color = LAB_COLORS[i % len(LAB_COLORS)]
+        ax.plot(x, lv["iv"][idx], color=color, lw=1.8, label=f"IV {tau_days[idx]:.0f}d")
+        ax.plot(x, lv["local_vol"][idx], color=color, lw=1.5, ls="--", label=f"LV {tau_days[idx]:.0f}d")
+    ax.set_xlabel("log strike / spot")
+    ax.set_ylabel("volatility")
+    ax.set_title(title or "Local vol vs implied vol")
+    ax.legend(fontsize=6, ncol=2)
+    return ax
+
+
+def pca_variance_bars(ax, pca: dict, title: str | None = None):
+    ax = _ax(ax)
+    var = pca.get("explained_variance_table", pd.DataFrame())
+    if var.empty:
+        ax.text(0.5, 0.5, pca.get("diagnostic", "No PCA"), ha="center", va="center")
+        ax.set_title(title or "Surface PCA explained variance")
+        return ax
+    x = np.arange(len(var)) + 1
+    ax.bar(x, var["explained_variance_ratio"], color=LAB_COLORS[0], alpha=0.75)
+    ax.plot(x, var["cumulative"], color=LAB_COLORS[3], marker="o", lw=1.8)
+    ax.set_xticks(x)
+    ax.set_xlabel("component")
+    ax.set_ylabel("explained variance")
+    ax.set_title(title or "Surface PCA explained variance")
+    return ax
+
+
+def pca_shock_map(ax, pca_shocks: dict, component: int = 1, title: str | None = None):
+    ax = _ax(ax)
+    arr = np.asarray(pca_shocks.get(f"pc{component}", []), dtype=float)
+    grid = pca_shocks.get("grid", {})
+    if arr.size == 0 or "k" not in grid:
+        ax.text(0.5, 0.5, "No PCA shock", ha="center", va="center")
+        ax.set_title(title or f"PC{component} shock")
+        return ax
+    lim = _sym_lim(arr)
+    cf = ax.contourf(grid["k"], grid["tau_days"], arr, levels=17, cmap="coolwarm", vmin=-lim, vmax=lim, extend="both")
+    ax.contour(grid["k"], grid["tau_days"], arr, levels=[0.0], colors="black", linewidths=0.7)
+    ax.set_xlabel("log strike / forward")
+    ax.set_ylabel("days")
+    ax.set_title(title or f"PC{component} IV shock")
+    ax.figure.colorbar(cf, ax=ax, pad=0.01, label="IV shock")
+    return ax
+
+
+def delta_correction_slices(ax, greek_grid: pd.DataFrame, x_col: str = "k_spot", maturities_days=(30, 60, 120), title: str | None = None):
+    ax = _ax(ax)
+    for i, day in enumerate(maturities_days):
+        idx = (greek_grid["tau_days"] - day).abs().idxmin()
+        tau = greek_grid.loc[idx, "tau_days"]
+        g = greek_grid[np.isclose(greek_grid["tau_days"], tau)].sort_values(x_col)
+        ax.plot(g[x_col], g["delta_diff"], lw=1.8, color=LAB_COLORS[i % len(LAB_COLORS)], label=f"{tau:.0f}d")
+    ax.axhline(0.0, color="black", lw=0.8)
+    ax.set_xlabel("log strike / spot")
+    ax.set_ylabel("delta diff")
+    ax.set_title(title or "Delta correction slices")
+    ax.legend(fontsize=7)
+    return ax
+
+
+def gamma_correction_slices(ax, greek_grid: pd.DataFrame, x_col: str = "k_spot", maturities_days=(30, 60, 120), title: str | None = None):
+    ax = _ax(ax)
+    for i, day in enumerate(maturities_days):
+        idx = (greek_grid["tau_days"] - day).abs().idxmin()
+        tau = greek_grid.loc[idx, "tau_days"]
+        g = greek_grid[np.isclose(greek_grid["tau_days"], tau)].sort_values(x_col)
+        ax.plot(g[x_col], g["gamma_diff"], lw=1.8, color=LAB_COLORS[i % len(LAB_COLORS)], label=f"{tau:.0f}d")
+    ax.axhline(0.0, color="black", lw=0.8)
+    ax.set_xlabel("log strike / spot")
+    ax.set_ylabel("gamma diff")
+    ax.set_title(title or "Gamma correction slices")
+    ax.legend(fontsize=7)
+    return ax
+
+
 __all__ = [
+    "delta_correction_slices",
+    "gamma_correction_slices",
+    "local_vol_ratio_map",
+    "local_vol_slices",
+    "local_vol_surface_3d",
+    "pca_shock_map",
+    "pca_variance_bars",
     "plot_clean_vs_dirty_spread",
     "plot_forward_vs_spot",
     "plot_greek_bands",
@@ -774,4 +982,8 @@ __all__ = [
     "plot_single_day_parity_forward_extraction",
     "plot_solver_runtime",
     "plot_solver_success",
+    "quote_coverage_map",
+    "residual_histogram",
+    "smile_slices_comparison",
+    "smooth_surface_3d",
 ]
