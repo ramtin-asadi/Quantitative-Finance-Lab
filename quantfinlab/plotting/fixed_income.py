@@ -397,11 +397,236 @@ def plot_trade_summary(
     ax.set_ylabel("Notional")
 
 
+def plot_curve_snapshots(
+    ax: plt.Axes,
+    curves: pd.DataFrame,
+    maturities,
+    dates,
+    *,
+    tenor_cols: list[str] | tuple[str, ...] | None = None,
+    title: str = "Curve snapshots",
+    ylabel: str = "Yield (%)",
+) -> None:
+    if curves is None or curves.empty:
+        ax.text(0.5, 0.5, "No curve data", ha="center", va="center")
+        ax.axis("off")
+        return
+    maturities = np.asarray(maturities, dtype=float)
+    use_cols = list(tenor_cols) if tenor_cols is not None else list(curves.columns)
+    for date in pd.DatetimeIndex(dates):
+        if date in curves.index:
+            ax.plot(maturities, curves.loc[date, use_cols].to_numpy(float) * 100, marker="o", label=date.strftime("%Y-%m"))
+    ax.set_title(title)
+    ax.set_xlabel("Maturity in years")
+    ax.set_ylabel(ylabel)
+    ax.legend(fontsize=8)
+
+
+def plot_pca_diagnostics(
+    ax: plt.Axes,
+    maturities,
+    pca_fit: dict,
+    *,
+    title: str = "PCA loadings",
+) -> None:
+    labels = ["pc1 level", "pc2 slope", "pc3 curvature"]
+    maturities = np.asarray(maturities, dtype=float)
+    loadings = np.asarray(pca_fit["loadings"], dtype=float)
+    explained = np.asarray(pca_fit.get("explained", np.repeat(np.nan, loadings.shape[1])), dtype=float)
+    for j in range(min(3, loadings.shape[1])):
+        suffix = f" ({explained[j]:.0%})" if np.isfinite(explained[j]) else ""
+        ax.plot(maturities, loadings[:, j], marker="o", label=f"{labels[j]}{suffix}")
+    ax.axhline(0.0, color="black", lw=0.8)
+    ax.set_title(title)
+    ax.set_xlabel("Maturity in years")
+    ax.set_ylabel("Loading")
+    ax.legend(fontsize=8)
+
+
+def plot_count_bar(
+    ax: plt.Axes,
+    counts: pd.Series | pd.DataFrame,
+    *,
+    title: str = "Counts",
+    ylabel: str = "Months",
+) -> None:
+    if counts is None or len(counts) == 0:
+        ax.text(0.5, 0.5, "No count data", ha="center", va="center")
+        ax.axis("off")
+        return
+    data = counts.iloc[:, 0] if isinstance(counts, pd.DataFrame) else counts
+    data.plot(kind="bar", ax=ax)
+    ax.set_title(title)
+    ax.set_xlabel("")
+    ax.set_ylabel(ylabel)
+
+
+def plot_target_duration_path(
+    ax: plt.Axes,
+    target_data: pd.Series | pd.DataFrame,
+    *,
+    column: str = "target duration",
+    neutral: float = 5.0,
+    title: str = "Target duration",
+) -> None:
+    if target_data is None or len(target_data) == 0:
+        ax.text(0.5, 0.5, "No target data", ha="center", va="center")
+        ax.axis("off")
+        return
+    series = target_data[column] if isinstance(target_data, pd.DataFrame) and column in target_data else pd.Series(target_data)
+    ax.plot(series.index, series.to_numpy(float), label=column)
+    ax.axhline(float(neutral), color="black", lw=0.8, label="neutral")
+    ax.set_title(title)
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Years")
+    ax.legend(fontsize=8)
+
+
+def plot_signed_notional(
+    ax: plt.Axes,
+    swap_log: pd.DataFrame,
+    *,
+    title: str = "Synthetic swap signed notional",
+) -> None:
+    if swap_log is None or swap_log.empty or "signed notional" not in swap_log.columns:
+        ax.text(0.5, 0.5, "No swap data", ha="center", va="center")
+        ax.axis("off")
+        return
+    ax.plot(swap_log.index, swap_log["signed notional"], label="signed notional")
+    ax.axhline(0.0, color="black", lw=0.8)
+    ax.set_title(title)
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Notional")
+    ax.legend(fontsize=8)
+
+
+def plot_short_rate_fan_comparison(
+    ax: plt.Axes,
+    vasicek_paths: pd.DataFrame,
+    cir_paths: pd.DataFrame,
+    *,
+    title: str = "Short-rate fan comparison",
+) -> None:
+    for paths, color, label in [(vasicek_paths, "#069AF3", "vasicek"), (cir_paths, "#FE420F", "cir")]:
+        q = paths.quantile([0.05, 0.50, 0.95], axis=1).T
+        ax.fill_between(q.index, q[0.05] * 100, q[0.95] * 100, alpha=0.15, color=color)
+        ax.plot(q.index, q[0.50] * 100, color=color, lw=1.8, label=f"{label} median")
+    ax.set_title(title)
+    ax.set_xlabel("Years")
+    ax.set_ylabel("Short rate (%)")
+    ax.legend()
+
+
+def plot_hw_g2_loadings(
+    ax: plt.Axes,
+    maturities,
+    hw_fit: dict,
+    g2_fit: dict,
+    *,
+    title: str = "HW1F and G2++ loading structure",
+) -> None:
+    maturities = np.asarray(maturities, dtype=float)
+    ax.plot(maturities, hw_fit["loading"], marker="o", label="hw1f loading")
+    ax.plot(maturities, g2_fit["loadings"][:, 0], marker="o", label="g2 first loading")
+    ax.plot(maturities, g2_fit["loadings"][:, 1], marker="o", label="g2 second loading")
+    ax.axhline(0.0, color="black", lw=0.8)
+    ax.set_title(title)
+    ax.set_xlabel("Maturity in years")
+    ax.set_ylabel("Loading")
+    ax.legend()
+
+
+def plot_hw_g2_scenario_fan(
+    ax: plt.Axes,
+    maturities,
+    base_curve,
+    hw_curves,
+    g2_curves,
+    *,
+    title: str = "One-month yield-change fan",
+) -> None:
+    maturities = np.asarray(maturities, dtype=float)
+    base = np.asarray(base_curve, dtype=float)
+    for curves, color, label in [(hw_curves, "#069AF3", "hw1f"), (g2_curves, "#008080", "g2++")]:
+        changes_bp = (np.asarray(curves, dtype=float) - base[None, :]) * 10000.0
+        q = np.quantile(changes_bp, [0.10, 0.50, 0.90], axis=0)
+        ax.fill_between(maturities, q[0], q[2], alpha=0.16, color=color)
+        ax.plot(maturities, q[1], color=color, lw=1.8, label=f"{label} median")
+    ax.axhline(0.0, color="black", lw=0.9)
+    ax.set_title(title)
+    ax.set_xlabel("Maturity in years")
+    ax.set_ylabel("Yield change (bp)")
+    ax.legend()
+
+
+def plot_scenario_pnl_bars(
+    ax: plt.Axes,
+    scenario_summary: pd.DataFrame,
+    *,
+    title: str = "Scenario P&L by portfolio",
+) -> None:
+    if scenario_summary is None or scenario_summary.empty:
+        ax.text(0.5, 0.5, "No scenario data", ha="center", va="center")
+        ax.axis("off")
+        return
+    scenario_order = [s for s in ["parallel -100 bp", "parallel -50 bp", "parallel +50 bp", "parallel +100 bp"] if s in scenario_summary.index]
+    plot_data = scenario_summary.reindex(scenario_order) if scenario_order else scenario_summary
+    plot_data.mul(100).plot(kind="bar", ax=ax, width=0.78)
+    ax.axhline(0.0, color="black", lw=0.8)
+    ax.set_title(title)
+    ax.set_xlabel("Scenario")
+    ax.set_ylabel("KRD-implied PnL (% NAV)")
+    ax.tick_params(axis="x", rotation=0)
+    ax.legend(fontsize=8)
+
+
+def plot_effective_duration_comparison(
+    ax: plt.Axes,
+    durations: pd.DataFrame,
+    *,
+    title: str = "Effective duration comparison",
+) -> None:
+    if durations is None or durations.empty:
+        ax.text(0.5, 0.5, "No duration data", ha="center", va="center")
+        ax.axis("off")
+        return
+    for col in durations.columns:
+        ax.plot(durations.index, durations[col], label=str(col))
+    ax.set_title(title)
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Effective duration")
+    ax.legend(fontsize=8)
+
+
+def plot_rolling_active_return(
+    ax: plt.Axes,
+    active_returns: pd.DataFrame,
+    *,
+    window: int = 12,
+    title: str = "Rolling active return",
+) -> None:
+    if active_returns is None or active_returns.empty:
+        ax.text(0.5, 0.5, "No active return data", ha="center", va="center")
+        ax.axis("off")
+        return
+    data = (1.0 + active_returns.fillna(0.0)).rolling(int(window)).apply(np.prod, raw=True) - 1.0
+    for col in data.columns:
+        ax.plot(data.index, data[col] * 100, label=str(col))
+    ax.axhline(0.0, color="black", lw=0.8)
+    ax.set_title(title)
+    ax.set_xlabel("Date")
+    ax.set_ylabel(f"{window}-month active return (%)")
+    ax.legend(fontsize=8)
+
+
 __all__ = [
     "plot_bond_metric_bar",
     "plot_bucket_pv",
     "plot_carry_return_contributions",
+    "plot_count_bar",
+    "plot_curve_snapshots",
     "plot_duration_tracking",
+    "plot_effective_duration_comparison",
     "plot_krd_heatmap",
     "plot_krd_lines",
     "plot_ladder_cumulative_return",
@@ -409,8 +634,15 @@ __all__ = [
     "plot_ladder_nav",
     "plot_ladder_weights",
     "plot_latest_krd_bar",
+    "plot_hw_g2_loadings",
+    "plot_hw_g2_scenario_fan",
     "plot_risk_metric",
     "plot_risk_timeseries",
+    "plot_scenario_pnl_bars",
+    "plot_short_rate_fan_comparison",
+    "plot_signed_notional",
+    "plot_target_duration_path",
+    "plot_rolling_active_return",
     "plot_total_pv",
     "plot_trade_summary",
 ]

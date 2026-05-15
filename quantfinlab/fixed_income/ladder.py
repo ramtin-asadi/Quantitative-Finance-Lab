@@ -239,6 +239,17 @@ def initialize_ladder(
     return positions, float(cash)
 
 
+def _cost_bps_for_maturity(trading_cost_bps, maturity: int) -> float:
+    if callable(trading_cost_bps):
+        return float(trading_cost_bps(int(maturity)))
+    if isinstance(trading_cost_bps, dict):
+        if int(maturity) in trading_cost_bps:
+            return float(trading_cost_bps[int(maturity)])
+        if str(maturity) in trading_cost_bps:
+            return float(trading_cost_bps[str(maturity)])
+    return float(trading_cost_bps)
+
+
 def apply_trade(
     positions: dict[int, dict],
     cash: float,
@@ -254,7 +265,7 @@ def apply_trade(
     freq: int = 2,
 ) -> float:
     maturity = int(maturity)
-    tc = trading_cost_bps / 10000.0
+    tc = _cost_bps_for_maturity(trading_cost_bps, maturity) / 10000.0
 
     if maturity not in positions or positions[maturity] is None:
         coupon = coupon_lookup(date, maturity)
@@ -322,7 +333,6 @@ def roll_bucket_positions(
     if bucket_floor is None:
         bucket_floor = {2: 1.5, 5: 3.5, 10: 7.5, 30: 20.0}
     trade_rows: list[dict] = []
-    tc = trading_cost_bps / 10000.0
 
     for maturity in buckets_l:
         bond = positions.get(maturity)
@@ -337,6 +347,7 @@ def roll_bucket_positions(
 
         floor = float(bucket_floor.get(maturity, 0.0))
         if rem < floor:
+            tc = _cost_bps_for_maturity(trading_cost_bps, maturity) / 10000.0
             cost = value * tc
             cash += value - cost
             trade_rows.append(
@@ -446,6 +457,7 @@ def run_ladder_backtest(
     cash_tenor_label: str = "1M",
     cash_fallback_labels: tuple[str, ...] = ("3M", "6M", "1Y"),
     duration_target: float | None = None,
+    duration_target_by_date: pd.Series | dict | None = None,
     duration_band: float | None = None,
     overlay_fn: Callable | None = None,
     freq: int = 2,
@@ -560,7 +572,19 @@ def run_ladder_backtest(
         )
     snapshots[start_date] = {"positions": clone_positions(positions), "cash": float(cash)}
 
-    if duration_target is not None and overlay_fn is None:
+    target_series = None
+    if duration_target_by_date is not None:
+        target_series = pd.Series(duration_target_by_date, dtype=float).sort_index()
+        target_series.index = pd.to_datetime(target_series.index)
+
+    def duration_target_for(date: pd.Timestamp) -> float | None:
+        if target_series is not None:
+            history = target_series.loc[target_series.index <= pd.Timestamp(date)].dropna()
+            if len(history) > 0:
+                return float(history.iloc[-1])
+        return None if duration_target is None else float(duration_target)
+
+    if (duration_target is not None or target_series is not None) and overlay_fn is None:
         from .duration_overlay import duration_switch_overlay
 
         overlay_fn = duration_switch_overlay
@@ -653,13 +677,14 @@ def run_ladder_backtest(
         )
         period_trades.extend(rebalance_trades)
 
-        if duration_target is not None and overlay_fn is not None:
+        period_duration_target = duration_target_for(date)
+        if period_duration_target is not None and overlay_fn is not None:
             positions, cash, overlay_trades, _ = overlay_fn(
                 positions,
                 cash,
                 date,
                 df_now,
-                target_duration=duration_target,
+                target_duration=period_duration_target,
                 duration_band=float(duration_band or 0.0),
                 buckets=buckets_l,
                 apply_trade_fn=apply_trade_bound,
@@ -755,6 +780,7 @@ def run_ladder_backtest(
         "issue_labels": issue_labels,
         "curve_method": curve_method,
         "valid_dates": valid_dates,
+        "duration_target_by_date": target_series,
     }
 
     return SimpleBacktestResult(
@@ -768,19 +794,224 @@ def run_ladder_backtest(
     )
 
 
+def prepare_secondary_curve_market(
+    par_yields: pd.DataFrame,
+    *,
+    selected_tenors: list[str] | None = None,
+    min_len: int = 60,
+    max_gap_days: int = 45,
+):
+    from .bootstrap import build_zero_curve_panel_from_par_yields
+
+    monthly_all = par_yields.sort_index().resample("ME").last()
+    if selected_tenors is None:
+        selected_tenors = [str(c) for c in monthly_all.columns]
+    monthly = monthly_all[selected_tenors].dropna()
+    curve_dates = choose_backtest_block(monthly.index, min_len=min_len, max_gap_days=max_gap_days)
+    monthly = monthly.loc[curve_dates].copy()
+    zero_rates = build_zero_curve_panel_from_par_yields(
+        monthly,
+        method="pchip",
+        tenors=selected_tenors,
+        as_continuous=True,
+    )
+    zero_rates = zero_rates.reindex(monthly.index).astype(float)
+    zero_rates.columns = zero_rates.columns.astype(float)
+    return monthly, zero_rates, pd.DatetimeIndex(monthly.index)
+
+
+def build_duration_reference_ladders(
+    par_yields: pd.DataFrame,
+    duration_targets: dict[str, float],
+    *,
+    neutral_name: str = "neutral duration",
+    strategy_prefix: str = "",
+    buckets: list[int] | tuple[int, ...] = DEFAULT_ISSUE_MATURITIES,
+    target_weights: dict[int, float] | None = None,
+    trading_cost_bps: float | dict | Callable = 1.0,
+    duration_band: float = 0.20,
+    tenor_cols: list[str] | None = None,
+    risk_bucket_bounds: dict[int, tuple[float, float]] | None = None,
+    min_block_len: int = 60,
+    **kwargs,
+):
+    out = {}
+    for name, target in duration_targets.items():
+        out[name] = run_ladder_backtest(
+            par_yields,
+            strategy_name=f"{strategy_prefix}{name}".strip(),
+            buckets=buckets,
+            target_weights=target_weights,
+            trading_cost_bps=trading_cost_bps,
+            duration_target=float(target),
+            duration_band=float(duration_band),
+            tenor_cols=tenor_cols,
+            risk_bucket_bounds=risk_bucket_bounds,
+            min_block_len=min_block_len,
+            **kwargs,
+        )
+    if neutral_name not in out and 5.0 in [float(v) for v in duration_targets.values()]:
+        neutral_key = next(k for k, v in duration_targets.items() if float(v) == 5.0)
+        out[neutral_name] = out[neutral_key]
+    return out
+
+
+def forward_carry_roll_panel(
+    reference_results: dict[str, SimpleBacktestResult],
+    par_yields: pd.DataFrame,
+    curve_dates,
+    *,
+    buckets: list[int] | tuple[int, ...] = DEFAULT_ISSUE_MATURITIES,
+    tenor_cols: list[str] | None = None,
+    curve_method: str = "pchip",
+    cash_tenor_label: str = "3M",
+    freq: int = 2,
+    short_end: str = "continuous",
+):
+    curve_dates = pd.DatetimeIndex(curve_dates)
+    buckets_l = [int(x) for x in buckets]
+    curve_lookup = make_curve_lookup(
+        par_yields,
+        curve_method=curve_method,
+        tenor_cols=tenor_cols,
+        freq=freq,
+        short_end=short_end,
+    )
+
+    def one_return(result, date):
+        loc = curve_dates.get_loc(pd.Timestamp(date))
+        if loc >= len(curve_dates) - 1:
+            return np.nan
+        next_date = curve_dates[loc + 1]
+        snapshot = result.diagnostics["snapshots"].get(pd.Timestamp(date))
+        curve = curve_lookup(date)
+        if snapshot is None or curve is None:
+            return np.nan
+        positions = clone_positions(snapshot["positions"])
+        cash = float(snapshot["cash"])
+        df_func = curve.df
+        nav_start = cash + sum(position_values_by_bucket(positions, date, df_func, buckets=buckets_l).values())
+        cash_rate = float(par_yields.loc[pd.Timestamp(date), cash_tenor_label]) if cash_tenor_label in par_yields else 0.0
+        cash_next = cash * math.exp(cash_rate * yearfrac(date, next_date))
+        income = 0.0
+        for maturity in list(positions):
+            gross, _, _ = bond_cashflows_between(positions[maturity], date, next_date)
+            income += gross
+        value_next = sum(position_values_by_bucket(positions, next_date, df_func, buckets=buckets_l).values())
+        return (cash_next + income + value_next) / max(nav_start, 1e-12) - 1
+
+    return pd.DataFrame(
+        {
+            name: pd.Series({date: one_return(result, date) for date in curve_dates[:-1]}, name=name)
+            for name, result in reference_results.items()
+        }
+    )
+
+
+def target_score_table(
+    date,
+    model_name: str,
+    *,
+    target_names: list[str],
+    duration_targets: dict[str, float],
+    reference_krd: dict[str, pd.DataFrame],
+    reference_carry: pd.DataFrame,
+    model_view_func: Callable,
+    key_maturities,
+    previous_target: str,
+    neutral_name: str = "neutral duration",
+    risk_penalty: float = 0.15,
+):
+    expected_change, cov = model_view_func(model_name, date, key_maturities)
+    rows = []
+    base_krd = reference_krd[neutral_name].loc[:date].iloc[-1].to_numpy(float)
+    for target_name in target_names:
+        krd = reference_krd[target_name].loc[:date].iloc[-1].to_numpy(float)
+        active_krd = krd - base_krd
+        carry_diff = float(reference_carry.loc[date, target_name] - reference_carry.loc[date, neutral_name])
+        curve_return = -float(active_krd @ expected_change)
+        active_risk = float(np.sqrt(max(active_krd @ cov @ active_krd, 1e-12)))
+        transition_cost = 0.0 if target_name == previous_target else 0.00020 + 0.00005 * abs(duration_targets[target_name] - duration_targets[previous_target])
+        expected_active = carry_diff + curve_return - transition_cost
+        score = (expected_active - float(risk_penalty) * active_risk) / active_risk
+        rows.append(
+            {
+                "target": target_name,
+                "target duration": duration_targets[target_name],
+                "expected active return": expected_active,
+                "active risk": active_risk,
+                "score": score,
+                "carry difference": carry_diff,
+                "curve view return": curve_return,
+                "transition cost": transition_cost,
+            }
+        )
+    out = pd.DataFrame(rows).set_index("target")
+    out.insert(0, "date", pd.Timestamp(date))
+    out.insert(1, "model", model_name)
+    return out
+
+
+def select_dynamic_duration_targets(
+    model_target_by_date: pd.DataFrame,
+    model_returns: pd.DataFrame,
+    baseline_returns: pd.Series,
+    *,
+    validation_months: int = 36,
+    neutral_duration: float = 5.0,
+):
+    model_index = model_target_by_date.dropna(how="all").index
+    rows = []
+    for i in range(int(validation_months), len(model_index)):
+        decision_date = model_index[i]
+        train_end = model_index[i - 1]
+        train = model_returns.loc[:train_end].tail(int(validation_months))
+        train_base = baseline_returns.reindex(train.index)
+        active = train.sub(train_base, axis=0)
+        vol = active.std(ddof=1).replace(0, np.nan)
+        score = active.mean() / vol
+        selected_model = score.idxmax()
+        target_duration = float(model_target_by_date.loc[decision_date, selected_model])
+        rows.append(
+            {
+                "date": decision_date,
+                "selected model": selected_model,
+                "target duration": target_duration,
+                "validation score": score.loc[selected_model],
+            }
+        )
+    log = pd.DataFrame(rows).set_index("date") if rows else pd.DataFrame()
+    target_by_date = pd.Series(float(neutral_duration), index=model_target_by_date.index, name="dynamic target duration")
+    if not log.empty:
+        target_by_date.loc[log.index] = log["target duration"]
+    return log, target_by_date
+
+
+def active_returns_against_baseline(returns, baseline_returns: pd.Series):
+    data = pd.DataFrame(returns).copy()
+    base = baseline_returns.reindex(data.index)
+    return data.sub(base, axis=0)
+
+
 __all__ = [
+    "active_returns_against_baseline",
     "apply_trade",
+    "build_duration_reference_ladders",
     "choose_backtest_block",
     "clone_positions",
+    "forward_carry_roll_panel",
     "gap_safe_frame",
     "initialize_ladder",
     "ladder_nav",
     "ladder_performance_table",
     "ladder_returns",
     "make_curve_lookup",
+    "prepare_secondary_curve_market",
     "rebalance_ladder_to_buckets",
     "rebalance_to_targets",
     "roll_bucket_positions",
     "run_ladder_backtest",
+    "select_dynamic_duration_targets",
     "split_contiguous_blocks",
+    "target_score_table",
 ]

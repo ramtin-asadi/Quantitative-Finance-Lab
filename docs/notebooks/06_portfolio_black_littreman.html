@@ -65,6 +65,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
+<link href="../notebooks/07_dynamic_hedge_ratios.html" rel="next">
 <link href="../notebooks/05_GARCH_forecasting_VRP.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -214,6 +215,21 @@ window.Quarto = {
   <a href="../notebooks/06_portfolio_black_littreman.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">6. Black Litterman with Learned Confidence</span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/07_dynamic_hedge_ratios.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Dynamic Hedge-Ratio Engineering: Hedgeability, Model Choice, and Residual Tradeability</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/08_vol_surface_local_vol.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">08_vol_surface_local_vol.html</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/09_term_structure_models.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">09_term_structure_models.html</span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -266,7 +282,7 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 <p>Since this notebook is a portfolio optimization related topic, i highly recommend reading notebook <a href="https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/02_portfolio_optimization_MV_models.html">2. Portfolio optimization with Mean-Variance models</a> first for better understanding of project.</p>
 <section id="imports-and-pltting-style" class="level3">
 <h3 class="anchored" data-anchor-id="imports-and-pltting-style">Imports and pltting style</h3>
-<div id="64e3efcd" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:02.483324Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:02.483324Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:05.813906Z&quot;}}">
+<div id="64e3efcd" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:02.483324Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:02.483324Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:05.813906Z&quot;}}" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
@@ -320,7 +336,7 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 <section id="data" class="level2">
 <h2 class="anchored" data-anchor-id="data">2) Data</h2>
 <p>For this project, we could’ve used the same nasdaq data from notebook 2, but that wouldn’t be the best choice for Black-Litterman and the economic interpretation and building views wouldn’t be as good. So we use a dataset of famous ETFs (investement funds that are tradable like exchanges) which is collected from yahoo-finance API. A script for reproducing the dataset will be available soon. The dataset contains history of these ETFs from the start of 2010, but we use the data from the start of 2013 cause we don’t want to deal with missing prices of one of the ETFs.</p>
-<div id="5b24c87f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:05.976053Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:05.976053Z&quot;}}">
+<div id="5b24c87f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:05.976053Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:05.976053Z&quot;}}" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data/ETF_data.csv"</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> data_path.exists():</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    data_path <span class="op">=</span> Path(<span class="st">"data/ETF_data.csv"</span>)</span>
@@ -369,10 +385,8 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 <span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"close panel:"</span>, close_all.shape, close_all.index.<span class="bu">min</span>().date(), <span class="st">"to"</span>, close_all.index.<span class="bu">max</span>().date())</span>
 <span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"volume panel:"</span>, volume_all.shape)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>data file: ..\data\ETF_data.csv
-close panel: (4107, 56) 2010-01-04 to 2026-05-01
-auto_adjust=True in the data script, so close is the adjusted price input used below
-volume panel: (4107, 56)</code></pre>
+<pre><code>close panel: (4111, 63) 2010-01-04 to 2026-05-07
+volume panel: (4111, 63)</code></pre>
 </div>
 </div>
 <p>The loaded data has <span class="math inline">\(4107\)</span> trading days and <span class="math inline">\(56\)</span> adjusted close columns before we select the project’s ETFs. We are not going to use all <span class="math inline">\(56\)</span> ETFs and most of them are for later projects and secondary data for this project like sector ETFs.</p>
@@ -479,7 +493,7 @@ volume panel: (4107, 56)</code></pre>
 <p><strong>Credit</strong> ETFs sit between bonds and equities. <strong>LQD</strong> is investment grade credit, while <strong>HYG</strong> is high yield credit. HYG is especially important because it can behave like a risky asset. In calm markets, high yield can earn carry. In stress markets, it can sell off with equities because credit spreads widen.</p>
 <p><strong>GLD, VNQ, and DBC</strong> have real asset and inflation sensitive exposures. <strong>Gold</strong> can behave as a diversifier when confidence in financial assets weakens and the situation is uncertain, although it is not a perfect hedge. <strong>VNQ</strong> is real estate and is sensitive to both growth and rates. <strong>DBC</strong> is broad commodities and can perform well during inflationary commodity cycles, but it can also be very painful in long disinflationary periods.</p>
 <p>This financial interpretation matters because the later views are not arbitrary and we use these relations to build economically reasonable views.</p>
-<div id="86fdb0a5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.037675Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.037675Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;}}">
+<div id="86fdb0a5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.037675Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.037675Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;}}" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>start_date <span class="op">=</span> <span class="st">"2013-01-01"</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>assets <span class="op">=</span> [</span>
@@ -562,135 +576,135 @@ volume panel: (4107, 56)</code></pre>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
 <td>SPY</td>
-<td>3353</td>
+<td>3357</td>
 <td>2013-01-02</td>
-<td>2026-05-01</td>
+<td>2026-05-07</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
 <td>QQQ</td>
-<td>3353</td>
+<td>3357</td>
 <td>2013-01-02</td>
-<td>2026-05-01</td>
+<td>2026-05-07</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
 <td>IWM</td>
-<td>3353</td>
+<td>3357</td>
 <td>2013-01-02</td>
-<td>2026-05-01</td>
+<td>2026-05-07</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
 <td>EFA</td>
-<td>3353</td>
+<td>3357</td>
 <td>2013-01-02</td>
-<td>2026-05-01</td>
+<td>2026-05-07</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
 <td>EEM</td>
-<td>3353</td>
+<td>3357</td>
 <td>2013-01-02</td>
-<td>2026-05-01</td>
+<td>2026-05-07</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
 <td>TLT</td>
-<td>3353</td>
+<td>3357</td>
 <td>2013-01-02</td>
-<td>2026-05-01</td>
+<td>2026-05-07</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
 <td>IEF</td>
-<td>3353</td>
+<td>3357</td>
 <td>2013-01-02</td>
-<td>2026-05-01</td>
+<td>2026-05-07</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
 <td>SHY</td>
-<td>3353</td>
+<td>3357</td>
 <td>2013-01-02</td>
-<td>2026-05-01</td>
+<td>2026-05-07</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
 <td>AGG</td>
-<td>3353</td>
+<td>3357</td>
 <td>2013-01-02</td>
-<td>2026-05-01</td>
+<td>2026-05-07</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
 <td>LQD</td>
-<td>3353</td>
+<td>3357</td>
 <td>2013-01-02</td>
-<td>2026-05-01</td>
+<td>2026-05-07</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">10</th>
 <td>HYG</td>
-<td>3353</td>
+<td>3357</td>
 <td>2013-01-02</td>
-<td>2026-05-01</td>
+<td>2026-05-07</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">11</th>
 <td>GLD</td>
-<td>3353</td>
+<td>3357</td>
 <td>2013-01-02</td>
-<td>2026-05-01</td>
+<td>2026-05-07</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">12</th>
 <td>VNQ</td>
-<td>3353</td>
+<td>3357</td>
 <td>2013-01-02</td>
-<td>2026-05-01</td>
+<td>2026-05-07</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">13</th>
 <td>DBC</td>
-<td>3353</td>
+<td>3357</td>
 <td>2013-01-02</td>
-<td>2026-05-01</td>
+<td>2026-05-07</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">14</th>
 <td>UUP</td>
-<td>3353</td>
+<td>3357</td>
 <td>2013-01-02</td>
-<td>2026-05-01</td>
+<td>2026-05-07</td>
 <td>0.0</td>
 <td>False</td>
 </tr>
@@ -702,10 +716,10 @@ volume panel: (4107, 56)</code></pre>
 <div class="cell-output cell-output-stdout">
 <pre><code>assets: ['SPY', 'QQQ', 'IWM', 'EFA', 'EEM', 'TLT', 'IEF', 'SHY', 'AGG', 'LQD', 'HYG', 'GLD', 'VNQ', 'DBC']
 signal assets: ['SPY', 'QQQ', 'IWM', 'EFA', 'EEM', 'TLT', 'IEF', 'SHY', 'AGG', 'LQD', 'HYG', 'GLD', 'VNQ', 'DBC', 'UUP']
-return panel: (3352, 14) 2013-01-03 to 2026-05-01</code></pre>
+return panel: (3356, 14) 2013-01-03 to 2026-05-07</code></pre>
 </div>
 </div>
-<div id="a069749b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;}}" data-execution_count="5">
+<div id="a069749b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;}}" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>rebal_freq <span class="op">=</span> <span class="st">"ME"</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>cov_lookback <span class="op">=</span> <span class="dv">756</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>mu_lookback <span class="op">=</span> <span class="dv">252</span></span>
@@ -715,11 +729,11 @@ return panel: (3352, 14) 2013-01-03 to 2026-05-01</code></pre>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"first:"</span>, rebalance_dates[<span class="dv">0</span>].date(), <span class="st">"last:"</span>, rebalance_dates[<span class="op">-</span><span class="dv">1</span>].date())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>rebalance dates: 125
-first: 2016-01-29 last: 2026-05-01</code></pre>
+first: 2016-01-29 last: 2026-05-07</code></pre>
 </div>
 </div>
 <p>We made monthly rebalance dates and we can see that even though our data starts from 2013, we need a lookback window for estimating covariance and mean, so the first rebalance date happens at the first month of 2016.</p>
-<div id="e9976116" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.110139Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.110139Z&quot;}}">
+<div id="e9976116" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.110139Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.110139Z&quot;}}" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>annualization <span class="op">=</span> <span class="dv">252</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
@@ -764,8 +778,8 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 <td>AGG</td>
 <td>Core bonds</td>
 <td>2013-01-03</td>
-<td>2026-05-01</td>
-<td>3352</td>
+<td>2026-05-07</td>
+<td>3356</td>
 <td>0.0178</td>
 <td>0.0496</td>
 <td>-0.1843</td>
@@ -775,10 +789,10 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 <td>DBC</td>
 <td>Commodities</td>
 <td>2013-01-03</td>
-<td>2026-05-01</td>
-<td>3352</td>
-<td>0.0203</td>
-<td>0.1702</td>
+<td>2026-05-07</td>
+<td>3356</td>
+<td>0.0189</td>
+<td>0.1704</td>
 <td>-0.6220</td>
 </tr>
 <tr class="odd">
@@ -786,10 +800,10 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 <td>EEM</td>
 <td>International equity</td>
 <td>2013-01-03</td>
-<td>2026-05-01</td>
-<td>3352</td>
-<td>0.0492</td>
-<td>0.2015</td>
+<td>2026-05-07</td>
+<td>3356</td>
+<td>0.0521</td>
+<td>0.2016</td>
 <td>-0.3982</td>
 </tr>
 <tr class="even">
@@ -797,10 +811,10 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 <td>EFA</td>
 <td>International equity</td>
 <td>2013-01-03</td>
-<td>2026-05-01</td>
-<td>3352</td>
-<td>0.0746</td>
-<td>0.1670</td>
+<td>2026-05-07</td>
+<td>3356</td>
+<td>0.0752</td>
+<td>0.1673</td>
 <td>-0.3419</td>
 </tr>
 <tr class="odd">
@@ -808,10 +822,10 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 <td>GLD</td>
 <td>Real assets</td>
 <td>2013-01-03</td>
-<td>2026-05-01</td>
-<td>3352</td>
-<td>0.0743</td>
-<td>0.1630</td>
+<td>2026-05-07</td>
+<td>3356</td>
+<td>0.0758</td>
+<td>0.1632</td>
 <td>-0.3860</td>
 </tr>
 <tr class="even">
@@ -819,9 +833,9 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 <td>HYG</td>
 <td>Credit</td>
 <td>2013-01-03</td>
-<td>2026-05-01</td>
-<td>3352</td>
-<td>0.0414</td>
+<td>2026-05-07</td>
+<td>3356</td>
+<td>0.0412</td>
 <td>0.0790</td>
 <td>-0.2203</td>
 </tr>
@@ -830,10 +844,10 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 <td>IEF</td>
 <td>Duration bonds</td>
 <td>2013-01-03</td>
-<td>2026-05-01</td>
-<td>3352</td>
+<td>2026-05-07</td>
+<td>3356</td>
 <td>0.0120</td>
-<td>0.0645</td>
+<td>0.0644</td>
 <td>-0.2408</td>
 </tr>
 <tr class="even">
@@ -841,9 +855,9 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 <td>IWM</td>
 <td>US equity</td>
 <td>2013-01-03</td>
-<td>2026-05-01</td>
-<td>3352</td>
-<td>0.1061</td>
+<td>2026-05-07</td>
+<td>3356</td>
+<td>0.1068</td>
 <td>0.2154</td>
 <td>-0.4113</td>
 </tr>
@@ -852,9 +866,9 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 <td>LQD</td>
 <td>Credit</td>
 <td>2013-01-03</td>
-<td>2026-05-01</td>
-<td>3352</td>
-<td>0.0256</td>
+<td>2026-05-07</td>
+<td>3356</td>
+<td>0.0257</td>
 <td>0.0798</td>
 <td>-0.2510</td>
 </tr>
@@ -863,10 +877,10 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 <td>QQQ</td>
 <td>US equity</td>
 <td>2013-01-03</td>
-<td>2026-05-01</td>
-<td>3352</td>
-<td>0.1992</td>
-<td>0.2078</td>
+<td>2026-05-07</td>
+<td>3356</td>
+<td>0.2017</td>
+<td>0.2077</td>
 <td>-0.3512</td>
 </tr>
 <tr class="odd">
@@ -874,9 +888,9 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 <td>SHY</td>
 <td>Short bonds</td>
 <td>2013-01-03</td>
-<td>2026-05-01</td>
-<td>3352</td>
-<td>0.0134</td>
+<td>2026-05-07</td>
+<td>3356</td>
+<td>0.0133</td>
 <td>0.0142</td>
 <td>-0.0571</td>
 </tr>
@@ -885,10 +899,10 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 <td>SPY</td>
 <td>US equity</td>
 <td>2013-01-03</td>
-<td>2026-05-01</td>
-<td>3352</td>
-<td>0.1470</td>
-<td>0.1686</td>
+<td>2026-05-07</td>
+<td>3356</td>
+<td>0.1481</td>
+<td>0.1685</td>
 <td>-0.3372</td>
 </tr>
 <tr class="odd">
@@ -896,10 +910,10 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 <td>TLT</td>
 <td>Duration bonds</td>
 <td>2013-01-03</td>
-<td>2026-05-01</td>
-<td>3352</td>
-<td>0.0017</td>
-<td>0.1450</td>
+<td>2026-05-07</td>
+<td>3356</td>
+<td>0.0018</td>
+<td>0.1449</td>
 <td>-0.4853</td>
 </tr>
 <tr class="even">
@@ -907,10 +921,10 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 <td>VNQ</td>
 <td>Real assets</td>
 <td>2013-01-03</td>
-<td>2026-05-01</td>
-<td>3352</td>
-<td>0.0695</td>
-<td>0.1947</td>
+<td>2026-05-07</td>
+<td>3356</td>
+<td>0.0697</td>
+<td>0.1946</td>
 <td>-0.4240</td>
 </tr>
 </tbody>
@@ -927,7 +941,7 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 <p>The bond ETFs show very different behavior. <strong>SHY</strong> has very low volatility around <span class="math inline">\(1.4\%\)</span> and a much smaller drawdown around <span class="math inline">\(-5.7\%\)</span>, but the return is also low. <strong>TLT</strong> is the opposite of what someone might expect from “bonds”. It has a very large drawdown around <span class="math inline">\(-48.5\%\)</span> in this sample because as we said earlier, long duration bonds are sensitive to interest rate changes. TLT fell hard by the post-2021 rate shock.</p>
 <p><strong>DBC</strong> has a very large drawdown around <span class="math inline">\(-62.2\%\)</span>, which can be from the long weak cycles. <strong>GLD and VNQ</strong> sit somewhere between diversifiers and risk assets. They have meaningful volatility and large drawdowns, but they also bring different economic exposure.</p>
 <p>An efficient active model like Black-Litterman should know when to lean into growth, when to prefer real assets, when to reduce long duration, and when to stay close to the benchmark so it can control risk and gain the high return based on the state and information given to it each time it’s rabalancing.</p>
-<div id="b73a6bc4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.113543Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.113136Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;}}" data-execution_count="7">
+<div id="b73a6bc4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.113543Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.113136Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;}}" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>normalized_prices <span class="op">=</span> close <span class="op">/</span> close.ffill().bfill().iloc[<span class="dv">0</span>]</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> normalized_prices.plot(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="dv">4</span>), lw<span class="op">=</span><span class="fl">1.1</span>)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"ETF normalized prices"</span>)</span>
@@ -944,7 +958,7 @@ first: 2016-01-29 last: 2026-05-01</code></pre>
 </div>
 </div>
 </div>
-<div id="0881c0c7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.769265Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.769265Z&quot;}}" data-execution_count="8">
+<div id="0881c0c7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.769265Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.769265Z&quot;}}" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>rolling_vol <span class="op">=</span> rolling_volatility(returns, windows<span class="op">=</span>(<span class="dv">63</span>,), annualization<span class="op">=</span>annualization)</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> rolling_vol.plot(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="dv">4</span>), lw<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"rolling annualized volatility, 63 trading days"</span>)</span>
@@ -1004,7 +1018,7 @@ w_b=\begin{bmatrix}w_{b,\mathrm{SPY}} &amp; w_{b,\mathrm{QQQ}} &amp; \cdots &amp
 <p><span class="math display">\[
 w_{b,i}\geq 0
 \]</span></p>
-<div id="f57f0d31" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.101896Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.101896Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;}}">
+<div id="f57f0d31" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.101896Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.101896Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;}}" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>w_min <span class="op">=</span> <span class="fl">0.0</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>w_max <span class="op">=</span> <span class="fl">0.40</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1188,7 +1202,7 @@ w_{b,i}\geq 0
 <p>As we can see, we set SPY as the largest position at about <strong><span class="math inline">\(22.2\%\)</span></strong>, followed by AGG around <strong><span class="math inline">\(10.1\%\)</span></strong>, EFA around <strong><span class="math inline">\(9.1\%\)</span></strong>, and several exposures around <strong><span class="math inline">\(8.1\%\)</span></strong> or <strong><span class="math inline">\(5.1\%\)</span></strong>. Large weights go to liquid core exposures. SPY for broad US equity, AGG for core bonds, EFA for developed international equities, and intermediate/long Treasuries for duration. Smaller weights go to more specialized or volatile exposures such as DBC, VNQ, HYG, and IWM. This makes sense because those assets can be useful, but we usually do not want them to dominate the portfolio.</p>
 <p>US equity is the largest section at about 34.3%. Duration bonds and international equities are also meaningful. Core bonds, real assets, and credit each have visible allocations, while commodities are intentionally small.</p>
 <p>This looks like a reasonable strategic benchmark for a multi asset project. It is growth oriented enough to participate in equity markets, but it is not a pure equity portfolio. It has bonds, gold, real estate, credit, and commodities. That makes it a useful anchor for active allocation.</p>
-<div id="2fd69cad" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;}}" data-execution_count="10">
+<div id="2fd69cad" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;}}" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">3.5</span>))</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>benchmark_w.sort_values(ascending<span class="op">=</span><span class="va">False</span>).plot(kind<span class="op">=</span><span class="st">"bar"</span>, ax<span class="op">=</span>ax)</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"fixed etf benchmark anchor"</span>)</span>
@@ -1264,7 +1278,7 @@ w_{b,i}\geq 0
 </div>
 </div>
 </div>
-<div id="7bdcfd8b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.254413Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.254413Z&quot;}}" data-execution_count="11">
+<div id="7bdcfd8b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.254413Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.254413Z&quot;}}" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>ewma_lambda <span class="op">=</span> <span class="fl">0.97</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>delta_fallback <span class="op">=</span> <span class="fl">2.5</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>delta_min <span class="op">=</span> <span class="fl">0.50</span></span>
@@ -1322,7 +1336,7 @@ w_{b,i}\geq 0
 <pre><code>stored covariance and prior for 125 rebalance dates</code></pre>
 </div>
 </div>
-<div id="5b27526f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:08.287613Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:08.287613Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:08.699935Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:08.699935Z&quot;}}" data-execution_count="12">
+<div id="5b27526f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:08.287613Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:08.287613Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:08.699935Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:08.699935Z&quot;}}" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>delta_series <span class="op">=</span> pd.Series(delta_by_date).sort_index()</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> delta_series.plot(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">3</span>), lw<span class="op">=</span><span class="fl">1.4</span>)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"rolling benchmark-implied risk aversion"</span>)</span>
@@ -1370,85 +1384,85 @@ w_{b,i}\geq 0
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
 <td>EEM</td>
-<td>0.2038</td>
+<td>0.2155</td>
 <td>0.0505</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
 <td>EFA</td>
-<td>0.1552</td>
+<td>0.1722</td>
 <td>0.0909</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
 <td>GLD</td>
-<td>0.1525</td>
+<td>0.1651</td>
 <td>0.0505</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
 <td>IWM</td>
-<td>0.1483</td>
+<td>0.1552</td>
 <td>0.0404</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
 <td>QQQ</td>
-<td>0.1370</td>
+<td>0.1416</td>
 <td>0.0808</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
 <td>SPY</td>
-<td>0.1109</td>
+<td>0.1130</td>
 <td>0.2222</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
 <td>VNQ</td>
-<td>0.0769</td>
+<td>0.0835</td>
 <td>0.0404</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
 <td>TLT</td>
-<td>0.0385</td>
+<td>0.0457</td>
 <td>0.0808</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>HYG</td>
-<td>0.0361</td>
-<td>0.0404</td>
+<td>LQD</td>
+<td>0.0383</td>
+<td>0.0505</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>LQD</td>
-<td>0.0350</td>
-<td>0.0505</td>
+<td>HYG</td>
+<td>0.0368</td>
+<td>0.0404</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">10</th>
 <td>IEF</td>
-<td>0.0255</td>
+<td>0.0289</td>
 <td>0.0808</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">11</th>
 <td>AGG</td>
-<td>0.0234</td>
+<td>0.0262</td>
 <td>0.1010</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">12</th>
 <td>SHY</td>
-<td>0.0077</td>
+<td>0.0085</td>
 <td>0.0505</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">13</th>
 <td>DBC</td>
-<td>-0.0793</td>
+<td>-0.1005</td>
 <td>0.0202</td>
 </tr>
 </tbody>
@@ -1464,7 +1478,7 @@ w_{b,i}\geq 0
 </div>
 </div>
 </div>
-<div id="f7bd9b82" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:08.702376Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:08.702376Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:08.717258Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:08.717258Z&quot;}}" data-execution_count="13">
+<div id="f7bd9b82" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:08.702376Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:08.702376Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:08.717258Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:08.717258Z&quot;}}" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>cost_bps <span class="op">=</span> <span class="fl">10.0</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>bl_mv_lambda <span class="op">=</span> <span class="fl">6.0</span></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1507,7 +1521,7 @@ w_{b,i}\geq 0
 <span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> np.minimum(w, w_max)</span>
 <span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> w <span class="op">/</span> w.<span class="bu">sum</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="18daab17" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:08.719261Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:08.719261Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;}}" data-execution_count="14">
+<div id="18daab17" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:08.719261Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:08.719261Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;}}" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> backtest_result_to_dict(name, result, fallback_flags<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    flags <span class="op">=</span> pd.Series(dtype<span class="op">=</span><span class="bu">float</span>) <span class="cf">if</span> fallback_flags <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> pd.Series(fallback_flags).sort_index()</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {</span>
@@ -1602,7 +1616,7 @@ w_{b,i}\geq 0
 selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)', 'MV (LedoitWolf, BayesStein)']</code></pre>
 </div>
 </div>
-<div id="e2b9dc5e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;}}" data-execution_count="15">
+<div id="e2b9dc5e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;}}" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> quick_metrics(ret, nav<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    ret <span class="op">=</span> pd.Series(ret).dropna()</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    nav <span class="op">=</span> simple_nav(ret) <span class="cf">if</span> nav <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> pd.Series(nav).dropna()</span>
@@ -1612,7 +1626,7 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    cagr <span class="op">=</span> <span class="bu">float</span>(nav.iloc[<span class="op">-</span><span class="dv">1</span>] <span class="op">**</span> (<span class="fl">1.0</span> <span class="op">/</span> years) <span class="op">-</span> <span class="fl">1.0</span>)</span>
 <span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    ann_vol <span class="op">=</span> <span class="bu">float</span>(ret.std(ddof<span class="op">=</span><span class="dv">1</span>) <span class="op">*</span> math.sqrt(annualization))</span>
 <span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    sharpe <span class="op">=</span> <span class="bu">float</span>((ret.mean() <span class="op">-</span> risk_free_daily) <span class="op">/</span> ret.std(ddof<span class="op">=</span><span class="dv">1</span>) <span class="op">*</span> math.sqrt(annualization)) <span class="cf">if</span> ret.std(ddof<span class="op">=</span><span class="dv">1</span>) <span class="op">&gt;</span> <span class="fl">1e-12</span> <span class="cf">else</span> np.nan</span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">"cagr"</span>: cagr, <span class="st">"ann_vol"</span>: ann_vol, <span class="st">"sharpe"</span>: sharpe, <span class="st">"max_drawdown"</span>: max_drawdown_from_nav(nav)}</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">"cagr"</span>: cagr, <span class="st">"ann_vol"</span>: ann_vol, <span class="st">"sharpe"</span>: sharpe, <span class="st">"max_drawdown"</span>: <span class="bu">float</span>((nav <span class="op">/</span> nav.cummax() <span class="op">-</span> <span class="fl">1.0</span>).<span class="bu">min</span>())}</span>
 <span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>top_mv_minvar <span class="op">=</span> walkforward_grid.results[walkforward_grid.results[<span class="st">"Optimizer"</span>].isin([<span class="st">"MV"</span>, <span class="st">"MinVar"</span>])].sort_values(<span class="st">"Sharpe"</span>, ascending<span class="op">=</span><span class="va">False</span>)</span>
@@ -1653,9 +1667,9 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
 <td>Strategic Benchmark</td>
-<td>0.0905</td>
-<td>0.1011</td>
-<td>0.5213</td>
+<td>0.0914</td>
+<td>0.1012</td>
+<td>0.5291</td>
 <td>-0.2242</td>
 <td>0.0144</td>
 <td>0</td>
@@ -1663,29 +1677,29 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
 <td>Equal Weight</td>
-<td>0.0848</td>
-<td>0.0932</td>
-<td>0.4849</td>
+<td>0.0855</td>
+<td>0.0933</td>
+<td>0.4916</td>
 <td>-0.2041</td>
-<td>0.0113</td>
+<td>0.0114</td>
 <td>0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">3</th>
 <td>MV (LedoitWolf, BayesStein)</td>
-<td>0.0730</td>
+<td>0.0735</td>
 <td>0.0687</td>
-<td>0.4794</td>
+<td>0.4860</td>
 <td>-0.1181</td>
-<td>0.0269</td>
+<td>0.0270</td>
 <td>0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">2</th>
 <td>MinVar (OAS)</td>
-<td>0.0684</td>
-<td>0.0755</td>
-<td>0.3776</td>
+<td>0.0686</td>
+<td>0.0754</td>
+<td>0.3806</td>
 <td>-0.1975</td>
 <td>0.0031</td>
 <td>0</td>
@@ -1699,7 +1713,7 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <pre><code>benchmarks use the full library walk-forward grid, then keep only best-Sharpe MV and best-Sharpe MinVar; MaxSharpe is not used as a benchmark</code></pre>
 </div>
 </div>
-<div id="ca0f1313" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.408255Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.408255Z&quot;}}" data-execution_count="16">
+<div id="ca0f1313" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.408255Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.408255Z&quot;}}" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>avg_turnover_table <span class="op">=</span> pd.DataFrame({name: result[<span class="st">"turnover"</span>].mean() <span class="cf">for</span> name, result <span class="kw">in</span> baseline_results.items()}, index<span class="op">=</span>[<span class="st">"avg_turnover"</span>]).T</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>display(avg_turnover_table.<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>baseline_nav <span class="op">=</span> pd.DataFrame({name: result[<span class="st">"nav"</span>] <span class="cf">for</span> name, result <span class="kw">in</span> baseline_results.items()})</span>
@@ -1731,7 +1745,7 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">Equal Weight</th>
-<td>0.0113</td>
+<td>0.0114</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">MinVar (OAS)</th>
@@ -1739,7 +1753,7 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">MV (LedoitWolf, BayesStein)</th>
-<td>0.0269</td>
+<td>0.0270</td>
 </tr>
 </tbody>
 </table>
@@ -1754,7 +1768,7 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 </div>
 </div>
 </div>
-<div id="614b0b46" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.408255Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.408255Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.426714Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.426714Z&quot;}}" data-execution_count="17">
+<div id="614b0b46" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.408255Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.408255Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.426714Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.426714Z&quot;}}" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>risky_asset_names <span class="op">=</span> [<span class="st">"SPY"</span>, <span class="st">"QQQ"</span>, <span class="st">"IWM"</span>, <span class="st">"EFA"</span>, <span class="st">"EEM"</span>, <span class="st">"HYG"</span>, <span class="st">"VNQ"</span>, <span class="st">"DBC"</span>]</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>cyclical_asset_names <span class="op">=</span> [<span class="st">"IWM"</span>, <span class="st">"EEM"</span>, <span class="st">"VNQ"</span>, <span class="st">"HYG"</span>]</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>defensive_asset_names <span class="op">=</span> [<span class="st">"TLT"</span>, <span class="st">"IEF"</span>, <span class="st">"SHY"</span>, <span class="st">"AGG"</span>, <span class="st">"LQD"</span>, <span class="st">"GLD"</span>]</span>
@@ -1936,7 +1950,7 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <span id="cb22-179"><a href="#cb22-179" aria-hidden="true" tabindex="-1"></a>    }</span>
 <span id="cb22-180"><a href="#cb22-180" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> asset_signal_table.sort_values(<span class="st">"score"</span>, ascending<span class="op">=</span><span class="va">False</span>), market_state</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="9d64c902" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.431405Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.430075Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.467301Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.467301Z&quot;}}" data-execution_count="18">
+<div id="9d64c902" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.431405Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.430075Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.467301Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.467301Z&quot;}}" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>latest_signal_table, latest_market_state <span class="op">=</span> compute_asset_signals(signal_close, signal_returns, latest_rebalance_date, dividends<span class="op">=</span>dividends_all)</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>signal_display_cols <span class="op">=</span> [<span class="st">"sleeve"</span>, <span class="st">"mom_1_0"</span>, <span class="st">"mom_3_0"</span>, <span class="st">"mom_6_1"</span>, <span class="st">"trend_50"</span>, <span class="st">"trend_200"</span>, <span class="st">"vol_63"</span>, <span class="st">"dd_252"</span>, <span class="st">"dividend_yield_252"</span>, <span class="st">"score"</span>]</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>display(latest_signal_table[signal_display_cols].reset_index().<span class="bu">round</span>(<span class="dv">4</span>))</span>
@@ -1968,211 +1982,211 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <th data-quarto-table-cell-role="th">0</th>
 <td>DBC</td>
 <td>Commodities</td>
-<td>0.0743</td>
-<td>0.2612</td>
-<td>0.3158</td>
-<td>0.0908</td>
-<td>0.2975</td>
-<td>0.2512</td>
-<td>-0.0093</td>
-<td>0.0241</td>
-<td>1.7445</td>
+<td>0.0592</td>
+<td>0.2731</td>
+<td>0.3039</td>
+<td>0.0529</td>
+<td>0.2644</td>
+<td>0.2423</td>
+<td>-0.0345</td>
+<td>0.0246</td>
+<td>1.5339</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
 <td>EEM</td>
 <td>International equity</td>
-<td>0.1206</td>
-<td>0.0851</td>
-<td>0.0871</td>
-<td>0.0711</td>
-<td>0.1634</td>
-<td>0.2832</td>
-<td>0.0000</td>
-<td>0.0189</td>
-<td>0.8135</td>
+<td>0.1018</td>
+<td>0.1377</td>
+<td>0.1253</td>
+<td>0.1071</td>
+<td>0.2005</td>
+<td>0.2916</td>
+<td>-0.0133</td>
+<td>0.0182</td>
+<td>0.9854</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>IWM</td>
+<td>QQQ</td>
 <td>US equity</td>
-<td>0.1191</td>
-<td>0.0775</td>
-<td>0.0367</td>
-<td>0.0758</td>
-<td>0.1299</td>
-<td>0.2157</td>
-<td>0.0000</td>
-<td>0.0091</td>
-<td>0.5005</td>
+<td>0.1466</td>
+<td>0.1655</td>
+<td>-0.0001</td>
+<td>0.1234</td>
+<td>0.1479</td>
+<td>0.1921</td>
+<td>-0.0012</td>
+<td>0.0040</td>
+<td>0.5723</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>QQQ</td>
+<td>IWM</td>
 <td>US equity</td>
-<td>0.1538</td>
-<td>0.0854</td>
-<td>-0.0243</td>
-<td>0.1009</td>
-<td>0.1182</td>
-<td>0.1969</td>
-<td>0.0000</td>
-<td>0.0042</td>
-<td>0.3587</td>
+<td>0.0837</td>
+<td>0.1053</td>
+<td>0.0608</td>
+<td>0.0808</td>
+<td>0.1363</td>
+<td>0.2177</td>
+<td>-0.0158</td>
+<td>0.0090</td>
+<td>0.4786</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
 <td>GLD</td>
 <td>Real assets</td>
-<td>-0.0334</td>
-<td>-0.0489</td>
-<td>0.2317</td>
-<td>-0.0470</td>
-<td>0.0808</td>
-<td>0.3438</td>
-<td>-0.1466</td>
+<td>-0.0066</td>
+<td>-0.0231</td>
+<td>0.1925</td>
+<td>-0.0189</td>
+<td>0.0962</td>
+<td>0.3132</td>
+<td>-0.1295</td>
 <td>0.0000</td>
-<td>0.2701</td>
+<td>0.2280</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
 <td>SPY</td>
 <td>US equity</td>
-<td>0.0998</td>
-<td>0.0443</td>
-<td>-0.0108</td>
-<td>0.0606</td>
-<td>0.0789</td>
-<td>0.1514</td>
-<td>0.0000</td>
-<td>0.0102</td>
-<td>-0.0112</td>
+<td>0.0822</td>
+<td>0.0826</td>
+<td>0.0123</td>
+<td>0.0716</td>
+<td>0.0919</td>
+<td>0.1504</td>
+<td>-0.0031</td>
+<td>0.0101</td>
+<td>0.1340</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
 <td>EFA</td>
 <td>International equity</td>
-<td>0.0354</td>
-<td>0.0135</td>
-<td>0.0753</td>
-<td>0.0192</td>
-<td>0.0708</td>
-<td>0.2131</td>
-<td>-0.0337</td>
-<td>0.0318</td>
-<td>-0.0266</td>
+<td>0.0068</td>
+<td>0.0255</td>
+<td>0.0917</td>
+<td>0.0290</td>
+<td>0.0756</td>
+<td>0.2239</td>
+<td>-0.0262</td>
+<td>0.0316</td>
+<td>0.0661</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
 <td>VNQ</td>
 <td>Real assets</td>
-<td>0.0791</td>
-<td>0.0692</td>
-<td>-0.0069</td>
-<td>0.0374</td>
-<td>0.0711</td>
-<td>0.1477</td>
-<td>-0.0100</td>
-<td>0.0363</td>
-<td>-0.0835</td>
+<td>0.0464</td>
+<td>0.0727</td>
+<td>0.0375</td>
+<td>0.0389</td>
+<td>0.0728</td>
+<td>0.1472</td>
+<td>-0.0072</td>
+<td>0.0362</td>
+<td>-0.0293</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
-<td>UUP</td>
-<td>Dollar</td>
-<td>-0.0115</td>
-<td>0.0209</td>
-<td>0.0424</td>
-<td>-0.0037</td>
-<td>0.0138</td>
-<td>0.0626</td>
-<td>-0.0204</td>
-<td>0.0338</td>
-<td>-0.3393</td>
+<td>HYG</td>
+<td>Credit</td>
+<td>0.0011</td>
+<td>0.0066</td>
+<td>0.0210</td>
+<td>0.0063</td>
+<td>0.0166</td>
+<td>0.0536</td>
+<td>-0.0046</td>
+<td>0.0587</td>
+<td>-0.3965</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
-<td>HYG</td>
-<td>Credit</td>
-<td>0.0140</td>
-<td>0.0068</td>
-<td>0.0112</td>
-<td>0.0091</td>
-<td>0.0200</td>
-<td>0.0524</td>
-<td>-0.0021</td>
-<td>0.0635</td>
-<td>-0.3650</td>
+<td>UUP</td>
+<td>Dollar</td>
+<td>-0.0044</td>
+<td>0.0118</td>
+<td>0.0308</td>
+<td>-0.0047</td>
+<td>0.0131</td>
+<td>0.0623</td>
+<td>-0.0204</td>
+<td>0.0338</td>
+<td>-0.4778</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">10</th>
 <td>SHY</td>
 <td>Short bonds</td>
-<td>0.0021</td>
-<td>0.0027</td>
-<td>0.0134</td>
-<td>0.0009</td>
-<td>0.0092</td>
-<td>0.0158</td>
-<td>-0.0026</td>
-<td>0.0402</td>
-<td>-0.4372</td>
+<td>0.0006</td>
+<td>0.0010</td>
+<td>0.0138</td>
+<td>0.0008</td>
+<td>0.0084</td>
+<td>0.0160</td>
+<td>-0.0029</td>
+<td>0.0371</td>
+<td>-0.4944</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">11</th>
 <td>AGG</td>
 <td>Core bonds</td>
-<td>0.0023</td>
-<td>0.0007</td>
-<td>0.0104</td>
-<td>-0.0022</td>
-<td>0.0071</td>
-<td>0.0433</td>
-<td>-0.0150</td>
-<td>0.0429</td>
-<td>-0.4939</td>
+<td>-0.0015</td>
+<td>-0.0014</td>
+<td>0.0144</td>
+<td>-0.0008</td>
+<td>0.0068</td>
+<td>0.0441</td>
+<td>-0.0145</td>
+<td>0.0396</td>
+<td>-0.5428</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">12</th>
-<td>IEF</td>
-<td>Duration bonds</td>
-<td>0.0001</td>
-<td>0.0002</td>
+<td>LQD</td>
+<td>Credit</td>
+<td>-0.0030</td>
+<td>-0.0046</td>
 <td>0.0071</td>
-<td>-0.0058</td>
-<td>0.0014</td>
-<td>0.0533</td>
-<td>-0.0239</td>
-<td>0.0419</td>
-<td>-0.5639</td>
+<td>0.0001</td>
+<td>0.0034</td>
+<td>0.0636</td>
+<td>-0.0155</td>
+<td>0.0455</td>
+<td>-0.6048</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">13</th>
-<td>LQD</td>
-<td>Credit</td>
-<td>0.0034</td>
-<td>-0.0028</td>
-<td>0.0006</td>
-<td>-0.0024</td>
-<td>0.0029</td>
-<td>0.0624</td>
-<td>-0.0167</td>
-<td>0.0495</td>
-<td>-0.5761</td>
+<td>IEF</td>
+<td>Duration bonds</td>
+<td>-0.0046</td>
+<td>-0.0047</td>
+<td>0.0120</td>
+<td>-0.0047</td>
+<td>0.0004</td>
+<td>0.0537</td>
+<td>-0.0242</td>
+<td>0.0386</td>
+<td>-0.6277</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">14</th>
 <td>TLT</td>
 <td>Duration bonds</td>
-<td>-0.0039</td>
-<td>-0.0028</td>
-<td>-0.0097</td>
-<td>-0.0136</td>
+<td>-0.0110</td>
+<td>-0.0101</td>
+<td>0.0022</td>
 <td>-0.0102</td>
-<td>0.0997</td>
-<td>-0.0469</td>
-<td>0.0494</td>
-<td>-0.7906</td>
+<td>-0.0104</td>
+<td>0.1003</td>
+<td>-0.0465</td>
+<td>0.0455</td>
+<td>-0.8248</td>
 </tr>
 </tbody>
 </table>
@@ -2181,10 +2195,10 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>the score ranks assets for relative views; it is not used as a standalone return forecast
-{'risky_median_score': 0.17374867205248162, 'defensive_median_score': -0.5288770319735261, 'risk_on_score': 0.7026257040260078, 'risky_trend_breadth': 1.0, 'risky_trend_breadth_3m_ago': 1.0, 'risky_trend_breadth_change_63': 0.0, 'cyclical_trend_breadth': 1.0, 'cyclical_trend_breadth_3m_ago': 1.0, 'cyclical_trend_breadth_change_63': 0.0, 'spy_trend_200': 0.07891809711481845, 'spy_drawdown_252': 0.0, 'spy_vol_63': 0.15136413478464925, 'spy_vol_z': -0.07002872545379353, 'equity_stress': False, 'qqq_spy_63': 0.0411448064245048, 'qqq_spy_126': 0.008717305622156335, 'hyg_lqd_63': 0.009586676538705818, 'hyg_lqd_126': 0.03045734135686773, 'iwm_spy_63': 0.03322394644058324, 'iwm_spy_126': 0.08287933191322816, 'eem_efa_63': 0.07160985901167893, 'dbc_ief_63': 0.2609741837498576, 'dbc_agg_63': 0.26040566991034075, 'dollar_trend': 0.013843082442195564, 'dollar_mom_3_0': 0.020856590614012127, 'spy_tlt_corr_126': 0.251290613684761, 'spy_ief_corr_126': 0.24556989667890614, 'stock_bond_corr_126': 0.251290613684761, 'avg_risky_corr_126': 0.46486969688624863, 'avg_risky_corr_63': 0.45961176782356145, 'asset_corr_to_spy_126': {'QQQ': 0.9554385489129761, 'IWM': 0.8554259266765418, 'EFA': 0.8011656772109861, 'EEM': 0.7896244037872628, 'TLT': 0.251290613684761, 'IEF': 0.24556989667890614, 'SHY': 0.2160578401731979, 'AGG': 0.38527586993734225, 'LQD': 0.47624271755361364, 'HYG': 0.7741237137231219, 'GLD': 0.28029935563907565, 'VNQ': 0.4788769213861118, 'DBC': -0.18854881080204683, 'UUP': -0.3224232335576605}, 'real_asset_score': 1.007280659722617, 'bond_score': -0.5638790122699242}</code></pre>
+{'risky_median_score': 0.3062913564705609, 'defensive_median_score': -0.5737997263775599, 'risk_on_score': 0.8800910828481208, 'risky_trend_breadth': 1.0, 'risky_trend_breadth_3m_ago': 1.0, 'risky_trend_breadth_change_63': 0.0, 'cyclical_trend_breadth': 1.0, 'cyclical_trend_breadth_3m_ago': 1.0, 'cyclical_trend_breadth_change_63': 0.0, 'spy_trend_200': 0.09188920549621837, 'spy_drawdown_252': -0.0030661051573263043, 'spy_vol_63': 0.15043979115267941, 'spy_vol_z': -0.04882412994664096, 'equity_stress': False, 'qqq_spy_63': 0.08288257895940299, 'qqq_spy_126': 0.035485254073543304, 'hyg_lqd_63': 0.011222095921665676, 'hyg_lqd_126': 0.020849369153329134, 'iwm_spy_63': 0.022693295353102716, 'iwm_spy_126': 0.08663908057063963, 'eem_efa_63': 0.11219134681438825, 'dbc_ief_63': 0.27788488135860967, 'dbc_agg_63': 0.2745451480456166, 'dollar_trend': 0.013069867842758764, 'dollar_mom_3_0': 0.011812465596963584, 'spy_tlt_corr_126': 0.276414150979206, 'spy_ief_corr_126': 0.2741956666646065, 'stock_bond_corr_126': 0.276414150979206, 'avg_risky_corr_126': 0.4634603176866089, 'avg_risky_corr_63': 0.45985081702498143, 'asset_corr_to_spy_126': {'QQQ': 0.9550231067423346, 'IWM': 0.8540029185210589, 'EFA': 0.8023966736122485, 'EEM': 0.7917707733734249, 'TLT': 0.27641415097920596, 'IEF': 0.2741956666646065, 'SHY': 0.2477019940415785, 'AGG': 0.408930580936676, 'LQD': 0.5006550256210142, 'HYG': 0.7860988493828405, 'GLD': 0.3033441745810057, 'VNQ': 0.5071958770446182, 'DBC': -0.23490528733557828, 'UUP': -0.3251221445359246}, 'real_asset_score': 0.8809456110216173, 'bond_score': -0.6276910238178387}</code></pre>
 </div>
 </div>
-<div id="b5d57b61" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.467301Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.467301Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.496050Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.495158Z&quot;}}" data-execution_count="19">
+<div id="b5d57b61" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.467301Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.467301Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.496050Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.495158Z&quot;}}" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>family_q_caps <span class="op">=</span> {</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"liquid_leadership"</span>: <span class="fl">0.042</span>,</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"dual_momentum"</span>: <span class="fl">0.022</span>,</span>
@@ -2599,59 +2613,59 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>liquid_leadership</td>
-<td>Liquidity leadership</td>
-<td>Liquidity leadership</td>
-<td>narrow_leadership</td>
-<td>[QQQ, SPY]</td>
-<td>[HYG, VNQ]</td>
-<td>0.3329</td>
-<td>0.0109</td>
-<td>0.1665</td>
-<td>risk_on</td>
-<td>{'leadership_spread': 0.3980206952657629, 'cyc...</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">1</th>
 <td>dual_momentum</td>
 <td>Dual momentum</td>
 <td>Dual momentum</td>
 <td>trend_following</td>
-<td>[DBC, GLD, EEM, IWM]</td>
-<td>[TLT, LQD]</td>
-<td>1.7715</td>
-<td>0.0196</td>
-<td>0.7086</td>
+<td>[DBC, EEM, GLD, IWM]</td>
+<td>[TLT, LQD, AGG]</td>
+<td>1.8970</td>
+<td>0.0200</td>
+<td>0.7588</td>
 <td>neutral</td>
-<td>{'dual_dispersion': 1.356483128543048, 'long_s...</td>
+<td>{'dual_dispersion': 1.5167343437542735, 'long_...</td>
 </tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">2</th>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
 <td>inflation_rotation</td>
 <td>Inflation rotation</td>
 <td>Inflation rotation</td>
 <td>inflation_shock</td>
 <td>[DBC, GLD]</td>
-<td>[TLT, LQD, IEF, AGG]</td>
-<td>1.5712</td>
-<td>0.0204</td>
-<td>0.5029</td>
+<td>[TLT, IEF, LQD, AGG]</td>
+<td>1.5086</td>
+<td>0.0201</td>
+<td>0.4877</td>
 <td>neutral</td>
-<td>{'commodity_score': 1.007280659722617, 'durati...</td>
+<td>{'commodity_score': 0.8809456110216173, 'durat...</td>
 </tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">3</th>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
 <td>risk_adj_momentum</td>
 <td>Risk-adjusted momentum</td>
 <td>Risk-adjusted momentum</td>
 <td>quality_momentum</td>
-<td>[DBC, EEM, IWM, QQQ]</td>
-<td>[TLT, IEF, LQD, AGG]</td>
-<td>0.9988</td>
-<td>0.0093</td>
-<td>0.3995</td>
+<td>[DBC, EEM, QQQ, IWM]</td>
+<td>[TLT, IEF, LQD, GLD]</td>
+<td>1.1438</td>
+<td>0.0101</td>
+<td>0.4575</td>
 <td>neutral</td>
-<td>{'risk_adj_dispersion': 0.6934411211187503, 'l...</td>
+<td>{'risk_adj_dispersion': 0.853928574656698, 'lo...</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>credit_switch</td>
+<td>Credit switch</td>
+<td>Credit switch: risk-on</td>
+<td>risk_on</td>
+<td>[SPY, QQQ, HYG, IWM]</td>
+<td>[SHY, IEF, AGG]</td>
+<td>1.2157</td>
+<td>0.0075</td>
+<td>0.6078</td>
+<td>risk_on</td>
+<td>{'spy_trend_200': 0.09188920549621837, 'hyg_lq...</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
@@ -2661,11 +2675,11 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <td>em_leadership</td>
 <td>[EEM]</td>
 <td>[EFA]</td>
-<td>1.2315</td>
-<td>0.0136</td>
-<td>0.6158</td>
+<td>1.3981</td>
+<td>0.0145</td>
+<td>0.6991</td>
 <td>risk_on</td>
-<td>{'eem_efa_63': 0.07160985901167893, 'dollar_tr...</td>
+<td>{'eem_efa_63': 0.11219134681438825, 'dollar_tr...</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
@@ -2675,11 +2689,11 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <td>broad_reflation</td>
 <td>[IWM, HYG, VNQ, DBC, EEM]</td>
 <td>[SHY, IEF, AGG, GLD]</td>
-<td>1.3967</td>
-<td>0.0339</td>
-<td>0.6983</td>
+<td>1.3294</td>
+<td>0.0331</td>
+<td>0.6647</td>
 <td>risk_on</td>
-<td>{'iwm_spy_63': 0.03322394644058324, 'hyg_lqd_6...</td>
+<td>{'iwm_spy_63': 0.022693295353102716, 'hyg_lqd_...</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
@@ -2689,11 +2703,11 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <td>short_duration_quality</td>
 <td>[SHY, AGG, IEF]</td>
 <td>[TLT]</td>
-<td>0.2180</td>
-<td>0.0017</td>
-<td>0.1090</td>
+<td>0.2262</td>
+<td>0.0018</td>
+<td>0.1131</td>
 <td>risk_off</td>
-<td>{'tlt_trend_200': -0.010226109945979278, 'ief_...</td>
+<td>{'tlt_trend_200': -0.010432248556209167, 'ief_...</td>
 </tr>
 </tbody>
 </table>
@@ -2701,7 +2715,7 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 </div>
 </div>
 </div>
-<div id="46d16d64" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.496740Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.496740Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.535762Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.535762Z&quot;}}" data-execution_count="20">
+<div id="46d16d64" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.496740Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.496740Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.535762Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.535762Z&quot;}}" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>conf_floor <span class="op">=</span> <span class="fl">0.30</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>conf_cap <span class="op">=</span> <span class="fl">0.90</span></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>haircut_conf_floor <span class="op">=</span> <span class="fl">0.20</span></span>
@@ -3003,47 +3017,47 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
 <td>spy_trend_200</td>
-<td>0.0789</td>
+<td>0.0919</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
 <td>qqq_spy_63</td>
-<td>0.0411</td>
+<td>0.0829</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
 <td>hyg_lqd_63</td>
-<td>0.0096</td>
+<td>0.0112</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
 <td>iwm_spy_63</td>
-<td>0.0332</td>
+<td>0.0227</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
 <td>eem_efa_63</td>
-<td>0.0716</td>
+<td>0.1122</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
 <td>dbc_ief_63</td>
-<td>0.2610</td>
+<td>0.2779</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
 <td>dbc_agg_63</td>
-<td>0.2604</td>
+<td>0.2745</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
 <td>spy_vol_z</td>
-<td>-0.0700</td>
+<td>-0.0488</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">8</th>
 <td>spy_drawdown_252</td>
-<td>0.0000</td>
+<td>-0.0031</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">9</th>
@@ -3068,32 +3082,32 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <tr class="even">
 <th data-quarto-table-cell-role="th">13</th>
 <td>dollar_trend</td>
-<td>0.0138</td>
+<td>0.0131</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">14</th>
 <td>dollar_mom_3_0</td>
-<td>0.0209</td>
+<td>0.0118</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">15</th>
 <td>stock_bond_corr_126</td>
-<td>0.2513</td>
+<td>0.2764</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">16</th>
 <td>avg_risky_corr_126</td>
-<td>0.4649</td>
+<td>0.4635</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">17</th>
 <td>risk_on_score</td>
-<td>0.7026</td>
+<td>0.8801</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">18</th>
 <td>commodity_minus_duration_score</td>
-<td>1.6845</td>
+<td>1.6072</td>
 </tr>
 </tbody>
 </table>
@@ -3101,7 +3115,7 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 </div>
 </div>
 </div>
-<div id="3df3d3cc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.535762Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.535762Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:23.082544Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:23.082544Z&quot;}}" data-execution_count="21">
+<div id="3df3d3cc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.535762Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.535762Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:23.082544Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:23.082544Z&quot;}}" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>view_cache <span class="op">=</span> {}</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>view_log_rows <span class="op">=</span> []</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> dt <span class="kw">in</span> rebalance_dates:</span>
@@ -3185,79 +3199,79 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <th data-quarto-table-cell-role="th">0</th>
 <td>dual_momentum</td>
 <td>Dual momentum</td>
-<td>[DBC, GLD, EEM, IWM]</td>
-<td>[TLT, LQD]</td>
-<td>1.7715</td>
-<td>0.0196</td>
-<td>0.7086</td>
+<td>[DBC, EEM, GLD, IWM]</td>
+<td>[TLT, LQD, AGG]</td>
+<td>1.8970</td>
+<td>0.0200</td>
+<td>0.7588</td>
 <td>0.85</td>
 <td>neutral</td>
-<td>{'dual_dispersion': 1.356483128543048, 'long_s...</td>
+<td>{'dual_dispersion': 1.5167343437542735, 'long_...</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>reflation_breadth</td>
-<td>Reflation breadth</td>
-<td>[IWM, HYG, VNQ, DBC, EEM]</td>
-<td>[SHY, IEF, AGG, GLD]</td>
-<td>1.3967</td>
-<td>0.0339</td>
-<td>0.6983</td>
-<td>0.78</td>
-<td>risk_on</td>
-<td>{'iwm_spy_63': 0.03322394644058324, 'hyg_lqd_6...</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">2</th>
 <td>international_rotation</td>
 <td>International rotation</td>
 <td>[EEM]</td>
 <td>[EFA]</td>
-<td>1.2315</td>
-<td>0.0136</td>
-<td>0.6158</td>
+<td>1.3981</td>
+<td>0.0145</td>
+<td>0.6991</td>
 <td>0.72</td>
 <td>risk_on</td>
-<td>{'eem_efa_63': 0.07160985901167893, 'dollar_tr...</td>
+<td>{'eem_efa_63': 0.11219134681438825, 'dollar_tr...</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>reflation_breadth</td>
+<td>Reflation breadth</td>
+<td>[IWM, HYG, VNQ, DBC, EEM]</td>
+<td>[SHY, IEF, AGG, GLD]</td>
+<td>1.3294</td>
+<td>0.0331</td>
+<td>0.6647</td>
+<td>0.78</td>
+<td>risk_on</td>
+<td>{'iwm_spy_63': 0.022693295353102716, 'hyg_lqd_...</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>inflation_rotation</td>
-<td>Inflation rotation</td>
-<td>[DBC, GLD]</td>
-<td>[TLT, LQD, IEF, AGG]</td>
-<td>1.5712</td>
-<td>0.0204</td>
-<td>0.5029</td>
-<td>0.80</td>
-<td>neutral</td>
-<td>{'commodity_score': 1.007280659722617, 'durati...</td>
+<td>credit_switch</td>
+<td>Credit switch: risk-on</td>
+<td>[SPY, QQQ, HYG, IWM]</td>
+<td>[SHY, IEF, AGG]</td>
+<td>1.2157</td>
+<td>0.0075</td>
+<td>0.6078</td>
+<td>0.88</td>
+<td>risk_on</td>
+<td>{'spy_trend_200': 0.09188920549621837, 'hyg_lq...</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>risk_adj_momentum</td>
-<td>Risk-adjusted momentum</td>
-<td>[DBC, EEM, IWM, QQQ]</td>
+<td>inflation_rotation</td>
+<td>Inflation rotation</td>
+<td>[DBC, GLD]</td>
 <td>[TLT, IEF, LQD, AGG]</td>
-<td>0.9988</td>
-<td>0.0093</td>
-<td>0.3995</td>
-<td>1.00</td>
+<td>1.5086</td>
+<td>0.0201</td>
+<td>0.4877</td>
+<td>0.80</td>
 <td>neutral</td>
-<td>{'risk_adj_dispersion': 0.6934411211187503, 'l...</td>
+<td>{'commodity_score': 0.8809456110216173, 'durat...</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>liquid_leadership</td>
-<td>Liquidity leadership</td>
-<td>[QQQ, SPY]</td>
-<td>[HYG, VNQ]</td>
-<td>0.3329</td>
-<td>0.0109</td>
-<td>0.1665</td>
-<td>0.90</td>
-<td>risk_on</td>
-<td>{'leadership_spread': 0.3980206952657629, 'cyc...</td>
+<td>risk_adj_momentum</td>
+<td>Risk-adjusted momentum</td>
+<td>[DBC, EEM, QQQ, IWM]</td>
+<td>[TLT, IEF, LQD, GLD]</td>
+<td>1.1438</td>
+<td>0.0101</td>
+<td>0.4575</td>
+<td>1.00</td>
+<td>neutral</td>
+<td>{'risk_adj_dispersion': 0.853928574656698, 'lo...</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
@@ -3265,12 +3279,12 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <td>Duration quality</td>
 <td>[SHY, AGG, IEF]</td>
 <td>[TLT]</td>
-<td>0.2180</td>
-<td>0.0017</td>
-<td>0.1090</td>
+<td>0.2262</td>
+<td>0.0018</td>
+<td>0.1131</td>
 <td>0.70</td>
 <td>risk_off</td>
-<td>{'tlt_trend_200': -0.010226109945979278, 'ief_...</td>
+<td>{'tlt_trend_200': -0.010432248556209167, 'ief_...</td>
 </tr>
 </tbody>
 </table>
@@ -3304,42 +3318,42 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <td>125</td>
 <td>0.0123</td>
 <td>0.0123</td>
-<td>1.8257</td>
+<td>1.8269</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">dual_momentum</th>
 <td>118</td>
 <td>0.0191</td>
 <td>0.0191</td>
-<td>1.7699</td>
+<td>1.7710</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">duration_quality</th>
 <td>78</td>
 <td>0.0042</td>
 <td>0.0042</td>
-<td>0.6185</td>
+<td>0.6186</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">credit_switch</th>
-<td>58</td>
+<td>59</td>
 <td>0.0069</td>
 <td>0.0069</td>
-<td>1.1253</td>
+<td>1.1268</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">liquid_leadership</th>
-<td>51</td>
-<td>0.0209</td>
-<td>0.0209</td>
-<td>0.7422</td>
+<td>50</td>
+<td>0.0211</td>
+<td>0.0211</td>
+<td>0.7504</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">international_rotation</th>
 <td>46</td>
-<td>0.0117</td>
-<td>0.0117</td>
-<td>1.0113</td>
+<td>0.0118</td>
+<td>0.0118</td>
+<td>1.0149</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">growth_duration</th>
@@ -3351,16 +3365,16 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <tr class="even">
 <th data-quarto-table-cell-role="th">reflation_breadth</th>
 <td>22</td>
-<td>0.0318</td>
-<td>0.0318</td>
-<td>1.3210</td>
+<td>0.0317</td>
+<td>0.0317</td>
+<td>1.3179</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">inflation_rotation</th>
 <td>21</td>
 <td>0.0152</td>
 <td>0.0152</td>
-<td>0.9968</td>
+<td>0.9938</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">correlation_stress</th>
@@ -3382,7 +3396,7 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 </div>
 </div>
 </div>
-<div id="3ed90d9d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:23.082544Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:23.082544Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:23.105087Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:23.105087Z&quot;}}" data-execution_count="22">
+<div id="3ed90d9d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:23.082544Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:23.082544Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:23.105087Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:23.105087Z&quot;}}" data-execution_count="21">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> reliability_score_for_q(stats):</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    hit_rate <span class="op">=</span> stats.get(<span class="st">"hit_rate"</span>, np.nan)</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    recent_hit_rate <span class="op">=</span> stats.get(<span class="st">"recent_hit_rate"</span>, np.nan)</span>
@@ -3538,95 +3552,95 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <td>Dual momentum</td>
 <td>Dual momentum</td>
 <td>trend_following</td>
-<td>[DBC, GLD, EEM, IWM]</td>
-<td>[TLT, LQD]</td>
-<td>0.0696</td>
-<td>0.0196</td>
-<td>0.0196</td>
-<td>0.0892</td>
+<td>[DBC, EEM, GLD, IWM]</td>
+<td>[TLT, LQD, AGG]</td>
+<td>0.0721</td>
+<td>0.0200</td>
+<td>0.0200</td>
+<td>0.0921</td>
 <td>NaN</td>
-<td>0.25*DBC + 0.25*GLD + 0.25*EEM + 0.25*IWM - 0....</td>
-<td>{'dual_dispersion': 1.356483128543048, 'long_s...</td>
+<td>0.25*DBC + 0.25*EEM + 0.25*GLD + 0.25*IWM - 0....</td>
+<td>{'dual_dispersion': 1.5167343437542735, 'long_...</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>reflation_breadth</td>
-<td>Reflation breadth</td>
-<td>Reflation breadth</td>
-<td>broad_reflation</td>
-<td>[IWM, HYG, VNQ, DBC, EEM]</td>
-<td>[SHY, IEF, AGG, GLD]</td>
-<td>0.0249</td>
-<td>0.0339</td>
-<td>0.0339</td>
-<td>0.0588</td>
-<td>NaN</td>
-<td>0.20*IWM + 0.20*HYG + 0.20*VNQ + 0.20*DBC + 0....</td>
-<td>{'iwm_spy_63': 0.03322394644058324, 'hyg_lqd_6...</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">2</th>
 <td>international_rotation</td>
 <td>International rotation</td>
 <td>International rotation</td>
 <td>em_leadership</td>
 <td>[EEM]</td>
 <td>[EFA]</td>
-<td>0.0486</td>
-<td>0.0136</td>
-<td>0.0136</td>
-<td>0.0622</td>
+<td>0.0433</td>
+<td>0.0145</td>
+<td>0.0145</td>
+<td>0.0578</td>
 <td>NaN</td>
 <td>1.00*EEM - 1.00*EFA</td>
-<td>{'eem_efa_63': 0.07160985901167893, 'dollar_tr...</td>
+<td>{'eem_efa_63': 0.11219134681438825, 'dollar_tr...</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>reflation_breadth</td>
+<td>Reflation breadth</td>
+<td>Reflation breadth</td>
+<td>broad_reflation</td>
+<td>[IWM, HYG, VNQ, DBC, EEM]</td>
+<td>[SHY, IEF, AGG, GLD]</td>
+<td>0.0209</td>
+<td>0.0331</td>
+<td>0.0331</td>
+<td>0.0540</td>
+<td>NaN</td>
+<td>0.20*IWM + 0.20*HYG + 0.20*VNQ + 0.20*DBC + 0....</td>
+<td>{'iwm_spy_63': 0.022693295353102716, 'hyg_lqd_...</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
+<td>credit_switch</td>
+<td>Credit switch</td>
+<td>Credit switch: risk-on</td>
+<td>risk_on</td>
+<td>[SPY, QQQ, HYG, IWM]</td>
+<td>[SHY, IEF, AGG]</td>
+<td>0.0904</td>
+<td>0.0075</td>
+<td>0.0075</td>
+<td>0.0979</td>
+<td>NaN</td>
+<td>0.25*SPY + 0.25*QQQ + 0.25*HYG + 0.25*IWM - 0....</td>
+<td>{'spy_trend_200': 0.09188920549621837, 'hyg_lq...</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
 <td>inflation_rotation</td>
 <td>Inflation rotation</td>
 <td>Inflation rotation</td>
 <td>inflation_shock</td>
 <td>[DBC, GLD]</td>
-<td>[TLT, LQD, IEF, AGG]</td>
-<td>0.0060</td>
-<td>0.0204</td>
-<td>0.0204</td>
-<td>0.0264</td>
+<td>[TLT, IEF, LQD, AGG]</td>
+<td>-0.0025</td>
+<td>0.0201</td>
+<td>0.0201</td>
+<td>0.0176</td>
 <td>NaN</td>
-<td>0.50*DBC + 0.50*GLD - 0.25*TLT - 0.25*LQD - 0....</td>
-<td>{'commodity_score': 1.007280659722617, 'durati...</td>
+<td>0.50*DBC + 0.50*GLD - 0.25*TLT - 0.25*IEF - 0....</td>
+<td>{'commodity_score': 0.8809456110216173, 'durat...</td>
 </tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">4</th>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
 <td>risk_adj_momentum</td>
 <td>Risk-adjusted momentum</td>
 <td>Risk-adjusted momentum</td>
 <td>quality_momentum</td>
-<td>[DBC, EEM, IWM, QQQ]</td>
-<td>[TLT, IEF, LQD, AGG]</td>
-<td>0.0718</td>
-<td>0.0093</td>
-<td>0.0093</td>
-<td>0.0811</td>
+<td>[DBC, EEM, QQQ, IWM]</td>
+<td>[TLT, IEF, LQD, GLD]</td>
+<td>0.0335</td>
+<td>0.0101</td>
+<td>0.0101</td>
+<td>0.0436</td>
 <td>NaN</td>
-<td>0.25*DBC + 0.25*EEM + 0.25*IWM + 0.25*QQQ - 0....</td>
-<td>{'risk_adj_dispersion': 0.6934411211187503, 'l...</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">5</th>
-<td>liquid_leadership</td>
-<td>Liquidity leadership</td>
-<td>Liquidity leadership</td>
-<td>narrow_leadership</td>
-<td>[QQQ, SPY]</td>
-<td>[HYG, VNQ]</td>
-<td>0.0674</td>
-<td>0.0109</td>
-<td>0.0109</td>
-<td>0.0784</td>
-<td>NaN</td>
-<td>0.50*QQQ + 0.50*SPY - 0.50*HYG - 0.50*VNQ</td>
-<td>{'leadership_spread': 0.3980206952657629, 'cyc...</td>
+<td>0.25*DBC + 0.25*EEM + 0.25*QQQ + 0.25*IWM - 0....</td>
+<td>{'risk_adj_dispersion': 0.853928574656698, 'lo...</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
@@ -3636,13 +3650,13 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <td>short_duration_quality</td>
 <td>[SHY, AGG, IEF]</td>
 <td>[TLT]</td>
-<td>-0.0196</td>
-<td>0.0017</td>
-<td>0.0017</td>
-<td>-0.0178</td>
+<td>-0.0245</td>
+<td>0.0018</td>
+<td>0.0018</td>
+<td>-0.0227</td>
 <td>NaN</td>
 <td>0.33*SHY + 0.33*AGG + 0.33*IEF - 1.00*TLT</td>
-<td>{'tlt_trend_200': -0.010226109945979278, 'ief_...</td>
+<td>{'tlt_trend_200': -0.010432248556209167, 'ief_...</td>
 </tr>
 </tbody>
 </table>
@@ -3693,119 +3707,119 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">dual_momentum</th>
-<td>0.0</td>
+<td>0.00</td>
 <td>0.00</td>
 <td>0.25</td>
 <td>0.0</td>
 <td>0.25</td>
-<td>-0.50</td>
+<td>-0.333</td>
 <td>0.000</td>
 <td>0.000</td>
-<td>0.000</td>
-<td>-0.50</td>
-<td>0.0</td>
+<td>-0.333</td>
+<td>-0.333</td>
+<td>0.00</td>
 <td>0.25</td>
 <td>0.0</td>
 <td>0.25</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">reflation_breadth</th>
-<td>0.0</td>
-<td>0.00</td>
-<td>0.20</td>
-<td>0.0</td>
-<td>0.20</td>
-<td>0.00</td>
-<td>-0.250</td>
-<td>-0.250</td>
-<td>-0.250</td>
-<td>0.00</td>
-<td>0.2</td>
-<td>-0.25</td>
-<td>0.2</td>
-<td>0.20</td>
-</tr>
-<tr class="odd">
 <th data-quarto-table-cell-role="th">international_rotation</th>
-<td>0.0</td>
+<td>0.00</td>
 <td>0.00</td>
 <td>0.00</td>
 <td>-1.0</td>
 <td>1.00</td>
-<td>0.00</td>
 <td>0.000</td>
 <td>0.000</td>
 <td>0.000</td>
-<td>0.00</td>
-<td>0.0</td>
-<td>0.00</td>
-<td>0.0</td>
-<td>0.00</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">inflation_rotation</th>
-<td>0.0</td>
-<td>0.00</td>
-<td>0.00</td>
-<td>0.0</td>
-<td>0.00</td>
-<td>-0.25</td>
-<td>-0.250</td>
 <td>0.000</td>
-<td>-0.250</td>
-<td>-0.25</td>
+<td>0.000</td>
+<td>0.00</td>
+<td>0.00</td>
 <td>0.0</td>
-<td>0.50</td>
-<td>0.0</td>
-<td>0.50</td>
+<td>0.00</td>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">risk_adj_momentum</th>
+<th data-quarto-table-cell-role="th">reflation_breadth</th>
+<td>0.00</td>
+<td>0.00</td>
+<td>0.20</td>
 <td>0.0</td>
-<td>0.25</td>
-<td>0.25</td>
-<td>0.0</td>
-<td>0.25</td>
-<td>-0.25</td>
-<td>-0.250</td>
+<td>0.20</td>
 <td>0.000</td>
 <td>-0.250</td>
+<td>-0.250</td>
+<td>-0.250</td>
+<td>0.000</td>
+<td>0.20</td>
 <td>-0.25</td>
-<td>0.0</td>
-<td>0.00</td>
-<td>0.0</td>
-<td>0.25</td>
+<td>0.2</td>
+<td>0.20</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">liquid_leadership</th>
-<td>0.5</td>
-<td>0.50</td>
+<th data-quarto-table-cell-role="th">credit_switch</th>
+<td>0.25</td>
+<td>0.25</td>
+<td>0.25</td>
+<td>0.0</td>
+<td>0.00</td>
+<td>0.000</td>
+<td>-0.333</td>
+<td>-0.333</td>
+<td>-0.333</td>
+<td>0.000</td>
+<td>0.25</td>
 <td>0.00</td>
 <td>0.0</td>
 <td>0.00</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">inflation_rotation</th>
 <td>0.00</td>
+<td>0.00</td>
+<td>0.00</td>
+<td>0.0</td>
+<td>0.00</td>
+<td>-0.250</td>
+<td>-0.250</td>
+<td>0.000</td>
+<td>-0.250</td>
+<td>-0.250</td>
+<td>0.00</td>
+<td>0.50</td>
+<td>0.0</td>
+<td>0.50</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">risk_adj_momentum</th>
+<td>0.00</td>
+<td>0.25</td>
+<td>0.25</td>
+<td>0.0</td>
+<td>0.25</td>
+<td>-0.250</td>
+<td>-0.250</td>
 <td>0.000</td>
 <td>0.000</td>
-<td>0.000</td>
+<td>-0.250</td>
 <td>0.00</td>
-<td>-0.5</td>
-<td>0.00</td>
-<td>-0.5</td>
-<td>0.00</td>
+<td>-0.25</td>
+<td>0.0</td>
+<td>0.25</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">duration_quality</th>
+<td>0.00</td>
+<td>0.00</td>
+<td>0.00</td>
 <td>0.0</td>
 <td>0.00</td>
-<td>0.00</td>
-<td>0.0</td>
-<td>0.00</td>
-<td>-1.00</td>
+<td>-1.000</td>
 <td>0.333</td>
 <td>0.333</td>
 <td>0.333</td>
+<td>0.000</td>
 <td>0.00</td>
-<td>0.0</td>
 <td>0.00</td>
 <td>0.0</td>
 <td>0.00</td>
@@ -3816,7 +3830,7 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 </div>
 </div>
 </div>
-<div id="3c7f3fe9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:23.105087Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:23.105087Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:24.546810Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:24.546810Z&quot;}}" data-execution_count="23">
+<div id="3c7f3fe9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:23.105087Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:23.105087Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:24.546810Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:24.546810Z&quot;}}" data-execution_count="22">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>view_horizon_days <span class="op">=</span> <span class="dv">21</span></span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -3926,14 +3940,22 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 </thead>
 <tbody>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">dual_momentum</th>
+<th data-quarto-table-cell-role="th">credit_switch</th>
 <td>0.5</td>
-<td>0.5942</td>
-<td>0.5942</td>
-<td>0.5942</td>
-<td>0.5942</td>
+<td>0.5604</td>
+<td>0.5604</td>
+<td>0.5604</td>
+<td>0.5604</td>
 </tr>
 <tr class="even">
+<th data-quarto-table-cell-role="th">dual_momentum</th>
+<td>0.5</td>
+<td>0.5967</td>
+<td>0.5967</td>
+<td>0.5967</td>
+<td>0.5967</td>
+</tr>
+<tr class="odd">
 <th data-quarto-table-cell-role="th">duration_quality</th>
 <td>0.5</td>
 <td>0.2000</td>
@@ -3941,29 +3963,21 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 <td>NaN</td>
 <td>NaN</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <th data-quarto-table-cell-role="th">inflation_rotation</th>
 <td>0.5</td>
-<td>0.4873</td>
-<td>0.4873</td>
-<td>0.4873</td>
-<td>0.4873</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">international_rotation</th>
-<td>0.5</td>
-<td>0.3131</td>
-<td>0.3131</td>
-<td>NaN</td>
-<td>NaN</td>
+<td>0.4865</td>
+<td>0.4865</td>
+<td>0.4865</td>
+<td>0.4865</td>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">liquid_leadership</th>
+<th data-quarto-table-cell-role="th">international_rotation</th>
 <td>0.5</td>
-<td>0.6194</td>
-<td>0.6194</td>
-<td>0.6194</td>
-<td>0.6194</td>
+<td>0.3173</td>
+<td>0.3173</td>
+<td>NaN</td>
+<td>NaN</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">reflation_breadth</th>
@@ -3976,10 +3990,10 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 <tr class="odd">
 <th data-quarto-table-cell-role="th">risk_adj_momentum</th>
 <td>0.5</td>
-<td>0.5226</td>
-<td>0.5226</td>
-<td>0.5226</td>
-<td>0.5226</td>
+<td>0.5255</td>
+<td>0.5255</td>
+<td>0.5255</td>
+<td>0.5255</td>
 </tr>
 </tbody>
 </table>
@@ -3987,7 +4001,7 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 </div>
 </div>
 </div>
-<div id="34aee2c4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:24.546810Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:24.546810Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:24.575627Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:24.575627Z&quot;}}" data-execution_count="24">
+<div id="34aee2c4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:24.546810Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:24.546810Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:24.575627Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:24.575627Z&quot;}}" data-execution_count="23">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>tau <span class="op">=</span> <span class="fl">0.05</span></span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>use_empirical_omega_rescale <span class="op">=</span> <span class="va">False</span></span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -4070,85 +4084,85 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 <th data-quarto-table-cell-role="th">0</th>
 <td>Dual momentum</td>
 <td>dual_momentum</td>
-<td>0.019558</td>
+<td>0.019982</td>
 <td>0.0</td>
-<td>0.019558</td>
-<td>0.089174</td>
-<td>0.594198</td>
-<td>0.024714</td>
-<td>0.000844</td>
+<td>0.019982</td>
+<td>0.092056</td>
+<td>0.596708</td>
+<td>0.021330</td>
+<td>0.000721</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">1</th>
-<td>Reflation breadth</td>
-<td>reflation_breadth</td>
-<td>0.033879</td>
+<td>International rotation</td>
+<td>international_rotation</td>
+<td>0.014527</td>
 <td>0.0</td>
-<td>0.033879</td>
-<td>0.058752</td>
-<td>0.420000</td>
-<td>0.007321</td>
-<td>0.000505</td>
+<td>0.014527</td>
+<td>0.057784</td>
+<td>0.317295</td>
+<td>0.015033</td>
+<td>0.001617</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">2</th>
-<td>International rotation</td>
-<td>international_rotation</td>
-<td>0.013596</td>
+<td>Reflation breadth</td>
+<td>reflation_breadth</td>
+<td>0.033054</td>
 <td>0.0</td>
-<td>0.013596</td>
-<td>0.062218</td>
-<td>0.313130</td>
-<td>0.014962</td>
-<td>0.001641</td>
+<td>0.033054</td>
+<td>0.053978</td>
+<td>0.420000</td>
+<td>0.007425</td>
+<td>0.000513</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
-<td>Inflation rotation</td>
-<td>inflation_rotation</td>
-<td>0.020405</td>
+<td>Credit switch: risk-on</td>
+<td>credit_switch</td>
+<td>0.007498</td>
 <td>0.0</td>
-<td>0.020405</td>
-<td>0.026418</td>
-<td>0.487302</td>
-<td>0.045933</td>
-<td>0.002416</td>
+<td>0.007498</td>
+<td>0.097935</td>
+<td>0.560420</td>
+<td>0.015148</td>
+<td>0.000594</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
-<td>Risk-adjusted momentum</td>
-<td>risk_adj_momentum</td>
-<td>0.009289</td>
+<td>Inflation rotation</td>
+<td>inflation_rotation</td>
+<td>0.020058</td>
 <td>0.0</td>
-<td>0.009289</td>
-<td>0.081132</td>
-<td>0.522604</td>
-<td>0.017509</td>
-<td>0.000800</td>
+<td>0.020058</td>
+<td>0.017581</td>
+<td>0.486545</td>
+<td>0.041208</td>
+<td>0.002174</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">5</th>
-<td>Liquidity leadership</td>
-<td>liquid_leadership</td>
-<td>0.010930</td>
+<td>Risk-adjusted momentum</td>
+<td>risk_adj_momentum</td>
+<td>0.010130</td>
 <td>0.0</td>
-<td>0.010930</td>
-<td>0.078368</td>
-<td>0.619355</td>
-<td>0.017489</td>
-<td>0.000537</td>
+<td>0.010130</td>
+<td>0.043591</td>
+<td>0.525505</td>
+<td>0.013253</td>
+<td>0.000598</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">6</th>
 <td>Duration quality</td>
 <td>duration_quality</td>
-<td>0.001726</td>
+<td>0.001790</td>
 <td>0.0</td>
-<td>0.001726</td>
-<td>-0.017848</td>
+<td>0.001790</td>
+<td>-0.022693</td>
 <td>0.300000</td>
-<td>0.003988</td>
-<td>0.000465</td>
+<td>0.004015</td>
+<td>0.000468</td>
 </tr>
 </tbody>
 </table>
@@ -4159,7 +4173,7 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 <pre><code>omega uses confidence-based full view covariance; learned Q is applied when build_view_matrix is called with use_learned_q=True</code></pre>
 </div>
 </div>
-<div id="f895626b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:24.575627Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:24.575627Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;}}" data-execution_count="25">
+<div id="f895626b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:24.575627Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:24.575627Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;}}" data-execution_count="24">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> black_litterman_posterior(prior_mu, cov_ann, view_p, view_q, omega, tau<span class="op">=</span>tau):</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    prior_mu <span class="op">=</span> pd.Series(prior_mu).astype(<span class="bu">float</span>)</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    cov_ann <span class="op">=</span> pd.DataFrame(cov_ann, index<span class="op">=</span>prior_mu.index, columns<span class="op">=</span>prior_mu.index).astype(<span class="bu">float</span>)</span>
@@ -4223,102 +4237,102 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 </thead>
 <tbody>
 <tr class="odd">
+<th data-quarto-table-cell-role="th">12</th>
+<td>VNQ</td>
+<td>0.0835</td>
+<td>0.1215</td>
+<td>0.0380</td>
+</tr>
+<tr class="even">
 <th data-quarto-table-cell-role="th">11</th>
 <td>GLD</td>
-<td>0.1525</td>
-<td>0.3000</td>
-<td>0.1475</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">13</th>
-<td>DBC</td>
-<td>-0.0793</td>
-<td>0.0168</td>
-<td>0.0961</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">4</th>
-<td>EEM</td>
-<td>0.2038</td>
-<td>0.2946</td>
-<td>0.0908</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">1</th>
-<td>QQQ</td>
-<td>0.1370</td>
-<td>0.1872</td>
-<td>0.0502</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">0</th>
-<td>SPY</td>
-<td>0.1109</td>
-<td>0.1467</td>
-<td>0.0357</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">3</th>
-<td>EFA</td>
-<td>0.1552</td>
-<td>0.1830</td>
-<td>0.0278</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">2</th>
-<td>IWM</td>
-<td>0.1483</td>
-<td>0.1743</td>
-<td>0.0260</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">10</th>
-<td>HYG</td>
-<td>0.0361</td>
-<td>0.0389</td>
-<td>0.0028</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">6</th>
-<td>IEF</td>
-<td>0.0255</td>
-<td>0.0274</td>
-<td>0.0019</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">7</th>
-<td>SHY</td>
-<td>0.0077</td>
-<td>0.0095</td>
-<td>0.0018</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">8</th>
-<td>AGG</td>
-<td>0.0234</td>
-<td>0.0226</td>
-<td>-0.0008</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">9</th>
-<td>LQD</td>
-<td>0.0350</td>
-<td>0.0303</td>
-<td>-0.0047</td>
+<td>0.1651</td>
+<td>0.1871</td>
+<td>0.0220</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">5</th>
 <td>TLT</td>
-<td>0.0385</td>
-<td>0.0204</td>
-<td>-0.0180</td>
+<td>0.0457</td>
+<td>0.0573</td>
+<td>0.0116</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">12</th>
-<td>VNQ</td>
-<td>0.0769</td>
-<td>0.0175</td>
-<td>-0.0594</td>
+<th data-quarto-table-cell-role="th">9</th>
+<td>LQD</td>
+<td>0.0383</td>
+<td>0.0462</td>
+<td>0.0079</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2</th>
+<td>IWM</td>
+<td>0.1552</td>
+<td>0.1622</td>
+<td>0.0070</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">6</th>
+<td>IEF</td>
+<td>0.0289</td>
+<td>0.0359</td>
+<td>0.0070</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">3</th>
+<td>EFA</td>
+<td>0.1722</td>
+<td>0.1791</td>
+<td>0.0068</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">8</th>
+<td>AGG</td>
+<td>0.0262</td>
+<td>0.0320</td>
+<td>0.0058</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">10</th>
+<td>HYG</td>
+<td>0.0368</td>
+<td>0.0410</td>
+<td>0.0042</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">7</th>
+<td>SHY</td>
+<td>0.0085</td>
+<td>0.0104</td>
+<td>0.0019</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">13</th>
+<td>DBC</td>
+<td>-0.1005</td>
+<td>-0.1002</td>
+<td>0.0003</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">4</th>
+<td>EEM</td>
+<td>0.2155</td>
+<td>0.2107</td>
+<td>-0.0048</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>SPY</td>
+<td>0.1130</td>
+<td>0.1072</td>
+<td>-0.0059</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>QQQ</td>
+<td>0.1416</td>
+<td>0.1209</td>
+<td>-0.0207</td>
 </tr>
 </tbody>
 </table>
@@ -4339,73 +4353,73 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 </thead>
 <tbody>
 <tr class="odd">
+<th data-quarto-table-cell-role="th">10</th>
+<td>HYG</td>
+<td>0.2046</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">9</th>
+<td>LQD</td>
+<td>0.2046</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">12</th>
+<td>VNQ</td>
+<td>0.2046</td>
+</tr>
+<tr class="even">
 <th data-quarto-table-cell-role="th">0</th>
 <td>SPY</td>
-<td>0.1921</td>
+<td>0.1670</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <th data-quarto-table-cell-role="th">4</th>
 <td>EEM</td>
-<td>0.1921</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">8</th>
-<td>AGG</td>
-<td>0.1921</td>
+<td>0.1084</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">13</th>
-<td>DBC</td>
-<td>0.1921</td>
+<th data-quarto-table-cell-role="th">11</th>
+<td>GLD</td>
+<td>0.0599</td>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">6</th>
-<td>IEF</td>
-<td>0.1921</td>
+<th data-quarto-table-cell-role="th">5</th>
+<td>TLT</td>
+<td>0.0261</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">2</th>
 <td>IWM</td>
-<td>0.0302</td>
+<td>0.0102</td>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">11</th>
-<td>GLD</td>
-<td>0.0095</td>
+<th data-quarto-table-cell-role="th">6</th>
+<td>IEF</td>
+<td>0.0088</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">5</th>
-<td>TLT</td>
-<td>0.0000</td>
+<th data-quarto-table-cell-role="th">13</th>
+<td>DBC</td>
+<td>0.0059</td>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">1</th>
-<td>QQQ</td>
-<td>0.0000</td>
-</tr>
-<tr class="even">
 <th data-quarto-table-cell-role="th">3</th>
 <td>EFA</td>
 <td>0.0000</td>
 </tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">1</th>
+<td>QQQ</td>
+<td>0.0000</td>
+</tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">9</th>
-<td>LQD</td>
+<th data-quarto-table-cell-role="th">8</th>
+<td>AGG</td>
 <td>0.0000</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">7</th>
 <td>SHY</td>
-<td>0.0000</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">10</th>
-<td>HYG</td>
-<td>0.0000</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">12</th>
-<td>VNQ</td>
 <td>0.0000</td>
 </tr>
 </tbody>
@@ -4414,10 +4428,10 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 </div>
 </div>
 <div class="cell-output cell-output-stdout">
-<pre><code>{'n_views': 7, 'avg_confidence': nan, 'max_confidence': nan, 'min_confidence': nan, 'max_abs_q': 0.08917445627697065, 'max_abs_posterior_shift': 0.14746388981351133, 'condition_number': 1465.5038944376747, 'no_views': False, 'failure': False, 'clipped': True}</code></pre>
+<pre><code>{'n_views': 7, 'avg_confidence': nan, 'max_confidence': nan, 'min_confidence': nan, 'max_abs_q': 0.09793508915845954, 'max_abs_posterior_shift': 0.03802857952342588, 'condition_number': 193.0051070099999, 'no_views': False, 'failure': False, 'clipped': False}</code></pre>
 </div>
 </div>
-<div id="d93b4d8f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:24.620988Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:24.620988Z&quot;}}" data-execution_count="26">
+<div id="d93b4d8f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:24.620988Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:24.620988Z&quot;}}" data-execution_count="25">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>active_weight_limit <span class="op">=</span> <span class="fl">0.15</span></span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>active_weight_relaxed <span class="op">=</span> <span class="fl">0.22</span></span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>gamma_te <span class="op">=</span> <span class="fl">3.0</span></span>
@@ -4498,7 +4512,7 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 <span id="cb36-78"><a href="#cb36-78" aria-hidden="true" tabindex="-1"></a>    previous <span class="op">=</span> w_prev <span class="cf">if</span> w_prev <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> benchmark_w.reindex(post_mu.index).values</span>
 <span id="cb36-79"><a href="#cb36-79" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> clean_bl_weight_array(previous, post_mu.index, previous<span class="op">=</span>previous), <span class="va">True</span>, {<span class="st">"active_limit"</span>: <span class="va">None</span>, <span class="st">"use_sleeves"</span>: <span class="va">False</span>, <span class="st">"te_gamma"</span>: np.nan}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="8f4d13f0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:24.620988Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:24.620988Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:47.737846Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:47.737846Z&quot;}}" data-execution_count="27">
+<div id="8f4d13f0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:24.620988Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:24.620988Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:47.737846Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:47.737846Z&quot;}}" data-execution_count="26">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>bl_modes <span class="op">=</span> {</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Learned-Confidence BL"</span>: {<span class="st">"view_set"</span>: <span class="st">"selected"</span>, <span class="st">"confidence_mode"</span>: <span class="st">"learned"</span>},</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>}</span>
@@ -4580,7 +4594,7 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior rows: 124</code></pre>
 </div>
 </div>
-<div id="afd4e630" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:47.737846Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:47.737846Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:47.783313Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:47.783313Z&quot;}}" data-execution_count="28">
+<div id="afd4e630" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:47.737846Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:47.737846Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:47.783313Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:47.783313Z&quot;}}" data-execution_count="27">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>combined_results <span class="op">=</span> {}</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>combined_results.update(baseline_results)</span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>combined_results.update(bl_results)</span>
@@ -4633,7 +4647,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <span id="cb39-50"><a href="#cb39-50" aria-hidden="true" tabindex="-1"></a>    sharpe <span class="op">=</span> <span class="bu">float</span>((ret.mean() <span class="op">-</span> risk_free_daily) <span class="op">/</span> ret.std(ddof<span class="op">=</span><span class="dv">1</span>) <span class="op">*</span> math.sqrt(annualization)) <span class="cf">if</span> ret.std(ddof<span class="op">=</span><span class="dv">1</span>) <span class="op">&gt;</span> <span class="fl">1e-12</span> <span class="cf">else</span> np.nan</span>
 <span id="cb39-51"><a href="#cb39-51" aria-hidden="true" tabindex="-1"></a>    downside <span class="op">=</span> ret[ret <span class="op">&lt;</span> risk_free_daily]</span>
 <span id="cb39-52"><a href="#cb39-52" aria-hidden="true" tabindex="-1"></a>    sortino <span class="op">=</span> <span class="bu">float</span>((ret.mean() <span class="op">-</span> risk_free_daily) <span class="op">/</span> downside.std(ddof<span class="op">=</span><span class="dv">1</span>) <span class="op">*</span> math.sqrt(annualization)) <span class="cf">if</span> <span class="bu">len</span>(downside) <span class="op">&gt;</span> <span class="dv">2</span> <span class="kw">and</span> downside.std(ddof<span class="op">=</span><span class="dv">1</span>) <span class="op">&gt;</span> <span class="fl">1e-12</span> <span class="cf">else</span> np.nan</span>
-<span id="cb39-53"><a href="#cb39-53" aria-hidden="true" tabindex="-1"></a>    max_dd <span class="op">=</span> max_drawdown_from_nav(nav)</span>
+<span id="cb39-53"><a href="#cb39-53" aria-hidden="true" tabindex="-1"></a>    max_dd <span class="op">=</span> <span class="bu">float</span>((nav <span class="op">/</span> nav.cummax() <span class="op">-</span> <span class="fl">1.0</span>).<span class="bu">min</span>())</span>
 <span id="cb39-54"><a href="#cb39-54" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> result[<span class="st">"weights"</span>]</span>
 <span id="cb39-55"><a href="#cb39-55" aria-hidden="true" tabindex="-1"></a>    eff_n <span class="op">=</span> <span class="bu">float</span>((<span class="fl">1.0</span> <span class="op">/</span> weights.<span class="bu">pow</span>(<span class="dv">2</span>).<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)).replace([np.inf, <span class="op">-</span>np.inf], np.nan).mean()) <span class="cf">if</span> <span class="kw">not</span> weights.empty <span class="cf">else</span> np.nan</span>
 <span id="cb39-56"><a href="#cb39-56" aria-hidden="true" tabindex="-1"></a>    avg_max_weight <span class="op">=</span> <span class="bu">float</span>(weights.<span class="bu">max</span>(axis<span class="op">=</span><span class="dv">1</span>).mean()) <span class="cf">if</span> <span class="kw">not</span> weights.empty <span class="cf">else</span> np.nan</span>
@@ -4669,7 +4683,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <span id="cb39-86"><a href="#cb39-86" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> combined_results[name][<span class="st">"weights"</span>].reindex(columns<span class="op">=</span>assets).fillna(<span class="fl">0.0</span>)</span>
 <span id="cb39-87"><a href="#cb39-87" aria-hidden="true" tabindex="-1"></a>    bench <span class="op">=</span> benchmark_w.reindex(assets).fillna(<span class="fl">0.0</span>)</span>
 <span id="cb39-88"><a href="#cb39-88" aria-hidden="true" tabindex="-1"></a>    avg_active_dist <span class="op">=</span> <span class="bu">float</span>(weights.subtract(bench, axis<span class="op">=</span><span class="dv">1</span>).<span class="bu">abs</span>().<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>).mean()) <span class="cf">if</span> <span class="kw">not</span> weights.empty <span class="cf">else</span> np.nan</span>
-<span id="cb39-89"><a href="#cb39-89" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">"strategy"</span>: name, <span class="st">"active_return_ann"</span>: active_return, <span class="st">"tracking_error"</span>: tracking_error, <span class="st">"information_ratio"</span>: info_ratio, <span class="st">"active_max_drawdown"</span>: max_drawdown_from_nav(active_nav), <span class="st">"hit_rate_vs_benchmark"</span>: <span class="bu">float</span>((active <span class="op">&gt;</span> <span class="dv">0</span>).mean()), <span class="st">"corr_to_benchmark"</span>: corr, <span class="st">"beta_to_benchmark"</span>: beta, <span class="st">"avg_active_weight_distance"</span>: avg_active_dist, <span class="st">"avg_active_risk"</span>: avg_active_risk_against_benchmark(weights)}</span>
+<span id="cb39-89"><a href="#cb39-89" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">"strategy"</span>: name, <span class="st">"active_return_ann"</span>: active_return, <span class="st">"tracking_error"</span>: tracking_error, <span class="st">"information_ratio"</span>: info_ratio, <span class="st">"active_max_drawdown"</span>: <span class="bu">float</span>((active_nav <span class="op">/</span> active_nav.cummax() <span class="op">-</span> <span class="fl">1.0</span>).<span class="bu">min</span>()), <span class="st">"hit_rate_vs_benchmark"</span>: <span class="bu">float</span>((active <span class="op">&gt;</span> <span class="dv">0</span>).mean()), <span class="st">"corr_to_benchmark"</span>: corr, <span class="st">"beta_to_benchmark"</span>: beta, <span class="st">"avg_active_weight_distance"</span>: avg_active_dist, <span class="st">"avg_active_risk"</span>: avg_active_risk_against_benchmark(weights)}</span>
 <span id="cb39-90"><a href="#cb39-90" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-91"><a href="#cb39-91" aria-hidden="true" tabindex="-1"></a>benchmark_relative_table <span class="op">=</span> pd.DataFrame([benchmark_relative_metrics(name) <span class="cf">for</span> name <span class="kw">in</span> final_strategy_names <span class="cf">if</span> name <span class="op">!=</span> <span class="st">"Strategic Benchmark"</span>]).set_index(<span class="st">"strategy"</span>)</span>
 <span id="cb39-92"><a href="#cb39-92" aria-hidden="true" tabindex="-1"></a>display(benchmark_relative_table.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -4699,40 +4713,40 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">Strategic Benchmark</th>
-<td>0.0907</td>
-<td>0.0905</td>
+<td>0.0915</td>
+<td>0.0914</td>
 <td>0.0025</td>
 <td>0.0144</td>
 <td>1.7845</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">Equal Weight</th>
-<td>0.0849</td>
-<td>0.0848</td>
+<td>0.0856</td>
+<td>0.0855</td>
 <td>0.0022</td>
-<td>0.0113</td>
-<td>1.4181</td>
+<td>0.0114</td>
+<td>1.4252</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">MinVar (OAS)</th>
-<td>0.0684</td>
-<td>0.0684</td>
+<td>0.0687</td>
+<td>0.0686</td>
 <td>0.0005</td>
 <td>0.0031</td>
 <td>0.3903</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">MV (LedoitWolf, BayesStein)</th>
-<td>0.0734</td>
-<td>0.0730</td>
+<td>0.0739</td>
+<td>0.0735</td>
 <td>0.0044</td>
-<td>0.0269</td>
-<td>3.3647</td>
+<td>0.0270</td>
+<td>3.3724</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">Learned-Confidence BL</th>
-<td>0.1033</td>
-<td>0.1010</td>
+<td>0.1039</td>
+<td>0.1015</td>
 <td>0.0385</td>
 <td>0.1761</td>
 <td>21.8353</td>
@@ -4782,12 +4796,12 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">Strategic Benchmark</th>
-<td>0.0905</td>
-<td>0.1011</td>
-<td>0.5213</td>
-<td>0.6420</td>
+<td>0.0914</td>
+<td>0.1012</td>
+<td>0.5291</td>
+<td>0.6525</td>
 <td>-0.2242</td>
-<td>0.4035</td>
+<td>0.4075</td>
 <td>0.0144</td>
 <td>1.7845</td>
 <td>0.0025</td>
@@ -4797,14 +4811,14 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">Equal Weight</th>
-<td>0.0848</td>
-<td>0.0932</td>
-<td>0.4849</td>
-<td>0.5962</td>
+<td>0.0855</td>
+<td>0.0933</td>
+<td>0.4916</td>
+<td>0.6052</td>
 <td>-0.2041</td>
-<td>0.4153</td>
-<td>0.0113</td>
-<td>1.4181</td>
+<td>0.4187</td>
+<td>0.0114</td>
+<td>1.4252</td>
 <td>0.0022</td>
 <td>14.0000</td>
 <td>0.0714</td>
@@ -4812,46 +4826,46 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">MinVar (OAS)</th>
-<td>0.0684</td>
-<td>0.0755</td>
-<td>0.3776</td>
-<td>0.4336</td>
+<td>0.0686</td>
+<td>0.0754</td>
+<td>0.3806</td>
+<td>0.4374</td>
 <td>-0.1975</td>
-<td>0.3463</td>
+<td>0.3476</td>
 <td>0.0031</td>
 <td>0.3903</td>
 <td>0.0005</td>
-<td>9.1865</td>
+<td>9.1867</td>
 <td>0.2389</td>
 <td>0</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">MV (LedoitWolf, BayesStein)</th>
-<td>0.0730</td>
+<td>0.0735</td>
 <td>0.0687</td>
-<td>0.4794</td>
-<td>0.5804</td>
+<td>0.4860</td>
+<td>0.5886</td>
 <td>-0.1181</td>
-<td>0.6185</td>
-<td>0.0269</td>
-<td>3.3647</td>
+<td>0.6225</td>
+<td>0.0270</td>
+<td>3.3724</td>
 <td>0.0044</td>
-<td>4.8248</td>
+<td>4.8250</td>
 <td>0.3443</td>
 <td>0</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">Learned-Confidence BL</th>
-<td>0.1010</td>
-<td>0.1030</td>
-<td>0.6060</td>
-<td>0.7607</td>
+<td>0.1015</td>
+<td>0.1031</td>
+<td>0.6103</td>
+<td>0.7671</td>
 <td>-0.2207</td>
-<td>0.4576</td>
+<td>0.4600</td>
 <td>0.1761</td>
 <td>21.8353</td>
 <td>0.0385</td>
-<td>6.7529</td>
+<td>6.7530</td>
 <td>0.2541</td>
 <td>0</td>
 </tr>
@@ -4894,49 +4908,49 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">Equal Weight</th>
-<td>-0.0075</td>
+<td>-0.0076</td>
 <td>0.0181</td>
-<td>-0.4126</td>
+<td>-0.4222</td>
 <td>-0.1093</td>
-<td>0.4787</td>
+<td>0.4783</td>
 <td>0.9859</td>
-<td>0.9092</td>
+<td>0.9091</td>
 <td>0.4560</td>
 <td>0.0170</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">MinVar (OAS)</th>
-<td>-0.0242</td>
+<td>-0.0248</td>
 <td>0.0454</td>
-<td>-0.5331</td>
+<td>-0.5458</td>
 <td>-0.2451</td>
 <td>0.4717</td>
-<td>0.9081</td>
-<td>0.6778</td>
-<td>0.6987</td>
-<td>0.0400</td>
+<td>0.9082</td>
+<td>0.6775</td>
+<td>0.6986</td>
+<td>0.0399</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">MV (LedoitWolf, BayesStein)</th>
-<td>-0.0197</td>
+<td>-0.0201</td>
 <td>0.0801</td>
-<td>-0.2462</td>
+<td>-0.2508</td>
 <td>-0.3092</td>
 <td>0.4779</td>
-<td>0.6135</td>
+<td>0.6140</td>
 <td>0.4172</td>
 <td>1.0929</td>
 <td>0.0681</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">Learned-Confidence BL</th>
-<td>0.0097</td>
+<td>0.0094</td>
 <td>0.0303</td>
-<td>0.3213</td>
+<td>0.3106</td>
 <td>-0.0586</td>
 <td>0.5167</td>
-<td>0.9561</td>
-<td>0.9744</td>
+<td>0.9562</td>
+<td>0.9748</td>
 <td>0.6673</td>
 <td>0.0249</td>
 </tr>
@@ -4946,7 +4960,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 </div>
 </div>
 </div>
-<div id="246832f3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:47.783313Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:47.783313Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:48.209207Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:48.209207Z&quot;}}" data-execution_count="29">
+<div id="246832f3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:47.783313Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:47.783313Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:48.209207Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:48.209207Z&quot;}}" data-execution_count="28">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>nav_df <span class="op">=</span> pd.DataFrame(nav_by_strategy)[final_strategy_names]</span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>drawdown_df <span class="op">=</span> nav_df <span class="op">/</span> nav_df.cummax() <span class="op">-</span> <span class="fl">1.0</span></span>
 <span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">7</span>), sharex<span class="op">=</span><span class="va">True</span>)</span>
@@ -4962,7 +4976,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 </div>
 </div>
 </div>
-<div id="b4942974" class="cell" data-execution_count="30">
+<div id="b4942974" class="cell" data-execution_count="29">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>final_returns_df <span class="op">=</span> pd.DataFrame(returns_by_strategy)[final_strategy_names].dropna(how<span class="op">=</span><span class="st">"all"</span>).fillna(<span class="fl">0.0</span>)</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>drawdown_summary <span class="op">=</span> drawdown_summary_table(final_returns_df)</span>
@@ -5027,14 +5041,14 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <th data-quarto-table-cell-role="th">Equal Weight</th>
 <td>-0.2041</td>
 <td>667</td>
-<td>14.7219</td>
+<td>14.6316</td>
 <td>0.0571</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">Learned-Confidence BL</th>
 <td>-0.2207</td>
 <td>598</td>
-<td>13.5122</td>
+<td>13.4364</td>
 <td>0.0670</td>
 </tr>
 <tr class="odd">
@@ -5048,14 +5062,14 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <th data-quarto-table-cell-role="th">MinVar (OAS)</th>
 <td>-0.1975</td>
 <td>668</td>
-<td>15.2414</td>
+<td>15.4452</td>
 <td>0.0423</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">Strategic Benchmark</th>
 <td>-0.2242</td>
 <td>598</td>
-<td>12.4830</td>
+<td>12.4181</td>
 <td>0.0611</td>
 </tr>
 </tbody>
@@ -5094,38 +5108,38 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">Equal Weight</th>
-<td>0.0086</td>
-<td>0.0139</td>
-<td>0.0099</td>
-<td>0.0152</td>
+<td>0.0085</td>
+<td>0.0138</td>
+<td>0.0102</td>
+<td>0.0155</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">Learned-Confidence BL</th>
 <td>0.0100</td>
-<td>0.0158</td>
-<td>0.0122</td>
-<td>0.0177</td>
+<td>0.0157</td>
+<td>0.0129</td>
+<td>0.0187</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">MV (LedoitWolf, BayesStein)</th>
 <td>0.0064</td>
-<td>0.0106</td>
-<td>0.0118</td>
-<td>0.0176</td>
+<td>0.0105</td>
+<td>0.0107</td>
+<td>0.0160</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">MinVar (OAS)</th>
 <td>0.0066</td>
-<td>0.0111</td>
-<td>0.0074</td>
-<td>0.0114</td>
+<td>0.0110</td>
+<td>0.0073</td>
+<td>0.0113</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">Strategic Benchmark</th>
 <td>0.0093</td>
 <td>0.0151</td>
-<td>0.0109</td>
-<td>0.0172</td>
+<td>0.0113</td>
+<td>0.0178</td>
 </tr>
 </tbody>
 </table>
@@ -5140,7 +5154,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 </div>
 </div>
 </div>
-<div id="dd9e485b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:48.218747Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:48.218747Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:48.404611Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:48.404611Z&quot;}}" data-execution_count="31">
+<div id="dd9e485b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:48.218747Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:48.218747Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:48.404611Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:48.404611Z&quot;}}" data-execution_count="30">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>candidate_active_count <span class="op">=</span> candidate_view_log.groupby(<span class="st">"date"</span>).size().reindex(rebalance_dates[:<span class="op">-</span><span class="dv">1</span>], fill_value<span class="op">=</span><span class="dv">0</span>) <span class="cf">if</span> <span class="kw">not</span> candidate_view_log.empty <span class="cf">else</span> pd.Series(<span class="dv">0</span>, index<span class="op">=</span>rebalance_dates[:<span class="op">-</span><span class="dv">1</span>])</span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>selected_active_count <span class="op">=</span> selected_view_log.groupby(<span class="st">"date"</span>).size().reindex(rebalance_dates[:<span class="op">-</span><span class="dv">1</span>], fill_value<span class="op">=</span><span class="dv">0</span>) <span class="cf">if</span> <span class="kw">not</span> selected_view_log.empty <span class="cf">else</span> pd.Series(<span class="dv">0</span>, index<span class="op">=</span>rebalance_dates[:<span class="op">-</span><span class="dv">1</span>])</span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">3</span>))</span>
@@ -5543,8 +5557,8 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <td>Learned-Confidence BL</td>
 <td>inflation_rotation</td>
 <td>19</td>
-<td>0.0027</td>
-<td>0.0326</td>
+<td>0.0026</td>
+<td>0.0306</td>
 <td>0.7895</td>
 </tr>
 <tr class="even">
@@ -5552,8 +5566,8 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <td>Learned-Confidence BL</td>
 <td>reflation_breadth</td>
 <td>21</td>
-<td>0.0020</td>
-<td>0.0244</td>
+<td>0.0019</td>
+<td>0.0226</td>
 <td>0.6190</td>
 </tr>
 <tr class="odd">
@@ -5580,7 +5594,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <td>risk_adj_momentum</td>
 <td>123</td>
 <td>0.0009</td>
-<td>0.0113</td>
+<td>0.0110</td>
 <td>0.5854</td>
 </tr>
 <tr class="even">
@@ -5589,7 +5603,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <td>dual_momentum</td>
 <td>106</td>
 <td>0.0008</td>
-<td>0.0099</td>
+<td>0.0095</td>
 <td>0.5943</td>
 </tr>
 <tr class="odd">
@@ -5597,8 +5611,8 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <td>Learned-Confidence BL</td>
 <td>credit_switch</td>
 <td>57</td>
-<td>-0.0001</td>
-<td>-0.0015</td>
+<td>-0.0002</td>
+<td>-0.0021</td>
 <td>0.5088</td>
 </tr>
 <tr class="even">
@@ -5744,7 +5758,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 </div>
 </div>
 </div>
-<div id="4ff0e784" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:48.404611Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:48.404611Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:48.748049Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:48.747067Z&quot;}}" data-execution_count="32">
+<div id="4ff0e784" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:48.404611Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:48.404611Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:48.748049Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:48.747067Z&quot;}}" data-execution_count="31">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>latest_post_date <span class="op">=</span> posterior_log[<span class="st">"date"</span>].<span class="bu">max</span>() <span class="cf">if</span> <span class="kw">not</span> posterior_log.empty <span class="cf">else</span> pd.Timestamp(rebalance_dates[<span class="op">-</span><span class="dv">2</span>])</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>prior_latest <span class="op">=</span> prior_mu_by_date[pd.Timestamp(latest_post_date)].reindex(assets)</span>
 <span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>posterior_clarity <span class="op">=</span> pd.DataFrame({</span>
@@ -5909,7 +5923,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 </div>
 </div>
 </div>
-<div id="db5ab386" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:48.750043Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:48.750043Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:48.803848Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:48.803848Z&quot;}}" data-execution_count="33">
+<div id="db5ab386" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:48.750043Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:48.750043Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:48.803848Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:48.803848Z&quot;}}" data-execution_count="32">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> candidate_view_log.empty:</span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>    candidate_counts <span class="op">=</span> candidate_view_log.groupby(<span class="st">"view_family"</span>).size().rename(<span class="st">"candidate_count"</span>)</span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>    display_name <span class="op">=</span> candidate_view_log.groupby(<span class="st">"view_family"</span>)[<span class="st">"family_display_name"</span>].agg(<span class="kw">lambda</span> x: x.mode().iloc[<span class="dv">0</span>] <span class="cf">if</span> <span class="bu">len</span>(x.mode()) <span class="cf">else</span> x.iloc[<span class="dv">0</span>]) <span class="cf">if</span> <span class="st">"family_display_name"</span> <span class="kw">in</span> candidate_view_log.columns <span class="cf">else</span> pd.Series(dtype<span class="op">=</span><span class="bu">object</span>)</span>
@@ -6252,7 +6266,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 </div>
 </div>
 </div>
-<div id="2d923d5d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:48.806265Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:48.806265Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:48.823815Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:48.822807Z&quot;}}" data-execution_count="34">
+<div id="2d923d5d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:48.806265Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:48.806265Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:48.823815Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:48.822807Z&quot;}}" data-execution_count="33">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>decision_table <span class="op">=</span> reliability[[col <span class="cf">for</span> col <span class="kw">in</span> [<span class="st">"display_name"</span>, <span class="st">"candidate_count"</span>, <span class="st">"selected_count"</span>, <span class="st">"selected_share"</span>, <span class="st">"hit_rate"</span>, <span class="st">"payoff_ir"</span>, <span class="st">"recent_hit_rate"</span>, <span class="st">"avg_tactical_confidence"</span>, <span class="st">"avg_selected_score"</span>, <span class="st">"risk_orientation_mode"</span>, <span class="st">"interpretation"</span>, <span class="st">"final_decision"</span>] <span class="cf">if</span> col <span class="kw">in</span> reliability.columns]].copy()</span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>display(decision_table.<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> selection_log.empty:</span>
@@ -6657,7 +6671,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 </div>
 </div>
 </div>
-<div id="6aef0d8d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:48.824811Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:48.824811Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:49.135831Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:49.135831Z&quot;}}" data-execution_count="35">
+<div id="6aef0d8d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:48.824811Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:48.824811Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:49.135831Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:49.135831Z&quot;}}" data-execution_count="34">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>learned_confidence_weights <span class="op">=</span> combined_results[<span class="st">"Learned-Confidence BL"</span>][<span class="st">"weights"</span>].reindex(columns<span class="op">=</span>assets)</span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>benchmark_aligned <span class="op">=</span> benchmark_w.reindex(assets).fillna(<span class="fl">0.0</span>)</span>
 <span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>active_w_learned_confidence <span class="op">=</span> learned_confidence_weights.subtract(benchmark_aligned, axis<span class="op">=</span><span class="dv">1</span>)</span>
@@ -6768,7 +6782,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 </div>
 </div>
 </div>
-<div id="cb329d09" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:49.135831Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:49.135831Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:49.545127Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:49.544236Z&quot;}}" data-execution_count="36">
+<div id="cb329d09" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:49.135831Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:49.135831Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:49.545127Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:49.544236Z&quot;}}" data-execution_count="35">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> active_risk_series(weights):</span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
 <span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> dt, row <span class="kw">in</span> weights.iterrows():</span>
@@ -6819,7 +6833,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <h2 class="anchored" data-anchor-id="sector-etf-transfer-with-quantfinlab">Sector ETF transfer with QuantFinLab</h2>
 <p>The primary Learned-Confidence Black-Litterman model above was developed on the cross-asset ETF universe and is left intact as the accepted result. This final section uses the reusable QuantFinLab components on a secondary sector ETF universe.</p>
 <p>Data selection and cleaning remain visible here. The BL engine, view objects, learned confidence, table helpers, plotting helpers, walk-forward baselines, and common backtest timing/cost handling are delegated to the library. The goal is transferability of the engine, not a claim that sector rotation is the same problem as the cross-asset allocation above.</p>
-<div id="d13896f2" class="cell" data-execution_count="37">
+<div id="d13896f2" class="cell" data-execution_count="36">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -7191,7 +7205,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <span id="cb48-369"><a href="#cb48-369" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>data file: ..\data\ETF_data.csv
-close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
+close panel: (4111, 63) 2010-01-04 to 2026-05-07</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
@@ -7216,8 +7230,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>XLK</td>
 <td>tradable</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7226,8 +7240,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>XLC</td>
 <td>tradable</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7236,8 +7250,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>XLY</td>
 <td>tradable</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7246,8 +7260,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>XLF</td>
 <td>tradable</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7256,8 +7270,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>XLI</td>
 <td>tradable</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7266,8 +7280,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>XLE</td>
 <td>tradable</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7276,8 +7290,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>XLB</td>
 <td>tradable</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7286,8 +7300,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>XLV</td>
 <td>tradable</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7296,8 +7310,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>XLP</td>
 <td>tradable</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7306,8 +7320,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>XLU</td>
 <td>tradable</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7316,8 +7330,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>XLRE</td>
 <td>tradable</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7326,8 +7340,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>SPY</td>
 <td>signal</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7336,8 +7350,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>QQQ</td>
 <td>signal</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7346,8 +7360,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>IWM</td>
 <td>signal</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7356,8 +7370,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>TLT</td>
 <td>signal</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7366,8 +7380,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>IEF</td>
 <td>signal</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7376,8 +7390,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>SHY</td>
 <td>signal</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7386,8 +7400,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>LQD</td>
 <td>signal</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7396,8 +7410,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>HYG</td>
 <td>signal</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7406,8 +7420,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>GLD</td>
 <td>signal</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7416,8 +7430,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>DBC</td>
 <td>signal</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7426,8 +7440,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <td>UUP</td>
 <td>signal</td>
 <td>2018-07-02</td>
-<td>2026-05-01</td>
-<td>1969</td>
+<td>2026-05-07</td>
+<td>1973</td>
 <td>0.0</td>
 <td>True</td>
 </tr>
@@ -7439,8 +7453,8 @@ close panel: (4107, 56) 2010-01-04 to 2026-05-01</code></pre>
 <div class="cell-output cell-output-stdout">
 <pre><code>sector assets: ['XLK', 'XLC', 'XLY', 'XLF', 'XLI', 'XLE', 'XLB', 'XLV', 'XLP', 'XLU', 'XLRE']
 sector signal assets: ['SPY', 'QQQ', 'IWM', 'TLT', 'IEF', 'SHY', 'LQD', 'HYG', 'GLD', 'DBC', 'UUP']
-sector return panel: (1968, 11) 2018-07-03 to 2026-05-01
-sector rebalance dates: 71 2020-07-31 to 2026-05-01</code></pre>
+sector return panel: (1972, 11) 2018-07-03 to 2026-05-07
+sector rebalance dates: 71 2020-07-31 to 2026-05-07</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
@@ -7668,222 +7682,222 @@ sector rebalance dates: 71 2020-07-31 to 2026-05-01</code></pre>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">DBC</th>
 <td>Other</td>
-<td>0.2612</td>
-<td>0.3158</td>
-<td>0.2975</td>
-<td>0.2512</td>
-<td>-0.0093</td>
-<td>1.7123</td>
+<td>0.2731</td>
+<td>0.3039</td>
+<td>0.2644</td>
+<td>0.2423</td>
+<td>-0.0345</td>
+<td>1.6533</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">XLE</th>
 <td>Sector</td>
-<td>0.1603</td>
-<td>0.3401</td>
-<td>0.2263</td>
-<td>0.2309</td>
-<td>-0.0593</td>
-<td>1.6359</td>
+<td>0.0786</td>
+<td>0.3190</td>
+<td>0.1581</td>
+<td>0.2337</td>
+<td>-0.1057</td>
+<td>0.9994</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">XLK</th>
 <td>Sector</td>
-<td>0.1264</td>
-<td>-0.0401</td>
-<td>0.1501</td>
-<td>0.2590</td>
-<td>0.0000</td>
-<td>0.5436</td>
+<td>0.2527</td>
+<td>-0.0120</td>
+<td>0.1993</td>
+<td>0.2504</td>
+<td>-0.0020</td>
+<td>0.9798</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">IWM</th>
-<td>Other</td>
-<td>0.0775</td>
-<td>0.0367</td>
-<td>0.1299</td>
-<td>0.2157</td>
-<td>0.0000</td>
-<td>0.4581</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">XLB</th>
-<td>Sector</td>
-<td>0.0469</td>
-<td>0.1369</td>
-<td>0.0991</td>
-<td>0.1923</td>
-<td>-0.0381</td>
-<td>0.3542</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLU</th>
-<td>Sector</td>
-<td>0.0838</td>
-<td>0.0728</td>
-<td>0.0648</td>
-<td>0.1748</td>
-<td>-0.0179</td>
-<td>0.3278</td>
-</tr>
-<tr class="odd">
 <th data-quarto-table-cell-role="th">QQQ</th>
 <td>Other</td>
-<td>0.0854</td>
-<td>-0.0243</td>
-<td>0.1182</td>
-<td>0.1969</td>
-<td>0.0000</td>
-<td>0.3266</td>
+<td>0.1655</td>
+<td>-0.0001</td>
+<td>0.1479</td>
+<td>0.1921</td>
+<td>-0.0012</td>
+<td>0.6020</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">IWM</th>
+<td>Other</td>
+<td>0.1053</td>
+<td>0.0608</td>
+<td>0.1363</td>
+<td>0.2177</td>
+<td>-0.0158</td>
+<td>0.4903</td>
 </tr>
 <tr class="even">
+<th data-quarto-table-cell-role="th">XLB</th>
+<td>Sector</td>
+<td>0.0223</td>
+<td>0.1639</td>
+<td>0.0970</td>
+<td>0.1859</td>
+<td>-0.0371</td>
+<td>0.3235</td>
+</tr>
+<tr class="odd">
 <th data-quarto-table-cell-role="th">XLI</th>
 <td>Sector</td>
-<td>0.0484</td>
-<td>0.0728</td>
-<td>0.0902</td>
-<td>0.2050</td>
-<td>-0.0305</td>
-<td>0.2744</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">GLD</th>
-<td>Other</td>
-<td>-0.0489</td>
-<td>0.2317</td>
-<td>0.0808</td>
-<td>0.3438</td>
-<td>-0.1466</td>
-<td>0.0905</td>
+<td>0.0363</td>
+<td>0.1056</td>
+<td>0.0934</td>
+<td>0.2135</td>
+<td>-0.0247</td>
+<td>0.2665</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">SPY</th>
+<th data-quarto-table-cell-role="th">GLD</th>
 <td>Other</td>
-<td>0.0443</td>
-<td>-0.0108</td>
-<td>0.0789</td>
-<td>0.1514</td>
-<td>0.0000</td>
-<td>0.0509</td>
+<td>-0.0231</td>
+<td>0.1925</td>
+<td>0.0962</td>
+<td>0.3132</td>
+<td>-0.1295</td>
+<td>0.2122</td>
 </tr>
 <tr class="odd">
+<th data-quarto-table-cell-role="th">SPY</th>
+<td>Other</td>
+<td>0.0826</td>
+<td>0.0123</td>
+<td>0.0919</td>
+<td>0.1504</td>
+<td>-0.0031</td>
+<td>0.1977</td>
+</tr>
+<tr class="even">
 <th data-quarto-table-cell-role="th">XLRE</th>
 <td>Sector</td>
-<td>0.0769</td>
-<td>-0.0108</td>
-<td>0.0743</td>
-<td>0.1553</td>
-<td>-0.0072</td>
-<td>-0.0635</td>
+<td>0.0841</td>
+<td>0.0368</td>
+<td>0.0746</td>
+<td>0.1529</td>
+<td>-0.0076</td>
+<td>0.0235</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">XLU</th>
+<td>Sector</td>
+<td>0.0542</td>
+<td>0.0574</td>
+<td>0.0298</td>
+<td>0.1749</td>
+<td>-0.0481</td>
+<td>-0.1139</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">HYG</th>
 <td>Other</td>
-<td>0.0068</td>
-<td>0.0112</td>
-<td>0.0200</td>
-<td>0.0524</td>
-<td>-0.0021</td>
-<td>-0.2305</td>
+<td>0.0066</td>
+<td>0.0210</td>
+<td>0.0166</td>
+<td>0.0536</td>
+<td>-0.0046</td>
+<td>-0.2967</td>
 </tr>
 <tr class="odd">
-<th data-quarto-table-cell-role="th">UUP</th>
-<td>Other</td>
-<td>0.0209</td>
-<td>0.0424</td>
-<td>0.0138</td>
-<td>0.0626</td>
-<td>-0.0204</td>
-<td>-0.2486</td>
+<th data-quarto-table-cell-role="th">XLC</th>
+<td>Sector</td>
+<td>0.0133</td>
+<td>-0.0169</td>
+<td>0.0283</td>
+<td>0.1496</td>
+<td>-0.0194</td>
+<td>-0.3382</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">SHY</th>
+<th data-quarto-table-cell-role="th">UUP</th>
 <td>Other</td>
-<td>0.0027</td>
-<td>0.0134</td>
-<td>0.0092</td>
-<td>0.0158</td>
-<td>-0.0026</td>
-<td>-0.3205</td>
+<td>0.0118</td>
+<td>0.0308</td>
+<td>0.0131</td>
+<td>0.0623</td>
+<td>-0.0204</td>
+<td>-0.3817</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">XLP</th>
 <td>Sector</td>
-<td>0.0136</td>
-<td>0.0537</td>
-<td>0.0488</td>
-<td>0.1538</td>
-<td>-0.0596</td>
-<td>-0.3281</td>
+<td>-0.0284</td>
+<td>0.0833</td>
+<td>0.0452</td>
+<td>0.1474</td>
+<td>-0.0617</td>
+<td>-0.4023</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">IEF</th>
+<th data-quarto-table-cell-role="th">SHY</th>
 <td>Other</td>
-<td>0.0002</td>
-<td>0.0071</td>
-<td>0.0014</td>
-<td>0.0533</td>
-<td>-0.0239</td>
-<td>-0.4042</td>
+<td>0.0010</td>
+<td>0.0138</td>
+<td>0.0084</td>
+<td>0.0160</td>
+<td>-0.0029</td>
+<td>-0.4139</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">LQD</th>
 <td>Other</td>
-<td>-0.0028</td>
-<td>0.0006</td>
-<td>0.0029</td>
-<td>0.0624</td>
-<td>-0.0167</td>
-<td>-0.4140</td>
+<td>-0.0046</td>
+<td>0.0071</td>
+<td>0.0034</td>
+<td>0.0636</td>
+<td>-0.0155</td>
+<td>-0.4840</td>
 </tr>
 <tr class="even">
-<th data-quarto-table-cell-role="th">XLC</th>
-<td>Sector</td>
-<td>-0.0249</td>
-<td>-0.0542</td>
-<td>0.0244</td>
-<td>0.1509</td>
-<td>-0.0249</td>
-<td>-0.5660</td>
-</tr>
-<tr class="odd">
-<th data-quarto-table-cell-role="th">TLT</th>
+<th data-quarto-table-cell-role="th">IEF</th>
 <td>Other</td>
-<td>-0.0028</td>
-<td>-0.0097</td>
-<td>-0.0102</td>
-<td>0.0997</td>
-<td>-0.0469</td>
-<td>-0.6332</td>
-</tr>
-<tr class="even">
-<th data-quarto-table-cell-role="th">XLV</th>
-<td>Sector</td>
-<td>-0.0581</td>
-<td>0.0704</td>
-<td>-0.0056</td>
-<td>0.1565</td>
-<td>-0.0902</td>
-<td>-0.7566</td>
+<td>-0.0047</td>
+<td>0.0120</td>
+<td>0.0004</td>
+<td>0.0537</td>
+<td>-0.0242</td>
+<td>-0.4994</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">XLY</th>
 <td>Sector</td>
-<td>-0.0190</td>
-<td>-0.0800</td>
-<td>0.0184</td>
-<td>0.2086</td>
-<td>-0.0454</td>
-<td>-0.7846</td>
+<td>0.0222</td>
+<td>-0.0724</td>
+<td>0.0277</td>
+<td>0.2053</td>
+<td>-0.0353</td>
+<td>-0.5544</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">XLV</th>
+<td>Sector</td>
+<td>-0.0615</td>
+<td>0.0472</td>
+<td>-0.0106</td>
+<td>0.1523</td>
+<td>-0.0929</td>
+<td>-0.6879</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">TLT</th>
+<td>Other</td>
+<td>-0.0101</td>
+<td>0.0022</td>
+<td>-0.0104</td>
+<td>0.1003</td>
+<td>-0.0465</td>
+<td>-0.6946</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">XLF</th>
 <td>Sector</td>
-<td>-0.0234</td>
-<td>-0.0743</td>
-<td>-0.0073</td>
-<td>0.1750</td>
-<td>-0.0747</td>
-<td>-1.0247</td>
+<td>-0.0277</td>
+<td>-0.0383</td>
+<td>-0.0143</td>
+<td>0.1711</td>
+<td>-0.0813</td>
+<td>-0.8812</td>
 </tr>
 </tbody>
 </table>
@@ -7915,9 +7929,9 @@ sector rebalance dates: 71 2020-07-31 to 2026-05-01</code></pre>
 <td>growth_leadership</td>
 <td>Growth leadership</td>
 <td>growth_leadership</td>
-<td>1.1652</td>
-<td>0.0219</td>
-<td>0.0219</td>
+<td>2.0000</td>
+<td>0.0277</td>
+<td>0.0277</td>
 <td>None</td>
 <td>XLK, XLC, XLY</td>
 <td>XLP, XLU, XLV</td>
@@ -7927,9 +7941,9 @@ sector rebalance dates: 71 2020-07-31 to 2026-05-01</code></pre>
 <td>cyclical_breadth</td>
 <td>Cyclical breadth</td>
 <td>cyclical_risk_on</td>
-<td>1.0593</td>
-<td>0.0138</td>
-<td>0.0138</td>
+<td>1.2114</td>
+<td>0.0150</td>
+<td>0.0150</td>
 <td>None</td>
 <td>XLI, XLF, XLB, XLE</td>
 <td>XLP, XLU, XLV</td>
@@ -7939,9 +7953,9 @@ sector rebalance dates: 71 2020-07-31 to 2026-05-01</code></pre>
 <td>inflation_beneficiaries</td>
 <td>Inflation beneficiaries</td>
 <td>inflation_pressure</td>
-<td>0.8415</td>
-<td>0.0047</td>
-<td>0.0047</td>
+<td>0.4178</td>
+<td>0.0026</td>
+<td>0.0026</td>
 <td>None</td>
 <td>XLE, XLB</td>
 <td>XLK, XLY</td>
@@ -7951,9 +7965,9 @@ sector rebalance dates: 71 2020-07-31 to 2026-05-01</code></pre>
 <td>small_cap_risk_on</td>
 <td>Small-cap risk-on</td>
 <td>domestic_risk_on</td>
-<td>0.6728</td>
-<td>0.0049</td>
-<td>0.0049</td>
+<td>0.9490</td>
+<td>0.0064</td>
+<td>0.0064</td>
 <td>None</td>
 <td>XLI, XLF, XLY</td>
 <td>XLP, XLU, XLV</td>
@@ -7963,12 +7977,12 @@ sector rebalance dates: 71 2020-07-31 to 2026-05-01</code></pre>
 <td>sector_reversal</td>
 <td>Sector reversal</td>
 <td>short_horizon_reversal</td>
-<td>1.4100</td>
-<td>0.0032</td>
-<td>0.0032</td>
+<td>1.5373</td>
+<td>0.0034</td>
+<td>0.0034</td>
 <td>None</td>
-<td>XLV, XLE</td>
-<td>XLK, XLRE</td>
+<td>XLE, XLU</td>
+<td>XLK, XLY</td>
 </tr>
 </tbody>
 </table>
@@ -8009,12 +8023,12 @@ selected sector baselines: MinVar (LedoitWolf) and MV (EWMA, BayesStein)</code><
 <td>MinVar</td>
 <td>-</td>
 <td>LedoitWolf</td>
-<td>0.1000</td>
+<td>0.0987</td>
 <td>0.1288</td>
-<td>0.4989</td>
+<td>0.4899</td>
 <td>-0.1867</td>
-<td>0.5357</td>
-<td>0.6950</td>
+<td>0.5288</td>
+<td>0.6831</td>
 <td>0.0070</td>
 <td>0.4971</td>
 <td>0.0003</td>
@@ -8026,16 +8040,16 @@ selected sector baselines: MinVar (LedoitWolf) and MV (EWMA, BayesStein)</code><
 <td>MV</td>
 <td>BayesStein</td>
 <td>EWMA</td>
-<td>0.1211</td>
-<td>0.1394</td>
-<td>0.6042</td>
+<td>0.1187</td>
+<td>0.1393</td>
+<td>0.5887</td>
 <td>-0.1445</td>
-<td>0.8383</td>
-<td>0.8245</td>
-<td>0.1391</td>
-<td>9.8735</td>
-<td>0.0071</td>
-<td>3.9598</td>
+<td>0.8212</td>
+<td>0.8040</td>
+<td>0.1396</td>
+<td>9.9106</td>
+<td>0.0072</td>
+<td>3.9575</td>
 <td>0</td>
 </tr>
 </tbody>
@@ -8191,11 +8205,11 @@ candidate views: 307 selected views: 251</code></pre>
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">Sector Benchmark</th>
-<td>0.1483</td>
-<td>0.1485</td>
-<td>0.7413</td>
+<td>0.1476</td>
+<td>0.1484</td>
+<td>0.7373</td>
 <td>-0.1925</td>
-<td>0.7704</td>
+<td>0.7665</td>
 <td>0.0206</td>
 <td>1.4430</td>
 <td>0.0009</td>
@@ -8208,54 +8222,54 @@ candidate views: 307 selected views: 251</code></pre>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">Sector MinVar (best grid)</th>
-<td>0.0998</td>
-<td>0.1289</td>
-<td>0.5013</td>
+<td>0.0985</td>
+<td>0.1288</td>
+<td>0.4924</td>
 <td>-0.1870</td>
-<td>0.5337</td>
+<td>0.5267</td>
 <td>0.0135</td>
 <td>0.9430</td>
 <td>0.0006</td>
-<td>-0.0454</td>
+<td>-0.0460</td>
 <td>0.0524</td>
-<td>-0.8671</td>
-<td>0.4681</td>
-<td>0.9382</td>
-<td>0.8145</td>
+<td>-0.8780</td>
+<td>0.4675</td>
+<td>0.9383</td>
+<td>0.8146</td>
 </tr>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">Sector MV (best grid)</th>
-<td>0.1231</td>
-<td>0.1394</td>
-<td>0.6159</td>
+<td>0.1207</td>
+<td>0.1393</td>
+<td>0.6007</td>
 <td>-0.1461</td>
-<td>0.8426</td>
+<td>0.8260</td>
 <td>0.1433</td>
 <td>10.0300</td>
-<td>0.0071</td>
-<td>-0.0242</td>
-<td>0.0683</td>
-<td>-0.3542</td>
-<td>0.5145</td>
-<td>0.8893</td>
-<td>0.8352</td>
+<td>0.0072</td>
+<td>-0.0257</td>
+<td>0.0684</td>
+<td>-0.3753</td>
+<td>0.5138</td>
+<td>0.8887</td>
+<td>0.8347</td>
 </tr>
 <tr class="even">
 <th data-quarto-table-cell-role="th">Sector Learned-Confidence BL</th>
-<td>0.1536</td>
-<td>0.1501</td>
-<td>0.7673</td>
+<td>0.1529</td>
+<td>0.1500</td>
+<td>0.7643</td>
 <td>-0.1824</td>
-<td>0.8418</td>
+<td>0.8385</td>
 <td>0.1983</td>
 <td>13.8845</td>
 <td>0.0093</td>
-<td>0.0051</td>
-<td>0.0358</td>
-<td>0.1426</td>
+<td>0.0052</td>
+<td>0.0357</td>
+<td>0.1464</td>
 <td>0.5097</td>
 <td>0.9713</td>
-<td>0.9820</td>
+<td>0.9819</td>
 </tr>
 </tbody>
 </table>
@@ -8296,12 +8310,12 @@ candidate views: 307 selected views: 251</code></pre>
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">Sector Learned-Confidence BL</th>
-<td>0.0051</td>
-<td>0.0358</td>
-<td>0.1426</td>
+<td>0.0052</td>
+<td>0.0357</td>
+<td>0.1464</td>
 <td>0.5097</td>
 <td>0.9713</td>
-<td>0.982</td>
+<td>0.9819</td>
 <td>-0.0744</td>
 <td>0.5977</td>
 <td>Sector Benchmark</td>
@@ -9161,6 +9175,9 @@ candidate views: 307 selected views: 251</code></pre>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
+      <a href="../notebooks/07_dynamic_hedge_ratios.html" class="pagination-link" aria-label="Dynamic Hedge-Ratio Engineering: Hedgeability, Model Choice, and Residual Tradeability">
+        <span class="nav-page-text"><span class="chapter-title">Dynamic Hedge-Ratio Engineering: Hedgeability, Model Choice, and Residual Tradeability</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
   </div>
 </nav>
 </div> <!-- /content -->

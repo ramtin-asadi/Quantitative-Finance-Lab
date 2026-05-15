@@ -381,6 +381,115 @@ def plot_straddle_payoff(
     return fig, ax
 
 
+def plot_fixed_float_swap_diagram(
+    ax=None,
+    *,
+    title: str = "Fixed-for-floating swap: payer and receiver views",
+    figsize: tuple[float, float] = (13.0, 6.3),
+):
+    set_plot_style()
+    if ax is None:
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.get_figure()
+    ax.axis("off")
+    ax.set_xlim(0, 14)
+    ax.set_ylim(0, 7)
+
+    bg = "#fbfbfb"
+    panel_edge = "#d5d9df"
+    fixed_color = "#1f77b4"
+    float_color = "#c44e52"
+    receive_color = "#eaf3ff"
+    pay_color = "#fff1ed"
+    dealer_color = "#f6f7f9"
+
+    ax.set_facecolor(bg)
+    panel = mpatches.FancyBboxPatch(
+        (0.35, 0.45),
+        13.3,
+        5.75,
+        boxstyle="round,pad=0.22,rounding_size=0.18",
+        fc="white",
+        ec=panel_edge,
+        lw=1.2,
+    )
+    ax.add_patch(panel)
+
+    boxes = {
+        "receiver": (0.95, 3.75, 3.1, 1.25, receive_color, "Receiver fixed\nadds duration"),
+        "dealer_top": (5.45, 3.75, 3.1, 1.25, dealer_color, "Swap counterparty\nclears net cashflows"),
+        "payer": (9.95, 3.75, 3.1, 1.25, pay_color, "Payer fixed\nremoves duration"),
+        "dealer_bottom": (5.45, 1.55, 3.1, 1.25, dealer_color, "Same swap,\nopposite side"),
+    }
+    for x, y, w, h, color, text in boxes.values():
+        patch = mpatches.FancyBboxPatch(
+            (x, y),
+            w,
+            h,
+            boxstyle="round,pad=0.18,rounding_size=0.16",
+            fc=color,
+            ec="#30343b",
+            lw=1.1,
+        )
+        ax.add_patch(patch)
+        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=10, fontweight="bold")
+
+    def arrow(start, end, color, rad=0.0):
+        patch = FancyArrowPatch(
+            start,
+            end,
+            arrowstyle="-|>",
+            mutation_scale=18,
+            lw=2.1,
+            color=color,
+            connectionstyle=f"arc3,rad={rad}",
+        )
+        ax.add_patch(patch)
+        return patch
+
+    arrow((4.05, 4.72), (5.45, 4.72), fixed_color)
+    arrow((5.45, 4.08), (4.05, 4.08), float_color)
+    ax.text(4.75, 5.02, "receives fixed", ha="center", va="bottom", fontsize=9, color=fixed_color)
+    ax.text(4.75, 3.75, "pays floating", ha="center", va="top", fontsize=9, color=float_color)
+
+    arrow((8.55, 4.72), (9.95, 4.72), float_color)
+    arrow((9.95, 4.08), (8.55, 4.08), fixed_color)
+    ax.text(9.25, 5.02, "receives floating", ha="center", va="bottom", fontsize=9, color=float_color)
+    ax.text(9.25, 3.75, "pays fixed", ha="center", va="top", fontsize=9, color=fixed_color)
+
+    arrow((5.45, 2.42), (4.05, 2.42), fixed_color)
+    arrow((4.05, 1.78), (5.45, 1.78), float_color)
+    ax.text(4.75, 2.72, "fixed leg", ha="center", va="bottom", fontsize=9, color=fixed_color)
+    ax.text(4.75, 1.45, "floating leg", ha="center", va="top", fontsize=9, color=float_color)
+
+    arrow((8.55, 2.42), (9.95, 2.42), fixed_color)
+    arrow((9.95, 1.78), (8.55, 1.78), float_color)
+    ax.text(9.25, 2.72, "fixed leg", ha="center", va="bottom", fontsize=9, color=fixed_color)
+    ax.text(9.25, 1.45, "floating leg", ha="center", va="top", fontsize=9, color=float_color)
+
+    ax.text(2.50, 5.75, "Receiver swap", ha="center", fontsize=11, fontweight="bold", color="#20242a")
+    ax.text(11.50, 5.75, "Payer swap", ha="center", fontsize=11, fontweight="bold", color="#20242a")
+    ax.plot([7.0, 7.0], [0.8, 5.95], color=panel_edge, lw=1.0, ls="--")
+    ax.text(
+        7.0,
+        0.85,
+        "Synthetic overlay notional is set from target DV01; the figure shows cashflow direction, not a market OIS curve.",
+        ha="center",
+        va="bottom",
+        fontsize=9,
+        color="#555b63",
+    )
+    ax.set_title(title, fontsize=14, pad=14)
+    fig.tight_layout()
+    return fig, ax
+
+
 plot_bsm_comp_graph = plot_computation_dag
 
-__all__ = ["plot_bsm_comp_graph", "plot_computation_dag", "plot_straddle_payoff"]
+__all__ = [
+    "plot_bsm_comp_graph",
+    "plot_computation_dag",
+    "plot_fixed_float_swap_diagram",
+    "plot_straddle_payoff",
+]
