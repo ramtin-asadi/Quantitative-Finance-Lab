@@ -17,6 +17,7 @@ book:
     - notebooks/07_dynamic_hedge_ratios.ipynb
     - notebooks/08_vol_surface_local_vol.ipynb
     - notebooks/09_term_structure_models.ipynb
+    - notebooks/10_portfolio_tail_parity_robust.ipynb
 
 format:
   html:

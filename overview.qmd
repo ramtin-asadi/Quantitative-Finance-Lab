@@ -124,7 +124,7 @@ For risk work, important diagnostics include VaR, expected shortfall, exception 
 
 For options work, important diagnostics include quote filters, parity checks, solver success rates, pricing residuals, Greek consistency, uncertainty bands, and hedging P&L attribution.
 
-A metric should not be shown alone when it can be misleading. It should be paired with interpretation, diagnostics, or limitations.
+> NOTE: We implement everything maunually if it's the first time implementing it, from the second time to more, we use library to don't repeat long codes that have been shown in the first time.
 
 ---
 

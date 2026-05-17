@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
 import numpy as np
 import pandas as pd
@@ -586,9 +586,36 @@ def plot_fixed_cov_mu_comparison(nav: pd.DataFrame, strategies: Sequence[str], *
 
 plot_nav = plot_strategy_nav
 plot_drawdowns = plot_strategy_drawdowns
+
+
+def _short_names(names: Sequence[str], short_labels: Mapping[str, str] | None = None, labels: Sequence[str] | None = None):
+    if labels is not None:
+        return list(labels)
+    if short_labels is None:
+        return list(names)
+    return [short_labels.get(name, name) for name in names]
+
+
+def _small_legend(ax, *, ncol: int = 2):
+    handles, labels = ax.get_legend_handles_labels()
+    if handles:
+        ax.legend(loc="best", fontsize=7, ncol=ncol, frameon=True, framealpha=0.85)
+    return ax
+
+
+def _average_weight_matrix(weights_by_name: Mapping[str, pd.DataFrame | pd.Series]) -> pd.DataFrame:
+    rows = {}
+    for name, weights in weights_by_name.items():
+        if isinstance(weights, pd.DataFrame):
+            rows[name] = weights.astype(float).mean(axis=0)
+        else:
+            rows[name] = pd.Series(weights, dtype=float)
+    return pd.DataFrame(rows).fillna(0.0)
+
+
 def plot_finalist_nav(
     nav: pd.DataFrame,
-    strategies: Sequence[str],
+    strategies: Sequence[str] | None = None,
     *,
     ax=None,
     title: str | None = None,
@@ -596,18 +623,21 @@ def plot_finalist_nav(
     summary: pd.DataFrame | None = None,
     baseline: str = "EW",
     include_baseline: bool = True,
+    short_labels: Mapping[str, str] | None = None,
 ):
     strategies_use = (
         selection.with_baseline(strategies, available=nav.columns, baseline=baseline)
-        if include_baseline
-        else list(strategies)
+        if strategies is not None and include_baseline
+        else list(strategies or nav.columns)
     )
-    return plot_strategy_nav(nav, strategies_use, ax=ax, title=title, labels=labels, summary=summary)
+    labels_use = _short_names(strategies_use, short_labels, labels)
+    ax = plot_strategy_nav(nav, strategies_use, ax=ax, title=title, labels=labels_use, summary=summary)
+    return _small_legend(ax)
 
 
 def plot_finalist_drawdowns(
     nav: pd.DataFrame,
-    strategies: Sequence[str],
+    strategies: Sequence[str] | None = None,
     *,
     ax=None,
     title: str | None = None,
@@ -615,13 +645,252 @@ def plot_finalist_drawdowns(
     summary: pd.DataFrame | None = None,
     baseline: str = "EW",
     include_baseline: bool = True,
+    short_labels: Mapping[str, str] | None = None,
 ):
     strategies_use = (
         selection.with_baseline(strategies, available=nav.columns, baseline=baseline)
-        if include_baseline
-        else list(strategies)
+        if strategies is not None and include_baseline
+        else list(strategies or nav.columns)
     )
-    return plot_strategy_drawdowns(nav, strategies_use, ax=ax, title=title, labels=labels, summary=summary)
+    labels_use = _short_names(strategies_use, short_labels, labels)
+    ax = plot_strategy_drawdowns(nav, strategies_use, ax=ax, title=title, labels=labels_use, summary=summary)
+    return _small_legend(ax)
+
+
+def plot_finalist_metric_bar(
+    grid_results: pd.DataFrame,
+    strategies: Sequence[str] | None = None,
+    *,
+    metric: str = "Sharpe",
+    ax=None,
+    title: str | None = None,
+    baseline: str = "EW",
+    include_baseline: bool = True,
+    short_labels: Mapping[str, str] | None = None,
+    labels: Sequence[str] | None = None,
+):
+    set_plot_style()
+    ax = _get_ax(ax)
+    strategies_use = list(strategies or grid_results.index)
+    if strategies is not None and include_baseline:
+        strategies_use = selection.with_baseline(strategies_use, available=grid_results.index, baseline=baseline)
+    present = [s for s in strategies_use if s in grid_results.index and metric in grid_results.columns]
+    if not present:
+        ax.text(0.5, 0.5, "Missing", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    vals = grid_results.loc[present, metric].astype(float)
+    names = _short_names(present, short_labels, labels)
+    ax.barh(names, vals.values)
+    ax.set_title(title or metric)
+    ax.set_xlabel(metric)
+    ax.grid(True, axis="x", alpha=0.3)
+    return ax
+
+
+def plot_risk_return_scatter(
+    grid_results: pd.DataFrame,
+    strategies: Sequence[str] | None = None,
+    *,
+    ax=None,
+    title: str | None = None,
+    risk_col: str = "Vol",
+    return_col: str = "CAGR",
+    color_col: str | None = "Sharpe",
+    size_col: str | None = None,
+    short_labels: Mapping[str, str] | None = None,
+):
+    set_plot_style()
+    ax = _get_ax(ax)
+    present = [s for s in list(strategies or grid_results.index) if s in grid_results.index]
+    if not present or risk_col not in grid_results.columns or return_col not in grid_results.columns:
+        ax.text(0.5, 0.5, "Missing", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    df = grid_results.loc[present].copy()
+    colors = df[color_col].astype(float) if color_col in df.columns else "#0072B2"
+    sizes = 90.0
+    if size_col in df.columns:
+        raw = df[size_col].abs().astype(float)
+        sizes = 50.0 + 260.0 * raw / max(float(raw.max()), 1e-12)
+    scatter = ax.scatter(df[risk_col], df[return_col], c=colors, s=sizes, alpha=0.82, edgecolor="white", linewidth=0.6)
+    for name, label in zip(present, _short_names(present, short_labels), strict=False):
+        ax.annotate(label, (df.loc[name, risk_col], df.loc[name, return_col]), xytext=(4, 3), textcoords="offset points", fontsize=7)
+    ax.set_title(title or "Risk-return")
+    ax.set_xlabel(risk_col)
+    ax.set_ylabel(return_col)
+    ax.grid(True, alpha=0.3)
+    if color_col in df.columns:
+        ax.figure.colorbar(scatter, ax=ax, fraction=0.046, pad=0.04, label=color_col)
+    return ax
+
+
+def plot_average_weight_heatmap(
+    weights_by_name: Mapping[str, pd.DataFrame | pd.Series],
+    *,
+    ax=None,
+    title: str | None = None,
+    short_labels: Mapping[str, str] | None = None,
+    cmap: str | None = None,
+):
+    set_plot_style()
+    ax = _get_ax(ax)
+    avg = _average_weight_matrix(weights_by_name)
+    if avg.empty:
+        ax.text(0.5, 0.5, "No weights", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    avg = avg.loc[avg.sum(axis=1).sort_values(ascending=False).index]
+    vals = avg.to_numpy(dtype=float)
+    im = ax.imshow(vals, aspect="auto", cmap=cmap or "Blues")
+    ax.set_title(title or "Average weights")
+    ax.set_yticks(range(len(avg.index)))
+    ax.set_yticklabels(avg.index)
+    ax.set_xticks(range(len(avg.columns)))
+    ax.set_xticklabels(_short_names(list(avg.columns), short_labels), rotation=35, ha="right")
+    ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    return ax
+
+
+def plot_sleeve_exposure_bar(
+    weights_by_name: Mapping[str, pd.DataFrame | pd.Series],
+    sleeve_map: Mapping[str, str],
+    *,
+    ax=None,
+    title: str | None = None,
+    short_labels: Mapping[str, str] | None = None,
+):
+    set_plot_style()
+    ax = _get_ax(ax)
+    avg = _average_weight_matrix(weights_by_name)
+    if avg.empty:
+        ax.text(0.5, 0.5, "No weights", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    sleeves = pd.Series(sleeve_map, dtype=str)
+    rows = {}
+    for sleeve in sleeves.dropna().unique():
+        members = sleeves[sleeves.eq(sleeve)].index.intersection(avg.index)
+        rows[sleeve] = avg.loc[members].sum(axis=0) if len(members) else pd.Series(0.0, index=avg.columns)
+    exposure = pd.DataFrame(rows).fillna(0.0)
+    exposure.index = _short_names(list(exposure.index), short_labels)
+    exposure.plot(kind="bar", stacked=True, ax=ax, width=0.82)
+    ax.set_title(title or "Sleeve exposure")
+    ax.set_xlabel("")
+    ax.set_ylabel("Average weight")
+    ax.tick_params(axis="x", labelrotation=35)
+    ax.grid(True, axis="y", alpha=0.3)
+    return _small_legend(ax, ncol=1)
+
+
+def plot_cvar_budget_path(path: pd.DataFrame, *, ax=None, title: str | None = None):
+    set_plot_style()
+    ax = _get_ax(ax)
+    if path is None or path.empty:
+        ax.text(0.5, 0.5, "No path", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    x = path["budget_scale"] if "budget_scale" in path.columns else np.arange(len(path))
+    if "expected_return" in path.columns:
+        ax.plot(x, path["expected_return"], marker="o", label="Expected return")
+    if "cvar_loss" in path.columns:
+        ax.plot(x, path["cvar_loss"], marker="o", label="CVaR loss")
+    if "cvar_budget" in path.columns:
+        ax.plot(x, path["cvar_budget"], ls="--", label="Budget")
+    ax.set_title(title or "CVaR budget path")
+    ax.set_xlabel("Budget scale")
+    ax.grid(True, alpha=0.3)
+    return _small_legend(ax)
+
+
+def plot_risk_contribution_bar(table: pd.DataFrame, *, ax=None, title: str | None = None):
+    set_plot_style()
+    ax = _get_ax(ax)
+    if table is None or table.empty:
+        ax.text(0.5, 0.5, "No risk contributions", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    t = table.copy()
+    if "asset" in t.columns:
+        t = t.set_index("asset")
+    col = "percent_risk_contribution" if "percent_risk_contribution" in t.columns else "risk_contribution"
+    vals = t[col].astype(float).sort_values()
+    ax.barh(vals.index, vals.values)
+    ax.set_title(title or "Risk contribution")
+    ax.set_xlabel("Percent of risk" if col.startswith("percent") else "Risk contribution")
+    ax.grid(True, axis="x", alpha=0.3)
+    return ax
+
+
+def plot_hrp_dendrogram(
+    cov_ann,
+    *,
+    labels: Sequence[str] | None = None,
+    linkage_method: str = "average",
+    ax=None,
+    title: str | None = None,
+):
+    set_plot_style()
+    ax = _get_ax(ax)
+    from scipy.cluster.hierarchy import dendrogram, linkage
+    from scipy.spatial.distance import squareform
+
+    cov = pd.DataFrame(cov_ann, index=labels, columns=labels) if labels is not None else pd.DataFrame(cov_ann)
+    labels_use = [str(x) for x in cov.index]
+    std = np.sqrt(np.diag(cov.to_numpy(dtype=float))).clip(min=1e-12)
+    corr = np.clip(cov.to_numpy(dtype=float) / np.outer(std, std), -1.0, 1.0)
+    dist = np.sqrt(np.maximum((1.0 - corr) / 2.0, 0.0))
+    np.fill_diagonal(dist, 0.0)
+    dendrogram(linkage(squareform(dist, checks=False), method=linkage_method), labels=labels_use, ax=ax, leaf_rotation=60, leaf_font_size=7)
+    ax.set_title(title or "HRP clustering")
+    ax.grid(False)
+    return ax
+
+
+def plot_nco_cluster_weights(
+    cluster_table: pd.DataFrame,
+    weights: pd.Series | pd.DataFrame,
+    *,
+    ax=None,
+    title: str | None = None,
+):
+    set_plot_style()
+    ax = _get_ax(ax)
+    if isinstance(weights, pd.DataFrame):
+        w = weights.iloc[-1].astype(float)
+    else:
+        w = pd.Series(weights, dtype=float)
+    if cluster_table is None or cluster_table.empty:
+        ax.text(0.5, 0.5, "No clusters", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    t = cluster_table.copy()
+    if "asset" not in t.columns:
+        t = t.reset_index().rename(columns={t.index.name or "index": "asset"})
+    sleeve = t.set_index("asset")["cluster"].astype(str)
+    vals = w.groupby(sleeve.reindex(w.index).fillna("NA")).sum().sort_values()
+    ax.barh(vals.index, vals.values)
+    ax.set_title(title or "NCO-MV clusters")
+    ax.set_xlabel("Latest weight")
+    ax.grid(True, axis="x", alpha=0.3)
+    return ax
+
+
+def plot_wasserstein_radius_path(path: pd.DataFrame, *, ax=None, title: str | None = None):
+    set_plot_style()
+    ax = _get_ax(ax)
+    if path is None or path.empty or "radius" not in path.columns:
+        ax.text(0.5, 0.5, "No path", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    x = path["radius"].astype(float)
+    for col, label in [("robust_return", "Robust return"), ("volatility", "Volatility"), ("effective_n", "Effective N")]:
+        if col in path.columns:
+            ax.plot(x, path[col].astype(float), marker="o", label=label)
+    ax.set_title(title or "Wasserstein radius path")
+    ax.set_xlabel("Radius")
+    ax.grid(True, alpha=0.3)
+    return _small_legend(ax)
 
 
 __all__ = [
@@ -630,6 +899,8 @@ __all__ = [
     "heatmap_matrix",
     "plot_active_nav",
     "plot_active_weights_heatmap",
+    "plot_average_weight_heatmap",
+    "plot_cvar_budget_path",
     "plot_drawdowns",
     "plot_effective_n_bar",
     "plot_finalist_drawdowns",
@@ -638,12 +909,16 @@ __all__ = [
     "plot_fixed_cov_mu_comparison",
     "plot_fixed_mu_covariance_comparison",
     "plot_grid_heatmap",
+    "plot_hrp_dendrogram",
     "plot_metric_bar",
     "plot_nav",
     "plot_latest_weights",
+    "plot_nco_cluster_weights",
     "plot_posterior_shift_heatmap",
+    "plot_risk_contribution_bar",
     "plot_risk_return_scatter",
     "plot_rolling_active_metrics",
+    "plot_sleeve_exposure_bar",
     "plot_stress_summary",
     "plot_strategy_drawdowns",
     "plot_strategy_nav",
@@ -652,5 +927,6 @@ __all__ = [
     "plot_view_q_and_confidence",
     "plot_view_selection_counts",
     "plot_weights",
+    "plot_wasserstein_radius_path",
     "show_portfolio_xaxis_like_risk_module",
 ]

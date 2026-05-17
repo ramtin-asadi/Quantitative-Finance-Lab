@@ -137,6 +137,9 @@ def load_yfinance_panel(
     *,
     fields: tuple[str, ...] = ("close", "volume", "dividends", "stock_splits"),
     tickers: list[str] | None = None,
+    start: str | pd.Timestamp | None = None,
+    end: str | pd.Timestamp | None = None,
+    lowercase: bool = False,
     date_col: str | None = None,
     suffix: str = "__",
     source: str | None = "yfinance_export",
@@ -156,7 +159,12 @@ def load_yfinance_panel(
         Field names to extract. Names are matched case-insensitively.
         Missing fields become empty DataFrames in the output.
     tickers
-        Optional whitelist of ticker symbols.
+        Optional whitelist of ticker symbols. Matching is case-insensitive.
+    start, end
+        Optional date cutoff applied after parsing.
+    lowercase
+        If true, normalize ticker columns to lowercase. This is useful when
+        combining ETF and equity panels in notebooks.
     source
         Registered schema in :data:`PANEL_SOURCES`. ``None`` skips the
         registry; use ``date_col``/``suffix`` to drive the loader.
@@ -174,12 +182,50 @@ def load_yfinance_panel(
     eff_suffix = str(cfg.get("suffix", suffix)) if "suffix" in cfg else suffix
 
     if fmt == "multi_header":
-        return _load_multi_header(p, date_col=eff_date_col, fields=fields, tickers=tickers)
-    if fmt == "wide_suffix":
-        return _load_wide_suffix(
-            p, suffix=eff_suffix, date_col=eff_date_col, fields=fields, tickers=tickers
+        panels = _load_multi_header(p, date_col=eff_date_col, fields=fields, tickers=None)
+    elif fmt == "wide_suffix":
+        panels = _load_wide_suffix(
+            p, suffix=eff_suffix, date_col=eff_date_col, fields=fields, tickers=None
         )
-    raise ValueError(f"Unsupported panel format {fmt!r} for source {source!r}")
+    else:
+        raise ValueError(f"Unsupported panel format {fmt!r} for source {source!r}")
+
+    wanted = [str(t).strip() for t in tickers or [] if str(t).strip()]
+    out: dict[str, pd.DataFrame] = {}
+    for field, df in panels.items():
+        panel = df.copy()
+        panel.index = pd.to_datetime(panel.index)
+        panel = panel.sort_index()
+        panel.columns = [str(c).strip().lower() if lowercase else str(c).strip() for c in panel.columns]
+        if panel.columns.duplicated().any():
+            panel = panel.T.groupby(level=0).last().T
+        if start is not None:
+            panel = panel.loc[panel.index >= pd.Timestamp(start)]
+        if end is not None:
+            panel = panel.loc[panel.index <= pd.Timestamp(end)]
+        if wanted:
+            if lowercase:
+                keep = []
+                seen: set[str] = set()
+                for ticker in wanted:
+                    t = ticker.lower()
+                    if t in panel.columns and t not in seen:
+                        keep.append(t)
+                        seen.add(t)
+            else:
+                lookup = {str(c).lower(): c for c in panel.columns}
+                keep = []
+                seen = set()
+                for ticker in wanted:
+                    col = lookup.get(ticker.lower())
+                    if col is not None and col not in seen:
+                        keep.append(col)
+                        seen.add(col)
+            panel = panel.reindex(columns=keep)
+        else:
+            panel = panel.reindex(columns=sorted(panel.columns))
+        out[field] = panel
+    return out
 
 
 def align_panels(*panels: pd.DataFrame, how: str = "inner") -> tuple[pd.DataFrame, ...]:

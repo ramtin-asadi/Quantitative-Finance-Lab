@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Dynamic Hedge-Ratio Engineering: Hedgeability, Model Choice, and Residual Tradeability – Quantitative Finance Lab</title>
+<title>Dynamic Hedge Ratio and Residual Trading – Quantitative Finance Lab</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -121,7 +121,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../notebooks/07_dynamic_hedge_ratios.html"><span class="chapter-title">Dynamic Hedge-Ratio Engineering: Hedgeability, Model Choice, and Residual Tradeability</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../notebooks/07_dynamic_hedge_ratios.html"><span class="chapter-title">Dynamic Hedge Ratio and Residual Trading</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -188,17 +188,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/07_dynamic_hedge_ratios.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">Dynamic Hedge-Ratio Engineering: Hedgeability, Model Choice, and Residual Tradeability</span></a>
+  <a href="../notebooks/07_dynamic_hedge_ratios.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">Dynamic Hedge Ratio and Residual Trading</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/08_vol_surface_local_vol.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">08_vol_surface_local_vol.html</span></a>
+  <a href="../notebooks/08_vol_surface_local_vol.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Volatility Surface and Local Volatility model</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/09_term_structure_models.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">09_term_structure_models.html</span></a>
+  <a href="../notebooks/09_term_structure_models.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Short Rate and Term Structure Models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/10_portfolio_tail_parity_robust.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Portfolio Optimization: Tail risk, Risk Parity and Robust Models</span></a>
   </div>
 </li>
     </ul>
@@ -212,7 +217,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">Dynamic Hedge-Ratio Engineering: Hedgeability, Model Choice, and Residual Tradeability</span></h1>
+<h1 class="title"><span class="chapter-title">Dynamic Hedge Ratio and Residual Trading</span></h1>
 </div>
 
 
@@ -258,29 +263,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    stress_table,</span>
 <span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio.universe <span class="im">import</span> prices_to_returns</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting.risk <span class="im">import</span> auto_grid, turn_off_unused_axes</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting.portfolio <span class="im">import</span> plot_turnover_bar, plot_metric_bar</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">"display.max_columns"</span>, <span class="dv">80</span>)</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">"display.width"</span>, <span class="dv">180</span>)</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> [<span class="st">"#069AF3"</span>, <span class="st">"#FE420F"</span>, <span class="st">"#00008B"</span>, <span class="st">"#008080"</span>, <span class="st">"#CC79A7"</span>,</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>          <span class="st">"#DC143C"</span>, <span class="st">"#9614fa"</span>, <span class="st">"#0072B2"</span>, <span class="st">"#7BC8F6"</span>, <span class="st">"#04D8B2"</span>, <span class="st">"#800080"</span>, <span class="st">"#FF8072"</span>]</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> cycler <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>    plt.rcParams[<span class="st">"axes.prop_cycle"</span>] <span class="op">=</span> cycler(color<span class="op">=</span>colors)</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">7</span>, <span class="fl">3.5</span>),</span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.dpi"</span>: <span class="dv">140</span>,</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    <span class="st">"savefig.dpi"</span>: <span class="dv">250</span>,</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.grid"</span>: <span class="va">True</span>,</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grid.alpha"</span>: <span class="fl">0.20</span>,</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>,</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="dv">11</span>,</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="dv">10</span>,</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">8</span>,</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.dataio <span class="im">import</span> load_yfinance_panel</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting.risk <span class="im">import</span> auto_grid, turn_off_unused_axes</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting.portfolio <span class="im">import</span> plot_turnover_bar, plot_metric_bar</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">"display.max_columns"</span>, <span class="dv">80</span>)</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>pd.set_option(<span class="st">"display.width"</span>, <span class="dv">180</span>)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> [<span class="st">"#069AF3"</span>, <span class="st">"#FE420F"</span>, <span class="st">"#00008B"</span>, <span class="st">"#008080"</span>, <span class="st">"#CC79A7"</span>,</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>          <span class="st">"#DC143C"</span>, <span class="st">"#9614fa"</span>, <span class="st">"#0072B2"</span>, <span class="st">"#7BC8F6"</span>, <span class="st">"#04D8B2"</span>, <span class="st">"#800080"</span>, <span class="st">"#FF8072"</span>]</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> cycler <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    plt.rcParams[<span class="st">"axes.prop_cycle"</span>] <span class="op">=</span> cycler(color<span class="op">=</span>colors)</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">7</span>, <span class="fl">3.5</span>),</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.dpi"</span>: <span class="dv">140</span>,</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    <span class="st">"savefig.dpi"</span>: <span class="dv">250</span>,</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.grid"</span>: <span class="va">True</span>,</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>    <span class="st">"grid.alpha"</span>: <span class="fl">0.20</span>,</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>,</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="dv">11</span>,</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="dv">10</span>,</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">8</span>,</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div id="0ff724ea" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>start <span class="op">=</span> <span class="st">"2015-01-01"</span></span>
@@ -302,63 +308,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="load-and-clean-data" class="level2">
 <h2 class="anchored" data-anchor-id="load-and-clean-data">2. load and clean data</h2>
 <div id="c47d4d16" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> close_panel(path):</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> Path(path)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> path.suffix.lower() <span class="op">==</span> <span class="st">".parquet"</span>:</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        <span class="im">import</span> pyarrow.parquet <span class="im">as</span> pq</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        pf <span class="op">=</span> pq.ParquetFile(path)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        names <span class="op">=</span> pf.schema.names</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>        date_col <span class="op">=</span> <span class="bu">next</span>((c <span class="cf">for</span> c <span class="kw">in</span> names <span class="cf">if</span> c.lower() <span class="kw">in</span> {<span class="st">"date"</span>, <span class="st">"datetime"</span>, <span class="st">"timestamp"</span>}), names[<span class="dv">0</span>])</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        close_cols <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> names <span class="cf">if</span> c.lower().endswith(<span class="st">"__close"</span>) <span class="kw">or</span> c.lower().endswith(<span class="st">"_close"</span>)]</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        raw <span class="op">=</span> pd.read_parquet(path, columns<span class="op">=</span>[date_col, <span class="op">*</span>close_cols])</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        raw <span class="op">=</span> pd.read_csv(path)</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        date_col <span class="op">=</span> <span class="bu">next</span>((c <span class="cf">for</span> c <span class="kw">in</span> raw.columns <span class="cf">if</span> c.lower() <span class="kw">in</span> {<span class="st">"date"</span>, <span class="st">"datetime"</span>, <span class="st">"timestamp"</span>}), raw.columns[<span class="dv">0</span>])</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        close_cols <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> raw.columns <span class="cf">if</span> c.lower().endswith(<span class="st">"__close"</span>) <span class="kw">or</span> c.lower().endswith(<span class="st">"_close"</span>)]</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> close_cols:</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        skip <span class="op">=</span> (<span class="st">"volume"</span>, <span class="st">"dividends"</span>, <span class="st">"stock_splits"</span>)</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>        close_cols <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> raw.columns <span class="cf">if</span> c <span class="op">!=</span> date_col <span class="kw">and</span> <span class="kw">not</span> c.lower().endswith(skip)]</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> raw[[date_col, <span class="op">*</span>close_cols]].copy()</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    out[date_col] <span class="op">=</span> pd.to_datetime(out[date_col], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> out.dropna(subset<span class="op">=</span>[date_col]).set_index(date_col).sort_index()</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> ticker_name(col):</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>        text <span class="op">=</span> <span class="bu">str</span>(col).strip()</span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="st">"__"</span> <span class="kw">in</span> text:</span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> text.split(<span class="st">"__"</span>, <span class="dv">1</span>)[<span class="dv">0</span>].lower()</span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> text.lower().endswith(<span class="st">"_close"</span>):</span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> text[:<span class="op">-</span><span class="dv">6</span>].lower()</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> text.lower()</span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> out.rename(columns<span class="op">=</span>{c: ticker_name(c) <span class="cf">for</span> c <span class="kw">in</span> close_cols})</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> out.<span class="bu">apply</span>(pd.to_numeric, errors<span class="op">=</span><span class="st">"coerce"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> out.columns.duplicated().<span class="bu">any</span>():</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>        out <span class="op">=</span> out.T.groupby(level<span class="op">=</span><span class="dv">0</span>).last().T</span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>etf_path <span class="op">=</span> Path(<span class="st">"../data/ETF_data.csv"</span>)</span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>nasdaq_path <span class="op">=</span> Path(<span class="st">"../data/nasdaq_all_close_volume.parquet"</span>)</span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>etf_px <span class="op">=</span> close_panel(etf_path)</span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>stock_px <span class="op">=</span> close_panel(nasdaq_path)</span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>px <span class="op">=</span> pd.concat([stock_px, etf_px], axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>px <span class="op">=</span> px.loc[:, <span class="op">~</span>px.columns.duplicated(keep<span class="op">=</span><span class="st">"last"</span>)]</span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>px <span class="op">=</span> px.loc[(px.index <span class="op">&gt;=</span> start) <span class="op">&amp;</span> (px.index <span class="op">&lt;=</span> end)].sort_index()</span>
-<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>ret_m <span class="op">=</span> prices_to_returns(px, kind<span class="op">=</span><span class="st">"log"</span>)</span>
-<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>ret_b <span class="op">=</span> prices_to_returns(px, kind<span class="op">=</span><span class="st">"simple"</span>)</span>
-<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"etf close panel: </span><span class="sc">{</span>etf_px<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"stock close panel: </span><span class="sc">{</span>stock_px<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"combined price panel from </span><span class="sc">{</span>start<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>end<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>px<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>etf_path <span class="op">=</span> Path(<span class="st">"../data/ETF_data.csv"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>nasdaq_path <span class="op">=</span> Path(<span class="st">"../data/nasdaq_all_close_volume.parquet"</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>etf_px <span class="op">=</span> load_yfinance_panel(etf_path, fields<span class="op">=</span>(<span class="st">"close"</span>,), start<span class="op">=</span>start, end<span class="op">=</span>end, lowercase<span class="op">=</span><span class="va">True</span>)[<span class="st">"close"</span>]</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>stock_px <span class="op">=</span> load_yfinance_panel(nasdaq_path, fields<span class="op">=</span>(<span class="st">"close"</span>,), start<span class="op">=</span>start, end<span class="op">=</span>end, lowercase<span class="op">=</span><span class="va">True</span>)[<span class="st">"close"</span>]</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>px <span class="op">=</span> pd.concat([stock_px, etf_px], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>px <span class="op">=</span> px.loc[:, <span class="op">~</span>px.columns.duplicated(keep<span class="op">=</span><span class="st">"last"</span>)]</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>px <span class="op">=</span> px.loc[(px.index <span class="op">&gt;=</span> start) <span class="op">&amp;</span> (px.index <span class="op">&lt;=</span> end)].sort_index()</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>ret_m <span class="op">=</span> prices_to_returns(px, kind<span class="op">=</span><span class="st">"log"</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>ret_b <span class="op">=</span> prices_to_returns(px, kind<span class="op">=</span><span class="st">"simple"</span>)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"etf close panel: </span><span class="sc">{</span>etf_px<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"stock close panel: </span><span class="sc">{</span>stock_px<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"combined price panel from </span><span class="sc">{</span>start<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>end<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>px<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>etf close panel: (4111, 63)
-stock close panel: (14140, 4382)
+<pre><code>etf close panel: (2766, 63)
+stock close panel: (2766, 4382)
 combined price panel from 2015-01-01 to 2026-01-01: (2766, 4445)</code></pre>
 </div>
 </div>
@@ -3886,261 +3854,239 @@ combined price panel from 2015-01-01 to 2026-01-01: (2766, 4445)</code></pre>
 <span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.risk <span class="im">import</span> drawdown_series</span>
 <span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.backtest.hedging <span class="im">import</span> run_many_hedge_backtests</span>
 <span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio.universe <span class="im">import</span> prices_to_returns</span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.hedging.relations <span class="im">import</span> rel, rel_table, rel_tickers, filter_rels</span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.hedging.ratios <span class="im">import</span> ols_beta, roll_beta, ridge_beta, kf_beta</span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.hedging.policies <span class="im">import</span> rebalance_beta, band_beta</span>
-<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.hedging.metrics <span class="im">import</span> coverage_table, diag_table, model_table, score_table, best_table, robust_table, quality_table</span>
-<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.hedging.residual <span class="im">import</span> (</span>
-<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>    price_ols_beta <span class="im">as</span> lib_price_ols_beta,</span>
-<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>    roll_price_beta <span class="im">as</span> lib_roll_price_beta,</span>
-<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>    kf_price_beta <span class="im">as</span> lib_kf_price_beta,</span>
-<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>    log_spread <span class="im">as</span> lib_log_spread,</span>
-<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>    eg_test <span class="im">as</span> lib_eg_test,</span>
-<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>    adf_test <span class="im">as</span> lib_adf_test,</span>
-<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>    half_life <span class="im">as</span> lib_half_life,</span>
-<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>    z_signal <span class="im">as</span> lib_z_signal,</span>
-<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>    resid_gate <span class="im">as</span> lib_resid_gate,</span>
-<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting <span class="im">import</span> hedging <span class="im">as</span> hplot</span>
-<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>start <span class="op">=</span> <span class="st">"2015-01-01"</span></span>
-<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>end <span class="op">=</span> <span class="st">"2026-01-01"</span></span>
-<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>ann <span class="op">=</span> <span class="dv">252</span></span>
-<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a>n_train <span class="op">=</span> <span class="dv">504</span></span>
-<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>win <span class="op">=</span> <span class="dv">252</span></span>
-<span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>alpha <span class="op">=</span> <span class="fl">10.0</span></span>
-<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>freq <span class="op">=</span> <span class="st">"w-fri"</span></span>
-<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a>band <span class="op">=</span> <span class="fl">0.05</span></span>
-<span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a>cost_bps <span class="op">=</span> <span class="fl">5.0</span></span>
-<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a>z_win <span class="op">=</span> <span class="dv">126</span></span>
-<span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a>z_in <span class="op">=</span> <span class="fl">2.0</span></span>
-<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a>z_out <span class="op">=</span> <span class="fl">0.5</span></span>
-<span id="cb22-40"><a href="#cb22-40" aria-hidden="true" tabindex="-1"></a>z_stop <span class="op">=</span> <span class="fl">3.5</span></span>
-<span id="cb22-41"><a href="#cb22-41" aria-hidden="true" tabindex="-1"></a>z_cool <span class="op">=</span> <span class="dv">5</span></span>
-<span id="cb22-42"><a href="#cb22-42" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> [<span class="st">"#069AF3"</span>, <span class="st">"#FE420F"</span>, <span class="st">"#00008B"</span>, <span class="st">"#008080"</span>, <span class="st">"#CC79A7"</span>,</span>
-<span id="cb22-43"><a href="#cb22-43" aria-hidden="true" tabindex="-1"></a>          <span class="st">"#DC143C"</span>, <span class="st">"#9614fa"</span>, <span class="st">"#0072B2"</span>, <span class="st">"#7BC8F6"</span>, <span class="st">"#04D8B2"</span>, <span class="st">"#800080"</span>, <span class="st">"#FF8072"</span>]</span>
-<span id="cb22-44"><a href="#cb22-44" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"axes.prop_cycle"</span>] <span class="op">=</span> cycler(color<span class="op">=</span>colors)</span>
-<span id="cb22-45"><a href="#cb22-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.dataio <span class="im">import</span> load_yfinance_panel</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.hedging.relations <span class="im">import</span> rel, rel_table, rel_tickers, filter_rels</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.hedging.ratios <span class="im">import</span> ols_beta, roll_beta, ridge_beta, kf_beta</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.hedging.policies <span class="im">import</span> rebalance_beta, band_beta</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.hedging.metrics <span class="im">import</span> coverage_table, diag_table, model_table, score_table, best_table, robust_table, quality_table</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.hedging.residual <span class="im">import</span> (</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>    price_ols_beta <span class="im">as</span> lib_price_ols_beta,</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>    roll_price_beta <span class="im">as</span> lib_roll_price_beta,</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>    kf_price_beta <span class="im">as</span> lib_kf_price_beta,</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>    log_spread <span class="im">as</span> lib_log_spread,</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>    eg_test <span class="im">as</span> lib_eg_test,</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>    adf_test <span class="im">as</span> lib_adf_test,</span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>    half_life <span class="im">as</span> lib_half_life,</span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>    z_signal <span class="im">as</span> lib_z_signal,</span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>    resid_gate <span class="im">as</span> lib_resid_gate,</span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting <span class="im">import</span> hedging <span class="im">as</span> hplot</span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a>start <span class="op">=</span> <span class="st">"2015-01-01"</span></span>
+<span id="cb22-30"><a href="#cb22-30" aria-hidden="true" tabindex="-1"></a>end <span class="op">=</span> <span class="st">"2026-01-01"</span></span>
+<span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a>ann <span class="op">=</span> <span class="dv">252</span></span>
+<span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>n_train <span class="op">=</span> <span class="dv">504</span></span>
+<span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>win <span class="op">=</span> <span class="dv">252</span></span>
+<span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>alpha <span class="op">=</span> <span class="fl">10.0</span></span>
+<span id="cb22-35"><a href="#cb22-35" aria-hidden="true" tabindex="-1"></a>freq <span class="op">=</span> <span class="st">"w-fri"</span></span>
+<span id="cb22-36"><a href="#cb22-36" aria-hidden="true" tabindex="-1"></a>band <span class="op">=</span> <span class="fl">0.05</span></span>
+<span id="cb22-37"><a href="#cb22-37" aria-hidden="true" tabindex="-1"></a>cost_bps <span class="op">=</span> <span class="fl">5.0</span></span>
+<span id="cb22-38"><a href="#cb22-38" aria-hidden="true" tabindex="-1"></a>z_win <span class="op">=</span> <span class="dv">126</span></span>
+<span id="cb22-39"><a href="#cb22-39" aria-hidden="true" tabindex="-1"></a>z_in <span class="op">=</span> <span class="fl">2.0</span></span>
+<span id="cb22-40"><a href="#cb22-40" aria-hidden="true" tabindex="-1"></a>z_out <span class="op">=</span> <span class="fl">0.5</span></span>
+<span id="cb22-41"><a href="#cb22-41" aria-hidden="true" tabindex="-1"></a>z_stop <span class="op">=</span> <span class="fl">3.5</span></span>
+<span id="cb22-42"><a href="#cb22-42" aria-hidden="true" tabindex="-1"></a>z_cool <span class="op">=</span> <span class="dv">5</span></span>
+<span id="cb22-43"><a href="#cb22-43" aria-hidden="true" tabindex="-1"></a>colors <span class="op">=</span> [<span class="st">"#069AF3"</span>, <span class="st">"#FE420F"</span>, <span class="st">"#00008B"</span>, <span class="st">"#008080"</span>, <span class="st">"#CC79A7"</span>,</span>
+<span id="cb22-44"><a href="#cb22-44" aria-hidden="true" tabindex="-1"></a>          <span class="st">"#DC143C"</span>, <span class="st">"#9614fa"</span>, <span class="st">"#0072B2"</span>, <span class="st">"#7BC8F6"</span>, <span class="st">"#04D8B2"</span>, <span class="st">"#800080"</span>, <span class="st">"#FF8072"</span>]</span>
+<span id="cb22-45"><a href="#cb22-45" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"axes.prop_cycle"</span>] <span class="op">=</span> cycler(color<span class="op">=</span>colors)</span>
 <span id="cb22-46"><a href="#cb22-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-47"><a href="#cb22-47" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sec_close_panel(path):</span>
-<span id="cb22-48"><a href="#cb22-48" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> Path(path)</span>
-<span id="cb22-49"><a href="#cb22-49" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> path.suffix.lower() <span class="op">==</span> <span class="st">".parquet"</span>:</span>
-<span id="cb22-50"><a href="#cb22-50" aria-hidden="true" tabindex="-1"></a>        <span class="im">import</span> pyarrow.parquet <span class="im">as</span> pq</span>
-<span id="cb22-51"><a href="#cb22-51" aria-hidden="true" tabindex="-1"></a>        pf <span class="op">=</span> pq.ParquetFile(path)</span>
-<span id="cb22-52"><a href="#cb22-52" aria-hidden="true" tabindex="-1"></a>        names <span class="op">=</span> pf.schema.names</span>
-<span id="cb22-53"><a href="#cb22-53" aria-hidden="true" tabindex="-1"></a>        date_col <span class="op">=</span> <span class="bu">next</span>((c <span class="cf">for</span> c <span class="kw">in</span> names <span class="cf">if</span> c.lower() <span class="kw">in</span> {<span class="st">"date"</span>, <span class="st">"datetime"</span>, <span class="st">"timestamp"</span>}), names[<span class="dv">0</span>])</span>
-<span id="cb22-54"><a href="#cb22-54" aria-hidden="true" tabindex="-1"></a>        close_cols <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> names <span class="cf">if</span> c.lower().endswith(<span class="st">"__close"</span>) <span class="kw">or</span> c.lower().endswith(<span class="st">"_close"</span>)]</span>
-<span id="cb22-55"><a href="#cb22-55" aria-hidden="true" tabindex="-1"></a>        raw <span class="op">=</span> pd.read_parquet(path, columns<span class="op">=</span>[date_col, <span class="op">*</span>close_cols])</span>
-<span id="cb22-56"><a href="#cb22-56" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
-<span id="cb22-57"><a href="#cb22-57" aria-hidden="true" tabindex="-1"></a>        raw <span class="op">=</span> pd.read_csv(path)</span>
-<span id="cb22-58"><a href="#cb22-58" aria-hidden="true" tabindex="-1"></a>        date_col <span class="op">=</span> <span class="bu">next</span>((c <span class="cf">for</span> c <span class="kw">in</span> raw.columns <span class="cf">if</span> c.lower() <span class="kw">in</span> {<span class="st">"date"</span>, <span class="st">"datetime"</span>, <span class="st">"timestamp"</span>}), raw.columns[<span class="dv">0</span>])</span>
-<span id="cb22-59"><a href="#cb22-59" aria-hidden="true" tabindex="-1"></a>        close_cols <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> raw.columns <span class="cf">if</span> c.lower().endswith(<span class="st">"__close"</span>) <span class="kw">or</span> c.lower().endswith(<span class="st">"_close"</span>)]</span>
-<span id="cb22-60"><a href="#cb22-60" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> raw[[date_col, <span class="op">*</span>close_cols]].copy()</span>
-<span id="cb22-61"><a href="#cb22-61" aria-hidden="true" tabindex="-1"></a>    out[date_col] <span class="op">=</span> pd.to_datetime(out[date_col], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
-<span id="cb22-62"><a href="#cb22-62" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> out.dropna(subset<span class="op">=</span>[date_col]).set_index(date_col).sort_index()</span>
-<span id="cb22-63"><a href="#cb22-63" aria-hidden="true" tabindex="-1"></a>    names <span class="op">=</span> {}</span>
-<span id="cb22-64"><a href="#cb22-64" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> c <span class="kw">in</span> close_cols:</span>
-<span id="cb22-65"><a href="#cb22-65" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> <span class="bu">str</span>(c).strip()</span>
-<span id="cb22-66"><a href="#cb22-66" aria-hidden="true" tabindex="-1"></a>        names[c] <span class="op">=</span> s.split(<span class="st">"__"</span>, <span class="dv">1</span>)[<span class="dv">0</span>].lower() <span class="cf">if</span> <span class="st">"__"</span> <span class="kw">in</span> s <span class="cf">else</span> s[:<span class="op">-</span><span class="dv">6</span>].lower() <span class="cf">if</span> s.lower().endswith(<span class="st">"_close"</span>) <span class="cf">else</span> s.lower()</span>
-<span id="cb22-67"><a href="#cb22-67" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> out.rename(columns<span class="op">=</span>names).<span class="bu">apply</span>(pd.to_numeric, errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
-<span id="cb22-68"><a href="#cb22-68" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out.T.groupby(level<span class="op">=</span><span class="dv">0</span>).last().T <span class="cf">if</span> out.columns.duplicated().<span class="bu">any</span>() <span class="cf">else</span> out</span>
-<span id="cb22-69"><a href="#cb22-69" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-70"><a href="#cb22-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-71"><a href="#cb22-71" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sec_zero_beta(index, r):</span>
-<span id="cb22-72"><a href="#cb22-72" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(<span class="fl">0.0</span>, index<span class="op">=</span>pd.DatetimeIndex(index)[:<span class="dv">1</span>], columns<span class="op">=</span>r.hedges)</span>
-<span id="cb22-73"><a href="#cb22-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-74"><a href="#cb22-74" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-75"><a href="#cb22-75" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sec_total_return(nav):</span>
-<span id="cb22-76"><a href="#cb22-76" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> pd.Series(nav).dropna()</span>
-<span id="cb22-77"><a href="#cb22-77" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(s.iloc[<span class="op">-</span><span class="dv">1</span>] <span class="op">/</span> s.iloc[<span class="dv">0</span>] <span class="op">-</span> <span class="dv">1</span>) <span class="cf">if</span> <span class="bu">len</span>(s) <span class="op">&gt;</span> <span class="dv">1</span> <span class="kw">and</span> <span class="bu">abs</span>(s.iloc[<span class="dv">0</span>]) <span class="op">&gt;</span> <span class="fl">1e-12</span> <span class="cf">else</span> np.nan</span>
-<span id="cb22-78"><a href="#cb22-78" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-79"><a href="#cb22-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-80"><a href="#cb22-80" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sec_maxdd(ret):</span>
-<span id="cb22-81"><a href="#cb22-81" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> pd.Series(ret).dropna()</span>
-<span id="cb22-82"><a href="#cb22-82" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(drawdown_series(s, input_kind<span class="op">=</span><span class="st">"returns"</span>).<span class="bu">min</span>()) <span class="cf">if</span> <span class="bu">len</span>(s) <span class="cf">else</span> np.nan</span>
-<span id="cb22-83"><a href="#cb22-83" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-84"><a href="#cb22-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-85"><a href="#cb22-85" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> sec_result:</span>
-<span id="cb22-86"><a href="#cb22-86" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, d):</span>
-<span id="cb22-87"><a href="#cb22-87" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.__dict__.update(d)</span>
-<span id="cb22-88"><a href="#cb22-88" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.net_returns <span class="op">=</span> d[<span class="st">"net_return"</span>]</span>
-<span id="cb22-89"><a href="#cb22-89" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.gross_returns <span class="op">=</span> d[<span class="st">"gross_return"</span>]</span>
-<span id="cb22-90"><a href="#cb22-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-91"><a href="#cb22-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-92"><a href="#cb22-92" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sec_spread_book(ret, target, hedge, beta, signal):</span>
-<span id="cb22-93"><a href="#cb22-93" aria-hidden="true" tabindex="-1"></a>    panel <span class="op">=</span> ret[[target, hedge]].dropna()</span>
-<span id="cb22-94"><a href="#cb22-94" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> beta[<span class="st">"beta"</span>].reindex(panel.index).ffill().shift(<span class="dv">1</span>)</span>
-<span id="cb22-95"><a href="#cb22-95" aria-hidden="true" tabindex="-1"></a>    sig <span class="op">=</span> signal.reindex(panel.index).fillna(<span class="fl">0.0</span>)</span>
-<span id="cb22-96"><a href="#cb22-96" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> pd.concat([panel, b.rename(<span class="st">"beta"</span>), sig.rename(<span class="st">"signal"</span>)], axis<span class="op">=</span><span class="dv">1</span>).dropna()</span>
-<span id="cb22-97"><a href="#cb22-97" aria-hidden="true" tabindex="-1"></a>    spread_ret <span class="op">=</span> data[target] <span class="op">-</span> data[<span class="st">"beta"</span>] <span class="op">*</span> data[hedge]</span>
-<span id="cb22-98"><a href="#cb22-98" aria-hidden="true" tabindex="-1"></a>    gross <span class="op">=</span> data[<span class="st">"signal"</span>] <span class="op">*</span> spread_ret</span>
-<span id="cb22-99"><a href="#cb22-99" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> pd.DataFrame({target: data[<span class="st">"signal"</span>], hedge: <span class="op">-</span>data[<span class="st">"signal"</span>] <span class="op">*</span> data[<span class="st">"beta"</span>]})</span>
-<span id="cb22-100"><a href="#cb22-100" aria-hidden="true" tabindex="-1"></a>    turnover <span class="op">=</span> weights.diff().<span class="bu">abs</span>().<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb22-101"><a href="#cb22-101" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(turnover):</span>
-<span id="cb22-102"><a href="#cb22-102" aria-hidden="true" tabindex="-1"></a>        turnover.iloc[<span class="dv">0</span>] <span class="op">=</span> weights.iloc[<span class="dv">0</span>].<span class="bu">abs</span>().<span class="bu">sum</span>()</span>
-<span id="cb22-103"><a href="#cb22-103" aria-hidden="true" tabindex="-1"></a>    cost <span class="op">=</span> turnover <span class="op">*</span> cost_bps <span class="op">/</span> <span class="fl">10000.0</span></span>
-<span id="cb22-104"><a href="#cb22-104" aria-hidden="true" tabindex="-1"></a>    net <span class="op">=</span> gross <span class="op">-</span> cost</span>
-<span id="cb22-105"><a href="#cb22-105" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> sec_result({</span>
-<span id="cb22-106"><a href="#cb22-106" aria-hidden="true" tabindex="-1"></a>        <span class="st">"target_return"</span>: spread_ret,</span>
-<span id="cb22-107"><a href="#cb22-107" aria-hidden="true" tabindex="-1"></a>        <span class="st">"gross_return"</span>: gross,</span>
-<span id="cb22-108"><a href="#cb22-108" aria-hidden="true" tabindex="-1"></a>        <span class="st">"net_return"</span>: net,</span>
-<span id="cb22-109"><a href="#cb22-109" aria-hidden="true" tabindex="-1"></a>        <span class="st">"turnover"</span>: turnover,</span>
-<span id="cb22-110"><a href="#cb22-110" aria-hidden="true" tabindex="-1"></a>        <span class="st">"cost"</span>: cost,</span>
-<span id="cb22-111"><a href="#cb22-111" aria-hidden="true" tabindex="-1"></a>        <span class="st">"beta"</span>: beta[[<span class="st">"beta"</span>]].rename(columns<span class="op">=</span>{<span class="st">"beta"</span>: hedge}).reindex(data.index).ffill(),</span>
-<span id="cb22-112"><a href="#cb22-112" aria-hidden="true" tabindex="-1"></a>        <span class="st">"gross_values"</span>: (<span class="dv">1</span> <span class="op">+</span> gross).cumprod(),</span>
-<span id="cb22-113"><a href="#cb22-113" aria-hidden="true" tabindex="-1"></a>        <span class="st">"net_values"</span>: (<span class="dv">1</span> <span class="op">+</span> net).cumprod(),</span>
-<span id="cb22-114"><a href="#cb22-114" aria-hidden="true" tabindex="-1"></a>        <span class="st">"target_values"</span>: (<span class="dv">1</span> <span class="op">+</span> spread_ret).cumprod(),</span>
-<span id="cb22-115"><a href="#cb22-115" aria-hidden="true" tabindex="-1"></a>    })</span>
-<span id="cb22-116"><a href="#cb22-116" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-117"><a href="#cb22-117" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-118"><a href="#cb22-118" aria-hidden="true" tabindex="-1"></a>etf_path <span class="op">=</span> Path(<span class="st">"../data/ETF_data.csv"</span>)</span>
-<span id="cb22-119"><a href="#cb22-119" aria-hidden="true" tabindex="-1"></a>nasdaq_path <span class="op">=</span> Path(<span class="st">"../data/nasdaq_all_close_volume.parquet"</span>)</span>
-<span id="cb22-120"><a href="#cb22-120" aria-hidden="true" tabindex="-1"></a>etf_px_sec <span class="op">=</span> sec_close_panel(etf_path)</span>
-<span id="cb22-121"><a href="#cb22-121" aria-hidden="true" tabindex="-1"></a>stock_px_sec <span class="op">=</span> sec_close_panel(nasdaq_path)</span>
-<span id="cb22-122"><a href="#cb22-122" aria-hidden="true" tabindex="-1"></a>px_sec_all <span class="op">=</span> pd.concat([stock_px_sec, etf_px_sec], axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb22-123"><a href="#cb22-123" aria-hidden="true" tabindex="-1"></a>px_sec_all <span class="op">=</span> px_sec_all.loc[:, <span class="op">~</span>px_sec_all.columns.duplicated(keep<span class="op">=</span><span class="st">"last"</span>)]</span>
-<span id="cb22-124"><a href="#cb22-124" aria-hidden="true" tabindex="-1"></a>px_sec_all <span class="op">=</span> px_sec_all.loc[(px_sec_all.index <span class="op">&gt;=</span> start) <span class="op">&amp;</span> (px_sec_all.index <span class="op">&lt;=</span> end)].sort_index()</span>
-<span id="cb22-125"><a href="#cb22-125" aria-hidden="true" tabindex="-1"></a>ret_m_all <span class="op">=</span> prices_to_returns(px_sec_all, kind<span class="op">=</span><span class="st">"log"</span>)</span>
-<span id="cb22-126"><a href="#cb22-126" aria-hidden="true" tabindex="-1"></a>ret_b_all <span class="op">=</span> prices_to_returns(px_sec_all, kind<span class="op">=</span><span class="st">"simple"</span>)</span>
+<span id="cb22-47"><a href="#cb22-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-48"><a href="#cb22-48" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sec_zero_beta(index, r):</span>
+<span id="cb22-49"><a href="#cb22-49" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(<span class="fl">0.0</span>, index<span class="op">=</span>pd.DatetimeIndex(index)[:<span class="dv">1</span>], columns<span class="op">=</span>r.hedges)</span>
+<span id="cb22-50"><a href="#cb22-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-51"><a href="#cb22-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-52"><a href="#cb22-52" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sec_total_return(nav):</span>
+<span id="cb22-53"><a href="#cb22-53" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> pd.Series(nav).dropna()</span>
+<span id="cb22-54"><a href="#cb22-54" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(s.iloc[<span class="op">-</span><span class="dv">1</span>] <span class="op">/</span> s.iloc[<span class="dv">0</span>] <span class="op">-</span> <span class="dv">1</span>) <span class="cf">if</span> <span class="bu">len</span>(s) <span class="op">&gt;</span> <span class="dv">1</span> <span class="kw">and</span> <span class="bu">abs</span>(s.iloc[<span class="dv">0</span>]) <span class="op">&gt;</span> <span class="fl">1e-12</span> <span class="cf">else</span> np.nan</span>
+<span id="cb22-55"><a href="#cb22-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-56"><a href="#cb22-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-57"><a href="#cb22-57" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sec_maxdd(ret):</span>
+<span id="cb22-58"><a href="#cb22-58" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> pd.Series(ret).dropna()</span>
+<span id="cb22-59"><a href="#cb22-59" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(drawdown_series(s, input_kind<span class="op">=</span><span class="st">"returns"</span>).<span class="bu">min</span>()) <span class="cf">if</span> <span class="bu">len</span>(s) <span class="cf">else</span> np.nan</span>
+<span id="cb22-60"><a href="#cb22-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-61"><a href="#cb22-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-62"><a href="#cb22-62" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> sec_result:</span>
+<span id="cb22-63"><a href="#cb22-63" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, d):</span>
+<span id="cb22-64"><a href="#cb22-64" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.__dict__.update(d)</span>
+<span id="cb22-65"><a href="#cb22-65" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.net_returns <span class="op">=</span> d[<span class="st">"net_return"</span>]</span>
+<span id="cb22-66"><a href="#cb22-66" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.gross_returns <span class="op">=</span> d[<span class="st">"gross_return"</span>]</span>
+<span id="cb22-67"><a href="#cb22-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-68"><a href="#cb22-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-69"><a href="#cb22-69" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sec_spread_book(ret, target, hedge, beta, signal):</span>
+<span id="cb22-70"><a href="#cb22-70" aria-hidden="true" tabindex="-1"></a>    panel <span class="op">=</span> ret[[target, hedge]].dropna()</span>
+<span id="cb22-71"><a href="#cb22-71" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> beta[<span class="st">"beta"</span>].reindex(panel.index).ffill().shift(<span class="dv">1</span>)</span>
+<span id="cb22-72"><a href="#cb22-72" aria-hidden="true" tabindex="-1"></a>    sig <span class="op">=</span> signal.reindex(panel.index).fillna(<span class="fl">0.0</span>)</span>
+<span id="cb22-73"><a href="#cb22-73" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> pd.concat([panel, b.rename(<span class="st">"beta"</span>), sig.rename(<span class="st">"signal"</span>)], axis<span class="op">=</span><span class="dv">1</span>).dropna()</span>
+<span id="cb22-74"><a href="#cb22-74" aria-hidden="true" tabindex="-1"></a>    spread_ret <span class="op">=</span> data[target] <span class="op">-</span> data[<span class="st">"beta"</span>] <span class="op">*</span> data[hedge]</span>
+<span id="cb22-75"><a href="#cb22-75" aria-hidden="true" tabindex="-1"></a>    gross <span class="op">=</span> data[<span class="st">"signal"</span>] <span class="op">*</span> spread_ret</span>
+<span id="cb22-76"><a href="#cb22-76" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> pd.DataFrame({target: data[<span class="st">"signal"</span>], hedge: <span class="op">-</span>data[<span class="st">"signal"</span>] <span class="op">*</span> data[<span class="st">"beta"</span>]})</span>
+<span id="cb22-77"><a href="#cb22-77" aria-hidden="true" tabindex="-1"></a>    turnover <span class="op">=</span> weights.diff().<span class="bu">abs</span>().<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb22-78"><a href="#cb22-78" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(turnover):</span>
+<span id="cb22-79"><a href="#cb22-79" aria-hidden="true" tabindex="-1"></a>        turnover.iloc[<span class="dv">0</span>] <span class="op">=</span> weights.iloc[<span class="dv">0</span>].<span class="bu">abs</span>().<span class="bu">sum</span>()</span>
+<span id="cb22-80"><a href="#cb22-80" aria-hidden="true" tabindex="-1"></a>    cost <span class="op">=</span> turnover <span class="op">*</span> cost_bps <span class="op">/</span> <span class="fl">10000.0</span></span>
+<span id="cb22-81"><a href="#cb22-81" aria-hidden="true" tabindex="-1"></a>    net <span class="op">=</span> gross <span class="op">-</span> cost</span>
+<span id="cb22-82"><a href="#cb22-82" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> sec_result({</span>
+<span id="cb22-83"><a href="#cb22-83" aria-hidden="true" tabindex="-1"></a>        <span class="st">"target_return"</span>: spread_ret,</span>
+<span id="cb22-84"><a href="#cb22-84" aria-hidden="true" tabindex="-1"></a>        <span class="st">"gross_return"</span>: gross,</span>
+<span id="cb22-85"><a href="#cb22-85" aria-hidden="true" tabindex="-1"></a>        <span class="st">"net_return"</span>: net,</span>
+<span id="cb22-86"><a href="#cb22-86" aria-hidden="true" tabindex="-1"></a>        <span class="st">"turnover"</span>: turnover,</span>
+<span id="cb22-87"><a href="#cb22-87" aria-hidden="true" tabindex="-1"></a>        <span class="st">"cost"</span>: cost,</span>
+<span id="cb22-88"><a href="#cb22-88" aria-hidden="true" tabindex="-1"></a>        <span class="st">"beta"</span>: beta[[<span class="st">"beta"</span>]].rename(columns<span class="op">=</span>{<span class="st">"beta"</span>: hedge}).reindex(data.index).ffill(),</span>
+<span id="cb22-89"><a href="#cb22-89" aria-hidden="true" tabindex="-1"></a>        <span class="st">"gross_values"</span>: (<span class="dv">1</span> <span class="op">+</span> gross).cumprod(),</span>
+<span id="cb22-90"><a href="#cb22-90" aria-hidden="true" tabindex="-1"></a>        <span class="st">"net_values"</span>: (<span class="dv">1</span> <span class="op">+</span> net).cumprod(),</span>
+<span id="cb22-91"><a href="#cb22-91" aria-hidden="true" tabindex="-1"></a>        <span class="st">"target_values"</span>: (<span class="dv">1</span> <span class="op">+</span> spread_ret).cumprod(),</span>
+<span id="cb22-92"><a href="#cb22-92" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb22-93"><a href="#cb22-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-94"><a href="#cb22-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-95"><a href="#cb22-95" aria-hidden="true" tabindex="-1"></a>etf_path <span class="op">=</span> Path(<span class="st">"../data/ETF_data.csv"</span>)</span>
+<span id="cb22-96"><a href="#cb22-96" aria-hidden="true" tabindex="-1"></a>nasdaq_path <span class="op">=</span> Path(<span class="st">"../data/nasdaq_all_close_volume.parquet"</span>)</span>
+<span id="cb22-97"><a href="#cb22-97" aria-hidden="true" tabindex="-1"></a>etf_px_sec <span class="op">=</span> load_yfinance_panel(etf_path, fields<span class="op">=</span>(<span class="st">"close"</span>,), start<span class="op">=</span>start, end<span class="op">=</span>end, lowercase<span class="op">=</span><span class="va">True</span>)[<span class="st">"close"</span>]</span>
+<span id="cb22-98"><a href="#cb22-98" aria-hidden="true" tabindex="-1"></a>stock_px_sec <span class="op">=</span> load_yfinance_panel(nasdaq_path, fields<span class="op">=</span>(<span class="st">"close"</span>,), start<span class="op">=</span>start, end<span class="op">=</span>end, lowercase<span class="op">=</span><span class="va">True</span>)[<span class="st">"close"</span>]</span>
+<span id="cb22-99"><a href="#cb22-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-100"><a href="#cb22-100" aria-hidden="true" tabindex="-1"></a>px_sec_all <span class="op">=</span> pd.concat([stock_px_sec, etf_px_sec], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb22-101"><a href="#cb22-101" aria-hidden="true" tabindex="-1"></a>px_sec_all <span class="op">=</span> px_sec_all.loc[:, <span class="op">~</span>px_sec_all.columns.duplicated(keep<span class="op">=</span><span class="st">"last"</span>)]</span>
+<span id="cb22-102"><a href="#cb22-102" aria-hidden="true" tabindex="-1"></a>px_sec_all <span class="op">=</span> px_sec_all.loc[(px_sec_all.index <span class="op">&gt;=</span> start) <span class="op">&amp;</span> (px_sec_all.index <span class="op">&lt;=</span> end)].sort_index()</span>
+<span id="cb22-103"><a href="#cb22-103" aria-hidden="true" tabindex="-1"></a>ret_m_all <span class="op">=</span> prices_to_returns(px_sec_all, kind<span class="op">=</span><span class="st">"log"</span>)</span>
+<span id="cb22-104"><a href="#cb22-104" aria-hidden="true" tabindex="-1"></a>ret_b_all <span class="op">=</span> prices_to_returns(px_sec_all, kind<span class="op">=</span><span class="st">"simple"</span>)</span>
+<span id="cb22-105"><a href="#cb22-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-106"><a href="#cb22-106" aria-hidden="true" tabindex="-1"></a>rel_sec <span class="op">=</span> [</span>
+<span id="cb22-107"><a href="#cb22-107" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"efa_hefa"</span>, <span class="st">"efa"</span>, [<span class="st">"hefa"</span>, <span class="st">"uup"</span>], <span class="st">"developed ex-us hedged by currency-hedged EAFE and dollar"</span>),</span>
+<span id="cb22-108"><a href="#cb22-108" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ewj_dxj"</span>, <span class="st">"ewj"</span>, [<span class="st">"dxj"</span>, <span class="st">"fxy"</span>, <span class="st">"spy"</span>], <span class="st">"japan hedged by currency-hedged japan, yen, and market"</span>),</span>
+<span id="cb22-109"><a href="#cb22-109" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ezu_hezu"</span>, <span class="st">"ezu"</span>, [<span class="st">"hezu"</span>, <span class="st">"fxe"</span>, <span class="st">"spy"</span>], <span class="st">"eurozone hedged by currency-hedged eurozone, euro, and market"</span>),</span>
+<span id="cb22-110"><a href="#cb22-110" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ewc_macro"</span>, <span class="st">"ewc"</span>, [<span class="st">"spy"</span>, <span class="st">"xle"</span>, <span class="st">"dbc"</span>, <span class="st">"fxc"</span>], <span class="st">"canada hedged by market, energy, commodities, and cad"</span>),</span>
+<span id="cb22-111"><a href="#cb22-111" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ewa_macro"</span>, <span class="st">"ewa"</span>, [<span class="st">"efa"</span>, <span class="st">"dbc"</span>, <span class="st">"fxa"</span>], <span class="st">"australia hedged by developed markets, commodities, and aud"</span>),</span>
+<span id="cb22-112"><a href="#cb22-112" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ewh_macro"</span>, <span class="st">"ewh"</span>, [<span class="st">"fxi"</span>, <span class="st">"mchi"</span>, <span class="st">"vnq"</span>, <span class="st">"uup"</span>], <span class="st">"hong kong hedged by china, property, and dollar"</span>),</span>
+<span id="cb22-113"><a href="#cb22-113" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ewt_macro"</span>, <span class="st">"ewt"</span>, [<span class="st">"eem"</span>, <span class="st">"smh"</span>, <span class="st">"qqq"</span>, <span class="st">"uup"</span>], <span class="st">"taiwan hedged by emerging markets, semis, growth, and dollar"</span>),</span>
+<span id="cb22-114"><a href="#cb22-114" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ewy_macro"</span>, <span class="st">"ewy"</span>, [<span class="st">"eem"</span>, <span class="st">"smh"</span>, <span class="st">"ewt"</span>, <span class="st">"uup"</span>], <span class="st">"korea hedged by emerging markets, semis, taiwan, and dollar"</span>),</span>
+<span id="cb22-115"><a href="#cb22-115" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"inda_macro"</span>, <span class="st">"inda"</span>, [<span class="st">"eem"</span>, <span class="st">"qqq"</span>, <span class="st">"uup"</span>], <span class="st">"india hedged by emerging markets, growth, and dollar"</span>),</span>
+<span id="cb22-116"><a href="#cb22-116" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ewz_macro"</span>, <span class="st">"ewz"</span>, [<span class="st">"eem"</span>, <span class="st">"dbc"</span>, <span class="st">"uup"</span>], <span class="st">"brazil hedged by emerging markets, commodities, and dollar"</span>),</span>
+<span id="cb22-117"><a href="#cb22-117" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"eww_macro"</span>, <span class="st">"eww"</span>, [<span class="st">"spy"</span>, <span class="st">"eem"</span>, <span class="st">"uup"</span>], <span class="st">"mexico hedged by us market, emerging markets, and dollar"</span>),</span>
+<span id="cb22-118"><a href="#cb22-118" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"fxi_macro"</span>, <span class="st">"fxi"</span>, [<span class="st">"mchi"</span>, <span class="st">"kweb"</span>, <span class="st">"ashr"</span>, <span class="st">"uup"</span>], <span class="st">"china large caps hedged by china etf sleeves and dollar"</span>),</span>
+<span id="cb22-119"><a href="#cb22-119" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb22-120"><a href="#cb22-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-121"><a href="#cb22-121" aria-hidden="true" tabindex="-1"></a>sec_view <span class="op">=</span> rel_table(rel_sec, px_sec_all.columns)</span>
+<span id="cb22-122"><a href="#cb22-122" aria-hidden="true" tabindex="-1"></a>rel_sec, missing_sec <span class="op">=</span> filter_rels(rel_sec, px_sec_all.columns)</span>
+<span id="cb22-123"><a href="#cb22-123" aria-hidden="true" tabindex="-1"></a>tickers_sec <span class="op">=</span> rel_tickers(rel_sec)</span>
+<span id="cb22-124"><a href="#cb22-124" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"available secondary tickers: </span><span class="sc">{</span><span class="bu">len</span>(tickers_sec)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb22-125"><a href="#cb22-125" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"missing secondary tickers:"</span>, missing_sec)</span>
+<span id="cb22-126"><a href="#cb22-126" aria-hidden="true" tabindex="-1"></a>display(sec_view)</span>
 <span id="cb22-127"><a href="#cb22-127" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-128"><a href="#cb22-128" aria-hidden="true" tabindex="-1"></a>rel_sec <span class="op">=</span> [</span>
-<span id="cb22-129"><a href="#cb22-129" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"efa_hefa"</span>, <span class="st">"efa"</span>, [<span class="st">"hefa"</span>, <span class="st">"uup"</span>], <span class="st">"developed ex-us hedged by currency-hedged EAFE and dollar"</span>),</span>
-<span id="cb22-130"><a href="#cb22-130" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ewj_dxj"</span>, <span class="st">"ewj"</span>, [<span class="st">"dxj"</span>, <span class="st">"fxy"</span>, <span class="st">"spy"</span>], <span class="st">"japan hedged by currency-hedged japan, yen, and market"</span>),</span>
-<span id="cb22-131"><a href="#cb22-131" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ezu_hezu"</span>, <span class="st">"ezu"</span>, [<span class="st">"hezu"</span>, <span class="st">"fxe"</span>, <span class="st">"spy"</span>], <span class="st">"eurozone hedged by currency-hedged eurozone, euro, and market"</span>),</span>
-<span id="cb22-132"><a href="#cb22-132" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ewc_macro"</span>, <span class="st">"ewc"</span>, [<span class="st">"spy"</span>, <span class="st">"xle"</span>, <span class="st">"dbc"</span>, <span class="st">"fxc"</span>], <span class="st">"canada hedged by market, energy, commodities, and cad"</span>),</span>
-<span id="cb22-133"><a href="#cb22-133" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ewa_macro"</span>, <span class="st">"ewa"</span>, [<span class="st">"efa"</span>, <span class="st">"dbc"</span>, <span class="st">"fxa"</span>], <span class="st">"australia hedged by developed markets, commodities, and aud"</span>),</span>
-<span id="cb22-134"><a href="#cb22-134" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ewh_macro"</span>, <span class="st">"ewh"</span>, [<span class="st">"fxi"</span>, <span class="st">"mchi"</span>, <span class="st">"vnq"</span>, <span class="st">"uup"</span>], <span class="st">"hong kong hedged by china, property, and dollar"</span>),</span>
-<span id="cb22-135"><a href="#cb22-135" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ewt_macro"</span>, <span class="st">"ewt"</span>, [<span class="st">"eem"</span>, <span class="st">"smh"</span>, <span class="st">"qqq"</span>, <span class="st">"uup"</span>], <span class="st">"taiwan hedged by emerging markets, semis, growth, and dollar"</span>),</span>
-<span id="cb22-136"><a href="#cb22-136" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ewy_macro"</span>, <span class="st">"ewy"</span>, [<span class="st">"eem"</span>, <span class="st">"smh"</span>, <span class="st">"ewt"</span>, <span class="st">"uup"</span>], <span class="st">"korea hedged by emerging markets, semis, taiwan, and dollar"</span>),</span>
-<span id="cb22-137"><a href="#cb22-137" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"inda_macro"</span>, <span class="st">"inda"</span>, [<span class="st">"eem"</span>, <span class="st">"qqq"</span>, <span class="st">"uup"</span>], <span class="st">"india hedged by emerging markets, growth, and dollar"</span>),</span>
-<span id="cb22-138"><a href="#cb22-138" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"ewz_macro"</span>, <span class="st">"ewz"</span>, [<span class="st">"eem"</span>, <span class="st">"dbc"</span>, <span class="st">"uup"</span>], <span class="st">"brazil hedged by emerging markets, commodities, and dollar"</span>),</span>
-<span id="cb22-139"><a href="#cb22-139" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"eww_macro"</span>, <span class="st">"eww"</span>, [<span class="st">"spy"</span>, <span class="st">"eem"</span>, <span class="st">"uup"</span>], <span class="st">"mexico hedged by us market, emerging markets, and dollar"</span>),</span>
-<span id="cb22-140"><a href="#cb22-140" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"fxi_macro"</span>, <span class="st">"fxi"</span>, [<span class="st">"mchi"</span>, <span class="st">"kweb"</span>, <span class="st">"ashr"</span>, <span class="st">"uup"</span>], <span class="st">"china large caps hedged by china etf sleeves and dollar"</span>),</span>
-<span id="cb22-141"><a href="#cb22-141" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb22-142"><a href="#cb22-142" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-143"><a href="#cb22-143" aria-hidden="true" tabindex="-1"></a>sec_view <span class="op">=</span> rel_table(rel_sec, px_sec_all.columns)</span>
-<span id="cb22-144"><a href="#cb22-144" aria-hidden="true" tabindex="-1"></a>rel_sec, missing_sec <span class="op">=</span> filter_rels(rel_sec, px_sec_all.columns)</span>
-<span id="cb22-145"><a href="#cb22-145" aria-hidden="true" tabindex="-1"></a>tickers_sec <span class="op">=</span> rel_tickers(rel_sec)</span>
-<span id="cb22-146"><a href="#cb22-146" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"available secondary tickers: </span><span class="sc">{</span><span class="bu">len</span>(tickers_sec)<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb22-147"><a href="#cb22-147" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"missing secondary tickers:"</span>, missing_sec)</span>
-<span id="cb22-148"><a href="#cb22-148" aria-hidden="true" tabindex="-1"></a>display(sec_view)</span>
-<span id="cb22-149"><a href="#cb22-149" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-150"><a href="#cb22-150" aria-hidden="true" tabindex="-1"></a>px_sec <span class="op">=</span> px_sec_all[tickers_sec]</span>
-<span id="cb22-151"><a href="#cb22-151" aria-hidden="true" tabindex="-1"></a>ret_m_sec <span class="op">=</span> ret_m_all[tickers_sec]</span>
-<span id="cb22-152"><a href="#cb22-152" aria-hidden="true" tabindex="-1"></a>ret_b_sec <span class="op">=</span> ret_b_all[tickers_sec]</span>
-<span id="cb22-153"><a href="#cb22-153" aria-hidden="true" tabindex="-1"></a>display(coverage_table(px_sec, rel_sec).<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb22-154"><a href="#cb22-154" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-155"><a href="#cb22-155" aria-hidden="true" tabindex="-1"></a>betas, books_sec, blog_sec <span class="op">=</span> {}, {}, {}</span>
-<span id="cb22-156"><a href="#cb22-156" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> r <span class="kw">in</span> rel_sec:</span>
-<span id="cb22-157"><a href="#cb22-157" aria-hidden="true" tabindex="-1"></a>    betas[(r.name, <span class="st">"static"</span>)] <span class="op">=</span> ols_beta(ret_m_sec, r, n_train<span class="op">=</span>n_train)</span>
-<span id="cb22-158"><a href="#cb22-158" aria-hidden="true" tabindex="-1"></a>    betas[(r.name, <span class="st">"rolling"</span>)] <span class="op">=</span> roll_beta(ret_m_sec, r, win<span class="op">=</span>win, n_train<span class="op">=</span>n_train)</span>
-<span id="cb22-159"><a href="#cb22-159" aria-hidden="true" tabindex="-1"></a>    betas[(r.name, <span class="st">"ridge"</span>)] <span class="op">=</span> ridge_beta(ret_m_sec, r, win<span class="op">=</span>win, alpha<span class="op">=</span>alpha, n_train<span class="op">=</span>n_train)</span>
-<span id="cb22-160"><a href="#cb22-160" aria-hidden="true" tabindex="-1"></a>    betas[(r.name, <span class="st">"kalman"</span>)] <span class="op">=</span> kf_beta(ret_m_sec, r, n_train<span class="op">=</span>n_train)</span>
-<span id="cb22-161"><a href="#cb22-161" aria-hidden="true" tabindex="-1"></a>    books_sec[<span class="ss">f"</span><span class="sc">{</span>r<span class="sc">.</span>name<span class="sc">}</span><span class="ss"> | target"</span>] <span class="op">=</span> {<span class="st">"target"</span>: r.target, <span class="st">"hedges"</span>: r.hedges, <span class="st">"beta"</span>: sec_zero_beta(ret_b_sec.index, r)}</span>
-<span id="cb22-162"><a href="#cb22-162" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> m <span class="kw">in</span> [<span class="st">"static"</span>, <span class="st">"rolling"</span>, <span class="st">"ridge"</span>, <span class="st">"kalman"</span>]:</span>
-<span id="cb22-163"><a href="#cb22-163" aria-hidden="true" tabindex="-1"></a>        b1 <span class="op">=</span> rebalance_beta(betas[(r.name, m)], ret_b_sec.index, freq<span class="op">=</span>freq)</span>
-<span id="cb22-164"><a href="#cb22-164" aria-hidden="true" tabindex="-1"></a>        b2 <span class="op">=</span> b1.ffill() <span class="cf">if</span> m <span class="op">==</span> <span class="st">"static"</span> <span class="cf">else</span> band_beta(b1, band<span class="op">=</span>band)</span>
-<span id="cb22-165"><a href="#cb22-165" aria-hidden="true" tabindex="-1"></a>        books_sec[<span class="ss">f"</span><span class="sc">{</span>r<span class="sc">.</span>name<span class="sc">}</span><span class="ss"> | </span><span class="sc">{</span>m<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> {<span class="st">"target"</span>: r.target, <span class="st">"hedges"</span>: r.hedges, <span class="st">"beta"</span>: b2}</span>
-<span id="cb22-166"><a href="#cb22-166" aria-hidden="true" tabindex="-1"></a>        blog_sec[<span class="ss">f"</span><span class="sc">{</span>r<span class="sc">.</span>name<span class="sc">}</span><span class="ss"> | </span><span class="sc">{</span>m<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> {<span class="st">"rel"</span>: r.name, <span class="st">"model"</span>: m, <span class="st">"desired"</span>: betas[(r.name, m)], <span class="st">"traded"</span>: b2}</span>
-<span id="cb22-167"><a href="#cb22-167" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-168"><a href="#cb22-168" aria-hidden="true" tabindex="-1"></a>bt_sec <span class="op">=</span> run_many_hedge_backtests(books_sec, returns<span class="op">=</span>ret_b_sec[tickers_sec], cost_bps<span class="op">=</span>cost_bps)</span>
-<span id="cb22-169"><a href="#cb22-169" aria-hidden="true" tabindex="-1"></a>tab_diag_sec <span class="op">=</span> diag_table(ret_m_sec, rel_sec, beta_log<span class="op">=</span>blog_sec, ann<span class="op">=</span>ann)</span>
-<span id="cb22-170"><a href="#cb22-170" aria-hidden="true" tabindex="-1"></a>tab_model_sec <span class="op">=</span> model_table(bt_sec, rel_sec, ret_m_sec, ann<span class="op">=</span>ann)</span>
-<span id="cb22-171"><a href="#cb22-171" aria-hidden="true" tabindex="-1"></a>tab_score_sec <span class="op">=</span> score_table(tab_model_sec)</span>
-<span id="cb22-172"><a href="#cb22-172" aria-hidden="true" tabindex="-1"></a>tab_best_sec <span class="op">=</span> best_table(tab_score_sec)</span>
-<span id="cb22-173"><a href="#cb22-173" aria-hidden="true" tabindex="-1"></a>tab_robust_sec <span class="op">=</span> robust_table(tab_score_sec)</span>
-<span id="cb22-174"><a href="#cb22-174" aria-hidden="true" tabindex="-1"></a>tab_quality_sec <span class="op">=</span> quality_table(tab_model_sec)</span>
-<span id="cb22-175"><a href="#cb22-175" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-176"><a href="#cb22-176" aria-hidden="true" tabindex="-1"></a>display(tab_diag_sec.<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb22-177"><a href="#cb22-177" aria-hidden="true" tabindex="-1"></a>display(tab_best_sec.<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb22-178"><a href="#cb22-178" aria-hidden="true" tabindex="-1"></a>display(tab_robust_sec.<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb22-179"><a href="#cb22-179" aria-hidden="true" tabindex="-1"></a>display(tab_quality_sec.<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb22-180"><a href="#cb22-180" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-181"><a href="#cb22-181" aria-hidden="true" tabindex="-1"></a>pairs_sec <span class="op">=</span> [</span>
-<span id="cb22-182"><a href="#cb22-182" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"efa_hefa"</span>, <span class="st">"efa"</span>, <span class="st">"hefa"</span>),</span>
-<span id="cb22-183"><a href="#cb22-183" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"ewj_dxj"</span>, <span class="st">"ewj"</span>, <span class="st">"dxj"</span>),</span>
-<span id="cb22-184"><a href="#cb22-184" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"ezu_hezu"</span>, <span class="st">"ezu"</span>, <span class="st">"hezu"</span>),</span>
-<span id="cb22-185"><a href="#cb22-185" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"fxi_mchi"</span>, <span class="st">"fxi"</span>, <span class="st">"mchi"</span>),</span>
-<span id="cb22-186"><a href="#cb22-186" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"ewt_ewy"</span>, <span class="st">"ewt"</span>, <span class="st">"ewy"</span>),</span>
-<span id="cb22-187"><a href="#cb22-187" aria-hidden="true" tabindex="-1"></a>]</span>
-<span id="cb22-188"><a href="#cb22-188" aria-hidden="true" tabindex="-1"></a>pairs_sec <span class="op">=</span> [p <span class="cf">for</span> p <span class="kw">in</span> pairs_sec <span class="cf">if</span> p[<span class="dv">1</span>] <span class="kw">in</span> px_sec_all.columns <span class="kw">and</span> p[<span class="dv">2</span>] <span class="kw">in</span> px_sec_all.columns]</span>
-<span id="cb22-189"><a href="#cb22-189" aria-hidden="true" tabindex="-1"></a>source_fns_sec <span class="op">=</span> {</span>
-<span id="cb22-190"><a href="#cb22-190" aria-hidden="true" tabindex="-1"></a>    <span class="st">"static_log_ols"</span>: <span class="kw">lambda</span> t, h: lib_price_ols_beta(px_sec_all, t, h, n_train<span class="op">=</span>n_train),</span>
-<span id="cb22-191"><a href="#cb22-191" aria-hidden="true" tabindex="-1"></a>    <span class="st">"rolling_log_ols"</span>: <span class="kw">lambda</span> t, h: lib_roll_price_beta(px_sec_all, t, h, win<span class="op">=</span>win, n_train<span class="op">=</span>n_train),</span>
-<span id="cb22-192"><a href="#cb22-192" aria-hidden="true" tabindex="-1"></a>    <span class="st">"kalman_log"</span>: <span class="kw">lambda</span> t, h: lib_kf_price_beta(px_sec_all, t, h, n_train<span class="op">=</span>n_train),</span>
-<span id="cb22-193"><a href="#cb22-193" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb22-194"><a href="#cb22-194" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-195"><a href="#cb22-195" aria-hidden="true" tabindex="-1"></a>gate_rows_sec, resid_sec, z_sec, meta_sec <span class="op">=</span> [], {}, {}, {}</span>
-<span id="cb22-196"><a href="#cb22-196" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> pair_name, target, hedge <span class="kw">in</span> pairs_sec:</span>
-<span id="cb22-197"><a href="#cb22-197" aria-hidden="true" tabindex="-1"></a>    lp <span class="op">=</span> np.log(px_sec_all[[target, hedge]].dropna())</span>
-<span id="cb22-198"><a href="#cb22-198" aria-hidden="true" tabindex="-1"></a>    eg_p <span class="op">=</span> lib_eg_test(lp[target], lp[hedge])</span>
-<span id="cb22-199"><a href="#cb22-199" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> beta_source, fn <span class="kw">in</span> source_fns_sec.items():</span>
-<span id="cb22-200"><a href="#cb22-200" aria-hidden="true" tabindex="-1"></a>        params <span class="op">=</span> fn(target, hedge)</span>
-<span id="cb22-201"><a href="#cb22-201" aria-hidden="true" tabindex="-1"></a>        spread <span class="op">=</span> lib_log_spread(px_sec_all, target, hedge, params)</span>
-<span id="cb22-202"><a href="#cb22-202" aria-hidden="true" tabindex="-1"></a>        sig <span class="op">=</span> lib_z_signal(spread, z_win<span class="op">=</span>z_win, z_in<span class="op">=</span>z_in, z_out<span class="op">=</span>z_out, z_stop<span class="op">=</span>z_stop, z_cool<span class="op">=</span>z_cool)</span>
-<span id="cb22-203"><a href="#cb22-203" aria-hidden="true" tabindex="-1"></a>        key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>pair_name<span class="sc">}</span><span class="ss"> | </span><span class="sc">{</span>beta_source<span class="sc">}</span><span class="ss">"</span></span>
-<span id="cb22-204"><a href="#cb22-204" aria-hidden="true" tabindex="-1"></a>        res <span class="op">=</span> sec_spread_book(ret_b_all, target, hedge, params, sig[<span class="st">"signal"</span>])</span>
-<span id="cb22-205"><a href="#cb22-205" aria-hidden="true" tabindex="-1"></a>        sdrop <span class="op">=</span> spread.dropna()</span>
-<span id="cb22-206"><a href="#cb22-206" aria-hidden="true" tabindex="-1"></a>        split <span class="op">=</span> <span class="bu">max</span>(<span class="bu">len</span>(sdrop) <span class="op">//</span> <span class="dv">2</span>, <span class="dv">30</span>)</span>
-<span id="cb22-207"><a href="#cb22-207" aria-hidden="true" tabindex="-1"></a>        first, second <span class="op">=</span> sdrop.iloc[:split], sdrop.iloc[split:]</span>
-<span id="cb22-208"><a href="#cb22-208" aria-hidden="true" tabindex="-1"></a>        trades <span class="op">=</span> <span class="bu">int</span>((sig[<span class="st">"signal"</span>].ne(<span class="dv">0</span>) <span class="op">&amp;</span> sig[<span class="st">"signal"</span>].shift(<span class="dv">1</span>).fillna(<span class="dv">0</span>).eq(<span class="dv">0</span>)).<span class="bu">sum</span>())</span>
-<span id="cb22-209"><a href="#cb22-209" aria-hidden="true" tabindex="-1"></a>        gate_rows_sec.append({</span>
-<span id="cb22-210"><a href="#cb22-210" aria-hidden="true" tabindex="-1"></a>            <span class="st">"pair"</span>: pair_name,</span>
-<span id="cb22-211"><a href="#cb22-211" aria-hidden="true" tabindex="-1"></a>            <span class="st">"beta_source"</span>: beta_source,</span>
-<span id="cb22-212"><a href="#cb22-212" aria-hidden="true" tabindex="-1"></a>            <span class="st">"eg_p"</span>: eg_p,</span>
-<span id="cb22-213"><a href="#cb22-213" aria-hidden="true" tabindex="-1"></a>            <span class="st">"adf_p"</span>: lib_adf_test(spread),</span>
-<span id="cb22-214"><a href="#cb22-214" aria-hidden="true" tabindex="-1"></a>            <span class="st">"half_life"</span>: lib_half_life(spread),</span>
-<span id="cb22-215"><a href="#cb22-215" aria-hidden="true" tabindex="-1"></a>            <span class="st">"spread_vol"</span>: spread.diff().std() <span class="op">*</span> np.sqrt(ann),</span>
-<span id="cb22-216"><a href="#cb22-216" aria-hidden="true" tabindex="-1"></a>            <span class="st">"trades"</span>: trades,</span>
-<span id="cb22-217"><a href="#cb22-217" aria-hidden="true" tabindex="-1"></a>            <span class="st">"cost_drag"</span>: <span class="bu">max</span>(sec_total_return(res.gross_values) <span class="op">-</span> sec_total_return(res.net_values), <span class="fl">0.0</span>),</span>
-<span id="cb22-218"><a href="#cb22-218" aria-hidden="true" tabindex="-1"></a>            <span class="st">"cost_drag_ann"</span>: res.cost.mean() <span class="op">*</span> ann <span class="cf">if</span> <span class="bu">len</span>(res.cost) <span class="cf">else</span> <span class="fl">0.0</span>,</span>
-<span id="cb22-219"><a href="#cb22-219" aria-hidden="true" tabindex="-1"></a>            <span class="st">"break_p"</span>: <span class="bu">max</span>(lib_adf_test(first), lib_adf_test(second)) <span class="cf">if</span> <span class="bu">len</span>(second) <span class="op">&gt;=</span> <span class="dv">30</span> <span class="cf">else</span> np.nan,</span>
-<span id="cb22-220"><a href="#cb22-220" aria-hidden="true" tabindex="-1"></a>            <span class="st">"beta_turnover"</span>: params[<span class="st">"beta"</span>].dropna().diff().<span class="bu">abs</span>().mean(),</span>
-<span id="cb22-221"><a href="#cb22-221" aria-hidden="true" tabindex="-1"></a>            <span class="st">"key"</span>: key,</span>
-<span id="cb22-222"><a href="#cb22-222" aria-hidden="true" tabindex="-1"></a>        })</span>
-<span id="cb22-223"><a href="#cb22-223" aria-hidden="true" tabindex="-1"></a>        resid_sec[key], z_sec[key], meta_sec[key] <span class="op">=</span> res, sig, {<span class="st">"pair"</span>: pair_name, <span class="st">"beta_source"</span>: beta_source}</span>
-<span id="cb22-224"><a href="#cb22-224" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-225"><a href="#cb22-225" aria-hidden="true" tabindex="-1"></a>tab_gate_sec <span class="op">=</span> lib_resid_gate(gate_rows_sec)</span>
-<span id="cb22-226"><a href="#cb22-226" aria-hidden="true" tabindex="-1"></a>display(tab_gate_sec[[<span class="st">"pair"</span>, <span class="st">"beta_source"</span>, <span class="st">"eg_p"</span>, <span class="st">"adf_p"</span>, <span class="st">"half_life"</span>, <span class="st">"spread_vol"</span>, <span class="st">"trades"</span>, <span class="st">"cost_drag_ann"</span>, <span class="st">"beta_turnover"</span>, <span class="st">"eligible"</span>]].<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb22-227"><a href="#cb22-227" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-228"><a href="#cb22-228" aria-hidden="true" tabindex="-1"></a>resid_rows_sec <span class="op">=</span> []</span>
-<span id="cb22-229"><a href="#cb22-229" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> key, res <span class="kw">in</span> resid_sec.items():</span>
-<span id="cb22-230"><a href="#cb22-230" aria-hidden="true" tabindex="-1"></a>    ret <span class="op">=</span> res.net_returns.dropna()</span>
-<span id="cb22-231"><a href="#cb22-231" aria-hidden="true" tabindex="-1"></a>    sig <span class="op">=</span> z_sec[key][<span class="st">"signal"</span>]</span>
-<span id="cb22-232"><a href="#cb22-232" aria-hidden="true" tabindex="-1"></a>    resid_rows_sec.append({</span>
-<span id="cb22-233"><a href="#cb22-233" aria-hidden="true" tabindex="-1"></a>        <span class="st">"pair"</span>: meta_sec[key][<span class="st">"pair"</span>],</span>
-<span id="cb22-234"><a href="#cb22-234" aria-hidden="true" tabindex="-1"></a>        <span class="st">"beta_source"</span>: meta_sec[key][<span class="st">"beta_source"</span>],</span>
-<span id="cb22-235"><a href="#cb22-235" aria-hidden="true" tabindex="-1"></a>        <span class="st">"trades"</span>: <span class="bu">int</span>((sig.ne(<span class="dv">0</span>) <span class="op">&amp;</span> sig.shift(<span class="dv">1</span>).fillna(<span class="dv">0</span>).eq(<span class="dv">0</span>)).<span class="bu">sum</span>()),</span>
-<span id="cb22-236"><a href="#cb22-236" aria-hidden="true" tabindex="-1"></a>        <span class="st">"net_return"</span>: sec_total_return(res.net_values),</span>
-<span id="cb22-237"><a href="#cb22-237" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ann_vol"</span>: ret.std() <span class="op">*</span> np.sqrt(ann),</span>
-<span id="cb22-238"><a href="#cb22-238" aria-hidden="true" tabindex="-1"></a>        <span class="st">"sharpe"</span>: ret.mean() <span class="op">/</span> ret.std() <span class="op">*</span> np.sqrt(ann) <span class="cf">if</span> ret.std() <span class="op">&gt;</span> <span class="fl">1e-12</span> <span class="cf">else</span> np.nan,</span>
-<span id="cb22-239"><a href="#cb22-239" aria-hidden="true" tabindex="-1"></a>        <span class="st">"maxdd"</span>: sec_maxdd(ret),</span>
-<span id="cb22-240"><a href="#cb22-240" aria-hidden="true" tabindex="-1"></a>        <span class="st">"cost_drag"</span>: <span class="bu">max</span>(sec_total_return(res.gross_values) <span class="op">-</span> sec_total_return(res.net_values), <span class="fl">0.0</span>),</span>
-<span id="cb22-241"><a href="#cb22-241" aria-hidden="true" tabindex="-1"></a>        <span class="st">"cost_drag_ann"</span>: res.cost.mean() <span class="op">*</span> ann <span class="cf">if</span> <span class="bu">len</span>(res.cost) <span class="cf">else</span> <span class="fl">0.0</span>,</span>
-<span id="cb22-242"><a href="#cb22-242" aria-hidden="true" tabindex="-1"></a>        <span class="st">"key"</span>: key,</span>
-<span id="cb22-243"><a href="#cb22-243" aria-hidden="true" tabindex="-1"></a>    })</span>
-<span id="cb22-244"><a href="#cb22-244" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-245"><a href="#cb22-245" aria-hidden="true" tabindex="-1"></a>tab_resid_sec <span class="op">=</span> pd.DataFrame(resid_rows_sec)</span>
-<span id="cb22-246"><a href="#cb22-246" aria-hidden="true" tabindex="-1"></a>pick_sec <span class="op">=</span> tab_gate_sec[tab_gate_sec[<span class="st">"eligible"</span>] <span class="op">&amp;</span> <span class="op">~</span>tab_gate_sec[<span class="st">"beta_source"</span>].eq(<span class="st">"kalman_log"</span>)]</span>
-<span id="cb22-247"><a href="#cb22-247" aria-hidden="true" tabindex="-1"></a>rolling_sec <span class="op">=</span> pick_sec.loc[pick_sec[<span class="st">"beta_source"</span>].eq(<span class="st">"rolling_log_ols"</span>), <span class="st">"key"</span>].tolist()</span>
-<span id="cb22-248"><a href="#cb22-248" aria-hidden="true" tabindex="-1"></a>keep_sec <span class="op">=</span> rolling_sec <span class="kw">or</span> pick_sec[<span class="st">"key"</span>].tolist()</span>
-<span id="cb22-249"><a href="#cb22-249" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> keep_sec <span class="kw">and</span> <span class="kw">not</span> tab_resid_sec.empty:</span>
-<span id="cb22-250"><a href="#cb22-250" aria-hidden="true" tabindex="-1"></a>    keep_sec <span class="op">=</span> tab_resid_sec[<span class="op">~</span>tab_resid_sec[<span class="st">"beta_source"</span>].eq(<span class="st">"kalman_log"</span>)].sort_values(<span class="st">"trades"</span>, ascending<span class="op">=</span><span class="va">False</span>)[<span class="st">"key"</span>].head(<span class="dv">5</span>).tolist()</span>
-<span id="cb22-251"><a href="#cb22-251" aria-hidden="true" tabindex="-1"></a>show_resid_sec <span class="op">=</span> tab_resid_sec[tab_resid_sec[<span class="st">"key"</span>].isin(keep_sec)].copy()</span>
-<span id="cb22-252"><a href="#cb22-252" aria-hidden="true" tabindex="-1"></a>display(show_resid_sec.drop(columns<span class="op">=</span><span class="st">"key"</span>).<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb22-253"><a href="#cb22-253" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-254"><a href="#cb22-254" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">3</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="fl">17.5</span>, <span class="fl">12.5</span>))</span>
-<span id="cb22-255"><a href="#cb22-255" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> ax.ravel()</span>
-<span id="cb22-256"><a href="#cb22-256" aria-hidden="true" tabindex="-1"></a>hplot.plot_score_heatmap(tab_score_sec, ax<span class="op">=</span>ax[<span class="dv">0</span>], title<span class="op">=</span><span class="st">"secondary score"</span>)</span>
-<span id="cb22-257"><a href="#cb22-257" aria-hidden="true" tabindex="-1"></a>hplot.plot_metric_heatmap(tab_score_sec, <span class="st">"vol_red"</span>, ax<span class="op">=</span>ax[<span class="dv">1</span>], title<span class="op">=</span><span class="st">"vol reduction"</span>)</span>
-<span id="cb22-258"><a href="#cb22-258" aria-hidden="true" tabindex="-1"></a>hplot.plot_metric_heatmap(tab_score_sec, <span class="st">"es_red"</span>, ax<span class="op">=</span>ax[<span class="dv">2</span>], title<span class="op">=</span><span class="st">"es reduction"</span>)</span>
-<span id="cb22-259"><a href="#cb22-259" aria-hidden="true" tabindex="-1"></a>hplot.plot_metric_heatmap(tab_score_sec, <span class="st">"cost_drag_ann"</span>, ax<span class="op">=</span>ax[<span class="dv">3</span>], title<span class="op">=</span><span class="st">"annual cost drag"</span>)</span>
-<span id="cb22-260"><a href="#cb22-260" aria-hidden="true" tabindex="-1"></a>hplot.plot_model_counts(tab_best_sec, ax<span class="op">=</span>ax[<span class="dv">4</span>], title<span class="op">=</span><span class="st">"best model count"</span>, colors<span class="op">=</span>colors)</span>
-<span id="cb22-261"><a href="#cb22-261" aria-hidden="true" tabindex="-1"></a>hplot.plot_score_gap(tab_score_sec, ax<span class="op">=</span>ax[<span class="dv">5</span>], title<span class="op">=</span><span class="st">"score gap"</span>, colors<span class="op">=</span>colors)</span>
-<span id="cb22-262"><a href="#cb22-262" aria-hidden="true" tabindex="-1"></a>hplot.plot_quality_bar(tab_quality_sec, ax<span class="op">=</span>ax[<span class="dv">6</span>], title<span class="op">=</span><span class="st">"best vol reduction"</span>, colors<span class="op">=</span>colors)</span>
-<span id="cb22-263"><a href="#cb22-263" aria-hidden="true" tabindex="-1"></a>hplot.plot_resid_gate_counts(tab_gate_sec, ax<span class="op">=</span>ax[<span class="dv">7</span>], title<span class="op">=</span><span class="st">"eligible residual gates"</span>, colors<span class="op">=</span>colors)</span>
-<span id="cb22-264"><a href="#cb22-264" aria-hidden="true" tabindex="-1"></a>hplot.plot_resid_return_bar(show_resid_sec <span class="cf">if</span> <span class="kw">not</span> show_resid_sec.empty <span class="cf">else</span> tab_resid_sec, ax<span class="op">=</span>ax[<span class="dv">8</span>], title<span class="op">=</span><span class="st">"residual trading net return"</span>, colors<span class="op">=</span>colors)</span>
-<span id="cb22-265"><a href="#cb22-265" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb22-128"><a href="#cb22-128" aria-hidden="true" tabindex="-1"></a>px_sec <span class="op">=</span> px_sec_all[tickers_sec]</span>
+<span id="cb22-129"><a href="#cb22-129" aria-hidden="true" tabindex="-1"></a>ret_m_sec <span class="op">=</span> ret_m_all[tickers_sec]</span>
+<span id="cb22-130"><a href="#cb22-130" aria-hidden="true" tabindex="-1"></a>ret_b_sec <span class="op">=</span> ret_b_all[tickers_sec]</span>
+<span id="cb22-131"><a href="#cb22-131" aria-hidden="true" tabindex="-1"></a>display(coverage_table(px_sec, rel_sec).<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb22-132"><a href="#cb22-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-133"><a href="#cb22-133" aria-hidden="true" tabindex="-1"></a>betas, books_sec, blog_sec <span class="op">=</span> {}, {}, {}</span>
+<span id="cb22-134"><a href="#cb22-134" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> r <span class="kw">in</span> rel_sec:</span>
+<span id="cb22-135"><a href="#cb22-135" aria-hidden="true" tabindex="-1"></a>    betas[(r.name, <span class="st">"static"</span>)] <span class="op">=</span> ols_beta(ret_m_sec, r, n_train<span class="op">=</span>n_train)</span>
+<span id="cb22-136"><a href="#cb22-136" aria-hidden="true" tabindex="-1"></a>    betas[(r.name, <span class="st">"rolling"</span>)] <span class="op">=</span> roll_beta(ret_m_sec, r, win<span class="op">=</span>win, n_train<span class="op">=</span>n_train)</span>
+<span id="cb22-137"><a href="#cb22-137" aria-hidden="true" tabindex="-1"></a>    betas[(r.name, <span class="st">"ridge"</span>)] <span class="op">=</span> ridge_beta(ret_m_sec, r, win<span class="op">=</span>win, alpha<span class="op">=</span>alpha, n_train<span class="op">=</span>n_train)</span>
+<span id="cb22-138"><a href="#cb22-138" aria-hidden="true" tabindex="-1"></a>    betas[(r.name, <span class="st">"kalman"</span>)] <span class="op">=</span> kf_beta(ret_m_sec, r, n_train<span class="op">=</span>n_train)</span>
+<span id="cb22-139"><a href="#cb22-139" aria-hidden="true" tabindex="-1"></a>    books_sec[<span class="ss">f"</span><span class="sc">{</span>r<span class="sc">.</span>name<span class="sc">}</span><span class="ss"> | target"</span>] <span class="op">=</span> {<span class="st">"target"</span>: r.target, <span class="st">"hedges"</span>: r.hedges, <span class="st">"beta"</span>: sec_zero_beta(ret_b_sec.index, r)}</span>
+<span id="cb22-140"><a href="#cb22-140" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> m <span class="kw">in</span> [<span class="st">"static"</span>, <span class="st">"rolling"</span>, <span class="st">"ridge"</span>, <span class="st">"kalman"</span>]:</span>
+<span id="cb22-141"><a href="#cb22-141" aria-hidden="true" tabindex="-1"></a>        b1 <span class="op">=</span> rebalance_beta(betas[(r.name, m)], ret_b_sec.index, freq<span class="op">=</span>freq)</span>
+<span id="cb22-142"><a href="#cb22-142" aria-hidden="true" tabindex="-1"></a>        b2 <span class="op">=</span> b1.ffill() <span class="cf">if</span> m <span class="op">==</span> <span class="st">"static"</span> <span class="cf">else</span> band_beta(b1, band<span class="op">=</span>band)</span>
+<span id="cb22-143"><a href="#cb22-143" aria-hidden="true" tabindex="-1"></a>        books_sec[<span class="ss">f"</span><span class="sc">{</span>r<span class="sc">.</span>name<span class="sc">}</span><span class="ss"> | </span><span class="sc">{</span>m<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> {<span class="st">"target"</span>: r.target, <span class="st">"hedges"</span>: r.hedges, <span class="st">"beta"</span>: b2}</span>
+<span id="cb22-144"><a href="#cb22-144" aria-hidden="true" tabindex="-1"></a>        blog_sec[<span class="ss">f"</span><span class="sc">{</span>r<span class="sc">.</span>name<span class="sc">}</span><span class="ss"> | </span><span class="sc">{</span>m<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> {<span class="st">"rel"</span>: r.name, <span class="st">"model"</span>: m, <span class="st">"desired"</span>: betas[(r.name, m)], <span class="st">"traded"</span>: b2}</span>
+<span id="cb22-145"><a href="#cb22-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-146"><a href="#cb22-146" aria-hidden="true" tabindex="-1"></a>bt_sec <span class="op">=</span> run_many_hedge_backtests(books_sec, returns<span class="op">=</span>ret_b_sec[tickers_sec], cost_bps<span class="op">=</span>cost_bps)</span>
+<span id="cb22-147"><a href="#cb22-147" aria-hidden="true" tabindex="-1"></a>tab_diag_sec <span class="op">=</span> diag_table(ret_m_sec, rel_sec, beta_log<span class="op">=</span>blog_sec, ann<span class="op">=</span>ann)</span>
+<span id="cb22-148"><a href="#cb22-148" aria-hidden="true" tabindex="-1"></a>tab_model_sec <span class="op">=</span> model_table(bt_sec, rel_sec, ret_m_sec, ann<span class="op">=</span>ann)</span>
+<span id="cb22-149"><a href="#cb22-149" aria-hidden="true" tabindex="-1"></a>tab_score_sec <span class="op">=</span> score_table(tab_model_sec)</span>
+<span id="cb22-150"><a href="#cb22-150" aria-hidden="true" tabindex="-1"></a>tab_best_sec <span class="op">=</span> best_table(tab_score_sec)</span>
+<span id="cb22-151"><a href="#cb22-151" aria-hidden="true" tabindex="-1"></a>tab_robust_sec <span class="op">=</span> robust_table(tab_score_sec)</span>
+<span id="cb22-152"><a href="#cb22-152" aria-hidden="true" tabindex="-1"></a>tab_quality_sec <span class="op">=</span> quality_table(tab_model_sec)</span>
+<span id="cb22-153"><a href="#cb22-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-154"><a href="#cb22-154" aria-hidden="true" tabindex="-1"></a>display(tab_diag_sec.<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb22-155"><a href="#cb22-155" aria-hidden="true" tabindex="-1"></a>display(tab_best_sec.<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb22-156"><a href="#cb22-156" aria-hidden="true" tabindex="-1"></a>display(tab_robust_sec.<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb22-157"><a href="#cb22-157" aria-hidden="true" tabindex="-1"></a>display(tab_quality_sec.<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb22-158"><a href="#cb22-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-159"><a href="#cb22-159" aria-hidden="true" tabindex="-1"></a>pairs_sec <span class="op">=</span> [</span>
+<span id="cb22-160"><a href="#cb22-160" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"efa_hefa"</span>, <span class="st">"efa"</span>, <span class="st">"hefa"</span>),</span>
+<span id="cb22-161"><a href="#cb22-161" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"ewj_dxj"</span>, <span class="st">"ewj"</span>, <span class="st">"dxj"</span>),</span>
+<span id="cb22-162"><a href="#cb22-162" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"ezu_hezu"</span>, <span class="st">"ezu"</span>, <span class="st">"hezu"</span>),</span>
+<span id="cb22-163"><a href="#cb22-163" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"fxi_mchi"</span>, <span class="st">"fxi"</span>, <span class="st">"mchi"</span>),</span>
+<span id="cb22-164"><a href="#cb22-164" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"ewt_ewy"</span>, <span class="st">"ewt"</span>, <span class="st">"ewy"</span>),</span>
+<span id="cb22-165"><a href="#cb22-165" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb22-166"><a href="#cb22-166" aria-hidden="true" tabindex="-1"></a>pairs_sec <span class="op">=</span> [p <span class="cf">for</span> p <span class="kw">in</span> pairs_sec <span class="cf">if</span> p[<span class="dv">1</span>] <span class="kw">in</span> px_sec_all.columns <span class="kw">and</span> p[<span class="dv">2</span>] <span class="kw">in</span> px_sec_all.columns]</span>
+<span id="cb22-167"><a href="#cb22-167" aria-hidden="true" tabindex="-1"></a>source_fns_sec <span class="op">=</span> {</span>
+<span id="cb22-168"><a href="#cb22-168" aria-hidden="true" tabindex="-1"></a>    <span class="st">"static_log_ols"</span>: <span class="kw">lambda</span> t, h: lib_price_ols_beta(px_sec_all, t, h, n_train<span class="op">=</span>n_train),</span>
+<span id="cb22-169"><a href="#cb22-169" aria-hidden="true" tabindex="-1"></a>    <span class="st">"rolling_log_ols"</span>: <span class="kw">lambda</span> t, h: lib_roll_price_beta(px_sec_all, t, h, win<span class="op">=</span>win, n_train<span class="op">=</span>n_train),</span>
+<span id="cb22-170"><a href="#cb22-170" aria-hidden="true" tabindex="-1"></a>    <span class="st">"kalman_log"</span>: <span class="kw">lambda</span> t, h: lib_kf_price_beta(px_sec_all, t, h, n_train<span class="op">=</span>n_train),</span>
+<span id="cb22-171"><a href="#cb22-171" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb22-172"><a href="#cb22-172" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-173"><a href="#cb22-173" aria-hidden="true" tabindex="-1"></a>gate_rows_sec, resid_sec, z_sec, meta_sec <span class="op">=</span> [], {}, {}, {}</span>
+<span id="cb22-174"><a href="#cb22-174" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> pair_name, target, hedge <span class="kw">in</span> pairs_sec:</span>
+<span id="cb22-175"><a href="#cb22-175" aria-hidden="true" tabindex="-1"></a>    lp <span class="op">=</span> np.log(px_sec_all[[target, hedge]].dropna())</span>
+<span id="cb22-176"><a href="#cb22-176" aria-hidden="true" tabindex="-1"></a>    eg_p <span class="op">=</span> lib_eg_test(lp[target], lp[hedge])</span>
+<span id="cb22-177"><a href="#cb22-177" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> beta_source, fn <span class="kw">in</span> source_fns_sec.items():</span>
+<span id="cb22-178"><a href="#cb22-178" aria-hidden="true" tabindex="-1"></a>        params <span class="op">=</span> fn(target, hedge)</span>
+<span id="cb22-179"><a href="#cb22-179" aria-hidden="true" tabindex="-1"></a>        spread <span class="op">=</span> lib_log_spread(px_sec_all, target, hedge, params)</span>
+<span id="cb22-180"><a href="#cb22-180" aria-hidden="true" tabindex="-1"></a>        sig <span class="op">=</span> lib_z_signal(spread, z_win<span class="op">=</span>z_win, z_in<span class="op">=</span>z_in, z_out<span class="op">=</span>z_out, z_stop<span class="op">=</span>z_stop, z_cool<span class="op">=</span>z_cool)</span>
+<span id="cb22-181"><a href="#cb22-181" aria-hidden="true" tabindex="-1"></a>        key <span class="op">=</span> <span class="ss">f"</span><span class="sc">{</span>pair_name<span class="sc">}</span><span class="ss"> | </span><span class="sc">{</span>beta_source<span class="sc">}</span><span class="ss">"</span></span>
+<span id="cb22-182"><a href="#cb22-182" aria-hidden="true" tabindex="-1"></a>        res <span class="op">=</span> sec_spread_book(ret_b_all, target, hedge, params, sig[<span class="st">"signal"</span>])</span>
+<span id="cb22-183"><a href="#cb22-183" aria-hidden="true" tabindex="-1"></a>        sdrop <span class="op">=</span> spread.dropna()</span>
+<span id="cb22-184"><a href="#cb22-184" aria-hidden="true" tabindex="-1"></a>        split <span class="op">=</span> <span class="bu">max</span>(<span class="bu">len</span>(sdrop) <span class="op">//</span> <span class="dv">2</span>, <span class="dv">30</span>)</span>
+<span id="cb22-185"><a href="#cb22-185" aria-hidden="true" tabindex="-1"></a>        first, second <span class="op">=</span> sdrop.iloc[:split], sdrop.iloc[split:]</span>
+<span id="cb22-186"><a href="#cb22-186" aria-hidden="true" tabindex="-1"></a>        trades <span class="op">=</span> <span class="bu">int</span>((sig[<span class="st">"signal"</span>].ne(<span class="dv">0</span>) <span class="op">&amp;</span> sig[<span class="st">"signal"</span>].shift(<span class="dv">1</span>).fillna(<span class="dv">0</span>).eq(<span class="dv">0</span>)).<span class="bu">sum</span>())</span>
+<span id="cb22-187"><a href="#cb22-187" aria-hidden="true" tabindex="-1"></a>        gate_rows_sec.append({</span>
+<span id="cb22-188"><a href="#cb22-188" aria-hidden="true" tabindex="-1"></a>            <span class="st">"pair"</span>: pair_name,</span>
+<span id="cb22-189"><a href="#cb22-189" aria-hidden="true" tabindex="-1"></a>            <span class="st">"beta_source"</span>: beta_source,</span>
+<span id="cb22-190"><a href="#cb22-190" aria-hidden="true" tabindex="-1"></a>            <span class="st">"eg_p"</span>: eg_p,</span>
+<span id="cb22-191"><a href="#cb22-191" aria-hidden="true" tabindex="-1"></a>            <span class="st">"adf_p"</span>: lib_adf_test(spread),</span>
+<span id="cb22-192"><a href="#cb22-192" aria-hidden="true" tabindex="-1"></a>            <span class="st">"half_life"</span>: lib_half_life(spread),</span>
+<span id="cb22-193"><a href="#cb22-193" aria-hidden="true" tabindex="-1"></a>            <span class="st">"spread_vol"</span>: spread.diff().std() <span class="op">*</span> np.sqrt(ann),</span>
+<span id="cb22-194"><a href="#cb22-194" aria-hidden="true" tabindex="-1"></a>            <span class="st">"trades"</span>: trades,</span>
+<span id="cb22-195"><a href="#cb22-195" aria-hidden="true" tabindex="-1"></a>            <span class="st">"cost_drag"</span>: <span class="bu">max</span>(sec_total_return(res.gross_values) <span class="op">-</span> sec_total_return(res.net_values), <span class="fl">0.0</span>),</span>
+<span id="cb22-196"><a href="#cb22-196" aria-hidden="true" tabindex="-1"></a>            <span class="st">"cost_drag_ann"</span>: res.cost.mean() <span class="op">*</span> ann <span class="cf">if</span> <span class="bu">len</span>(res.cost) <span class="cf">else</span> <span class="fl">0.0</span>,</span>
+<span id="cb22-197"><a href="#cb22-197" aria-hidden="true" tabindex="-1"></a>            <span class="st">"break_p"</span>: <span class="bu">max</span>(lib_adf_test(first), lib_adf_test(second)) <span class="cf">if</span> <span class="bu">len</span>(second) <span class="op">&gt;=</span> <span class="dv">30</span> <span class="cf">else</span> np.nan,</span>
+<span id="cb22-198"><a href="#cb22-198" aria-hidden="true" tabindex="-1"></a>            <span class="st">"beta_turnover"</span>: params[<span class="st">"beta"</span>].dropna().diff().<span class="bu">abs</span>().mean(),</span>
+<span id="cb22-199"><a href="#cb22-199" aria-hidden="true" tabindex="-1"></a>            <span class="st">"key"</span>: key,</span>
+<span id="cb22-200"><a href="#cb22-200" aria-hidden="true" tabindex="-1"></a>        })</span>
+<span id="cb22-201"><a href="#cb22-201" aria-hidden="true" tabindex="-1"></a>        resid_sec[key], z_sec[key], meta_sec[key] <span class="op">=</span> res, sig, {<span class="st">"pair"</span>: pair_name, <span class="st">"beta_source"</span>: beta_source}</span>
+<span id="cb22-202"><a href="#cb22-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-203"><a href="#cb22-203" aria-hidden="true" tabindex="-1"></a>tab_gate_sec <span class="op">=</span> lib_resid_gate(gate_rows_sec)</span>
+<span id="cb22-204"><a href="#cb22-204" aria-hidden="true" tabindex="-1"></a>display(tab_gate_sec[[<span class="st">"pair"</span>, <span class="st">"beta_source"</span>, <span class="st">"eg_p"</span>, <span class="st">"adf_p"</span>, <span class="st">"half_life"</span>, <span class="st">"spread_vol"</span>, <span class="st">"trades"</span>, <span class="st">"cost_drag_ann"</span>, <span class="st">"beta_turnover"</span>, <span class="st">"eligible"</span>]].<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb22-205"><a href="#cb22-205" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-206"><a href="#cb22-206" aria-hidden="true" tabindex="-1"></a>resid_rows_sec <span class="op">=</span> []</span>
+<span id="cb22-207"><a href="#cb22-207" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> key, res <span class="kw">in</span> resid_sec.items():</span>
+<span id="cb22-208"><a href="#cb22-208" aria-hidden="true" tabindex="-1"></a>    ret <span class="op">=</span> res.net_returns.dropna()</span>
+<span id="cb22-209"><a href="#cb22-209" aria-hidden="true" tabindex="-1"></a>    sig <span class="op">=</span> z_sec[key][<span class="st">"signal"</span>]</span>
+<span id="cb22-210"><a href="#cb22-210" aria-hidden="true" tabindex="-1"></a>    resid_rows_sec.append({</span>
+<span id="cb22-211"><a href="#cb22-211" aria-hidden="true" tabindex="-1"></a>        <span class="st">"pair"</span>: meta_sec[key][<span class="st">"pair"</span>],</span>
+<span id="cb22-212"><a href="#cb22-212" aria-hidden="true" tabindex="-1"></a>        <span class="st">"beta_source"</span>: meta_sec[key][<span class="st">"beta_source"</span>],</span>
+<span id="cb22-213"><a href="#cb22-213" aria-hidden="true" tabindex="-1"></a>        <span class="st">"trades"</span>: <span class="bu">int</span>((sig.ne(<span class="dv">0</span>) <span class="op">&amp;</span> sig.shift(<span class="dv">1</span>).fillna(<span class="dv">0</span>).eq(<span class="dv">0</span>)).<span class="bu">sum</span>()),</span>
+<span id="cb22-214"><a href="#cb22-214" aria-hidden="true" tabindex="-1"></a>        <span class="st">"net_return"</span>: sec_total_return(res.net_values),</span>
+<span id="cb22-215"><a href="#cb22-215" aria-hidden="true" tabindex="-1"></a>        <span class="st">"ann_vol"</span>: ret.std() <span class="op">*</span> np.sqrt(ann),</span>
+<span id="cb22-216"><a href="#cb22-216" aria-hidden="true" tabindex="-1"></a>        <span class="st">"sharpe"</span>: ret.mean() <span class="op">/</span> ret.std() <span class="op">*</span> np.sqrt(ann) <span class="cf">if</span> ret.std() <span class="op">&gt;</span> <span class="fl">1e-12</span> <span class="cf">else</span> np.nan,</span>
+<span id="cb22-217"><a href="#cb22-217" aria-hidden="true" tabindex="-1"></a>        <span class="st">"maxdd"</span>: sec_maxdd(ret),</span>
+<span id="cb22-218"><a href="#cb22-218" aria-hidden="true" tabindex="-1"></a>        <span class="st">"cost_drag"</span>: <span class="bu">max</span>(sec_total_return(res.gross_values) <span class="op">-</span> sec_total_return(res.net_values), <span class="fl">0.0</span>),</span>
+<span id="cb22-219"><a href="#cb22-219" aria-hidden="true" tabindex="-1"></a>        <span class="st">"cost_drag_ann"</span>: res.cost.mean() <span class="op">*</span> ann <span class="cf">if</span> <span class="bu">len</span>(res.cost) <span class="cf">else</span> <span class="fl">0.0</span>,</span>
+<span id="cb22-220"><a href="#cb22-220" aria-hidden="true" tabindex="-1"></a>        <span class="st">"key"</span>: key,</span>
+<span id="cb22-221"><a href="#cb22-221" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb22-222"><a href="#cb22-222" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-223"><a href="#cb22-223" aria-hidden="true" tabindex="-1"></a>tab_resid_sec <span class="op">=</span> pd.DataFrame(resid_rows_sec)</span>
+<span id="cb22-224"><a href="#cb22-224" aria-hidden="true" tabindex="-1"></a>pick_sec <span class="op">=</span> tab_gate_sec[tab_gate_sec[<span class="st">"eligible"</span>] <span class="op">&amp;</span> <span class="op">~</span>tab_gate_sec[<span class="st">"beta_source"</span>].eq(<span class="st">"kalman_log"</span>)]</span>
+<span id="cb22-225"><a href="#cb22-225" aria-hidden="true" tabindex="-1"></a>rolling_sec <span class="op">=</span> pick_sec.loc[pick_sec[<span class="st">"beta_source"</span>].eq(<span class="st">"rolling_log_ols"</span>), <span class="st">"key"</span>].tolist()</span>
+<span id="cb22-226"><a href="#cb22-226" aria-hidden="true" tabindex="-1"></a>keep_sec <span class="op">=</span> rolling_sec <span class="kw">or</span> pick_sec[<span class="st">"key"</span>].tolist()</span>
+<span id="cb22-227"><a href="#cb22-227" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> keep_sec <span class="kw">and</span> <span class="kw">not</span> tab_resid_sec.empty:</span>
+<span id="cb22-228"><a href="#cb22-228" aria-hidden="true" tabindex="-1"></a>    keep_sec <span class="op">=</span> tab_resid_sec[<span class="op">~</span>tab_resid_sec[<span class="st">"beta_source"</span>].eq(<span class="st">"kalman_log"</span>)].sort_values(<span class="st">"trades"</span>, ascending<span class="op">=</span><span class="va">False</span>)[<span class="st">"key"</span>].head(<span class="dv">5</span>).tolist()</span>
+<span id="cb22-229"><a href="#cb22-229" aria-hidden="true" tabindex="-1"></a>show_resid_sec <span class="op">=</span> tab_resid_sec[tab_resid_sec[<span class="st">"key"</span>].isin(keep_sec)].copy()</span>
+<span id="cb22-230"><a href="#cb22-230" aria-hidden="true" tabindex="-1"></a>display(show_resid_sec.drop(columns<span class="op">=</span><span class="st">"key"</span>).<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb22-231"><a href="#cb22-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-232"><a href="#cb22-232" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(<span class="dv">3</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="fl">17.5</span>, <span class="fl">12.5</span>))</span>
+<span id="cb22-233"><a href="#cb22-233" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> ax.ravel()</span>
+<span id="cb22-234"><a href="#cb22-234" aria-hidden="true" tabindex="-1"></a>hplot.plot_score_heatmap(tab_score_sec, ax<span class="op">=</span>ax[<span class="dv">0</span>], title<span class="op">=</span><span class="st">"secondary score"</span>)</span>
+<span id="cb22-235"><a href="#cb22-235" aria-hidden="true" tabindex="-1"></a>hplot.plot_metric_heatmap(tab_score_sec, <span class="st">"vol_red"</span>, ax<span class="op">=</span>ax[<span class="dv">1</span>], title<span class="op">=</span><span class="st">"vol reduction"</span>)</span>
+<span id="cb22-236"><a href="#cb22-236" aria-hidden="true" tabindex="-1"></a>hplot.plot_metric_heatmap(tab_score_sec, <span class="st">"es_red"</span>, ax<span class="op">=</span>ax[<span class="dv">2</span>], title<span class="op">=</span><span class="st">"es reduction"</span>)</span>
+<span id="cb22-237"><a href="#cb22-237" aria-hidden="true" tabindex="-1"></a>hplot.plot_metric_heatmap(tab_score_sec, <span class="st">"cost_drag_ann"</span>, ax<span class="op">=</span>ax[<span class="dv">3</span>], title<span class="op">=</span><span class="st">"annual cost drag"</span>)</span>
+<span id="cb22-238"><a href="#cb22-238" aria-hidden="true" tabindex="-1"></a>hplot.plot_model_counts(tab_best_sec, ax<span class="op">=</span>ax[<span class="dv">4</span>], title<span class="op">=</span><span class="st">"best model count"</span>, colors<span class="op">=</span>colors)</span>
+<span id="cb22-239"><a href="#cb22-239" aria-hidden="true" tabindex="-1"></a>hplot.plot_score_gap(tab_score_sec, ax<span class="op">=</span>ax[<span class="dv">5</span>], title<span class="op">=</span><span class="st">"score gap"</span>, colors<span class="op">=</span>colors)</span>
+<span id="cb22-240"><a href="#cb22-240" aria-hidden="true" tabindex="-1"></a>hplot.plot_quality_bar(tab_quality_sec, ax<span class="op">=</span>ax[<span class="dv">6</span>], title<span class="op">=</span><span class="st">"best vol reduction"</span>, colors<span class="op">=</span>colors)</span>
+<span id="cb22-241"><a href="#cb22-241" aria-hidden="true" tabindex="-1"></a>hplot.plot_resid_gate_counts(tab_gate_sec, ax<span class="op">=</span>ax[<span class="dv">7</span>], title<span class="op">=</span><span class="st">"eligible residual gates"</span>, colors<span class="op">=</span>colors)</span>
+<span id="cb22-242"><a href="#cb22-242" aria-hidden="true" tabindex="-1"></a>hplot.plot_resid_return_bar(show_resid_sec <span class="cf">if</span> <span class="kw">not</span> show_resid_sec.empty <span class="cf">else</span> tab_resid_sec, ax<span class="op">=</span>ax[<span class="dv">8</span>], title<span class="op">=</span><span class="st">"residual trading net return"</span>, colors<span class="op">=</span>colors)</span>
+<span id="cb22-243"><a href="#cb22-243" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>available secondary tickers: 30
 missing secondary tickers: {}</code></pre>
@@ -5688,8 +5634,8 @@ missing secondary tickers: {}</code></pre>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../notebooks/08_vol_surface_local_vol.html" class="pagination-link" aria-label="08_vol_surface_local_vol.html">
-        <span class="nav-page-text"><span class="chapter-title">08_vol_surface_local_vol.html</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../notebooks/08_vol_surface_local_vol.html" class="pagination-link" aria-label="Volatility Surface and Local Volatility model">
+        <span class="nav-page-text"><span class="chapter-title">Volatility Surface and Local Volatility model</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

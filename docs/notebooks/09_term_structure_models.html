@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>term_structure_models – Quantitative Finance Lab</title>
+<title>Short Rate and Term Structure Models – Quantitative Finance Lab</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -65,6 +65,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="../site_libs/quarto-search/fuse.min.js"></script>
 <script src="../site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="../">
+<link href="../notebooks/10_portfolio_tail_parity_robust.html" rel="next">
 <link href="../notebooks/08_vol_surface_local_vol.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
@@ -120,7 +121,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../notebooks/09_term_structure_models.html"><span class="chapter-title">09_term_structure_models.html</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../notebooks/09_term_structure_models.html"><span class="chapter-title">Short Rate and Term Structure Models</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -187,17 +188,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/07_dynamic_hedge_ratios.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Dynamic Hedge-Ratio Engineering: Hedgeability, Model Choice, and Residual Tradeability</span></a>
+  <a href="../notebooks/07_dynamic_hedge_ratios.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Dynamic Hedge Ratio and Residual Trading</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/08_vol_surface_local_vol.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">08_vol_surface_local_vol.html</span></a>
+  <a href="../notebooks/08_vol_surface_local_vol.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Volatility Surface and Local Volatility model</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/09_term_structure_models.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">09_term_structure_models.html</span></a>
+  <a href="../notebooks/09_term_structure_models.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">Short Rate and Term Structure Models</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/10_portfolio_tail_parity_robust.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Portfolio Optimization: Tail risk, Risk Parity and Robust Models</span></a>
   </div>
 </li>
     </ul>
@@ -207,12 +213,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <!-- margin-sidebar -->
     
 <!-- main -->
-<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-title">Short Rate and Term Structure Models</span></h1>
+</div>
 
 
 
+<div class="quarto-title-meta">
 
-<div id="cell-0" class="cell" data-execution_count="1">
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div id="8aae3f8a" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pathlib</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
@@ -262,7 +284,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">8</span>,</span>
 <span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-1" class="cell" data-execution_count="2">
+<div id="cell-2" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>par_path <span class="op">=</span> root <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"par-yield-curve-rates-1990-2026.csv"</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>par_yields_daily <span class="op">=</span> load_par_yield_curve(par_path, source<span class="op">=</span><span class="st">"us_treasury"</span>).sort_index()</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>par_yields_daily.tail()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -392,7 +414,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-2" class="cell" data-execution_count="3">
+<div id="cell-3" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>selected_tenors <span class="op">=</span> [<span class="st">"1M"</span>, <span class="st">"3M"</span>, <span class="st">"6M"</span>, <span class="st">"1Y"</span>, <span class="st">"2Y"</span>, <span class="st">"3Y"</span>, <span class="st">"5Y"</span>, <span class="st">"7Y"</span>, <span class="st">"10Y"</span>, <span class="st">"20Y"</span>, <span class="st">"30Y"</span>]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>core_tenors <span class="op">=</span> [<span class="st">"1M"</span>, <span class="st">"3M"</span>, <span class="st">"2Y"</span>, <span class="st">"5Y"</span>, <span class="st">"10Y"</span>, <span class="st">"30Y"</span>]</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>par_yields_monthly_all <span class="op">=</span> par_yields_daily.resample(<span class="st">"ME"</span>).last()</span>
@@ -409,7 +431,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
  DatetimeIndex(['2025-11-30', '2025-12-31', '2026-01-31'], dtype='datetime64[us]', freq=None))</code></pre>
 </div>
 </div>
-<div id="cell-3" class="cell" data-execution_count="4">
+<div id="cell-4" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>zero_rates <span class="op">=</span> build_zero_curve_panel_from_par_yields(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    par_yields,</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    method<span class="op">=</span><span class="st">"pchip"</span>,</span>
@@ -521,7 +543,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-4" class="cell" data-execution_count="5">
+<div id="cell-5" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>first_valid <span class="op">=</span> par_yields_daily[selected_tenors].<span class="bu">apply</span>(<span class="kw">lambda</span> s: s.first_valid_index())</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>data_coverage <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"item"</span>: [<span class="st">"daily observations"</span>, <span class="st">"monthly curve dates"</span>, <span class="st">"first monthly date"</span>, <span class="st">"last monthly date"</span>, <span class="st">"selected tenors"</span>],</span>
@@ -647,7 +669,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-5" class="cell" data-execution_count="6">
+<div id="cell-6" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sample_locs <span class="op">=</span> [<span class="dv">0</span>, <span class="bu">len</span>(curve_dates) <span class="op">//</span> <span class="dv">4</span>, <span class="bu">len</span>(curve_dates) <span class="op">//</span> <span class="dv">2</span>, <span class="dv">3</span> <span class="op">*</span> <span class="bu">len</span>(curve_dates) <span class="op">//</span> <span class="dv">4</span>, <span class="bu">len</span>(curve_dates) <span class="op">-</span> <span class="dv">1</span>]</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>sample_dates <span class="op">=</span> [curve_dates[i] <span class="cf">for</span> i <span class="kw">in</span> sample_locs]</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots()</span>
@@ -666,7 +688,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-6" class="cell" data-execution_count="7">
+<div id="cell-7" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>short_tenor <span class="op">=</span> <span class="st">"1M"</span> <span class="cf">if</span> <span class="st">"1M"</span> <span class="kw">in</span> par_yields.columns <span class="cf">else</span> <span class="st">"3M"</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>short_rate <span class="op">=</span> par_yields[short_tenor].rename(<span class="st">"short rate proxy"</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>selected_yields <span class="op">=</span> pd.DataFrame({</span>
@@ -755,7 +777,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-7" class="cell" data-execution_count="8">
+<div id="cell-8" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">4</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].plot(short_rate.index, short_rate <span class="op">*</span> <span class="dv">100</span>, label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>short_tenor<span class="sc">.</span>lower()<span class="sc">}</span><span class="ss"> proxy"</span>)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> col <span class="kw">in</span> [<span class="st">"2y"</span>, <span class="st">"10y"</span>, <span class="st">"30y"</span>]:</span>
@@ -778,7 +800,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-8" class="cell" data-execution_count="9">
+<div id="cell-9" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>acm_csv_path <span class="op">=</span> root <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"ACMTermPremium.csv"</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>acm_xls_path <span class="op">=</span> root <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"ACMTermPremium.xls"</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -850,7 +872,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-9" class="cell" data-execution_count="10">
+<div id="cell-10" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>acm_10y <span class="op">=</span> acm_term_premium.resample(<span class="st">"ME"</span>).last().reindex(curve_dates, method<span class="op">=</span><span class="st">"ffill"</span>)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>term_premium_comparison <span class="op">=</span> acm_10y.copy()</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>term_premium_summary <span class="op">=</span> pd.DataFrame({</span>
@@ -935,7 +957,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-10" class="cell" data-execution_count="11">
+<div id="cell-11" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>sofr_path <span class="op">=</span> root <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"sofr.csv"</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>sofr_start_date <span class="op">=</span> pd.Timestamp(<span class="st">"2020-03-02"</span>)</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>sofr_raw <span class="op">=</span> pd.read_csv(sofr_path)</span>
@@ -1011,7 +1033,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
-<div id="cell-11" class="cell" data-execution_count="12">
+<div id="cell-12" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> acf1(values):</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> pd.Series(values).dropna().astype(<span class="bu">float</span>)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(x) <span class="op">&lt;</span> <span class="dv">3</span> <span class="kw">or</span> x.std() <span class="op">==</span> <span class="dv">0</span>:</span>
@@ -1050,7 +1072,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 <span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>    theta <span class="op">=</span> <span class="bu">float</span>(params[<span class="st">"theta"</span>])</span>
 <span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> theta <span class="op">+</span> (<span class="bu">float</span>(r0) <span class="op">-</span> theta) <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> np.exp(<span class="op">-</span>kappa <span class="op">*</span> years)) <span class="op">/</span> (kappa <span class="op">*</span> years)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-12" class="cell" data-execution_count="13">
+<div id="cell-13" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_vasicek_ar(short_history):</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> pd.Series(short_history).dropna().astype(<span class="bu">float</span>)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(x) <span class="op">&lt;</span> <span class="dv">12</span>:</span>
@@ -1142,7 +1164,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 <span id="cb15-89"><a href="#cb15-89" aria-hidden="true" tabindex="-1"></a>        filtered.append(mean)</span>
 <span id="cb15-90"><a href="#cb15-90" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(nll), np.asarray(filtered)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-13" class="cell" data-execution_count="14">
+<div id="cell-14" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_vasicek(yields, maturities, maxiter<span class="op">=</span><span class="dv">80</span>):</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> pd.DataFrame(yields).dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    y_values <span class="op">=</span> y.to_numpy(<span class="bu">float</span>)</span>
@@ -1247,7 +1269,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-14" class="cell" data-execution_count="15">
+<div id="cell-15" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots()</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>ax.plot(short_rate.index, short_rate <span class="op">*</span> <span class="dv">100</span>, label<span class="op">=</span><span class="st">"observed short proxy"</span>, alpha<span class="op">=</span><span class="fl">0.8</span>)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>ax.plot(vasicek_filtered.index, vasicek_filtered <span class="op">*</span> <span class="dv">100</span>, label<span class="op">=</span><span class="st">"filtered vasicek short rate"</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
@@ -1343,7 +1365,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 <span id="cb18-77"><a href="#cb18-77" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-78"><a href="#cb18-78" aria-hidden="true" tabindex="-1"></a>cir_fit_log <span class="op">=</span> []</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-16" class="cell" data-execution_count="17">
+<div id="cell-17" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>cir_fit <span class="op">=</span> fit_cir(short_rate)</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>cir_parameter_table <span class="op">=</span> pd.DataFrame([cir_fit])</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>cir_parameter_table[<span class="st">"feller margin"</span>] <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> cir_parameter_table[<span class="st">"kappa"</span>] <span class="op">*</span> cir_parameter_table[<span class="st">"theta"</span>] <span class="op">-</span> cir_parameter_table[<span class="st">"sigma"</span>] <span class="op">**</span> <span class="dv">2</span></span>
@@ -1403,7 +1425,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-17" class="cell" data-execution_count="18">
+<div id="cell-18" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> simulate_vasicek_paths(r0, params, years<span class="op">=</span><span class="fl">5.0</span>, steps_per_year<span class="op">=</span><span class="dv">12</span>, n_paths<span class="op">=</span><span class="dv">200</span>, seed<span class="op">=</span><span class="dv">9</span>):</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    local_rng <span class="op">=</span> np.random.default_rng(seed)</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    steps <span class="op">=</span> <span class="bu">int</span>(years <span class="op">*</span> steps_per_year)</span>
@@ -1434,7 +1456,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 <span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>        paths[step] <span class="op">=</span> np.maximum(prev <span class="op">+</span> drift <span class="op">+</span> shock, <span class="fl">1e-8</span>)</span>
 <span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(paths <span class="op">-</span> shift, index<span class="op">=</span>np.arange(steps <span class="op">+</span> <span class="dv">1</span>) <span class="op">/</span> steps_per_year)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-18" class="cell" data-execution_count="19">
+<div id="cell-19" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>vasicek_paths <span class="op">=</span> simulate_vasicek_paths(short_rate.iloc[<span class="op">-</span><span class="dv">1</span>], vasicek_fit, years<span class="op">=</span><span class="dv">5</span>, n_paths<span class="op">=</span><span class="dv">300</span>, seed<span class="op">=</span><span class="dv">11</span>)</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>cir_paths <span class="op">=</span> simulate_cir_paths(short_rate.iloc[<span class="op">-</span><span class="dv">1</span>], cir_fit, years<span class="op">=</span><span class="dv">5</span>, n_paths<span class="op">=</span><span class="dv">300</span>, seed<span class="op">=</span><span class="dv">12</span>)</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">4</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
@@ -1455,7 +1477,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-19" class="cell" data-execution_count="20">
+<div id="cell-20" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots()</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> paths, label, color <span class="kw">in</span> [(vasicek_paths, <span class="st">"vasicek"</span>, colors[<span class="dv">0</span>]), (cir_paths, <span class="st">"cir"</span>, colors[<span class="dv">1</span>])]:</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> paths.quantile([<span class="fl">0.10</span>, <span class="fl">0.50</span>, <span class="fl">0.90</span>], axis<span class="op">=</span><span class="dv">1</span>).T</span>
@@ -1474,7 +1496,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-20" class="cell" data-execution_count="21">
+<div id="cell-21" class="cell" data-execution_count="21">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>rolling_rows <span class="op">=</span> []</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> date <span class="kw">in</span> curve_dates[rolling_window:]:</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    history <span class="op">=</span> zero_rates.loc[:date].tail(rolling_window)</span>
@@ -1653,7 +1675,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-21" class="cell" data-execution_count="22">
+<div id="cell-22" class="cell" data-execution_count="22">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>term_premium_plot <span class="op">=</span> term_premium_comparison.dropna()</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>term_premium_correlation <span class="op">=</span> term_premium_plot.corr().loc[[<span class="st">"acm 10y term premium"</span>], [<span class="st">"vasicek term premium proxy"</span>, <span class="st">"cir term premium proxy"</span>]]</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots()</span>
@@ -1695,7 +1717,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-22" class="cell" data-execution_count="23">
+<div id="cell-23" class="cell" data-execution_count="23">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ar1_expected_score(scores):</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> pd.Series(scores).dropna().astype(<span class="bu">float</span>)</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(x) <span class="op">&lt;</span> <span class="dv">12</span> <span class="kw">or</span> x.std() <span class="op">==</span> <span class="dv">0</span>:</span>
@@ -1751,7 +1773,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 <span id="cb25-53"><a href="#cb25-53" aria-hidden="true" tabindex="-1"></a>    shocks <span class="op">=</span> local_rng.normal(<span class="dv">0</span>, params[<span class="st">"sigma monthly"</span>], size<span class="op">=</span>n_scenarios)</span>
 <span id="cb25-54"><a href="#cb25-54" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> base <span class="op">+</span> params.get(<span class="st">"expected change"</span>, <span class="dv">0</span>) <span class="op">+</span> shocks[:, <span class="va">None</span>] <span class="op">*</span> params[<span class="st">"loading"</span>][<span class="va">None</span>, :]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-23" class="cell" data-execution_count="24">
+<div id="cell-24" class="cell" data-execution_count="24">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>scenario_maturities <span class="op">=</span> np.array([<span class="fl">0.25</span>, <span class="fl">1.0</span>, <span class="fl">2.0</span>, <span class="fl">5.0</span>, <span class="fl">10.0</span>, <span class="fl">30.0</span>], dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>hw1f_fit <span class="op">=</span> estimate_hw1f(zero_rates.tail(rolling_window), scenario_maturities)</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>hw1f_diagnostics <span class="op">=</span> pd.DataFrame({</span>
@@ -1798,7 +1820,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-24" class="cell" data-execution_count="25">
+<div id="cell-25" class="cell" data-execution_count="25">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>base_date <span class="op">=</span> curve_dates[<span class="op">-</span><span class="dv">1</span>]</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>base_curve <span class="op">=</span> zero_rates.loc[base_date, scenario_maturities].to_numpy(<span class="bu">float</span>)</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>hw_curves <span class="op">=</span> simulate_hw1f_curves(base_curve, hw1f_fit, n_scenarios<span class="op">=</span><span class="dv">2000</span>, seed<span class="op">=</span><span class="dv">22</span>)</span>
@@ -1858,7 +1880,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-25" class="cell" data-execution_count="26">
+<div id="cell-26" class="cell" data-execution_count="26">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> g2_loadings(a, b, maturities):</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    first <span class="op">=</span> hw1f_loading(a, maturities)</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    second <span class="op">=</span> hw1f_loading(b, maturities)</span>
@@ -1904,7 +1926,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 <span id="cb28-43"><a href="#cb28-43" aria-hidden="true" tabindex="-1"></a>    factors <span class="op">=</span> local_rng.multivariate_normal(np.zeros(<span class="dv">2</span>), params[<span class="st">"factor covariance"</span>], size<span class="op">=</span>n_scenarios)</span>
 <span id="cb28-44"><a href="#cb28-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> base <span class="op">+</span> params.get(<span class="st">"expected change"</span>, <span class="dv">0</span>) <span class="op">+</span> factors <span class="op">@</span> params[<span class="st">"loadings"</span>].T</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-26" class="cell" data-execution_count="27">
+<div id="cell-27" class="cell" data-execution_count="27">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>g2_fit <span class="op">=</span> estimate_g2(zero_rates.tail(rolling_window), scenario_maturities)</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>g2_cov <span class="op">=</span> g2_fit[<span class="st">"factor covariance"</span>]</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>g2_diagnostics <span class="op">=</span> pd.DataFrame({</span>
@@ -1961,7 +1983,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-27" class="cell" data-execution_count="28">
+<div id="cell-28" class="cell" data-execution_count="28">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>g2_curves <span class="op">=</span> simulate_g2_curves(base_curve, g2_fit, n_scenarios<span class="op">=</span><span class="dv">2000</span>, seed<span class="op">=</span><span class="dv">32</span>)</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>hw_many <span class="op">=</span> simulate_hw1f_curves(base_curve, hw1f_fit, n_scenarios<span class="op">=</span><span class="dv">2000</span>, seed<span class="op">=</span><span class="dv">33</span>)</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">4</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
@@ -1992,7 +2014,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-28" class="cell" data-execution_count="29">
+<div id="cell-29" class="cell" data-execution_count="29">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> orient_pca_loadings(loadings, scores):</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    loadings <span class="op">=</span> loadings.copy()</span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    scores <span class="op">=</span> scores.copy()</span>
@@ -2026,7 +2048,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 <span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>        <span class="st">"score rho"</span>: score_rho,</span>
 <span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>    }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-29" class="cell" data-execution_count="30">
+<div id="cell-30" class="cell" data-execution_count="30">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>pca_fit <span class="op">=</span> estimate_pca(zero_rates.tail(rolling_window), scenario_maturities, n_components<span class="op">=</span><span class="dv">3</span>)</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>pca_diagnostics <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"pc"</span>: [<span class="st">"pc1 level"</span>, <span class="st">"pc2 slope"</span>, <span class="st">"pc3 curvature"</span>],</span>
@@ -2098,7 +2120,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-30" class="cell" data-execution_count="31">
+<div id="cell-31" class="cell" data-execution_count="31">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>ladder_cost_bps <span class="op">=</span> {<span class="dv">2</span>: <span class="fl">2.0</span>, <span class="dv">5</span>: <span class="fl">2.0</span>, <span class="dv">10</span>: <span class="fl">4.0</span>, <span class="dv">30</span>: <span class="fl">6.0</span>}</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>ladder_buckets <span class="op">=</span> [<span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">30</span>]</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>risk_bucket_bounds <span class="op">=</span> {<span class="dv">2</span>: (<span class="fl">0.0</span>, <span class="fl">3.5</span>), <span class="dv">5</span>: (<span class="fl">3.5</span>, <span class="fl">7.5</span>), <span class="dv">10</span>: (<span class="fl">7.5</span>, <span class="fl">20.0</span>), <span class="dv">30</span>: (<span class="fl">20.0</span>, <span class="fl">30.0</span>)}</span>
@@ -2128,7 +2150,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 <span id="cb33-27"><a href="#cb33-27" aria-hidden="true" tabindex="-1"></a>target_reference_ladders <span class="op">=</span> {name: run_duration_ladder(name, target) <span class="cf">for</span> name, target <span class="kw">in</span> duration_targets.items()}</span>
 <span id="cb33-28"><a href="#cb33-28" aria-hidden="true" tabindex="-1"></a>baseline_returns <span class="op">=</span> baseline_ladder.returns.rename(<span class="st">"fixed 5y ladder"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-31" class="cell" data-execution_count="32">
+<div id="cell-32" class="cell" data-execution_count="32">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>ladder_rows <span class="op">=</span> []</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, result <span class="kw">in</span> {<span class="st">"fixed 5y ladder"</span>: baseline_ladder, <span class="op">**</span>target_reference_ladders}.items():</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    risk_df <span class="op">=</span> result.diagnostics[<span class="st">"risk"</span>]</span>
@@ -2239,7 +2261,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-32" class="cell" data-execution_count="33">
+<div id="cell-33" class="cell" data-execution_count="33">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model_curve_view(model_name, date, maturities):</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    history <span class="op">=</span> zero_rates.loc[:date].tail(rolling_window)</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    maturities <span class="op">=</span> np.asarray(maturities, dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -2271,7 +2293,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 <span id="cb35-29"><a href="#cb35-29" aria-hidden="true" tabindex="-1"></a>    cov <span class="op">=</span> params[<span class="st">"sigma"</span>] <span class="op">**</span> <span class="dv">2</span> <span class="op">*</span> dt <span class="op">*</span> np.outer(loading, loading)</span>
 <span id="cb35-30"><a href="#cb35-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> drift, cov</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-33" class="cell" data-execution_count="34">
+<div id="cell-34" class="cell" data-execution_count="34">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> forward_carry_roll_panel(reference_results):</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    curve_lookup <span class="op">=</span> make_curve_lookup(par_yields, curve_method<span class="op">=</span><span class="st">"pchip"</span>, tenor_cols<span class="op">=</span>selected_tenors, freq<span class="op">=</span><span class="dv">2</span>, short_end<span class="op">=</span><span class="st">"continuous"</span>)</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2407,7 +2429,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-34" class="cell" data-execution_count="35">
+<div id="cell-35" class="cell" data-execution_count="35">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> select_dynamic_duration_targets(model_target_by_date, model_returns, baseline_returns, validation_months<span class="op">=</span><span class="dv">36</span>, neutral_duration<span class="op">=</span><span class="fl">5.0</span>):</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    model_index <span class="op">=</span> model_target_by_date.dropna(how<span class="op">=</span><span class="st">"all"</span>).index</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
@@ -2528,7 +2550,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-35" class="cell" data-execution_count="36">
+<div id="cell-36" class="cell" data-execution_count="36">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">4</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>nav_series(baseline_returns.reindex(dynamic_duration_returns.index).dropna(), start_value<span class="op">=</span><span class="dv">1</span>).plot(ax<span class="op">=</span>axes[<span class="dv">0</span>], label<span class="op">=</span><span class="st">"fixed 5y ladder"</span>)</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>nav_series(dynamic_duration_returns.dropna(), start_value<span class="op">=</span><span class="dv">1</span>).plot(ax<span class="op">=</span>axes[<span class="dv">0</span>], label<span class="op">=</span><span class="st">"dynamic duration ladder"</span>)</span>
@@ -2548,7 +2570,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-36" class="cell" data-execution_count="37">
+<div id="cell-37" class="cell" data-execution_count="37">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> strategy_summary(returns):</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    clean <span class="op">=</span> pd.DataFrame(returns).dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    perf <span class="op">=</span> performance_table(clean, annualization<span class="op">=</span><span class="dv">12</span>)</span>
@@ -2666,7 +2688,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-37" class="cell" data-execution_count="38">
+<div id="cell-38" class="cell" data-execution_count="38">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plot_fixed_float_swap_diagram()</span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
@@ -2677,7 +2699,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 </div>
 </div>
 </div>
-<div id="cell-38" class="cell" data-execution_count="39">
+<div id="cell-39" class="cell" data-execution_count="39">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> zero_rate_at(date, times, shift<span class="op">=</span><span class="fl">0.0</span>):</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    grid <span class="op">=</span> zero_rates.columns.to_numpy(<span class="bu">float</span>)</span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> zero_rates.loc[pd.Timestamp(date)].to_numpy(<span class="bu">float</span>)</span>
@@ -2725,7 +2747,7 @@ Name: sofr cash return, dtype: float64</code></pre>
 <span id="cb41-45"><a href="#cb41-45" aria-hidden="true" tabindex="-1"></a>    pv_down <span class="op">=</span> swap_value(date, tenor, fixed_rate, side<span class="op">=</span>side, shift<span class="op">=-</span>bump)</span>
 <span id="cb41-46"><a href="#cb41-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>((pv_down <span class="op">-</span> pv_up) <span class="op">/</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-39" class="cell" data-execution_count="40">
+<div id="cell-40" class="cell" data-execution_count="40">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>overlay_tenor <span class="op">=</span> <span class="fl">10.0</span></span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>overlay_slippage_bp <span class="op">=</span> <span class="fl">0.5</span></span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>overlay_duration_budget <span class="op">=</span> <span class="fl">1.5</span></span>
@@ -4485,11 +4507,14 @@ Name: sofr cash return, dtype: float64</code></pre>
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../notebooks/08_vol_surface_local_vol.html" class="pagination-link" aria-label="08_vol_surface_local_vol.html">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-title">08_vol_surface_local_vol.html</span></span>
+      <a href="../notebooks/08_vol_surface_local_vol.html" class="pagination-link" aria-label="Volatility Surface and Local Volatility model">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-title">Volatility Surface and Local Volatility model</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
+      <a href="../notebooks/10_portfolio_tail_parity_robust.html" class="pagination-link" aria-label="Portfolio Optimization: Tail risk, Risk Parity and Robust Models">
+        <span class="nav-page-text"><span class="chapter-title">Portfolio Optimization: Tail risk, Risk Parity and Robust Models</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
   </div>
 </nav>
 </div> <!-- /content -->
