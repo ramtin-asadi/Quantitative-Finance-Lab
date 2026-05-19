@@ -11,7 +11,6 @@ from .curves import LAB_COLORS, set_plot_style
 def _ax(ax=None):
     if ax is None:
         _, ax = plt.subplots()
-    set_plot_style()
     return ax
 
 
@@ -942,12 +941,417 @@ def gamma_correction_slices(ax, greek_grid: pd.DataFrame, x_col: str = "k_spot",
     return ax
 
 
+def _quiet_axis(ax, message: str, title: str | None = None):
+    ax = _ax(ax)
+    ax.text(0.5, 0.5, message, ha="center", va="center", transform=ax.transAxes)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    if title:
+        ax.set_title(title)
+    return ax
+
+
+def _days_from_quotes(frame: pd.DataFrame, tau_col: str = "tau") -> pd.Series:
+    if "dte_days" in frame.columns:
+        return pd.to_numeric(frame["dte_days"], errors="coerce")
+    return pd.to_numeric(frame.get(tau_col), errors="coerce") * 365.25
+
+
+def _smile_expiries(frame: pd.DataFrame, max_slices: int = 4):
+    if frame.empty or "expiry" not in frame.columns:
+        return []
+    counts = frame.groupby("expiry").size().sort_values(ascending=False)
+    return list(pd.to_datetime(counts.head(max_slices).index))
+
+
+def calibration_quote_map(ax, quotes: pd.DataFrame, k_col: str = "k", tau_col: str = "tau", title: str | None = None):
+    ax = _ax(ax)
+    q = quotes.dropna(subset=[k_col, tau_col]).copy()
+    if q.empty:
+        return _quiet_axis(ax, "No calibration quotes", title or "Calibration quote map")
+    dte = _days_from_quotes(q, tau_col)
+    value = pd.to_numeric(q.get("iv_mid", q.get("obs_weight", 1.0)), errors="coerce")
+    sc = ax.scatter(q[k_col], dte, c=value, s=14, alpha=0.75, cmap="viridis")
+    ax.axvline(0.0, color="black", lw=0.8, alpha=0.7)
+    ax.set_xlabel("log strike / forward")
+    ax.set_ylabel("days to expiry")
+    ax.set_title(title or "Calibration quote map")
+    ax.figure.colorbar(sc, ax=ax, pad=0.01, label="IV" if "iv_mid" in q.columns else "weight")
+    return ax
+
+
+def smile_term_structure(ax, quotes: pd.DataFrame, k_col: str = "k", tau_col: str = "tau", iv_col: str = "iv_mid", title: str | None = None):
+    ax = _ax(ax)
+    q = quotes.dropna(subset=[k_col, iv_col]).copy()
+    if q.empty or "expiry" not in q.columns:
+        return _quiet_axis(ax, "No smile data", title or "IV smile term structure")
+    for i, expiry in enumerate(_smile_expiries(q, 5)):
+        g = q[pd.to_datetime(q["expiry"]).eq(expiry)].sort_values(k_col)
+        if len(g) < 4:
+            continue
+        dte = float(np.nanmedian(_days_from_quotes(g, tau_col)))
+        ax.plot(g[k_col], g[iv_col], marker="o", ms=3, lw=1.2, color=LAB_COLORS[i % len(LAB_COLORS)], label=f"{dte:.0f}d")
+    ax.set_xlabel("log strike / forward")
+    ax.set_ylabel("implied vol")
+    ax.set_title(title or "IV smile term structure")
+    ax.legend(fontsize=7)
+    return ax
+
+
+def model_quote_overlay(ax, quotes: pd.DataFrame, model_quotes: pd.DataFrame, k_col: str = "k", tau_col: str = "tau", title: str | None = None):
+    ax = _ax(ax)
+    base = quotes.dropna(subset=[k_col, tau_col]).copy()
+    chosen = model_quotes.dropna(subset=[k_col, tau_col]).copy()
+    if base.empty and chosen.empty:
+        return _quiet_axis(ax, "No quote data", title or "Balanced model quotes")
+    pieces = []
+    for label, frame in [("surface", base), ("model panel", chosen)]:
+        if frame.empty or "expiry" not in frame.columns:
+            continue
+        g = frame.copy()
+        g["dte_plot"] = _days_from_quotes(g, tau_col)
+        one = g.groupby("expiry").agg(
+            dte=("dte_plot", "median"),
+            quotes=(k_col, "size"),
+            k_min=(k_col, "min"),
+            k_max=(k_col, "max"),
+        ).reset_index()
+        one["panel"] = label
+        pieces.append(one)
+    if not pieces:
+        return _quiet_axis(ax, "No expiry coverage", title or "Balanced model quotes")
+    cover = pd.concat(pieces, ignore_index=True)
+    expiries = cover.groupby("expiry")["dte"].median().sort_values().index
+    x = np.arange(len(expiries), dtype=float)
+    width = 0.36
+    surface = cover[cover["panel"].eq("surface")].set_index("expiry").reindex(expiries)
+    model = cover[cover["panel"].eq("model panel")].set_index("expiry").reindex(expiries)
+    ax.bar(x - width / 2, surface["quotes"].fillna(0), width=width, alpha=0.35, label="surface quotes")
+    ax.bar(x + width / 2, model["quotes"].fillna(0), width=width, alpha=0.80, label="model quotes")
+    for i, expiry in enumerate(expiries):
+        row = model.loc[expiry] if expiry in model.index else None
+        if row is not None and np.isfinite(row.get("k_min", np.nan)) and np.isfinite(row.get("k_max", np.nan)):
+            ax.text(i + width / 2, float(row["quotes"]) + 0.8, f"{row['k_min']:.2f}..{row['k_max']:.2f}", ha="center", va="bottom", rotation=90, fontsize=6)
+    labels = [f"{float(cover.loc[cover['expiry'].eq(e), 'dte'].median()):.0f}d" for e in expiries]
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=0)
+    ax.set_xlabel("expiry bucket")
+    ax.set_ylabel("quote count")
+    ax.set_title(title or "Balanced panel coverage by expiry")
+    ax.legend(fontsize=7)
+    return ax
+
+
+def svi_smiles(ax, quotes: pd.DataFrame, fit: dict, title: str | None = None):
+    ax = _ax(ax)
+    f = fit.get("fit", pd.DataFrame()) if isinstance(fit, dict) else pd.DataFrame()
+    if f.empty:
+        return _quiet_axis(ax, "No SVI fit", title or "SVI fitted smiles")
+    for i, expiry in enumerate(_smile_expiries(f, 4)):
+        g = f[pd.to_datetime(f["expiry"]).eq(expiry)].sort_values("k")
+        if len(g) < 4:
+            continue
+        dte = float(np.nanmedian(_days_from_quotes(g)))
+        color = LAB_COLORS[i % len(LAB_COLORS)]
+        ax.scatter(g["k"], g["iv_mid"], s=12, alpha=0.50, color=color)
+        ax.plot(g["k"], g["model_iv"], lw=1.8, color=color, label=f"{dte:.0f}d")
+    ax.set_xlabel("log strike / forward")
+    ax.set_ylabel("implied vol")
+    ax.set_title(title or "SVI fitted smiles")
+    ax.legend(fontsize=7)
+    return ax
+
+
+def svi_ssvi_errors(ax, svi_fit: dict | pd.DataFrame, ssvi_fit: dict | None = None, title: str | None = None):
+    ax = _ax(ax)
+    if not isinstance(svi_fit, dict) or not isinstance(ssvi_fit, dict):
+        return _quiet_axis(ax, "Pass SVI and SSVI fit objects", title or "SVI vs SSVI errors")
+    pieces = []
+    for name, fit in [("SVI", svi_fit), ("SSVI", ssvi_fit)]:
+        f = fit.get("fit", pd.DataFrame()).copy()
+        if f.empty or "expiry" not in f.columns or "iv_residual" not in f.columns:
+            continue
+        f["dte_plot"] = _days_from_quotes(f)
+        one = f.groupby("expiry").agg(
+            dte=("dte_plot", "median"),
+            iv_rmse=("iv_residual", lambda x: float(np.sqrt(np.nanmean(np.asarray(x, dtype=float) ** 2)))),
+            quotes=("iv_residual", "size"),
+        ).reset_index()
+        one["model"] = name
+        pieces.append(one)
+    if not pieces:
+        return _quiet_axis(ax, "No expiry error data", title or "SVI vs SSVI errors")
+    err = pd.concat(pieces, ignore_index=True)
+    expiries = err.groupby("expiry")["dte"].median().sort_values().index
+    x = np.arange(len(expiries), dtype=float)
+    width = 0.38
+    for offset, name in [(-width / 2, "SVI"), (width / 2, "SSVI")]:
+        y = err[err["model"].eq(name)].set_index("expiry").reindex(expiries)["iv_rmse"]
+        ax.bar(x + offset, y, width=width, label=name)
+    labels = [f"{float(err.loc[err['expiry'].eq(e), 'dte'].median()):.0f}d" for e in expiries]
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.set_xlabel("expiry")
+    ax.set_ylabel("IV RMSE")
+    ax.set_title(title or "SVI vs SSVI error by expiry")
+    ax.legend(fontsize=7)
+    return ax
+
+
+def ssvi_residuals(ax, quotes: pd.DataFrame, fit: dict, title: str | None = None):
+    ax = _ax(ax)
+    f = fit.get("fit", pd.DataFrame()) if isinstance(fit, dict) else pd.DataFrame()
+    if f.empty or "iv_residual" not in f.columns:
+        return _quiet_axis(ax, "No SSVI residuals", title or "SSVI residual map")
+    q = f.dropna(subset=["k", "iv_residual"]).copy()
+    if q.empty:
+        return _quiet_axis(ax, "No SSVI residuals", title or "SSVI residual map")
+    q["dte_plot"] = _days_from_quotes(q)
+    q["expiry_label"] = q.groupby("expiry")["dte_plot"].transform("median").round().astype(int).astype(str) + "d"
+    bins = np.array([-np.inf, -0.25, -0.17, -0.10, -0.04, 0.04, 0.10, 0.17, 0.25, np.inf])
+    labels = ["<-25", "-25:-17", "-17:-10", "-10:-04", "-04:04", "04:10", "10:17", "17:25", ">25"]
+    q["k_bucket"] = pd.cut(q["k"], bins=bins, labels=labels)
+    order = q.groupby("expiry")["dte_plot"].median().sort_values().index
+    table = q.pivot_table(index="expiry", columns="k_bucket", values="iv_residual", aggfunc="median", observed=False).reindex(order)
+    if table.empty:
+        return _quiet_axis(ax, "No residual buckets", title or "SSVI residual map")
+    lim = _sym_lim(table.to_numpy(dtype=float))
+    im = ax.imshow(table.to_numpy(dtype=float), aspect="auto", cmap="coolwarm", vmin=-lim, vmax=lim)
+    ax.set_xticks(np.arange(table.shape[1]))
+    ax.set_xticklabels(table.columns.astype(str), rotation=35, ha="right")
+    y_labels = [f"{float(q.loc[q['expiry'].eq(e), 'dte_plot'].median()):.0f}d" for e in table.index]
+    ax.set_yticks(np.arange(table.shape[0]))
+    ax.set_yticklabels(y_labels)
+    ax.set_xlabel("log-moneyness bucket")
+    ax.set_ylabel("expiry")
+    ax.set_title(title or "SSVI median IV residual by bucket")
+    ax.figure.colorbar(im, ax=ax, pad=0.01, label="model IV - market IV")
+    return ax
+
+
+def sabr_smiles(ax, quotes: pd.DataFrame, fit: dict, title: str | None = None):
+    ax = _ax(ax)
+    f = fit.get("fit", pd.DataFrame()) if isinstance(fit, dict) else pd.DataFrame()
+    if f.empty:
+        return _quiet_axis(ax, "No SABR fit", title or "SABR fitted smiles")
+    for i, expiry in enumerate(_smile_expiries(f, 4)):
+        g = f[pd.to_datetime(f["expiry"]).eq(expiry)].sort_values("k")
+        if len(g) < 4:
+            continue
+        dte = float(np.nanmedian(_days_from_quotes(g)))
+        color = LAB_COLORS[i % len(LAB_COLORS)]
+        ax.scatter(g["k"], g["iv_mid"], s=12, alpha=0.50, color=color)
+        ax.plot(g["k"], g["model_iv"], lw=1.8, color=color, label=f"{dte:.0f}d")
+    ax.set_xlabel("log strike / forward")
+    ax.set_ylabel("implied vol")
+    ax.set_title(title or "SABR fitted smiles")
+    ax.legend(fontsize=7)
+    return ax
+
+
+def sabr_terms(ax, fit: dict, title: str | None = None):
+    ax = _ax(ax)
+    p = fit.get("params", pd.DataFrame()) if isinstance(fit, dict) else pd.DataFrame()
+    if p.empty:
+        return _quiet_axis(ax, "No SABR parameters", title or "SABR parameters")
+    x = pd.to_numeric(p.get("dte_days", pd.Series(np.arange(len(p)), index=p.index)), errors="coerce")
+    order = np.argsort(x.to_numpy(dtype=float))
+    x = x.iloc[order]
+    p = p.iloc[order]
+    ax.plot(x, p["alpha"], marker="o", lw=1.5, label="alpha")
+    ax.plot(x, p["nu"], marker="o", lw=1.5, label="nu")
+    ax.plot(x, p["rho"], marker="o", lw=1.2, label="rho")
+    ax.axhline(0.0, color="black", lw=0.7, alpha=0.6)
+    ax.set_xlabel("days to expiry")
+    ax.set_ylabel("parameter value")
+    ax.set_title(title or "SABR parameter term structure")
+    ax.legend(fontsize=7)
+    return ax
+
+
+def merton_tail_fit(ax, quotes: pd.DataFrame, fit: dict, title: str | None = None):
+    ax = _ax(ax)
+    f = fit.get("fit", pd.DataFrame()) if isinstance(fit, dict) else pd.DataFrame()
+    if f.empty:
+        return _quiet_axis(ax, "No Merton fit", title or "Merton tail fit")
+    x = pd.to_numeric(f.get("k"), errors="coerce")
+    y = pd.to_numeric(f.get("price_residual"), errors="coerce")
+    tail_count = int((x.abs() >= 0.14).sum())
+    ax.scatter(x, y, s=16, alpha=0.65)
+    ax.axhline(0.0, color="black", lw=0.8)
+    ax.axvline(-0.14, color="black", lw=0.7, ls="--", alpha=0.55)
+    ax.axvline(0.14, color="black", lw=0.7, ls="--", alpha=0.55)
+    if tail_count < 8:
+        ax.text(0.03, 0.95, f"tail diagnostic weak: {tail_count} quotes", transform=ax.transAxes, va="top", fontsize=8)
+    else:
+        ax.text(0.03, 0.95, f"tail quotes: {tail_count}", transform=ax.transAxes, va="top", fontsize=8)
+    ax.set_xlabel("log strike / forward")
+    ax.set_ylabel("model price - mid")
+    ax.set_title(title or "Merton jump-tail fit")
+    return ax
+
+
+def heston_mc_check(ax, fit: dict, title: str | None = None):
+    ax = _ax(ax)
+    conv = fit.get("mc_convergence", pd.DataFrame()) if isinstance(fit, dict) else pd.DataFrame()
+    if conv.empty:
+        return _quiet_axis(ax, "No MC convergence data", title or "Heston MC convergence")
+    ax.plot(conv["paths"], conv["price"], marker="o", lw=1.5, label="price")
+    ax.set_xscale("log", base=2)
+    ax.set_xlabel("paths")
+    ax.set_ylabel("model price")
+    ax2 = ax.twinx()
+    ax2.plot(conv["paths"], conv["standard_error"], marker="s", lw=1.2, color=LAB_COLORS[3], label="standard error")
+    ax2.set_ylabel("standard error")
+    ax.set_title(title or "Heston MC convergence")
+    lines = ax.get_lines() + ax2.get_lines()
+    ax.legend(lines, [line.get_label() for line in lines], fontsize=7)
+    return ax
+
+
+def heston_bates_fit(ax, quotes: pd.DataFrame, heston_fit: dict, bates_fit: dict, title: str | None = None):
+    ax = _ax(ax)
+    h = heston_fit.get("fit", pd.DataFrame()) if isinstance(heston_fit, dict) else pd.DataFrame()
+    b = bates_fit.get("fit", pd.DataFrame()) if isinstance(bates_fit, dict) else pd.DataFrame()
+    if h.empty and b.empty:
+        return _quiet_axis(ax, "No simulation fits", title or "Heston vs Bates")
+    if not h.empty:
+        ax.scatter(h["k"], h["price_residual"], s=16, alpha=0.55, label="heston")
+    if not b.empty:
+        ax.scatter(b["k"], b["price_residual"], s=16, alpha=0.55, label="bates")
+    ax.axhline(0.0, color="black", lw=0.8)
+    ax.set_xlabel("log strike / forward")
+    ax.set_ylabel("model price - mid")
+    ax.set_title(title or "Heston vs Bates fit")
+    ax.legend(fontsize=7)
+    return ax
+
+
+def model_speed_accuracy(ax, comparison: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if comparison.empty or "model" not in comparison.columns:
+        return _quiet_axis(ax, "No comparison data", title or "Model speed and accuracy")
+    c = comparison.copy()
+    x_col = "runtime_sec" if "runtime_sec" in c.columns else "runtime" if "runtime" in c.columns else "elapsed_sec"
+    y_col = "weighted_iv_rmse" if "weighted_iv_rmse" in c.columns else "weighted_price_rmse"
+    c[x_col] = pd.to_numeric(c.get(x_col, 0.0), errors="coerce").fillna(0.0)
+    c[y_col] = pd.to_numeric(c.get(y_col), errors="coerce")
+    c = c.dropna(subset=[y_col])
+    if c.empty:
+        return _quiet_axis(ax, "No runtime/error data", title or "Model speed and accuracy")
+    ax.scatter(c[x_col].clip(lower=1e-6), c[y_col], s=45)
+    for _, r in c.iterrows():
+        ax.annotate(str(r["model"]), (max(float(r[x_col]), 1e-6), float(r[y_col])), xytext=(4, 2), textcoords="offset points", fontsize=8)
+    ax.set_xscale("log")
+    ax.set_xlabel("runtime seconds")
+    ax.set_ylabel(y_col.replace("_", " "))
+    ax.set_title(title or "Model error vs runtime")
+    return ax
+
+
+def benchmark_errors(ax, comparison: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if comparison.empty or "model" not in comparison.columns:
+        return _quiet_axis(ax, "No benchmark data", title or "Benchmark errors")
+    c = comparison.copy()
+    value_col = "weighted_iv_rmse" if "weighted_iv_rmse" in c.columns else "weighted_price_rmse"
+    c[value_col] = pd.to_numeric(c.get(value_col), errors="coerce")
+    c = c.dropna(subset=[value_col]).sort_values(value_col)
+    if c.empty:
+        return _quiet_axis(ax, "No benchmark errors", title or "Benchmark errors")
+    ax.bar(c["model"], c[value_col], color=[LAB_COLORS[i % len(LAB_COLORS)] for i in range(len(c))])
+    ax.set_ylabel(value_col.replace("_", " "))
+    ax.set_title(title or "Common benchmark errors")
+    ax.tick_params(axis="x", labelrotation=25)
+    return ax
+
+
+def model_disagreement(ax, fair_values: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if fair_values.empty or "model_disagreement" not in fair_values.columns:
+        return _quiet_axis(ax, "No disagreement data", title or "Model disagreement")
+    q = fair_values.dropna(subset=["date", "model_disagreement"]).copy()
+    if q.empty:
+        return _quiet_axis(ax, "No disagreement data", title or "Model disagreement")
+    q["date"] = pd.to_datetime(q["date"], errors="coerce").dt.normalize()
+    daily = q.groupby("date").agg(
+        median=("model_disagreement", "median"),
+        p75=("model_disagreement", lambda x: float(np.nanquantile(x, 0.75))),
+        p90=("model_disagreement", lambda x: float(np.nanquantile(x, 0.90))),
+        candidates=("watchlist_candidate", lambda x: int(np.nansum(x))) if "watchlist_candidate" in q.columns else ("model_disagreement", "size"),
+    ).reset_index().dropna(subset=["date"])
+    if daily.empty:
+        return _quiet_axis(ax, "No daily disagreement", title or "Model disagreement")
+    x = daily["date"]
+    ax.plot(x, daily["median"], lw=1.5, label="median")
+    ax.plot(x, daily["p90"], lw=1.1, label="p90")
+    ax.fill_between(x, daily["p75"], daily["p90"], alpha=0.18, label="p75-p90")
+    ax.set_xlabel("date")
+    ax.set_ylabel("price disagreement")
+    ax.set_title(title or "Daily model disagreement")
+    locator = mdates.AutoDateLocator(minticks=3, maxticks=5)
+    ax.xaxis.set_major_locator(locator)
+    ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(locator))
+    ax.tick_params(axis="x", labelrotation=20)
+    ax.legend(fontsize=7)
+    return ax
+
+
+def residual_deciles(ax, validation: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    summary = validation.attrs.get("summary", pd.DataFrame()) if isinstance(validation, pd.DataFrame) else pd.DataFrame()
+    if summary.empty and isinstance(validation, pd.DataFrame) and {"z_residual", "next_hedged_pnl"}.issubset(validation.columns):
+        v = validation.dropna(subset=["z_residual", "next_hedged_pnl"]).copy()
+        if not v.empty:
+            v["decile"] = pd.qcut(v["z_residual"].rank(method="first"), 10, labels=False, duplicates="drop")
+            summary = v.groupby("decile").agg(mean_next_hedged_pnl=("next_hedged_pnl", "mean"), count=("next_hedged_pnl", "size")).reset_index()
+    if summary.empty:
+        return _quiet_axis(ax, "No residual validation", title or "Residual deciles")
+    ax.bar(summary["decile"].astype(int), summary["mean_next_hedged_pnl"], alpha=0.75)
+    ax.axhline(0.0, color="black", lw=0.8)
+    ax.set_xlabel("residual decile")
+    ax.set_ylabel("next hedged P&L")
+    ax.set_title(title or "Residual deciles vs next hedged P&L")
+    return ax
+
+
+def scheduled_hedge_equity(ax, results: dict, comparison: pd.DataFrame | None = None, title: str | None = None):
+    ax = _ax(ax)
+    drawn = False
+    for name, result in (results or {}).items():
+        nav = result.get("nav", pd.DataFrame()) if isinstance(result, dict) else pd.DataFrame()
+        if nav.empty:
+            continue
+        if "delta" in nav.columns:
+            series = nav["delta"]
+        else:
+            series = nav.iloc[:, 0]
+        ax.plot(series.index, series.values, lw=1.6, label=str(name))
+        drawn = True
+    if not drawn:
+        return _quiet_axis(ax, "No scheduled hedge results", title or "Scheduled hedge equity")
+    ax.axhline(0.0, color="black", lw=0.8)
+    ax.set_xlabel("date")
+    ax.set_ylabel("cumulative P&L")
+    ax.set_title(title or "Scheduled hedge comparison")
+    _format_hedging_axis(ax, len(results or {}))
+    return ax
+
+
 __all__ = [
+    "benchmark_errors",
+    "calibration_quote_map",
     "delta_correction_slices",
     "gamma_correction_slices",
+    "heston_bates_fit",
+    "heston_mc_check",
     "local_vol_ratio_map",
     "local_vol_slices",
     "local_vol_surface_3d",
+    "merton_tail_fit",
+    "model_disagreement",
+    "model_quote_overlay",
+    "model_speed_accuracy",
     "pca_shock_map",
     "pca_variance_bars",
     "plot_clean_vs_dirty_spread",
@@ -983,7 +1387,15 @@ __all__ = [
     "plot_solver_runtime",
     "plot_solver_success",
     "quote_coverage_map",
+    "residual_deciles",
     "residual_histogram",
+    "sabr_smiles",
+    "sabr_terms",
+    "scheduled_hedge_equity",
     "smile_slices_comparison",
     "smooth_surface_3d",
+    "smile_term_structure",
+    "ssvi_residuals",
+    "svi_smiles",
+    "svi_ssvi_errors",
 ]

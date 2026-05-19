@@ -18,6 +18,7 @@ book:
     - notebooks/08_vol_surface_local_vol.ipynb
     - notebooks/09_term_structure_models.ipynb
     - notebooks/10_portfolio_tail_parity_robust.ipynb
+    - notebooks/11_stochastic_volatility.ipynb
 
 format:
   html:
