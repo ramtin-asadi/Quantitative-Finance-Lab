@@ -19,6 +19,9 @@ book:
     - notebooks/09_term_structure_models.ipynb
     - notebooks/10_portfolio_tail_parity_robust.ipynb
     - notebooks/11_stochastic_volatility.ipynb
+    - notebooks/12_financial_conditions_index.ipynb
+    - notebooks/13_american_option_numerics.ipynb
+    - notebooks/14_fourier_option_pricing.ipynb
 
 format:
   html:
