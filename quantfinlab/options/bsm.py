@@ -200,6 +200,16 @@ def no_arbitrage_bounds(option_type, forward, strike, discount_factor=1.0) -> tu
     return lower, upper
 
 
+def bsm_cf(u, spot, rate, dividend_yield, tau, sigma):
+    """Black-Scholes characteristic function of log spot at expiry."""
+    u_arr = np.asarray(u, dtype=complex)
+    sigma_arr = np.asarray(sigma, dtype=float)
+    mu = np.log(np.asarray(spot, dtype=float)) + (
+        np.asarray(rate, dtype=float) - np.asarray(dividend_yield, dtype=float) - 0.5 * sigma_arr * sigma_arr
+    ) * np.asarray(tau, dtype=float)
+    return np.exp(1j * u_arr * mu - 0.5 * sigma_arr * sigma_arr * u_arr * u_arr * np.asarray(tau, dtype=float))
+
+
 __all__ = [
     "black76_call",
     "black76_delta",
@@ -209,6 +219,7 @@ __all__ = [
     "black76_rho",
     "black76_theta",
     "black76_vega",
+    "bsm_cf",
     "bsm_price",
     "d1_d2_forward",
     "forward_bsm_call",

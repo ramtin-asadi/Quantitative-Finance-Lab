@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from . import (
     bates,
+    american,
     bsm,
     diagnostics,
+    fourier,
     greeks,
     hedging,
     heston,
@@ -18,6 +20,7 @@ from . import (
     ssvi,
     surface,
     svi,
+    variance_gamma,
 )
 from .bsm import black76_price, bsm_price, forward_bsm_price
 from .greeks import compute_greeks, compute_greeks_jax, compute_greeks_numpy
@@ -26,6 +29,7 @@ from .quote_cleaning import clean_option_quotes, wide_option_chain_to_long
 
 __all__ = [
     "black76_price",
+    "american",
     "bates",
     "bsm",
     "bsm_price",
@@ -36,6 +40,7 @@ __all__ = [
     "compute_iv_table",
     "diagnostics",
     "forward_bsm_price",
+    "fourier",
     "greeks",
     "hedging",
     "heston",
@@ -52,5 +57,6 @@ __all__ = [
     "ssvi",
     "surface",
     "svi",
+    "variance_gamma",
     "wide_option_chain_to_long",
 ]

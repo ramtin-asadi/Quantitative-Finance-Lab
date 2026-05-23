@@ -57,6 +57,18 @@ _OPTION_CHAIN_SOURCES: dict[str, dict[str, object]] = {
         "underlying_default": "SPX",
         "annualization_days": 365.25,
     },
+    "optionsdx_spy": {
+        "schema": "wide_call_put",
+        "profile": "optionsdx_equity",
+        "underlying_default": "SPY",
+        "annualization_days": 365.25,
+    },
+    "optionsdx_qqq": {
+        "schema": "wide_call_put",
+        "profile": "optionsdx_equity",
+        "underlying_default": "QQQ",
+        "annualization_days": 365.25,
+    },
     # Deribit BTC end-of-day chain via OptionsDX (parquet, long-form).
     "btc_deribit": {
         "schema": "long",  # one row per leg with option_right C/P

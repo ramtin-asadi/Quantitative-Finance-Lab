@@ -8,8 +8,20 @@ from cycler import cycler
 from ..common.contracts import Curve
 from ..fixed_income import bootstrap, discounting
 
-LAB_COLORS = ["#069AF3","#FE420F", "#00008B", "#008080" , "#CC79A7",
-          "#9614fa", "#DC143C", "#7BC8F6", "#0072B2","#04D8B2", "#800080", "#FF8072"]
+LAB_COLORS = [
+    "#069AF3",
+    "#FE420F",
+    "#00008B",
+    "#008080",
+    "#CC79A7",
+    "#DC143C",
+    "#9614fa",
+    "#0072B2",
+    "#7BC8F6",
+    "#04D8B2",
+    "#800080",
+    "#FF8072",
+]
 
 
 def set_plot_style(colors: list[str] | None = None) -> None:
@@ -17,18 +29,16 @@ def set_plot_style(colors: list[str] | None = None) -> None:
     plt.rcParams["axes.prop_cycle"] = cycler(color=palette)
     plt.rcParams.update(
         {
-            "figure.figsize": (6, 3),
-            "figure.dpi": 200,
-            "savefig.dpi": 300,
+            "figure.figsize": (7, 3.5),
+            "figure.dpi": 140,
+            "savefig.dpi": 250,
             "axes.grid": True,
             "grid.alpha": 0.20,
             "axes.spines.top": False,
             "axes.spines.right": False,
-            "axes.titlesize": 12,
-            "axes.labelsize": 12,
-            "xtick.labelsize": 9,
-            "ytick.labelsize": 9,
-            "legend.fontsize": 7,
+            "axes.titlesize": 11,
+            "axes.labelsize": 10,
+            "legend.fontsize": 8,
         }
     )
 

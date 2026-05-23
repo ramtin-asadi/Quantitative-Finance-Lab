@@ -33,6 +33,71 @@ from .schemas import get_option_chain_source
 _REQUIRED_LONG_COLUMNS = ("date", "expiry", "strike", "option_type", "underlying")
 
 
+def _clean_optionsdx_columns(columns) -> list[str]:
+    return [str(c).strip().strip("[]").strip().lower() for c in columns]
+
+
+def _normalize_optionsdx_text_frame(raw: pd.DataFrame, source_file: Path) -> pd.DataFrame:
+    out = raw.copy()
+    out.columns = _clean_optionsdx_columns(out.columns)
+    for col in ("quote_readtime", "quote_date", "expire_date"):
+        if col in out.columns:
+            out[col] = pd.to_datetime(out[col], errors="coerce")
+    for col in out.columns:
+        if col in {"quote_readtime", "quote_date", "expire_date", "c_size", "p_size"}:
+            continue
+        out[col] = pd.to_numeric(out[col], errors="coerce")
+    out["source_file"] = source_file.name
+    out["source_month"] = source_file.stem.split("_")[-1]
+    return out
+
+
+def combine_optionsdx_texts(
+    files: str | Path | list[str | Path],
+    output_path: str | Path,
+    *,
+    compression: str = "zstd",
+) -> pd.DataFrame:
+    """Combine monthly OptionsDX wide call/put text files into one parquet.
+
+    The raw files keep vendor column names in square brackets and include a
+    space after each delimiter. The combined parquet follows the same lowercase
+    wide schema as the existing SPX parquet and adds ``source_file`` and
+    ``source_month`` for traceability.
+    """
+    if isinstance(files, (str, Path)):
+        p = Path(files)
+        file_list = sorted(p.glob("*.txt")) if p.is_dir() else sorted(p.parent.glob(p.name))
+    else:
+        file_list = [Path(f) for f in files]
+    if not file_list:
+        raise ValueError("No OptionsDX text files were provided.")
+
+    out_path = Path(output_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if out_path.exists():
+        out_path.unlink()
+
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    writer = None
+    rows = []
+    try:
+        for path in file_list:
+            raw = pd.read_csv(path, skipinitialspace=True, low_memory=False)
+            frame = _normalize_optionsdx_text_frame(raw, path)
+            table = pa.Table.from_pandas(frame, preserve_index=False)
+            if writer is None:
+                writer = pq.ParquetWriter(out_path, table.schema, compression=compression)
+            writer.write_table(table)
+            rows.append({"source_file": path.name, "rows": int(len(frame))})
+    finally:
+        if writer is not None:
+            writer.close()
+    return pd.DataFrame(rows)
+
+
 def _read_chain(path: Path, columns: list[str] | None = None) -> pd.DataFrame:
     suffix = path.suffix.lower()
     if suffix == ".parquet":
@@ -267,6 +332,37 @@ def load_spx_option_pairs(
     return out
 
 
+def load_optionsdx_equity_pairs(
+    path: str | Path,
+    *,
+    source: str = "optionsdx_spy",
+    annualization_days: float = 365.25,
+    max_rel_spread: float = 0.35,
+    tau_min_days: float = 7.0,
+    tau_max_days: float = 180.0,
+    k_over_s_range: tuple[float, float] = (0.70, 1.35),
+    top_n_per_expiry: int | None = 70,
+    min_pairs_per_expiry: int = 6,
+) -> pd.DataFrame:
+    """Load SPY/QQQ OptionsDX wide quotes as paired call/put rows."""
+    cfg = get_option_chain_source(source)
+    underlying = str(cfg.get("underlying_default", ""))
+    out = load_spx_option_pairs(
+        path,
+        annualization_days=annualization_days,
+        max_rel_spread=max_rel_spread,
+        tau_min_days=tau_min_days,
+        tau_max_days=tau_max_days,
+        k_over_s_range=k_over_s_range,
+        top_n_per_expiry=top_n_per_expiry,
+        min_pairs_per_expiry=min_pairs_per_expiry,
+    )
+    out["underlying"] = underlying
+    out.attrs["chain_source"] = source
+    out.attrs["annualization_days"] = float(annualization_days)
+    return out
+
+
 def filter_valid_quotes(
     df: pd.DataFrame,
     *,
@@ -401,7 +497,9 @@ __all__ = [
     "filter_atm_window",
     "filter_liquidity",
     "filter_valid_quotes",
+    "combine_optionsdx_texts",
     "load_option_chain",
+    "load_optionsdx_equity_pairs",
     "load_spx_option_pairs",
     "pair_calls_puts",
 ]

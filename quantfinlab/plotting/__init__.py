@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from . import curves, diagrams, fixed_income, options, portfolio, risk, volatility
+from . import curves, diagrams, fixed_income, macro, options, portfolio, risk, volatility
 from .curves import (
     LAB_COLORS,
     choose_heatmap_cmap,
@@ -144,6 +144,7 @@ __all__ = [
     "format_portfolio_time_axis",
     "format_date_axis",
     "make_color_map",
+    "macro",
     "options",
     "plot_bond_metric_bar",
     "plot_bsm_comp_graph",

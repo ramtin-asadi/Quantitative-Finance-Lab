@@ -2037,6 +2037,50 @@ def scheduled_hedge_comparison(
     return pd.DataFrame(rows)
 
 
+def option_fill_price(row: pd.Series | dict, side: float, action: str = "open") -> float:
+    data = row if isinstance(row, pd.Series) else pd.Series(row)
+    bid = float(pd.to_numeric(data.get("bid", np.nan), errors="coerce"))
+    ask = float(pd.to_numeric(data.get("ask", np.nan), errors="coerce"))
+    mid = float(pd.to_numeric(data.get("mid", 0.5 * (bid + ask)), errors="coerce"))
+    if not np.isfinite(bid) or not np.isfinite(ask):
+        return mid
+    if float(side) > 0:
+        return ask if str(action).lower().startswith("open") else bid
+    return bid if str(action).lower().startswith("open") else ask
+
+
+def mark_option_position(row: pd.Series | dict, quantity: float, *, multiplier: float = 100.0, price_col: str = "mid") -> float:
+    data = row if isinstance(row, pd.Series) else pd.Series(row)
+    price = float(pd.to_numeric(data.get(price_col, data.get("mid", np.nan)), errors="coerce"))
+    return float(quantity) * price * float(multiplier)
+
+
+def settle_option_expiry(option_type: str, spot: float, strike: float, quantity: float, *, multiplier: float = 100.0) -> float:
+    if str(option_type).lower().startswith("c"):
+        payoff = max(float(spot) - float(strike), 0.0)
+    else:
+        payoff = max(float(strike) - float(spot), 0.0)
+    return float(quantity) * payoff * float(multiplier)
+
+
+def close_option_position(row: pd.Series | dict, quantity: float, *, multiplier: float = 100.0) -> float:
+    price = option_fill_price(row, quantity, action="close")
+    return float(quantity) * price * float(multiplier)
+
+
+def option_trade_ledger(rows: list[dict] | pd.DataFrame) -> pd.DataFrame:
+    out = pd.DataFrame(rows).copy()
+    if out.empty:
+        return out
+    for col in ["date", "entry_date", "exit_date", "expiry"]:
+        if col in out.columns:
+            out[col] = pd.to_datetime(out[col], errors="coerce").dt.normalize()
+    for col in ["quantity", "price", "cashflow", "spread_cost", "pnl"]:
+        if col in out.columns:
+            out[col] = pd.to_numeric(out[col], errors="coerce")
+    return out
+
+
 __all__ = [
     "apply_hedge_transaction_costs",
     "compute_hedge_pnl",
@@ -2044,6 +2088,8 @@ __all__ = [
     "hedge_book_from_schedules",
     "hedge_trade_ledger",
     "hedging_diagnostics",
+    "close_option_position",
+    "mark_option_position",
     "hedging_drawdown",
     "matched_option_schedule",
     "rolling_residual_delta",
@@ -2054,4 +2100,7 @@ __all__ = [
     "run_scheduled_option_hedging_backtest",
     "scheduled_hedge_comparison",
     "summarize_hedging_backtest",
+    "option_fill_price",
+    "option_trade_ledger",
+    "settle_option_expiry",
 ]

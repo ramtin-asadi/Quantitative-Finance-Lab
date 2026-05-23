@@ -381,6 +381,114 @@ def plot_straddle_payoff(
     return fig, ax
 
 
+def tree_structure(ax=None, *, steps: int = 3, spot: float = 100.0, up: float = 1.12, down: float = 0.90, strike: float = 100.0, rate: float = 0.04, p: float = 0.52, title: str | None = None):
+    set_plot_style()
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10.5, 5.8))
+    else:
+        fig = ax.get_figure()
+    ax.axis("off")
+    n = int(max(2, steps))
+    disc = np.exp(-float(rate) / max(n, 1))
+    stock = {}
+    value = {}
+    exercise = {}
+    for i in range(n + 1):
+        for j in range(i + 1):
+            stock[(i, j)] = float(spot) * (float(up) ** j) * (float(down) ** (i - j))
+    for j in range(n + 1):
+        payoff = max(float(strike) - stock[(n, j)], 0.0)
+        value[(n, j)] = payoff
+        exercise[(n, j)] = payoff > 0.0
+    for i in range(n - 1, -1, -1):
+        for j in range(i + 1):
+            payoff = max(float(strike) - stock[(i, j)], 0.0)
+            continuation = disc * (float(p) * value[(i + 1, j + 1)] + (1.0 - float(p)) * value[(i + 1, j)])
+            value[(i, j)] = max(payoff, continuation)
+            exercise[(i, j)] = payoff > continuation and payoff > 0.0
+    positions = {}
+    for i in range(n + 1):
+        for j in range(i + 1):
+            positions[(i, j)] = (i, j - 0.5 * i)
+    for i in range(n):
+        for j in range(i + 1):
+            x0, y0 = positions[(i, j)]
+            for jj, label in ((j, "d"), (j + 1, "u")):
+                x1, y1 = positions[(i + 1, jj)]
+                ax.add_patch(FancyArrowPatch((x0 + 0.13, y0), (x1 - 0.13, y1), arrowstyle="-|>", mutation_scale=10, lw=1.0, color="#6b7280", alpha=0.75))
+                ax.text((x0 + x1) / 2, (y0 + y1) / 2 + 0.06, label, ha="center", va="center", fontsize=8, color="#374151")
+    for i in range(n + 1):
+        for j in range(i + 1):
+            x, y = positions[(i, j)]
+            terminal = i == n
+            early = bool(exercise[(i, j)]) and not terminal
+            face = "#dbeafe" if not terminal else "#fef3c7"
+            if early:
+                face = "#fecaca"
+            box = mpatches.FancyBboxPatch((x - 0.34, y - 0.18), 0.68, 0.36, boxstyle="round,pad=0.035,rounding_size=0.04", fc=face, ec="#111827", lw=1.0)
+            ax.add_patch(box)
+            if i == 0:
+                label = f"S0={stock[(i, j)]:.0f}\nV={value[(i, j)]:.2f}"
+            elif terminal:
+                label = f"S={stock[(i, j)]:.0f}\npayoff={value[(i, j)]:.2f}"
+            else:
+                payoff = max(float(strike) - stock[(i, j)], 0.0)
+                label = f"S={stock[(i, j)]:.0f}\nmax({payoff:.2f}, C)"
+            ax.text(x, y, label, ha="center", va="center", fontsize=8)
+    ax.text(n + 0.35, 0.58 * n, "terminal payoff", ha="left", va="center", fontsize=9, color="#92400e")
+    ax.text(0.35, -0.58 * n, "backward induction:\nV = max(exercise, continuation)", ha="left", va="center", fontsize=9, color="#991b1b")
+    handles = [
+        mpatches.Patch(fc="#dbeafe", ec="#111827", label="continuation node"),
+        mpatches.Patch(fc="#fef3c7", ec="#111827", label="terminal payoff"),
+        mpatches.Patch(fc="#fecaca", ec="#111827", label="early exercise"),
+    ]
+    ax.legend(handles=handles, loc="upper left", frameon=True, fontsize=8)
+    ax.set_xlim(-0.65, n + 1.45)
+    ax.set_ylim(-n / 2 - 0.85, n / 2 + 0.85)
+    ax.set_title(title or "American binomial tree: stock moves, terminal payoff, and backward max step")
+    fig.tight_layout()
+    return fig, ax
+
+
+def overlay_payoffs(axs=None, *, spot: float = 100.0, call_strike: float = 105.0, put_strike: float = 95.0, call_premium: float = 2.5, put_premium: float = 2.0):
+    set_plot_style()
+    if axs is None:
+        fig, axs = plt.subplots(1, 3, figsize=(13.5, 4.2))
+    else:
+        axs = np.asarray(axs).ravel()
+        fig = axs[0].get_figure()
+    s = np.linspace(0.65 * spot, 1.35 * spot, 301)
+    stock = s - spot
+    short_call = -np.maximum(s - call_strike, 0.0) + call_premium
+    long_put = np.maximum(put_strike - s, 0.0) - put_premium
+    covered = stock + short_call
+    protective = stock + long_put
+    collar = stock + short_call + long_put
+    specs = [
+        (covered, [("stock", stock), ("short call", short_call)], "covered call", [call_strike], spot - call_premium),
+        (protective, [("stock", stock), ("long put", long_put)], "protective put", [put_strike], spot + put_premium),
+        (collar, [("stock", stock), ("short call", short_call), ("long put", long_put)], "collar", [put_strike, call_strike], spot - call_premium + put_premium),
+    ]
+    for ax, (combined, legs, label, strikes, breakeven) in zip(axs[:3], specs):
+        ax.axhline(0.0, color="#222222", lw=0.8)
+        ax.axvline(spot, color="#666666", lw=0.8, ls="--")
+        for name, leg in legs:
+            ax.plot(s, leg, lw=1.1, alpha=0.62, ls="--", label=name)
+        ax.plot(s, combined, lw=2.2, color="#111827", label="combined")
+        for k in strikes:
+            ax.axvline(k, color="#9ca3af", lw=0.9)
+            ax.text(k, ax.get_ylim()[0], f"K={k:.0f}", ha="center", va="bottom", fontsize=7)
+        ax.axvline(breakeven, color="#ef4444", lw=0.9, ls=":")
+        ax.fill_between(s, combined, 0.0, where=combined < 0, color="#fecaca", alpha=0.18)
+        ax.fill_between(s, combined, 0.0, where=combined > 0, color="#bbf7d0", alpha=0.15)
+        ax.set_xlabel("final underlying price")
+        ax.set_ylabel("P&L per share")
+        ax.set_title(label)
+        ax.legend(fontsize=7, loc="best")
+    fig.tight_layout()
+    return fig, axs
+
+
 def plot_fixed_float_swap_diagram(
     ax=None,
     *,
@@ -492,4 +600,6 @@ __all__ = [
     "plot_computation_dag",
     "plot_fixed_float_swap_diagram",
     "plot_straddle_payoff",
+    "tree_structure",
+    "overlay_payoffs",
 ]

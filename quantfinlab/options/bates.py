@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from scipy import optimize
 
-from quantfinlab.options.heston import _rng_shocks, _scale
+from quantfinlab.options.heston import _rng_shocks, _scale, heston_cf
 
 try:
     from numba import njit
@@ -32,6 +32,18 @@ def _jump_shocks(n_path: int, n_step: int, random_state: int = 7):
     zj = rng.normal(size=(n_half, n_step))
     uj = rng.uniform(size=(n_half, n_step))
     return np.vstack([zj, -zj]).astype(float), np.vstack([uj, uj]).astype(float)
+
+
+def bates_cf(u, spot, rate, dividend_yield, tau, v0, kappa, theta, sigma_v, rho, lambda_jump, mu_jump, sigma_jump):
+    """Bates characteristic function: Heston times compensated Merton jumps."""
+    u_arr = np.asarray(u, dtype=complex)
+    lam = np.asarray(lambda_jump, dtype=float)
+    mu = np.asarray(mu_jump, dtype=float)
+    sj = np.asarray(sigma_jump, dtype=float)
+    omega = -lam * (np.exp(mu + 0.5 * sj * sj) - 1.0)
+    h = heston_cf(u_arr, spot, np.asarray(rate, dtype=float) + omega, dividend_yield, tau, v0, kappa, theta, sigma_v, rho)
+    jump = np.exp(lam * np.asarray(tau, dtype=float) * (np.exp(1j * u_arr * mu - 0.5 * sj * sj * u_arr * u_arr) - 1.0))
+    return h * jump
 
 
 if _has_numba:
@@ -236,4 +248,4 @@ def bates_prices(quotes: pd.DataFrame, fit: dict, engine: str = "auto") -> pd.Da
     return _fit_prices(quotes, arr, steps, None, None, None, None, paths, state, engine=engine)
 
 
-__all__ = ["fit_bates_mc", "bates_mc_price", "bates_prices"]
+__all__ = ["bates_cf", "fit_bates_mc", "bates_mc_price", "bates_prices"]

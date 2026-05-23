@@ -50,6 +50,25 @@ def _weights(lam_tau: float, n_max: int) -> np.ndarray:
     return out
 
 
+def merton_cf(u, spot, rate, dividend_yield, tau, sigma, lambda_jump, mu_jump, sigma_jump):
+    """Merton jump-diffusion characteristic function of log spot at expiry."""
+    u_arr = np.asarray(u, dtype=complex)
+    sigma = np.asarray(sigma, dtype=float)
+    lam = np.asarray(lambda_jump, dtype=float)
+    mu = np.asarray(mu_jump, dtype=float)
+    sj = np.asarray(sigma_jump, dtype=float)
+    tau = np.asarray(tau, dtype=float)
+    omega = -lam * (np.exp(mu + 0.5 * sj * sj) - 1.0)
+    drift = np.log(np.asarray(spot, dtype=float)) + (
+        np.asarray(rate, dtype=float) - np.asarray(dividend_yield, dtype=float) + omega - 0.5 * sigma * sigma
+    ) * tau
+    return np.exp(
+        1j * u_arr * drift
+        - 0.5 * sigma * sigma * u_arr * u_arr * tau
+        + lam * tau * (np.exp(1j * u_arr * mu - 0.5 * sj * sj * u_arr * u_arr) - 1.0)
+    )
+
+
 def merton_price(option_type, forward, strike, tau, discount_factor, sigma, lambda_jump, mu_jump, sigma_jump, n_max: int = 40, engine: str = "auto"):
     option_type = np.asarray(option_type)
     forward = np.asarray(forward, dtype=float)
@@ -215,4 +234,4 @@ def merton_prices(quotes: pd.DataFrame, fit: dict, engine: str = "auto") -> pd.D
     return _fit_prices_from_params(quotes, params, _engine_name(engine))
 
 
-__all__ = ["fit_merton_jump_diffusion", "merton_price", "merton_prices"]
+__all__ = ["fit_merton_jump_diffusion", "merton_cf", "merton_price", "merton_prices"]

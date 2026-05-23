@@ -14,6 +14,24 @@ def _ax(ax=None):
     return ax
 
 
+def _small_legend(ax, **kwargs):
+    defaults = {
+        "fontsize": 6,
+        "frameon": True,
+        "framealpha": 0.88,
+        "borderpad": 0.25,
+        "labelspacing": 0.25,
+        "handlelength": 1.2,
+        "handletextpad": 0.35,
+        "borderaxespad": 0.25,
+    }
+    defaults.update(kwargs)
+    handles, labels = ax.get_legend_handles_labels()
+    if handles:
+        return ax.legend(handles, labels, **defaults)
+    return None
+
+
 def _ordered_strategy_columns(frame: pd.DataFrame) -> list:
     preferred = ["unhedged", "delta", "delta_vega"]
     return [c for c in preferred if c in frame.columns] + [c for c in frame.columns if c not in preferred]
@@ -26,7 +44,7 @@ def _format_hedging_axis(ax, n_series: int) -> None:
     ax.grid(True, alpha=0.20)
     ax.tick_params(axis="x", labelrotation=25)
     if n_series > 0:
-        ax.legend(loc="best", ncol=min(3, n_series), fontsize=7)
+        _small_legend(ax, loc="best", ncol=min(3, n_series))
 
 
 def _relative_spread(frame: pd.DataFrame) -> pd.Series:
@@ -60,7 +78,7 @@ def plot_clean_vs_dirty_spread(dirty: pd.DataFrame, clean: pd.DataFrame, ax=None
     else:
         ax.hist(dirty_spread, bins=40, alpha=0.45, label="raw")
         ax.hist(clean_spread, bins=40, alpha=0.65, label="clean")
-        ax.legend()
+        _small_legend(ax)
     ax.set_xlabel("relative spread")
     ax.set_ylabel("count")
     ax.set_title(title or "Clean vs dirty spreads")
@@ -87,7 +105,7 @@ def plot_forward_vs_spot(forward_table: pd.DataFrame, ax=None, title: str | None
         ax.plot(plot_data["date"], plot_data["spot"], ".", ms=2, alpha=0.55, label="spot")
     ax.set_ylabel("level")
     ax.set_title(title or "Parity-implied forward vs spot")
-    ax.legend(loc="best")
+    _small_legend(ax, loc="best")
     return ax
 
 
@@ -138,7 +156,7 @@ def plot_iv_smile(iv_table: pd.DataFrame, ax=None, title: str | None = None):
     ax.set_ylabel("implied vol")
     ax.set_title(title or "IV smile")
     if ax.lines:
-        ax.legend(fontsize=7)
+        _small_legend(ax)
     return ax
 
 
@@ -177,7 +195,7 @@ def plot_iv_bid_ask_band(iv_table: pd.DataFrame, ax=None, title: str | None = No
     ax.set_xlabel("moneyness")
     ax.set_ylabel("implied vol")
     ax.set_title(title or "IV bid/mid/ask band")
-    ax.legend()
+    _small_legend(ax)
     return ax
 
 
@@ -218,7 +236,7 @@ def plot_greek_bands(greek_bands: pd.DataFrame, greek: str = "delta", ax=None, t
     ax.fill_between(data["moneyness"], data[f"{greek}_low"], data[f"{greek}_high"], alpha=0.2)
     ax.set_xlabel("moneyness")
     ax.set_title(title or f"{greek} uncertainty band")
-    ax.legend()
+    _small_legend(ax)
     return ax
 
 
@@ -232,7 +250,7 @@ def plot_realized_vs_implied_vol(rv_iv: pd.DataFrame, ax=None, title: str | None
     ax.plot(grouped["date"], grouped["implied_vol"], label="implied")
     ax.set_ylabel("volatility")
     ax.set_title(title or "Realized vs implied volatility")
-    ax.legend()
+    _small_legend(ax)
     return ax
 
 
@@ -357,7 +375,7 @@ def plot_single_day_parity_forward_extraction(
     date_txt = pd.Timestamp(quotes[date_col].dropna().iloc[0]).date() if date_col and quotes[date_col].notna().any() else ""
     exp_txt = pd.Timestamp(exp).date() if exp is not None else ""
     ax.set_title(title or f"single-day parity forward extraction ({date_txt}, {exp_txt})")
-    ax.legend(loc="best")
+    _small_legend(ax, loc="best")
     return ax
 
 
@@ -413,7 +431,7 @@ def plot_market_mid_vs_realized_vol_forward_bsm(rv_pricing, ax=None, title: str 
     ax.set_xlabel("log-moneyness")
     ax.set_ylabel("option price")
     ax.set_title(title or "market mid vs realized-vol forward-bsm pricing")
-    ax.legend(loc="best")
+    _small_legend(ax, loc="best")
     return ax
 
 
@@ -430,7 +448,7 @@ def plot_iv_failure_rate_by_log_moneyness(solver_diagnostics, ax=None, title: st
     ax.set_ylabel("failure rate")
     ax.set_ylim(bottom=0)
     ax.set_title(title or "IV inversion failure rate by log-moneyness")
-    ax.legend(fontsize=7)
+    _small_legend(ax)
     return ax
 
 
@@ -462,7 +480,7 @@ def plot_iv_iterations_by_log_moneyness(solver_diagnostics, ax=None, title: str 
     ax.set_xlabel("log-moneyness")
     ax.set_ylabel("median iterations")
     ax.set_title(title or "Successful IV iterations by log-moneyness")
-    ax.legend(fontsize=7)
+    _small_legend(ax)
     return ax
 
 
@@ -518,7 +536,7 @@ def plot_numpy_jax_greek_comparison(greek_comparison, greek: str = "delta", ax=N
     ax.set_xlabel("log-moneyness" if xcol in {"log_moneyness", "lm_f"} else "observation")
     ax.set_ylabel(greek)
     ax.set_title(title or greek, fontsize=13)
-    ax.legend(loc="best")
+    _small_legend(ax, loc="best")
     return ax
 
 
@@ -563,7 +581,7 @@ def plot_greek_uncertainty_bands(greek_bands: pd.DataFrame, greek: str = "delta"
     ax.set_xticklabels(summary["greek"], rotation=0)
     ax.set_ylabel("band width")
     ax.set_title(title or "Greek uncertainty from bid/mid/ask IV")
-    ax.legend(loc="best")
+    _small_legend(ax, loc="best")
     return ax
 
 
@@ -618,7 +636,7 @@ def plot_hedging_rolling_turnover(hedge_results: dict, window: int = 21, ax=None
     roll_turn = turnover.rolling(int(window)).mean()
     for col in roll_turn.columns:
         ax.plot(roll_turn.index, roll_turn[col], label=str(col))
-    ax.legend(ncol=min(3, len(roll_turn.columns)))
+    _small_legend(ax, ncol=min(3, len(roll_turn.columns)))
     ax.set_title(title or f"rolling {int(window)} day mean turnover")
     ax.set_ylabel("turnover")
     ax.set_xlabel("date")
@@ -636,7 +654,7 @@ def plot_hedging_cumulative_pnl(hedge_results: dict, ax=None, title: str | None 
     cumulative = pnl.cumsum()
     for col in cumulative.columns:
         ax.plot(cumulative.index, cumulative[col], label=str(col))
-    ax.legend(ncol=min(3, len(cumulative.columns)))
+    _small_legend(ax, ncol=min(3, len(cumulative.columns)))
     ax.set_title(title or "cumulative pnl")
     ax.set_ylabel("cumulative pnl")
     ax.set_xlabel("date")
@@ -723,7 +741,7 @@ def plot_hedge_exposures(hedge_results: dict, ax=None, title: str | None = None)
         for strategy, grp in exposures.groupby("strategy"):
             ax.plot(grp["date"], grp["delta_after"], label=f"{strategy} delta")
     ax.set_title(title or "Hedge exposures")
-    ax.legend(loc="best")
+    _small_legend(ax, loc="best")
     return ax
 
 
@@ -829,7 +847,7 @@ def smile_slices_comparison(ax, grid: dict, pchip_grid, spline_grid, maturities_
     ax.set_xlabel("log strike / forward")
     ax.set_ylabel("implied vol")
     ax.set_title(title or "PCHIP vs spline smiles")
-    ax.legend(fontsize=7)
+    _small_legend(ax)
     return ax
 
 
@@ -872,7 +890,7 @@ def local_vol_slices(ax, lv: dict, x_col: str = "k_spot", maturities_days=(30, 6
     ax.set_xlabel("log strike / spot")
     ax.set_ylabel("volatility")
     ax.set_title(title or "Local vol vs implied vol")
-    ax.legend(fontsize=6, ncol=2)
+    _small_legend(ax, ncol=2)
     return ax
 
 
@@ -922,7 +940,7 @@ def delta_correction_slices(ax, greek_grid: pd.DataFrame, x_col: str = "k_spot",
     ax.set_xlabel("log strike / spot")
     ax.set_ylabel("delta diff")
     ax.set_title(title or "Delta correction slices")
-    ax.legend(fontsize=7)
+    _small_legend(ax)
     return ax
 
 
@@ -937,7 +955,7 @@ def gamma_correction_slices(ax, greek_grid: pd.DataFrame, x_col: str = "k_spot",
     ax.set_xlabel("log strike / spot")
     ax.set_ylabel("gamma diff")
     ax.set_title(title or "Gamma correction slices")
-    ax.legend(fontsize=7)
+    _small_legend(ax)
     return ax
 
 
@@ -994,7 +1012,7 @@ def smile_term_structure(ax, quotes: pd.DataFrame, k_col: str = "k", tau_col: st
     ax.set_xlabel("log strike / forward")
     ax.set_ylabel("implied vol")
     ax.set_title(title or "IV smile term structure")
-    ax.legend(fontsize=7)
+    _small_legend(ax)
     return ax
 
 
@@ -1038,7 +1056,7 @@ def model_quote_overlay(ax, quotes: pd.DataFrame, model_quotes: pd.DataFrame, k_
     ax.set_xlabel("expiry bucket")
     ax.set_ylabel("quote count")
     ax.set_title(title or "Balanced panel coverage by expiry")
-    ax.legend(fontsize=7)
+    _small_legend(ax)
     return ax
 
 
@@ -1058,7 +1076,7 @@ def svi_smiles(ax, quotes: pd.DataFrame, fit: dict, title: str | None = None):
     ax.set_xlabel("log strike / forward")
     ax.set_ylabel("implied vol")
     ax.set_title(title or "SVI fitted smiles")
-    ax.legend(fontsize=7)
+    _small_legend(ax)
     return ax
 
 
@@ -1094,7 +1112,7 @@ def svi_ssvi_errors(ax, svi_fit: dict | pd.DataFrame, ssvi_fit: dict | None = No
     ax.set_xlabel("expiry")
     ax.set_ylabel("IV RMSE")
     ax.set_title(title or "SVI vs SSVI error by expiry")
-    ax.legend(fontsize=7)
+    _small_legend(ax)
     return ax
 
 
@@ -1145,7 +1163,7 @@ def sabr_smiles(ax, quotes: pd.DataFrame, fit: dict, title: str | None = None):
     ax.set_xlabel("log strike / forward")
     ax.set_ylabel("implied vol")
     ax.set_title(title or "SABR fitted smiles")
-    ax.legend(fontsize=7)
+    _small_legend(ax)
     return ax
 
 
@@ -1165,7 +1183,7 @@ def sabr_terms(ax, fit: dict, title: str | None = None):
     ax.set_xlabel("days to expiry")
     ax.set_ylabel("parameter value")
     ax.set_title(title or "SABR parameter term structure")
-    ax.legend(fontsize=7)
+    _small_legend(ax)
     return ax
 
 
@@ -1205,7 +1223,7 @@ def heston_mc_check(ax, fit: dict, title: str | None = None):
     ax2.set_ylabel("standard error")
     ax.set_title(title or "Heston MC convergence")
     lines = ax.get_lines() + ax2.get_lines()
-    ax.legend(lines, [line.get_label() for line in lines], fontsize=7)
+    ax.legend(lines, [line.get_label() for line in lines], fontsize=6, frameon=True, framealpha=0.88, borderpad=0.25, labelspacing=0.25, handlelength=1.2, handletextpad=0.35)
     return ax
 
 
@@ -1223,7 +1241,7 @@ def heston_bates_fit(ax, quotes: pd.DataFrame, heston_fit: dict, bates_fit: dict
     ax.set_xlabel("log strike / forward")
     ax.set_ylabel("model price - mid")
     ax.set_title(title or "Heston vs Bates fit")
-    ax.legend(fontsize=7)
+    _small_legend(ax)
     return ax
 
 
@@ -1293,7 +1311,7 @@ def model_disagreement(ax, fair_values: pd.DataFrame, title: str | None = None):
     ax.xaxis.set_major_locator(locator)
     ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(locator))
     ax.tick_params(axis="x", labelrotation=20)
-    ax.legend(fontsize=7)
+    _small_legend(ax)
     return ax
 
 
@@ -1338,8 +1356,1476 @@ def scheduled_hedge_equity(ax, results: dict, comparison: pd.DataFrame | None = 
     return ax
 
 
+def quote_coverage(ax, quotes: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    q = quotes.copy()
+    if q.empty:
+        return _quiet_axis(ax, "No quotes", title or "Quote coverage")
+    x = pd.to_numeric(q.get("moneyness", q.get("k_over_s", q.get("strike") / q.get("spot"))), errors="coerce")
+    y = pd.to_numeric(q.get("dte_days", q.get("dte", q.get("tau") * 365.25)), errors="coerce")
+    ax.scatter(x, y, s=6, alpha=0.25)
+    ax.set_xlabel("K / S")
+    ax.set_ylabel("DTE")
+    ax.set_title(title or "Quote coverage")
+    return ax
+
+
+def dividend_timeline(ax, prices: pd.DataFrame | pd.Series, dividends: pd.DataFrame | pd.Series | None = None, title: str | None = None):
+    ax = _ax(ax)
+    if isinstance(prices, pd.DataFrame):
+        close = prices["close"] if "close" in prices.columns else prices.iloc[:, 0]
+    else:
+        close = pd.Series(prices)
+    close.index = pd.to_datetime(close.index, errors="coerce")
+    ax.plot(close.index, close.values, lw=1.2, label="close")
+    div = dividends
+    if div is None and isinstance(prices, pd.DataFrame) and "dividend" in prices.columns:
+        div = prices["dividend"]
+    if div is not None:
+        div = pd.Series(div)
+        div.index = pd.to_datetime(div.index, errors="coerce")
+        div = div[pd.to_numeric(div, errors="coerce") > 0]
+        if not div.empty:
+            y = close.reindex(div.index, method="nearest")
+            ax.scatter(div.index, y, marker="v", s=35, label="dividend")
+    ax.set_title(title or "Underlying and dividends")
+    _small_legend(ax)
+    return ax
+
+
+def iv_moneyness(ax, quotes: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    q = quotes.dropna(subset=[c for c in ["iv_mid"] if c in quotes.columns]).copy()
+    if q.empty:
+        return _quiet_axis(ax, "No IV", title or "IV by moneyness")
+    x = pd.to_numeric(q.get("moneyness", q.get("k_over_s", q.get("strike") / q.get("spot"))), errors="coerce")
+    ax.scatter(x, q["iv_mid"], s=10, alpha=0.45)
+    ax.set_xlabel("K / S")
+    ax.set_ylabel("IV")
+    ax.set_title(title or "IV by moneyness")
+    return ax
+
+
+def sigma_surface(ax, quotes: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if quotes.empty or "sigma_used" not in quotes:
+        return _quiet_axis(ax, "No sigma data", title or "Sigma surface")
+    q = quotes.copy()
+    x = pd.to_numeric(q.get("moneyness", q.get("k_over_s", q.get("strike") / q.get("spot"))), errors="coerce")
+    y = pd.to_numeric(q.get("dte_days", q.get("tau") * 365.25), errors="coerce")
+    sc = ax.scatter(x, y, c=pd.to_numeric(q["sigma_used"], errors="coerce"), s=6, alpha=0.5, cmap="viridis")
+    ax.set_xlabel("K / S")
+    ax.set_ylabel("DTE")
+    ax.set_title(title or "Sigma used across chain")
+    ax.figure.colorbar(sc, ax=ax, pad=0.01)
+    return ax
+
+
+def tree_convergence(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No convergence", title or "Tree convergence")
+    ax.plot(table["steps"], table["price"], marker="o", lw=1.4)
+    if "reference_error" in table:
+        ax2 = ax.twinx()
+        ax2.plot(table["steps"], table["reference_error"], marker="s", lw=1.0, color=LAB_COLORS[3], label="abs error")
+        ax2.set_ylabel("abs error")
+    ax.set_xlabel("steps")
+    ax.set_ylabel("price")
+    ax.set_title(title or "Tree convergence")
+    return ax
+
+
+def tree_boundary(ax, boundary: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if boundary.empty:
+        return _quiet_axis(ax, "No boundary", title or "Tree boundary")
+    data = boundary.copy()
+    x = data["time_to_expiry"] if "time_to_expiry" in data else data["time"] if "time" in data else data.index
+    y = data["boundary_over_k"] if "boundary_over_k" in data else data["boundary"] / data["strike"] if {"boundary", "strike"}.issubset(data.columns) else data["boundary"]
+    ax.plot(x, y, lw=1.6)
+    ax.set_xlabel("time to expiry")
+    ax.set_ylabel("boundary S/K")
+    ax.set_title(title or "Exercise boundary")
+    return ax
+
+
+def tree_exercise_map(ax, exercise: pd.DataFrame | np.ndarray, title: str | None = None):
+    ax = _ax(ax)
+    if isinstance(exercise, pd.DataFrame) and {"time_to_expiry", "s_over_k", "exercise"}.issubset(exercise.columns):
+        q = exercise.copy()
+        q["time_bin"] = pd.cut(pd.to_numeric(q["time_to_expiry"], errors="coerce"), bins=np.linspace(q["time_to_expiry"].min(), q["time_to_expiry"].max(), 41), include_lowest=True)
+        q["sk_bin"] = pd.cut(pd.to_numeric(q["s_over_k"], errors="coerce"), bins=np.linspace(q["s_over_k"].min(), q["s_over_k"].max(), 41), include_lowest=True)
+        table = q.pivot_table(index="sk_bin", columns="time_bin", values="exercise", aggfunc="max", observed=False)
+        im = ax.imshow(table.to_numpy(float), aspect="auto", origin="lower", cmap="magma", extent=[float(q["time_to_expiry"].min()), float(q["time_to_expiry"].max()), float(q["s_over_k"].min()), float(q["s_over_k"].max())])
+        ax.set_xlabel("time to expiry")
+        ax.set_ylabel("S / K")
+        ax.set_title(title or "Tree exercise region")
+        ax.figure.colorbar(im, ax=ax, pad=0.01)
+        return ax
+    values = exercise.to_numpy() if isinstance(exercise, pd.DataFrame) else np.asarray(exercise)
+    if values.size == 0:
+        return _quiet_axis(ax, "No exercise map", title or "Tree exercise map")
+    im = ax.imshow(values.astype(float), aspect="auto", origin="lower", cmap="magma")
+    ax.set_xlabel("time step")
+    ax.set_ylabel("S / K grid")
+    ax.set_title(title or "Tree exercise region")
+    ax.figure.colorbar(im, ax=ax, pad=0.01)
+    return ax
+
+
+def american_premium_heatmap(ax, quotes: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if quotes.empty or "american_premium" not in quotes:
+        return _quiet_axis(ax, "No premium data", title or "American premium")
+    q = quotes.copy()
+    if "option_type" in q.columns and q["option_type"].nunique() > 1:
+        q = q[q["option_type"].astype(str).str.lower().str.startswith("p")].copy()
+        label = "puts"
+    else:
+        label = str(q["option_type"].iloc[0]) if "option_type" in q and len(q) else ""
+    q["dte_bucket"] = pd.cut(pd.to_numeric(q["dte_days"], errors="coerce"), bins=[0, 14, 30, 60, 90, 120, 180])
+    q["m_bucket"] = pd.cut(pd.to_numeric(q["moneyness"], errors="coerce"), bins=[0.65, 0.8, 0.9, 0.97, 1.03, 1.1, 1.25, 1.45])
+    table = q.pivot_table(index="dte_bucket", columns="m_bucket", values="american_premium", aggfunc="median", observed=False)
+    im = ax.imshow(table.to_numpy(float), aspect="auto", cmap="viridis")
+    ax.set_xticks(np.arange(table.shape[1]))
+    ax.set_xticklabels([str(c) for c in table.columns], rotation=45, ha="right", fontsize=7)
+    ax.set_yticks(np.arange(table.shape[0]))
+    ax.set_yticklabels([str(i) for i in table.index], fontsize=7)
+    ax.figure.colorbar(im, ax=ax, pad=0.01)
+    ax.set_xlabel("K / S bucket")
+    ax.set_ylabel("DTE bucket")
+    ax.set_title(title or f"American premium heatmap {label}".strip())
+    return ax
+
+
+def pricing_error_distribution(ax, quotes: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    col = "pricing_error" if "pricing_error" in quotes.columns else "price_error"
+    if quotes.empty or col not in quotes:
+        return _quiet_axis(ax, "No pricing errors", title or "Pricing error distribution")
+    x = pd.to_numeric(quotes[col], errors="coerce").replace([np.inf, -np.inf], np.nan).dropna()
+    ax.hist(x, bins=80, alpha=0.8)
+    ax.axvline(0.0, color="black", lw=0.9)
+    ax.set_xlabel("model price - mid")
+    ax.set_ylabel("contracts")
+    ax.set_title(title or "Pricing error distribution")
+    return ax
+
+
+def premium_term_curves(ax, quotes: pd.DataFrame, option_type: str | None = None, title: str | None = None):
+    ax = _ax(ax)
+    if quotes.empty or "american_premium" not in quotes:
+        return _quiet_axis(ax, "No premium data", title or "Premium Term Curves")
+    q = quotes.copy()
+    if option_type is not None and "option_type" in q:
+        q = q[q["option_type"].astype(str).str.lower().str.startswith(str(option_type).lower()[0])].copy()
+    if q.empty:
+        return _quiet_axis(ax, "No matching options", title or "Premium Term Curves")
+    dte = pd.to_numeric(q.get("dte_days", q.get("tau", np.nan) * 365.25), errors="coerce")
+    spot = pd.to_numeric(q.get("spot", 1.0), errors="coerce")
+    m = pd.to_numeric(q.get("moneyness", pd.to_numeric(q.get("strike", np.nan), errors="coerce") / spot), errors="coerce")
+    q["dte_bucket"] = pd.cut(dte, [0, 14, 30, 60, 90, 120, 180, 365], include_lowest=True)
+    q["m_bucket"] = pd.cut(m, [0.65, 0.90, 0.97, 1.03, 1.10, 1.25, 1.50], include_lowest=True)
+    q["premium_bps"] = pd.to_numeric(q["american_premium"], errors="coerce") / spot * 10000.0
+    rows = []
+    for (dte_bucket, m_bucket), part in q.groupby(["dte_bucket", "m_bucket"], observed=True):
+        x = 0.5 * (float(dte_bucket.left) + float(dte_bucket.right))
+        values = part["premium_bps"].replace([np.inf, -np.inf], np.nan).dropna()
+        if len(values):
+            rows.append({"dte_mid": x, "m_bucket": str(m_bucket), "median": values.median(), "q25": values.quantile(0.25), "q75": values.quantile(0.75), "count": len(values)})
+    data = pd.DataFrame(rows)
+    if data.empty:
+        return _quiet_axis(ax, "No term data", title or "Premium Term Curves")
+    for label, part in data.groupby("m_bucket", sort=False):
+        part = part.sort_values("dte_mid")
+        ax.plot(part["dte_mid"], part["median"], marker="o", lw=1.4, label=label)
+        ax.fill_between(part["dte_mid"].to_numpy(float), part["q25"].to_numpy(float), part["q75"].to_numpy(float), alpha=0.14)
+    ax.axhline(0.0, color="black", lw=0.8)
+    ax.set_xlabel("DTE bucket midpoint")
+    ax.set_ylabel("median American premium, bps of spot")
+    ax.set_title(title or "Premium Term Curves")
+    _small_legend(ax, ncol=2)
+    return ax
+
+
+def premium_concentration(ax, quotes: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if quotes.empty or "american_premium" not in quotes:
+        return _quiet_axis(ax, "No premium data", title or "Premium Concentration")
+    q = quotes.copy()
+    if "option_type" not in q:
+        q["option_type"] = "option"
+    drew = False
+    for opt, part in q.groupby(q["option_type"].astype(str).str.lower().str[0]):
+        values = pd.to_numeric(part["american_premium"], errors="coerce").clip(lower=0.0).replace([np.inf, -np.inf], np.nan).dropna().sort_values(ascending=False)
+        if len(values) == 0 or float(values.sum()) <= 0.0:
+            continue
+        x = np.arange(1, len(values) + 1, dtype=float) / float(len(values))
+        y = values.cumsum().to_numpy(float) / float(values.sum())
+        ax.plot(x * 100.0, y * 100.0, lw=1.7, label="calls" if opt.startswith("c") else "puts" if opt.startswith("p") else str(opt))
+        drew = True
+    if not drew:
+        return _quiet_axis(ax, "No positive premium", title or "Premium Concentration")
+    ax.plot([0, 100], [0, 100], color="black", lw=0.8, ls=":")
+    ax.set_xlabel("contracts ranked by premium, cumulative %")
+    ax.set_ylabel("total positive American premium, cumulative %")
+    ax.set_title(title or "Premium Concentration")
+    _small_legend(ax)
+    return ax
+
+
+def pricing_error_spread(ax, quotes: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    col = "pricing_error" if "pricing_error" in quotes.columns else "price_error"
+    if quotes.empty or col not in quotes:
+        return _quiet_axis(ax, "No pricing errors", title or "Spread-Scaled Error")
+    q = quotes.copy()
+    half = 0.5 * (pd.to_numeric(q.get("ask"), errors="coerce") - pd.to_numeric(q.get("bid"), errors="coerce"))
+    if half.isna().all() or (half <= 0).all():
+        half = pd.to_numeric(q.get("mid", 1.0), errors="coerce") * pd.to_numeric(q.get("relative_spread", q.get("rel_spread", np.nan)), errors="coerce") * 0.5
+    ratio = pd.to_numeric(q[col], errors="coerce") / half.replace(0.0, np.nan)
+    ratio = ratio.replace([np.inf, -np.inf], np.nan).dropna().clip(-20.0, 20.0)
+    if ratio.empty:
+        return _quiet_axis(ax, "No scaled errors", title or "Spread-Scaled Error")
+    ax.hist(ratio, bins=80, color=LAB_COLORS[0], alpha=0.82)
+    for x, label in [(-1.0, "bid"), (0.0, "mid"), (1.0, "ask")]:
+        ax.axvline(x, color="black" if x == 0.0 else "#6b7280", lw=0.9, ls="-" if x == 0.0 else ":")
+    ax.set_xlabel("(model price - mid) / half-spread")
+    ax.set_ylabel("contracts")
+    ax.set_title(title or "Spread-Scaled Error")
+    return ax
+
+
+def bid_ask_hit_rate(ax, quotes: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    price_col = "american_tree_price" if "american_tree_price" in quotes.columns else "model_price" if "model_price" in quotes.columns else None
+    if quotes.empty or price_col is None or not {"bid", "ask"}.issubset(quotes.columns):
+        return _quiet_axis(ax, "No bid/ask data", title or "Bid/Ask Fit")
+    q = quotes.copy()
+    dte = pd.to_numeric(q.get("dte_days", q.get("tau", np.nan) * 365.25), errors="coerce")
+    q["dte_bucket"] = pd.cut(dte, [0, 14, 30, 60, 90, 120, 180, 365], include_lowest=True)
+    q["inside"] = (pd.to_numeric(q[price_col], errors="coerce") >= pd.to_numeric(q["bid"], errors="coerce")) & (pd.to_numeric(q[price_col], errors="coerce") <= pd.to_numeric(q["ask"], errors="coerce"))
+    option_side = q["option_type"].astype(str).str.lower().str.startswith("c") if "option_type" in q else pd.Series(False, index=q.index)
+    q["option_side"] = np.where(option_side, "calls", "puts")
+    table = q.groupby(["dte_bucket", "option_side"], observed=True)["inside"].mean().reset_index()
+    if table.empty:
+        return _quiet_axis(ax, "No hit-rate data", title or "Bid/Ask Fit")
+    mids = {b: 0.5 * (float(b.left) + float(b.right)) for b in table["dte_bucket"].unique()}
+    for side, part in table.groupby("option_side"):
+        part = part.assign(dte_mid=part["dte_bucket"].map(mids)).sort_values("dte_mid")
+        ax.plot(part["dte_mid"], part["inside"] * 100.0, marker="o", lw=1.4, label=side)
+    ax.set_ylim(0, 100)
+    ax.set_xlabel("DTE bucket midpoint")
+    ax.set_ylabel("model inside bid/ask, %")
+    ax.set_title(title or "Bid/Ask Fit")
+    _small_legend(ax)
+    return ax
+
+
+def boundary_compare(ax, pde_result: dict | pd.DataFrame, tree_result: pd.DataFrame | None = None, title: str | None = None):
+    ax = _ax(ax)
+    drew = False
+    if isinstance(pde_result, dict):
+        boundary = np.asarray(pde_result.get("boundary", []), dtype=float)
+        strike = float(pde_result.get("strike", np.nan))
+        tau = float(pde_result.get("tau", 1.0))
+        if boundary.size and np.isfinite(strike) and strike > 0:
+            x = np.linspace(tau, 0.0, len(boundary))
+            y = boundary / strike
+            mask = np.isfinite(y) & (y > 0)
+            if mask.any():
+                ax.plot(x[mask], y[mask], lw=1.7, label="PDE")
+                drew = True
+    elif isinstance(pde_result, pd.DataFrame) and not pde_result.empty:
+        x = pde_result["time_to_expiry"] if "time_to_expiry" in pde_result else pde_result.index
+        y = pde_result["boundary_over_k"] if "boundary_over_k" in pde_result else pde_result.get("boundary")
+        ax.plot(x, y, lw=1.7, label="PDE")
+        drew = True
+    if tree_result is not None and not tree_result.empty:
+        x = tree_result["time_to_expiry"] if "time_to_expiry" in tree_result else tree_result.get("time", tree_result.index)
+        y = tree_result["boundary_over_k"] if "boundary_over_k" in tree_result else tree_result.get("boundary")
+        ax.plot(x, y, lw=1.2, ls="--", label="tree")
+        drew = True
+    if not drew:
+        return _quiet_axis(ax, "No boundary", title or "Free Boundary")
+    ax.set_xlabel("time to expiry")
+    ax.set_ylabel("exercise boundary S / K")
+    ax.set_title(title or "Free Boundary")
+    _small_legend(ax)
+    return ax
+
+
+def pde_tree_gap_curves(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No PDE/tree table", title or "PDE-Tree Gap")
+    q = table.copy()
+    if "pde_tree_disagreement" not in q:
+        if {"pde_price", "american_tree_price"}.issubset(q.columns):
+            q["pde_tree_disagreement"] = pd.to_numeric(q["pde_price"], errors="coerce") - pd.to_numeric(q["american_tree_price"], errors="coerce")
+        elif {"pde_price", "tree_price"}.issubset(q.columns):
+            q["pde_tree_disagreement"] = pd.to_numeric(q["pde_price"], errors="coerce") - pd.to_numeric(q["tree_price"], errors="coerce")
+        else:
+            return _quiet_axis(ax, "No disagreement column", title or "PDE-Tree Gap")
+    q["abs_disagreement"] = pd.to_numeric(q["pde_tree_disagreement"], errors="coerce").abs()
+    spot_col = "spot" if "spot" in q.columns else "s" if "s" in q.columns else None
+    if spot_col is not None:
+        spot = pd.to_numeric(q[spot_col], errors="coerce").replace(0.0, np.nan)
+        q["gap_value"] = 10000.0 * q["abs_disagreement"] / spot
+        ylabel = "|PDE - tree| (bps of spot)"
+    else:
+        q["gap_value"] = q["abs_disagreement"]
+        ylabel = "|PDE - tree|"
+    if "dte_days" not in q.columns:
+        return _quiet_axis(ax, "No DTE column", title or "PDE-Tree Gap")
+    if "dte_bucket" not in q.columns:
+        q["dte_bucket"] = pd.cut(pd.to_numeric(q["dte_days"], errors="coerce"), [0, 14, 30, 60, 90, 120, 180, 365])
+    q = q.replace([np.inf, -np.inf], np.nan).dropna(subset=["gap_value", "dte_days", "dte_bucket"])
+    if q.empty:
+        return _quiet_axis(ax, "No disagreement data", title or "PDE-Tree Gap")
+    drew = False
+    for i, (opt, group) in enumerate(q.groupby("option_type", observed=True)):
+        by = group.groupby("dte_bucket", observed=True).agg(
+            x=("dte_days", "median"),
+            med=("gap_value", "median"),
+            lo=("gap_value", lambda v: np.nanquantile(v, 0.25)),
+            hi=("gap_value", lambda v: np.nanquantile(v, 0.75)),
+        ).dropna().sort_values("x")
+        if by.empty:
+            continue
+        color = LAB_COLORS[i % len(LAB_COLORS)]
+        ax.plot(by["x"], by["med"], marker="o", ms=3, lw=1.5, color=color, label=str(opt))
+        ax.fill_between(by["x"].to_numpy(float), by["lo"].to_numpy(float), by["hi"].to_numpy(float), color=color, alpha=0.15, lw=0)
+        drew = True
+    if not drew:
+        return _quiet_axis(ax, "No disagreement data", title or "PDE-Tree Gap")
+    ax.set_xlabel("DTE")
+    ax.set_ylabel(ylabel)
+    ax.set_title(title or "PDE-Tree Gap")
+    _small_legend(ax, ncol=2)
+    return ax
+
+
+def pde_disagreement_bars(ax, table: pd.DataFrame, title: str | None = None, n: int = 20):
+    return pde_tree_gap_curves(ax, table, title or "PDE-Tree Gap")
+
+
+def lsm_policy_curve(ax, coefficients: np.ndarray | pd.DataFrame, *, strike: float = 1.0, option_type: str = "put", step: int | None = None, title: str | None = None):
+    ax = _ax(ax)
+    beta = np.asarray(coefficients, dtype=float)
+    if beta.size == 0:
+        return _quiet_axis(ax, "No LSM coefficients", title or "LSM Policy")
+    if beta.ndim == 1:
+        coef = beta
+    else:
+        idx = int(step) if step is not None else max(0, beta.shape[0] // 2)
+        idx = min(max(idx, 0), beta.shape[0] - 1)
+        coef = beta[idx]
+    x = np.linspace(-0.45, 0.45, 220)
+    basis = np.vstack([x ** i for i in range(len(coef))]).T
+    cont = basis @ coef
+    s_over_k = np.exp(x)
+    payoff = np.maximum(s_over_k - 1.0, 0.0) * float(strike) if str(option_type).lower().startswith("c") else np.maximum(1.0 - s_over_k, 0.0) * float(strike)
+    exercise = payoff > cont
+    ax.plot(x, cont, lw=1.7, label="fitted continuation")
+    ax.plot(x, payoff, lw=1.3, color=LAB_COLORS[1], label="immediate exercise")
+    if exercise.any():
+        idx = np.where(exercise)[0]
+        ax.axvspan(x[idx.min()], x[idx.max()], color=LAB_COLORS[1], alpha=0.12, label="exercise region")
+        ax.axvline(x[idx[0]], color="black", lw=0.9, ls=":")
+    ax.set_xlabel("log(S / K)")
+    ax.set_ylabel("value")
+    ax.set_title(title or "LSM Policy")
+    _small_legend(ax)
+    return ax
+
+
+def overlay_equity_drawdown(ax, results: dict | pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    nav = results.get("nav", pd.DataFrame()) if isinstance(results, dict) else results
+    dd = results.get("drawdown", pd.DataFrame()) if isinstance(results, dict) else pd.DataFrame()
+    if nav.empty:
+        return _quiet_axis(ax, "No NAV", title or "Overlay Equity")
+    base = nav / nav.iloc[0]
+    base.plot(ax=ax, lw=1.2)
+    _small_legend(ax, ncol=1)
+    ax.set_ylabel("NAV / initial NAV")
+    ax.set_title(title or "Overlay Equity")
+    if not dd.empty:
+        ax2 = ax.twinx()
+        dd.min(axis=1).plot(ax=ax2, color="#6b7280", lw=1.0, alpha=0.65, label="worst drawdown")
+        ax2.set_ylabel("worst drawdown")
+        ax2.grid(False)
+    return ax
+
+
+def strategy_mechanics_bars(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty or "strategy" not in table:
+        return _quiet_axis(ax, "No strategy table", title or "Strategy mechanics")
+    q = table.copy()
+    cols = [c for c in ["total_premium_received", "total_close_cost", "total_spread_cost"] if c in q.columns]
+    if not cols:
+        return _quiet_axis(ax, "No cashflow data", title or "Strategy mechanics")
+    plot = q.set_index("strategy")[cols].apply(pd.to_numeric, errors="coerce").fillna(0.0)
+    plot.plot(kind="bar", ax=ax, width=0.82)
+    _small_legend(ax, ncol=1)
+    ax.set_ylabel("cashflow dollars")
+    ax.set_title(title or "Strategy Mechanics")
+    ax.tick_params(axis="x", labelrotation=35)
+    return ax
+
+
+def pde_value_map(ax, result: dict | pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    values = result.get("values", np.asarray([])) if isinstance(result, dict) else np.asarray(result)
+    if np.asarray(values).size == 0:
+        return _quiet_axis(ax, "No PDE values", title or "PDE value map")
+    arr = np.asarray(values, dtype=float)
+    s_grid = np.asarray(result.get("s_grid", np.arange(arr.shape[1])), dtype=float) if isinstance(result, dict) else np.arange(arr.shape[1])
+    strike = float(result.get("strike", np.nan)) if isinstance(result, dict) else np.nan
+    x = s_grid / strike if np.isfinite(strike) and strike > 0 else s_grid
+    im = ax.imshow(arr, aspect="auto", origin="lower", cmap="viridis", extent=[float(np.nanmin(x)), float(np.nanmax(x)), 0.0, 1.0])
+    ax.set_xlabel("S / K")
+    ax.set_ylabel("time index fraction")
+    ax.set_title(title or "PDE value map")
+    ax.figure.colorbar(im, ax=ax, pad=0.01)
+    return ax
+
+
+def pde_value_surface(ax, result: dict | pd.DataFrame, title: str | None = None):
+    return pde_value_map(ax, result, title or "PDE value surface")
+
+
+def pde_exercise_map(ax, result: dict | pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if isinstance(result, dict):
+        values = np.asarray(result.get("values", []), dtype=float)
+        s_grid = np.asarray(result.get("s_grid", np.arange(values.shape[1] if values.ndim == 2 else 0)), dtype=float)
+        strike = float(result.get("strike", np.nan))
+        option_type = str(result.get("option_type", "put"))
+        payoff = np.maximum(s_grid - strike, 0.0) if option_type.lower().startswith("c") else np.maximum(strike - s_grid, 0.0)
+        exercise = (values - payoff[None, :]) <= 1e-5 if values.ndim == 2 and np.isfinite(strike) else np.asarray([])
+    else:
+        exercise = np.asarray(result, dtype=float)
+    if exercise.size == 0:
+        return _quiet_axis(ax, "No exercise region", title or "PDE exercise region")
+    if isinstance(result, dict) and "s_grid" in result and np.isfinite(strike) and strike > 0:
+        x = s_grid / strike
+        extent = [float(np.nanmin(x)), float(np.nanmax(x)), 0.0, 1.0]
+    else:
+        extent = None
+    im = ax.imshow(exercise.astype(float), aspect="auto", origin="lower", cmap="magma", extent=extent)
+    ax.set_xlabel("S / K")
+    ax.set_ylabel("time index fraction")
+    ax.set_title(title or "PDE exercise region")
+    ax.figure.colorbar(im, ax=ax, pad=0.01)
+    return ax
+
+
+def pde_boundary(ax, result: dict | pd.DataFrame, title: str | None = None):
+    if isinstance(result, pd.DataFrame):
+        data = result
+    else:
+        boundary = np.asarray(result.get("boundary", []), dtype=float)
+        strike = float(result.get("strike", np.nan))
+        tau = float(result.get("tau", 1.0))
+        data = pd.DataFrame({"time_to_expiry": np.linspace(tau, 0.0, len(boundary)), "boundary": boundary})
+        if np.isfinite(strike) and strike > 0:
+            data["boundary_over_k"] = data["boundary"] / strike
+    return tree_boundary(ax, data, title or "PDE boundary")
+
+
+def pde_residual(ax, result: dict | pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    residuals = result.get("residuals", []) if isinstance(result, dict) else result.get("residual", [])
+    if len(residuals) == 0:
+        return _quiet_axis(ax, "No residuals", title or "PSOR residual")
+    ax.semilogy(np.asarray(residuals, dtype=float), lw=1.2)
+    ax.set_xlabel("time step")
+    ax.set_ylabel("residual")
+    ax.set_title(title or "PSOR residual")
+    return ax
+
+
+def pde_value_slices(ax, result: dict, title: str | None = None):
+    ax = _ax(ax)
+    values = np.asarray(result.get("values", []), dtype=float)
+    s_grid = np.asarray(result.get("s_grid", []), dtype=float)
+    strike = float(result.get("strike", np.nan))
+    if values.ndim != 2 or s_grid.size == 0 or not np.isfinite(strike) or strike <= 0:
+        return _quiet_axis(ax, "No PDE slices", title or "PDE value slices")
+    x = s_grid / strike
+    option_type = str(result.get("option_type", "put")).lower()
+    payoff = np.maximum(x - 1.0, 0.0) if option_type.startswith("c") else np.maximum(1.0 - x, 0.0)
+    ax.plot(x, payoff, color="black", lw=1.2, label="payoff")
+    for frac in [0.0, 0.25, 0.5, 0.75, 1.0]:
+        idx = int(round(frac * (values.shape[0] - 1)))
+        ax.plot(x, values[idx] / strike, lw=1.0, label=f"t={frac:.2f}")
+    ax.set_xlabel("S / K")
+    ax.set_ylabel("V / K")
+    ax.set_title(title or "PDE value slices")
+    _small_legend(ax)
+    return ax
+
+
+def complementarity_gap(ax, result: dict, title: str | None = None):
+    ax = _ax(ax)
+    values = np.asarray(result.get("values", []), dtype=float)
+    s_grid = np.asarray(result.get("s_grid", []), dtype=float)
+    strike = float(result.get("strike", np.nan))
+    if values.ndim != 2 or s_grid.size == 0 or not np.isfinite(strike):
+        return _quiet_axis(ax, "No complementarity gap", title or "Complementarity gap")
+    option_type = str(result.get("option_type", "put")).lower()
+    payoff = np.maximum(s_grid - strike, 0.0) if option_type.startswith("c") else np.maximum(strike - s_grid, 0.0)
+    gap = np.maximum(payoff[None, :] - values, 0.0)
+    x = s_grid / strike
+    im = ax.imshow(gap, aspect="auto", origin="lower", cmap="magma", extent=[float(np.nanmin(x)), float(np.nanmax(x)), 0.0, 1.0])
+    ax.set_xlabel("S / K")
+    ax.set_ylabel("time index fraction")
+    ax.set_title(title or "Complementarity gap")
+    ax.figure.colorbar(im, ax=ax, pad=0.01)
+    return ax
+
+
+def pde_residuals(ax, result: dict | pd.DataFrame, title: str | None = None):
+    return pde_residual(ax, result, title or "PSOR residuals")
+
+
+def method_disagreement_heatmap(ax, quotes: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if quotes.empty or "model_disagreement" not in quotes:
+        return _quiet_axis(ax, "No disagreement", title or "Method disagreement")
+    q = quotes.copy()
+    dte = q["dte_days"] if "dte_days" in q else q["tau"] * 365.25 if "tau" in q else pd.Series(np.nan, index=q.index)
+    moneyness = q["moneyness"] if "moneyness" in q else q["strike"] / q["spot"] if {"strike", "spot"}.issubset(q.columns) else pd.Series(np.nan, index=q.index)
+    q["dte_bucket"] = pd.cut(pd.to_numeric(dte, errors="coerce"), bins=[0, 14, 30, 60, 90, 120, 180, 365])
+    q["m_bucket"] = pd.cut(pd.to_numeric(moneyness, errors="coerce"), bins=np.linspace(0.75, 1.25, 11))
+    table = q.pivot_table(index="dte_bucket", columns="m_bucket", values="model_disagreement", aggfunc="median", observed=False)
+    im = ax.imshow(table.to_numpy(float), aspect="auto", cmap="viridis")
+    ax.set_xticks(np.arange(table.shape[1]))
+    ax.set_xticklabels([str(c) for c in table.columns], rotation=45, ha="right", fontsize=6)
+    ax.set_yticks(np.arange(table.shape[0]))
+    ax.set_yticklabels([str(i) for i in table.index], fontsize=7)
+    ax.figure.colorbar(im, ax=ax, pad=0.01)
+    ax.set_title(title or "Method disagreement")
+    return ax
+
+
+def lsm_regression(ax, data: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if data.empty or not {"x", "cashflow"}.issubset(data.columns):
+        return _quiet_axis(ax, "No regression data", title or "LSM continuation regression")
+    sc = ax.scatter(data["x"], data["cashflow"], c=data.get("exercise", pd.Series(0, index=data.index)), s=10, alpha=0.35, cmap="coolwarm")
+    if "continuation" in data.columns:
+        ordered = data.sort_values("x")
+        ax.plot(ordered["x"], ordered["continuation"], color="black", lw=1.7, label="fitted continuation")
+    if "payoff" in data.columns:
+        ordered = data.sort_values("x")
+        ax.plot(ordered["x"], ordered["payoff"], color="#dc2626", lw=1.2, label="immediate exercise")
+    if "boundary_x" in data.columns and data["boundary_x"].notna().any():
+        ax.axvline(float(data["boundary_x"].dropna().iloc[0]), color="#111827", lw=1.0, ls=":", label="exercise boundary")
+    ax.set_xlabel("log(S/K)")
+    ax.set_ylabel("discounted future cashflow")
+    ax.set_title(title or "LSM true continuation target")
+    _small_legend(ax)
+    ax.figure.colorbar(sc, ax=ax, pad=0.01)
+    return ax
+
+
+def lsm_boundary(ax, boundary: pd.DataFrame, reference: pd.DataFrame | None = None, title: str | None = None):
+    ax = _ax(ax)
+    if boundary.empty:
+        return _quiet_axis(ax, "No LSM boundary", title or "LSM boundary")
+    x = boundary["step"] if "step" in boundary else boundary.index
+    ax.plot(x, boundary["boundary"], lw=1.5, label="LSM")
+    if reference is not None and not reference.empty:
+        ax.plot(reference.iloc[:, 0], reference.iloc[:, 1], lw=1.0, label="reference")
+    ax.set_title(title or "Learned exercise boundary")
+    _small_legend(ax)
+    return ax
+
+
+def lsm_policy_gap(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No policy gap", title or "LSM policy gap")
+    col = "policy_gap" if "policy_gap" in table else table.select_dtypes("number").columns[-1]
+    ax.hist(pd.to_numeric(table[col], errors="coerce").dropna(), bins=25)
+    ax.set_title(title or "Policy gap")
+    return ax
+
+
+def lsm_regime_coverage(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No regime coverage", title or "LSM regime coverage")
+    q = table.copy()
+    x = pd.to_numeric(q.get("moneyness", q.get("median_moneyness")), errors="coerce")
+    y = pd.to_numeric(q.get("dte_days", q.get("median_dte")), errors="coerce")
+    c = pd.to_numeric(q.get("coverage_rows", q.get("cell_rows", 1)), errors="coerce")
+    sc = ax.scatter(x, y, c=c, s=25, cmap="viridis")
+    ax.set_xlabel("K / S")
+    ax.set_ylabel("DTE")
+    ax.set_title(title or "LSM regime coverage")
+    ax.figure.colorbar(sc, ax=ax, pad=0.01)
+    return ax
+
+
+def lsm_path_convergence(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No LSM convergence", title or "LSM path convergence")
+    q = table.copy()
+    y = "evaluation_price" if "evaluation_price" in q.columns else "lsm_price"
+    degree_col = "basis_degree" if "basis_degree" in q.columns else ("degree" if "degree" in q.columns else None)
+    if degree_col is None:
+        part = q.sort_values("paths")
+        ax.plot(part["paths"], part[y], marker="o", lw=1.2, label="policy")
+    else:
+        for degree, part in q.groupby(degree_col):
+            part = part.sort_values("paths")
+            ax.plot(part["paths"], part[y], marker="o", lw=1.2, label=f"degree {degree}")
+    if "ci_low" in q.columns and "ci_high" in q.columns:
+        part = q.sort_values("paths")
+        ax.fill_between(part["paths"], part["ci_low"], part["ci_high"], color="#93c5fd", alpha=0.25)
+    ax.set_xscale("log")
+    ax.set_xlabel("paths")
+    ax.set_ylabel(y.replace("_", " "))
+    ax.set_title(title or "LSM path-count convergence")
+    _small_legend(ax)
+    return ax
+
+
+def lsm_exercise_probability(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty or "exercise_probability" not in table:
+        return _quiet_axis(ax, "No exercise probability", title or "LSM exercise probability")
+    q = table.copy()
+    if "dte_bucket" not in q:
+        q["dte_bucket"] = pd.cut(pd.to_numeric(q.get("dte_days"), errors="coerce"), [0, 14, 30, 60, 90, 120, 180])
+    if "moneyness_bucket" not in q:
+        q["moneyness_bucket"] = pd.cut(pd.to_numeric(q.get("moneyness"), errors="coerce"), [0.65, 0.8, 0.9, 0.97, 1.03, 1.1, 1.25, 1.45])
+    table2 = q.pivot_table(index="dte_bucket", columns="moneyness_bucket", values="exercise_probability", aggfunc="median", observed=False)
+    im = ax.imshow(table2.to_numpy(float), aspect="auto", cmap="magma")
+    ax.set_xticks(np.arange(table2.shape[1]))
+    ax.set_xticklabels([str(c) for c in table2.columns], rotation=45, ha="right", fontsize=7)
+    ax.set_yticks(np.arange(table2.shape[0]))
+    ax.set_yticklabels([str(i) for i in table2.index], fontsize=7)
+    ax.set_xlabel("K / S bucket")
+    ax.set_ylabel("DTE bucket")
+    ax.set_title(title or "LSM exercise probability")
+    ax.figure.colorbar(im, ax=ax, pad=0.01)
+    return ax
+
+
+def lsm_reference_gap(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No reference gap", title or "LSM reference gap")
+    q = table.copy()
+    gap = "reference_gap" if "reference_gap" in q.columns else "tree_lsm_gap" if "tree_lsm_gap" in q.columns else None
+    if gap is None:
+        return _quiet_axis(ax, "No gap column", title or "LSM reference gap")
+    size = np.sqrt(pd.to_numeric(q.get("coverage_rows", 1), errors="coerce").fillna(1.0)).clip(8, 70)
+    x = pd.to_numeric(q["moneyness"], errors="coerce") if "moneyness" in q else pd.Series(1.0, index=q.index)
+    y = pd.to_numeric(q["dte_days"], errors="coerce") if "dte_days" in q else pd.Series(0.0, index=q.index)
+    sc = ax.scatter(x, y, c=pd.to_numeric(q[gap], errors="coerce"), s=size, cmap="coolwarm", alpha=0.75)
+    ax.set_xlabel("K / S")
+    ax.set_ylabel("DTE")
+    ax.set_title(title or "LSM reference gap by regime")
+    ax.figure.colorbar(sc, ax=ax, pad=0.01)
+    return ax
+
+
+def method_runtime_error(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No methods", title or "Runtime vs error")
+    x = pd.to_numeric(table.get("runtime_sec", table.get("runtime", 0.0)), errors="coerce").clip(lower=1e-8)
+    y = pd.to_numeric(table.get("abs_error", table.get("model_disagreement", table.get("price_error", 0.0))), errors="coerce")
+    ax.scatter(x, y, s=45)
+    for _, row in table.iterrows():
+        ax.annotate(str(row.get("method", row.get("model", ""))), (float(row.get("runtime_sec", row.get("runtime", 1e-8))), float(row.get("abs_error", row.get("model_disagreement", row.get("price_error", 0.0))))), fontsize=7)
+    ax.set_xscale("log")
+    ax.set_xlabel("runtime seconds")
+    ax.set_ylabel("error")
+    ax.set_title(title or "Runtime vs error")
+    return ax
+
+
+def runtime_accuracy(ax, table: pd.DataFrame, title: str | None = None):
+    return method_runtime_error(ax, table, title or "Runtime vs accuracy")
+
+
+def american_premium_map(ax, quotes: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if quotes.empty or "american_premium" not in quotes:
+        return _quiet_axis(ax, "No premium data", title or "American premium")
+    x = pd.to_numeric(quotes.get("moneyness", quotes.get("k_over_s", quotes.get("strike") / quotes.get("spot"))), errors="coerce")
+    y = pd.to_numeric(quotes.get("dte_days", quotes.get("dte", quotes.get("tau") * 365.25)), errors="coerce")
+    sc = ax.scatter(x, y, c=quotes["american_premium"], s=10, cmap="viridis")
+    ax.figure.colorbar(sc, ax=ax, pad=0.01)
+    ax.set_xlabel("K / S")
+    ax.set_ylabel("DTE")
+    ax.set_title(title or "American premium")
+    return ax
+
+
+def assignment_heatmap(ax, quotes: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if quotes.empty or "assignment_risk" not in quotes:
+        return _quiet_axis(ax, "No assignment risk", title or "Assignment risk")
+    q = quotes.copy()
+    q["dte_bucket"] = pd.cut(pd.to_numeric(q.get("dte_days", q.get("dte", q.get("tau") * 365.25)), errors="coerce"), bins=[0, 7, 14, 30, 60, 120, 365])
+    q["m_bucket"] = pd.cut(pd.to_numeric(q.get("moneyness", q.get("k_over_s", q.get("strike") / q.get("spot"))), errors="coerce"), bins=np.linspace(0.8, 1.2, 9))
+    table = q.pivot_table(index="dte_bucket", columns="m_bucket", values="assignment_risk", aggfunc="median", observed=False)
+    im = ax.imshow(table.to_numpy(float), aspect="auto", cmap="magma")
+    ax.set_xticks(np.arange(table.shape[1]))
+    ax.set_xticklabels([str(c) for c in table.columns], rotation=45, ha="right", fontsize=6)
+    ax.set_yticks(np.arange(table.shape[0]))
+    ax.set_yticklabels([str(i) for i in table.index], fontsize=7)
+    ax.figure.colorbar(im, ax=ax, pad=0.01)
+    ax.set_title(title or "Assignment risk")
+    return ax
+
+
+def assignment_event_study(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No event study", title or "Assignment risk around ex-dividend")
+    q = table.copy()
+    if "option_type" in q.columns:
+        q = q[q["option_type"].astype(str).str.lower().str.startswith("c")].copy()
+    if {"spot", "strike"}.issubset(q.columns):
+        q = q[pd.to_numeric(q["spot"], errors="coerce") > pd.to_numeric(q["strike"], errors="coerce")].copy()
+    if q.empty:
+        return _quiet_axis(ax, "No ITM calls", title or "ITM call assignment risk")
+    xcol = "days_to_next_dividend" if "days_to_next_dividend" in table.columns else "event_day"
+    ycol = "assignment_risk" if "assignment_risk" in table.columns else table.select_dtypes("number").columns[-1]
+    q = q.dropna(subset=[xcol, ycol]).copy()
+    if q.empty:
+        return _quiet_axis(ax, "No event study", title or "Assignment risk around ex-dividend")
+    grouped = q.groupby(xcol)[ycol].agg(["median", "mean", "count"]).reset_index()
+    ax.plot(grouped[xcol], grouped["median"], marker="o", lw=1.5, label="median ITM call risk")
+    ax.plot(grouped[xcol], grouped["mean"], lw=1.0, alpha=0.7, label="mean")
+    ax.fill_between(grouped[xcol].to_numpy(float), grouped["median"].to_numpy(float), 0.0, alpha=0.10)
+    ax.invert_xaxis()
+    ax.set_xlabel("days to ex-dividend")
+    ax.set_ylabel("assignment risk")
+    ax.set_title(title or "ITM short-call assignment risk into ex-dividend")
+    _small_legend(ax)
+    return ax
+
+
+def dividend_gap_distribution(ax, quotes: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if quotes.empty:
+        return _quiet_axis(ax, "No dividend gap", title or "Dividend gap")
+    q = quotes.copy()
+    if "option_type" in q:
+        q = q[q["option_type"].astype(str).str.lower().str.startswith("c")].copy()
+    if {"spot", "strike"}.issubset(q):
+        q = q[pd.to_numeric(q["spot"], errors="coerce") > pd.to_numeric(q["strike"], errors="coerce")].copy()
+    gap = pd.to_numeric(q.get("dividend_gap", pd.to_numeric(q.get("next_dividend", 0.0), errors="coerce") - pd.to_numeric(q.get("time_value", 0.0), errors="coerce")), errors="coerce").dropna()
+    ax.hist(gap, bins=60, color="#2563eb", alpha=0.8)
+    ax.axvline(0.0, color="black", lw=0.9)
+    ax.set_xlabel("next dividend - time value")
+    ax.set_ylabel("ITM calls")
+    ax.set_title(title or "Dividend gap distribution")
+    return ax
+
+
+def assignment_component_bars(ax, quotes: pd.DataFrame, title: str | None = None, n: int = 12):
+    ax = _ax(ax)
+    cols = ["itm_score", "boundary_proximity", "dividend_gap_score", "low_time_value_score", "ex_div_proximity", "model_uncertainty_score"]
+    if quotes.empty or not set(cols).issubset(quotes.columns):
+        return _quiet_axis(ax, "No components", title or "Assignment components")
+    q = quotes.copy()
+    if "option_type" in q:
+        q = q[q["option_type"].astype(str).str.lower().str.startswith("c")].copy()
+    q = q.sort_values("assignment_risk", ascending=False).head(int(n))
+    bottom = np.zeros(len(q))
+    x = np.arange(len(q))
+    colors = ["#2563eb", "#7c3aed", "#dc2626", "#f97316", "#059669", "#6b7280"]
+    for col, color in zip(cols, colors):
+        values = pd.to_numeric(q[col], errors="coerce").fillna(0.0).to_numpy()
+        ax.bar(x, values, bottom=bottom, label=col.replace("_", " "), color=color, alpha=0.85)
+        bottom += values
+    ax.set_xticks(x)
+    expiry = pd.to_datetime(q["expiry"], errors="coerce").dt.strftime("%m-%d") if "expiry" in q else pd.Series("", index=q.index)
+    strike = pd.to_numeric(q["strike"], errors="coerce").round(0).astype("Int64").astype(str) if "strike" in q else pd.Series(np.arange(len(q)).astype(str), index=q.index)
+    labels = expiry.fillna("") + " " + strike.fillna("")
+    ax.set_xticklabels(labels, rotation=60, ha="right", fontsize=7)
+    ax.set_ylabel("component level")
+    ax.set_title(title or "Top short-call assignment risk components")
+    _small_legend(ax, ncol=2)
+    return ax
+
+
+def boundary_dividend_scatter(ax, quotes: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if quotes.empty or not {"boundary_distance", "dividend_gap"}.issubset(quotes.columns):
+        return _quiet_axis(ax, "No boundary/dividend data", title or "Boundary vs dividend gap")
+    q = quotes.copy()
+    if "option_type" in q:
+        q = q[q["option_type"].astype(str).str.lower().str.startswith("c")].copy()
+    if {"spot", "strike"}.issubset(q.columns):
+        q = q[pd.to_numeric(q["spot"], errors="coerce") > pd.to_numeric(q["strike"], errors="coerce")].copy()
+    sc = ax.scatter(pd.to_numeric(q["boundary_distance"], errors="coerce"), pd.to_numeric(q["dividend_gap"], errors="coerce"), c=pd.to_numeric(q.get("assignment_risk", 0.0), errors="coerce"), s=9, alpha=0.35, cmap="magma")
+    ax.axvline(0.0, color="black", lw=0.8)
+    ax.axhline(0.0, color="black", lw=0.8)
+    ax.set_xlabel("boundary distance")
+    ax.set_ylabel("dividend - time value")
+    ax.set_title(title or "Boundary proximity and dividend gap")
+    ax.figure.colorbar(sc, ax=ax, pad=0.01)
+    return ax
+
+
+def overlay_equity(ax, results: dict | pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    nav = results.get("nav", pd.DataFrame()) if isinstance(results, dict) else results
+    if nav.empty:
+        return _quiet_axis(ax, "No overlay NAV", title or "Overlay equity")
+    base = nav / nav.iloc[0]
+    base.plot(ax=ax, lw=1.3)
+    ax.set_ylabel("NAV / initial NAV")
+    ax.set_title(title or "Overlay equity")
+    return ax
+
+
+def overlay_drawdown(ax, results: dict | pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    dd = results.get("drawdown", pd.DataFrame()) if isinstance(results, dict) else results
+    if dd.empty:
+        return _quiet_axis(ax, "No drawdown", title or "Overlay drawdown")
+    dd.plot(ax=ax, lw=1.2)
+    ax.set_title(title or "Overlay drawdown")
+    return ax
+
+
+def overlay_return_drawdown(ax, summary: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if summary.empty:
+        return _quiet_axis(ax, "No summary", title or "Return vs drawdown")
+    x = pd.to_numeric(summary.get("max_drawdown"), errors="coerce")
+    y = pd.to_numeric(summary.get("total_return"), errors="coerce")
+    ax.scatter(x, y, s=55)
+    for _, row in summary.iterrows():
+        ax.annotate(str(row.get("strategy", "")), (float(row.get("max_drawdown", np.nan)), float(row.get("total_return", np.nan))), fontsize=7)
+    ax.set_xlabel("max drawdown")
+    ax.set_ylabel("total return")
+    ax.set_title(title or "Strategy return vs drawdown")
+    return ax
+
+
+def premium_close_bars(ax, trades: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if trades.empty or not {"strategy", "event", "cashflow"}.issubset(trades.columns):
+        return _quiet_axis(ax, "No trade cashflows", title or "Premium and close costs")
+    q = trades.copy()
+    q["open_premium"] = np.where(q["event"].eq("open"), pd.to_numeric(q["cashflow"], errors="coerce"), 0.0)
+    q["close_cost"] = np.where(q["event"].isin(["roll_close", "assignment_defense_close"]), pd.to_numeric(q["cashflow"], errors="coerce"), 0.0)
+    table = q.groupby("strategy")[["open_premium", "close_cost"]].sum()
+    table.plot(kind="bar", stacked=True, ax=ax)
+    ax.axhline(0.0, color="black", lw=0.8)
+    ax.set_ylabel("cashflow")
+    ax.set_title(title or "Premium received vs close/defense cost")
+    return ax
+
+
+def selected_moneyness(ax, trades: pd.DataFrame, quotes: pd.DataFrame | None = None, title: str | None = None):
+    ax = _ax(ax)
+    if trades.empty:
+        return _quiet_axis(ax, "No selected contracts", title or "Selected moneyness")
+    data = trades.copy()
+    if quotes is not None and not quotes.empty and "moneyness" not in data.columns:
+        merge_cols = ["contract_key", "moneyness"] + (["option_type"] if "option_type" in quotes.columns else [])
+        data = data.merge(quotes[merge_cols].drop_duplicates("contract_key"), on="contract_key", how="left")
+    if "moneyness" not in data.columns:
+        return _quiet_axis(ax, "No moneyness", title or "Selected moneyness")
+    d = pd.to_datetime(data.get("date", data.get("entry_date")), errors="coerce")
+    call = data["option_type"].astype(str).str.lower().str.startswith("c") if "option_type" in data else pd.Series(False, index=data.index)
+    ax.scatter(d[call], data.loc[call, "moneyness"], s=18, label="calls", alpha=0.75)
+    ax.scatter(d[~call], data.loc[~call, "moneyness"], s=18, label="puts", alpha=0.75)
+    ax.axhline(1.0, color="black", lw=0.8)
+    ax.set_ylabel("K / S at selection")
+    ax.set_title(title or "Selected option moneyness")
+    _small_legend(ax)
+    return ax
+
+
+def active_legs(ax, holdings: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if holdings.empty:
+        return _quiet_axis(ax, "No holdings", title or "Active legs")
+    holdings.plot(ax=ax, lw=1.1)
+    ax.set_ylabel("active option legs")
+    ax.set_title(title or "Active option legs")
+    return ax
+
+
+def trade_timeline(ax, trades: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if trades.empty or "event" not in trades:
+        return _quiet_axis(ax, "No trades", title or "Trade timeline")
+    data = trades.copy()
+    data["date"] = pd.to_datetime(data.get("date", data.get("entry_date")), errors="coerce")
+    events = list(pd.unique(data["event"].astype(str)))
+    codes = {name: i for i, name in enumerate(events)}
+    y = data["event"].astype(str).map(codes)
+    ax.scatter(data["date"], y, s=18, alpha=0.75)
+    ax.set_yticks(list(codes.values()))
+    ax.set_yticklabels(list(codes.keys()), fontsize=7)
+    ax.set_title(title or "Trade event timeline")
+    return ax
+
+
+def monthly_return_bars(ax, nav: pd.DataFrame | dict, title: str | None = None):
+    ax = _ax(ax)
+    data = nav.get("nav", pd.DataFrame()) if isinstance(nav, dict) else nav
+    if data.empty:
+        return _quiet_axis(ax, "No NAV", title or "Monthly returns")
+    monthly = data.resample("ME").last().pct_change().dropna()
+    if monthly.empty:
+        return _quiet_axis(ax, "Not enough NAV history", title or "Monthly returns")
+    monthly.plot(kind="bar", ax=ax, width=0.85)
+    ax.set_ylabel("monthly return")
+    ax.set_title(title or "Monthly returns")
+    return ax
+
+
+def roll_actions(ax, trades: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if trades.empty:
+        return _quiet_axis(ax, "No trades", title or "Roll actions")
+    d = pd.to_datetime(trades.get("entry_date", trades.get("date")), errors="coerce")
+    y = trades.get("strategy", trades.get("label", pd.Series("trade", index=trades.index))).astype("category").cat.codes
+    ax.scatter(d, y, s=18, alpha=0.7)
+    ax.set_title(title or "Roll and entry actions")
+    return ax
+
+
+def selected_strikes(ax, trades: pd.DataFrame, quotes: pd.DataFrame | None = None, title: str | None = None):
+    ax = _ax(ax)
+    if trades.empty:
+        return _quiet_axis(ax, "No selected strikes", title or "Selected strikes")
+    data = trades.copy()
+    if quotes is not None and not quotes.empty and "strike" not in data.columns:
+        keys = ["contract_key", "strike", "option_type"]
+        data = data.merge(quotes[keys].drop_duplicates("contract_key"), on="contract_key", how="left")
+    if "strike" not in data.columns:
+        return _quiet_axis(ax, "No strike column", title or "Selected strikes")
+    d = pd.to_datetime(data.get("date", data.get("entry_date")), errors="coerce")
+    y = pd.to_numeric(data["strike"], errors="coerce")
+    sc = ax.scatter(d, y, c=data.get("quantity", pd.Series(1.0, index=data.index)), s=20, cmap="coolwarm")
+    ax.set_ylabel("strike")
+    ax.set_title(title or "Selected strikes over time")
+    ax.figure.colorbar(sc, ax=ax, pad=0.01)
+    return ax
+
+
+def premium_protection(ax, summary: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if summary.empty:
+        return _quiet_axis(ax, "No summary", title or "Premium and protection")
+    x = pd.to_numeric(summary.get("net_open_premium_cashflow", summary.get("premium_income", 0.0)), errors="coerce")
+    y = pd.to_numeric(summary.get("max_drawdown", 0.0), errors="coerce")
+    ax.scatter(x, y, s=45)
+    for _, row in summary.iterrows():
+        ax.annotate(str(row.get("strategy", "")), (float(row.get("net_open_premium_cashflow", row.get("premium_income", 0.0))), float(row.get("max_drawdown", 0.0))), fontsize=7)
+    ax.set_xlabel("net open premium cashflow")
+    ax.set_ylabel("max drawdown")
+    ax.set_title(title or "Premium/protection tradeoff")
+    return ax
+
+
+def fourier_quote_coverage(ax, quotes: pd.DataFrame, title: str | None = None):
+    return quote_coverage(ax, quotes, title or "Fourier quote coverage")
+
+
+def cf_shape(ax, data: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if data.empty:
+        return _quiet_axis(ax, "No CF data", title or "CF shape")
+    ax.plot(data["u"], data["real"], label="real")
+    ax.plot(data["u"], data["imag"], label="imag")
+    _small_legend(ax)
+    ax.set_title(title or "Characteristic function")
+    return ax
+
+
+def direct_price_error(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No direct validation", title or "Direct price error")
+    x = table.get("strike", table.index)
+    y = table.get("price_error", table.select_dtypes("number").iloc[:, -1])
+    ax.plot(x, y, marker="o", lw=1.2)
+    ax.axhline(0, color="black", lw=0.8)
+    ax.set_title(title or "Direct price error")
+    return ax
+
+
+def fft_grid(ax, grid: pd.DataFrame, quotes: pd.DataFrame | None = None, title: str | None = None):
+    ax = _ax(ax)
+    if grid.empty:
+        return _quiet_axis(ax, "No FFT grid", title or "FFT grid")
+    ax.plot(grid["strike"], grid["price"], lw=1.2, label="grid")
+    if quotes is not None and not quotes.empty:
+        ax.scatter(quotes["strike"], quotes["mid"], s=12, alpha=0.5, label="quotes")
+    ax.set_xscale("log")
+    ax.set_title(title or "FFT strike grid")
+    _small_legend(ax)
+    return ax
+
+
+def fft_damping(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No damping data", title or "FFT damping")
+    ax.plot(table["alpha"], table["error"], marker="o")
+    ax.set_xlabel("alpha")
+    ax.set_ylabel("error")
+    ax.set_title(title or "Damping sensitivity")
+    return ax
+
+
+def cos_convergence(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No COS convergence", title or "COS convergence")
+    q = table.copy()
+    y_col = "median_abs_error" if "median_abs_error" in q.columns else "max_abs_error" if "max_abs_error" in q.columns else "error"
+    for i, (model, g) in enumerate(q.groupby(q.get("model", pd.Series("COS", index=q.index)), observed=True)):
+        g = g.sort_values("n_terms")
+        ax.plot(g["n_terms"], pd.to_numeric(g[y_col], errors="coerce"), marker="o", ms=3, lw=1.25, color=LAB_COLORS[i % len(LAB_COLORS)], label=str(model))
+    ax.set_xscale("log", base=2)
+    ax.set_yscale("log")
+    ax.set_xlabel("terms")
+    ax.set_ylabel("median abs error")
+    ax.set_title(title or "COS Convergence")
+    _small_legend(ax, ncol=2)
+    return ax
+
+
+def engine_speed(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No speed table", title or "Engine speed")
+    ax.bar(table.iloc[:, 0].astype(str), pd.to_numeric(table.get("items_per_sec", table.select_dtypes("number").iloc[:, -1]), errors="coerce"))
+    ax.tick_params(axis="x", labelrotation=25)
+    ax.set_title(title or "Engine speed")
+    return ax
+
+
+def fft_fit(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No FFT fit", title or "FFT Fit")
+    q = table.copy()
+    q = q.sort_values("moneyness" if "moneyness" in q.columns else "strike")
+    x = pd.to_numeric(q["moneyness"], errors="coerce") if "moneyness" in q.columns else pd.to_numeric(q["strike"], errors="coerce")
+    y = pd.to_numeric(q.get("fft_price", q.get("price")), errors="coerce")
+    ref = pd.to_numeric(q.get("reference_price", y), errors="coerce")
+    err = pd.to_numeric(q.get("abs_error", (y - ref).abs()), errors="coerce").clip(lower=1e-12)
+    ax.plot(x, ref, color="black", lw=1.3, label="reference")
+    ax.plot(x, y, color=LAB_COLORS[0], lw=1.3, label="FFT")
+    ax.fill_between(x.to_numpy(float), np.minimum(y, ref).to_numpy(float), np.maximum(y, ref).to_numpy(float), color=LAB_COLORS[0], alpha=0.12, lw=0)
+    ax2 = ax.twinx()
+    ax2.plot(x, err, color=LAB_COLORS[6], lw=1.0, alpha=0.85, label="abs error")
+    ax2.set_yscale("log")
+    ax2.set_ylabel("abs error")
+    ax2.tick_params(axis="y", labelsize=7)
+    ax.set_xlabel("K / S" if "moneyness" in q.columns else "strike")
+    ax.set_ylabel("call price")
+    ax.set_title(title or "FFT Fit")
+    _small_legend(ax, loc="upper right")
+    return ax
+
+
+def throughput(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No throughput", title or "Throughput")
+    q = table.copy()
+    if "label" not in q.columns:
+        q["label"] = q.get("method", q.get("engine", pd.Series("engine", index=q.index))).astype(str)
+    if "prices_per_second" not in q.columns:
+        n = pd.to_numeric(q.get("items", q.get("n", 1.0)), errors="coerce")
+        runtime = pd.to_numeric(q.get("runtime_sec", q.get("runtime", np.nan)), errors="coerce")
+        q["prices_per_second"] = n / runtime.replace(0.0, np.nan)
+    by = q.groupby("label", observed=True)["prices_per_second"].median().replace([np.inf, -np.inf], np.nan).dropna().sort_values()
+    if by.empty:
+        return _quiet_axis(ax, "No throughput", title or "Throughput")
+    colors = [LAB_COLORS[i % len(LAB_COLORS)] for i in range(len(by))]
+    ax.barh(by.index.astype(str), by.to_numpy(float), color=colors, alpha=0.82)
+    ax.set_xscale("log")
+    ax.set_xlabel("prices / second")
+    ax.set_title(title or "Throughput")
+    ax.tick_params(axis="y", labelsize=7)
+    return ax
+
+
+def model_quality(ax, comparison: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if comparison.empty:
+        return _quiet_axis(ax, "No model comparison", title or "Model Quality")
+    q = comparison.copy().sort_values("weighted_price_rmse")
+    y = np.arange(len(q))
+    rmse = pd.to_numeric(q["weighted_price_rmse"], errors="coerce")
+    ax.barh(y, rmse, color=LAB_COLORS[0], alpha=0.78, label="RMSE")
+    if "otm_put_rmse" in q.columns:
+        ax.scatter(pd.to_numeric(q["otm_put_rmse"], errors="coerce"), y, color=LAB_COLORS[6], s=36, zorder=3, label="OTM puts")
+    ax.set_yticks(y)
+    ax.set_yticklabels(q["model"].astype(str))
+    ax.invert_yaxis()
+    ax.set_xlabel("weighted error")
+    ax.set_title(title or "Model Quality")
+    if "bid_ask_hit_rate" in q.columns:
+        for yi, hit in zip(y, pd.to_numeric(q["bid_ask_hit_rate"], errors="coerce")):
+            if np.isfinite(hit):
+                ax.text(rmse.max() * 1.03 if np.isfinite(rmse.max()) else 0.0, yi, f"{hit:.0%}", va="center", fontsize=7, color=LAB_COLORS[3])
+    _small_legend(ax, loc="lower right")
+    return ax
+
+
+def jump_fit(ax, quotes: pd.DataFrame, fit: dict | pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    f = fit.get("fit", pd.DataFrame()) if isinstance(fit, dict) else fit
+    if f.empty:
+        return _quiet_axis(ax, "No jump fit", title or "Jump fit")
+    ax.scatter(f.get("strike"), f.get("mid"), s=12, alpha=0.5, label="mid")
+    ax.scatter(f.get("strike"), f.get("model_price"), s=10, alpha=0.6, label="model")
+    _small_legend(ax)
+    ax.set_title(title or "Jump model fit")
+    return ax
+
+
+def jump_residuals(ax, fit: dict | pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    f = fit.get("fit", pd.DataFrame()) if isinstance(fit, dict) else fit
+    if f.empty:
+        return _quiet_axis(ax, "No residuals", title or "Jump residuals")
+    x = f.get("k", np.log(f.get("strike") / f.get("spot")))
+    ax.scatter(x, f.get("price_residual"), s=12, alpha=0.55)
+    ax.axhline(0, color="black", lw=0.8)
+    ax.set_title(title or "Jump residuals")
+    return ax
+
+
+def sv_fit(ax, quotes: pd.DataFrame, fit: dict | pd.DataFrame, title: str | None = None):
+    return jump_fit(ax, quotes, fit, title or "SV fit")
+
+
+def sv_residuals(ax, fit: dict | pd.DataFrame, title: str | None = None):
+    return jump_residuals(ax, fit, title or "SV residuals")
+
+
+def model_error_runtime(ax, comparison: pd.DataFrame, title: str | None = None):
+    return method_runtime_error(ax, comparison.rename(columns={"weighted_price_rmse": "abs_error"}), title or "Model error/runtime")
+
+
+def density_compare(ax, densities: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if densities.empty:
+        return _quiet_axis(ax, "No densities", title or "Density comparison")
+    for name, g in densities.groupby("model"):
+        ax.plot(g["x"], g["density"], label=str(name))
+    _small_legend(ax)
+    ax.set_title(title or "Risk-neutral density")
+    return ax
+
+
+def tail_probability(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No tail data", title or "Tail probability")
+    ax.bar(table["model"], table["left_tail_probability"])
+    ax.set_title(title or "Left-tail probability")
+    return ax
+
+
+def hedge_candidates(ax, candidates: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if candidates.empty:
+        return _quiet_axis(ax, "No candidates", title or "Hedge candidates")
+    ax.scatter(candidates["strike"], candidates.get("hedge_score", candidates.index), c=candidates.get("dte_days", 0), s=24)
+    ax.set_title(title or "Tail hedge candidates")
+    return ax
+
+
+def hedge_equity(ax, results: dict | pd.DataFrame, title: str | None = None):
+    return overlay_equity(ax, results, title or "Hedge equity")
+
+
+def hedge_drawdown(ax, results: dict | pd.DataFrame, title: str | None = None):
+    return overlay_drawdown(ax, results, title or "Hedge drawdown")
+
+
+def fourier_data_overview(ax, quotes: pd.DataFrame, spot: pd.Series | pd.DataFrame | None = None, title: str | None = None):
+    ax = _ax(ax)
+    if quotes.empty:
+        return _quiet_axis(ax, "No quotes", title or "Data Regime")
+    q = quotes.copy()
+    q["date"] = pd.to_datetime(q["date"], errors="coerce").dt.normalize()
+    rows = q.groupby("date").size()
+    spread = q.groupby("date")["relative_spread" if "relative_spread" in q else "rel_spread"].median() if ("relative_spread" in q or "rel_spread" in q) else None
+    ax.bar(rows.index, rows / max(rows.max(), 1.0), width=1.0, color=LAB_COLORS[7], alpha=0.35, label="rows")
+    if spot is not None:
+        s = spot["close"] if isinstance(spot, pd.DataFrame) and "close" in spot else pd.Series(spot)
+        s.index = pd.to_datetime(s.index, errors="coerce").normalize()
+        s = s.sort_index().loc[(s.index >= rows.index.min()) & (s.index <= rows.index.max())]
+        if not s.empty:
+            ax.plot(s.index, s / s.iloc[0], color=LAB_COLORS[0], lw=1.4, label="spot")
+    if spread is not None and not spread.empty:
+        ax2 = ax.twinx()
+        ax2.plot(spread.index, spread, color=LAB_COLORS[6], lw=1.0, label="spread")
+        ax2.set_ylabel("median spread")
+        ax2.tick_params(axis="y", labelsize=7)
+    ax.set_ylabel("indexed")
+    ax.set_xlabel("date")
+    ax.set_title(title or "Data Regime")
+    _small_legend(ax, loc="upper left")
+    return ax
+
+
+def cf_fingerprint(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No CF data", title or "CF Fingerprint")
+    y_col = "magnitude" if "magnitude" in table.columns else "density" if "density" in table.columns else None
+    if y_col is None:
+        return _quiet_axis(ax, "No CF measure", title or "CF Fingerprint")
+    x_col = "u" if "u" in table.columns else "x"
+    for i, (name, g) in enumerate(table.groupby("model", observed=True)):
+        ax.plot(g[x_col], g[y_col], lw=1.2, color=LAB_COLORS[i % len(LAB_COLORS)], label=str(name))
+    ax.set_xlabel(x_col)
+    ax.set_ylabel(y_col)
+    ax.set_title(title or "CF Fingerprint")
+    _small_legend(ax, ncol=2)
+    return ax
+
+
+def direct_accuracy(ax, validation: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if validation.empty:
+        return _quiet_axis(ax, "No validation", title or "Direct Accuracy")
+    q = validation.copy()
+    y = "abs_error" if "abs_error" in q.columns else "price_error"
+    if "strike" in q.columns:
+        for i, (tau, g) in enumerate(q.groupby(q.get("tau", pd.Series("all", index=q.index)), observed=True)):
+            ax.plot(g["strike"], np.abs(pd.to_numeric(g[y], errors="coerce")), lw=1.0, color=LAB_COLORS[i % len(LAB_COLORS)], label=f"{float(tau) * 365.25:.0f}d" if np.isscalar(tau) and pd.notna(tau) else str(tau))
+        ax.set_xlabel("strike")
+    else:
+        ax.plot(np.abs(pd.to_numeric(q[y], errors="coerce")).to_numpy(), lw=1.0, color=LAB_COLORS[0])
+        ax.set_xlabel("case")
+    ax.set_ylabel("abs error")
+    ax.set_yscale("log")
+    ax.set_title(title or "Direct Accuracy")
+    _small_legend(ax, ncol=2)
+    return ax
+
+
+def fft_validation(ax, validation: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if validation.empty:
+        return _quiet_axis(ax, "No FFT validation", title or "FFT Validation")
+    q = validation.copy()
+    if "n" in q.columns:
+        by = q.groupby(["engine", "n"], observed=True)["median_abs_error"].median().reset_index()
+        for i, (engine, g) in enumerate(by.groupby("engine", observed=True)):
+            ax.plot(g["n"], g["median_abs_error"], marker="o", ms=3, lw=1.2, color=LAB_COLORS[i % len(LAB_COLORS)], label=str(engine))
+        ax.set_xscale("log", base=2)
+        ax.set_xlabel("N")
+    else:
+        by = q.groupby("engine", observed=True)["median_abs_error"].median().sort_values()
+        ax.bar(by.index.astype(str), by.to_numpy(float), color=LAB_COLORS[: len(by)])
+        ax.set_xlabel("engine")
+    ax.set_ylabel("median abs error")
+    ax.set_yscale("log")
+    ax.set_title(title or "FFT Validation")
+    _small_legend(ax)
+    return ax
+
+
+def cos_validation(ax, validation: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if validation.empty:
+        return _quiet_axis(ax, "No COS validation", title or "COS Validation")
+    q = validation.copy()
+    for i, (model, g) in enumerate(q.groupby("model", observed=True)):
+        x = g["n_terms"] if "n_terms" in g.columns else np.arange(len(g))
+        y = g["max_abs_error"] if "max_abs_error" in g.columns else g.get("median_abs_error", pd.Series(np.nan, index=g.index))
+        ax.plot(x, y, marker="o", ms=3, lw=1.2, color=LAB_COLORS[i % len(LAB_COLORS)], label=str(model))
+    if "n_terms" in q.columns:
+        ax.set_xscale("log", base=2)
+        ax.set_xlabel("terms")
+    ax.set_ylabel("error")
+    ax.set_yscale("log")
+    ax.set_title(title or "COS Validation")
+    _small_legend(ax, ncol=2)
+    return ax
+
+
+def engine_frontier(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No engine table", title or "Engine Frontier")
+    q = table.copy()
+    x = pd.to_numeric(q.get("runtime_sec", q.get("runtime", 1.0)), errors="coerce")
+    y = pd.to_numeric(q.get("median_abs_error", q.get("max_abs_error", q.get("error", 1.0))), errors="coerce")
+    labels = q.get("engine", q.get("method", q.get("model", pd.Series("", index=q.index)))).astype(str)
+    ax.scatter(x, y, s=55, color=[LAB_COLORS[i % len(LAB_COLORS)] for i in range(len(q))], alpha=0.85)
+    for xi, yi, lab in zip(x, y, labels):
+        if np.isfinite(xi) and np.isfinite(yi):
+            ax.annotate(str(lab), (xi, yi), fontsize=6, xytext=(3, 3), textcoords="offset points")
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel("seconds")
+    ax.set_ylabel("error")
+    ax.set_title(title or "Engine Frontier")
+    return ax
+
+
+def daily_calibration_error(ax, daily: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if daily.empty:
+        return _quiet_axis(ax, "No daily fits", title or "Daily RMSE")
+    q = daily.copy()
+    q["date"] = pd.to_datetime(q["date"], errors="coerce")
+    for i, (model, g) in enumerate(q.groupby("model", observed=True)):
+        g = g.sort_values("date")
+        ax.plot(g["date"], g["weighted_price_rmse"], lw=1.2, color=LAB_COLORS[i % len(LAB_COLORS)], label=str(model))
+    ax.set_xlabel("date")
+    ax.set_ylabel("weighted RMSE")
+    ax.set_title(title or "Daily RMSE")
+    _small_legend(ax, ncol=2)
+    return ax
+
+
+def calibration_parameters(ax, daily: pd.DataFrame, title: str | None = None, param: str = "p0"):
+    ax = _ax(ax)
+    if daily.empty or param not in daily.columns:
+        return _quiet_axis(ax, "No parameters", title or "Parameters")
+    q = daily.copy()
+    q["date"] = pd.to_datetime(q["date"], errors="coerce")
+    for i, (model, g) in enumerate(q.groupby("model", observed=True)):
+        ax.plot(g.sort_values("date")["date"], g.sort_values("date")[param], lw=1.0, color=LAB_COLORS[i % len(LAB_COLORS)], label=str(model))
+    ax.set_xlabel("date")
+    ax.set_ylabel(param)
+    ax.set_title(title or "Parameters")
+    _small_legend(ax, ncol=2)
+    return ax
+
+
+def model_tournament(ax, comparison: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if comparison.empty:
+        return _quiet_axis(ax, "No comparison", title or "Model Tournament")
+    q = comparison.sort_values("weighted_price_rmse").copy()
+    ax.bar(q["model"].astype(str), q["weighted_price_rmse"], color=LAB_COLORS[0], alpha=0.78, label="RMSE")
+    ax.set_ylabel("weighted RMSE")
+    if "bid_ask_hit_rate" in q.columns:
+        ax2 = ax.twinx()
+        ax2.plot(q["model"].astype(str), q["bid_ask_hit_rate"], marker="o", ms=3, color=LAB_COLORS[3], label="hit rate")
+        ax2.set_ylabel("hit rate")
+        ax2.tick_params(axis="y", labelsize=7)
+    ax.set_title(title or "Model Tournament")
+    ax.tick_params(axis="x", rotation=15)
+    return ax
+
+
+def residual_smiles(ax, residuals: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if residuals.empty:
+        return _quiet_axis(ax, "No residuals", title or "Residual Smiles")
+    q = residuals.copy()
+    x_col = "x" if "x" in q.columns else "log_moneyness_mid" if "log_moneyness_mid" in q.columns else None
+    if x_col is None and "moneyness_bucket" in q.columns:
+        q["x"] = np.arange(len(q))
+        x_col = "x"
+    y_col = "median_scaled_residual" if "median_scaled_residual" in q.columns else "price_residual"
+    for i, (model, g) in enumerate(q.groupby("model", observed=True)):
+        g = g.sort_values(x_col)
+        ax.plot(g[x_col], g[y_col], marker="o", ms=3, lw=1.1, color=LAB_COLORS[i % len(LAB_COLORS)], label=str(model))
+        if {"q25_scaled_residual", "q75_scaled_residual"}.issubset(g.columns):
+            ax.fill_between(g[x_col].to_numpy(float), g["q25_scaled_residual"].to_numpy(float), g["q75_scaled_residual"].to_numpy(float), color=LAB_COLORS[i % len(LAB_COLORS)], alpha=0.12, lw=0)
+    ax.axhline(0, color="black", lw=0.7)
+    ax.set_xlabel("log moneyness")
+    ax.set_ylabel("scaled residual")
+    ax.set_title(title or "Residual Smiles")
+    _small_legend(ax, ncol=2)
+    return ax
+
+
+def tail_density(ax, densities: pd.DataFrame, title: str | None = None):
+    return density_compare(ax, densities, title or "Tail Density")
+
+
+def tail_probability_series(ax, table: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if table.empty:
+        return _quiet_axis(ax, "No tail series", title or "Tail Probability")
+    q = table.copy()
+    q["date"] = pd.to_datetime(q["date"], errors="coerce")
+    y_col = "tail_prob_80" if "tail_prob_80" in q.columns else "left_tail_probability"
+    for i, (model, g) in enumerate(q.groupby("model", observed=True)):
+        ax.plot(g.sort_values("date")["date"], g.sort_values("date")[y_col], lw=1.2, color=LAB_COLORS[i % len(LAB_COLORS)], label=str(model))
+    ax.set_xlabel("date")
+    ax.set_ylabel("probability")
+    ax.set_title(title or "Tail Probability")
+    _small_legend(ax, ncol=2)
+    return ax
+
+
+def hedge_nav(ax, results: dict | pd.DataFrame, title: str | None = None):
+    return overlay_equity(ax, results, title or "Hedge NAV")
+
+
+def hedge_selection(ax, schedule: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if schedule.empty:
+        return _quiet_axis(ax, "No schedule", title or "Hedge Selection")
+    q = schedule.copy()
+    q["date"] = pd.to_datetime(q.get("date", q.get("entry_date")), errors="coerce")
+    for i, (name, g) in enumerate(q.groupby(q.get("selector", q.get("strategy", pd.Series("hedge", index=q.index))), observed=True)):
+        y = pd.to_numeric(g.get("moneyness", g.get("entry_moneyness", np.nan)), errors="coerce")
+        ax.plot(g["date"], y, marker="o", ms=2.5, lw=1.0, color=LAB_COLORS[i % len(LAB_COLORS)], label=str(name))
+    ax.set_xlabel("date")
+    ax.set_ylabel("K / S")
+    ax.set_title(title or "Hedge Selection")
+    _small_legend(ax, ncol=2)
+    return ax
+
+
+def hedge_cost_payoff(ax, trades: pd.DataFrame, title: str | None = None):
+    ax = _ax(ax)
+    if trades.empty:
+        return _quiet_axis(ax, "No trades", title or "Hedge Cashflow")
+    q = trades.copy()
+    if "strategy" not in q.columns:
+        q["strategy"] = "hedge"
+    q["premium_spent"] = np.where(q.get("event", "").astype(str).eq("open"), -pd.to_numeric(q.get("cashflow", 0.0), errors="coerce"), 0.0)
+    q["payoff"] = np.where(q.get("event", "").astype(str).isin(["expiry_settlement", "roll_close"]), pd.to_numeric(q.get("cashflow", 0.0), errors="coerce"), 0.0)
+    by = q.groupby("strategy")[["premium_spent", "payoff"]].sum()
+    by.plot(kind="bar", stacked=False, ax=ax, color=[LAB_COLORS[6], LAB_COLORS[3]], width=0.75)
+    ax.set_ylabel("cashflow")
+    ax.set_title(title or "Hedge Cashflow")
+    ax.tick_params(axis="x", rotation=15)
+    _small_legend(ax)
+    return ax
+
+
 __all__ = [
     "benchmark_errors",
+    "american_premium_map",
+    "american_premium_heatmap",
+    "assignment_event_study",
+    "assignment_heatmap",
+    "bid_ask_hit_rate",
+    "boundary_compare",
     "calibration_quote_map",
     "delta_correction_slices",
     "gamma_correction_slices",
@@ -1350,6 +2836,7 @@ __all__ = [
     "local_vol_surface_3d",
     "merton_tail_fit",
     "model_disagreement",
+    "model_error_runtime",
     "model_quote_overlay",
     "model_speed_accuracy",
     "pca_shock_map",
@@ -1380,6 +2867,88 @@ __all__ = [
     "plot_pricing_error_hist",
     "plot_quote_filter_waterfall",
     "plot_realized_vs_implied_vol",
+    "quote_coverage",
+    "dividend_timeline",
+    "iv_moneyness",
+    "sigma_surface",
+    "tree_convergence",
+    "tree_exercise_map",
+    "tree_boundary",
+    "pde_value_map",
+    "pde_value_surface",
+    "pde_value_slices",
+    "pde_exercise_map",
+    "pde_boundary",
+    "pde_residual",
+    "pde_residuals",
+    "pde_tree_gap_curves",
+    "pde_disagreement_bars",
+    "complementarity_gap",
+    "pricing_error_distribution",
+    "pricing_error_spread",
+    "method_disagreement_heatmap",
+    "lsm_regression",
+    "lsm_boundary",
+    "lsm_policy_curve",
+    "lsm_policy_gap",
+    "lsm_regime_coverage",
+    "lsm_path_convergence",
+    "lsm_exercise_probability",
+    "lsm_reference_gap",
+    "method_runtime_error",
+    "runtime_accuracy",
+    "dividend_gap_distribution",
+    "assignment_component_bars",
+    "boundary_dividend_scatter",
+    "overlay_equity",
+    "overlay_drawdown",
+    "overlay_equity_drawdown",
+    "overlay_return_drawdown",
+    "premium_close_bars",
+    "premium_concentration",
+    "premium_term_curves",
+    "selected_moneyness",
+    "active_legs",
+    "strategy_mechanics_bars",
+    "trade_timeline",
+    "monthly_return_bars",
+    "roll_actions",
+    "selected_strikes",
+    "premium_protection",
+    "fourier_quote_coverage",
+    "fourier_data_overview",
+    "cf_fingerprint",
+    "direct_accuracy",
+    "fft_validation",
+    "fft_fit",
+    "cos_validation",
+    "engine_frontier",
+    "throughput",
+    "model_quality",
+    "daily_calibration_error",
+    "calibration_parameters",
+    "model_tournament",
+    "residual_smiles",
+    "tail_density",
+    "tail_probability_series",
+    "hedge_nav",
+    "hedge_selection",
+    "hedge_cost_payoff",
+    "cf_shape",
+    "direct_price_error",
+    "fft_grid",
+    "fft_damping",
+    "cos_convergence",
+    "engine_speed",
+    "jump_fit",
+    "jump_residuals",
+    "sv_fit",
+    "sv_residuals",
+    "density_compare",
+    "tail_probability",
+    "hedge_candidates",
+    "hedge_equity",
+    "hedge_drawdown",
     "plot_rolling_residual_delta",
     "plot_rolling_residual_vega",
     "plot_single_day_forward_iv_skew",

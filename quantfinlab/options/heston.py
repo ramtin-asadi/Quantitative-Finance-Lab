@@ -31,6 +31,29 @@ def _rng_shocks(n_path: int, n_step: int, random_state: int = 7):
     return np.vstack([z1, -z1]).astype(float), np.vstack([z2, -z2]).astype(float)
 
 
+def heston_cf(u, spot, rate, dividend_yield, tau, v0, kappa, theta, sigma_v, rho):
+    """Stable little-Heston-trap characteristic function of log spot."""
+    u = np.asarray(u, dtype=complex)
+    spot = np.asarray(spot, dtype=float)
+    tau = np.asarray(tau, dtype=float)
+    v0 = np.maximum(np.asarray(v0, dtype=float), 1e-10)
+    kappa = np.maximum(np.asarray(kappa, dtype=float), 1e-10)
+    theta = np.maximum(np.asarray(theta, dtype=float), 1e-10)
+    sigma_v = np.maximum(np.asarray(sigma_v, dtype=float), 1e-10)
+    rho = np.clip(np.asarray(rho, dtype=float), -0.999, 0.999)
+    i = 1j
+    d = np.sqrt((rho * sigma_v * i * u - kappa) ** 2 + sigma_v**2 * (i * u + u * u))
+    g = (kappa - rho * sigma_v * i * u - d) / (kappa - rho * sigma_v * i * u + d)
+    exp_dt = np.exp(-d * tau)
+    c = (
+        i * u * (np.log(spot) + (np.asarray(rate, dtype=float) - np.asarray(dividend_yield, dtype=float)) * tau)
+        + (kappa * theta / sigma_v**2)
+        * ((kappa - rho * sigma_v * i * u - d) * tau - 2.0 * np.log((1.0 - g * exp_dt) / (1.0 - g)))
+    )
+    dcoef = ((kappa - rho * sigma_v * i * u - d) / sigma_v**2) * ((1.0 - exp_dt) / (1.0 - g * exp_dt))
+    return np.exp(c + dcoef * v0)
+
+
 def _scale(q: pd.DataFrame, weight_col: str | None) -> np.ndarray:
     if "calib_scale_px" in q.columns:
         s = pd.to_numeric(q["calib_scale_px"], errors="coerce").to_numpy(dtype=float)
@@ -231,4 +254,4 @@ def heston_prices(quotes: pd.DataFrame, fit: dict, engine: str = "auto") -> pd.D
     return _fit_prices(quotes, np.array([p["v0"], p["kappa"], p["theta"], p["xi"], p["rho"]], dtype=float), steps, None, None, paths, state, engine=engine)
 
 
-__all__ = ["fit_heston_mc", "heston_mc_price", "heston_prices"]
+__all__ = ["fit_heston_mc", "heston_cf", "heston_mc_price", "heston_prices"]
