@@ -32,14 +32,14 @@ The goal is to build a portfolio that is both **research-grade** (well explained
 
 ## Projects
 
-::: {.columns}
+:::: {.columns}
 
 ::: {.column width="50%"}
 ### 01 — Yield Curve, Bond Pricing & Risk
 
-- Yield curve construction (discount factors / zero rates)
-- Bond pricing and key risk measures
-- Practical fixed-income utilities you can reuse elsewhere
+- Yield curve construction from par yields using discount, zero-rate, and forward-rate methods
+- Bond pricing, duration, convexity, PV01, and key-rate duration analysis
+- Duration-targeted fixed-income portfolio design with reusable fixed-income utilities
 
 [Open Project 01](notebooks/01_yield_curve_bond_pricing_and_risk.html)
 :::
@@ -47,14 +47,158 @@ The goal is to build a portfolio that is both **research-grade** (well explained
 ::: {.column width="50%"}
 ### 02 — Portfolio Optimization (Mean–Variance)
 
-- Mean–variance optimization pipeline
-- Covariance estimators and model comparisons
-- Backtest-style evaluation and performance diagnostics
+- Mean–variance portfolio construction with practical universe filtering
+- Expected-return models, covariance estimators, shrinkage methods, and frontier diagnostics
+- Backtest-style evaluation using performance, drawdown, turnover, and risk metrics
 
 [Open Project 02](notebooks/02_portfolio_optimization_MV_models.html)
 :::
 
+::::
+
+:::: {.columns}
+
+::: {.column width="50%"}
+### 03 — Risk Report Engine & CAPM
+
+- Reusable portfolio risk-reporting framework for volatility, drawdowns, VaR, and expected shortfall
+- CAPM beta, alpha, rolling exposure, benchmark comparison, and stress-period analysis
+- Risk contribution, diversification diagnostics, and reporting tools used across later projects
+
+[Open Project 03](notebooks/03_risk_report_engine_and_CAPM.html)
 :::
+
+::: {.column width="50%"}
+### 04 — Black–Scholes, Implied Volatility, Greeks & Hedging
+
+- Black–Scholes pricing, implied-volatility inversion, option-chain cleaning, and solver benchmarking
+- Greek calculation, finite-difference validation, put-call parity checks, and IV diagnostics
+- Delta and delta-vega hedging with P&L attribution, transaction costs, and a BTC options repeat
+
+[Open Project 04](notebooks/04_BSM_IV_greeks_hedging.html)
+:::
+
+::::
+
+:::: {.columns}
+
+::: {.column width="50%"}
+### 05 — Volatility Forecasting, GARCH & Variance Risk Premium
+
+- Realized-volatility forecasting with GARCH, GJR-GARCH, EGARCH, and HAR-RV models
+- Construction of a clean 30-day ATM implied-volatility panel from SPX option chains
+- Variance-risk-premium signals translated into straddle overlays and strategy diagnostics
+
+[Open Project 05](notebooks/05_GARCH_forecasting_VRP.html)
+:::
+
+::: {.column width="50%"}
+### 06 — Black–Litterman with Learned Confidence
+
+- ETF portfolio construction with strategic benchmarks, market-implied priors, and active views
+- Black–Litterman posterior-return modeling with learned confidence and reliability diagnostics
+- Active portfolio evaluation using tracking error, information ratio, redundancy gates, and library replication
+
+[Open Project 06](notebooks/06_portfolio_black_littreman.html)
+:::
+
+::::
+
+:::: {.columns}
+
+::: {.column width="50%"}
+### 07 — Dynamic Hedge Ratios & Residual Trading
+
+- Hedge-ratio estimation using static OLS, rolling OLS, ridge regression, and Kalman/state-space methods
+- Pair-level hedgeability analysis across equity, commodity, currency, and ETF relationships
+- Residual trading tests with no-trade bands, transaction costs, model comparison, and robustness repeats
+
+[Open Project 07](notebooks/07_dynamic_hedge_ratios.html)
+:::
+
+::: {.column width="50%"}
+### 08 — Volatility Surface & Local Volatility
+
+- SPX option-surface construction from cleaned market quotes across moneyness and maturity
+- Surface diagnostics, smile/skew behavior, PCA-style surface dynamics, and Greek-risk scoring
+- Dupire-style local-volatility analysis with a secondary BTC options implementation using the library
+
+[Open Project 08](notebooks/08_vol_surface_local_vol.html)
+:::
+
+::::
+
+:::: {.columns}
+
+::: {.column width="50%"}
+### 09 — Short-Rate & Term-Structure Models
+
+- Treasury curve modeling with zero curves, slopes, term-premium data, SOFR returns, and monthly panels
+- Vasicek, CIR, and multi-factor term-structure experiments with calibration and diagnostic checks
+- Duration-ladder backtesting, curve overlays, fixed-income risk reporting, and reusable library implementation
+
+[Open Project 09](notebooks/09_term_structure_models.html)
+:::
+
+::: {.column width="50%"}
+### 10 — Tail Risk, Risk Parity & Robust Portfolio Models
+
+- Portfolio optimization under tail-risk, CVaR, risk-parity, HRP, and robust-optimization objectives
+- Comparison of mean-variance, Black–Litterman, CVaR, Wasserstein-DRO, and ellipsoid-robust models
+- Strategy evaluation with drawdowns, turnover, transaction costs, risk contributions, and secondary replication
+
+[Open Project 10](notebooks/10_portfolio_tail_parity_robust.html)
+:::
+
+::::
+
+:::: {.columns}
+
+::: {.column width="50%"}
+### 11 — Stochastic Volatility & Model-Risk-Aware Option Relative Value
+
+- Smile and stochastic-volatility model comparison using SVI, SSVI, SABR, Merton, Heston, and Bates-style models
+- Calibration diagnostics, residual analysis, weighted IV errors, runtime checks, and model-stability comparison
+- Option relative-value signal testing with hedging attribution, model-risk controls, and secondary market repeats
+
+[Open Project 11](notebooks/11_stochastic_volatility.html)
+:::
+
+::: {.column width="50%"}
+### 12 — Macro Financial Conditions Index
+
+- Macro dataset construction from inflation, policy, growth, labor, housing, external, and breadth indicators
+- Expanding PCA and supervised/embargoed alternatives for building financial-conditions signals
+- Sector-rotation and risk-scaling experiments with performance comparison, drawdown analysis, and library replication
+
+[Open Project 12](notebooks/12_financial_conditions_index.html)
+:::
+
+::::
+
+:::: {.columns}
+
+::: {.column width="50%"}
+### 13 — American Options & Numerical Pricing Methods
+
+- American option pricing with binomial trees, finite-difference/PDE validation, and Longstaff–Schwartz Monte Carlo
+- Large-scale SPY option-chain cleaning with dividends, rates, early-exercise logic, and production-style pricing tests
+- C++ and Numba engine comparison, convergence diagnostics, assignment analysis, and secondary library repeat
+
+[Open Project 13](notebooks/13_american_option_numerics.html)
+:::
+
+::: {.column width="50%"}
+### 14 — Fourier-Based Option Pricing
+
+- Characteristic-function pricing with COS and Fourier-style methods for BSM, Merton, VG, Heston, and Bates models
+- Large-scale SPX option calibration, pricing-error comparison, convergence checks, and runtime diagnostics
+- Jump-risk and stochastic-volatility model evaluation with BTC options extension and reusable library implementation
+
+[Open Project 14](notebooks/14_fourier_option_pricing.html)
+:::
+
+::::
 
 ---
 

@@ -22,6 +22,9 @@ book:
     - notebooks/12_financial_conditions_index.ipynb
     - notebooks/13_american_option_numerics.ipynb
     - notebooks/14_fourier_option_pricing.ipynb
+    - notebooks/15_factor_investing.ipynb
+    - notebooks/16_regime_switching_portfolio.ipynb
+    - notebooks/17_network_portfolio.ipynb
 
 format:
   html:

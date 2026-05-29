@@ -234,79 +234,6 @@ def plot_effective_n_bar(grid_results: pd.DataFrame, strategies: Sequence[str], 
     return plot_metric_bar(grid_results, strategies, metric="Effective N", ax=ax, title=title or "Effective N")
 
 
-def plot_finalist_metric_bar(
-    grid_results: pd.DataFrame,
-    strategies: Sequence[str],
-    *,
-    metric: str = "Sharpe",
-    ax=None,
-    title: str | None = None,
-    baseline: str = "EW",
-    include_baseline: bool = True,
-):
-    strategies_use = (
-        selection.with_baseline(strategies, available=grid_results.index, baseline=baseline)
-        if include_baseline
-        else list(strategies)
-    )
-    return plot_metric_bar(
-        grid_results,
-        strategies_use,
-        metric=metric,
-        ax=ax,
-        title=title or f"Finalist {metric}",
-    )
-
-
-def plot_risk_return_scatter(
-    grid_results: pd.DataFrame,
-    strategies: Sequence[str],
-    *,
-    ax=None,
-    title: str | None = None,
-    risk_col: str = "Vol",
-    return_col: str = "CAGR",
-    color_col: str = "Sharpe",
-    annotate: bool = True,
-    summary: pd.DataFrame | None = None,
-):
-    set_plot_style()
-    ax = _get_ax(ax)
-    present = [s for s in strategies if s in grid_results.index]
-    if not present:
-        ax.text(0.5, 0.5, "Missing", ha="center", va="center", transform=ax.transAxes)
-        ax.set_axis_off()
-        return ax
-
-    df = grid_results.loc[present].copy()
-    x = df[risk_col].astype(float)
-    y = df[return_col].astype(float)
-    c = df[color_col].astype(float) if color_col in df.columns else None
-    scatter = ax.scatter(
-        x,
-        y,
-        c=c,
-        cmap=choose_heatmap_cmap(metric_name=color_col),
-        s=70,
-        edgecolor="white",
-        linewidth=0.8,
-    )
-    if c is not None and np.isfinite(c).any():
-        cbar = ax.figure.colorbar(scatter, ax=ax, fraction=0.046, pad=0.04)
-        cbar.set_label(color_col)
-    if annotate:
-        label_source = summary if summary is not None else grid_results
-        labels = _labels_for_strategies(present, label_source)
-        for xi, yi, label in zip(x, y, labels, strict=False):
-            if np.isfinite(xi) and np.isfinite(yi):
-                ax.annotate(label, (xi, yi), xytext=(4, 4), textcoords="offset points", fontsize=7)
-    ax.set_title(title or "Finalist return vs risk")
-    ax.set_xlabel(risk_col)
-    ax.set_ylabel(return_col)
-    ax.grid(True, alpha=0.3)
-    return ax
-
-
 def plot_turnover(turnover: pd.DataFrame | pd.Series, strategies: Sequence[str] | None = None, *, ax=None, title: str | None = None):
     set_plot_style()
     ax = _get_ax(ax)
@@ -597,7 +524,7 @@ def _short_names(names: Sequence[str], short_labels: Mapping[str, str] | None = 
 
 
 def _small_legend(ax, *, ncol: int = 2):
-    handles, labels = ax.get_legend_handles_labels()
+    handles, _ = ax.get_legend_handles_labels()
     if handles:
         ax.legend(loc="best", fontsize=7, ncol=ncol, frameon=True, framealpha=0.85)
     return ax
@@ -893,10 +820,275 @@ def plot_wasserstein_radius_path(path: pd.DataFrame, *, ax=None, title: str | No
     return _small_legend(ax)
 
 
+def _frame_for_heatmap(data, *, fill_diag: float | None = None) -> pd.DataFrame:
+    if isinstance(data, pd.DataFrame):
+        out = data.copy().astype(float)
+    else:
+        arr = np.asarray(data, dtype=float)
+        out = pd.DataFrame(arr)
+    out = out.replace([np.inf, -np.inf], np.nan)
+    if fill_diag is not None and out.shape[0] == out.shape[1]:
+        vals = out.to_numpy(dtype=float).copy()
+        np.fill_diagonal(vals, float(fill_diag))
+        out = pd.DataFrame(vals, index=out.index, columns=out.columns)
+    return out
+
+
+def _heatmap_ticks(ax, labels: Sequence[str], *, max_labels: int = 24):
+    labels = [str(x) for x in labels]
+    n = len(labels)
+    if n <= max_labels:
+        locs = np.arange(n)
+        shown = labels
+    else:
+        step = max(int(np.ceil(n / max_labels)), 1)
+        locs = np.arange(0, n, step)
+        shown = [labels[i] for i in locs]
+    ax.set_xticks(locs)
+    ax.set_xticklabels(shown, rotation=90, fontsize=6)
+    ax.set_yticks(locs)
+    ax.set_yticklabels(shown, fontsize=6)
+
+
+def corr_heatmap(ax, corr, *, title: str | None = None, cmap: str = "coolwarm"):
+    mat = _frame_for_heatmap(corr, fill_diag=1.0)
+    vals = mat.to_numpy(dtype=float)
+    im = ax.imshow(vals, aspect="auto", cmap=cmap, vmin=-1.0, vmax=1.0)
+    ax.set_title(title or "Correlation")
+    _heatmap_ticks(ax, list(mat.index))
+    ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    return ax
+
+
+def tail_heatmap(ax, tail, *, title: str | None = None, cmap: str = "magma"):
+    mat = _frame_for_heatmap(tail, fill_diag=1.0)
+    vals = mat.to_numpy(dtype=float)
+    im = ax.imshow(vals, aspect="auto", cmap=cmap, vmin=0.0, vmax=max(1e-12, float(np.nanmax(vals))))
+    ax.set_title(title or "Tail dependence")
+    _heatmap_ticks(ax, list(mat.index))
+    ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    return ax
+
+
+def distance_heatmap(ax, distance, *, title: str | None = None, cmap: str = "viridis_r"):
+    mat = _frame_for_heatmap(distance, fill_diag=0.0)
+    vals = mat.to_numpy(dtype=float)
+    im = ax.imshow(vals, aspect="auto", cmap=cmap)
+    ax.set_title(title or "Distance")
+    _heatmap_ticks(ax, list(mat.index))
+    ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    return ax
+
+
+def network_graph(
+    ax,
+    graph,
+    *,
+    title: str | None = None,
+    seed: int = 17,
+):
+    try:
+        import networkx as nx
+    except Exception:
+        ax.text(0.5, 0.5, "networkx unavailable", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    if graph is None or graph.number_of_nodes() == 0:
+        ax.text(0.5, 0.5, "No network", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    draw_graph = graph.copy()
+    pos = nx.spring_layout(draw_graph, weight="weight", seed=int(seed), iterations=80)
+    strength = pd.Series(dict(draw_graph.degree(weight="weight")), dtype=float)
+    if strength.empty or float(strength.max()) <= 1e-12:
+        sizes = [16.0 for _ in draw_graph.nodes()]
+    else:
+        sizes = [18.0 + 85.0 * float(strength.get(n, 0.0)) / float(strength.max()) for n in draw_graph.nodes()]
+    weights = np.asarray([float(d.get("weight", 0.0)) for _, _, d in draw_graph.edges(data=True)], dtype=float)
+    high = max(float(weights.max()) if len(weights) else 1.0, 1e-12)
+    widths = 0.14 + (0.65 if draw_graph.number_of_edges() > 1000 else 2.0) * weights / high
+    edge_alpha = 0.22 if draw_graph.number_of_edges() > 1000 else 0.68
+    nx.draw_networkx_edges(
+        draw_graph,
+        pos,
+        ax=ax,
+        width=widths,
+        alpha=edge_alpha,
+        edge_color=weights if len(weights) else "#355c7d",
+        edge_cmap=__import__("matplotlib").colormaps["plasma"],
+        edge_vmin=0.0,
+        edge_vmax=high,
+    )
+    nx.draw_networkx_nodes(
+        draw_graph,
+        pos,
+        ax=ax,
+        node_size=sizes,
+        node_color=list(strength.reindex(draw_graph.nodes()).fillna(0.0)),
+        cmap="viridis",
+        alpha=0.88,
+        linewidths=0.25,
+        edgecolors="white",
+    )
+    ax.set_title(title or "Network")
+    ax.set_axis_off()
+    return ax
+
+
+def centrality_heatmap(ax, centrality: pd.DataFrame, *, title: str | None = None, cmap: str = "viridis"):
+    df = pd.DataFrame(centrality).copy()
+    cols = [c for c in ["degree", "eigenvector", "betweenness", "closeness", "combined"] if c in df.columns]
+    df = df[cols] if cols else df.select_dtypes(include=[np.number])
+    if df.empty:
+        ax.text(0.5, 0.5, "No centrality", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    vals = df.astype(float).to_numpy()
+    im = ax.imshow(vals, aspect="auto", cmap=cmap, vmin=0.0, vmax=1.0)
+    ax.set_title(title or "Centrality scores")
+    ax.set_xticks(range(len(df.columns)))
+    ax.set_xticklabels(df.columns, rotation=35, ha="right")
+    ax.set_yticks(range(len(df.index)))
+    ax.set_yticklabels([str(x) for x in df.index], fontsize=6)
+    ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    return ax
+
+
+def centrality_score_bars(
+    ax,
+    scores: pd.Series | pd.DataFrame,
+    *,
+    column: str = "combined",
+    top_n: int = 20,
+    title: str | None = None,
+):
+    if isinstance(scores, pd.DataFrame):
+        if column in scores.columns:
+            vals = scores[column]
+        else:
+            vals = scores.select_dtypes(include=[np.number]).iloc[:, 0]
+    else:
+        vals = pd.Series(scores, dtype=float)
+    vals = vals.dropna().sort_values(ascending=True).tail(int(top_n))
+    if vals.empty:
+        ax.text(0.5, 0.5, "No scores", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    ax.barh(vals.index.astype(str), vals.values)
+    ax.set_title(title or "Centrality scores")
+    ax.set_xlabel(column)
+    ax.grid(True, axis="x", alpha=0.3)
+    return ax
+
+
+def score_heatmap(ax, scores: pd.DataFrame, *, title: str | None = None, cmap: str = "viridis"):
+    df = pd.DataFrame(scores).select_dtypes(include=[np.number]).replace([np.inf, -np.inf], np.nan).fillna(0.0)
+    if df.empty:
+        ax.text(0.5, 0.5, "No scores", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    vals = df.to_numpy(dtype=float)
+    im = ax.imshow(vals, aspect="auto", cmap=cmap)
+    ax.set_title(title or "Scores")
+    ax.set_xticks(range(len(df.columns)))
+    ax.set_xticklabels(df.columns, rotation=35, ha="right")
+    ax.set_yticks(range(len(df.index)))
+    ax.set_yticklabels([str(x) for x in df.index], fontsize=6)
+    ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    return ax
+
+
+def weight_heatmap(
+    ax,
+    weights: pd.DataFrame | pd.Series,
+    *,
+    title: str | None = None,
+    top_n: int = 40,
+    cmap: str = "Blues",
+):
+    if isinstance(weights, pd.Series):
+        df = weights.to_frame("weight")
+    else:
+        df = pd.DataFrame(weights).copy()
+    df = df.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).fillna(0.0)
+    order = df.abs().max(axis=1).sort_values(ascending=False).head(int(top_n)).index
+    df = df.loc[order]
+    if df.empty:
+        ax.text(0.5, 0.5, "No weights", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    im = ax.imshow(df.to_numpy(dtype=float), aspect="auto", cmap=cmap)
+    ax.set_title(title or "Weights")
+    ax.set_xticks(range(len(df.columns)))
+    ax.set_xticklabels([str(x) for x in df.columns], rotation=35, ha="right")
+    ax.set_yticks(range(len(df.index)))
+    ax.set_yticklabels([str(x) for x in df.index], fontsize=6)
+    ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    return ax
+
+
+def _comparison_matrix(data: pd.DataFrame, *, value: str) -> pd.DataFrame:
+    df = pd.DataFrame(data).copy()
+    if df.empty:
+        return pd.DataFrame()
+    lookup = {str(c).lower(): c for c in df.columns}
+    val_col = lookup.get(str(value).lower(), value)
+    if val_col not in df.columns:
+        return pd.DataFrame()
+    needed = {"dependence", "network", "centrality"}
+    if not needed.issubset(set(df.columns)):
+        return pd.DataFrame()
+    dfx = df.copy()
+    dfx["setup"] = dfx["dependence"].astype(str) + " / " + dfx["network"].astype(str)
+    if "direction" in dfx.columns:
+        dfx["setup"] = dfx["setup"] + " / " + dfx["direction"].astype(str)
+    mat = dfx.pivot_table(index="centrality", columns="setup", values=val_col, aggfunc="mean")
+    return mat.sort_index(axis=0).sort_index(axis=1)
+
+
+def performance_heatmap(
+    ax,
+    comparison: pd.DataFrame,
+    *,
+    value: str,
+    title: str | None = None,
+    cmap: str | None = None,
+    annotate: bool = False,
+):
+    mat = _comparison_matrix(comparison, value=value)
+    if mat.empty:
+        ax.text(0.5, 0.5, "No comparison", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    vals = mat.to_numpy(dtype=float)
+    cmap_use = cmap or choose_heatmap_cmap(metric_name=value)
+    im = ax.imshow(vals, aspect="auto", cmap=cmap_use)
+    if annotate:
+        _annotate_heatmap(ax, vals, ".2f")
+    ax.set_title(title or value)
+    ax.set_xticks(range(len(mat.columns)))
+    ax.set_xticklabels(mat.columns, rotation=50, ha="right", fontsize=6)
+    ax.set_yticks(range(len(mat.index)))
+    ax.set_yticklabels(mat.index)
+    ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    return ax
+
+
+def network_comparison_grid(ax, comparison: pd.DataFrame, *, value: str, title: str | None = None):
+    return performance_heatmap(ax, comparison, value=value, title=title)
+
+
 __all__ = [
     "apply_portfolio_subplot_layout",
+    "centrality_heatmap",
+    "centrality_score_bars",
+    "corr_heatmap",
+    "distance_heatmap",
     "format_portfolio_time_axis",
     "heatmap_matrix",
+    "network_comparison_grid",
+    "network_graph",
+    "performance_heatmap",
     "plot_active_nav",
     "plot_active_weights_heatmap",
     "plot_average_weight_heatmap",
@@ -910,23 +1102,26 @@ __all__ = [
     "plot_fixed_mu_covariance_comparison",
     "plot_grid_heatmap",
     "plot_hrp_dendrogram",
+    "plot_latest_weights",
     "plot_metric_bar",
     "plot_nav",
-    "plot_latest_weights",
     "plot_nco_cluster_weights",
     "plot_posterior_shift_heatmap",
     "plot_risk_contribution_bar",
     "plot_risk_return_scatter",
     "plot_rolling_active_metrics",
     "plot_sleeve_exposure_bar",
-    "plot_stress_summary",
     "plot_strategy_drawdowns",
     "plot_strategy_nav",
+    "plot_stress_summary",
     "plot_turnover",
     "plot_turnover_bar",
     "plot_view_q_and_confidence",
     "plot_view_selection_counts",
-    "plot_weights",
     "plot_wasserstein_radius_path",
+    "plot_weights",
+    "score_heatmap",
     "show_portfolio_xaxis_like_risk_module",
+    "tail_heatmap",
+    "weight_heatmap",
 ]

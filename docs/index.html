@@ -176,17 +176,32 @@ ul.task-list li input[type="checkbox"] {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./notebooks/12_financial_conditions_index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Macro Fiancial Conditions Index</span></a>
+  <a href="./notebooks/12_financial_conditions_index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">12. Macro Fiancial Conditions Index</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./notebooks/13_american_option_numerics.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">American Options and Numerical Pricing Methods</span></a>
+  <a href="./notebooks/13_american_option_numerics.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">13. American Options and Numerical Pricing Methods</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./notebooks/14_fourier_option_pricing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Fourier Based Methods for Option Pricing</span></a>
+  <a href="./notebooks/14_fourier_option_pricing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">14. Fourier Based Methods for Option Pricing</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./notebooks/15_factor_investing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">15. Factor Investing and Fama French Allocation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./notebooks/16_regime_switching_portfolio.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">16. Regime Switching models for portfolio selection</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./notebooks/17_network_portfolio.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">17. Network-Aware Portfolio Construction</span></a>
   </div>
 </li>
     </ul>
@@ -269,9 +284,9 @@ Note
 <section id="yield-curve-bond-pricing-risk" class="level3">
 <h3 class="anchored" data-anchor-id="yield-curve-bond-pricing-risk">01 — Yield Curve, Bond Pricing &amp; Risk</h3>
 <ul>
-<li>Yield curve construction (discount factors / zero rates)</li>
-<li>Bond pricing and key risk measures</li>
-<li>Practical fixed-income utilities you can reuse elsewhere</li>
+<li>Yield curve construction from par yields using discount, zero-rate, and forward-rate methods</li>
+<li>Bond pricing, duration, convexity, PV01, and key-rate duration analysis</li>
+<li>Duration-targeted fixed-income portfolio design with reusable fixed-income utilities</li>
 </ul>
 <p><a href="notebooks/01_yield_curve_bond_pricing_and_risk.html">Open Project 01</a></p>
 </section>
@@ -279,11 +294,149 @@ Note
 <section id="portfolio-optimization-meanvariance" class="level3">
 <h3 class="anchored" data-anchor-id="portfolio-optimization-meanvariance">02 — Portfolio Optimization (Mean–Variance)</h3>
 <ul>
-<li>Mean–variance optimization pipeline</li>
-<li>Covariance estimators and model comparisons</li>
-<li>Backtest-style evaluation and performance diagnostics</li>
+<li>Mean–variance portfolio construction with practical universe filtering</li>
+<li>Expected-return models, covariance estimators, shrinkage methods, and frontier diagnostics</li>
+<li>Backtest-style evaluation using performance, drawdown, turnover, and risk metrics</li>
 </ul>
 <p><a href="notebooks/02_portfolio_optimization_MV_models.html">Open Project 02</a></p>
+</section>
+</div>
+</div>
+<div class="columns">
+<div class="column" style="width:50%;">
+<section id="risk-report-engine-capm" class="level3">
+<h3 class="anchored" data-anchor-id="risk-report-engine-capm">03 — Risk Report Engine &amp; CAPM</h3>
+<ul>
+<li>Reusable portfolio risk-reporting framework for volatility, drawdowns, VaR, and expected shortfall</li>
+<li>CAPM beta, alpha, rolling exposure, benchmark comparison, and stress-period analysis</li>
+<li>Risk contribution, diversification diagnostics, and reporting tools used across later projects</li>
+</ul>
+<p><a href="notebooks/03_risk_report_engine_and_CAPM.html">Open Project 03</a></p>
+</section>
+</div><div class="column" style="width:50%;">
+<section id="blackscholes-implied-volatility-greeks-hedging" class="level3">
+<h3 class="anchored" data-anchor-id="blackscholes-implied-volatility-greeks-hedging">04 — Black–Scholes, Implied Volatility, Greeks &amp; Hedging</h3>
+<ul>
+<li>Black–Scholes pricing, implied-volatility inversion, option-chain cleaning, and solver benchmarking</li>
+<li>Greek calculation, finite-difference validation, put-call parity checks, and IV diagnostics</li>
+<li>Delta and delta-vega hedging with P&amp;L attribution, transaction costs, and a BTC options repeat</li>
+</ul>
+<p><a href="notebooks/04_BSM_IV_greeks_hedging.html">Open Project 04</a></p>
+</section>
+</div>
+</div>
+<div class="columns">
+<div class="column" style="width:50%;">
+<section id="volatility-forecasting-garch-variance-risk-premium" class="level3">
+<h3 class="anchored" data-anchor-id="volatility-forecasting-garch-variance-risk-premium">05 — Volatility Forecasting, GARCH &amp; Variance Risk Premium</h3>
+<ul>
+<li>Realized-volatility forecasting with GARCH, GJR-GARCH, EGARCH, and HAR-RV models</li>
+<li>Construction of a clean 30-day ATM implied-volatility panel from SPX option chains</li>
+<li>Variance-risk-premium signals translated into straddle overlays and strategy diagnostics</li>
+</ul>
+<p><a href="notebooks/05_GARCH_forecasting_VRP.html">Open Project 05</a></p>
+</section>
+</div><div class="column" style="width:50%;">
+<section id="blacklitterman-with-learned-confidence" class="level3">
+<h3 class="anchored" data-anchor-id="blacklitterman-with-learned-confidence">06 — Black–Litterman with Learned Confidence</h3>
+<ul>
+<li>ETF portfolio construction with strategic benchmarks, market-implied priors, and active views</li>
+<li>Black–Litterman posterior-return modeling with learned confidence and reliability diagnostics</li>
+<li>Active portfolio evaluation using tracking error, information ratio, redundancy gates, and library replication</li>
+</ul>
+<p><a href="notebooks/06_portfolio_black_littreman.html">Open Project 06</a></p>
+</section>
+</div>
+</div>
+<div class="columns">
+<div class="column" style="width:50%;">
+<section id="dynamic-hedge-ratios-residual-trading" class="level3">
+<h3 class="anchored" data-anchor-id="dynamic-hedge-ratios-residual-trading">07 — Dynamic Hedge Ratios &amp; Residual Trading</h3>
+<ul>
+<li>Hedge-ratio estimation using static OLS, rolling OLS, ridge regression, and Kalman/state-space methods</li>
+<li>Pair-level hedgeability analysis across equity, commodity, currency, and ETF relationships</li>
+<li>Residual trading tests with no-trade bands, transaction costs, model comparison, and robustness repeats</li>
+</ul>
+<p><a href="notebooks/07_dynamic_hedge_ratios.html">Open Project 07</a></p>
+</section>
+</div><div class="column" style="width:50%;">
+<section id="volatility-surface-local-volatility" class="level3">
+<h3 class="anchored" data-anchor-id="volatility-surface-local-volatility">08 — Volatility Surface &amp; Local Volatility</h3>
+<ul>
+<li>SPX option-surface construction from cleaned market quotes across moneyness and maturity</li>
+<li>Surface diagnostics, smile/skew behavior, PCA-style surface dynamics, and Greek-risk scoring</li>
+<li>Dupire-style local-volatility analysis with a secondary BTC options implementation using the library</li>
+</ul>
+<p><a href="notebooks/08_vol_surface_local_vol.html">Open Project 08</a></p>
+</section>
+</div>
+</div>
+<div class="columns">
+<div class="column" style="width:50%;">
+<section id="short-rate-term-structure-models" class="level3">
+<h3 class="anchored" data-anchor-id="short-rate-term-structure-models">09 — Short-Rate &amp; Term-Structure Models</h3>
+<ul>
+<li>Treasury curve modeling with zero curves, slopes, term-premium data, SOFR returns, and monthly panels</li>
+<li>Vasicek, CIR, and multi-factor term-structure experiments with calibration and diagnostic checks</li>
+<li>Duration-ladder backtesting, curve overlays, fixed-income risk reporting, and reusable library implementation</li>
+</ul>
+<p><a href="notebooks/09_term_structure_models.html">Open Project 09</a></p>
+</section>
+</div><div class="column" style="width:50%;">
+<section id="tail-risk-risk-parity-robust-portfolio-models" class="level3">
+<h3 class="anchored" data-anchor-id="tail-risk-risk-parity-robust-portfolio-models">10 — Tail Risk, Risk Parity &amp; Robust Portfolio Models</h3>
+<ul>
+<li>Portfolio optimization under tail-risk, CVaR, risk-parity, HRP, and robust-optimization objectives</li>
+<li>Comparison of mean-variance, Black–Litterman, CVaR, Wasserstein-DRO, and ellipsoid-robust models</li>
+<li>Strategy evaluation with drawdowns, turnover, transaction costs, risk contributions, and secondary replication</li>
+</ul>
+<p><a href="notebooks/10_portfolio_tail_parity_robust.html">Open Project 10</a></p>
+</section>
+</div>
+</div>
+<div class="columns">
+<div class="column" style="width:50%;">
+<section id="stochastic-volatility-model-risk-aware-option-relative-value" class="level3">
+<h3 class="anchored" data-anchor-id="stochastic-volatility-model-risk-aware-option-relative-value">11 — Stochastic Volatility &amp; Model-Risk-Aware Option Relative Value</h3>
+<ul>
+<li>Smile and stochastic-volatility model comparison using SVI, SSVI, SABR, Merton, Heston, and Bates-style models</li>
+<li>Calibration diagnostics, residual analysis, weighted IV errors, runtime checks, and model-stability comparison</li>
+<li>Option relative-value signal testing with hedging attribution, model-risk controls, and secondary market repeats</li>
+</ul>
+<p><a href="notebooks/11_stochastic_volatility.html">Open Project 11</a></p>
+</section>
+</div><div class="column" style="width:50%;">
+<section id="macro-financial-conditions-index" class="level3">
+<h3 class="anchored" data-anchor-id="macro-financial-conditions-index">12 — Macro Financial Conditions Index</h3>
+<ul>
+<li>Macro dataset construction from inflation, policy, growth, labor, housing, external, and breadth indicators</li>
+<li>Expanding PCA and supervised/embargoed alternatives for building financial-conditions signals</li>
+<li>Sector-rotation and risk-scaling experiments with performance comparison, drawdown analysis, and library replication</li>
+</ul>
+<p><a href="notebooks/12_financial_conditions_index.html">Open Project 12</a></p>
+</section>
+</div>
+</div>
+<div class="columns">
+<div class="column" style="width:50%;">
+<section id="american-options-numerical-pricing-methods" class="level3">
+<h3 class="anchored" data-anchor-id="american-options-numerical-pricing-methods">13 — American Options &amp; Numerical Pricing Methods</h3>
+<ul>
+<li>American option pricing with binomial trees, finite-difference/PDE validation, and Longstaff–Schwartz Monte Carlo</li>
+<li>Large-scale SPY option-chain cleaning with dividends, rates, early-exercise logic, and production-style pricing tests</li>
+<li>C++ and Numba engine comparison, convergence diagnostics, assignment analysis, and secondary library repeat</li>
+</ul>
+<p><a href="notebooks/13_american_option_numerics.html">Open Project 13</a></p>
+</section>
+</div><div class="column" style="width:50%;">
+<section id="fourier-based-option-pricing" class="level3">
+<h3 class="anchored" data-anchor-id="fourier-based-option-pricing">14 — Fourier-Based Option Pricing</h3>
+<ul>
+<li>Characteristic-function pricing with COS and Fourier-style methods for BSM, Merton, VG, Heston, and Bates models</li>
+<li>Large-scale SPX option calibration, pricing-error comparison, convergence checks, and runtime diagnostics</li>
+<li>Jump-risk and stochastic-volatility model evaluation with BTC options extension and reusable library implementation</li>
+</ul>
+<p><a href="notebooks/14_fourier_option_pricing.html">Open Project 14</a></p>
 </section>
 </div>
 </div>
