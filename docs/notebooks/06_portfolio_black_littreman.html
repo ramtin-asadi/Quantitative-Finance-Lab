@@ -270,6 +270,21 @@ window.Quarto = {
   <a href="../notebooks/17_network_portfolio.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">17. Network-Aware Portfolio Construction</span></a>
   </div>
 </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Rough Volatiility For Option Pricing</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Reinforcement Learning for Portfolio Allocation</span></a>
+  </div>
+</li>
     </ul>
     </div>
 </nav>
@@ -309,16 +324,19 @@ window.Quarto = {
 <section id="mathematic-background-bayes-rule" class="level2">
 <h2 class="anchored" data-anchor-id="mathematic-background-bayes-rule">1) mathematic background: Bayes Rule</h2>
 <p>Black-Litterman is easier to understand if we start with this topic. Imagine we have an initial belief about something uncertain. Then we observe new evidence. We should not throw away the initial belief completely, and we should not ignore the evidence either. We should update the belief.</p>
-<p>That is the whole Bayesian idea. The prior is what we believed before the new information. The likelihood describes how compatible the new information is with possible states of the world. The posterior is what we believe after combining both.</p>
+<p>That is the whole Bayesian idea. The <strong>prior</strong> is what we believed before the new information. The <strong>likelihood</strong> is how compatible the new information is with possible states of the world. The <strong>posterior</strong> is what we believe after combining both.</p>
 <p><span class="math display">\[
 P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 \]</span></p>
-<p>Here <span class="math inline">\(P(A)\)</span> is the prior belief, <span class="math inline">\(P(B\mid A)\)</span> is the likelihood of observing the evidence if <span class="math inline">\(A\)</span> were true, and <span class="math inline">\(P(A\mid B)\)</span> is the posterior belief after seeing the evidence.</p>
-<p>Here, the uncertain object is not a class label or a coin probability. It is the vector of <strong>expected returns</strong>. Expected returns are hard to estimate, so we do not want to trust raw historical averages too much. We can first define a <strong>benchmark</strong> that gives us a conservative starting point. Then we use some <strong>views</strong> about the financial markets and economic situations that will have effect on expected returns. views give us new information. Then there is <strong>confidence</strong> for each view which decides how much the views should move us away from the benchmark.</p>
+<p>where <span class="math inline">\(P(A)\)</span> is the <strong>prior</strong> (what we believed before seeing <span class="math inline">\(B\)</span>), <span class="math inline">\(P(B \mid A)\)</span> is the <strong>likelihood</strong> (how compatible the evidence <span class="math inline">\(B\)</span> is with belief <span class="math inline">\(A\)</span>), and <span class="math inline">\(P(A \mid B)\)</span> is the <strong>posterior</strong> (our updated belief after seeing <span class="math inline">\(B\)</span>). Written proportionally:</p>
 <p><span class="math display">\[
+\underbrace{P(A \mid B)}_{\text{posterior}} \;\propto\; \underbrace{P(B \mid A)}_{\text{likelihood}} \times \underbrace{P(A)}_{\text{prior}}
+\]</span></p>
+<p>Or we can write it like this: <span class="math display">\[
 \mathrm{posterior\ belief}\propto\mathrm{prior\ belief}\times\mathrm{new\ evidence}
 \]</span></p>
-<p>So the process is: - start with a reasonable neutral belief - listen to evidence - update in proportion to confidence.</p>
+<p>Here, the uncertain object is not a class label or a coin probability. It is the vector of <strong>expected returns</strong>. Expected returns are hard to estimate, so we don’t want to trust historical averages too much. We can first define a <strong>benchmark</strong> that gives us a starting point or the prior. Then we use some <strong>views</strong> about the financial markets and economic situations that will have effect on expected returns. views give us new information. Then there is <strong>confidence</strong> for each view which decides how much the views should move us away from the benchmark.</p>
+<p>So the process is: - start with a reasonable neutral belief - observe the new evidence - update the belief considering the confidence.</p>
 <p>Since this notebook is a portfolio optimization related topic, i highly recommend reading notebook <a href="https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/02_portfolio_optimization_MV_models.html">2. Portfolio optimization with Mean-Variance models</a> first for better understanding of project.</p>
 <section id="imports-and-pltting-style" class="level3">
 <h3 class="anchored" data-anchor-id="imports-and-pltting-style">Imports and pltting style</h3>
@@ -427,7 +445,7 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 volume panel: (4111, 63)</code></pre>
 </div>
 </div>
-<p>The loaded data has <span class="math inline">\(4107\)</span> trading days and <span class="math inline">\(56\)</span> adjusted close columns before we select the project’s ETFs. We are not going to use all <span class="math inline">\(56\)</span> ETFs and most of them are for later projects and secondary data for this project like sector ETFs.</p>
+<p>The loaded data has <span class="math inline">\(4107\)</span> trading days and <span class="math inline">\(63\)</span> adjusted close columns before we select the project’s ETFs. We are not going to use all <span class="math inline">\(63\)</span> ETFs and most of them are for later projects and secondary data for this project like sector ETFs.</p>
 <section id="choosing-the-etfs" class="level3">
 <h3 class="anchored" data-anchor-id="choosing-the-etfs">2.1 Choosing the ETFs</h3>
 <p>We now choose the ETFs we are going to analyze for this notebook. The tradable assets are:</p>
@@ -473,17 +491,17 @@ volume panel: (4111, 63)</code></pre>
 <tr class="even">
 <td>TLT</td>
 <td>Long duration Treasuries</td>
-<td>Long-duration US Treasuries, very sensitive to changes in long-term interest rates.</td>
+<td>Long-duration US Treasuries (20+ years), very sensitive to changes in long-term interest rates.</td>
 </tr>
 <tr class="odd">
 <td>IEF</td>
 <td>Intermediate Treasuries</td>
-<td>Intermediate Treasury exposure, less duration risk than TLT.</td>
+<td>Intermediate Treasury exposure (7-10 year), less duration risk than TLT.</td>
 </tr>
 <tr class="even">
 <td>SHY</td>
 <td>Short Treasuries</td>
-<td>Short-duration Treasury exposure and a defensive cash-like sleeve. Usually low volatility and low return.</td>
+<td>Short-duration Treasury exposure (1-3 year) and a defensive cash-like sleeve. Usually low volatility and low return.</td>
 </tr>
 <tr class="odd">
 <td>AGG</td>
@@ -503,7 +521,7 @@ volume panel: (4111, 63)</code></pre>
 <tr class="even">
 <td>GLD</td>
 <td>Gold</td>
-<td>Gold exposure, often treated as a real asset or crisis/inflation hedge.</td>
+<td>Holds physical gold, often treated as a real asset or crisis/inflation hedge.</td>
 </tr>
 <tr class="odd">
 <td>VNQ</td>
@@ -977,8 +995,8 @@ first: 2016-01-29 last: 2026-05-07</code></pre>
 <p>As we can see, <strong>QQQ</strong> has been the strongest asset in the sample, with an annualized return close to 20% and volatility around 21%. <strong>SPY</strong> also performs strongly, with lower return and lower volatility than QQQ. <strong>IWM</strong> has a positive return but much higher drawdown, which is typical of small cap exposure especially in our sample where large cap growth leadership has been very strong.</p>
 <p>The international equity ETFs are weaker. <strong>EFA and EEM</strong> both have large drawdowns and volatility, but their returns are much lower than U.S. equities. This already tells us that a simple global equity diversification story is not enough. International exposure may still be useful, but an efficient model should not blindly assume that all equities and markets deserve the same allocation.</p>
 <p>The bond ETFs show very different behavior. <strong>SHY</strong> has very low volatility around <span class="math inline">\(1.4\%\)</span> and a much smaller drawdown around <span class="math inline">\(-5.7\%\)</span>, but the return is also low. <strong>TLT</strong> is the opposite of what someone might expect from “bonds”. It has a very large drawdown around <span class="math inline">\(-48.5\%\)</span> in this sample because as we said earlier, long duration bonds are sensitive to interest rate changes. TLT fell hard by the post-2021 rate shock.</p>
-<p><strong>DBC</strong> has a very large drawdown around <span class="math inline">\(-62.2\%\)</span>, which can be from the long weak cycles. <strong>GLD and VNQ</strong> sit somewhere between diversifiers and risk assets. They have meaningful volatility and large drawdowns, but they also bring different economic exposure.</p>
-<p>An efficient active model like Black-Litterman should know when to lean into growth, when to prefer real assets, when to reduce long duration, and when to stay close to the benchmark so it can control risk and gain the high return based on the state and information given to it each time it’s rabalancing.</p>
+<p><strong>DBC</strong> has a very large drawdown around <span class="math inline">\(-62.2\%\)</span>, which can be from the long weak cycles. <strong>GLD and VNQ</strong> are somewhere between diversifiers and risk assets. They have meaningful volatility and large drawdowns, but they also bring different economic exposure.</p>
+<p>An efficient active model like Black-Litterman should know when to lean into growth, when to prefer real assets, when to reduce long duration, and when to stay close to the benchmark so it can control risk and gain the high return based on the state and information and the uncertainty of that information given to it each time it’s rabalancing.</p>
 <div id="b73a6bc4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.113543Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.113136Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;}}" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>normalized_prices <span class="op">=</span> close <span class="op">/</span> close.ffill().bfill().iloc[<span class="dv">0</span>]</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> normalized_prices.plot(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="dv">4</span>), lw<span class="op">=</span><span class="fl">1.1</span>)</span>
@@ -1037,12 +1055,12 @@ first: 2016-01-29 last: 2026-05-07</code></pre>
 </section>
 <section id="building-the-strategic-benchmark-and-prior" class="level2">
 <h2 class="anchored" data-anchor-id="building-the-strategic-benchmark-and-prior">3) Building the strategic benchmark and Prior</h2>
-<p>If we remember the bayes rule from earlier, we want to update our belief when new information arrives. We first need an intial belief or a starting point that is going to change with with the new information.</p>
+<p>If we remember the bayes rule from earlier, we want to update our belief when new information arrives. We first need an intial belief or a starting point that is going to change with the new information.</p>
 <section id="benchmark-portfolio" class="level3">
 <h3 class="anchored" data-anchor-id="benchmark-portfolio">3.1 Benchmark portfolio</h3>
-<p>We First define a neutral portfolio. This is not supposed to be the smartest portfolio in the notebook. It is the anchor. In Black-Litterman, the benchmark exists because it represents the <strong>starting belief about how capital should be allocated</strong> before any active views are added.</p>
-<p>The benchmark we use is a portfolio with pre-defined fixed weights and the weights are based on what we think can be reasonable for these ETFs based on their performance, behaviour and what they hold. It gives meaningful weight to US equities, international equities, bonds, credit, gold, real estate, and commodities. It is also constrained by asset caps and constraints. These caps protect the optimization from unrealistic concentration.</p>
-<p>For example, even if QQQ has a strong historical return, we probably do not want a mult asset benchmark to become almost entirely QQQ. Likewise, even if short Treasuries have low volatility, a diversified benchmark should not become a pure cash substitute.</p>
+<p>We First define a neutral portfolio. This is not supposed to be the smartest portfolio in the notebook. In Black-Litterman, the benchmark exists because it represents the <strong>starting belief about how capital should be allocated</strong> before any active views are added.</p>
+<p>The benchmark we use is a portfolio with pre-defined fixed weights and the weights are based on what we think can be reasonable for these ETFs based on their performance, behaviour and what they hold. It gives meaningful weight to US equities, international equities, bonds, credit, gold, real estate, and commodities. It is also constrained by asset caps and constraints. These caps protect the optimization from unrealistic concentration on just one asset.</p>
+<p>For example, even if QQQ has a strong historical return, we probably do not want a mult asset benchmark to become almost entirely QQQ. We are looking for diversification. Also, even if short Treasuries have low volatility, a diversified benchmark should not become a pure cash substitute. In that case we will end up with a very low volatility portfolio but almost the worst return.</p>
 <p>We don’t want the optimizer to do whatever it wants. We want it to stay inside a realistic multi asset allocation structure. That’s why we use bounds and caps for weights on each asset.</p>
 <p>Since we already know from notebook 2, A benchmark weight vector looks like this:</p>
 <p><span class="math display">\[
@@ -1238,12 +1256,12 @@ w_{b,i}\geq 0
 <section id="what-weights-we-used-and-why" class="level3">
 <h3 class="anchored" data-anchor-id="what-weights-we-used-and-why">What weights we used and why</h3>
 <p>As we can see, we set SPY as the largest position at about <strong><span class="math inline">\(22.2\%\)</span></strong>, followed by AGG around <strong><span class="math inline">\(10.1\%\)</span></strong>, EFA around <strong><span class="math inline">\(9.1\%\)</span></strong>, and several exposures around <strong><span class="math inline">\(8.1\%\)</span></strong> or <strong><span class="math inline">\(5.1\%\)</span></strong>. Large weights go to liquid core exposures. SPY for broad US equity, AGG for core bonds, EFA for developed international equities, and intermediate/long Treasuries for duration. Smaller weights go to more specialized or volatile exposures such as DBC, VNQ, HYG, and IWM. This makes sense because those assets can be useful, but we usually do not want them to dominate the portfolio.</p>
-<p>US equity is the largest section at about 34.3%. Duration bonds and international equities are also meaningful. Core bonds, real assets, and credit each have visible allocations, while commodities are intentionally small.</p>
-<p>This looks like a reasonable strategic benchmark for a multi asset project. It is growth oriented enough to participate in equity markets, but it is not a pure equity portfolio. It has bonds, gold, real estate, credit, and commodities. That makes it a useful anchor for active allocation.</p>
-<div id="2fd69cad" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;}}" data-execution_count="9">
+<p>US equity is the largest section at about 34.3%. Duration bonds and international equities are also used enough. Core bonds, real assets, and credit each have visible allocations, while commodities are intentionally small.</p>
+<p>This looks like a reasonable strategic benchmark for a multi asset project. It is growth oriented enough to participate in equity markets, but it is not a pure equity portfolio to end up with too high volatility. It has bonds, gold, real estate, credit, and commodities. That makes it a useful starting point for active allocation.</p>
+<div id="2fd69cad" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;}}">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">3.5</span>))</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>benchmark_w.sort_values(ascending<span class="op">=</span><span class="va">False</span>).plot(kind<span class="op">=</span><span class="st">"bar"</span>, ax<span class="op">=</span>ax)</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"fixed etf benchmark anchor"</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"fixed etf benchmark weights"</span>)</span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"weight"</span>)</span>
 <span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"asset"</span>)</span>
 <span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
@@ -1316,15 +1334,51 @@ w_{b,i}\geq 0
 </div>
 </div>
 </div>
-<div id="7bdcfd8b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.254413Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.254413Z&quot;}}" data-execution_count="10">
+</section>
+<section id="building-black-litterman-prior" class="level3">
+<h3 class="anchored" data-anchor-id="building-black-litterman-prior">3.2 Building Black-Litterman prior</h3>
+<p>We now build the first Black-Litterman object: the prior expected return vector.</p>
+<p>In ordinary mean-variance optimization, expected returns are usually the weakest input. Historical average returns are noisy, unstable, and extremely sensitive to the sample window. Black-Litterman avoids starting from raw sample means. Instead, we do a reverse action. We now have a portfolio with our defined weights, so there has to be a Mean-Variance that produces these weights with an unknown mean. We are looking for that mean given our weights. We want to see what expected returns would make this benchmark look optimal for an investor?</p>
+<p>This is called <strong>reverse optimization</strong>.</p>
+</section>
+<section id="estimating-mu-from-equilibrium" class="level3">
+<h3 class="anchored" data-anchor-id="estimating-mu-from-equilibrium">3.2.1 Estimating <span class="math inline">\(\mu\)</span> from equilibrium</h3>
+<p>We start with the standard mean-variance utility:</p>
+<p><span class="math display">\[
+\mathbf{w}_b = \mathbf{w}^\top \boldsymbol{\mu} - \frac{\delta}{2} \mathbf{w}^\top \boldsymbol{\Sigma} \mathbf{w}
+\]</span></p>
+<p>Here <span class="math inline">\(\mu\)</span> is the expected return vector, <span class="math inline">\(\Sigma_t\)</span> is the covariance matrix estimated at time <span class="math inline">\(t\)</span>, <span class="math inline">\(w_b\)</span> is the benchmark weight vector, and <span class="math inline">\(\delta_t\)</span> is the risk-aversion coefficient. Higher <span class="math inline">\(\delta\)</span> means the investor wants more compensation for taking variance.</p>
+<p>the unconstrained solution is <span class="math inline">\(\mathbf{w}_b^* = \frac{1}{\delta} \boldsymbol{\Sigma}^{-1} \boldsymbol{\mu}\)</span>, which can be changed to give:</p>
+<p><span class="math display">\[
+\boldsymbol{\mu}_{\text{eq}} = \delta\, \boldsymbol{\Sigma}\, \mathbf{w}_b
+\]</span></p>
+<p>The vector <span class="math inline">\(\mu_\text{eq}\)</span> is the prior expected return vector. If an investor maximizes expected return minus a penalty for variance, then the expected return vector that supports a given benchmark is equal to covariance times benchmark weights. If an asset contributes a lot of risk to the benchmark, it must have a higher implied return to justify its place. If an asset is defensive or low risk, it’s implied return is usually lower.</p>
+</section>
+<section id="estimating-covariance-sigma-and-risk-aversion-delta" class="level3">
+<h3 class="anchored" data-anchor-id="estimating-covariance-sigma-and-risk-aversion-delta">3.2.2 Estimating Covariance <span class="math inline">\(\Sigma\)</span> and Risk Aversion <span class="math inline">\(\delta\)</span></h3>
+<p>We also estimate <span class="math inline">\(\Sigma\)</span> with EWMA covariance. As we analyzes in notebook 2, EWMA puts more weight on recent returns:</p>
+<p><span class="math display">\[
+\Sigma_t=(1-\lambda)\sum_{j=0}^{L-1}\lambda^j(r_{t-j}-\bar r_t)(r_{t-j}-\bar r_t)^{\top}
+\]</span></p>
+<p>A high <span class="math inline">\(\lambda\)</span> such as <span class="math inline">\(0.97\)</span> makes the covariance estimate persistent but still responsive. This is useful for portfolio risk because covariance regimes change: 2020, 2022, and 2025 do not have the same market structure.</p>
+<p>The parameter <span class="math inline">\(\delta\)</span> is the <strong>market risk aversion coefficient</strong> which controls the overall scale of the implied returns. Economically, <span class="math inline">\(\delta\)</span> is the additional expected return the representative investor requires per unit of portfolio variance. We get the <span class="math inline">\(\delta\)</span> from benchmark too:</p>
+<p><span class="math display">\[
+\delta = \frac{\mu_{\text{bench}} - r_f}{\sigma_{\text{bench}}^2}
+\]</span></p>
+<p>This is the Sharpe ratio of the benchmark expressed in variance units. It measures how many units of expected excess return the market demands per unit of variance. Rather than assuming a fixed <span class="math inline">\(\delta = 2.5\)</span> (usual in literature), we <strong>estimate it dynamically</strong> at each rebalance date from the rolling historical performance of the benchmark portfolio itself.</p>
+<blockquote class="blockquote">
+<p>you might be confused about using <span class="math inline">\(\lambda\)</span> as the risk reversion parameter for Mean-Variance model in notebook 2, and here, using <span class="math inline">\(\delta\)</span>. We use <span class="math inline">\(\delta\)</span> as the symbol for implied risk aversion, which means extracting it from an existing model/portfolio. But <span class="math inline">\(\lambda\)</span> is used as the parameter of risk aversion for optimizing a model and getting to the optimal portfolio we want.</p>
+</blockquote>
+<p>Note: The prior is not static. At each rebalance date we use the current EWMA covariance estimate, so <span class="math inline">\(\boldsymbol{\mu}_{\text{eq}}\)</span> evolves with the market’s volatility and correlation structure.</p>
+<div id="7bdcfd8b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.254413Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.254413Z&quot;}}">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>ewma_lambda <span class="op">=</span> <span class="fl">0.97</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>delta_fallback <span class="op">=</span> <span class="fl">2.5</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>delta_min <span class="op">=</span> <span class="fl">0.50</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>delta_min <span class="op">=</span> <span class="fl">0.30</span></span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>delta_max <span class="op">=</span> <span class="fl">8.00</span></span>
 <span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>risk_free_daily <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> <span class="fl">0.04</span>) <span class="op">**</span> (<span class="fl">1.0</span> <span class="op">/</span> <span class="fl">252.0</span>) <span class="op">-</span> <span class="fl">1.0</span></span>
 <span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> local_make_psd(matrix, eps<span class="op">=</span><span class="fl">1e-10</span>):</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_psd(matrix, eps<span class="op">=</span><span class="fl">1e-10</span>):</span>
 <span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    arr <span class="op">=</span> np.asarray(matrix, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    arr <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> (arr <span class="op">+</span> arr.T)</span>
 <span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    vals, vecs <span class="op">=</span> np.linalg.eigh(arr)</span>
@@ -1353,10 +1407,10 @@ w_{b,i}\geq 0
 <span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>    bench_ret <span class="op">=</span> window <span class="op">@</span> benchmark_w</span>
 <span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>    ann_return <span class="op">=</span> <span class="bu">float</span>(bench_ret.mean() <span class="op">*</span> annualization)</span>
 <span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>    ann_var <span class="op">=</span> <span class="bu">float</span>(bench_ret.var(ddof<span class="op">=</span><span class="dv">1</span>) <span class="op">*</span> annualization)</span>
-<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>    raw_delta <span class="op">=</span> delta_fallback <span class="cf">if</span> (<span class="kw">not</span> np.isfinite(ann_var) <span class="kw">or</span> ann_var <span class="op">&lt;=</span> <span class="fl">1e-10</span>) <span class="cf">else</span> (ann_return <span class="op">-</span> risk_free_daily <span class="op">*</span> annualization) <span class="op">/</span> ann_var</span>
-<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> np.isfinite(raw_delta):</span>
-<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>        raw_delta <span class="op">=</span> delta_fallback</span>
-<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(np.clip(raw_delta, delta_min, delta_max))</span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>    delta <span class="op">=</span> (ann_return <span class="op">-</span> risk_free_daily <span class="op">*</span> annualization) <span class="op">/</span> ann_var</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> np.isfinite(delta):</span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>        delta <span class="op">=</span> delta_fallback</span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(np.clip(delta, delta_min, delta_max))</span>
 <span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a>cov_by_date <span class="op">=</span> {}</span>
@@ -1368,13 +1422,12 @@ w_{b,i}\geq 0
 <span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a>    prior_mu <span class="op">=</span> pd.Series(delta_t <span class="op">*</span> cov_ann.loc[assets, assets].values <span class="op">@</span> benchmark_w.loc[assets].values, index<span class="op">=</span>assets)</span>
 <span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a>    cov_by_date[pd.Timestamp(dt)] <span class="op">=</span> cov_ann</span>
 <span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a>    delta_by_date[pd.Timestamp(dt)] <span class="op">=</span> delta_t</span>
-<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a>    prior_mu_by_date[pd.Timestamp(dt)] <span class="op">=</span> prior_mu</span>
-<span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"stored covariance and prior for"</span>, <span class="bu">len</span>(prior_mu_by_date), <span class="st">"rebalance dates"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a>    prior_mu_by_date[pd.Timestamp(dt)] <span class="op">=</span> prior_mu</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>stored covariance and prior for 125 rebalance dates</code></pre>
 </div>
 </div>
-<div id="5b27526f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:08.287613Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:08.287613Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:08.699935Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:08.699935Z&quot;}}" data-execution_count="11">
+<div id="5b27526f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:08.287613Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:08.287613Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:08.699935Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:08.699935Z&quot;}}">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>delta_series <span class="op">=</span> pd.Series(delta_by_date).sort_index()</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> delta_series.plot(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">3</span>), lw<span class="op">=</span><span class="fl">1.4</span>)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"rolling benchmark-implied risk aversion"</span>)</span>
@@ -1385,19 +1438,20 @@ w_{b,i}\geq 0
 <span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>latest_rebalance_date <span class="op">=</span> rebalance_dates[<span class="op">-</span><span class="dv">1</span>]</span>
 <span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>latest_prior <span class="op">=</span> prior_mu_by_date[pd.Timestamp(latest_rebalance_date)].sort_values(ascending<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>prior_table <span class="op">=</span> pd.DataFrame({<span class="st">"asset"</span>: latest_prior.index, <span class="st">"prior_mu"</span>: latest_prior.values, <span class="st">"benchmark_weight"</span>: benchmark_w.reindex(latest_prior.index).values})</span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>display(prior_table.<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>prior_mu_frame <span class="op">=</span> pd.DataFrame(prior_mu_by_date).T.sort_index()</span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>prior_mu_heat <span class="op">=</span> prior_mu_frame.iloc[::<span class="bu">max</span>(<span class="dv">1</span>, <span class="bu">len</span>(prior_mu_frame) <span class="op">//</span> <span class="dv">36</span>)].T</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">4</span>))</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>im <span class="op">=</span> ax.imshow(prior_mu_heat, aspect<span class="op">=</span><span class="st">"auto"</span>, cmap<span class="op">=</span><span class="st">"coolwarm"</span>, vmin<span class="op">=-</span><span class="fl">0.15</span>, vmax<span class="op">=</span><span class="fl">0.15</span>)</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"benchmark-implied equilibrium returns"</span>)</span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>ax.set_yticks(<span class="bu">range</span>(<span class="bu">len</span>(prior_mu_heat.index)), prior_mu_heat.index)</span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>ax.set_xticks(<span class="bu">range</span>(<span class="bu">len</span>(prior_mu_heat.columns)), [d.strftime(<span class="st">"%Y-%m"</span>) <span class="cf">for</span> d <span class="kw">in</span> prior_mu_heat.columns], rotation<span class="op">=</span><span class="dv">90</span>, fontsize<span class="op">=</span><span class="dv">7</span>)</span>
-<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, ax<span class="op">=</span>ax, label<span class="op">=</span><span class="st">"annual return"</span>)</span>
-<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>prior_table <span class="op">=</span> pd.DataFrame({<span class="st">"asset"</span>: latest_prior.index, <span class="st">"prior_mu"</span>: latest_prior.values,</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"benchmark_weight"</span>: benchmark_w.reindex(latest_prior.index).values})</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>display(prior_table.<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>prior_mu_frame <span class="op">=</span> pd.DataFrame(prior_mu_by_date).T.sort_index()</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>prior_mu_heat <span class="op">=</span> prior_mu_frame.iloc[::<span class="bu">max</span>(<span class="dv">1</span>, <span class="bu">len</span>(prior_mu_frame) <span class="op">//</span> <span class="dv">36</span>)].T</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">4</span>))</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>im <span class="op">=</span> ax.imshow(prior_mu_heat, aspect<span class="op">=</span><span class="st">"auto"</span>, cmap<span class="op">=</span><span class="st">"coolwarm"</span>, vmin<span class="op">=-</span><span class="fl">0.15</span>, vmax<span class="op">=</span><span class="fl">0.15</span>)</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"benchmark-implied equilibrium returns"</span>)</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>ax.set_yticks(<span class="bu">range</span>(<span class="bu">len</span>(prior_mu_heat.index)), prior_mu_heat.index)</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>ax.set_xticks(<span class="bu">range</span>(<span class="bu">len</span>(prior_mu_heat.columns)), [d.strftime(<span class="st">"%Y-%m"</span>) <span class="cf">for</span> d <span class="kw">in</span> prior_mu_heat.columns], rotation<span class="op">=</span><span class="dv">90</span>)</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, ax<span class="op">=</span>ax, label<span class="op">=</span><span class="st">"annual return"</span>)</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
@@ -1516,48 +1570,57 @@ w_{b,i}\geq 0
 </div>
 </div>
 </div>
-<div id="f7bd9b82" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:08.702376Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:08.702376Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:08.717258Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:08.717258Z&quot;}}" data-execution_count="12">
+<p>The latest prior table ranks EEM at about <span class="math inline">\(21.5\%\)</span>, EFA around <span class="math inline">\(17.2\%\)</span>, GLD around <span class="math inline">\(16.5\%\)</span>, IWM around <span class="math inline">\(15.5\%\)</span>, QQQ around <span class="math inline">\(14.1\%\)</span>, and SPY around <span class="math inline">\(11.3\%\)</span>. These are annualized equilibrium returns implied by the benchmark, the latest covariance estimate, and the risk-aversion estimate.</p>
+<p>When the latest prior ranks EEM, EFA, GLD, IWM, QQQ, and SPY highly, it’s not simply saying these assets will have higher return, It’s saying that in the latest covariance estimate, and based on the benchmark exposures, those assets carry some kind of risk contribution that needs higher equilibrium return. DBC having a negative prior in the latest table means the benchmark and covariance structure do not naturally reward DBC in the same way at that time, so any active overweight to commodities must come from views rather than from the prior alone. This means we say on default, investing on commodities doesn’t benefit us in the way we want it, but since we use Black-Litterman, our views might show us things we don’t kno, guiding us to invest on them in the right time.</p>
+<p>GLD receiving a high prior is interesting. Gold does not always have high historical average return, but in a covariance-based prior it can receive more implied return when it contributes useful portfolio risk control maybe as a diversification power. This is one of the reasons Black-Litterman is more stable than raw historical mean estimation.</p>
+<p>In periods when an asset becomes more volatile or more connected to the benchmark, its implied prior can move. In 2020 and parts of 2022 which are stress regimes, implied returns change a lot because covariance and benchmark risk conditions changed suddenly. This is better than using one fixed prior for the whole sample. If market risk structure changes, the return should update too.</p>
+</section>
+</section>
+<section id="building-baseline-strategies" class="level2">
+<h2 class="anchored" data-anchor-id="building-baseline-strategies">4) Building baseline strategies</h2>
+<p>We now run the baseline portfolio models from the portfolios we made in notebook 2, and compare them against the strategic benchmark.</p>
+<p>A quick reminder from notebook 2: The minimum-variance problem is</p>
+<p><span class="math display">\[
+\min_w w^{\top}\Sigma w
+\]</span></p>
+<p>subject to the usual constraints like full investment, long-only weights, caps, and sleeve bounds.</p>
+<p>The mean-variance problem is</p>
+<p><span class="math display">\[
+\max_w w^{\top}\mu-\lambda w^{\top}\Sigma w
+\]</span></p>
+<p>where <span class="math inline">\(\mu\)</span> is the expected return vector. The problem is that <span class="math inline">\(\hat\mu\)</span> is noisy. A small change in expected returns can create a large change in weights. This is why the baseline uses shrinkage-style inputs such as Ledoit-Wolf covariance and Bayes-Stein means as we implemented and explained in notebook 2, here we don’t repeat the code and use the library’s grid function for producing models.</p>
+<div id="f7bd9b82" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:08.702376Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:08.702376Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:08.717258Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:08.717258Z&quot;}}">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>cost_bps <span class="op">=</span> <span class="fl">10.0</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>bl_mv_lambda <span class="op">=</span> <span class="fl">6.0</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>bl_mv_lambda <span class="op">=</span> <span class="fl">4.0</span></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> simple_nav(returns):</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    returns <span class="op">=</span> pd.Series(returns).dropna()</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (<span class="fl">1.0</span> <span class="op">+</span> returns).cumprod()</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> equal_weight_vector(index):</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> equal_weight(<span class="bu">list</span>(index), w_min<span class="op">=</span>w_min, w_max<span class="op">=</span>w_max, long_only<span class="op">=</span><span class="va">True</span>, as_series<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out.reindex(index).fillna(<span class="fl">0.0</span>).to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> simple_drawdown(nav):</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    nav <span class="op">=</span> pd.Series(nav).dropna()</span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> nav <span class="op">/</span> nav.cummax() <span class="op">-</span> <span class="fl">1.0</span></span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> equal_weight_vector(index):</span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> equal_weight(<span class="bu">list</span>(index), w_min<span class="op">=</span>w_min, w_max<span class="op">=</span>w_max, long_only<span class="op">=</span><span class="va">True</span>, as_series<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out.reindex(index).fillna(<span class="fl">0.0</span>).to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
-<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> clean_weight_array(weights, index, previous<span class="op">=</span><span class="va">None</span>):</span>
-<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> weights <span class="kw">is</span> <span class="va">None</span>:</span>
-<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>        weights <span class="op">=</span> previous <span class="cf">if</span> previous <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> equal_weight_vector(index)</span>
-<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> np.asarray(weights, dtype<span class="op">=</span><span class="bu">float</span>).reshape(<span class="op">-</span><span class="dv">1</span>)</span>
-<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(w) <span class="op">!=</span> <span class="bu">len</span>(index) <span class="kw">or</span> <span class="kw">not</span> np.<span class="bu">all</span>(np.isfinite(w)):</span>
-<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>        w <span class="op">=</span> equal_weight_vector(index) <span class="cf">if</span> previous <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> np.asarray(previous, dtype<span class="op">=</span><span class="bu">float</span>)</span>
-<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> np.maximum(w, w_min)</span>
-<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> np.minimum(w, w_max)</span>
-<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> w <span class="op">/</span> w.<span class="bu">sum</span>() <span class="cf">if</span> w.<span class="bu">sum</span>() <span class="op">&gt;</span> <span class="fl">1e-12</span> <span class="cf">else</span> equal_weight_vector(index)</span>
-<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>):</span>
-<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>        over <span class="op">=</span> w <span class="op">&gt;</span> w_max</span>
-<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> over.<span class="bu">any</span>():</span>
-<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
-<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>        extra <span class="op">=</span> (w[over] <span class="op">-</span> w_max).<span class="bu">sum</span>()</span>
-<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>        w[over] <span class="op">=</span> w_max</span>
-<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>        room <span class="op">=</span> np.maximum(w_max <span class="op">-</span> w[<span class="op">~</span>over], <span class="fl">0.0</span>)</span>
-<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> room.<span class="bu">sum</span>() <span class="op">&lt;=</span> <span class="fl">1e-12</span>:</span>
-<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
-<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>        w[<span class="op">~</span>over] <span class="op">+=</span> extra <span class="op">*</span> room <span class="op">/</span> room.<span class="bu">sum</span>()</span>
-<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> np.maximum(w, w_min)</span>
-<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> np.minimum(w, w_max)</span>
-<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> w <span class="op">/</span> w.<span class="bu">sum</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> clean_weight_array(weights, index, previous<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> weights <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>        weights <span class="op">=</span> previous <span class="cf">if</span> previous <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> equal_weight_vector(index)</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> np.asarray(weights, dtype<span class="op">=</span><span class="bu">float</span>).reshape(<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(w) <span class="op">!=</span> <span class="bu">len</span>(index) <span class="kw">or</span> <span class="kw">not</span> np.<span class="bu">all</span>(np.isfinite(w)):</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>        w <span class="op">=</span> equal_weight_vector(index) <span class="cf">if</span> previous <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> np.asarray(previous, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> np.maximum(w, w_min)</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> np.minimum(w, w_max)</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> w <span class="op">/</span> w.<span class="bu">sum</span>() <span class="cf">if</span> w.<span class="bu">sum</span>() <span class="op">&gt;</span> <span class="fl">1e-12</span> <span class="cf">else</span> equal_weight_vector(index)</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">10</span>):</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>        over <span class="op">=</span> w <span class="op">&gt;</span> w_max</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> over.<span class="bu">any</span>():</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>        extra <span class="op">=</span> (w[over] <span class="op">-</span> w_max).<span class="bu">sum</span>()</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>        w[over] <span class="op">=</span> w_max</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>        room <span class="op">=</span> np.maximum(w_max <span class="op">-</span> w[<span class="op">~</span>over], <span class="fl">0.0</span>)</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> room.<span class="bu">sum</span>() <span class="op">&lt;=</span> <span class="fl">1e-12</span>:</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>        w[<span class="op">~</span>over] <span class="op">+=</span> extra <span class="op">*</span> room <span class="op">/</span> room.<span class="bu">sum</span>()</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> np.maximum(w, w_min)</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> np.minimum(w, w_max)</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> w <span class="op">/</span> w.<span class="bu">sum</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div id="18daab17" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:08.719261Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:08.719261Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;}}" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> backtest_result_to_dict(name, result, fallback_flags<span class="op">=</span><span class="va">None</span>):</span>
@@ -1654,10 +1717,10 @@ w_{b,i}\geq 0
 selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)', 'MV (LedoitWolf, BayesStein)']</code></pre>
 </div>
 </div>
-<div id="e2b9dc5e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;}}" data-execution_count="14">
+<div id="e2b9dc5e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;}}">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> quick_metrics(ret, nav<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    ret <span class="op">=</span> pd.Series(ret).dropna()</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    nav <span class="op">=</span> simple_nav(ret) <span class="cf">if</span> nav <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> pd.Series(nav).dropna()</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    nav <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> ret).cumprod() <span class="cf">if</span> nav <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> pd.Series(nav).dropna()</span>
 <span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ret.empty <span class="kw">or</span> nav.empty:</span>
 <span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> {<span class="st">"cagr"</span>: np.nan, <span class="st">"ann_vol"</span>: np.nan, <span class="st">"sharpe"</span>: np.nan, <span class="st">"max_drawdown"</span>: np.nan}</span>
 <span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    years <span class="op">=</span> <span class="bu">max</span>(<span class="bu">len</span>(nav) <span class="op">/</span> annualization, <span class="fl">1e-9</span>)</span>
@@ -1682,8 +1745,7 @@ selected benchmark models: ['Strategic Benchmark', 'Equal Weight', 'MinVar (OAS)
 <span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>        <span class="st">"fallback_count"</span>: result[<span class="st">"fallback_count"</span>],</span>
 <span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>    })</span>
 <span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>baseline_candidate_summary <span class="op">=</span> pd.DataFrame(candidate_rows).sort_values(<span class="st">"sharpe"</span>, ascending<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>display(baseline_candidate_summary.<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"benchmarks use the full library walk-forward grid, then keep only best-Sharpe MV and best-Sharpe MinVar; MaxSharpe is not used as a benchmark"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>display(baseline_candidate_summary.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4211,7 +4273,7 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 <pre><code>omega uses confidence-based full view covariance; learned Q is applied when build_view_matrix is called with use_learned_q=True</code></pre>
 </div>
 </div>
-<div id="f895626b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:24.575627Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:24.575627Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;}}" data-execution_count="24">
+<div id="f895626b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:24.575627Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:24.575627Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;}}">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> black_litterman_posterior(prior_mu, cov_ann, view_p, view_q, omega, tau<span class="op">=</span>tau):</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    prior_mu <span class="op">=</span> pd.Series(prior_mu).astype(<span class="bu">float</span>)</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    cov_ann <span class="op">=</span> pd.DataFrame(cov_ann, index<span class="op">=</span>prior_mu.index, columns<span class="op">=</span>prior_mu.index).astype(<span class="bu">float</span>)</span>
@@ -4231,7 +4293,7 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 <span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>        post_mu_arr <span class="op">=</span> prior_mu.values <span class="op">+</span> tau_cov <span class="op">@</span> view_p.T <span class="op">@</span> solved_gap</span>
 <span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>        solved_cov <span class="op">=</span> np.linalg.solve(middle, view_p <span class="op">@</span> tau_cov)</span>
 <span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>        posterior_uncertainty <span class="op">=</span> tau_cov <span class="op">-</span> tau_cov <span class="op">@</span> view_p.T <span class="op">@</span> solved_cov</span>
-<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>        post_cov_arr <span class="op">=</span> local_make_psd(cov_arr <span class="op">+</span> posterior_uncertainty)</span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>        post_cov_arr <span class="op">=</span> make_psd(cov_arr <span class="op">+</span> posterior_uncertainty)</span>
 <span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a>        clipped <span class="op">=</span> np.<span class="bu">any</span>((post_mu_arr <span class="op">&lt;</span> <span class="op">-</span><span class="fl">0.30</span>) <span class="op">|</span> (post_mu_arr <span class="op">&gt;</span> <span class="fl">0.30</span>))</span>
 <span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>        post_mu_arr <span class="op">=</span> np.clip(post_mu_arr, <span class="op">-</span><span class="fl">0.30</span>, <span class="fl">0.30</span>)</span>
 <span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a>        post_mu <span class="op">=</span> pd.Series(post_mu_arr, index<span class="op">=</span>prior_mu.index)</span>
@@ -4469,7 +4531,7 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 <pre><code>{'n_views': 7, 'avg_confidence': nan, 'max_confidence': nan, 'min_confidence': nan, 'max_abs_q': 0.09793508915845954, 'max_abs_posterior_shift': 0.03802857952342588, 'condition_number': 193.0051070099999, 'no_views': False, 'failure': False, 'clipped': False}</code></pre>
 </div>
 </div>
-<div id="d93b4d8f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:24.620988Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:24.620988Z&quot;}}" data-execution_count="25">
+<div id="d93b4d8f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:24.604144Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:24.620988Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:24.620988Z&quot;}}">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>active_weight_limit <span class="op">=</span> <span class="fl">0.15</span></span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>active_weight_relaxed <span class="op">=</span> <span class="fl">0.22</span></span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>gamma_te <span class="op">=</span> <span class="fl">3.0</span></span>
@@ -4507,7 +4569,7 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 <span id="cb36-35"><a href="#cb36-35" aria-hidden="true" tabindex="-1"></a>    index <span class="op">=</span> <span class="bu">list</span>(mu.index)</span>
 <span id="cb36-36"><a href="#cb36-36" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(index)</span>
 <span id="cb36-37"><a href="#cb36-37" aria-hidden="true" tabindex="-1"></a>    w_var <span class="op">=</span> cp.Variable(n)</span>
-<span id="cb36-38"><a href="#cb36-38" aria-hidden="true" tabindex="-1"></a>    cov_arr <span class="op">=</span> local_make_psd(cov_ann.values <span class="op">+</span> np.eye(n) <span class="op">*</span> <span class="fl">1e-8</span>)</span>
+<span id="cb36-38"><a href="#cb36-38" aria-hidden="true" tabindex="-1"></a>    cov_arr <span class="op">=</span> make_psd(cov_ann.values <span class="op">+</span> np.eye(n) <span class="op">*</span> <span class="fl">1e-8</span>)</span>
 <span id="cb36-39"><a href="#cb36-39" aria-hidden="true" tabindex="-1"></a>    caps <span class="op">=</span> asset_caps.reindex(index).fillna(w_max).to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb36-40"><a href="#cb36-40" aria-hidden="true" tabindex="-1"></a>    bench <span class="op">=</span> benchmark_w.reindex(index).fillna(<span class="fl">0.0</span>).to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb36-41"><a href="#cb36-41" aria-hidden="true" tabindex="-1"></a>    prev <span class="op">=</span> np.asarray(w_prev <span class="cf">if</span> w_prev <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> bench, dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -4632,7 +4694,7 @@ confidence and learned Q use only payoff observations whose payoff_end_date is b
 candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior rows: 124</code></pre>
 </div>
 </div>
-<div id="afd4e630" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:47.737846Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:47.737846Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:47.783313Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:47.783313Z&quot;}}" data-execution_count="27">
+<div id="afd4e630" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:47.737846Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:47.737846Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:47.783313Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:47.783313Z&quot;}}">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>combined_results <span class="op">=</span> {}</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>combined_results.update(baseline_results)</span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>combined_results.update(bl_results)</span>
@@ -4712,7 +4774,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <span id="cb39-77"><a href="#cb39-77" aria-hidden="true" tabindex="-1"></a>    bench_ret <span class="op">=</span> pd.Series(combined_results[<span class="st">"Strategic Benchmark"</span>][<span class="st">"returns"</span>]).dropna()</span>
 <span id="cb39-78"><a href="#cb39-78" aria-hidden="true" tabindex="-1"></a>    ret <span class="op">=</span> pd.Series(combined_results[name][<span class="st">"returns"</span>]).reindex(bench_ret.index).fillna(<span class="fl">0.0</span>)</span>
 <span id="cb39-79"><a href="#cb39-79" aria-hidden="true" tabindex="-1"></a>    active <span class="op">=</span> ret <span class="op">-</span> bench_ret</span>
-<span id="cb39-80"><a href="#cb39-80" aria-hidden="true" tabindex="-1"></a>    active_nav <span class="op">=</span> simple_nav(active)</span>
+<span id="cb39-80"><a href="#cb39-80" aria-hidden="true" tabindex="-1"></a>    active_nav <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> active).cumprod()</span>
 <span id="cb39-81"><a href="#cb39-81" aria-hidden="true" tabindex="-1"></a>    tracking_error <span class="op">=</span> <span class="bu">float</span>(active.std(ddof<span class="op">=</span><span class="dv">1</span>) <span class="op">*</span> math.sqrt(annualization)) <span class="cf">if</span> active.std(ddof<span class="op">=</span><span class="dv">1</span>) <span class="op">&gt;</span> <span class="fl">1e-12</span> <span class="cf">else</span> np.nan</span>
 <span id="cb39-82"><a href="#cb39-82" aria-hidden="true" tabindex="-1"></a>    active_return <span class="op">=</span> <span class="bu">float</span>(active.mean() <span class="op">*</span> annualization)</span>
 <span id="cb39-83"><a href="#cb39-83" aria-hidden="true" tabindex="-1"></a>    info_ratio <span class="op">=</span> active_return <span class="op">/</span> tracking_error <span class="cf">if</span> np.isfinite(tracking_error) <span class="kw">and</span> tracking_error <span class="op">&gt;</span> <span class="fl">1e-12</span> <span class="cf">else</span> np.nan</span>
@@ -5014,45 +5076,46 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 </div>
 </div>
 </div>
-<div id="b4942974" class="cell" data-execution_count="29">
+<div id="b4942974" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>final_returns_df <span class="op">=</span> pd.DataFrame(returns_by_strategy)[final_strategy_names].dropna(how<span class="op">=</span><span class="st">"all"</span>).fillna(<span class="fl">0.0</span>)</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>drawdown_summary <span class="op">=</span> drawdown_summary_table(final_returns_df)</span>
 <span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> drawdown_summary.empty:</span>
 <span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
 <span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name <span class="kw">in</span> final_strategy_names:</span>
-<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>        nav <span class="op">=</span> simple_nav(final_returns_df[name])<span class="op">;</span> dd <span class="op">=</span> simple_drawdown(nav)</span>
-<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>        rows.append({<span class="st">"strategy"</span>: name, <span class="st">"max_drawdown"</span>: dd.<span class="bu">min</span>(), <span class="st">"date_of_max_drawdown"</span>: dd.idxmin(), <span class="st">"current_drawdown"</span>: dd.iloc[<span class="op">-</span><span class="dv">1</span>], <span class="st">"average_drawdown"</span>: dd.mean()})</span>
-<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>    drawdown_summary <span class="op">=</span> pd.DataFrame(rows).set_index(<span class="st">"strategy"</span>)</span>
-<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>display(drawdown_summary.<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>stress_windows <span class="op">=</span> {<span class="st">"2018_Q4_selloff"</span>: (<span class="st">"2018-10-01"</span>, <span class="st">"2018-12-31"</span>), <span class="st">"COVID_crash"</span>: (<span class="st">"2020-02-19"</span>, <span class="st">"2020-03-23"</span>), <span class="st">"2022_rates_inflation"</span>: (<span class="st">"2022-01-03"</span>, <span class="st">"2022-10-14"</span>), <span class="st">"2023_growth_rebound"</span>: (<span class="st">"2023-01-01"</span>, <span class="st">"2023-07-31"</span>)}</span>
-<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>stress_result <span class="op">=</span> stress_table(final_returns_df, windows<span class="op">=</span>stress_windows, worst_only<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="dv">6</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, window <span class="kw">in</span> <span class="bu">zip</span>(axes.ravel(), stress_windows.keys()):</span>
-<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a>    plot_stress_bar(ax, stress_result, window<span class="op">=</span>window, metric<span class="op">=</span><span class="st">"cum_return"</span>, ascending<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">"stress-window cumulative returns"</span>, y<span class="op">=</span><span class="fl">1.02</span>)</span>
-<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
-<span id="cb41-19"><a href="#cb41-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-20"><a href="#cb41-20" aria-hidden="true" tabindex="-1"></a>var_es <span class="op">=</span> var_es_table(final_returns_df, alpha<span class="op">=</span><span class="fl">0.05</span>, methods<span class="op">=</span>(<span class="st">"hist"</span>, <span class="st">"fhs"</span>))</span>
-<span id="cb41-21"><a href="#cb41-21" aria-hidden="true" tabindex="-1"></a>display(var_es.<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb41-22"><a href="#cb41-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-23"><a href="#cb41-23" aria-hidden="true" tabindex="-1"></a>best_var_method <span class="op">=</span> {name: <span class="st">"fhs"</span> <span class="cf">for</span> name <span class="kw">in</span> final_strategy_names}</span>
-<span id="cb41-24"><a href="#cb41-24" aria-hidden="true" tabindex="-1"></a>var_backtest_internal <span class="op">=</span> var_backtest_table(final_returns_df, alpha<span class="op">=</span><span class="fl">0.05</span>, methods<span class="op">=</span>(<span class="st">"hist"</span>, <span class="st">"cf"</span>, <span class="st">"fhs"</span>), lookback<span class="op">=</span><span class="dv">252</span>)</span>
-<span id="cb41-25"><a href="#cb41-25" aria-hidden="true" tabindex="-1"></a>picked <span class="op">=</span> best_var_methods(var_backtest_internal)</span>
-<span id="cb41-26"><a href="#cb41-26" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">isinstance</span>(picked, <span class="bu">dict</span>):</span>
-<span id="cb41-27"><a href="#cb41-27" aria-hidden="true" tabindex="-1"></a>    best_var_method.update({k: picked.get(k, <span class="st">"fhs"</span>) <span class="cf">for</span> k <span class="kw">in</span> final_strategy_names})</span>
-<span id="cb41-28"><a href="#cb41-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-29"><a href="#cb41-29" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">4</span>))</span>
-<span id="cb41-30"><a href="#cb41-30" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name <span class="kw">in</span> final_strategy_names:</span>
-<span id="cb41-31"><a href="#cb41-31" aria-hidden="true" tabindex="-1"></a>    method <span class="op">=</span> best_var_method.get(name, <span class="st">"fhs"</span>)</span>
-<span id="cb41-32"><a href="#cb41-32" aria-hidden="true" tabindex="-1"></a>    method <span class="op">=</span> method <span class="cf">if</span> method <span class="kw">in</span> [<span class="st">"hist"</span>, <span class="st">"cf"</span>, <span class="st">"fhs"</span>] <span class="cf">else</span> <span class="st">"fhs"</span></span>
-<span id="cb41-33"><a href="#cb41-33" aria-hidden="true" tabindex="-1"></a>    rv <span class="op">=</span> rolling_var(final_returns_df[name], alpha<span class="op">=</span><span class="fl">0.05</span>, lookback<span class="op">=</span><span class="dv">252</span>, method<span class="op">=</span>method)</span>
-<span id="cb41-34"><a href="#cb41-34" aria-hidden="true" tabindex="-1"></a>    rv.plot(ax<span class="op">=</span>ax, lw<span class="op">=</span><span class="fl">1.0</span>, label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss"> (</span><span class="sc">{</span>method<span class="sc">}</span><span class="ss">)"</span>)</span>
-<span id="cb41-35"><a href="#cb41-35" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb41-36"><a href="#cb41-36" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"rolling 5 percent var"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"daily return threshold"</span>)<span class="op">;</span> ax.set_xlabel(<span class="st">"date"</span>)<span class="op">;</span> ax.legend(ncol<span class="op">=</span><span class="dv">2</span>, fontsize<span class="op">=</span><span class="dv">7</span>)</span>
-<span id="cb41-37"><a href="#cb41-37" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb41-38"><a href="#cb41-38" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>        nav <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> final_returns_df[name]).cumprod() </span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>        dd <span class="op">=</span> nav <span class="op">/</span> nav.cummax() <span class="op">-</span> <span class="fl">1.0</span></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>        rows.append({<span class="st">"strategy"</span>: name, <span class="st">"max_drawdown"</span>: dd.<span class="bu">min</span>(), <span class="st">"date_of_max_drawdown"</span>: dd.idxmin(), <span class="st">"current_drawdown"</span>: dd.iloc[<span class="op">-</span><span class="dv">1</span>], <span class="st">"average_drawdown"</span>: dd.mean()})</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>    drawdown_summary <span class="op">=</span> pd.DataFrame(rows).set_index(<span class="st">"strategy"</span>)</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>display(drawdown_summary.<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>stress_windows <span class="op">=</span> {<span class="st">"2018_Q4_selloff"</span>: (<span class="st">"2018-10-01"</span>, <span class="st">"2018-12-31"</span>), <span class="st">"COVID_crash"</span>: (<span class="st">"2020-02-19"</span>, <span class="st">"2020-03-23"</span>), <span class="st">"2022_rates_inflation"</span>: (<span class="st">"2022-01-03"</span>, <span class="st">"2022-10-14"</span>), <span class="st">"2023_growth_rebound"</span>: (<span class="st">"2023-01-01"</span>, <span class="st">"2023-07-31"</span>)}</span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>stress_result <span class="op">=</span> stress_table(final_returns_df, windows<span class="op">=</span>stress_windows, worst_only<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="dv">6</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, window <span class="kw">in</span> <span class="bu">zip</span>(axes.ravel(), stress_windows.keys()):</span>
+<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a>    plot_stress_bar(ax, stress_result, window<span class="op">=</span>window, metric<span class="op">=</span><span class="st">"cum_return"</span>, ascending<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">"stress-window cumulative returns"</span>, y<span class="op">=</span><span class="fl">1.02</span>)</span>
+<span id="cb41-19"><a href="#cb41-19" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb41-20"><a href="#cb41-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-21"><a href="#cb41-21" aria-hidden="true" tabindex="-1"></a>var_es <span class="op">=</span> var_es_table(final_returns_df, alpha<span class="op">=</span><span class="fl">0.05</span>, methods<span class="op">=</span>(<span class="st">"hist"</span>, <span class="st">"fhs"</span>))</span>
+<span id="cb41-22"><a href="#cb41-22" aria-hidden="true" tabindex="-1"></a>display(var_es.<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb41-23"><a href="#cb41-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-24"><a href="#cb41-24" aria-hidden="true" tabindex="-1"></a>best_var_method <span class="op">=</span> {name: <span class="st">"fhs"</span> <span class="cf">for</span> name <span class="kw">in</span> final_strategy_names}</span>
+<span id="cb41-25"><a href="#cb41-25" aria-hidden="true" tabindex="-1"></a>var_backtest_internal <span class="op">=</span> var_backtest_table(final_returns_df, alpha<span class="op">=</span><span class="fl">0.05</span>, methods<span class="op">=</span>(<span class="st">"hist"</span>, <span class="st">"cf"</span>, <span class="st">"fhs"</span>), lookback<span class="op">=</span><span class="dv">252</span>)</span>
+<span id="cb41-26"><a href="#cb41-26" aria-hidden="true" tabindex="-1"></a>picked <span class="op">=</span> best_var_methods(var_backtest_internal)</span>
+<span id="cb41-27"><a href="#cb41-27" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">isinstance</span>(picked, <span class="bu">dict</span>):</span>
+<span id="cb41-28"><a href="#cb41-28" aria-hidden="true" tabindex="-1"></a>    best_var_method.update({k: picked.get(k, <span class="st">"fhs"</span>) <span class="cf">for</span> k <span class="kw">in</span> final_strategy_names})</span>
+<span id="cb41-29"><a href="#cb41-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-30"><a href="#cb41-30" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">4</span>))</span>
+<span id="cb41-31"><a href="#cb41-31" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name <span class="kw">in</span> final_strategy_names:</span>
+<span id="cb41-32"><a href="#cb41-32" aria-hidden="true" tabindex="-1"></a>    method <span class="op">=</span> best_var_method.get(name, <span class="st">"fhs"</span>)</span>
+<span id="cb41-33"><a href="#cb41-33" aria-hidden="true" tabindex="-1"></a>    method <span class="op">=</span> method <span class="cf">if</span> method <span class="kw">in</span> [<span class="st">"hist"</span>, <span class="st">"cf"</span>, <span class="st">"fhs"</span>] <span class="cf">else</span> <span class="st">"fhs"</span></span>
+<span id="cb41-34"><a href="#cb41-34" aria-hidden="true" tabindex="-1"></a>    rv <span class="op">=</span> rolling_var(final_returns_df[name], alpha<span class="op">=</span><span class="fl">0.05</span>, lookback<span class="op">=</span><span class="dv">252</span>, method<span class="op">=</span>method)</span>
+<span id="cb41-35"><a href="#cb41-35" aria-hidden="true" tabindex="-1"></a>    rv.plot(ax<span class="op">=</span>ax, lw<span class="op">=</span><span class="fl">1.0</span>, label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss"> (</span><span class="sc">{</span>method<span class="sc">}</span><span class="ss">)"</span>)</span>
+<span id="cb41-36"><a href="#cb41-36" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb41-37"><a href="#cb41-37" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"rolling 5 percent var"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"daily return threshold"</span>)<span class="op">;</span> ax.set_xlabel(<span class="st">"date"</span>)<span class="op">;</span> ax.legend(ncol<span class="op">=</span><span class="dv">2</span>, fontsize<span class="op">=</span><span class="dv">7</span>)</span>
+<span id="cb41-38"><a href="#cb41-38" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb41-39"><a href="#cb41-39" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6865,7 +6928,6 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 </div>
 </div>
 </div>
-</section>
 </section>
 <section id="sector-etf-transfer-with-quantfinlab" class="level2">
 <h2 class="anchored" data-anchor-id="sector-etf-transfer-with-quantfinlab">Sector ETF transfer with QuantFinLab</h2>

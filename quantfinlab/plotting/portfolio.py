@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from matplotlib.dates import DateFormatter
 
-from quantfinlab.plotting.curves import choose_heatmap_cmap, set_plot_style
+from quantfinlab.plotting.curves import LAB_COLORS, choose_heatmap_cmap, set_plot_style
 from quantfinlab.portfolio import selection
 
 
@@ -1078,10 +1078,512 @@ def network_comparison_grid(ax, comparison: pd.DataFrame, *, value: str, title: 
     return performance_heatmap(ax, comparison, value=value, title=title)
 
 
+def target_distribution(ax, data: pd.DataFrame, *, raw_col: str, scaled_col: str, title: str | None = None):
+    set_plot_style()
+    df = data[[raw_col, scaled_col]].apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).dropna()
+    if df.empty:
+        ax.text(0.5, 0.5, "No target data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    ax.hist(df[raw_col], bins=60, alpha=0.45, density=True, color=LAB_COLORS[0], label=raw_col)
+    ax.hist(df[scaled_col], bins=60, alpha=0.45, density=True, color=LAB_COLORS[1], label=scaled_col)
+    ax.axvline(0.0, color=LAB_COLORS[2], lw=1.0)
+    ax.set_title(title or "Target distributions")
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.25)
+    return ax
+
+
+def target_by_asset(ax, data: pd.DataFrame, *, target_col: str, asset_col: str = "asset", title: str | None = None):
+    set_plot_style()
+    df = data[[asset_col, target_col]].dropna()
+    if df.empty:
+        ax.text(0.5, 0.5, "No target data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    order = df.groupby(asset_col)[target_col].median().sort_values().index
+    vals = [df.loc[df[asset_col].eq(asset), target_col].to_numpy(dtype=float) for asset in order]
+    ax.boxplot(vals, labels=order, vert=False, showfliers=False, patch_artist=True)
+    for patch in ax.artists:
+        patch.set_facecolor(LAB_COLORS[0])
+        patch.set_alpha(0.35)
+    ax.axvline(0.0, color=LAB_COLORS[2], lw=1.0)
+    ax.set_title(title or f"{target_col} by asset")
+    ax.grid(True, axis="x", alpha=0.25)
+    return ax
+
+
+def target_stability(ax, stats: pd.DataFrame, *, title: str | None = None):
+    set_plot_style()
+    if stats is None or stats.empty:
+        ax.text(0.5, 0.5, "No stability data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    if "mean" in stats.columns:
+        ax.plot(stats.index, stats["mean"], color=LAB_COLORS[0], label="rolling mean")
+    if "vol" in stats.columns:
+        ax.plot(stats.index, stats["vol"], color=LAB_COLORS[1], label="rolling volatility")
+    ax.axhline(0.0, color=LAB_COLORS[2], lw=0.8, alpha=0.5)
+    ax.set_title(title or "Target stability")
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.25)
+    return _format_date_axis(ax)
+
+
+def feature_importance_bars(ax, importance: pd.Series | pd.DataFrame, *, top_n: int = 20, title: str | None = None):
+    set_plot_style()
+    if isinstance(importance, pd.DataFrame):
+        vals = importance.iloc[:, 0]
+    else:
+        vals = pd.Series(importance, dtype=float)
+    vals = vals.dropna().sort_values().tail(int(top_n))
+    if vals.empty:
+        ax.text(0.5, 0.5, "No importance", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    ax.barh(vals.index, vals.values, color=LAB_COLORS[0], alpha=0.82)
+    ax.set_title(title or "Feature importance")
+    ax.grid(True, axis="x", alpha=0.25)
+    return ax
+
+
+def feature_correlation_map(ax, corr: pd.DataFrame, *, title: str | None = None, annotate: bool = False):
+    set_plot_style()
+    c = pd.DataFrame(corr).astype(float)
+    if c.empty:
+        ax.text(0.5, 0.5, "No correlation", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    vals = c.to_numpy(dtype=float)
+    im = ax.imshow(vals, cmap="coolwarm", vmin=-1.0, vmax=1.0, aspect="auto")
+    ax.set_xticks(range(len(c.columns)))
+    ax.set_xticklabels(c.columns, rotation=90, fontsize=6)
+    ax.set_yticks(range(len(c.index)))
+    ax.set_yticklabels(c.index, fontsize=6)
+    if annotate and len(c) <= 12:
+        _annotate_heatmap(ax, vals, ".1f")
+    ax.set_title(title or "Feature correlation")
+    ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    return ax
+
+
+def pca_explained_variance(ax, explained: pd.DataFrame, *, title: str | None = None):
+    set_plot_style()
+    if explained is None or explained.empty:
+        ax.text(0.5, 0.5, "No PCA data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    x = np.arange(1, len(explained) + 1)
+    ratio = explained["explained_variance_ratio"].to_numpy(dtype=float)
+    cumulative = explained["cumulative"].to_numpy(dtype=float)
+    ax.bar(x, ratio, color=LAB_COLORS[0], alpha=0.65, label="component")
+    ax.plot(x, cumulative, color=LAB_COLORS[1], marker="o", lw=1.8, label="cumulative")
+    ax.set_ylim(0.0, 1.05)
+    ax.set_xlabel("Component")
+    ax.set_title(title or "PCA explained variance")
+    ax.legend(fontsize=8)
+    ax.grid(True, axis="y", alpha=0.25)
+    return ax
+
+
+def forecast_scatter(ax, data: pd.DataFrame, *, y_col: str, pred_col: str, title: str | None = None):
+    set_plot_style()
+    d = data[[y_col, pred_col]].apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan).dropna()
+    if d.empty:
+        ax.text(0.5, 0.5, "No forecast data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    ax.scatter(d[pred_col], d[y_col], s=14, alpha=0.35, color=LAB_COLORS[0], edgecolor="none")
+    lo = float(np.nanmin([d[pred_col].min(), d[y_col].min()]))
+    hi = float(np.nanmax([d[pred_col].max(), d[y_col].max()]))
+    ax.plot([lo, hi], [lo, hi], color=LAB_COLORS[1], lw=1.0)
+    ax.set_xlabel("Prediction")
+    ax.set_ylabel("Realized")
+    ax.set_title(title or "Prediction vs realized")
+    ax.grid(True, alpha=0.25)
+    return ax
+
+
+def forecast_buckets_chart(ax, bucket_table: pd.DataFrame, *, title: str | None = None):
+    set_plot_style()
+    if bucket_table is None or bucket_table.empty:
+        ax.text(0.5, 0.5, "No buckets", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    vals = bucket_table["mean"] if "mean" in bucket_table.columns else bucket_table.iloc[:, 0]
+    ax.bar(vals.index.astype(str), vals.values, color=LAB_COLORS[0], alpha=0.82)
+    ax.axhline(0.0, color=LAB_COLORS[2], lw=0.8)
+    ax.set_title(title or "Realized outcome by forecast bucket")
+    ax.set_xlabel("Forecast bucket")
+    ax.grid(True, axis="y", alpha=0.25)
+    return ax
+
+
+def rolling_ic_chart(ax, data: pd.DataFrame, *, date_col: str, asset_col: str, y_col: str, pred_col: str, title: str | None = None):
+    set_plot_style()
+    from quantfinlab.ml.evaluation import rolling_rank_ic
+
+    s = rolling_rank_ic(data, date_col=date_col, asset_col=asset_col, y_col=y_col, pred_col=pred_col)
+    if s.empty:
+        ax.text(0.5, 0.5, "No IC data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    ax.plot(s.index, s.values, color=LAB_COLORS[0], lw=1.5)
+    ax.axhline(0.0, color=LAB_COLORS[2], lw=0.8)
+    ax.set_title(title or "Rolling rank IC")
+    ax.grid(True, alpha=0.25)
+    return _format_date_axis(ax)
+
+
+def coverage_reliability(ax, data: pd.DataFrame, *, y_col: str, low_col: str, high_col: str, title: str | None = None):
+    set_plot_style()
+    d = data[[y_col, low_col, high_col]].apply(pd.to_numeric, errors="coerce").dropna()
+    if d.empty:
+        ax.text(0.5, 0.5, "No interval data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    d = d.assign(width=d[high_col] - d[low_col], hit=d[y_col].between(d[low_col], d[high_col]))
+    ranks = d["width"].rank(method="first")
+    d["bin"] = pd.qcut(ranks, 5, labels=False) + 1
+    rel = d.groupby("bin").agg(coverage=("hit", "mean"), width=("width", "mean"))
+    ax.bar(rel.index.astype(str), rel["coverage"], color=LAB_COLORS[0], alpha=0.78)
+    ax.axhline(0.80, color=LAB_COLORS[1], ls="--", lw=1.2, label="target 80%")
+    ax.set_ylim(0.0, 1.05)
+    ax.set_title(title or "Interval coverage reliability")
+    ax.legend(fontsize=8)
+    ax.grid(True, axis="y", alpha=0.25)
+    return ax
+
+
+def uncertainty_error_map(ax, data: pd.DataFrame, *, width_col: str, y_col: str, pred_col: str, title: str | None = None):
+    set_plot_style()
+    d = data[[width_col, y_col, pred_col]].apply(pd.to_numeric, errors="coerce").dropna()
+    if d.empty:
+        ax.text(0.5, 0.5, "No uncertainty data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    err = (d[y_col] - d[pred_col]).abs()
+    ax.scatter(d[width_col], err, s=14, alpha=0.35, color=LAB_COLORS[0], edgecolor="none")
+    ax.set_xlabel("Forecast interval width")
+    ax.set_ylabel("Absolute error")
+    ax.set_title(title or "Uncertainty vs error")
+    ax.grid(True, alpha=0.25)
+    return ax
+
+
+def disagreement_error_map(ax, data: pd.DataFrame, *, disagreement_col: str, y_col: str, pred_col: str, title: str | None = None):
+    set_plot_style()
+    d = data[[disagreement_col, y_col, pred_col]].apply(pd.to_numeric, errors="coerce").dropna()
+    if d.empty:
+        ax.text(0.5, 0.5, "No disagreement data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    err = (d[y_col] - d[pred_col]).abs()
+    ax.scatter(d[disagreement_col], err, s=14, alpha=0.35, color=LAB_COLORS[1], edgecolor="none")
+    ax.set_xlabel("Model disagreement")
+    ax.set_ylabel("Absolute error")
+    ax.set_title(title or "Disagreement vs error")
+    ax.grid(True, alpha=0.25)
+    return ax
+
+
+def conformal_shift_chart(ax, data: pd.DataFrame, *, raw_low: str, raw_high: str, conf_low: str, conf_high: str, title: str | None = None):
+    set_plot_style()
+    cols = [raw_low, raw_high, conf_low, conf_high]
+    d = data[cols].apply(pd.to_numeric, errors="coerce").dropna()
+    if d.empty:
+        ax.text(0.5, 0.5, "No conformal data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    raw_width = d[raw_high] - d[raw_low]
+    conf_width = d[conf_high] - d[conf_low]
+    ax.hist(raw_width, bins=40, alpha=0.50, color=LAB_COLORS[0], label="raw")
+    ax.hist(conf_width, bins=40, alpha=0.45, color=LAB_COLORS[1], label="conformal")
+    ax.set_title(title or "Raw vs conformal interval width")
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.25)
+    return ax
+
+
+def kelly_weight_path(ax, weights: pd.DataFrame, *, title: str | None = None):
+    set_plot_style()
+    W = pd.DataFrame(weights).astype(float)
+    if W.empty:
+        ax.text(0.5, 0.5, "No weights", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    top = W.mean().sort_values(ascending=False).head(8).index
+    W[top].plot.area(ax=ax, alpha=0.75, linewidth=0)
+    ax.set_title(title or "Kelly weight path")
+    ax.set_ylabel("Weight")
+    ax.legend(fontsize=7, ncol=2)
+    ax.grid(True, alpha=0.20)
+    return _format_date_axis(ax)
+
+
+def confidence_exposure_map(ax, data: pd.DataFrame, *, weight_frame: pd.DataFrame, title: str | None = None):
+    set_plot_style()
+    if data.empty or weight_frame.empty or "c_width" not in data.columns:
+        ax.text(0.5, 0.5, "No confidence data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    expo = weight_frame.sum(axis=1).rename("exposure")
+    conf = data.groupby("date")["c_width"].mean()
+    d = pd.concat([conf, expo], axis=1).dropna()
+    ax.scatter(d["c_width"], d["exposure"], s=28, color=LAB_COLORS[0], alpha=0.60)
+    ax.set_xlabel("Mean confidence")
+    ax.set_ylabel("Gross exposure")
+    ax.set_title(title or "Confidence vs exposure")
+    ax.grid(True, alpha=0.25)
+    return ax
+
+
+def kelly_shrinkage_curve(ax, data: pd.DataFrame, *, mu_col: str, mu_adj_col: str, title: str | None = None):
+    set_plot_style()
+    d = data[[mu_col, mu_adj_col]].apply(pd.to_numeric, errors="coerce").dropna()
+    if d.empty:
+        ax.text(0.5, 0.5, "No shrinkage data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    ax.scatter(d[mu_col], d[mu_adj_col], s=12, color=LAB_COLORS[0], alpha=0.35)
+    lo = float(np.nanmin([d[mu_col].min(), d[mu_adj_col].min()]))
+    hi = float(np.nanmax([d[mu_col].max(), d[mu_adj_col].max()]))
+    ax.plot([lo, hi], [lo, hi], color=LAB_COLORS[1], lw=1.0)
+    ax.axhline(0.0, color=LAB_COLORS[2], lw=0.7)
+    ax.axvline(0.0, color=LAB_COLORS[2], lw=0.7)
+    ax.set_xlabel("Raw mu")
+    ax.set_ylabel("Adjusted mu")
+    ax.set_title(title or "Kelly forecast shrinkage")
+    ax.grid(True, alpha=0.25)
+    return ax
+
+
+def forecast_to_weight_map(ax, data: pd.DataFrame, *, weight_frame: pd.DataFrame, title: str | None = None):
+    set_plot_style()
+    if data.empty or weight_frame.empty or not {"date", "asset", "mu_adj"}.issubset(data.columns):
+        ax.text(0.5, 0.5, "No forecast/weight data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    w_long = weight_frame.stack().rename("weight").reset_index()
+    w_long.columns = ["date", "asset", "weight"]
+    d = data[["date", "asset", "mu_adj"]].merge(w_long, on=["date", "asset"], how="inner").dropna()
+    ax.scatter(d["mu_adj"], d["weight"], s=16, alpha=0.45, color=LAB_COLORS[0], edgecolor="none")
+    ax.axvline(0.0, color=LAB_COLORS[2], lw=0.8)
+    ax.set_xlabel("Adjusted forecast")
+    ax.set_ylabel("Weight")
+    ax.set_title(title or "Forecast to weight")
+    ax.grid(True, alpha=0.25)
+    return ax
+
+
+def plot_rolling_sharpe(ax, returns: pd.DataFrame, *, window: int = 252, rf_daily: float = 0.0, title: str | None = None):
+    set_plot_style()
+    R = pd.DataFrame(returns).astype(float)
+    if R.empty:
+        ax.text(0.5, 0.5, "No returns", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    roll = (R - float(rf_daily)).rolling(int(window)).mean() / R.rolling(int(window)).std(ddof=1)
+    roll = roll * np.sqrt(252.0)
+    roll.plot(ax=ax, lw=1.1)
+    ax.axhline(0.0, color=LAB_COLORS[2], lw=0.8)
+    ax.set_title(title or "Rolling Sharpe")
+    ax.grid(True, alpha=0.25)
+    return _format_date_axis(ax)
+
+
+def policy_exposure_path(ax, weights: pd.DataFrame, *, cash_ticker: str = "SHY", title: str | None = None):
+    set_plot_style()
+    W = pd.DataFrame(weights).copy()
+    if W.empty:
+        ax.text(0.5, 0.5, "No weights", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    W.index = pd.to_datetime(W.index)
+    risky = W.drop(columns=[cash_ticker], errors="ignore").sum(axis=1)
+    cash = W[cash_ticker] if cash_ticker in W.columns else 1.0 - risky
+    ax.plot(risky.index, risky, label="risky exposure", color=LAB_COLORS[0], lw=1.8)
+    ax.plot(cash.index, cash, label="cash", color=LAB_COLORS[1], lw=1.2, ls="--")
+    ax.set_ylim(-0.02, 1.05)
+    ax.set_title(title or "Policy exposure")
+    ax.legend(loc="best", fontsize=8)
+    ax.grid(True, alpha=0.25)
+    return _format_date_axis(ax)
+
+
+def active_return_curve(
+    ax,
+    strategy_returns: pd.DataFrame,
+    *,
+    strategy: str,
+    benchmark: str,
+    title: str | None = None,
+):
+    set_plot_style()
+    R = pd.DataFrame(strategy_returns).copy()
+    if R.empty or strategy not in R.columns or benchmark not in R.columns:
+        ax.text(0.5, 0.5, "No active return data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    active = (R[strategy] - R[benchmark]).dropna()
+    nav = (1.0 + active).cumprod() - 1.0
+    ax.plot(nav.index, nav, color=LAB_COLORS[0], lw=1.8)
+    ax.axhline(0.0, color=LAB_COLORS[2], lw=0.8)
+    ax.set_title(title or f"{strategy} active return")
+    ax.grid(True, alpha=0.25)
+    return _format_date_axis(ax)
+
+
+def policy_weight_area(ax, weights: pd.DataFrame, *, title: str | None = None, top_n: int = 8):
+    set_plot_style()
+    W = pd.DataFrame(weights).copy()
+    if W.empty:
+        ax.text(0.5, 0.5, "No weights", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    W.index = pd.to_datetime(W.index)
+    cols = W.abs().mean().sort_values(ascending=False).head(int(top_n)).index.tolist()
+    other = W.drop(columns=cols, errors="ignore").sum(axis=1)
+    plot_data = W[cols].copy()
+    if W.shape[1] > len(cols):
+        plot_data["Other"] = other
+    plot_data.plot.area(ax=ax, linewidth=0.0, alpha=0.86)
+    ax.set_ylim(0.0, max(1.0, float(plot_data.sum(axis=1).max())))
+    ax.set_title(title or "Policy weights")
+    ax.legend(loc="center left", bbox_to_anchor=(1.01, 0.5), fontsize=7)
+    ax.grid(True, alpha=0.20)
+    return _format_date_axis(ax)
+
+
+def regime_exposure_boxplot(
+    ax,
+    weights: pd.DataFrame,
+    regime_features: pd.DataFrame,
+    *,
+    title: str | None = None,
+):
+    set_plot_style()
+    W = pd.DataFrame(weights).copy()
+    R = pd.DataFrame(regime_features).copy()
+    if W.empty or R.empty:
+        ax.text(0.5, 0.5, "No regime exposure data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    W.index = pd.to_datetime(W.index)
+    R.index = pd.to_datetime(R.index)
+    risky = W.drop(columns=[c for c in W.columns if str(c).upper() in {"SHY", "CASH"}], errors="ignore").sum(axis=1)
+    probs = R.reindex(R.index.union(W.index)).sort_index().ffill().reindex(W.index)
+    prob_cols = [c for c in probs.columns if str(c).startswith("p_")]
+    if prob_cols:
+        labels = probs[prob_cols].idxmax(axis=1).str.replace("p_", "", regex=False)
+    else:
+        labels = pd.Series("all", index=W.index)
+    data = [risky.loc[labels.eq(label)].dropna().to_numpy() for label in sorted(labels.dropna().unique())]
+    names = sorted(labels.dropna().unique())
+    if not data:
+        ax.text(0.5, 0.5, "No labeled regimes", ha="center", va="center", transform=ax.transAxes)
+        return ax
+    ax.boxplot(data, labels=names, patch_artist=True, boxprops={"facecolor": LAB_COLORS[8], "alpha": 0.55})
+    ax.set_ylabel("Risky exposure")
+    ax.set_title(title or "Exposure by regime")
+    ax.grid(True, axis="y", alpha=0.25)
+    return ax
+
+
+def forecast_policy_sensitivity(
+    ax,
+    weights: pd.DataFrame,
+    forecast_features: pd.DataFrame,
+    *,
+    title: str | None = None,
+):
+    set_plot_style()
+    W = pd.DataFrame(weights).copy()
+    F = pd.DataFrame(forecast_features).copy()
+    if W.empty or F.empty or not {"date", "asset"}.issubset(F.columns):
+        ax.text(0.5, 0.5, "No forecast sensitivity data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    W.index = pd.to_datetime(W.index)
+    F["date"] = pd.to_datetime(F["date"])
+    score_col = "tcn_alpha" if "tcn_alpha" in F.columns else ("tcn_rank" if "tcn_rank" in F.columns else None)
+    if score_col is None:
+        ax.text(0.5, 0.5, "No TCN score column", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    w_long = W.stack().rename("weight").reset_index()
+    w_long.columns = ["date", "asset", "weight"]
+    d = F[["date", "asset", score_col]].merge(w_long, on=["date", "asset"], how="inner").dropna()
+    ax.scatter(d[score_col], d["weight"], s=14, alpha=0.35, color=LAB_COLORS[0], edgecolor="none")
+    if len(d) > 5 and d[score_col].std(ddof=0) > 0:
+        coef = np.polyfit(d[score_col], d["weight"], deg=1)
+        x = np.linspace(float(d[score_col].min()), float(d[score_col].max()), 100)
+        ax.plot(x, coef[0] * x + coef[1], color=LAB_COLORS[1], lw=1.5)
+    ax.set_xlabel(score_col)
+    ax.set_ylabel("Policy weight")
+    ax.set_title(title or "Forecast sensitivity")
+    ax.grid(True, alpha=0.25)
+    return ax
+
+
+def turnover_cost_curve(
+    ax,
+    weights_by_strategy: Mapping[str, pd.DataFrame],
+    *,
+    cost_bps: float = 10.0,
+    title: str | None = None,
+):
+    set_plot_style()
+    rows = []
+    for name, weights in weights_by_strategy.items():
+        W = pd.DataFrame(weights).copy().sort_index()
+        if W.empty:
+            continue
+        turnover = 0.5 * W.diff().abs().sum(axis=1).fillna(0.0)
+        rows.append(
+            {
+                "Strategy": str(name),
+                "Annual Turnover": float(turnover.mean() * 52.0),
+                "Cost Drag": float(turnover.mean() * 52.0 * float(cost_bps) / 10000.0),
+            }
+        )
+    tbl = pd.DataFrame(rows).set_index("Strategy") if rows else pd.DataFrame()
+    if tbl.empty:
+        ax.text(0.5, 0.5, "No turnover data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    tbl["Annual Turnover"].plot(kind="bar", ax=ax, color=LAB_COLORS[0])
+    ax.set_title(title or "Turnover and cost")
+    ax.tick_params(axis="x", labelrotation=25)
+    ax.grid(True, axis="y", alpha=0.25)
+    return ax
+
+
+def concentration_path(ax, weights: pd.DataFrame, *, title: str | None = None):
+    set_plot_style()
+    W = pd.DataFrame(weights).copy()
+    if W.empty:
+        ax.text(0.5, 0.5, "No weights", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    W.index = pd.to_datetime(W.index)
+    risky = W.drop(columns=[c for c in W.columns if str(c).upper() in {"SHY", "CASH"}], errors="ignore")
+    hhi = (risky.clip(lower=0.0) ** 2).sum(axis=1)
+    max_w = risky.max(axis=1)
+    ax.plot(hhi.index, hhi, label="HHI", color=LAB_COLORS[0], lw=1.6)
+    ax.plot(max_w.index, max_w, label="max weight", color=LAB_COLORS[1], lw=1.3, ls="--")
+    ax.set_title(title or "Concentration")
+    ax.legend(loc="best", fontsize=8)
+    ax.grid(True, alpha=0.25)
+    return _format_date_axis(ax)
+
+
 __all__ = [
+    "active_return_curve",
     "apply_portfolio_subplot_layout",
     "centrality_heatmap",
     "centrality_score_bars",
+    "concentration_path",
     "corr_heatmap",
     "distance_heatmap",
     "format_portfolio_time_axis",
@@ -1092,9 +1594,21 @@ __all__ = [
     "plot_active_nav",
     "plot_active_weights_heatmap",
     "plot_average_weight_heatmap",
+    "confidence_exposure_map",
+    "conformal_shift_chart",
     "plot_cvar_budget_path",
     "plot_drawdowns",
     "plot_effective_n_bar",
+    "disagreement_error_map",
+    "feature_correlation_map",
+    "feature_importance_bars",
+    "forecast_buckets_chart",
+    "forecast_scatter",
+    "forecast_to_weight_map",
+    "forecast_policy_sensitivity",
+    "kelly_shrinkage_curve",
+    "kelly_weight_path",
+    "pca_explained_variance",
     "plot_finalist_drawdowns",
     "plot_finalist_metric_bar",
     "plot_finalist_nav",
@@ -1109,8 +1623,11 @@ __all__ = [
     "plot_posterior_shift_heatmap",
     "plot_risk_contribution_bar",
     "plot_risk_return_scatter",
+    "plot_rolling_sharpe",
     "plot_rolling_active_metrics",
     "plot_sleeve_exposure_bar",
+    "policy_exposure_path",
+    "policy_weight_area",
     "plot_strategy_drawdowns",
     "plot_strategy_nav",
     "plot_stress_summary",
@@ -1120,8 +1637,16 @@ __all__ = [
     "plot_view_selection_counts",
     "plot_wasserstein_radius_path",
     "plot_weights",
+    "regime_exposure_boxplot",
+    "rolling_ic_chart",
     "score_heatmap",
     "show_portfolio_xaxis_like_risk_module",
     "tail_heatmap",
+    "target_by_asset",
+    "target_distribution",
+    "target_stability",
+    "turnover_cost_curve",
+    "uncertainty_error_map",
+    "coverage_reliability",
     "weight_heatmap",
 ]

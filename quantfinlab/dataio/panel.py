@@ -268,8 +268,58 @@ def prices_to_returns_panel(
     return rets
 
 
+def load_vix(
+    path: str | Path,
+    *,
+    index: pd.Index | None = None,
+    ffill_limit: int | None = None,
+) -> pd.Series:
+    """Load a saved CBOE VIX close series and optionally align it to a target index.
+
+    The CSV is expected to have a date column and a single ``VIX`` close column
+    (as written by ``yfinance``). When ``index`` is supplied the series is
+    forward-filled onto that index so it can be merged with a daily return panel.
+    """
+    frame = pd.read_csv(Path(path))
+    date_col = _resolve_date_column(frame.columns, "Date") or frame.columns[0]
+    frame[date_col] = pd.to_datetime(frame[date_col], errors="coerce")
+    frame = frame.dropna(subset=[date_col]).set_index(date_col).sort_index()
+    value_col = "VIX" if "VIX" in frame.columns else frame.select_dtypes("number").columns[0]
+    vix = pd.to_numeric(frame[value_col], errors="coerce").rename("VIX")
+    vix = vix[~vix.index.duplicated(keep="last")]
+    if index is not None:
+        target = pd.DatetimeIndex(pd.to_datetime(index)).sort_values()
+        vix = vix.reindex(vix.index.union(target)).ffill(limit=ffill_limit).reindex(target)
+    return vix
+
+
+def vix_feature_frame(vix: pd.Series, *, index: pd.Index | None = None) -> pd.DataFrame:
+    """Distil a raw VIX series into stationary RL-observation features.
+
+    Returns three columns: a 20-day rolling z-score of the level, the ratio of
+    VIX to its 63-day moving average (term-structure proxy), and the 252-day
+    percentile rank of the level. All are bounded and free of raw macro data.
+    """
+    v = pd.to_numeric(pd.Series(vix), errors="coerce").astype(float)
+    v.index = pd.to_datetime(v.index)
+    v = v.sort_index().ffill()
+    roll20 = v.rolling(20, min_periods=10)
+    z20 = ((v - roll20.mean()) / roll20.std(ddof=1)).clip(-4.0, 4.0)
+    ma63 = v.rolling(63, min_periods=21).mean()
+    ratio63 = (v / ma63.replace(0.0, np.nan)).clip(0.25, 4.0)
+    pct252 = v.rolling(252, min_periods=63).rank(pct=True)
+    out = pd.DataFrame({"vix_z_20": z20, "vix_ma_ratio_63": ratio63, "vix_pct_252": pct252})
+    out = out.replace([np.inf, -np.inf], np.nan).fillna(0.0)
+    if index is not None:
+        target = pd.DatetimeIndex(pd.to_datetime(index)).sort_values()
+        out = out.reindex(out.index.union(target)).ffill().reindex(target).fillna(0.0)
+    return out
+
+
 __all__ = [
     "align_panels",
+    "load_vix",
     "load_yfinance_panel",
     "prices_to_returns_panel",
+    "vix_feature_frame",
 ]

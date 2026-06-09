@@ -25,6 +25,9 @@ book:
     - notebooks/15_factor_investing.ipynb
     - notebooks/16_regime_switching_portfolio.ipynb
     - notebooks/17_network_portfolio.ipynb
+    - notebooks/18_rough_volatility.ipynb
+    - notebooks/19_forecasting_kelly_allocation.ipynb
+    - notebooks/20_rl_portfolio_allocation.ipynb
 
 format:
   html:

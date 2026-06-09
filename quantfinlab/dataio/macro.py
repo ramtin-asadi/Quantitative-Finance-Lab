@@ -28,7 +28,7 @@ def load_macro_factors(path: str | Path, *, start: str | pd.Timestamp | None = N
     return out
 
 
-def load_nfci(path: str | Path) -> pd.DataFrame:
+def load_nfci(path: str | Path, *, start: str | pd.Timestamp | None = None) -> pd.DataFrame:
     data = pd.read_csv(path)
     date_col = "Friday_of_Week" if "Friday_of_Week" in data.columns else data.columns[0]
     data[date_col] = pd.to_datetime(data[date_col], errors="coerce")
@@ -36,6 +36,8 @@ def load_nfci(path: str | Path) -> pd.DataFrame:
     out = out.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan)
     monthly = out.groupby(out.index.to_period("M")).last()
     monthly.index = monthly.index.to_timestamp("M")
+    if start is not None:
+        monthly = monthly.loc[monthly.index >= pd.Timestamp(start)]
     return monthly
 
 

@@ -124,14 +124,17 @@ def direct_price(
     resolved = _resolve_engine(engine)
     p = _params(model, params)
     if resolved == "cpp":
-        from quantfinlab import _kernels
-
+        try:
+            from quantfinlab import _kernels
+        except Exception:
+            _kernels = None
         flat_s = s.reshape(-1)
         flat_r = r.reshape(-1)
         flat_q = q.reshape(-1)
         flat_flags = flags.reshape(-1)
         if (
-            np.unique(np.round(flat_s, 12)).size == 1
+            _kernels is not None
+            and np.unique(np.round(flat_s, 12)).size == 1
             and np.unique(np.round(flat_r, 12)).size == 1
             and np.unique(np.round(flat_q, 12)).size == 1
             and np.unique(flat_flags).size == 1
@@ -173,10 +176,14 @@ def fft_grid(model, params, spot, rate, dividend_yield, tau, *, alpha: float = 1
     p = _params(model, params)
     flag = int(_flag(option_type).reshape(-1)[0])
     if resolved == "cpp":
-        from quantfinlab import _kernels
-
-        out = _kernels.fft_prices(_model_id(model), p, float(spot), float(rate), float(dividend_yield), float(tau), float(alpha), int(n), float(eta), flag)
-        return pd.DataFrame({"strike": np.asarray(out["strikes"], dtype=float), "price": np.asarray(out["prices"], dtype=float)})
+        try:
+            from quantfinlab import _kernels
+        except Exception:
+            _kernels = None
+        if _kernels is not None:
+            out = _kernels.fft_prices(_model_id(model), p, float(spot), float(rate), float(dividend_yield), float(tau), float(alpha), int(n), float(eta), flag)
+            return pd.DataFrame({"strike": np.asarray(out["strikes"], dtype=float), "price": np.asarray(out["prices"], dtype=float)})
+        resolved = "numba"
     if resolved == "numba":
         from quantfinlab.numerics.fourier import carr_madan_fft_numba
 
@@ -213,7 +220,165 @@ def fft_prices(*args, **kwargs) -> pd.DataFrame:
     return fft_grid(*args, **kwargs)
 
 
-def cos_prices(model, params, strikes, tau, spot, rate, dividend_yield, *, n_terms: int = 256, truncation_width: float = 12.0, option_type="call", engine: str = "numba") -> np.ndarray:
+def _cos_chi_psi(u: np.ndarray, a: float, c: float, d: float) -> tuple[np.ndarray, np.ndarray]:
+    u = np.asarray(u, dtype=float)
+    chi = (
+        np.cos(u * (d - a)) * np.exp(d)
+        - np.cos(u * (c - a)) * np.exp(c)
+        + u * (np.sin(u * (d - a)) * np.exp(d) - np.sin(u * (c - a)) * np.exp(c))
+    ) / (1.0 + u * u)
+    psi = np.empty_like(u, dtype=float)
+    psi[0] = d - c
+    if len(u) > 1:
+        uu = u[1:]
+        psi[1:] = (np.sin(uu * (d - a)) - np.sin(uu * (c - a))) / uu
+    return chi, psi
+
+
+def _call_custom_cf(cf, u: np.ndarray, tau: float, spot: float, rate: float, dividend_yield: float):
+    try:
+        return cf(u, tau, spot, rate, dividend_yield)
+    except TypeError:
+        return cf(u, spot=spot, rate=rate, dividend_yield=dividend_yield, tau=tau)
+
+
+def _value_hint(value, idx: int, default: float) -> float:
+    if value is None:
+        return float(default)
+    if callable(value):
+        return float(value(idx))
+    arr = np.asarray(value, dtype=float)
+    if arr.ndim == 0:
+        return float(arr)
+    return float(arr.reshape(-1)[idx])
+
+
+def _cos_prices_custom_cf(
+    cf,
+    strikes,
+    tau,
+    spot,
+    rate,
+    dividend_yield,
+    *,
+    n_terms: int,
+    truncation_width: float,
+    option_type="call",
+    variance_hint=None,
+    x_center=None,
+    x_width=None,
+) -> np.ndarray:
+    k = np.asarray(strikes, dtype=float)
+    t = np.asarray(tau, dtype=float)
+    s, k, r, q, t = np.broadcast_arrays(np.asarray(spot, dtype=float), k, np.asarray(rate, dtype=float), np.asarray(dividend_yield, dtype=float), t)
+    flags = _flag(option_type)
+    if flags.size == 1 and k.size > 1:
+        flags = np.full(k.size, int(flags.reshape(-1)[0]), dtype=np.int32)
+    elif flags.size != k.size:
+        flags = np.broadcast_to(flags, k.shape).reshape(-1).astype(np.int32)
+    nn = int(n_terms)
+    out = np.full(k.size, np.nan, dtype=float)
+    flat_s = s.reshape(-1)
+    flat_k = k.reshape(-1)
+    flat_r = r.reshape(-1)
+    flat_q = q.reshape(-1)
+    flat_t = t.reshape(-1)
+    flat_flags = flags.reshape(-1)
+    valid = np.isfinite(flat_s + flat_k + flat_r + flat_q + flat_t) & (flat_s > 0.0) & (flat_k > 0.0) & (flat_t > 0.0)
+    if not np.any(valid):
+        return out.reshape(k.shape)
+    valid_idx = np.flatnonzero(valid)
+    keys = np.column_stack(
+        [
+            np.round(flat_s[valid_idx], 12),
+            np.round(flat_r[valid_idx], 12),
+            np.round(flat_q[valid_idx], 12),
+            np.round(flat_t[valid_idx], 12),
+            flat_flags[valid_idx].astype(float),
+        ]
+    )
+    _, inverse = np.unique(keys, axis=0, return_inverse=True)
+    for group in range(int(inverse.max()) + 1):
+        idx = valid_idx[inverse == group]
+        if idx.size == 0:
+            continue
+        first = int(idx[0])
+        si = float(flat_s[first])
+        ri = float(flat_r[first])
+        qi = float(flat_q[first])
+        ti = float(flat_t[first])
+        flag = int(flat_flags[first])
+        var_level = max(_value_hint(variance_hint, first, 0.04), 1e-8)
+        center_default = np.log(si) + (ri - qi - 0.5 * var_level) * ti
+        center = _value_hint(x_center, first, center_default)
+        width_default = float(truncation_width) * np.sqrt(max(var_level * ti, 1e-8))
+        width = max(_value_hint(x_width, first, width_default), 1e-4)
+        log_strikes = np.log(flat_k[idx])
+        a = min(center - width, float(np.nanmin(log_strikes)) - 0.15 * width)
+        b = max(center + width, float(np.nanmax(log_strikes)) + 0.15 * width)
+        if b <= a:
+            continue
+        u = np.arange(nn, dtype=float) * np.pi / (b - a)
+        phi = np.asarray(_call_custom_cf(cf, u, float(ti), float(si), float(ri), float(qi)), dtype=complex)
+        if phi.size != nn:
+            phi = np.broadcast_to(phi, (nn,)).astype(complex)
+        base = phi * np.exp(-1j * u * a)
+        d = float(b)
+        for i in idx:
+            ki = float(flat_k[i])
+            c = max(float(np.log(ki)), a)
+            if c >= d:
+                call = 0.0
+            else:
+                chi, psi = _cos_chi_psi(u, a, c, d)
+                coeff = 2.0 / (b - a) * (chi - ki * psi)
+                coeff[0] *= 0.5
+                call = float(np.exp(-ri * ti) * np.real(np.sum(base * coeff)))
+                if not np.isfinite(call):
+                    call = np.nan
+                else:
+                    intrinsic = max(si * np.exp(-qi * ti) - ki * np.exp(-ri * ti), 0.0)
+                    call = max(call, intrinsic * 0.999, 0.0)
+            if flag > 0:
+                out[i] = call
+            else:
+                out[i] = call - si * np.exp(-qi * ti) + ki * np.exp(-ri * ti)
+    return out.reshape(k.shape)
+
+
+def cos_prices(
+    model,
+    params,
+    strikes,
+    tau,
+    spot,
+    rate,
+    dividend_yield,
+    *,
+    n_terms: int = 256,
+    truncation_width: float = 12.0,
+    option_type="call",
+    engine: str = "numba",
+    cf=None,
+    variance_hint=None,
+    x_center=None,
+    x_width=None,
+) -> np.ndarray:
+    if cf is not None:
+        return _cos_prices_custom_cf(
+            cf,
+            strikes,
+            tau,
+            spot,
+            rate,
+            dividend_yield,
+            n_terms=int(n_terms),
+            truncation_width=float(truncation_width),
+            option_type=option_type,
+            variance_hint=variance_hint,
+            x_center=x_center,
+            x_width=x_width,
+        )
     k = np.asarray(strikes, dtype=float)
     t = np.asarray(tau, dtype=float)
     s, k, r, q, t = np.broadcast_arrays(np.asarray(spot, dtype=float), k, np.asarray(rate, dtype=float), np.asarray(dividend_yield, dtype=float), t)
@@ -223,9 +388,11 @@ def cos_prices(model, params, strikes, tau, spot, rate, dividend_yield, *, n_ter
     resolved = _resolve_engine(engine)
     p = _params(model, params)
     if resolved == "cpp":
-        from quantfinlab import _kernels
-
-        if np.unique(np.round(s.reshape(-1), 12)).size == 1 and np.unique(np.round(r.reshape(-1), 12)).size == 1 and np.unique(np.round(q.reshape(-1), 12)).size == 1 and np.unique(flags.reshape(-1)).size == 1:
+        try:
+            from quantfinlab import _kernels
+        except Exception:
+            _kernels = None
+        if _kernels is not None and np.unique(np.round(s.reshape(-1), 12)).size == 1 and np.unique(np.round(r.reshape(-1), 12)).size == 1 and np.unique(np.round(q.reshape(-1), 12)).size == 1 and np.unique(flags.reshape(-1)).size == 1:
             return np.asarray(
                 _kernels.cos_prices(
                     _model_id(model),

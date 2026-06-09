@@ -6,7 +6,9 @@ import numpy as np
 import pandas as pd
 from scipy import optimize
 
+from quantfinlab.options.bsm import black76_price, black76_vega
 from quantfinlab.options.fourier import cos_prices
+from quantfinlab.options.surface import surface_iv
 
 
 def _numeric_column(frame: pd.DataFrame, names, default: float = 0.0) -> pd.Series:
@@ -28,6 +30,13 @@ def calibration_weights(quotes: pd.DataFrame) -> pd.DataFrame:
         out["calib_scale_px"] = pd.to_numeric(out["half_spread"], errors="coerce").fillna(0.05).clip(lower=1e-5)
     else:
         out["calib_scale_px"] = (spread * _numeric_column(out, ("mid",), 1.0)).fillna(0.05).clip(lower=1e-5)
+    if "obs_weight" in out.columns:
+        weight = pd.to_numeric(out["obs_weight"], errors="coerce")
+        if weight.notna().any():
+            med = float(np.nanmedian(weight[(weight > 0) & np.isfinite(weight)])) if np.isfinite(weight).any() else 1.0
+            out["obs_weight"] = weight.fillna(med).clip(lower=0.02, upper=50.0)
+            out["obs_weight"] = out["obs_weight"] / max(float(np.nanmedian(out["obs_weight"])), 1e-12)
+            return out
     out["obs_weight"] = (1.0 / (spread**2 + 0.03**2)) * np.clip((vega / max(float(np.nanmedian(vega)), 1e-8)) ** 0.35, 0.20, 3.0)
     out["obs_weight"] = out["obs_weight"] / max(float(np.nanmedian(out["obs_weight"])), 1e-12)
     return out
@@ -253,6 +262,229 @@ def calibration_grid_quotes(
     return out
 
 
+def _date_fit_map(fits) -> dict[pd.Timestamp, dict]:
+    if fits is None:
+        return {}
+    if isinstance(fits, dict):
+        return {pd.Timestamp(k).normalize(): v for k, v in fits.items()}
+    raise TypeError("fits must be a dict keyed by quote date.")
+
+
+def _day_numeric_median(day: pd.DataFrame, names, default: float = 0.0) -> float:
+    for name in names:
+        if name in day.columns:
+            values = pd.to_numeric(day[name], errors="coerce")
+            values = values[np.isfinite(values)]
+            if len(values):
+                return float(values.median())
+    return float(default)
+
+
+def _nearest_tau_slice(day: pd.DataFrame, tau: float, *, max_days: float, annualization_days: float) -> pd.DataFrame:
+    gap = (pd.to_numeric(day["tau"], errors="coerce") - float(tau)).abs()
+    window = float(max_days) / float(annualization_days)
+    near = day[gap <= window].copy()
+    if len(near) >= 6:
+        return near
+    ranked = day.assign(_tau_gap=gap).sort_values("_tau_gap")
+    return ranked.head(min(max(12, len(ranked) // 4), len(ranked))).drop(columns=["_tau_gap"], errors="ignore")
+
+
+def surface_target_grid_quotes(
+    quotes: pd.DataFrame,
+    fits: dict,
+    *,
+    date_col: str = "date",
+    expiry_col: str = "expiry",
+    k_col: str = "k",
+    tau_col: str = "tau",
+    iv_col: str = "iv_mid",
+    min_dte: float = 7.0,
+    max_dte: float = 150.0,
+    dte_targets=(7.0, 10.0, 14.0, 21.0, 30.0, 45.0, 60.0, 90.0, 120.0, 150.0),
+    k_targets=(-0.42, -0.35, -0.28, -0.22, -0.16, -0.11, -0.07, -0.035, 0.0, 0.035, 0.07, 0.11, 0.16, 0.22, 0.28, 0.35),
+    max_abs_log_moneyness: float = 0.45,
+    min_quotes_per_date: int = 60,
+    min_source_quotes_per_date: int = 60,
+    tau_support_buffer_days: float = 4.0,
+    k_support_buffer: float = 0.025,
+    annualization_days: float = 365.25,
+    iv_floor: float = 0.02,
+    iv_cap: float = 4.00,
+    iv_error_floor: float = 0.008,
+    iv_error_cap: float = 0.080,
+    return_steps: bool = False,
+    adaptive_k_grid: bool = False,
+    adaptive_k_min_nodes: int = 7,
+    adaptive_k_max_nodes: int = 11,
+) -> pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]:
+    """Build a balanced model-calibration grid from a fitted IV surface.
+
+    The output is a synthetic but market-implied target panel. Each date gets
+    the same requested maturity/log-forward-moneyness grid inside observed
+    support, Black-76 prices at surface IV, and IV-space calibration scales
+    (``calib_scale_px = vega * iv_target_error``). This avoids calibrating
+    stochastic-volatility models to accidental clusters of raw vendor quotes.
+    """
+    x = quotes.copy()
+    rows = [{"step": "input quotes", "rows": int(len(x)), "removed": 0}]
+    if x.empty:
+        out = x.copy()
+        return (out, pd.DataFrame(rows)) if return_steps else out
+
+    fit_map = _date_fit_map(fits)
+    x[date_col] = pd.to_datetime(x[date_col], errors="coerce").dt.normalize()
+    if expiry_col in x.columns:
+        x[expiry_col] = pd.to_datetime(x[expiry_col], errors="coerce").dt.normalize()
+    for col in ["spot", "strike", tau_col, k_col, iv_col, "forward", "rate", "discount_factor", "implied_dividend_yield", "dividend_yield"]:
+        if col in x.columns:
+            x[col] = pd.to_numeric(x[col], errors="coerce")
+    need = [date_col, "spot", tau_col, k_col]
+    before = len(x)
+    x = x.dropna(subset=[c for c in need if c in x.columns]).copy()
+    rows.append({"step": "finite support fields", "rows": int(len(x)), "removed": int(before - len(x))})
+
+    targets_dte = np.asarray(dte_targets, dtype=float)
+    targets_k = np.asarray(k_targets, dtype=float)
+    targets_dte = targets_dte[(targets_dte >= float(min_dte)) & (targets_dte <= float(max_dte))]
+    targets_k = targets_k[np.abs(targets_k) <= float(max_abs_log_moneyness)]
+    pieces: list[pd.DataFrame] = []
+
+    for d, day in x.groupby(date_col, sort=True):
+        d = pd.Timestamp(d).normalize()
+        fit = fit_map.get(d)
+        if fit is None or len(day) < int(min_source_quotes_per_date):
+            continue
+        k_support = pd.to_numeric(day[k_col], errors="coerce")
+        tau_support = pd.to_numeric(day[tau_col], errors="coerce")
+        support_ok = np.isfinite(k_support) & np.isfinite(tau_support)
+        if support_ok.sum() < int(min_source_quotes_per_date):
+            continue
+        k_lo = float(np.nanquantile(k_support[support_ok], 0.02)) - float(k_support_buffer)
+        k_hi = float(np.nanquantile(k_support[support_ok], 0.98)) + float(k_support_buffer)
+        tau_lo = float(np.nanmin(tau_support[support_ok])) - float(tau_support_buffer_days) / float(annualization_days)
+        tau_hi = float(np.nanmax(tau_support[support_ok])) + float(tau_support_buffer_days) / float(annualization_days)
+        # Build date-adaptive k-nodes from the observed support so narrow-support dates
+        # are not penalised by the fixed wide default grid.
+        if adaptive_k_grid:
+            k_low_d = float(np.clip(k_lo, -float(max_abs_log_moneyness), -0.01))
+            k_high_d = float(np.clip(k_hi, 0.01, float(max_abs_log_moneyness)))
+            spread = k_high_d - k_low_d
+            n_k_nodes = int(np.round(
+                float(adaptive_k_min_nodes)
+                + (float(adaptive_k_max_nodes) - float(adaptive_k_min_nodes))
+                * max(0.0, min(1.0, (spread - 0.10) / 0.40))
+            ))
+            n_k_nodes = int(np.clip(n_k_nodes, int(adaptive_k_min_nodes), int(adaptive_k_max_nodes)))
+            date_k_targets = np.linspace(k_low_d, k_high_d, n_k_nodes)
+            # Always include ATM when support straddles zero
+            if k_low_d < 0.0 < k_high_d and not np.any(np.abs(date_k_targets) < 1e-4):
+                date_k_targets = np.sort(np.unique(np.append(date_k_targets, 0.0)))
+        else:
+            date_k_targets = targets_k
+        date_rows = []
+        spot = _day_numeric_median(day, ("spot",), np.nan)
+        if not np.isfinite(spot) or spot <= 0:
+            continue
+        for dte in targets_dte:
+            tau = float(dte) / float(annualization_days)
+            if tau < tau_lo or tau > tau_hi:
+                continue
+            near = _nearest_tau_slice(day, tau, max_days=max(float(tau_support_buffer_days), 5.0), annualization_days=annualization_days)
+            if near.empty:
+                continue
+            rate = _day_numeric_median(near, ("rate",), _day_numeric_median(day, ("rate",), 0.0))
+            div = _day_numeric_median(near, ("implied_dividend_yield", "dividend_yield"), _day_numeric_median(day, ("implied_dividend_yield", "dividend_yield"), 0.0))
+            discount = _day_numeric_median(near, ("discount_factor",), np.exp(-rate * tau))
+            forward = _day_numeric_median(near, ("forward",), spot * np.exp((rate - div) * tau))
+            if not np.isfinite(forward) or forward <= 0:
+                forward = spot * np.exp((rate - div) * tau)
+            if not np.isfinite(discount) or discount <= 0:
+                discount = float(np.exp(-rate * tau))
+            source_unc = _day_numeric_median(near, ("iv_uncertainty",), np.nan)
+            if not np.isfinite(source_unc):
+                if {"iv_bid", "iv_ask"}.issubset(near.columns):
+                    width = pd.to_numeric(near["iv_ask"], errors="coerce") - pd.to_numeric(near["iv_bid"], errors="coerce")
+                    source_unc = float(np.nanmedian(width[width > 0])) if np.isfinite(width).any() else np.nan
+            if not np.isfinite(source_unc):
+                source_unc = 0.015
+            source_unc = float(np.clip(source_unc, iv_error_floor, iv_error_cap))
+            for kt in date_k_targets:
+                if kt < k_lo or kt > k_hi:
+                    continue
+                sigma = float(np.asarray(surface_iv(fit, np.asarray([kt], dtype=float), np.asarray([tau], dtype=float))).reshape(-1)[0])
+                if not np.isfinite(sigma):
+                    continue
+                sigma = float(np.clip(sigma, iv_floor, iv_cap))
+                strike = float(forward * np.exp(float(kt)))
+                option_type = "put" if kt < -1e-10 else "call"
+                mid = float(black76_price(option_type, forward, strike, tau, sigma, discount))
+                vega = float(black76_vega(forward, strike, tau, sigma, discount))
+                if not np.isfinite(mid) or not np.isfinite(vega) or mid <= 0 or vega <= 0:
+                    continue
+                price_scale = max(vega * source_unc, 1e-5 * spot, 1e-4 * mid)
+                half_spread = max(0.5 * price_scale, 2e-6 * spot, 1e-5 * mid)
+                k_abs = abs(float(kt))
+                quote_quality_weight = _day_numeric_median(near, ("surface_weight", "obs_weight"), 1.0)
+                quote_quality_weight = float(np.clip(quote_quality_weight, 0.25, 4.0))
+                maturity_weight = float(np.clip(np.sqrt(30.0 / max(float(dte), 3.0)), 0.65, 1.65))
+                moneyness_weight = float(np.clip(np.exp(-max(k_abs - 0.22, 0.0) / 0.25), 0.45, 1.15))
+                date_rows.append(
+                    {
+                        date_col: d,
+                        expiry_col: d + pd.Timedelta(days=float(dte)),
+                        "target_source": "surface_grid",
+                        "quote_id": f"{d.date()}_{int(round(dte))}_{kt:.4f}_{option_type}",
+                        "spot": spot,
+                        "forward": forward,
+                        "strike": strike,
+                        "option_type": option_type,
+                        "tau": tau,
+                        "dte_days": float(dte),
+                        "rate": rate,
+                        "discount_factor": discount,
+                        "dividend_yield": div,
+                        "implied_dividend_yield": div,
+                        "k": float(kt),
+                        "log_moneyness": float(np.log(strike / spot)),
+                        "moneyness": float(strike / spot),
+                        "iv_mid": sigma,
+                        "iv_bid": max(sigma - source_unc, 1e-6),
+                        "iv_ask": sigma + source_unc,
+                        "vega": vega,
+                        "mid": mid,
+                        "bid": max(mid - half_spread, 0.0),
+                        "ask": mid + half_spread,
+                        "half_spread": half_spread,
+                        "relative_spread": (2.0 * half_spread / mid) if mid > 0 else np.nan,
+                        "rel_spread": (2.0 * half_spread / mid) if mid > 0 else np.nan,
+                        "iv_target_error": source_unc,
+                        "calib_scale_px": price_scale,
+                        "quote_quality_weight": quote_quality_weight,
+                        "maturity_weight": maturity_weight,
+                        "moneyness_weight": moneyness_weight,
+                        "obs_weight": quote_quality_weight * maturity_weight * moneyness_weight,
+                        "source_quote_count": int(len(day)),
+                    },
+                )
+        if len(date_rows) >= int(min_quotes_per_date):
+            day_out = pd.DataFrame(date_rows)
+            day_out["obs_weight"] = day_out["obs_weight"] / max(float(np.nanmedian(day_out["obs_weight"])), 1e-12)
+            pieces.append(day_out)
+
+    out = pd.concat(pieces, ignore_index=True) if pieces else pd.DataFrame()
+    rows.append({"step": "balanced surface grid", "rows": int(len(out)), "removed": int(len(x) - len(out))})
+    out = calibration_weights(out) if not out.empty else out
+    for name in out.columns:
+        dtype_name = str(out[name].dtype).lower()
+        if dtype_name == "category" or "interval" in dtype_name:
+            out[name] = out[name].astype(str)
+    steps = pd.DataFrame(rows)
+    if return_steps:
+        return out.reset_index(drop=True), steps
+    return out.reset_index(drop=True)
+
+
 def price_residuals(quotes: pd.DataFrame, model: str, params, *, engine: str = "numba") -> pd.DataFrame:
     out = quotes.copy()
     div = _numeric_column(out, ("dividend_yield", "implied_dividend_yield"), 0.0)
@@ -447,7 +679,32 @@ def fit_daily_models(
             fit = fit_date_model(day, model, start=last.get(str(model)), max_nfev=max_nfev, engine=engine, n_terms=n_terms, truncation_width=truncation_width)
             rows.append(fit["row"])
             if not fit["fit"].empty:
-                cols = [c for c in ["date", "expiry", "strike", "option_type", "mid", "bid", "ask", "spot", "tau", "dte_days", "moneyness", "model", "model_price", "price_residual", "calib_scale_px", "obs_weight"] if c in fit["fit"].columns]
+                cols = [
+                    c
+                    for c in [
+                        "date",
+                        "expiry",
+                        "strike",
+                        "option_type",
+                        "mid",
+                        "bid",
+                        "ask",
+                        "spot",
+                        "tau",
+                        "dte_days",
+                        "moneyness",
+                        "log_moneyness",
+                        "k",
+                        "iv_mid",
+                        "vega",
+                        "model",
+                        "model_price",
+                        "price_residual",
+                        "calib_scale_px",
+                        "obs_weight",
+                    ]
+                    if c in fit["fit"].columns
+                ]
                 fits.append(fit["fit"][cols].copy())
             if fit["row"].get("success", False):
                 last[str(model)] = np.asarray(fit["params"], dtype=float)
@@ -555,5 +812,6 @@ __all__ = [
     "price_residuals",
     "calibration_success_table",
     "residual_by_bucket",
+    "surface_target_grid_quotes",
     "warm_start_table",
 ]

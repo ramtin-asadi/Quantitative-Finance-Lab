@@ -115,6 +115,8 @@ def breach_stats(
             "breach": pd.Series(dtype=bool),
             "count": 0,
             "rate": float("nan"),
+            "coverage_error": float("nan"),
+            "abs_coverage_error": float("nan"),
             "longest_streak": 0,
             "avg_gap": float("nan"),
             "med_gap": float("nan"),
@@ -122,6 +124,7 @@ def breach_stats(
             "kupiec_p": float("nan"),
             "christ_lr": float("nan"),
             "christ_p": float("nan"),
+            "quantile_loss": float("nan"),
         }
     br = z["ret"] < z["var_q"]
     lr_uc, p_uc = kupiec_test(br, alpha=a)

@@ -20,8 +20,10 @@ from .option_chain import (
 )
 from .panel import (
     align_panels,
+    load_vix,
     load_yfinance_panel,
     prices_to_returns_panel,
+    vix_feature_frame,
 )
 from .macro import (
     clean_monthly_index,
@@ -49,6 +51,8 @@ __all__ = [
     "load_macro_factors",
     "load_ohlcv",
     "load_nfci",
+    "load_vix",
+    "vix_feature_frame",
     "load_option_chain",
     "load_optionsdx_equity_pairs",
     "load_par_yield_curve",

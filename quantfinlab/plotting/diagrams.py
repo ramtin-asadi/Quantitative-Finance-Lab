@@ -1158,26 +1158,590 @@ def walkforward_split(ax=None, *, title: str = "Walk-forward split: train only o
     return fig, ax
 
 
+def quantile_forecast(ax=None, *, title: str = "Quantile forecasts: median and prediction interval"):
+    set_plot_style()
+    fig, ax = plt.subplots(figsize=(9.5, 4.8), facecolor="white") if ax is None else (ax.get_figure(), ax)
+    _course_header(fig, title)
+    x = np.linspace(-3.2, 3.2, 500)
+    y = np.exp(-0.5 * x**2)
+    y /= y.max()
+    q10, q50, q90 = -1.28, 0.0, 1.28
+    ax.fill_between(x, 0, y, where=(x >= q10) & (x <= q90), color=LAB_COLORS[0], alpha=0.22, label="central interval")
+    ax.plot(x, y, color=LAB_COLORS[2], lw=2.0)
+    for q, label, color in [(q10, "q10", LAB_COLORS[1]), (q50, "q50", LAB_COLORS[3]), (q90, "q90", LAB_COLORS[1])]:
+        ax.axvline(q, color=color, lw=1.8, ls="--" if label != "q50" else "-")
+        ax.text(q, 1.03, label, ha="center", va="bottom", fontsize=10, color=color)
+    ax.annotate("width measures uncertainty", xy=(q90, 0.30), xytext=(1.65, 0.68), color=LAB_COLORS[2], arrowprops={"arrowstyle": "->", "color": LAB_COLORS[2]})
+    ax.set_yticks([])
+    ax.set_xlabel("future normalized excess return")
+    ax.set_ylim(0, 1.16)
+    ax.grid(True, axis="x", alpha=0.16)
+    fig.tight_layout(rect=(0, 0, 1, 0.88))
+    return fig, ax
+
+
+def linear_regularization_comparison(ax=None, *, title: str = "Ridge, Lasso, and Elastic Net"):
+    fig, ax = _course_canvas(ax, figsize=(14.2, 5.7), title=title, xlim=(0, 14.2), ylim=(0, 5.5))
+    starts = [0.70, 5.00, 9.30]
+    specs = [
+        ("Ridge", LAB_COLORS[0], "L2 penalty", "smooth shrinkage\nkeeps grouped signals", "circle constraint"),
+        ("Lasso", LAB_COLORS[1], "L1 penalty", "sparse solution\ncan zero features", "diamond constraint"),
+        ("Elastic Net", LAB_COLORS[3], "L1 + L2 penalty", "sparse but stable\nwith correlated features", "rounded diamond"),
+    ]
+
+    theta = np.linspace(0, 2 * np.pi, 240)
+    for x, (name, color, penalty, effect, shape_label) in zip(starts, specs, strict=False):
+        ax.add_patch(mpatches.FancyBboxPatch((x, 0.70), 3.55, 3.95, boxstyle="round,pad=0.13,rounding_size=0.16", fc="white", ec=LAB_COLORS[8], lw=1.1))
+        _round_box(ax, (x + 0.38, 4.05), (1.15, 0.42), name, fc=color, ec=color, text_color="white", fontsize=9.5)
+        ax.text(x + 2.20, 4.26, penalty, ha="center", va="center", fontsize=8.6, color=LAB_COLORS[2])
+        cx, cy = x + 1.72, 2.48
+        ax.plot([cx - 1.08, cx + 1.10], [cy, cy], color=LAB_COLORS[8], lw=1.0)
+        ax.plot([cx, cx], [cy - 1.05, cy + 1.08], color=LAB_COLORS[8], lw=1.0)
+        ax.text(cx + 1.18, cy - 0.08, "b1", fontsize=7.8, color=LAB_COLORS[2])
+        ax.text(cx + 0.08, cy + 1.10, "b2", fontsize=7.8, color=LAB_COLORS[2])
+
+        for scale, lw in [(1.18, 0.9), (0.82, 0.9)]:
+            ell_x = cx + 1.18 * scale * np.cos(theta)
+            ell_y = cy + 0.62 * scale * np.sin(theta)
+            rot_x = cx + 0.86 * (ell_x - cx) - 0.42 * (ell_y - cy)
+            rot_y = cy + 0.42 * (ell_x - cx) + 0.86 * (ell_y - cy)
+            ax.plot(rot_x, rot_y, color="#98a2b3", lw=lw, alpha=0.55, zorder=1)
+
+        if name == "Ridge":
+            pts_x = cx + 0.72 * np.cos(theta)
+            pts_y = cy + 0.72 * np.sin(theta)
+            opt = (cx + 0.42, cy + 0.37)
+        elif name == "Lasso":
+            pts_x = [cx, cx + 0.78, cx, cx - 0.78, cx]
+            pts_y = [cy + 0.78, cy, cy - 0.78, cy, cy + 0.78]
+            opt = (cx + 0.73, cy + 0.02)
+        else:
+            p = 1.32
+            pts_x = cx + 0.82 * np.sign(np.cos(theta)) * np.abs(np.cos(theta)) ** (2 / p)
+            pts_y = cy + 0.82 * np.sign(np.sin(theta)) * np.abs(np.sin(theta)) ** (2 / p)
+            opt = (cx + 0.58, cy + 0.18)
+
+        ax.plot(pts_x, pts_y, color=color, lw=2.0, zorder=2)
+        ax.scatter([cx + 0.98], [cy + 0.72], s=46, color="#475467", edgecolor="white", linewidth=0.7, zorder=4)
+        ax.text(cx + 1.05, cy + 0.76, "unregularized", fontsize=7.4, color=LAB_COLORS[2], ha="left")
+        _arrow(ax, (cx + 0.90, cy + 0.65), opt, color=color, lw=1.2, scale=8)
+        ax.scatter([opt[0]], [opt[1]], s=62, color=color, edgecolor="#111827", linewidth=0.8, zorder=5)
+        ax.text(cx, 1.08, shape_label, ha="center", fontsize=8.0, color=LAB_COLORS[2])
+        ax.text(cx, 0.50, effect, ha="center", va="top", fontsize=8.2, color=LAB_COLORS[2], linespacing=1.16)
+
+    _soft_label(ax, (7.10, 5.05), "All three are linear forecasters; the penalty decides how aggressively noisy coefficients are shrunk.")
+    fig.tight_layout()
+    return fig, ax
+
+
+def hist_gradient_boosting_diagram(ax=None, *, title: str = "HistGradientBoosting: binned residual learning"):
+    fig, ax = _course_canvas(ax, figsize=(16.4, 6.2), title=title, xlim=(0, 16.4), ylim=(0, 6.0))
+
+    def mini_tree(cx, cy, color, label):
+        ax.text(cx - 0.88, cy + 0.05, label, ha="right", va="center", fontsize=8, color=LAB_COLORS[2])
+        ax.add_patch(mpatches.Circle((cx, cy + 0.28), 0.18, fc=color, ec="#111827", lw=1.0, zorder=4))
+        for dx in [-0.44, 0.44]:
+            ax.add_patch(mpatches.Circle((cx + dx, cy - 0.22), 0.15, fc="white", ec=color, lw=1.4, zorder=4))
+            ax.plot([cx, cx + dx], [cy + 0.10, cy - 0.08], color=color, lw=1.45)
+
+    _round_box(ax, (0.62, 3.35), (1.80, 0.72), "daily\nfeatures", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white", fontsize=9)
+    _arrow(ax, (2.48, 3.71), (2.90, 3.71), color=LAB_COLORS[2], lw=1.55, scale=10)
+
+    bar_x = 3.05
+    heights = [0.32, 0.68, 1.14, 0.88, 0.52, 0.28]
+    for i, h in enumerate(heights):
+        fc = ["#a7d8fa", "#7bc8f6", LAB_COLORS[0], LAB_COLORS[3], "#9ddbd4", "#ccd6e0"][i]
+        ax.add_patch(mpatches.Rectangle((bar_x + i * 0.26, 3.10), 0.20, h, fc=fc, ec="#ffffff", lw=0.7, zorder=3))
+    _round_box(ax, (2.82, 2.55), (1.82, 0.38), "histogram bins", fc="white", ec=LAB_COLORS[0], fontsize=8.2)
+    _arrow(ax, (4.72, 3.50), (5.10, 3.50), color=LAB_COLORS[2], lw=1.55, scale=10)
+
+    grid_x, grid_y = 5.28, 2.82
+    for r in range(4):
+        for c in range(5):
+            val = (r * 3 + c) % 6
+            color = ["#d6ebff", "#a7d8fa", LAB_COLORS[0], "#c4ebe7", LAB_COLORS[3], "#edf2f7"][val]
+            ax.add_patch(mpatches.Rectangle((grid_x + c * 0.31, grid_y + r * 0.31), 0.28, 0.28, fc=color, ec="white", lw=0.65))
+    _round_box(ax, (5.02, 2.22), (1.95, 0.38), "integer bin matrix", fc="white", ec=LAB_COLORS[3], fontsize=8.2)
+    _arrow(ax, (7.05, 3.50), (7.45, 3.50), color=LAB_COLORS[2], lw=1.55, scale=10)
+
+    tree_box = mpatches.FancyBboxPatch((7.55, 1.30), 2.20, 3.75, boxstyle="round,pad=0.12,rounding_size=0.13", fc="white", ec=LAB_COLORS[8], lw=1.1, zorder=0)
+    ax.add_patch(tree_box)
+    mini_tree(8.65, 4.42, LAB_COLORS[3], "tree 1")
+    mini_tree(8.65, 3.20, LAB_COLORS[6], "tree 2")
+    mini_tree(8.65, 1.98, LAB_COLORS[1], "tree 3")
+    _round_box(ax, (8.02, 0.76), (1.28, 0.38), "fit gradients", fc="white", ec=LAB_COLORS[6], fontsize=8.0)
+    _arrow(ax, (9.82, 3.50), (10.30, 3.50), color=LAB_COLORS[2], lw=1.55, scale=10)
+
+    eq_y = 3.28
+    eq_boxes = [
+        (10.45, "F0", LAB_COLORS[2], 0.62),
+        (11.25, "+ eta T1", LAB_COLORS[3], 0.92),
+        (12.34, "+ eta T2", LAB_COLORS[6], 0.92),
+        (13.43, "+ eta T3", LAB_COLORS[1], 0.92),
+    ]
+    for i, (x, text, color, width) in enumerate(eq_boxes):
+        _round_box(ax, (x, eq_y), (width, 0.46), text, fc="white", ec=color, fontsize=7.8)
+        if i > 0:
+            prev_x, _, _, prev_w = eq_boxes[i - 1]
+            _arrow(ax, (prev_x + prev_w + 0.05, eq_y + 0.23), (x - 0.05, eq_y + 0.23), color=LAB_COLORS[2], lw=1.15, scale=8)
+    _round_box(ax, (14.80, 3.10), (1.05, 0.74), "forecast\nscore", fc=LAB_COLORS[1], ec=LAB_COLORS[1], text_color="white", fontsize=8.2)
+    _arrow(ax, (14.40, eq_y + 0.23), (14.78, 3.47), color=LAB_COLORS[2], lw=1.35, scale=9)
+
+    x_curve = np.linspace(10.55, 15.50, 160)
+    y_curve = 1.05 + 0.26 * np.tanh((x_curve - 12.20) * 2.4) + 0.045 * np.sin(x_curve * 6.5)
+    ax.plot(x_curve, y_curve, color=LAB_COLORS[2], lw=1.85)
+    ax.step([10.55, 11.05, 11.70, 12.45, 13.15, 14.05, 15.50], [0.76, 0.92, 1.14, 1.28, 1.18, 1.34, 1.43], where="post", color=LAB_COLORS[1], lw=1.8)
+    ax.text(13.00, 0.42, "leaf values add piecewise corrections", ha="center", fontsize=8.4, color=LAB_COLORS[2])
+    _soft_label(ax, (8.20, 5.32), "Histogram binning speeds split search; boosting adds small regularized trees one after another.")
+    fig.tight_layout()
+    return fig, ax
+
+
+def mlp_architecture(ax=None, *, title: str = "MLP median-neutral forecast network"):
+    fig, ax = _course_canvas(ax, figsize=(14.8, 7.3), title=title, xlim=(0, 14.8), ylim=(0, 7.2))
+    edge_light = "#374151"
+    edge_dark = LAB_COLORS[0]
+    node_edge = "#1f2937"
+    layer_x = [1.15, 3.65, 5.95, 8.25, 10.45, 12.75]
+    layers = [
+        ("Input\nfeatures", ["rank r63", "rel mom", "vol z", "drawdown", "regime", "asset emb"]),
+        ("Hidden 1", ["", "", "", "", "", ""]),
+        ("Hidden 2", ["", "", "", "", "", ""]),
+        ("Hidden 3", ["", "", "", "", ""]),
+        ("Hidden 4", ["", "", "", ""]),
+        ("Output", ["relative\nscore"]),
+    ]
+    y_by_count = {
+        1: [3.72],
+        4: [5.02, 4.28, 3.54, 2.80],
+        5: [5.25, 4.55, 3.85, 3.15, 2.45],
+        6: [5.42, 4.80, 4.18, 3.56, 2.94, 2.32],
+    }
+    positions = []
+    for x, (layer_name, labels) in zip(layer_x, layers, strict=False):
+        ys = y_by_count[len(labels)]
+        layer_pos = [(x, y) for y in ys]
+        positions.append(layer_pos)
+        ax.text(x, 6.25, layer_name, ha="center", va="bottom", fontsize=10, color=LAB_COLORS[2], linespacing=1.15)
+        for j, ((px, py), label) in enumerate(zip(layer_pos, labels, strict=False)):
+            if len(positions) == 1:
+                color = LAB_COLORS[5] if j == len(labels) - 1 else LAB_COLORS[0]
+            elif len(positions) == len(layers):
+                color = LAB_COLORS[1]
+            else:
+                color = LAB_COLORS[6] if len(positions) % 2 else LAB_COLORS[3]
+            ax.add_patch(mpatches.Circle((px + 0.035, py - 0.035), 0.23, fc="#00000018", ec="none", zorder=2))
+            ax.add_patch(mpatches.Circle((px, py), 0.23, fc=color, ec=node_edge, lw=1.35, zorder=4))
+            if label:
+                if len(positions) == 1:
+                    ax.text(px - 0.42, py, label, ha="right", va="center", fontsize=8.4, color=LAB_COLORS[2])
+                    ax.add_patch(FancyArrowPatch((px - 0.35, py), (px - 0.23, py), arrowstyle="-|>", mutation_scale=8, lw=1.15, color=edge_light, alpha=1.0))
+                else:
+                    ax.text(px + 0.62, py, label, ha="left", va="center", fontsize=9, color=LAB_COLORS[2], linespacing=1.1)
+
+    for left, right in zip(positions[:-1], positions[1:], strict=False):
+        for x0, y0 in left:
+            for x1, y1 in right:
+                ax.plot([x0 + 0.23, x1 - 0.23], [y0, y1], color=edge_light, lw=1.20, alpha=0.88, zorder=1)
+    highlight = [
+        (positions[0][1], positions[1][2]),
+        (positions[0][-1], positions[1][4]),
+        (positions[1][2], positions[2][1]),
+        (positions[2][1], positions[3][2]),
+        (positions[3][2], positions[4][1]),
+        (positions[4][1], positions[5][0]),
+    ]
+    for (x0, y0), (x1, y1) in highlight:
+        ax.add_patch(FancyArrowPatch((x0 + 0.24, y0), (x1 - 0.24, y1), arrowstyle="-|>", mutation_scale=11, lw=2.05, color=edge_dark, alpha=0.98, zorder=3))
+
+    _round_box(ax, (1.10, 0.92), (2.00, 0.58), "daily date-asset row", fc="white", ec=LAB_COLORS[0], fontsize=8.5)
+    _round_box(ax, (4.08, 0.92), (2.06, 0.58), "weighted sum", fc="white", ec=LAB_COLORS[3], fontsize=8.5)
+    ax.add_patch(mpatches.Circle((7.08, 1.21), 0.34, fc="white", ec=LAB_COLORS[2], lw=1.3))
+    ax.text(7.08, 1.21, "sum", ha="center", va="center", fontsize=8.5, color=LAB_COLORS[2])
+    _round_box(ax, (8.05, 0.92), (2.30, 0.58), "SiLU(sum + b)", fc="white", ec=LAB_COLORS[6], fontsize=8.5)
+    _round_box(ax, (11.08, 0.92), (1.65, 0.58), "score head", fc="white", ec=LAB_COLORS[1], fontsize=8.5)
+    _arrow(ax, (3.15, 1.21), (4.02, 1.21), color=LAB_COLORS[2], scale=10)
+    _arrow(ax, (6.18, 1.21), (6.72, 1.21), color=LAB_COLORS[2], scale=10)
+    _arrow(ax, (7.43, 1.21), (7.98, 1.21), color=LAB_COLORS[2], scale=10)
+    _arrow(ax, (10.40, 1.21), (11.02, 1.21), color=LAB_COLORS[2], scale=10)
+    ax.text(7.35, 0.42, "Target: volatility-scaled forward excess return minus same-date cross-sectional median.", ha="center", va="center", fontsize=8.8, color=LAB_COLORS[2])
+    ax.text(6.85, 5.92, "all nodes are connected; the blue path illustrates one learned high-impact route", ha="center", fontsize=8.6, color=LAB_COLORS[2], alpha=0.72)
+    fig.tight_layout()
+    return fig, ax
+
+
+def activation_loss(ax=None, *, title: str = "Activation and loss functions"):
+    set_plot_style()
+    fig, axes = plt.subplots(1, 2, figsize=(12.5, 5.1), facecolor="white")
+    _course_header(fig, title)
+    x = np.linspace(-4, 4, 400)
+    silu = x / (1.0 + np.exp(-x))
+    relu = np.maximum(x, 0.0)
+    axes[0].plot(x, silu, color=LAB_COLORS[0], lw=2.1, label="SiLU")
+    axes[0].plot(x, relu, color=LAB_COLORS[1], lw=1.6, ls="--", label="ReLU")
+    axes[0].axhline(0.0, color=LAB_COLORS[2], lw=0.8)
+    axes[0].set_title("Smooth activation", fontsize=11, fontweight="normal", color=LAB_COLORS[2])
+    err = np.linspace(-3, 3, 400)
+    huber = np.where(np.abs(err) <= 1.0, 0.5 * err**2, np.abs(err) - 0.5)
+    pinball = np.maximum(0.1 * err, -0.9 * err)
+    axes[1].plot(err, huber, color=LAB_COLORS[3], lw=2.1, label="Huber")
+    axes[1].plot(err, pinball, color=LAB_COLORS[4], lw=1.8, label="pinball q10")
+    axes[1].set_title("Robust point and quantile losses", fontsize=11, fontweight="normal", color=LAB_COLORS[2])
+    for panel in axes:
+        panel.grid(True, alpha=0.18)
+        panel.legend(frameon=False, fontsize=8)
+    fig.tight_layout(rect=(0, 0, 1, 0.88))
+    return fig, axes
+
+
+def lstm_architecture(ax=None, *, title: str = "LSTM cell: gates control memory and hidden state"):
+    fig, ax = _course_canvas(ax, figsize=(14.2, 7.0), title=title, xlim=(0, 14.2), ylim=(0, 6.9))
+    edge = "#111827"
+    pale = "#eef5ff"
+    cell = mpatches.FancyBboxPatch((2.65, 1.38), 9.70, 4.70, boxstyle="round,pad=0.20,rounding_size=0.18", fc="white", ec=LAB_COLORS[8], lw=1.15)
+    ax.add_patch(cell)
+
+    def gate(x, y, label, color):
+        _round_box(ax, (x - 0.47, y - 0.30), (0.94, 0.60), label, fc=color, ec=color, text_color="white", fontsize=8.5)
+
+    def op(x, y, label, fc=pale):
+        ax.add_patch(mpatches.Circle((x, y), 0.26, fc=fc, ec=LAB_COLORS[2], lw=1.1, zorder=4))
+        ax.text(x, y, label, ha="center", va="center", fontsize=9, color=LAB_COLORS[2], zorder=5)
+
+    ax.text(1.10, 5.28, "cell memory\nc(t-1)", ha="right", va="center", fontsize=10, color=LAB_COLORS[2], linespacing=1.15)
+    ax.text(1.10, 2.22, "hidden state\nh(t-1)", ha="right", va="center", fontsize=10, color=LAB_COLORS[2], linespacing=1.15)
+    ax.text(3.00, 0.88, "input x(t)", ha="center", va="center", fontsize=10, color=LAB_COLORS[2])
+    _arrow(ax, (1.25, 5.28), (3.30, 5.28), color=edge, lw=1.25, scale=12)
+    _arrow(ax, (2.20, 2.22), (11.45, 2.22), color=edge, lw=1.05, scale=11)
+    _arrow(ax, (3.00, 0.96), (3.00, 2.22), color=edge, lw=1.05, scale=11)
+
+    gate(3.65, 3.05, "f(t)\nsigmoid", LAB_COLORS[1])
+    gate(5.35, 3.05, "i(t)\nsigmoid", LAB_COLORS[0])
+    gate(7.05, 3.05, "g(t)\ntanh", LAB_COLORS[3])
+    gate(9.25, 3.05, "o(t)\nsigmoid", LAB_COLORS[6])
+    for x in [3.65, 5.35, 7.05, 9.25]:
+        _arrow(ax, (x, 2.28), (x, 2.72), color=edge, lw=0.95, scale=9)
+
+    op(3.65, 5.28, "*")
+    op(6.10, 4.36, "*")
+    op(7.62, 5.28, "+")
+    op(9.82, 4.20, "tanh")
+    op(10.42, 3.42, "*")
+    _arrow(ax, (3.65, 3.38), (3.65, 5.02), color=edge, lw=1.0, scale=10)
+    _arrow(ax, (5.35, 3.38), (5.92, 4.18), color=edge, lw=1.0, scale=10)
+    _arrow(ax, (7.05, 3.38), (6.24, 4.18), color=edge, lw=1.0, scale=10)
+    _arrow(ax, (6.36, 4.36), (7.35, 5.16), color=edge, lw=1.0, scale=10)
+    _arrow(ax, (3.92, 5.28), (7.35, 5.28), color=edge, lw=1.0, scale=10)
+    _arrow(ax, (7.89, 5.28), (12.95, 5.28), color=edge, lw=1.25, scale=12)
+    _arrow(ax, (8.02, 5.16), (9.70, 4.34), color=edge, lw=0.95, scale=9)
+    _arrow(ax, (9.25, 3.38), (10.17, 3.42), color=edge, lw=1.0, scale=10)
+    _arrow(ax, (9.98, 4.00), (10.28, 3.62), color=edge, lw=1.0, scale=10)
+    _arrow(ax, (10.68, 3.42), (12.90, 2.60), color=edge, lw=1.25, scale=12)
+    ax.text(13.10, 5.28, "c(t)", ha="left", va="center", fontsize=10.5, fontweight="bold", color=LAB_COLORS[2])
+    ax.text(13.05, 2.55, "h(t)", ha="left", va="center", fontsize=10.5, fontweight="bold", color=LAB_COLORS[2])
+
+    ax.text(3.65, 3.78, "forget", ha="center", fontsize=8, color=LAB_COLORS[1])
+    ax.text(5.35, 3.78, "input", ha="center", fontsize=8, color=LAB_COLORS[0])
+    ax.text(7.05, 3.78, "candidate", ha="center", fontsize=8, color=LAB_COLORS[3])
+    ax.text(9.25, 3.78, "output", ha="center", fontsize=8, color=LAB_COLORS[6])
+    _soft_label(ax, (6.25, 0.55), "The top lane preserves long-term cell memory; gates decide what to forget, write, and expose.")
+    fig.tight_layout()
+    return fig, ax
+
+
+def tcn_receptive_field(ax=None, *, title: str = "TCN daily sequence model: causal dilated receptive field"):
+    fig, ax = _course_canvas(ax, figsize=(15.0, 7.0), title=title, xlim=(0, 15.0), ylim=(0, 6.9))
+    x0 = 1.05
+    step = 1.16
+    n_time = 10
+    layer_y = [1.05, 2.15, 3.25, 4.35]
+    labels = ["daily\nfeatures", "conv d=1", "conv d=2", "conv d=4"]
+    dilations = [1, 2, 4]
+    node_edge = "#1f2937"
+    highlight_nodes = {0: {2, 3, 4, 5, 6, 7, 8, 9}, 1: {3, 5, 7, 9}, 2: {5, 9}, 3: {9}}
+    highlight_edges = set()
+    frontier = {9}
+    for layer_idx in range(3, 0, -1):
+        dilation = dilations[layer_idx - 1]
+        previous = set()
+        for j in frontier:
+            previous.add(j)
+            if j - dilation >= 0:
+                previous.add(j - dilation)
+                highlight_edges.add((layer_idx - 1, j - dilation, j))
+            highlight_edges.add((layer_idx - 1, j, j))
+        frontier = previous
+
+    for layer_idx, y in enumerate(layer_y):
+        ax.text(0.25, y, labels[layer_idx], ha="left", va="center", fontsize=9, color=LAB_COLORS[2])
+        for j in range(n_time):
+            px = x0 + j * step
+            active = j in highlight_nodes.get(layer_idx, set())
+            if layer_idx == 0:
+                fc = LAB_COLORS[0] if active else "#bde3ff"
+                ec = node_edge if active else "#5bb8ee"
+            elif layer_idx == 3:
+                fc = LAB_COLORS[1] if active else "#ffd5c3"
+                ec = node_edge if active else "#ff8759"
+            else:
+                fc = LAB_COLORS[3] if active else "#c7ebe7"
+                ec = node_edge if active else "#4fbab0"
+            ax.add_patch(mpatches.Circle((px, y), 0.20, fc=fc, ec=ec, lw=1.25, zorder=4))
+            if layer_idx == 0:
+                ax.text(px, 0.52, f"t-{n_time - 1 - j}" if j < n_time - 1 else "t", ha="center", fontsize=8, color=LAB_COLORS[2])
+
+    for layer_idx, dilation in enumerate(dilations):
+        y0, y1 = layer_y[layer_idx], layer_y[layer_idx + 1]
+        for j in range(n_time):
+            for src in [j, j - dilation]:
+                if src < 0:
+                    continue
+                is_hi = (layer_idx, src, j) in highlight_edges
+                color = LAB_COLORS[0] if is_hi else "#374151"
+                lw = 2.05 if is_hi else 1.42
+                alpha = 0.98 if is_hi else 0.88
+                ax.add_patch(FancyArrowPatch((x0 + src * step, y0 + 0.22), (x0 + j * step, y1 - 0.22), arrowstyle="-|>", mutation_scale=8 if is_hi else 7, lw=lw, color=color, alpha=alpha, zorder=2))
+        ax.text(12.05, 0.5 * (y0 + y1), f"dilation {dilation}", fontsize=9, color=[LAB_COLORS[3], LAB_COLORS[5], LAB_COLORS[1]][layer_idx], va="center", fontweight="medium")
+
+    _round_box(ax, (12.25, 4.95), (1.65, 0.68), "quantile /\nscore head", fc=LAB_COLORS[1], ec=LAB_COLORS[1], text_color="white", fontsize=8.5)
+    _arrow(ax, (x0 + 9 * step + 0.24, layer_y[-1]), (12.20, 5.28), color=LAB_COLORS[0], lw=1.8)
+    ax.plot([x0 + 2 * step, x0 + 9 * step], [0.28, 0.28], color=LAB_COLORS[2], lw=1.5)
+    ax.plot([x0 + 2 * step, x0 + 2 * step], [0.24, 0.38], color=LAB_COLORS[2], lw=1.5)
+    ax.plot([x0 + 9 * step, x0 + 9 * step], [0.24, 0.38], color=LAB_COLORS[2], lw=1.5)
+    ax.text(x0 + 5.5 * step, 0.08, "lookback window used for the relative-return forecast", ha="center", fontsize=8.7, color=LAB_COLORS[2])
+    _soft_label(ax, (6.55, 6.08), "No recurrence: the model sees a fixed daily window and forecasts median-neutral relative return.")
+    fig.tight_layout()
+    return fig, ax
+
+
+def sequence_memory_comparison(ax=None, *, title: str = "How forecasting models remember a sequence"):
+    fig, ax = _course_canvas(ax, figsize=(16.4, 7.2), title=title, xlim=(0, 16.4), ylim=(0, 7.0))
+    card_w = 3.38
+    card_h = 5.35
+    starts = [0.55, 4.45, 8.35, 12.25]
+    specs = [
+        ("MLP", LAB_COLORS[0], "single date row\nno internal state"),
+        ("RNN", LAB_COLORS[3], "hidden state\nworking memory"),
+        ("LSTM", LAB_COLORS[1], "cell state + hidden\nlonger memory"),
+        ("TCN", LAB_COLORS[6], "fixed receptive field\nparallel convolutions"),
+    ]
+    for x, (name, color, subtitle) in zip(starts, specs, strict=False):
+        ax.add_patch(mpatches.FancyBboxPatch((x, 0.78), card_w, card_h, boxstyle="round,pad=0.14,rounding_size=0.20", fc="white", ec=LAB_COLORS[8], lw=1.1))
+        _round_box(ax, (x + 0.35, 5.42), (card_w - 0.70, 0.42), name, fc=color, ec=color, text_color="white", fontsize=10)
+        ax.text(x + card_w / 2, 1.10, subtitle, ha="center", va="center", fontsize=8.2, color=LAB_COLORS[2], linespacing=1.18)
+        xs = np.linspace(x + 0.55, x + card_w - 0.55, 5)
+        for i, px in enumerate(xs):
+            active = i == 4 or name in {"RNN", "LSTM", "TCN"}
+            ax.add_patch(mpatches.Circle((px, 2.08), 0.13, fc=color if active else "#bfc5cf", ec="white", lw=0.7, zorder=3))
+            ax.text(px, 1.70, f"t-{4-i}" if i < 4 else "t", ha="center", fontsize=7.2, color=LAB_COLORS[2])
+        if name == "MLP":
+            _round_box(ax, (x + 1.10, 3.35), (1.05, 0.62), "dense", fc=color, ec=color, text_color="white", fontsize=8)
+            _arrow(ax, (xs[-1], 2.24), (x + 1.62, 3.30), color=color, lw=2.0, scale=10)
+            _arrow(ax, (x + 1.62, 3.99), (x + 1.62, 4.72), color=color, lw=2.0, scale=10)
+        elif name == "RNN":
+            _round_box(ax, (x + 1.03, 3.20), (1.18, 0.72), "h(t)", fc=color, ec=color, text_color="white", fontsize=8)
+            for px in xs:
+                _arrow(ax, (px, 2.22), (x + 1.62, 3.14), color=color, lw=1.30, scale=8)
+            ax.add_patch(FancyArrowPatch((x + 2.18, 3.55), (x + 2.18, 3.55), connectionstyle="arc3,rad=1.15", arrowstyle="-|>", mutation_scale=13, lw=1.80, color=color))
+            _arrow(ax, (x + 1.62, 3.96), (x + 1.62, 4.72), color=color, lw=2.0, scale=10)
+        elif name == "LSTM":
+            center = x + card_w / 2
+            lane_y = 4.24
+            bus_y = 3.05
+            gate_y = 3.48
+            gate_xs = [x + 0.86, center, x + 2.52]
+            ax.plot([x + 0.58, x + 2.86], [lane_y, lane_y], color=color, lw=2.35, zorder=2)
+            ax.text(x + 0.62, 4.50, "cell state", ha="left", fontsize=7.5, color=color)
+            _round_box(ax, (center - 0.56, 2.44), (1.12, 0.42), "h(t)", fc="white", ec=color, fontsize=8)
+            _arrow(ax, (center, 2.90), (center, bus_y - 0.03), color=color, lw=1.35, scale=7)
+            ax.plot([gate_xs[0], gate_xs[-1]], [bus_y, bus_y], color=color, lw=1.65, zorder=2)
+            for gx, label in zip(gate_xs, ["f", "i", "o"], strict=False):
+                _arrow(ax, (gx, bus_y + 0.03), (gx, gate_y - 0.24), color=color, lw=1.25, scale=7)
+                ax.add_patch(mpatches.FancyBboxPatch((gx - 0.21, gate_y - 0.18), 0.42, 0.36, boxstyle="round,pad=0.03,rounding_size=0.06", fc=color, ec=color, lw=1.2, zorder=5))
+                ax.text(gx, gate_y, label, ha="center", va="center", fontsize=8.0, color="white", zorder=6)
+                _arrow(ax, (gx, gate_y + 0.23), (gx, lane_y - 0.10), color=color, lw=1.45, scale=8)
+            _arrow(ax, (center, lane_y + 0.02), (center, 4.72), color=color, lw=2.0, scale=10)
+        else:
+            layer_ys = [2.78, 3.46, 4.14]
+            prev_ys = [2.08] + layer_ys[:-1]
+            node_r = 0.095
+            input_r = 0.13
+
+            def edge_points(src_x, src_y, dst_x, dst_y, src_r, dst_r):
+                dx = dst_x - src_x
+                dy = dst_y - src_y
+                dist = float(np.hypot(dx, dy))
+                if dist == 0.0:
+                    return (src_x, src_y + src_r), (dst_x, dst_y - dst_r)
+                ux = dx / dist
+                uy = dy / dist
+                return (src_x + ux * src_r, src_y + uy * src_r), (dst_x - ux * dst_r, dst_y - uy * dst_r)
+
+            for prev_y, yy, dilation in zip(prev_ys, layer_ys, [1, 2, 4], strict=False):
+                for j in range(len(xs)):
+                    for src in [j, j - dilation]:
+                        if src < 0:
+                            continue
+                        start, end = edge_points(xs[src], prev_y, xs[j], yy, input_r if prev_y == 2.08 else node_r, node_r)
+                        ax.add_patch(FancyArrowPatch(start, end, arrowstyle="-|>", mutation_scale=7, lw=1.45, color=color, alpha=0.96, zorder=3))
+                for px in xs:
+                    ax.add_patch(mpatches.Circle((px, yy), node_r, fc="#ead4ff", ec=color, lw=1.25, zorder=4))
+                ax.text(x + 0.44, yy, f"d={dilation}", ha="right", va="center", fontsize=7.2, color=color)
+            _arrow(ax, (xs[-1], layer_ys[-1] + 0.14), (x + 1.70, 4.72), color=color, lw=2.10, scale=10)
+        _round_box(ax, (x + 1.08, 4.76), (1.08, 0.42), "forecast", fc="#f8fafc", ec=color, fontsize=7.8)
+
+    _soft_label(ax, (7.60, 0.34), "The project uses tabular MLPs, LSTM memory, and TCN receptive fields as different ways to summarize recent daily features.")
+    fig.tight_layout()
+    return fig, ax
+
+
+def agent_environment_loop_diagram(ax=None, *, title: str = "RL portfolio loop"):
+    fig, ax = _course_canvas(ax, figsize=(12.4, 5.4), title=title, xlim=(0, 12.4), ylim=(0, 5.2))
+    _round_box(ax, (0.75, 2.05), (2.05, 0.90), "State\nfeatures", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white")
+    _round_box(ax, (4.95, 2.05), (2.05, 0.90), "Policy\nnetwork", fc=LAB_COLORS[3], ec=LAB_COLORS[3], text_color="white")
+    _round_box(ax, (9.15, 2.05), (2.10, 0.90), "Portfolio\nenvironment", fc=LAB_COLORS[1], ec=LAB_COLORS[1], text_color="white")
+    _arrow(ax, (2.85, 2.50), (4.90, 2.50), color=LAB_COLORS[2])
+    _arrow(ax, (7.05, 2.50), (9.10, 2.50), color=LAB_COLORS[2])
+    _arrow(ax, (10.20, 2.00), (10.20, 0.85), color=LAB_COLORS[1])
+    _arrow(ax, (10.20, 0.85), (1.80, 0.85), color=LAB_COLORS[1])
+    _arrow(ax, (1.80, 0.85), (1.80, 2.00), color=LAB_COLORS[1])
+    _soft_label(ax, (3.85, 2.86), "observation")
+    _soft_label(ax, (8.05, 2.86), "weights")
+    _soft_label(ax, (6.0, 0.52), "return, cost, drawdown, next state", color=LAB_COLORS[1])
+    fig.tight_layout()
+    return fig, ax
+
+
+def mdp_diagram(ax=None, *, title: str = "Portfolio allocation as an MDP"):
+    fig, ax = _course_canvas(ax, figsize=(12.2, 5.2), title=title, xlim=(0, 12.2), ylim=(0, 5.0))
+    nodes = [
+        (0.75, 2.6, "S(t)\nstate", LAB_COLORS[0]),
+        (3.15, 2.6, "A(t)\nweights", LAB_COLORS[3]),
+        (5.80, 2.6, "R(t+1)\nreward", LAB_COLORS[1]),
+        (8.45, 2.6, "S(t+1)\nstate", LAB_COLORS[0]),
+    ]
+    for x, y, text, color in nodes:
+        _round_box(ax, (x, y), (1.55, 0.86), text, fc=color, ec=color, text_color="white", fontsize=9)
+    for a, b in zip(nodes, nodes[1:], strict=False):
+        _arrow(ax, (a[0] + 1.58, a[1] + 0.43), (b[0] - 0.05, b[1] + 0.43), color=LAB_COLORS[2])
+    _soft_label(ax, (6.1, 1.35), "transition uses market returns and transaction costs")
+    fig.tight_layout()
+    return fig, ax
+
+
+def mdp_pomdp_diagram(ax=None, *, title: str = "MDP vs POMDP in markets"):
+    fig, ax = _course_canvas(ax, figsize=(12.4, 5.4), title=title, xlim=(0, 12.4), ylim=(0, 5.2))
+    _round_box(ax, (0.75, 3.15), (1.75, 0.72), "Hidden\nmarket state", fc=LAB_COLORS[5], ec=LAB_COLORS[5], text_color="white", fontsize=8)
+    _round_box(ax, (3.65, 3.15), (1.75, 0.72), "Observed\nfeatures", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white", fontsize=8)
+    _round_box(ax, (6.55, 3.15), (1.75, 0.72), "Action", fc=LAB_COLORS[3], ec=LAB_COLORS[3], text_color="white", fontsize=8)
+    _round_box(ax, (9.45, 3.15), (1.75, 0.72), "Next\nobservation", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white", fontsize=8)
+    _arrow(ax, (2.55, 3.51), (3.60, 3.51), color=LAB_COLORS[5])
+    _arrow(ax, (5.45, 3.51), (6.50, 3.51), color=LAB_COLORS[2])
+    _arrow(ax, (8.35, 3.51), (9.40, 3.51), color=LAB_COLORS[2])
+    _round_box(ax, (1.25, 1.10), (2.30, 0.76), "MDP assumption:\nstate is enough", fc="white", ec=LAB_COLORS[3], fontsize=8)
+    _round_box(ax, (7.20, 1.10), (2.65, 0.76), "POMDP reality:\nhistory helps", fc="white", ec=LAB_COLORS[1], fontsize=8)
+    _soft_label(ax, (6.05, 0.55), "Recurrent PPO lets the policy remember recent hidden context")
+    fig.tight_layout()
+    return fig, ax
+
+
+def policy_gradient_diagram(ax=None, *, title: str = "Policy-gradient intuition"):
+    fig, ax = _course_canvas(ax, figsize=(12.2, 5.2), title=title, xlim=(0, 12.2), ylim=(0, 5.0))
+    _round_box(ax, (0.75, 2.70), (2.0, 0.74), "sample\nweights", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white", fontsize=9)
+    _round_box(ax, (4.00, 2.70), (2.0, 0.74), "observe\nreward", fc=LAB_COLORS[1], ec=LAB_COLORS[1], text_color="white", fontsize=9)
+    _round_box(ax, (7.25, 2.70), (2.0, 0.74), "increase log\nprobability", fc=LAB_COLORS[3], ec=LAB_COLORS[3], text_color="white", fontsize=9)
+    _arrow(ax, (2.80, 3.07), (3.95, 3.07), color=LAB_COLORS[2])
+    _arrow(ax, (6.05, 3.07), (7.20, 3.07), color=LAB_COLORS[2])
+    _soft_label(ax, (5.95, 1.85), "good actions are reinforced; bad actions are discouraged")
+    ax.plot([1.0, 10.4], [1.10, 1.10], color=LAB_COLORS[8], lw=1.0, ls="--")
+    ax.text(5.7, 0.75, "gradient direction is weighted by advantage, not just raw return", ha="center", fontsize=9, color=LAB_COLORS[2])
+    fig.tight_layout()
+    return fig, ax
+
+
+def actor_critic_diagram(ax=None, *, title: str = "Actor-critic portfolio policy"):
+    fig, ax = _course_canvas(ax, figsize=(12.4, 5.4), title=title, xlim=(0, 12.4), ylim=(0, 5.2))
+    _round_box(ax, (0.70, 2.15), (2.0, 0.90), "State\nencoder", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white")
+    _round_box(ax, (4.35, 3.15), (2.15, 0.82), "Actor\npi(a|s)", fc=LAB_COLORS[3], ec=LAB_COLORS[3], text_color="white")
+    _round_box(ax, (4.35, 1.15), (2.15, 0.82), "Critic\nV(s)", fc=LAB_COLORS[1], ec=LAB_COLORS[1], text_color="white")
+    _round_box(ax, (8.35, 3.15), (2.10, 0.82), "continuous\nweights", fc=LAB_COLORS[4], ec=LAB_COLORS[4], text_color="white")
+    _round_box(ax, (8.35, 1.15), (2.10, 0.82), "advantage\nestimate", fc=LAB_COLORS[6], ec=LAB_COLORS[6], text_color="white")
+    _arrow(ax, (2.75, 2.72), (4.30, 3.54), color=LAB_COLORS[2])
+    _arrow(ax, (2.75, 2.45), (4.30, 1.54), color=LAB_COLORS[2])
+    _arrow(ax, (6.55, 3.56), (8.30, 3.56), color=LAB_COLORS[2])
+    _arrow(ax, (6.55, 1.56), (8.30, 1.56), color=LAB_COLORS[2])
+    fig.tight_layout()
+    return fig, ax
+
+
+def ppo_diagram(ax=None, *, title: str = "PPO clipped update"):
+    fig, ax = _course_canvas(ax, figsize=(12.4, 5.3), title=title, xlim=(0, 12.4), ylim=(0, 5.1))
+    _round_box(ax, (0.75, 2.75), (1.85, 0.72), "old policy", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white", fontsize=9)
+    _round_box(ax, (3.55, 2.75), (2.0, 0.72), "probability\nratio", fc=LAB_COLORS[3], ec=LAB_COLORS[3], text_color="white", fontsize=9)
+    _round_box(ax, (6.55, 2.75), (2.0, 0.72), "clip band\n1 +/- eps", fc=LAB_COLORS[1], ec=LAB_COLORS[1], text_color="white", fontsize=9)
+    _round_box(ax, (9.55, 2.75), (1.85, 0.72), "new policy", fc=LAB_COLORS[4], ec=LAB_COLORS[4], text_color="white", fontsize=9)
+    _arrow(ax, (2.65, 3.11), (3.50, 3.11), color=LAB_COLORS[2])
+    _arrow(ax, (5.60, 3.11), (6.50, 3.11), color=LAB_COLORS[2])
+    _arrow(ax, (8.60, 3.11), (9.50, 3.11), color=LAB_COLORS[2])
+    ax.plot([3.3, 9.0], [1.45, 1.45], color=LAB_COLORS[8], lw=1.2)
+    ax.fill_between([5.0, 7.3], [1.17, 1.17], [1.73, 1.73], color=LAB_COLORS[0], alpha=0.12)
+    ax.text(6.15, 1.87, "stable update region", ha="center", fontsize=9, color=LAB_COLORS[2])
+    _soft_label(ax, (6.15, 0.72), "PPO improves the policy while limiting destructive jumps")
+    fig.tight_layout()
+    return fig, ax
+
+
+def sac_diagram(ax=None, *, title: str = "SAC entropy-regularized control"):
+    fig, ax = _course_canvas(ax, figsize=(12.4, 5.4), title=title, xlim=(0, 12.4), ylim=(0, 5.2))
+    _round_box(ax, (0.65, 2.35), (1.95, 0.82), "Replay\nbuffer", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white", fontsize=9)
+    _round_box(ax, (4.10, 3.25), (1.85, 0.72), "Actor", fc=LAB_COLORS[3], ec=LAB_COLORS[3], text_color="white", fontsize=9)
+    _round_box(ax, (4.10, 1.35), (1.85, 0.72), "Q1 / Q2", fc=LAB_COLORS[1], ec=LAB_COLORS[1], text_color="white", fontsize=9)
+    _round_box(ax, (7.65, 2.35), (2.15, 0.82), "soft value\ntarget", fc=LAB_COLORS[4], ec=LAB_COLORS[4], text_color="white", fontsize=9)
+    _round_box(ax, (10.25, 2.35), (1.55, 0.82), "policy\nupdate", fc=LAB_COLORS[6], ec=LAB_COLORS[6], text_color="white", fontsize=9)
+    _arrow(ax, (2.65, 2.76), (4.05, 3.55), color=LAB_COLORS[2])
+    _arrow(ax, (2.65, 2.61), (4.05, 1.73), color=LAB_COLORS[2])
+    _arrow(ax, (6.00, 1.72), (7.60, 2.63), color=LAB_COLORS[2])
+    _arrow(ax, (9.85, 2.76), (10.20, 2.76), color=LAB_COLORS[2])
+    _soft_label(ax, (6.15, 0.72), "entropy term keeps exploration alive in continuous weights")
+    fig.tight_layout()
+    return fig, ax
+
+
 plot_bsm_comp_graph = plot_computation_dag
 
 __all__ = [
+    "actor_critic_diagram",
+    "agent_environment_loop_diagram",
     "agglomerative_tree",
+    "activation_loss",
     "bayesian_mixture",
     "decision_tree_split",
     "ensemble_bagging",
     "gmm_mixture",
     "hidden_markov_model",
+    "hist_gradient_boosting_diagram",
     "kmeans_geometry",
     "knn_neighbors",
     "lda_projection",
+    "linear_regularization_comparison",
+    "lstm_architecture",
     "logistic_boundary",
     "markov_chain",
+    "mdp_diagram",
+    "mdp_pomdp_diagram",
     "ml_pipeline",
+    "mlp_architecture",
     "plot_bsm_comp_graph",
     "plot_computation_dag",
     "plot_fixed_float_swap_diagram",
     "plot_straddle_payoff",
+    "policy_gradient_diagram",
+    "ppo_diagram",
+    "quantile_forecast",
+    "sac_diagram",
+    "sequence_memory_comparison",
     "svm_margin",
+    "tcn_receptive_field",
     "tree_structure",
     "overlay_payoffs",
     "unsupervised_supervised",
