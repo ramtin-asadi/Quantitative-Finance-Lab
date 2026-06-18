@@ -3,8 +3,8 @@ from __future__ import annotations
 import math
 from collections.abc import Sequence
 from itertools import combinations
+from typing import TYPE_CHECKING
 
-import networkx as nx
 import numpy as np
 import pandas as pd
 from scipy.special import gammaln
@@ -12,6 +12,20 @@ from scipy.stats import t as student_t
 from sklearn.covariance import LedoitWolf
 
 from quantfinlab.common.errors import InputError
+
+if TYPE_CHECKING:
+    import networkx as nx
+else:
+    try:
+        import networkx as nx
+    except Exception:  # pragma: no cover
+        nx = None
+
+
+def _require_networkx():
+    if nx is None:  # pragma: no cover
+        raise ImportError("networkx is required for portfolio network functions. Install quantfinlab[network].")
+    return nx
 
 
 def _clean_returns(returns: pd.DataFrame, *, min_rows: int = 20, min_cols: int = 2) -> pd.DataFrame:
@@ -207,9 +221,10 @@ def dependence_to_distance(dependence: pd.DataFrame | np.ndarray) -> pd.DataFram
 
 
 def dense_network(dependence: pd.DataFrame | np.ndarray, *, distance: pd.DataFrame | np.ndarray | None = None) -> nx.Graph:
+    nx_mod = _require_networkx()
     dep = _matrix_frame(dependence, name="dependence")
     dist = _matrix_frame(distance, index=dep.index, name="distance") if distance is not None else dependence_to_distance(dep)
-    graph = nx.Graph()
+    graph = nx_mod.Graph()
     graph.add_nodes_from(dep.index)
     for i, a in enumerate(dep.index):
         for j in range(i + 1, len(dep.index)):
@@ -221,9 +236,10 @@ def dense_network(dependence: pd.DataFrame | np.ndarray, *, distance: pd.DataFra
 
 
 def pmfg_network(dependence: pd.DataFrame | np.ndarray, *, distance: pd.DataFrame | np.ndarray | None = None) -> nx.Graph:
+    nx_mod = _require_networkx()
     dep = _matrix_frame(dependence, name="dependence")
     dist = _matrix_frame(distance, index=dep.index, name="distance") if distance is not None else dependence_to_distance(dep)
-    graph = nx.Graph()
+    graph = nx_mod.Graph()
     graph.add_nodes_from(dep.index)
     target_edges = max(0, 3 * (len(dep.index) - 2))
     edges = []
@@ -254,12 +270,12 @@ def pmfg_network(dependence: pd.DataFrame | np.ndarray, *, distance: pd.DataFram
             break
         if (
             embedding is not None
-            and nx.has_path(graph, a, b)
+            and nx_mod.has_path(graph, a, b)
             and not any(a in face and b in face for face in faces)
         ):
             continue
         graph.add_edge(a, b, weight=strength, signed_weight=signed, distance=d)
-        is_planar, new_embedding = nx.check_planarity(graph, counterexample=False)
+        is_planar, new_embedding = nx_mod.check_planarity(graph, counterexample=False)
         if is_planar:
             embedding = new_embedding
             faces = update_faces(embedding)
@@ -280,7 +296,7 @@ def pmfg_network(dependence: pd.DataFrame | np.ndarray, *, distance: pd.DataFram
             break
         strength, signed, a, b, d = max(feasible, key=lambda row: row[0])
         graph.add_edge(a, b, weight=strength, signed_weight=signed, distance=d)
-        is_planar, embedding = nx.check_planarity(graph, counterexample=False)
+        is_planar, embedding = nx_mod.check_planarity(graph, counterexample=False)
         if not is_planar:
             graph.remove_edge(a, b)
             break
@@ -289,9 +305,10 @@ def pmfg_network(dependence: pd.DataFrame | np.ndarray, *, distance: pd.DataFram
 
 
 def mst_network(dependence: pd.DataFrame | np.ndarray, *, distance: pd.DataFrame | np.ndarray | None = None) -> nx.Graph:
+    nx_mod = _require_networkx()
     dep = _matrix_frame(dependence, name="dependence")
     dist = _matrix_frame(distance, index=dep.index, name="distance") if distance is not None else dependence_to_distance(dep)
-    candidate = nx.Graph()
+    candidate = nx_mod.Graph()
     candidate.add_nodes_from(dep.index)
     for i, left in enumerate(dep.index):
         for j in range(i + 1, len(dep.index)):
@@ -304,7 +321,7 @@ def mst_network(dependence: pd.DataFrame | np.ndarray, *, distance: pd.DataFrame
                 signed_weight=signed,
                 distance=max(float(dist.iat[i, j]), 1e-8),
             )
-    return nx.minimum_spanning_tree(candidate, weight="distance")
+    return nx_mod.minimum_spanning_tree(candidate, weight="distance")
 
 
 def combined_centrality(scores: pd.DataFrame) -> pd.Series:
@@ -317,24 +334,25 @@ def combined_centrality(scores: pd.DataFrame) -> pd.Series:
 
 def centrality_table(graph: nx.Graph) -> pd.DataFrame:
     """Scaled degree/strength, eigenvector, betweenness, closeness, and combined scores."""
+    nx_mod = _require_networkx()
     nodes = list(graph.nodes())
     if not nodes:
         return pd.DataFrame()
     raw_degree = pd.Series(dict(graph.degree()), dtype=float).reindex(nodes).fillna(0.0)
     strength = pd.Series(dict(graph.degree(weight="weight")), dtype=float).reindex(nodes).fillna(0.0)
     try:
-        eig = nx.eigenvector_centrality_numpy(graph, weight="weight")
+        eig = nx_mod.eigenvector_centrality_numpy(graph, weight="weight")
     except Exception:
-        eig = nx.eigenvector_centrality(graph, weight="weight", max_iter=1000, tol=1e-7)
+        eig = nx_mod.eigenvector_centrality(graph, weight="weight", max_iter=1000, tol=1e-7)
     bet_k = min(16, len(nodes)) if len(nodes) > 32 else None
-    bet = nx.betweenness_centrality(
+    bet = nx_mod.betweenness_centrality(
         graph,
         k=bet_k,
         seed=17 if bet_k is not None else None,
         weight="distance",
         normalized=True,
     )
-    close = nx.closeness_centrality(graph, distance="distance")
+    close = nx_mod.closeness_centrality(graph, distance="distance")
     out = pd.DataFrame(
         {
             "raw_degree": raw_degree,

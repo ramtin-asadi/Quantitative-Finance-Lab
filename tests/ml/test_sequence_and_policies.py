@@ -43,7 +43,7 @@ def test_hmm_probability_quality_and_pca_helpers() -> None:
     assert np.allclose(aligned.sum(axis=1), 1.0)
     assert quality["states"] == 2
     assert np.isfinite(quality["aic"])
-    assert sequence_models.torch_available() is True
+    assert isinstance(sequence_models.torch_available(), bool)
 
 
 def test_sequence_array_builder_aligns_per_asset_rolling_windows() -> None:

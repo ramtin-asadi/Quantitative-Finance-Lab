@@ -197,6 +197,7 @@ def test_reward_components_penalties_and_component_table() -> None:
 
 
 def test_rollout_evaluate_policy_validation_table_and_checkpoints(tmp_path) -> None:
+    pytest.importorskip("torch")
     state, returns, _ = _state_fixture()
     policy = ConstantPolicy(state.n_assets)
     period = (state.dates[0], state.dates[4])

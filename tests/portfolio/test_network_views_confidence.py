@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from quantfinlab.portfolio import confidence, network, views
+from quantfinlab.portfolio import confidence, views
 from tests.synthetic.generators import return_panel
 
 
@@ -30,6 +30,9 @@ def _view_rows() -> list[dict[str, object]]:
 
 
 def test_network_dependence_pipeline_builds_graph_weights_and_summary() -> None:
+    pytest.importorskip("networkx")
+    from quantfinlab.portfolio import network
+
     returns = return_panel(n=100, assets=("AAA", "BBB", "CCC", "DDD"))
     corr = network.shrink_corr(returns)
     dist = network.corr_distance(corr)
