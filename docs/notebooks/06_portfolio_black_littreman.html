@@ -272,17 +272,17 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Rough Volatiility For Option Pricing</span></a>
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
+  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Reinforcement Learning for Portfolio Allocation</span></a>
+  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">20. Reinforcement Learning for Portfolio Allocation</span></a>
   </div>
 </li>
     </ul>
@@ -395,7 +395,7 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 <h2 class="anchored" data-anchor-id="data">2) Data</h2>
 <p>For this project, we could’ve used the same nasdaq data from notebook 2, but that wouldn’t be the best choice for Black-Litterman and the economic interpretation and building views wouldn’t be as good. So we use a dataset of famous ETFs (investement funds that are tradable like exchanges) which is collected from yahoo-finance API. A script for reproducing the dataset will be available soon. The dataset contains history of these ETFs from the start of 2010, but we use the data from the start of 2013 cause we don’t want to deal with missing prices of one of the ETFs.</p>
 <div id="5b24c87f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:05.976053Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:05.976053Z&quot;}}" data-execution_count="2">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data/ETF_data.csv"</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data/core_cross_asset_etfs.csv"</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> pd.read_csv(data_path)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>raw[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(raw[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> raw.dropna(subset<span class="op">=</span>[<span class="st">"date"</span>]).sort_values(<span class="st">"date"</span>)</span>
@@ -6953,10 +6953,10 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <span id="cb48-17"><a href="#cb48-17" aria-hidden="true" tabindex="-1"></a>sector_annualization <span class="op">=</span> <span class="fl">252.0</span></span>
 <span id="cb48-18"><a href="#cb48-18" aria-hidden="true" tabindex="-1"></a>bl_mv_lambda <span class="op">=</span> <span class="fl">6.0</span></span>
 <span id="cb48-19"><a href="#cb48-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb48-20"><a href="#cb48-20" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data/ETF_data.csv"</span>)</span>
-<span id="cb48-21"><a href="#cb48-21" aria-hidden="true" tabindex="-1"></a>close_all <span class="op">=</span> load_yfinance_panel(data_path, fields<span class="op">=</span>(<span class="st">"close"</span>,), lowercase<span class="op">=</span><span class="va">False</span>)[<span class="st">"close"</span>]</span>
+<span id="cb48-20"><a href="#cb48-20" aria-hidden="true" tabindex="-1"></a>data_paths <span class="op">=</span> [Path(<span class="st">"../data/sector_etfs.csv"</span>), Path(<span class="st">"../data/core_cross_asset_etfs.csv"</span>)]</span>
+<span id="cb48-21"><a href="#cb48-21" aria-hidden="true" tabindex="-1"></a>close_all <span class="op">=</span> load_yfinance_panel(data_paths, fields<span class="op">=</span>(<span class="st">"close"</span>,), lowercase<span class="op">=</span><span class="va">False</span>)[<span class="st">"close"</span>]</span>
 <span id="cb48-22"><a href="#cb48-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb48-23"><a href="#cb48-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"data file:"</span>, data_path)</span>
+<span id="cb48-23"><a href="#cb48-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"data files:"</span>, [<span class="bu">str</span>(p) <span class="cf">for</span> p <span class="kw">in</span> data_paths])</span>
 <span id="cb48-24"><a href="#cb48-24" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"close panel:"</span>, close_all.shape, close_all.index.<span class="bu">min</span>().date(), <span class="st">"to"</span>, close_all.index.<span class="bu">max</span>().date())</span>
 <span id="cb48-25"><a href="#cb48-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb48-26"><a href="#cb48-26" aria-hidden="true" tabindex="-1"></a>sector_start <span class="op">=</span> <span class="st">"2018-07-01"</span></span>
@@ -7295,7 +7295,7 @@ candidate view rows: 544 selected view rows: 510 confidence rows: 510 posterior 
 <span id="cb48-359"><a href="#cb48-359" aria-hidden="true" tabindex="-1"></a>port_plots.apply_portfolio_subplot_layout(fig, axes, hspace<span class="op">=</span><span class="fl">0.60</span>, wspace<span class="op">=</span><span class="fl">0.34</span>, bottom<span class="op">=</span><span class="fl">0.08</span>, top<span class="op">=</span><span class="fl">0.94</span>)</span>
 <span id="cb48-360"><a href="#cb48-360" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>data file: ..\data\ETF_data.csv
+<pre><code>data file: ..\data\core_cross_asset_etfs.csv
 close panel: (4111, 63) 2010-01-04 to 2026-05-07</code></pre>
 </div>
 <div class="cell-output cell-output-display">

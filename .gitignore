@@ -1,5 +1,15 @@
-# Data (local only)
-data/
+# Data reproducibility layer
+data/*
+!data/.gitignore
+!data/README.md
+!data/*/
+data/datasets/
+!data/*/raw/
+data/*/raw/**
+!data/*/raw/.gitkeep
+data/*/cache/
+!data/*/README.md
+!data/*/*.py
 
 # Environments
 .venv/

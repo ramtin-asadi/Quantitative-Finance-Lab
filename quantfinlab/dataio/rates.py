@@ -63,9 +63,9 @@ def load_par_yield_curve(
 
     Example
     -------
-    >>> us = load_par_yield_curve("data/par-yield-curve-rates-1990-2026.csv",
+    >>> us = load_par_yield_curve("data/us_treasury_yields.csv",
     ...                           source="us_treasury")
-    >>> jp = load_par_yield_curve("data/japan_yield_curve_all.csv",
+    >>> jp = load_par_yield_curve("data/japan_mof_yields.csv",
     ...                           source="japan_mof")
     """
     p = Path(path)

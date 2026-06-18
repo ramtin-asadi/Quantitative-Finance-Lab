@@ -243,17 +243,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Rough Volatiility For Option Pricing</span></a>
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
+  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Reinforcement Learning for Portfolio Allocation</span></a>
+  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">20. Reinforcement Learning for Portfolio Allocation</span></a>
   </div>
 </li>
     </ul>
@@ -341,10 +341,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div id="52bd2e00" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:55:22.737035Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:55:22.736531Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:55:22.743872Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:55:22.743872Z&quot;}}" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data"</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> (data_path <span class="op">/</span> <span class="st">"nasdaq_all_close_volume.parquet"</span>).exists():</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> (data_path <span class="op">/</span> <span class="st">"nasdaq_close_volume.parquet"</span>).exists():</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    data_path <span class="op">=</span> Path(<span class="st">"data"</span>)</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>primary_path <span class="op">=</span> data_path <span class="op">/</span> <span class="st">"nasdaq_all_close_volume.parquet"</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>primary_path <span class="op">=</span> data_path <span class="op">/</span> <span class="st">"nasdaq_close_volume.parquet"</span></span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>start_date <span class="op">=</span> <span class="st">"2016-01-01"</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>top_n <span class="op">=</span> <span class="dv">100</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>lookback <span class="op">=</span> <span class="dv">252</span></span>
@@ -3779,13 +3779,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb33-51"><a href="#cb33-51" aria-hidden="true" tabindex="-1"></a>w_max_hk <span class="op">=</span> <span class="fl">0.10</span></span>
 <span id="cb33-52"><a href="#cb33-52" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb33-53"><a href="#cb33-53" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data"</span>)</span>
-<span id="cb33-54"><a href="#cb33-54" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> (data_path <span class="op">/</span> <span class="st">"hkex_selected_close_volume.csv"</span>).exists():</span>
+<span id="cb33-54"><a href="#cb33-54" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> (data_path <span class="op">/</span> <span class="st">"hkex_close_volume.parquet"</span>).exists():</span>
 <span id="cb33-55"><a href="#cb33-55" aria-hidden="true" tabindex="-1"></a>    data_path <span class="op">=</span> Path(<span class="st">"data"</span>)</span>
 <span id="cb33-56"><a href="#cb33-56" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb33-57"><a href="#cb33-57" aria-hidden="true" tabindex="-1"></a>panel <span class="op">=</span> load_yfinance_panel(</span>
-<span id="cb33-58"><a href="#cb33-58" aria-hidden="true" tabindex="-1"></a>    data_path <span class="op">/</span> <span class="st">"hkex_selected_close_volume.csv"</span>,</span>
+<span id="cb33-58"><a href="#cb33-58" aria-hidden="true" tabindex="-1"></a>    data_path <span class="op">/</span> <span class="st">"hkex_close_volume.parquet"</span>,</span>
 <span id="cb33-59"><a href="#cb33-59" aria-hidden="true" tabindex="-1"></a>    fields<span class="op">=</span>(<span class="st">"close"</span>, <span class="st">"volume"</span>),</span>
-<span id="cb33-60"><a href="#cb33-60" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"hkex_csv"</span>,</span>
+<span id="cb33-60"><a href="#cb33-60" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"hkex_close_volume"</span>,</span>
 <span id="cb33-61"><a href="#cb33-61" aria-hidden="true" tabindex="-1"></a>    start<span class="op">=</span><span class="st">"2016-01-01"</span>,</span>
 <span id="cb33-62"><a href="#cb33-62" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb33-63"><a href="#cb33-63" aria-hidden="true" tabindex="-1"></a>close_hk, volume_hk <span class="op">=</span> clean_close_volume_panels(</span>
@@ -5312,8 +5312,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../notebooks/18_rough_volatility.html" class="pagination-link" aria-label="Rough Volatiility For Option Pricing">
-        <span class="nav-page-text"><span class="chapter-title">Rough Volatiility For Option Pricing</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../notebooks/18_rough_volatility.html" class="pagination-link" aria-label="18. Rough Volatility For Option Pricing">
+        <span class="nav-page-text"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

@@ -243,17 +243,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Rough Volatiility For Option Pricing</span></a>
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
+  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Reinforcement Learning for Portfolio Allocation</span></a>
+  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">20. Reinforcement Learning for Portfolio Allocation</span></a>
   </div>
 </li>
     </ul>
@@ -336,8 +336,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    root <span class="op">=</span> root.parent</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>data_dir <span class="op">=</span> root <span class="op">/</span> <span class="st">"data"</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>spx_chain_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"spx_options_chain_202201_202312.parquet"</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>rates_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"par-yield-curve-rates-1990-2026.csv"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>spx_chain_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"spx_options_chain.parquet"</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>rates_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"us_treasury_yields.csv"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div id="cff8294c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-18T14:41:45.344416Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-18T14:41:45.344416Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-18T14:41:53.255849Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-18T14:41:53.255360Z&quot;}}" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>ann_days <span class="op">=</span> <span class="fl">365.25</span></span>
@@ -5658,18 +5658,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb84-2"><a href="#cb84-2" aria-hidden="true" tabindex="-1"></a>beta_window <span class="op">=</span> <span class="dv">60</span></span>
 <span id="cb84-3"><a href="#cb84-3" aria-hidden="true" tabindex="-1"></a>fixed_hold_days <span class="op">=</span> <span class="dv">3</span></span>
 <span id="cb84-4"><a href="#cb84-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>spx_daily <span class="op">=</span> pd.read_csv(data_dir <span class="op">/</span> <span class="st">"spx_daily_yfinance.csv"</span>)</span>
+<span id="cb84-5"><a href="#cb84-5" aria-hidden="true" tabindex="-1"></a>spx_daily <span class="op">=</span> pd.read_csv(data_dir <span class="op">/</span> <span class="st">"spx_index_ohlcv.csv"</span>)</span>
 <span id="cb84-6"><a href="#cb84-6" aria-hidden="true" tabindex="-1"></a>spx_daily[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(spx_daily[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>).dt.normalize()</span>
 <span id="cb84-7"><a href="#cb84-7" aria-hidden="true" tabindex="-1"></a>spx_daily <span class="op">=</span> spx_daily.sort_values(<span class="st">"date"</span>).drop_duplicates(<span class="st">"date"</span>, keep<span class="op">=</span><span class="st">"last"</span>)</span>
 <span id="cb84-8"><a href="#cb84-8" aria-hidden="true" tabindex="-1"></a>spx_daily[<span class="st">"spx_close"</span>] <span class="op">=</span> pd.to_numeric(spx_daily[<span class="st">"close"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
 <span id="cb84-9"><a href="#cb84-9" aria-hidden="true" tabindex="-1"></a>spx_daily[<span class="st">"spx_ret"</span>] <span class="op">=</span> np.log(spx_daily[<span class="st">"spx_close"</span>] <span class="op">/</span> spx_daily[<span class="st">"spx_close"</span>].shift(<span class="dv">1</span>))</span>
 <span id="cb84-10"><a href="#cb84-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb84-11"><a href="#cb84-11" aria-hidden="true" tabindex="-1"></a>spy_daily <span class="op">=</span> pd.read_csv(data_dir <span class="op">/</span> <span class="st">"spy_yfinance.csv"</span>)</span>
-<span id="cb84-12"><a href="#cb84-12" aria-hidden="true" tabindex="-1"></a>spy_daily[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(spy_daily[<span class="st">"Date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>).dt.normalize()</span>
+<span id="cb84-11"><a href="#cb84-11" aria-hidden="true" tabindex="-1"></a>spy_daily <span class="op">=</span> pd.read_csv(data_dir <span class="op">/</span> <span class="st">"spy_ohlcv.csv"</span>)</span>
+<span id="cb84-12"><a href="#cb84-12" aria-hidden="true" tabindex="-1"></a>spy_daily[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(spy_daily[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>).dt.normalize()</span>
 <span id="cb84-13"><a href="#cb84-13" aria-hidden="true" tabindex="-1"></a>spy_daily <span class="op">=</span> spy_daily.sort_values(<span class="st">"date"</span>).drop_duplicates(<span class="st">"date"</span>, keep<span class="op">=</span><span class="st">"last"</span>)</span>
-<span id="cb84-14"><a href="#cb84-14" aria-hidden="true" tabindex="-1"></a>spy_daily[<span class="st">"spy_close"</span>] <span class="op">=</span> pd.to_numeric(spy_daily[<span class="st">"Close"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
-<span id="cb84-15"><a href="#cb84-15" aria-hidden="true" tabindex="-1"></a>spy_daily[<span class="st">"spy_dividend"</span>] <span class="op">=</span> pd.to_numeric(spy_daily.get(<span class="st">"Dividends"</span>, <span class="fl">0.0</span>), errors<span class="op">=</span><span class="st">"coerce"</span>).fillna(<span class="fl">0.0</span>)</span>
-<span id="cb84-16"><a href="#cb84-16" aria-hidden="true" tabindex="-1"></a>spy_daily[<span class="st">"spy_ret_tr"</span>] <span class="op">=</span> np.log(pd.to_numeric(spy_daily[<span class="st">"Adj Close"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>) <span class="op">/</span> pd.to_numeric(spy_daily[<span class="st">"Adj Close"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>).shift(<span class="dv">1</span>))</span>
+<span id="cb84-14"><a href="#cb84-14" aria-hidden="true" tabindex="-1"></a>spy_daily[<span class="st">"spy_close"</span>] <span class="op">=</span> pd.to_numeric(spy_daily[<span class="st">"close"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
+<span id="cb84-15"><a href="#cb84-15" aria-hidden="true" tabindex="-1"></a>spy_daily[<span class="st">"spy_dividend"</span>] <span class="op">=</span> pd.to_numeric(spy_daily.get(<span class="st">"dividends"</span>, <span class="fl">0.0</span>), errors<span class="op">=</span><span class="st">"coerce"</span>).fillna(<span class="fl">0.0</span>)</span>
+<span id="cb84-16"><a href="#cb84-16" aria-hidden="true" tabindex="-1"></a>spy_daily[<span class="st">"spy_ret_tr"</span>] <span class="op">=</span> np.log(pd.to_numeric(spy_daily[<span class="st">"adj_close"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>) <span class="op">/</span> pd.to_numeric(spy_daily[<span class="st">"adj_close"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>).shift(<span class="dv">1</span>))</span>
 <span id="cb84-17"><a href="#cb84-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb84-18"><a href="#cb84-18" aria-hidden="true" tabindex="-1"></a>hedge_market <span class="op">=</span> spx_daily[[<span class="st">"date"</span>, <span class="st">"spx_close"</span>, <span class="st">"spx_ret"</span>]].merge(spy_daily[[<span class="st">"date"</span>, <span class="st">"spy_close"</span>, <span class="st">"spy_dividend"</span>, <span class="st">"spy_ret_tr"</span>]], on<span class="op">=</span><span class="st">"date"</span>, how<span class="op">=</span><span class="st">"left"</span>)</span>
 <span id="cb84-19"><a href="#cb84-19" aria-hidden="true" tabindex="-1"></a>roll_cov <span class="op">=</span> hedge_market[<span class="st">"spx_ret"</span>].rolling(beta_window).cov(hedge_market[<span class="st">"spy_ret_tr"</span>])</span>
@@ -6789,7 +6789,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb95-95"><a href="#cb95-95" aria-hidden="true" tabindex="-1"></a>display(backend_report)</span>
 <span id="cb95-96"><a href="#cb95-96" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb95-97"><a href="#cb95-97" aria-hidden="true" tabindex="-1"></a>btc_spot <span class="op">=</span> load_ohlcv(</span>
-<span id="cb95-98"><a href="#cb95-98" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">/</span> <span class="st">"btc_usd_yfinance_2023_10_01_2024_10_15.csv"</span>,</span>
+<span id="cb95-98"><a href="#cb95-98" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">/</span> <span class="st">"btc_usd_ohlcv.csv"</span>,</span>
 <span id="cb95-99"><a href="#cb95-99" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"yfinance_csv"</span>,</span>
 <span id="cb95-100"><a href="#cb95-100" aria-hidden="true" tabindex="-1"></a>    fields<span class="op">=</span>(<span class="st">"close"</span>,),</span>
 <span id="cb95-101"><a href="#cb95-101" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -6797,13 +6797,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb95-103"><a href="#cb95-103" aria-hidden="true" tabindex="-1"></a>btc_spot <span class="op">=</span> btc_spot[btc_spot <span class="op">&gt;</span> <span class="dv">0</span>]</span>
 <span id="cb95-104"><a href="#cb95-104" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb95-105"><a href="#cb95-105" aria-hidden="true" tabindex="-1"></a>btc_options <span class="op">=</span> load_option_chain(</span>
-<span id="cb95-106"><a href="#cb95-106" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">/</span> <span class="st">"btc_deribit_optiondx_2024_01_09.parquet"</span>,</span>
+<span id="cb95-106"><a href="#cb95-106" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">/</span> <span class="st">"btc_options_chain.parquet"</span>,</span>
 <span id="cb95-107"><a href="#cb95-107" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"btc_deribit"</span>,</span>
 <span id="cb95-108"><a href="#cb95-108" aria-hidden="true" tabindex="-1"></a>    annualization_days<span class="op">=</span><span class="fl">365.0</span>,</span>
 <span id="cb95-109"><a href="#cb95-109" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb95-110"><a href="#cb95-110" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb95-111"><a href="#cb95-111" aria-hidden="true" tabindex="-1"></a>us_rates <span class="op">=</span> load_par_yield_curve(</span>
-<span id="cb95-112"><a href="#cb95-112" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">/</span> <span class="st">"par-yield-curve-rates-1990-2026.csv"</span>,</span>
+<span id="cb95-112"><a href="#cb95-112" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">/</span> <span class="st">"us_treasury_yields.csv"</span>,</span>
 <span id="cb95-113"><a href="#cb95-113" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"us_treasury"</span>,</span>
 <span id="cb95-114"><a href="#cb95-114" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb95-115"><a href="#cb95-115" aria-hidden="true" tabindex="-1"></a></span>

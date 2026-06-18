@@ -243,17 +243,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Rough Volatiility For Option Pricing</span></a>
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
+  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Reinforcement Learning for Portfolio Allocation</span></a>
+  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">20. Reinforcement Learning for Portfolio Allocation</span></a>
   </div>
 </li>
     </ul>
@@ -284,7 +284,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<div id="57e8b18c" class="cell" data-execution_count="18">
+<div id="57e8b18c" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
@@ -329,9 +329,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>cache_dir <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"cache"</span> <span class="op">/</span> <span class="st">"project13"</span></span>
 <span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>cache_dir.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>ann_days <span class="op">=</span> <span class="fl">365.25</span></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>spy_option_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"spy_options_chain_202201_202312.parquet"</span></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>spy_underlying_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"spy_yfinance.csv"</span></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>rates_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"par-yield-curve-rates-1990-2026.csv"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>spy_option_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"spy_options_chain.parquet"</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>spy_underlying_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"spy_ohlcv.csv"</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>rates_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"us_treasury_yields.csv"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div id="5e8f550a" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>option_columns <span class="op">=</span> [</span>
@@ -382,8 +382,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div id="634c7d05" class="cell" data-execution_count="21">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>underlying_raw <span class="op">=</span> pd.read_csv(spy_underlying_path)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>underlying_raw[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(underlying_raw[<span class="st">"Date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>).dt.normalize()</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>underlying_raw <span class="op">=</span> underlying_raw.rename(columns<span class="op">=</span>{<span class="st">"Close"</span>: <span class="st">"close"</span>, <span class="st">"Adj Close"</span>: <span class="st">"adj_close"</span>, <span class="st">"Dividends"</span>: <span class="st">"dividend"</span>, <span class="st">"Stock Splits"</span>: <span class="st">"split"</span>, <span class="st">"Volume"</span>: <span class="st">"volume"</span>})</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>underlying_raw[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(underlying_raw[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>).dt.normalize()</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>underlying_raw <span class="op">=</span> underlying_raw.rename(columns<span class="op">=</span>{<span class="st">"dividends"</span>: <span class="st">"dividend"</span>, <span class="st">"stock_splits"</span>: <span class="st">"split"</span>})</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>underlying <span class="op">=</span> underlying_raw.set_index(<span class="st">"date"</span>).sort_index()</span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>underlying_2022_2023 <span class="op">=</span> underlying.loc[<span class="st">"2022-01-01"</span>:<span class="st">"2023-12-31"</span>].copy()</span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>dividend_events <span class="op">=</span> underlying_2022_2023.loc[pd.to_numeric(underlying_2022_2023[<span class="st">"dividend"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>).fillna(<span class="fl">0.0</span>) <span class="op">&gt;</span> <span class="fl">0.0</span>, [<span class="st">"dividend"</span>, <span class="st">"close"</span>]].reset_index()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -1081,7 +1081,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="d242390a" class="cell" data-execution_count="26">
+<div id="d242390a" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>tree_structure()</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
@@ -5772,7 +5772,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="36d43c03" class="cell" data-execution_count="67">
+<div id="36d43c03" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>overlay_payoffs()</span>
 <span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
@@ -6983,7 +6983,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb64-30"><a href="#cb64-30" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb64-31"><a href="#cb64-31" aria-hidden="true" tabindex="-1"></a>project_root <span class="op">=</span> Path.cwd()</span>
 <span id="cb64-32"><a href="#cb64-32" aria-hidden="true" tabindex="-1"></a>data_dir <span class="op">=</span> project_root <span class="op">/</span> <span class="st">"../data"</span></span>
-<span id="cb64-33"><a href="#cb64-33" aria-hidden="true" tabindex="-1"></a>rates_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"par-yield-curve-rates-1990-2026.csv"</span></span>
+<span id="cb64-33"><a href="#cb64-33" aria-hidden="true" tabindex="-1"></a>rates_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"us_treasury_yields.csv"</span></span>
 <span id="cb64-34"><a href="#cb64-34" aria-hidden="true" tabindex="-1"></a>option_columns <span class="op">=</span> [</span>
 <span id="cb64-35"><a href="#cb64-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quote_date"</span>, <span class="st">"quote_readtime"</span>, <span class="st">"expire_date"</span>, <span class="st">"underlying_last"</span>, <span class="st">"strike"</span>,</span>
 <span id="cb64-36"><a href="#cb64-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"c_bid"</span>, <span class="st">"c_ask"</span>, <span class="st">"p_bid"</span>, <span class="st">"p_ask"</span>, <span class="st">"c_iv"</span>, <span class="st">"p_iv"</span>,</span>
@@ -6992,8 +6992,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb64-39"><a href="#cb64-39" aria-hidden="true" tabindex="-1"></a>]</span>
 <span id="cb64-40"><a href="#cb64-40" aria-hidden="true" tabindex="-1"></a>qqq_cache <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"cache"</span> <span class="op">/</span> <span class="st">"project13"</span> <span class="op">/</span> <span class="st">"qqq"</span></span>
 <span id="cb64-41"><a href="#cb64-41" aria-hidden="true" tabindex="-1"></a>qqq_cache.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb64-42"><a href="#cb64-42" aria-hidden="true" tabindex="-1"></a>qqq_raw <span class="op">=</span> load_option_chain(data_dir <span class="op">/</span> <span class="st">"qqq_options_chain_202201_202212.parquet"</span>, source<span class="op">=</span><span class="st">"optionsdx_qqq"</span>, columns<span class="op">=</span>option_columns)</span>
-<span id="cb64-43"><a href="#cb64-43" aria-hidden="true" tabindex="-1"></a>qqq_underlying <span class="op">=</span> pd.read_csv(data_dir <span class="op">/</span> <span class="st">"qqq_yfinance.csv"</span>)</span>
+<span id="cb64-42"><a href="#cb64-42" aria-hidden="true" tabindex="-1"></a>qqq_raw <span class="op">=</span> load_option_chain(data_dir <span class="op">/</span> <span class="st">"qqq_options_chain.parquet"</span>, source<span class="op">=</span><span class="st">"optionsdx_qqq"</span>, columns<span class="op">=</span>option_columns)</span>
+<span id="cb64-43"><a href="#cb64-43" aria-hidden="true" tabindex="-1"></a>qqq_underlying <span class="op">=</span> pd.read_csv(data_dir <span class="op">/</span> <span class="st">"qqq_ohlcv.csv"</span>)</span>
 <span id="cb64-44"><a href="#cb64-44" aria-hidden="true" tabindex="-1"></a>qqq_par <span class="op">=</span> load_par_yield_curve(rates_path, source<span class="op">=</span><span class="st">"us_treasury"</span>)</span>
 <span id="cb64-45"><a href="#cb64-45" aria-hidden="true" tabindex="-1"></a>qqq_zero <span class="op">=</span> build_zero_curve_panel_from_par_yields(qqq_par, method<span class="op">=</span><span class="st">"pchip"</span>)</span>
 <span id="cb64-46"><a href="#cb64-46" aria-hidden="true" tabindex="-1"></a>clean_quotes, clean_steps, qqq_dividends <span class="op">=</span> prepare_american_quotes(qqq_raw, qqq_underlying, qqq_zero, min_dte<span class="op">=</span><span class="dv">7</span>, max_dte<span class="op">=</span><span class="dv">180</span>, moneyness_range<span class="op">=</span>(<span class="fl">0.65</span>, <span class="fl">1.45</span>), max_rel_spread<span class="op">=</span><span class="fl">0.35</span>)</span>
@@ -7045,7 +7045,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb64-92"><a href="#cb64-92" aria-hidden="true" tabindex="-1"></a>assignment_scores.loc[<span class="op">~</span>assignment_scores[<span class="st">"option_type"</span>].astype(<span class="bu">str</span>).eq(<span class="st">"call"</span>), <span class="st">"assignment_risk"</span>] <span class="op">=</span> <span class="fl">0.0</span></span>
 <span id="cb64-93"><a href="#cb64-93" aria-hidden="true" tabindex="-1"></a>assignment_scores[<span class="st">"contract_key"</span>] <span class="op">=</span> assignment_scores[<span class="st">"option_type"</span>].astype(<span class="bu">str</span>) <span class="op">+</span> <span class="st">"_"</span> <span class="op">+</span> pd.to_datetime(assignment_scores[<span class="st">"expiry"</span>]).dt.strftime(<span class="st">"%Y-%m-</span><span class="sc">%d</span><span class="st">"</span>) <span class="op">+</span> <span class="st">"_"</span> <span class="op">+</span> assignment_scores[<span class="st">"strike"</span>].<span class="bu">round</span>(<span class="dv">6</span>).astype(<span class="bu">str</span>)</span>
 <span id="cb64-94"><a href="#cb64-94" aria-hidden="true" tabindex="-1"></a>under <span class="op">=</span> qqq_underlying.copy()</span>
-<span id="cb64-95"><a href="#cb64-95" aria-hidden="true" tabindex="-1"></a>under[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(under[<span class="st">"Date"</span>]).dt.normalize()</span>
+<span id="cb64-95"><a href="#cb64-95" aria-hidden="true" tabindex="-1"></a>under[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(under[<span class="st">"date"</span>]).dt.normalize()</span>
 <span id="cb64-96"><a href="#cb64-96" aria-hidden="true" tabindex="-1"></a>under <span class="op">=</span> under.set_index(<span class="st">"date"</span>).sort_index()</span>
 <span id="cb64-97"><a href="#cb64-97" aria-hidden="true" tabindex="-1"></a>contracts <span class="op">=</span> <span class="bu">float</span>(<span class="bu">int</span>(<span class="fl">1000.0</span> <span class="op">//</span> <span class="fl">100.0</span>))</span>
 <span id="cb64-98"><a href="#cb64-98" aria-hidden="true" tabindex="-1"></a>aware_quotes <span class="op">=</span> overlay_candidates(assignment_scores)</span>
@@ -7064,9 +7064,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb64-111"><a href="#cb64-111" aria-hidden="true" tabindex="-1"></a>    <span class="st">"naive_collar"</span>: naive_collar_schedule,</span>
 <span id="cb64-112"><a href="#cb64-112" aria-hidden="true" tabindex="-1"></a>    <span class="st">"boundary_aware_collar"</span>: boundary_collar_schedule,</span>
 <span id="cb64-113"><a href="#cb64-113" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb64-114"><a href="#cb64-114" aria-hidden="true" tabindex="-1"></a>overlay_results <span class="op">=</span> run_overlay_backtest(schedules, assignment_scores, under[<span class="st">"Close"</span>], shares<span class="op">=</span><span class="fl">1000.0</span>, dividends<span class="op">=</span>under[<span class="st">"Dividends"</span>], contract_multiplier<span class="op">=</span><span class="fl">100.0</span>, assignment_risk_threshold<span class="op">=</span><span class="fl">0.25</span>, assignment_defense_strategies<span class="op">=</span>{<span class="st">"boundary_covered_call"</span>, <span class="st">"boundary_aware_collar"</span>})</span>
+<span id="cb64-114"><a href="#cb64-114" aria-hidden="true" tabindex="-1"></a>overlay_results <span class="op">=</span> run_overlay_backtest(schedules, assignment_scores, under[<span class="st">"close"</span>], shares<span class="op">=</span><span class="fl">1000.0</span>, dividends<span class="op">=</span>under[<span class="st">"dividends"</span>], contract_multiplier<span class="op">=</span><span class="fl">100.0</span>, assignment_risk_threshold<span class="op">=</span><span class="fl">0.25</span>, assignment_defense_strategies<span class="op">=</span>{<span class="st">"boundary_covered_call"</span>, <span class="st">"boundary_aware_collar"</span>})</span>
 <span id="cb64-115"><a href="#cb64-115" aria-hidden="true" tabindex="-1"></a>overlay_table <span class="op">=</span> overlay_summary(overlay_results)</span>
-<span id="cb64-116"><a href="#cb64-116" aria-hidden="true" tabindex="-1"></a>mechanics <span class="op">=</span> overlay_mechanics_table(overlay_results, shares<span class="op">=</span><span class="fl">1000.0</span>, dividends<span class="op">=</span>under[<span class="st">"Dividends"</span>])</span>
+<span id="cb64-116"><a href="#cb64-116" aria-hidden="true" tabindex="-1"></a>mechanics <span class="op">=</span> overlay_mechanics_table(overlay_results, shares<span class="op">=</span><span class="fl">1000.0</span>, dividends<span class="op">=</span>under[<span class="st">"dividends"</span>])</span>
 <span id="cb64-117"><a href="#cb64-117" aria-hidden="true" tabindex="-1"></a>tree_table <span class="op">=</span> american_scan_summary(tree_full)</span>
 <span id="cb64-118"><a href="#cb64-118" aria-hidden="true" tabindex="-1"></a>short_call_final <span class="op">=</span> assignment_scores[assignment_scores[<span class="st">"option_type"</span>].astype(<span class="bu">str</span>).eq(<span class="st">"call"</span>) <span class="op">&amp;</span> assignment_scores[<span class="st">"spot"</span>].gt(assignment_scores[<span class="st">"strike"</span>])].copy()</span>
 <span id="cb64-119"><a href="#cb64-119" aria-hidden="true" tabindex="-1"></a>validity <span class="op">=</span> pd.DataFrame([{<span class="st">"contracts_per_rebalance"</span>: contracts, <span class="st">"max_active_calls"</span>: mechanics[<span class="st">"max_active_calls"</span>].<span class="bu">max</span>(), <span class="st">"max_active_puts"</span>: mechanics[<span class="st">"max_active_puts"</span>].<span class="bu">max</span>(), <span class="st">"max_total_return"</span>: overlay_table[<span class="st">"total_return"</span>].<span class="bu">max</span>(), <span class="st">"max_total_premium_received"</span>: mechanics[<span class="st">"total_premium_received"</span>].<span class="bu">max</span>()}])</span>

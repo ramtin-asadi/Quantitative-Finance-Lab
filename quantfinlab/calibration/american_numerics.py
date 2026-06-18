@@ -95,7 +95,15 @@ def prepare_american_quotes(
         u = u.set_index(date_col)
     u.index = pd.to_datetime(u.index, errors="coerce").normalize()
     u = u.sort_index()
-    div_col = "Dividends" if "Dividends" in u.columns else "dividend" if "dividend" in u.columns else None
+    div_col = (
+        "Dividends"
+        if "Dividends" in u.columns
+        else "dividends"
+        if "dividends" in u.columns
+        else "dividend"
+        if "dividend" in u.columns
+        else None
+    )
     if div_col is None:
         div_events = pd.DataFrame(columns=["date", "dividend"])
     else:

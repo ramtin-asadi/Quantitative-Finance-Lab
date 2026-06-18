@@ -32,19 +32,23 @@ _RATE_SOURCES: dict[str, dict[str, object]] = {
 
 
 _PANEL_SOURCES: dict[str, dict[str, object]] = {
-    # yfinance-style export with '<TICKER>__<field>' columns. The field
-    # suffix may be lower or upper case; the loader normalizes to lower.
-    # Used by ETF_data.csv (NB6) and nasdaq_all_close_volume.parquet (NB3).
+    # Root-level source-centered panels with '<TICKER>__<field>' columns.
+    # The field suffix may be lower or upper case; the loader normalizes
+    # to lower. Used by ETF CSVs and Stooq Parquet panels.
     "yfinance_export": {
         "format": "wide_suffix",
         "suffix": "__",
         "date_col": "date",
     },
-    # HKEX Stooq-style multi-header CSV. Two header rows with
-    # ticker on the first level and field ('Close', 'Volume') on the second.
-    "hkex_csv": {
-        "format": "multi_header",
-        "date_col": "Date",
+    "nasdaq_close_volume": {
+        "format": "wide_suffix",
+        "suffix": "__",
+        "date_col": "date",
+    },
+    "hkex_close_volume": {
+        "format": "wide_suffix",
+        "suffix": "__",
+        "date_col": "date",
     },
 }
 

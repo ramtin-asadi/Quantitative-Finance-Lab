@@ -1,19 +1,14 @@
 """Multi-asset wide panel loaders.
 
-A single ``load_yfinance_panel`` ingests two on-disk shapes:
-
-* yfinance-style export with ``<TICKER>__<field>`` columns
-  (NB6 ETF_data.csv, NB3 nasdaq_all_close_volume.parquet)
-* Stooq HKEX multi-header CSV with ticker on header level 0 and
-  field name (``Close`` / ``Volume``) on header level 1 (NB2 / NB3).
-
-Both shapes return the same ``dict[field_name -> wide DataFrame]`` with
-DatetimeIndex (sorted, deduplicated) and tickers as columns.
+``load_yfinance_panel`` ingests source-centered root files with
+``<TICKER>__<field>`` columns, including ETF CSVs and Stooq Parquet
+close/volume panels. It returns ``dict[field_name -> wide DataFrame]``
+with a sorted, deduplicated ``DatetimeIndex`` and tickers as columns.
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 
 import numpy as np
@@ -21,6 +16,11 @@ import pandas as pd
 
 from ..portfolio.universe import prices_to_returns
 from .schemas import get_panel_source
+
+
+def _resolve_data_file(path: str | Path, filename: str) -> Path:
+    p = Path(path)
+    return p / filename if p.is_dir() else p
 
 
 def _read_table(path: Path, *, header: int | list[int] = 0) -> pd.DataFrame:
@@ -133,7 +133,7 @@ def _load_multi_header(
 
 
 def load_yfinance_panel(
-    path: str | Path,
+    path: str | Path | Sequence[str | Path],
     *,
     fields: tuple[str, ...] = ("close", "volume", "dividends", "stock_splits"),
     tickers: list[str] | None = None,
@@ -169,6 +169,43 @@ def load_yfinance_panel(
         Registered schema in :data:`PANEL_SOURCES`. ``None`` skips the
         registry; use ``date_col``/``suffix`` to drive the loader.
     """
+    if isinstance(path, Sequence) and not isinstance(path, (str, bytes, Path)):
+        merged: dict[str, pd.DataFrame] = {}
+        for one_path in path:
+            part = load_yfinance_panel(
+                one_path,
+                fields=fields,
+                tickers=None,
+                start=start,
+                end=end,
+                lowercase=lowercase,
+                date_col=date_col,
+                suffix=suffix,
+                source=source,
+            )
+            for field, frame in part.items():
+                if field not in merged:
+                    merged[field] = frame
+                else:
+                    merged[field] = pd.concat([merged[field], frame], axis=1)
+                    merged[field] = merged[field].loc[:, ~merged[field].columns.duplicated(keep="last")]
+        wanted = [str(t).strip() for t in tickers or [] if str(t).strip()]
+        for field, frame in list(merged.items()):
+            panel = frame.reindex(columns=sorted(frame.columns))
+            if wanted:
+                lookup = {str(c).lower(): c for c in panel.columns}
+                keep = []
+                seen = set()
+                for ticker in wanted:
+                    key = ticker.lower() if lowercase else ticker.lower()
+                    col = key if lowercase and key in panel.columns else lookup.get(ticker.lower())
+                    if col is not None and col not in seen:
+                        keep.append(col)
+                        seen.add(col)
+                panel = panel.reindex(columns=keep)
+            merged[field] = panel
+        return merged
+
     p = Path(path)
     if not p.exists():
         raise ValueError(f"Panel file does not exist: {p}")
@@ -226,6 +263,48 @@ def load_yfinance_panel(
             panel = panel.reindex(columns=sorted(panel.columns))
         out[field] = panel
     return out
+
+
+def load_nasdaq_close_volume(
+    path: str | Path,
+    *,
+    tickers: list[str] | None = None,
+    start: str | pd.Timestamp | None = None,
+    end: str | pd.Timestamp | None = None,
+    lowercase: bool = False,
+) -> dict[str, pd.DataFrame]:
+    """Load the source-centered NASDAQ Stooq close/volume Parquet panel."""
+    p = _resolve_data_file(path, "nasdaq_close_volume.parquet")
+    return load_yfinance_panel(
+        p,
+        fields=("close", "volume"),
+        tickers=tickers,
+        start=start,
+        end=end,
+        lowercase=lowercase,
+        source="nasdaq_close_volume",
+    )
+
+
+def load_hkex_close_volume(
+    path: str | Path,
+    *,
+    tickers: list[str] | None = None,
+    start: str | pd.Timestamp | None = None,
+    end: str | pd.Timestamp | None = None,
+    lowercase: bool = False,
+) -> dict[str, pd.DataFrame]:
+    """Load the source-centered HKEX Stooq close/volume Parquet panel."""
+    p = _resolve_data_file(path, "hkex_close_volume.parquet")
+    return load_yfinance_panel(
+        p,
+        fields=("close", "volume"),
+        tickers=tickers,
+        start=start,
+        end=end,
+        lowercase=lowercase,
+        source="hkex_close_volume",
+    )
 
 
 def align_panels(*panels: pd.DataFrame, how: str = "inner") -> tuple[pd.DataFrame, ...]:
@@ -318,6 +397,8 @@ def vix_feature_frame(vix: pd.Series, *, index: pd.Index | None = None) -> pd.Da
 
 __all__ = [
     "align_panels",
+    "load_hkex_close_volume",
+    "load_nasdaq_close_volume",
     "load_vix",
     "load_yfinance_panel",
     "prices_to_returns_panel",

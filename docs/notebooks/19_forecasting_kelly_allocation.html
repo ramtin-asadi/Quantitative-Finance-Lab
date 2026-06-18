@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation – Quantitative Finance Lab</title>
+<title>19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation – Quantitative Finance Lab</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -121,7 +121,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../notebooks/19_forecasting_kelly_allocation.html"><span class="chapter-title">Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../notebooks/19_forecasting_kelly_allocation.html"><span class="chapter-title">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -243,17 +243,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Rough Volatiility For Option Pricing</span></a>
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
+  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Reinforcement Learning for Portfolio Allocation</span></a>
+  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">20. Reinforcement Learning for Portfolio Allocation</span></a>
   </div>
 </li>
     </ul>
@@ -267,7 +267,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></h1>
+<h1 class="title"><span class="chapter-title">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></h1>
 </div>
 
 
@@ -380,7 +380,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a>annualization <span class="op">=</span> <span class="fl">252.0</span></span>
 <span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a>cost_bps <span class="op">=</span> <span class="fl">10.0</span></span>
 <span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data"</span>) <span class="cf">if</span> Path(<span class="st">"../data/ETF_data.csv"</span>).exists() <span class="cf">else</span> Path(<span class="st">"data"</span>)</span>
+<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data"</span>) <span class="cf">if</span> Path(<span class="st">"../data/core_cross_asset_etfs.csv"</span>).exists() <span class="cf">else</span> Path(<span class="st">"data"</span>)</span>
 <span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>cpu_count <span class="op">=</span> os.cpu_count() <span class="kw">or</span> <span class="dv">1</span></span>
 <span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a>outer_n_jobs <span class="op">=</span> <span class="bu">max</span>(<span class="dv">1</span>, <span class="bu">min</span>(<span class="dv">4</span>, cpu_count))</span>
@@ -646,7 +646,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>benchmark_ticker <span class="op">=</span> <span class="st">"SPY"</span></span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>panels <span class="op">=</span> load_yfinance_panel(</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    data_path <span class="op">/</span> <span class="st">"ETF_data.csv"</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    data_path <span class="op">/</span> <span class="st">"core_cross_asset_etfs.csv"</span>,</span>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    fields<span class="op">=</span>(<span class="st">"close"</span>, <span class="st">"volume"</span>),</span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    tickers<span class="op">=</span>assets <span class="op">+</span> [cash_ticker],</span>
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"yfinance_export"</span>,</span>
@@ -2259,7 +2259,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div id="b4f8e558" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>macro_factors <span class="op">=</span> load_macro_factors(data_path <span class="op">/</span> <span class="st">"us_macro_factors.csv"</span>, start<span class="op">=</span><span class="st">"1990-01-01"</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>nfci <span class="op">=</span> load_nfci(data_path <span class="op">/</span> <span class="st">"nfci-data-series.csv"</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>nfci <span class="op">=</span> load_nfci(data_path <span class="op">/</span> <span class="st">"nfci.csv"</span>)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>fci_features <span class="op">=</span> build_fci_feature_block(macro_factors, nfci, index<span class="op">=</span>close.index)</span>
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>fci_features.index.name <span class="op">=</span> <span class="st">"date"</span></span>
 <span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>fci_availability <span class="op">=</span> pd.DataFrame({</span>
@@ -9883,9 +9883,9 @@ Name: z_tcn, dtype: float64</code></pre>
 <span id="cb88-61"><a href="#cb88-61" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb88-62"><a href="#cb88-62" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb88-63"><a href="#cb88-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb88-64"><a href="#cb88-64" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data"</span>) <span class="cf">if</span> Path(<span class="st">"../data/ETF_data.csv"</span>).exists() <span class="cf">else</span> Path(<span class="st">"data"</span>)</span>
+<span id="cb88-64"><a href="#cb88-64" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data"</span>) <span class="cf">if</span> Path(<span class="st">"../data/sector_etfs.csv"</span>).exists() <span class="cf">else</span> Path(<span class="st">"data"</span>)</span>
 <span id="cb88-65"><a href="#cb88-65" aria-hidden="true" tabindex="-1"></a>macro_factors <span class="op">=</span> load_macro_factors(data_path <span class="op">/</span> <span class="st">"us_macro_factors.csv"</span>, start<span class="op">=</span><span class="st">"1990-01-01"</span>)</span>
-<span id="cb88-66"><a href="#cb88-66" aria-hidden="true" tabindex="-1"></a>nfci <span class="op">=</span> load_nfci(data_path <span class="op">/</span> <span class="st">"nfci-data-series.csv"</span>)</span>
+<span id="cb88-66"><a href="#cb88-66" aria-hidden="true" tabindex="-1"></a>nfci <span class="op">=</span> load_nfci(data_path <span class="op">/</span> <span class="st">"nfci.csv"</span>)</span>
 <span id="cb88-67"><a href="#cb88-67" aria-hidden="true" tabindex="-1"></a>rf_annual <span class="op">=</span> <span class="fl">0.04</span></span>
 <span id="cb88-68"><a href="#cb88-68" aria-hidden="true" tabindex="-1"></a>rf_daily <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> rf_annual) <span class="op">**</span> (<span class="fl">1.0</span> <span class="op">/</span> <span class="fl">252.0</span>) <span class="op">-</span> <span class="fl">1.0</span></span>
 <span id="cb88-69"><a href="#cb88-69" aria-hidden="true" tabindex="-1"></a>annualization <span class="op">=</span> <span class="fl">252.0</span></span>
@@ -9908,7 +9908,7 @@ Name: z_tcn, dtype: float64</code></pre>
 <span id="cb88-86"><a href="#cb88-86" aria-hidden="true" tabindex="-1"></a>sector_universe_signature <span class="op">=</span> <span class="st">","</span>.join(sector_assets)</span>
 <span id="cb88-87"><a href="#cb88-87" aria-hidden="true" tabindex="-1"></a>sector_tickers <span class="op">=</span> sector_assets <span class="op">+</span> [cash_ticker, benchmark_ticker]</span>
 <span id="cb88-88"><a href="#cb88-88" aria-hidden="true" tabindex="-1"></a>sector_panels <span class="op">=</span> load_yfinance_panel(</span>
-<span id="cb88-89"><a href="#cb88-89" aria-hidden="true" tabindex="-1"></a>    data_path <span class="op">/</span> <span class="st">"ETF_data.csv"</span>,</span>
+<span id="cb88-89"><a href="#cb88-89" aria-hidden="true" tabindex="-1"></a>    [data_path <span class="op">/</span> <span class="st">"sector_etfs.csv"</span>, data_path <span class="op">/</span> <span class="st">"core_cross_asset_etfs.csv"</span>],</span>
 <span id="cb88-90"><a href="#cb88-90" aria-hidden="true" tabindex="-1"></a>    fields<span class="op">=</span>(<span class="st">"close"</span>, <span class="st">"volume"</span>),</span>
 <span id="cb88-91"><a href="#cb88-91" aria-hidden="true" tabindex="-1"></a>    tickers<span class="op">=</span>sector_tickers,</span>
 <span id="cb88-92"><a href="#cb88-92" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"yfinance_export"</span>,</span>
@@ -13183,13 +13183,13 @@ Name: z_tcn, dtype: float64</code></pre>
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../notebooks/18_rough_volatility.html" class="pagination-link" aria-label="Rough Volatiility For Option Pricing">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-title">Rough Volatiility For Option Pricing</span></span>
+      <a href="../notebooks/18_rough_volatility.html" class="pagination-link" aria-label="18. Rough Volatility For Option Pricing">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../notebooks/20_rl_portfolio_allocation.html" class="pagination-link" aria-label="Reinforcement Learning for Portfolio Allocation">
-        <span class="nav-page-text"><span class="chapter-title">Reinforcement Learning for Portfolio Allocation</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../notebooks/20_rl_portfolio_allocation.html" class="pagination-link" aria-label="20. Reinforcement Learning for Portfolio Allocation">
+        <span class="nav-page-text"><span class="chapter-title">20. Reinforcement Learning for Portfolio Allocation</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

@@ -1,0 +1,25 @@
+# Archive/generated/manual data
+/datasets/
+/*.csv
+/*.parquet
+/*.pkl
+/*.xlsx
+/*.xls
+
+# Raw/manual files and caches inside source folders
+*/raw/**
+!*/raw/
+!*/raw/.gitkeep
+*/cache/
+*/*.zip
+*/*.txt
+*/*.csv
+*/*.xlsx
+*/*.xls
+*/*.parquet
+
+# Keep documentation and scripts
+!README.md
+!.gitignore
+!*/*.md
+!*/*.py

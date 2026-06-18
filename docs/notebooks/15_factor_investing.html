@@ -243,17 +243,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Rough Volatiility For Option Pricing</span></a>
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
+  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Reinforcement Learning for Portfolio Allocation</span></a>
+  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">20. Reinforcement Learning for Portfolio Allocation</span></a>
   </div>
 </li>
     </ul>
@@ -301,11 +301,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>set_plot_style()</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>pd.options.display.float_format <span class="op">=</span> <span class="st">"</span><span class="sc">{:.4f}</span><span class="st">"</span>.<span class="bu">format</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-2" class="cell" data-execution_count="2">
+<div id="c7a1386e" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data"</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>etf_path <span class="op">=</span> data_path <span class="op">/</span> <span class="st">"ETF_data.csv"</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>factor_file <span class="op">=</span> data_path <span class="op">/</span> <span class="st">"F-F_Research_Data_5_Factors_2x3.csv"</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>industry_file <span class="op">=</span> data_path <span class="op">/</span> <span class="st">"12_Industry_Portfolios.csv"</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>etf_path <span class="op">=</span> [data_path <span class="op">/</span> <span class="st">"sector_etfs.csv"</span>, data_path <span class="op">/</span> <span class="st">"core_cross_asset_etfs.csv"</span>]</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>factor_file <span class="op">=</span> data_path <span class="op">/</span> <span class="st">"fama_french_us_5_factors.csv"</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>industry_file <span class="op">=</span> data_path <span class="op">/</span> <span class="st">"fama_french_us_12_industries.csv"</span></span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>sector_tickers <span class="op">=</span> [</span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"XLB"</span>, <span class="st">"XLE"</span>, <span class="st">"XLF"</span>, <span class="st">"XLI"</span>, <span class="st">"XLK"</span>,</span>
@@ -316,7 +316,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>cash_ticker <span class="op">=</span> <span class="st">"SHY"</span></span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>benchmark_ticker <span class="op">=</span> <span class="st">"SPY"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-3" class="cell" data-execution_count="3">
+<div id="6a8ebbbc" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>tickers <span class="op">=</span> sector_tickers <span class="op">+</span> [cash_ticker, benchmark_ticker]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>prices <span class="op">=</span> load_yfinance_panel(</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    etf_path,</span>
@@ -447,7 +447,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-4" class="cell" data-execution_count="4">
+<div id="426a5746" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>monthly_prices <span class="op">=</span> prices.resample(<span class="st">"ME"</span>).last().dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>monthly_returns <span class="op">=</span> monthly_prices.pct_change().dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -503,7 +503,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-5" class="cell" data-execution_count="5">
+<div id="81ad005e" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> io <span class="im">import</span> StringIO</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -541,7 +541,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> out.replace([<span class="op">-</span><span class="fl">99.99</span>, <span class="op">-</span><span class="fl">999.0</span>, <span class="op">-</span><span class="fl">999.99</span>], np.nan)</span>
 <span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out <span class="op">/</span> <span class="fl">100.0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-6" class="cell" data-execution_count="6">
+<div id="eae86b3b" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>ff5 <span class="op">=</span> read_ff_table(factor_file)</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>ff5 <span class="op">=</span> ff5[[c <span class="cf">for</span> c <span class="kw">in</span> [<span class="st">"Mkt-RF"</span>, <span class="st">"SMB"</span>, <span class="st">"HML"</span>, <span class="st">"RMW"</span>, <span class="st">"CMA"</span>, <span class="st">"RF"</span>] <span class="cf">if</span> c <span class="kw">in</span> ff5.columns]]</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>rf <span class="op">=</span> ff5[<span class="st">"RF"</span>]</span>
@@ -645,7 +645,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-7" class="cell" data-execution_count="7">
+<div id="82bfd5bf" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>us_momentum_candidates <span class="op">=</span> [</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"F-F_Momentum_Factor.csv"</span>,</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Momentum_Factor.csv"</span>,</span>
@@ -757,7 +757,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-8" class="cell" data-execution_count="8">
+<div id="1396554b" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>industry_returns <span class="op">=</span> read_ff_table(industry_file)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>industry_dates <span class="op">=</span> industry_returns.index.intersection(factors.dropna(subset<span class="op">=</span>factor_cols).index).intersection(rf.index)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>industry_returns <span class="op">=</span> industry_returns.loc[industry_dates]</span>
@@ -881,7 +881,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-9" class="cell" data-execution_count="9">
+<div id="db4972ac" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>factor_summary <span class="op">=</span> pd.DataFrame(</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    {</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"mean"</span>: factors.mean() <span class="op">*</span> <span class="fl">12.0</span>,</span>
@@ -962,7 +962,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-10" class="cell" data-execution_count="10">
+<div id="296dc136" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">18</span>, <span class="fl">4.2</span>))</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>factor_growth <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> factors).cumprod()</span>
@@ -996,7 +996,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-11" class="cell" data-execution_count="11">
+<div id="7a3ee8cc" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> full_sample_factor_regression(y, x):</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> pd.DataFrame(y).astype(<span class="bu">float</span>)</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> pd.DataFrame(x).astype(<span class="bu">float</span>)</span>
@@ -1022,7 +1022,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    stats_out <span class="op">=</span> pd.DataFrame(rows).set_index(<span class="st">"asset"</span>)</span>
 <span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> beta_out, stats_out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-12" class="cell" data-execution_count="12">
+<div id="e5950a76" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>industry_beta, industry_stats <span class="op">=</span> full_sample_factor_regression(</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    industry_excess,</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    factors.loc[industry_excess.index, factor_cols],</span>
@@ -1158,7 +1158,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-13" class="cell" data-execution_count="13">
+<div id="d57df06e" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>factor_etfs <span class="op">=</span> [<span class="st">"MTUM"</span>, <span class="st">"VLUE"</span>, <span class="st">"QUAL"</span>, <span class="st">"USMV"</span>, <span class="st">"RSP"</span>, <span class="st">"IWF"</span>, <span class="st">"IWD"</span>, <span class="st">"IWM"</span>]</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>proxy_prices <span class="op">=</span> load_yfinance_panel(</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    etf_path,</span>
@@ -1224,7 +1224,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-14" class="cell" data-execution_count="14">
+<div id="d2c2e25c" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">19</span>, <span class="fl">4.5</span>))</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>im <span class="op">=</span> axes[<span class="dv">0</span>].imshow(proxy_beta, cmap<span class="op">=</span><span class="st">"coolwarm"</span>, aspect<span class="op">=</span><span class="st">"auto"</span>)</span>
@@ -1320,7 +1320,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-15" class="cell" data-execution_count="15">
+<div id="ca713921" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>valid_factor_dates <span class="op">=</span> factors.dropna(subset<span class="op">=</span>factor_cols).index</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>common_dates <span class="op">=</span> sector_returns.index</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>common_dates <span class="op">=</span> common_dates.intersection(cash_returns.index)</span>
@@ -1394,7 +1394,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-16" class="cell" data-execution_count="16">
+<div id="8ebc79ae" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rolling_factor_fit(y, x, window<span class="op">=</span><span class="dv">60</span>):</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> pd.DataFrame(y).astype(<span class="bu">float</span>)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> pd.DataFrame(x).astype(<span class="bu">float</span>)</span>
@@ -1432,7 +1432,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb17-35"><a href="#cb17-35" aria-hidden="true" tabindex="-1"></a>                eps.loc[date, asset] <span class="op">=</span> <span class="bu">float</span>(y[asset].iloc[i] <span class="op">-</span> row_x <span class="op">@</span> coef)</span>
 <span id="cb17-36"><a href="#cb17-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> alpha, beta, r2, eps</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-17" class="cell" data-execution_count="17">
+<div id="6dfcba12" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>alpha, beta, r2, eps <span class="op">=</span> rolling_factor_fit(sector_excess, factors, window<span class="op">=</span><span class="dv">60</span>)</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>latest_beta <span class="op">=</span> beta.dropna(how<span class="op">=</span><span class="st">"all"</span>).iloc[<span class="op">-</span><span class="dv">1</span>].unstack(<span class="st">"factor"</span>)</span>
@@ -1468,7 +1468,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-18" class="cell" data-execution_count="18">
+<div id="5dcb6ca9" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> factor_state(factors, short_window<span class="op">=</span><span class="dv">6</span>, long_window<span class="op">=</span><span class="dv">12</span>, vol_window<span class="op">=</span><span class="dv">36</span>, skip<span class="op">=</span><span class="dv">1</span>, clip<span class="op">=</span><span class="fl">2.0</span>):</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    f <span class="op">=</span> pd.DataFrame(factors).astype(<span class="bu">float</span>)</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    short <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> f).rolling(short_window).<span class="bu">apply</span>(np.prod, raw<span class="op">=</span><span class="va">True</span>) <span class="op">-</span> <span class="fl">1.0</span></span>
@@ -1518,7 +1518,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a>    out.loc[idx, cols] <span class="op">=</span> blended.where(agree, blended <span class="op">*</span> disagreement_scale)</span>
 <span id="cb19-48"><a href="#cb19-48" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-19" class="cell" data-execution_count="19">
+<div id="4fe94db5" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>z_academic <span class="op">=</span> factor_state(factors, short_window<span class="op">=</span><span class="dv">6</span>, long_window<span class="op">=</span><span class="dv">12</span>, vol_window<span class="op">=</span><span class="dv">36</span>, skip<span class="op">=</span><span class="dv">1</span>, clip<span class="op">=</span><span class="fl">2.0</span>)</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>tradable_spreads <span class="op">=</span> factor_proxy_spreads(proxy_monthly_returns, benchmark_ticker<span class="op">=</span>benchmark_ticker, cash_ticker<span class="op">=</span>cash_ticker)</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>tradable_spreads <span class="op">=</span> tradable_spreads.reindex(common_dates)</span>
@@ -1617,7 +1617,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-20" class="cell" data-execution_count="20">
+<div id="17862140" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cross_section_z(values):</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    v <span class="op">=</span> pd.DataFrame(values).astype(<span class="bu">float</span>)</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    mean <span class="op">=</span> v.mean(axis<span class="op">=</span><span class="dv">1</span>)</span>
@@ -1637,7 +1637,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>            out.loc[date, b.index] <span class="op">=</span> b[cols].dot(z.loc[date, cols])</span>
 <span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-21" class="cell" data-execution_count="21">
+<div id="c2430e5e" class="cell" data-execution_count="21">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>s_factor <span class="op">=</span> factor_scores(beta, z_factor)</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>s_factor <span class="op">=</span> cross_section_z(s_factor)</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1734,7 +1734,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-22" class="cell" data-execution_count="22">
+<div id="8be7e3cc" class="cell" data-execution_count="22">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> residual_strength(eps, window<span class="op">=</span><span class="dv">6</span>):</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(eps).astype(<span class="bu">float</span>).rolling(window).<span class="bu">sum</span>()</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1751,7 +1751,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>    drawdown <span class="op">=</span> (nav <span class="op">/</span> peak <span class="op">-</span> <span class="fl">1.0</span>).clip(upper<span class="op">=</span><span class="fl">0.0</span>)</span>
 <span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> vol <span class="op">+</span> drawdown.<span class="bu">abs</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-23" class="cell" data-execution_count="23">
+<div id="69fe6738" class="cell" data-execution_count="23">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>raw_risk <span class="op">=</span> risk_penalty(sector_returns, vol_window<span class="op">=</span><span class="dv">36</span>, drawdown_window<span class="op">=</span><span class="dv">12</span>)</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>s_resid <span class="op">=</span> cross_section_z(residual_strength(eps, window<span class="op">=</span><span class="dv">6</span>))</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>s_trend <span class="op">=</span> cross_section_z(trend_strength(sector_returns, window<span class="op">=</span><span class="dv">12</span>, skip<span class="op">=</span><span class="dv">1</span>))</span>
@@ -1787,7 +1787,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-24" class="cell" data-execution_count="24">
+<div id="621262aa" class="cell" data-execution_count="24">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rank_ic_series(score, future_returns):</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    vals <span class="op">=</span> []</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> date <span class="kw">in</span> score.index.intersection(future_returns.index):</span>
@@ -2135,7 +2135,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-25" class="cell" data-execution_count="25">
+<div id="7c6a0b68" class="cell" data-execution_count="25">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rank_ic_series(score, future_returns):</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    vals <span class="op">=</span> []</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> date <span class="kw">in</span> score.index.intersection(future_returns.index):</span>
@@ -2183,7 +2183,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb26-45"><a href="#cb26-45" aria-hidden="true" tabindex="-1"></a>        )</span>
 <span id="cb26-46"><a href="#cb26-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(rows).set_index(<span class="st">"signal"</span>), pd.DataFrame(ic_series), spreads, top_active</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-26" class="cell" data-execution_count="26">
+<div id="cd6e72f1" class="cell" data-execution_count="26">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>signals <span class="op">=</span> {</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"s_factor"</span>: s_factor,</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"s_resid"</span>: s_resid,</span>
@@ -2256,7 +2256,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-27" class="cell" data-execution_count="27">
+<div id="5162650e" class="cell" data-execution_count="27">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> signal_decay(scores, returns, horizons<span class="op">=</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">6</span>), top_n<span class="op">=</span><span class="dv">4</span>):</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> h <span class="kw">in</span> horizons:</span>
@@ -2416,7 +2416,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-28" class="cell" data-execution_count="28">
+<div id="cd0ef4ca" class="cell" data-execution_count="28">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">19</span>, <span class="fl">4.5</span>))</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>ic_history.rolling(<span class="dv">24</span>).mean().plot(ax<span class="op">=</span>axes[<span class="dv">0</span>], lw<span class="op">=</span><span class="fl">1.2</span>)</span>
@@ -2443,7 +2443,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-29" class="cell" data-execution_count="29">
+<div id="bf09a03f" class="cell" data-execution_count="29">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> soft_active_weights(</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    scores,</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    returns,</span>
@@ -2503,7 +2503,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb30-57"><a href="#cb30-57" aria-hidden="true" tabindex="-1"></a>        prev <span class="op">=</span> target</span>
 <span id="cb30-58"><a href="#cb30-58" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-30" class="cell" data-execution_count="30">
+<div id="d2ad146f" class="cell" data-execution_count="30">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>score_dates <span class="op">=</span> s_total.dropna(how<span class="op">=</span><span class="st">"all"</span>).index</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>backtest_cols <span class="op">=</span> sector_tickers <span class="op">+</span> [cash_ticker, benchmark_ticker]</span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>backtest_returns <span class="op">=</span> monthly_returns[backtest_cols].loc[common_dates]</span>
@@ -2530,7 +2530,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>weights <span class="op">=</span> {name: w.reindex(index<span class="op">=</span>backtest_dates, columns<span class="op">=</span>backtest_cols).fillna(<span class="fl">0.0</span>) <span class="cf">for</span> name, w <span class="kw">in</span> weights.items()}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-31" class="cell" data-execution_count="31">
+<div id="dbe79ebe" class="cell" data-execution_count="31">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>latest_weights <span class="op">=</span> pd.concat({name: w.iloc[<span class="op">-</span><span class="dv">1</span>] <span class="cf">for</span> name, w <span class="kw">in</span> weights.items()}, axis<span class="op">=</span><span class="dv">1</span>).fillna(<span class="fl">0.0</span>)</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>display(latest_weights.loc[latest_weights.<span class="bu">abs</span>().<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>).gt(<span class="dv">0</span>)].<span class="bu">round</span>(<span class="dv">3</span>))</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2685,7 +2685,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-32" class="cell" data-execution_count="32">
+<div id="8382baa0" class="cell" data-execution_count="32">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>w_max <span class="op">=</span> pd.Series(<span class="fl">0.25</span>, index<span class="op">=</span>backtest_cols)</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>w_max[cash_ticker] <span class="op">=</span> <span class="fl">1.0</span></span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>w_max[benchmark_ticker] <span class="op">=</span> <span class="fl">1.0</span></span>
@@ -2931,7 +2931,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-33" class="cell" data-execution_count="33">
+<div id="24fe911e" class="cell" data-execution_count="33">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>nav <span class="op">=</span> pd.DataFrame({name: result.net_values <span class="cf">for</span> name, result <span class="kw">in</span> results.items()})</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>net_returns <span class="op">=</span> pd.DataFrame({name: result.net_returns <span class="cf">for</span> name, result <span class="kw">in</span> results.items()})</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>turnover <span class="op">=</span> pd.DataFrame({name: result.turnover <span class="cf">for</span> name, result <span class="kw">in</span> results.items()})</span>
@@ -2974,7 +2974,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-34" class="cell" data-execution_count="34">
+<div id="bc1fe137" class="cell" data-execution_count="34">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>stress_windows <span class="op">=</span> {</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2018 Q4"</span>: (<span class="st">"2018-10-01"</span>, <span class="st">"2018-12-31"</span>),</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2020 COVID crash"</span>: (<span class="st">"2020-02-01"</span>, <span class="st">"2020-03-31"</span>),</span>
@@ -3053,7 +3053,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-35" class="cell" data-execution_count="35">
+<div id="932e984f" class="cell" data-execution_count="35">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>final_name <span class="op">=</span> <span class="st">"Factor + Residual + Trend - Risk"</span></span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>final_weights <span class="op">=</span> results[final_name].weights.reindex(columns<span class="op">=</span>backtest_cols).fillna(<span class="fl">0.0</span>)</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -3262,7 +3262,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-36" class="cell" data-execution_count="36">
+<div id="3824cf97" class="cell" data-execution_count="36">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> portfolio_factor_exposure(weights, beta):</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    W <span class="op">=</span> pd.DataFrame(weights).astype(<span class="bu">float</span>)</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    assets <span class="op">=</span> beta.columns.get_level_values(<span class="st">"asset"</span>).unique()</span>
@@ -3279,7 +3279,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>            out.loc[date] <span class="op">=</span> w.reindex(common).dot(b.reindex(common))</span>
 <span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="cell-37" class="cell" data-execution_count="37">
+<div id="7061eb58" class="cell" data-execution_count="37">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>latest_date <span class="op">=</span> w_final.dropna(how<span class="op">=</span><span class="st">"all"</span>).index[<span class="op">-</span><span class="dv">1</span>]</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>latest_factor_states <span class="op">=</span> z_factor.loc[latest_date].sort_values(ascending<span class="op">=</span><span class="va">False</span>).to_frame(<span class="st">"state"</span>)</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>latest_sector_scores <span class="op">=</span> pd.concat(</span>
@@ -3656,7 +3656,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
-<div id="cell-38" class="cell" data-execution_count="38">
+<div id="dadbf789" class="cell" data-execution_count="38">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -3705,7 +3705,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb39-46"><a href="#cb39-46" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-47"><a href="#cb39-47" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-48"><a href="#cb39-48" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data"</span>)</span>
-<span id="cb39-49"><a href="#cb39-49" aria-hidden="true" tabindex="-1"></a>etf_path <span class="op">=</span> data_path <span class="op">/</span> <span class="st">"ETF_data.csv"</span></span>
+<span id="cb39-49"><a href="#cb39-49" aria-hidden="true" tabindex="-1"></a>etf_path <span class="op">=</span> [data_path <span class="op">/</span> <span class="st">"international_country_etfs.csv"</span>, data_path <span class="op">/</span> <span class="st">"factor_proxy_etfs.csv"</span>]</span>
 <span id="cb39-50"><a href="#cb39-50" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-51"><a href="#cb39-51" aria-hidden="true" tabindex="-1"></a>country_tickers <span class="op">=</span> [</span>
 <span id="cb39-52"><a href="#cb39-52" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EWJ"</span>, <span class="st">"EWU"</span>, <span class="st">"EWG"</span>, <span class="st">"EWQ"</span>, <span class="st">"EWL"</span>,</span>
@@ -3730,12 +3730,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb39-71"><a href="#cb39-71" aria-hidden="true" tabindex="-1"></a>monthly_returns <span class="op">=</span> monthly_prices.pct_change().dropna()</span>
 <span id="cb39-72"><a href="#cb39-72" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-73"><a href="#cb39-73" aria-hidden="true" tabindex="-1"></a>ff5 <span class="op">=</span> load_ff_factors(</span>
-<span id="cb39-74"><a href="#cb39-74" aria-hidden="true" tabindex="-1"></a>    data_path <span class="op">/</span> <span class="st">"Developed_ex_US_5_Factors.csv"</span>,</span>
+<span id="cb39-74"><a href="#cb39-74" aria-hidden="true" tabindex="-1"></a>    data_path <span class="op">/</span> <span class="st">"fama_french_developed_ex_us_5_factors.csv"</span>,</span>
 <span id="cb39-75"><a href="#cb39-75" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span>[<span class="st">"Mkt-RF"</span>, <span class="st">"SMB"</span>, <span class="st">"HML"</span>, <span class="st">"RMW"</span>, <span class="st">"CMA"</span>, <span class="st">"RF"</span>],</span>
 <span id="cb39-76"><a href="#cb39-76" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb39-77"><a href="#cb39-77" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-78"><a href="#cb39-78" aria-hidden="true" tabindex="-1"></a>mom <span class="op">=</span> load_ff_momentum(</span>
-<span id="cb39-79"><a href="#cb39-79" aria-hidden="true" tabindex="-1"></a>    data_path <span class="op">/</span> <span class="st">"Developed_ex_US_MOM_Factor.csv"</span>,</span>
+<span id="cb39-79"><a href="#cb39-79" aria-hidden="true" tabindex="-1"></a>    data_path <span class="op">/</span> <span class="st">"fama_french_developed_ex_us_momentum.csv"</span>,</span>
 <span id="cb39-80"><a href="#cb39-80" aria-hidden="true" tabindex="-1"></a>    name<span class="op">=</span><span class="st">"MOM"</span>,</span>
 <span id="cb39-81"><a href="#cb39-81" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb39-82"><a href="#cb39-82" aria-hidden="true" tabindex="-1"></a></span>

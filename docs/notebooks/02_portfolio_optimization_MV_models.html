@@ -272,17 +272,17 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Rough Volatiility For Option Pricing</span></a>
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
+  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Reinforcement Learning for Portfolio Allocation</span></a>
+  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">20. Reinforcement Learning for Portfolio Allocation</span></a>
   </div>
 </li>
     </ul>
@@ -488,14 +488,14 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="load-data-and-compute-returns">2) Load data and compute returns</h2>
 <p>the data used in this project can be downloaded from here (<a href="https://stooq.com/db/h/">Stooq US (nasdaq) daily market data</a>)</p>
 <div id="a56c1f01" class="cell" data-execution_count="3">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_parquet(<span class="vs">r"</span><span class="dv">..\d</span><span class="vs">ata</span><span class="ch">\n</span><span class="vs">asdaq_all_close_volume</span><span class="dv">.</span><span class="vs">parquet"</span>)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"Date"</span>] <span class="op">=</span> pd.to_datetime(df[<span class="st">"Date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.dropna(subset<span class="op">=</span>[<span class="st">"Date"</span>]).sort_values(<span class="st">"Date"</span>)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_parquet(<span class="vs">r"</span><span class="dv">..\d</span><span class="vs">ata</span><span class="ch">\n</span><span class="vs">asdaq_close_volume</span><span class="dv">.</span><span class="vs">parquet"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(df[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.dropna(subset<span class="op">=</span>[<span class="st">"date"</span>]).sort_values(<span class="st">"date"</span>)</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>close_map, vol_map <span class="op">=</span> {}, {}</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> df.columns:</span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    c <span class="op">=</span> <span class="bu">str</span>(c)</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> c <span class="op">==</span> <span class="st">"Date"</span> <span class="kw">or</span> <span class="st">"__"</span> <span class="kw">not</span> <span class="kw">in</span> c:</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> c <span class="op">==</span> <span class="st">"date"</span> <span class="kw">or</span> <span class="st">"__"</span> <span class="kw">not</span> <span class="kw">in</span> c:</span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span></span>
 <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    t, f <span class="op">=</span> c.rsplit(<span class="st">"__"</span>, <span class="dv">1</span>)</span>
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    f <span class="op">=</span> f.lower()</span>
@@ -508,8 +508,8 @@ window.Quarto = {
 <span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>close_prices <span class="op">=</span> df[[close_map[t] <span class="cf">for</span> t <span class="kw">in</span> common]].copy()<span class="op">;</span> close_prices.columns <span class="op">=</span> common</span>
 <span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>volumes <span class="op">=</span> df[[vol_map[t] <span class="cf">for</span> t <span class="kw">in</span> common]].copy()<span class="op">;</span> volumes.columns <span class="op">=</span> common</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>close_prices.index <span class="op">=</span> df[<span class="st">"Date"</span>]</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>volumes.index <span class="op">=</span> df[<span class="st">"Date"</span>]</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>close_prices.index <span class="op">=</span> df[<span class="st">"date"</span>]</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>volumes.index <span class="op">=</span> df[<span class="st">"date"</span>]</span>
 <span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>close_prices <span class="op">=</span> close_prices.<span class="bu">apply</span>(pd.to_numeric, errors<span class="op">=</span><span class="st">"coerce"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).astype(np.float32)</span>
 <span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>volumes <span class="op">=</span> volumes.<span class="bu">apply</span>(pd.to_numeric, errors<span class="op">=</span><span class="st">"coerce"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).astype(np.float32)</span>
@@ -2853,8 +2853,8 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <span id="cb36-25"><a href="#cb36-25" aria-hidden="true" tabindex="-1"></a>rf_daily <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> rf_annual) <span class="op">**</span> (<span class="fl">1.0</span> <span class="op">/</span> <span class="fl">252.0</span>) <span class="op">-</span> <span class="fl">1.0</span></span>
 <span id="cb36-26"><a href="#cb36-26" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb36-27"><a href="#cb36-27" aria-hidden="true" tabindex="-1"></a>panels <span class="op">=</span> load_yfinance_panel(</span>
-<span id="cb36-28"><a href="#cb36-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"../data/hkex_selected_close_volume.csv"</span>,</span>
-<span id="cb36-29"><a href="#cb36-29" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"hkex_csv"</span>,</span>
+<span id="cb36-28"><a href="#cb36-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"../data/hkex_close_volume.parquet"</span>,</span>
+<span id="cb36-29"><a href="#cb36-29" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"hkex_close_volume"</span>,</span>
 <span id="cb36-30"><a href="#cb36-30" aria-hidden="true" tabindex="-1"></a>    fields<span class="op">=</span>(<span class="st">"close"</span>, <span class="st">"volume"</span>))</span>
 <span id="cb36-31"><a href="#cb36-31" aria-hidden="true" tabindex="-1"></a>close_prices <span class="op">=</span> panels[<span class="st">"close"</span>].astype(np.float32)</span>
 <span id="cb36-32"><a href="#cb36-32" aria-hidden="true" tabindex="-1"></a>volumes <span class="op">=</span> panels[<span class="st">"volume"</span>].astype(np.float32)</span>

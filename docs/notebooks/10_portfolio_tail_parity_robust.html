@@ -243,17 +243,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Rough Volatiility For Option Pricing</span></a>
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
+  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Reinforcement Learning for Portfolio Allocation</span></a>
+  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">20. Reinforcement Learning for Portfolio Allocation</span></a>
   </div>
 </li>
     </ul>
@@ -315,9 +315,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({<span class="st">"figure.figsize"</span>: (<span class="dv">7</span>, <span class="fl">3.5</span>), <span class="st">"figure.dpi"</span>: <span class="dv">140</span>, <span class="st">"savefig.dpi"</span>: <span class="dv">250</span>, <span class="st">"axes.grid"</span>: <span class="va">True</span>, <span class="st">"grid.alpha"</span>: <span class="fl">0.20</span>, <span class="st">"axes.spines.top"</span>: <span class="va">False</span>, <span class="st">"axes.spines.right"</span>: <span class="va">False</span>, <span class="st">"axes.titlesize"</span>: <span class="dv">11</span>, <span class="st">"axes.labelsize"</span>: <span class="dv">10</span>, <span class="st">"xtick.labelsize"</span>: <span class="dv">9</span>, <span class="st">"ytick.labelsize"</span>: <span class="dv">9</span>, <span class="st">"legend.fontsize"</span>: <span class="dv">8</span>})</span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>project_title <span class="op">=</span> <span class="st">"Portfolio Optimization Models: Tail risk, Risk Parity and Robust Optimization"</span></span>
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>repo_root <span class="op">=</span> Path.cwd()</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> (repo_root <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"ETF_data.csv"</span>).exists() <span class="kw">and</span> (repo_root.parent <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"ETF_data.csv"</span>).exists():</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> (repo_root <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"core_cross_asset_etfs.csv"</span>).exists() <span class="kw">and</span> (repo_root.parent <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"core_cross_asset_etfs.csv"</span>).exists():</span>
 <span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    repo_root <span class="op">=</span> repo_root.parent</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> repo_root <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"ETF_data.csv"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> repo_root <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"core_cross_asset_etfs.csv"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div id="bb17826a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:44:54.763315Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:44:54.763315Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:44:55.081658Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:44:55.081658Z&quot;}}" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>loaded <span class="op">=</span> load_yfinance_panel(data_path, fields<span class="op">=</span>(<span class="st">"close"</span>,), source<span class="op">=</span><span class="st">"yfinance_export"</span>, lowercase<span class="op">=</span><span class="va">False</span>)</span>
@@ -6907,444 +6907,445 @@ posterior rows: 124</code></pre>
 <span id="cb46-106"><a href="#cb46-106" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Wasserstein DRMV"</span>: <span class="st">"W-DRO"</span>,</span>
 <span id="cb46-107"><a href="#cb46-107" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb46-108"><a href="#cb46-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-109"><a href="#cb46-109" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data/ETF_data.csv"</span>)</span>
-<span id="cb46-110"><a href="#cb46-110" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> data_path.exists():</span>
-<span id="cb46-111"><a href="#cb46-111" aria-hidden="true" tabindex="-1"></a>    data_path <span class="op">=</span> Path(<span class="st">"data/ETF_data.csv"</span>)</span>
-<span id="cb46-112"><a href="#cb46-112" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-113"><a href="#cb46-113" aria-hidden="true" tabindex="-1"></a>close_all <span class="op">=</span> load_yfinance_panel(data_path, fields<span class="op">=</span>(<span class="st">"close"</span>,), lowercase<span class="op">=</span><span class="va">False</span>, source<span class="op">=</span><span class="st">"yfinance_export"</span>)[<span class="st">"close"</span>]</span>
-<span id="cb46-114"><a href="#cb46-114" aria-hidden="true" tabindex="-1"></a>available_assets <span class="op">=</span> [ticker <span class="cf">for</span> ticker <span class="kw">in</span> assets <span class="cf">if</span> ticker <span class="kw">in</span> close_all.columns]</span>
-<span id="cb46-115"><a href="#cb46-115" aria-hidden="true" tabindex="-1"></a>available_signals <span class="op">=</span> [ticker <span class="cf">for</span> ticker <span class="kw">in</span> signal_assets <span class="cf">if</span> ticker <span class="kw">in</span> close_all.columns]</span>
-<span id="cb46-116"><a href="#cb46-116" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">len</span>(available_assets) <span class="op">!=</span> <span class="bu">len</span>(assets):</span>
-<span id="cb46-117"><a href="#cb46-117" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"missing sector ETF data: </span><span class="sc">{</span><span class="bu">sorted</span>(<span class="bu">set</span>(assets) <span class="op">-</span> <span class="bu">set</span>(available_assets))<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb46-118"><a href="#cb46-118" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-119"><a href="#cb46-119" aria-hidden="true" tabindex="-1"></a>close <span class="op">=</span> close_all.loc[pd.Timestamp(sector_start):, assets].ffill(limit<span class="op">=</span><span class="dv">3</span>).dropna(how<span class="op">=</span><span class="st">"any"</span>)</span>
-<span id="cb46-120"><a href="#cb46-120" aria-hidden="true" tabindex="-1"></a>returns <span class="op">=</span> prices_to_returns(close, kind<span class="op">=</span><span class="st">"simple"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).dropna(how<span class="op">=</span><span class="st">"all"</span>).fillna(<span class="fl">0.0</span>)</span>
-<span id="cb46-121"><a href="#cb46-121" aria-hidden="true" tabindex="-1"></a>close <span class="op">=</span> close.reindex(returns.index).ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
-<span id="cb46-122"><a href="#cb46-122" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-123"><a href="#cb46-123" aria-hidden="true" tabindex="-1"></a>signal_tickers <span class="op">=</span> <span class="bu">list</span>(<span class="bu">dict</span>.fromkeys(assets <span class="op">+</span> available_signals))</span>
-<span id="cb46-124"><a href="#cb46-124" aria-hidden="true" tabindex="-1"></a>signal_close <span class="op">=</span> close_all.loc[returns.index.<span class="bu">min</span>():, signal_tickers].ffill(limit<span class="op">=</span><span class="dv">3</span>).reindex(returns.index).ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
-<span id="cb46-125"><a href="#cb46-125" aria-hidden="true" tabindex="-1"></a>signal_returns <span class="op">=</span> prices_to_returns(signal_close, kind<span class="op">=</span><span class="st">"simple"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).reindex(returns.index).fillna(<span class="fl">0.0</span>)</span>
-<span id="cb46-126"><a href="#cb46-126" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-127"><a href="#cb46-127" aria-hidden="true" tabindex="-1"></a>rebalance_dates <span class="op">=</span> make_rebalance_dates(</span>
-<span id="cb46-128"><a href="#cb46-128" aria-hidden="true" tabindex="-1"></a>    returns.index,</span>
-<span id="cb46-129"><a href="#cb46-129" aria-hidden="true" tabindex="-1"></a>    freq<span class="op">=</span>rebal_freq,</span>
-<span id="cb46-130"><a href="#cb46-130" aria-hidden="true" tabindex="-1"></a>    min_history_days<span class="op">=</span><span class="bu">max</span>(cov_lookback, mu_lookback),</span>
-<span id="cb46-131"><a href="#cb46-131" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-132"><a href="#cb46-132" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-133"><a href="#cb46-133" aria-hidden="true" tabindex="-1"></a>universe_by_date <span class="op">=</span> {</span>
-<span id="cb46-134"><a href="#cb46-134" aria-hidden="true" tabindex="-1"></a>    pd.Timestamp(dt): {<span class="st">"tickers"</span>: <span class="bu">list</span>(assets), <span class="st">"avg_dollar_volume"</span>: pd.Series(<span class="fl">1.0</span>, index<span class="op">=</span>assets)}</span>
-<span id="cb46-135"><a href="#cb46-135" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> dt <span class="kw">in</span> rebalance_dates</span>
-<span id="cb46-136"><a href="#cb46-136" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb46-137"><a href="#cb46-137" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-138"><a href="#cb46-138" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector returns:"</span>, returns.shape, returns.index.<span class="bu">min</span>().date(), <span class="st">"to"</span>, returns.index.<span class="bu">max</span>().date())</span>
-<span id="cb46-139"><a href="#cb46-139" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"rebalance dates:"</span>, <span class="bu">len</span>(rebalance_dates), rebalance_dates[<span class="dv">0</span>].date(), <span class="st">"to"</span>, rebalance_dates[<span class="op">-</span><span class="dv">1</span>].date())</span>
-<span id="cb46-140"><a href="#cb46-140" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-141"><a href="#cb46-141" aria-hidden="true" tabindex="-1"></a>sector_grid <span class="op">=</span> run_walkforward_grid(</span>
-<span id="cb46-142"><a href="#cb46-142" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>returns,</span>
-<span id="cb46-143"><a href="#cb46-143" aria-hidden="true" tabindex="-1"></a>    close<span class="op">=</span>close,</span>
-<span id="cb46-144"><a href="#cb46-144" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
-<span id="cb46-145"><a href="#cb46-145" aria-hidden="true" tabindex="-1"></a>    universe_by_date<span class="op">=</span>universe_by_date,</span>
-<span id="cb46-146"><a href="#cb46-146" aria-hidden="true" tabindex="-1"></a>    cov_lookback<span class="op">=</span>cov_lookback,</span>
-<span id="cb46-147"><a href="#cb46-147" aria-hidden="true" tabindex="-1"></a>    mu_lookback<span class="op">=</span>mu_lookback,</span>
-<span id="cb46-148"><a href="#cb46-148" aria-hidden="true" tabindex="-1"></a>    min_cov_observations<span class="op">=</span>cov_lookback <span class="op">-</span> <span class="dv">1</span>,</span>
-<span id="cb46-149"><a href="#cb46-149" aria-hidden="true" tabindex="-1"></a>    min_mu_observations<span class="op">=</span>mu_lookback <span class="op">-</span> <span class="dv">1</span>,</span>
-<span id="cb46-150"><a href="#cb46-150" aria-hidden="true" tabindex="-1"></a>    max_weight<span class="op">=</span>w_max,</span>
-<span id="cb46-151"><a href="#cb46-151" aria-hidden="true" tabindex="-1"></a>    min_weight<span class="op">=</span>w_min,</span>
-<span id="cb46-152"><a href="#cb46-152" aria-hidden="true" tabindex="-1"></a>    long_only<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb46-153"><a href="#cb46-153" aria-hidden="true" tabindex="-1"></a>    trading_cost_bps<span class="op">=</span>cost_bps,</span>
-<span id="cb46-154"><a href="#cb46-154" aria-hidden="true" tabindex="-1"></a>    turnover_penalty_bps<span class="op">=</span>cost_bps,</span>
-<span id="cb46-155"><a href="#cb46-155" aria-hidden="true" tabindex="-1"></a>    fallback<span class="op">=</span><span class="st">"equal"</span>,</span>
-<span id="cb46-156"><a href="#cb46-156" aria-hidden="true" tabindex="-1"></a>    rf_daily<span class="op">=</span>risk_free_daily,</span>
-<span id="cb46-157"><a href="#cb46-157" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>annualization,</span>
-<span id="cb46-158"><a href="#cb46-158" aria-hidden="true" tabindex="-1"></a>    ewma_lambda<span class="op">=</span>ewma_lambda,</span>
-<span id="cb46-159"><a href="#cb46-159" aria-hidden="true" tabindex="-1"></a>    optimizer_params<span class="op">=</span>{</span>
-<span id="cb46-160"><a href="#cb46-160" aria-hidden="true" tabindex="-1"></a>        <span class="st">"MV"</span>: {<span class="st">"mv_lambda"</span>: mv_lambda},</span>
-<span id="cb46-161"><a href="#cb46-161" aria-hidden="true" tabindex="-1"></a>        <span class="st">"RidgeMV"</span>: {<span class="st">"mv_lambda"</span>: mv_lambda},</span>
-<span id="cb46-162"><a href="#cb46-162" aria-hidden="true" tabindex="-1"></a>        <span class="st">"FrontierGrid"</span>: {<span class="st">"grid_n"</span>: <span class="dv">15</span>},</span>
-<span id="cb46-163"><a href="#cb46-163" aria-hidden="true" tabindex="-1"></a>    },</span>
-<span id="cb46-164"><a href="#cb46-164" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-165"><a href="#cb46-165" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-166"><a href="#cb46-166" aria-hidden="true" tabindex="-1"></a>sector_grid <span class="op">=</span> append_frontiergrid_from_best_maxsharpe(sector_grid, metric<span class="op">=</span><span class="st">"Sharpe"</span>, grid_n<span class="op">=</span><span class="dv">25</span>)</span>
-<span id="cb46-167"><a href="#cb46-167" aria-hidden="true" tabindex="-1"></a>grid_summary <span class="op">=</span> sector_grid.results.replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
-<span id="cb46-168"><a href="#cb46-168" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-169"><a href="#cb46-169" aria-hidden="true" tabindex="-1"></a>equal_grid_name <span class="op">=</span> <span class="st">"EW"</span> <span class="cf">if</span> <span class="st">"EW"</span> <span class="kw">in</span> sector_grid.backtests <span class="cf">else</span> <span class="bu">str</span>(grid_summary.index[grid_summary[<span class="st">"Optimizer"</span>].eq(<span class="st">"EW"</span>)][<span class="dv">0</span>])</span>
-<span id="cb46-170"><a href="#cb46-170" aria-hidden="true" tabindex="-1"></a>minvar_name <span class="op">=</span> <span class="bu">str</span>(grid_summary.loc[grid_summary[<span class="st">"Optimizer"</span>].eq(<span class="st">"MinVar"</span>)].dropna(subset<span class="op">=</span>[<span class="st">"Sharpe"</span>]).sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Turnover"</span>, <span class="st">"CAGR"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">True</span>, <span class="va">False</span>]).index[<span class="dv">0</span>])</span>
-<span id="cb46-171"><a href="#cb46-171" aria-hidden="true" tabindex="-1"></a>mv_name <span class="op">=</span> <span class="bu">str</span>(grid_summary.loc[grid_summary[<span class="st">"Optimizer"</span>].eq(<span class="st">"MV"</span>)].dropna(subset<span class="op">=</span>[<span class="st">"Sharpe"</span>]).sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Turnover"</span>, <span class="st">"CAGR"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">True</span>, <span class="va">False</span>]).index[<span class="dv">0</span>])</span>
-<span id="cb46-172"><a href="#cb46-172" aria-hidden="true" tabindex="-1"></a>maxsharpe_candidates <span class="op">=</span> grid_summary.loc[grid_summary[<span class="st">"Optimizer"</span>].eq(<span class="st">"MaxSharpe"</span>)].dropna(subset<span class="op">=</span>[<span class="st">"Sharpe"</span>])</span>
-<span id="cb46-173"><a href="#cb46-173" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> maxsharpe_candidates.empty:</span>
-<span id="cb46-174"><a href="#cb46-174" aria-hidden="true" tabindex="-1"></a>    maxsharpe_candidates <span class="op">=</span> grid_summary.loc[grid_summary[<span class="st">"Optimizer"</span>].eq(<span class="st">"FrontierGrid"</span>)].dropna(subset<span class="op">=</span>[<span class="st">"Sharpe"</span>])</span>
-<span id="cb46-175"><a href="#cb46-175" aria-hidden="true" tabindex="-1"></a>maxsharpe_name <span class="op">=</span> <span class="bu">str</span>(maxsharpe_candidates.sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Turnover"</span>, <span class="st">"CAGR"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">True</span>, <span class="va">False</span>]).index[<span class="dv">0</span>])</span>
-<span id="cb46-176"><a href="#cb46-176" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-177"><a href="#cb46-177" aria-hidden="true" tabindex="-1"></a>_, _, minvar_cov <span class="op">=</span> selection.parse_strategy_spec(minvar_name, sector_grid.backtests[minvar_name])</span>
-<span id="cb46-178"><a href="#cb46-178" aria-hidden="true" tabindex="-1"></a>_, mv_mu, mv_cov <span class="op">=</span> selection.parse_strategy_spec(mv_name, sector_grid.backtests[mv_name])</span>
-<span id="cb46-179"><a href="#cb46-179" aria-hidden="true" tabindex="-1"></a>_, maxsharpe_mu, maxsharpe_cov <span class="op">=</span> selection.parse_strategy_spec(maxsharpe_name, sector_grid.backtests[maxsharpe_name])</span>
-<span id="cb46-180"><a href="#cb46-180" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-181"><a href="#cb46-181" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"selected grid models:"</span>, {<span class="st">"MinVar"</span>: minvar_name, <span class="st">"MV"</span>: mv_name, <span class="st">"MaxSharpe"</span>: maxsharpe_name})</span>
-<span id="cb46-182"><a href="#cb46-182" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-183"><a href="#cb46-183" aria-hidden="true" tabindex="-1"></a>sector_benchmark_w <span class="op">=</span> pd.Series(<span class="fl">1.0</span> <span class="op">/</span> <span class="bu">len</span>(assets), index<span class="op">=</span>assets, dtype<span class="op">=</span><span class="bu">float</span>)</span>
-<span id="cb46-184"><a href="#cb46-184" aria-hidden="true" tabindex="-1"></a>sector_roles_raw <span class="op">=</span> {</span>
-<span id="cb46-185"><a href="#cb46-185" aria-hidden="true" tabindex="-1"></a>    <span class="st">"assets"</span>: assets,</span>
-<span id="cb46-186"><a href="#cb46-186" aria-hidden="true" tabindex="-1"></a>    <span class="st">"growth"</span>: [<span class="st">"XLK"</span>, <span class="st">"XLC"</span>, <span class="st">"XLY"</span>],</span>
-<span id="cb46-187"><a href="#cb46-187" aria-hidden="true" tabindex="-1"></a>    <span class="st">"defensive"</span>: [<span class="st">"XLP"</span>, <span class="st">"XLU"</span>, <span class="st">"XLV"</span>],</span>
-<span id="cb46-188"><a href="#cb46-188" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cyclical"</span>: [<span class="st">"XLI"</span>, <span class="st">"XLF"</span>, <span class="st">"XLB"</span>, <span class="st">"XLE"</span>],</span>
-<span id="cb46-189"><a href="#cb46-189" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inflation_beneficiaries"</span>: [<span class="st">"XLE"</span>, <span class="st">"XLB"</span>],</span>
-<span id="cb46-190"><a href="#cb46-190" aria-hidden="true" tabindex="-1"></a>    <span class="st">"rate_sensitive"</span>: [<span class="st">"XLU"</span>, <span class="st">"XLV"</span>, <span class="st">"XLRE"</span>],</span>
-<span id="cb46-191"><a href="#cb46-191" aria-hidden="true" tabindex="-1"></a>    <span class="st">"credit_sensitive"</span>: [<span class="st">"XLF"</span>, <span class="st">"XLY"</span>, <span class="st">"XLI"</span>],</span>
-<span id="cb46-192"><a href="#cb46-192" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quality_defensive"</span>: [<span class="st">"XLV"</span>, <span class="st">"XLP"</span>],</span>
-<span id="cb46-193"><a href="#cb46-193" aria-hidden="true" tabindex="-1"></a>    <span class="st">"small_cap_sensitive"</span>: [<span class="st">"XLI"</span>, <span class="st">"XLF"</span>, <span class="st">"XLY"</span>],</span>
-<span id="cb46-194"><a href="#cb46-194" aria-hidden="true" tabindex="-1"></a>    <span class="st">"risky"</span>: assets,</span>
-<span id="cb46-195"><a href="#cb46-195" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sleeve_map"</span>: {ticker: <span class="st">"Sector"</span> <span class="cf">for</span> ticker <span class="kw">in</span> assets},</span>
-<span id="cb46-196"><a href="#cb46-196" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb46-197"><a href="#cb46-197" aria-hidden="true" tabindex="-1"></a>sector_roles <span class="op">=</span> {</span>
-<span id="cb46-198"><a href="#cb46-198" aria-hidden="true" tabindex="-1"></a>    key: ([ticker <span class="cf">for</span> ticker <span class="kw">in</span> value <span class="cf">if</span> ticker <span class="kw">in</span> assets] <span class="cf">if</span> <span class="bu">isinstance</span>(value, <span class="bu">list</span>) <span class="cf">else</span> value)</span>
-<span id="cb46-199"><a href="#cb46-199" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> key, value <span class="kw">in</span> sector_roles_raw.items()</span>
-<span id="cb46-200"><a href="#cb46-200" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb46-201"><a href="#cb46-201" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-202"><a href="#cb46-202" aria-hidden="true" tabindex="-1"></a>sector_family_caps <span class="op">=</span> {</span>
-<span id="cb46-203"><a href="#cb46-203" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sector_momentum"</span>: <span class="fl">0.012</span>,</span>
-<span id="cb46-204"><a href="#cb46-204" aria-hidden="true" tabindex="-1"></a>    <span class="st">"growth_leadership"</span>: <span class="fl">0.030</span>,</span>
-<span id="cb46-205"><a href="#cb46-205" aria-hidden="true" tabindex="-1"></a>    <span class="st">"defensive_rotation"</span>: <span class="fl">0.006</span>,</span>
-<span id="cb46-206"><a href="#cb46-206" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cyclical_breadth"</span>: <span class="fl">0.020</span>,</span>
-<span id="cb46-207"><a href="#cb46-207" aria-hidden="true" tabindex="-1"></a>    <span class="st">"credit_beta"</span>: <span class="fl">0.012</span>,</span>
-<span id="cb46-208"><a href="#cb46-208" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inflation_beneficiaries"</span>: <span class="fl">0.008</span>,</span>
-<span id="cb46-209"><a href="#cb46-209" aria-hidden="true" tabindex="-1"></a>    <span class="st">"duration_sensitive"</span>: <span class="fl">0.014</span>,</span>
-<span id="cb46-210"><a href="#cb46-210" aria-hidden="true" tabindex="-1"></a>    <span class="st">"small_cap_risk_on"</span>: <span class="fl">0.010</span>,</span>
-<span id="cb46-211"><a href="#cb46-211" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quality_defensive"</span>: <span class="fl">0.004</span>,</span>
-<span id="cb46-212"><a href="#cb46-212" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sector_reversal"</span>: <span class="fl">0.004</span>,</span>
-<span id="cb46-213"><a href="#cb46-213" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb46-214"><a href="#cb46-214" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-215"><a href="#cb46-215" aria-hidden="true" tabindex="-1"></a>sector_view_settings <span class="op">=</span> bl_views.ViewSettings(</span>
-<span id="cb46-216"><a href="#cb46-216" aria-hidden="true" tabindex="-1"></a>    family_q_caps<span class="op">=</span>sector_family_caps,</span>
-<span id="cb46-217"><a href="#cb46-217" aria-hidden="true" tabindex="-1"></a>    family_display_names<span class="op">=</span>bl_views.DEFAULT_SECTOR_DISPLAY_NAMES,</span>
-<span id="cb46-218"><a href="#cb46-218" aria-hidden="true" tabindex="-1"></a>    assets<span class="op">=</span>assets,</span>
-<span id="cb46-219"><a href="#cb46-219" aria-hidden="true" tabindex="-1"></a>    entry_z<span class="op">=</span><span class="fl">0.50</span>,</span>
-<span id="cb46-220"><a href="#cb46-220" aria-hidden="true" tabindex="-1"></a>    q_strength_scale<span class="op">=</span><span class="fl">1.25</span>,</span>
-<span id="cb46-221"><a href="#cb46-221" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>annualization,</span>
-<span id="cb46-222"><a href="#cb46-222" aria-hidden="true" tabindex="-1"></a>    view_horizon_days<span class="op">=</span><span class="dv">21</span>,</span>
-<span id="cb46-223"><a href="#cb46-223" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-224"><a href="#cb46-224" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-225"><a href="#cb46-225" aria-hidden="true" tabindex="-1"></a>sector_bl_settings <span class="op">=</span> bl.BLSettings(</span>
-<span id="cb46-226"><a href="#cb46-226" aria-hidden="true" tabindex="-1"></a>    cov_lookback<span class="op">=</span><span class="dv">504</span>,</span>
-<span id="cb46-227"><a href="#cb46-227" aria-hidden="true" tabindex="-1"></a>    mu_lookback<span class="op">=</span><span class="dv">252</span>,</span>
-<span id="cb46-228"><a href="#cb46-228" aria-hidden="true" tabindex="-1"></a>    risk_free_rate_annual<span class="op">=</span>risk_free_rate_annual,</span>
-<span id="cb46-229"><a href="#cb46-229" aria-hidden="true" tabindex="-1"></a>    transaction_cost_bps<span class="op">=</span>cost_bps,</span>
-<span id="cb46-230"><a href="#cb46-230" aria-hidden="true" tabindex="-1"></a>    tau<span class="op">=</span><span class="fl">0.05</span>,</span>
-<span id="cb46-231"><a href="#cb46-231" aria-hidden="true" tabindex="-1"></a>    ewma_lambda<span class="op">=</span>ewma_lambda,</span>
-<span id="cb46-232"><a href="#cb46-232" aria-hidden="true" tabindex="-1"></a>    max_weight<span class="op">=</span><span class="fl">0.35</span>,</span>
-<span id="cb46-233"><a href="#cb46-233" aria-hidden="true" tabindex="-1"></a>    active_weight_limit<span class="op">=</span><span class="fl">0.15</span>,</span>
-<span id="cb46-234"><a href="#cb46-234" aria-hidden="true" tabindex="-1"></a>    active_weight_relaxed<span class="op">=</span><span class="fl">0.22</span>,</span>
-<span id="cb46-235"><a href="#cb46-235" aria-hidden="true" tabindex="-1"></a>    max_selected_views<span class="op">=</span><span class="dv">5</span>,</span>
-<span id="cb46-236"><a href="#cb46-236" aria-hidden="true" tabindex="-1"></a>    redundancy_similarity<span class="op">=</span><span class="fl">0.85</span>,</span>
-<span id="cb46-237"><a href="#cb46-237" aria-hidden="true" tabindex="-1"></a>    max_same_direction<span class="op">=</span><span class="dv">3</span>,</span>
-<span id="cb46-238"><a href="#cb46-238" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-239"><a href="#cb46-239" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-240"><a href="#cb46-240" aria-hidden="true" tabindex="-1"></a>sector_view_functions <span class="op">=</span> (</span>
-<span id="cb46-241"><a href="#cb46-241" aria-hidden="true" tabindex="-1"></a>    bl_views.sector_momentum,</span>
-<span id="cb46-242"><a href="#cb46-242" aria-hidden="true" tabindex="-1"></a>    bl_views.growth_leadership,</span>
-<span id="cb46-243"><a href="#cb46-243" aria-hidden="true" tabindex="-1"></a>    bl_views.defensive_rotation,</span>
-<span id="cb46-244"><a href="#cb46-244" aria-hidden="true" tabindex="-1"></a>    bl_views.cyclical_breadth,</span>
-<span id="cb46-245"><a href="#cb46-245" aria-hidden="true" tabindex="-1"></a>    bl_views.credit_beta,</span>
-<span id="cb46-246"><a href="#cb46-246" aria-hidden="true" tabindex="-1"></a>    bl_views.inflation_beneficiaries,</span>
-<span id="cb46-247"><a href="#cb46-247" aria-hidden="true" tabindex="-1"></a>    bl_views.duration_sensitive,</span>
-<span id="cb46-248"><a href="#cb46-248" aria-hidden="true" tabindex="-1"></a>    bl_views.small_cap_risk_on,</span>
-<span id="cb46-249"><a href="#cb46-249" aria-hidden="true" tabindex="-1"></a>    bl_views.quality_defensive,</span>
-<span id="cb46-250"><a href="#cb46-250" aria-hidden="true" tabindex="-1"></a>    bl_views.sector_reversal,</span>
-<span id="cb46-251"><a href="#cb46-251" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-252"><a href="#cb46-252" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-253"><a href="#cb46-253" aria-hidden="true" tabindex="-1"></a>sector_asset_caps <span class="op">=</span> pd.Series(sector_bl_settings.max_weight, index<span class="op">=</span>assets, dtype<span class="op">=</span><span class="bu">float</span>)</span>
-<span id="cb46-254"><a href="#cb46-254" aria-hidden="true" tabindex="-1"></a>sector_bl_run <span class="op">=</span> bl.learned_confidence_bl(</span>
-<span id="cb46-255"><a href="#cb46-255" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>returns,</span>
-<span id="cb46-256"><a href="#cb46-256" aria-hidden="true" tabindex="-1"></a>    signal_returns<span class="op">=</span>signal_returns,</span>
-<span id="cb46-257"><a href="#cb46-257" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
-<span id="cb46-258"><a href="#cb46-258" aria-hidden="true" tabindex="-1"></a>    benchmark_weights<span class="op">=</span>sector_benchmark_w,</span>
-<span id="cb46-259"><a href="#cb46-259" aria-hidden="true" tabindex="-1"></a>    roles<span class="op">=</span>sector_roles,</span>
-<span id="cb46-260"><a href="#cb46-260" aria-hidden="true" tabindex="-1"></a>    view_functions<span class="op">=</span>sector_view_functions,</span>
-<span id="cb46-261"><a href="#cb46-261" aria-hidden="true" tabindex="-1"></a>    view_settings<span class="op">=</span>sector_view_settings,</span>
-<span id="cb46-262"><a href="#cb46-262" aria-hidden="true" tabindex="-1"></a>    settings<span class="op">=</span>sector_bl_settings,</span>
-<span id="cb46-263"><a href="#cb46-263" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>{<span class="st">"asset_caps"</span>: sector_asset_caps},</span>
-<span id="cb46-264"><a href="#cb46-264" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-265"><a href="#cb46-265" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-266"><a href="#cb46-266" aria-hidden="true" tabindex="-1"></a>sector_bl_result <span class="op">=</span> run_many_weights_backtests(</span>
-<span id="cb46-267"><a href="#cb46-267" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"Learned-Confidence BL"</span>: sector_bl_run.weights},</span>
-<span id="cb46-268"><a href="#cb46-268" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>returns,</span>
-<span id="cb46-269"><a href="#cb46-269" aria-hidden="true" tabindex="-1"></a>    cost_bps<span class="op">=</span>cost_bps,</span>
-<span id="cb46-270"><a href="#cb46-270" aria-hidden="true" tabindex="-1"></a>    rf_daily<span class="op">=</span>risk_free_daily,</span>
-<span id="cb46-271"><a href="#cb46-271" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>sector_bl_settings.min_weight,</span>
-<span id="cb46-272"><a href="#cb46-272" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>sector_bl_settings.max_weight,</span>
-<span id="cb46-273"><a href="#cb46-273" aria-hidden="true" tabindex="-1"></a>    long_only<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb46-274"><a href="#cb46-274" aria-hidden="true" tabindex="-1"></a>    normalize<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb46-275"><a href="#cb46-275" aria-hidden="true" tabindex="-1"></a>    weight_timing<span class="op">=</span><span class="st">"next_close"</span>,</span>
-<span id="cb46-276"><a href="#cb46-276" aria-hidden="true" tabindex="-1"></a>)[<span class="st">"Learned-Confidence BL"</span>]</span>
-<span id="cb46-277"><a href="#cb46-277" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-278"><a href="#cb46-278" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"BL view rows:"</span>, <span class="bu">len</span>(sector_bl_run.candidate_view_log), <span class="st">"candidate,"</span>, <span class="bu">len</span>(sector_bl_run.selected_view_log), <span class="st">"selected"</span>)</span>
-<span id="cb46-279"><a href="#cb46-279" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-280"><a href="#cb46-280" aria-hidden="true" tabindex="-1"></a>benchmark_results <span class="op">=</span> {</span>
-<span id="cb46-281"><a href="#cb46-281" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Equal Weight"</span>: sector_grid.backtests[equal_grid_name],</span>
-<span id="cb46-282"><a href="#cb46-282" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MinVar"</span>: sector_grid.backtests[minvar_name],</span>
-<span id="cb46-283"><a href="#cb46-283" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MV"</span>: sector_grid.backtests[mv_name],</span>
-<span id="cb46-284"><a href="#cb46-284" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MaxSharpe"</span>: sector_grid.backtests[maxsharpe_name],</span>
-<span id="cb46-285"><a href="#cb46-285" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Learned-Confidence BL"</span>: sector_bl_result,</span>
-<span id="cb46-286"><a href="#cb46-286" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb46-287"><a href="#cb46-287" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-288"><a href="#cb46-288" aria-hidden="true" tabindex="-1"></a>benchmark_table <span class="op">=</span> selection.build_strategy_summary(</span>
-<span id="cb46-289"><a href="#cb46-289" aria-hidden="true" tabindex="-1"></a>    benchmark_results,</span>
-<span id="cb46-290"><a href="#cb46-290" aria-hidden="true" tabindex="-1"></a>    rf_daily<span class="op">=</span>risk_free_daily,</span>
-<span id="cb46-291"><a href="#cb46-291" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>annualization,</span>
-<span id="cb46-292"><a href="#cb46-292" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-293"><a href="#cb46-293" aria-hidden="true" tabindex="-1"></a>display(benchmark_table[[<span class="st">"CAGR"</span>, <span class="st">"Vol"</span>, <span class="st">"Sharpe"</span>, <span class="st">"Sortino"</span>, <span class="st">"Calmar"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Turnover"</span>, <span class="st">"Effective N"</span>]].<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb46-294"><a href="#cb46-294" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-295"><a href="#cb46-295" aria-hidden="true" tabindex="-1"></a>weights_min_cvar <span class="op">=</span> min_cvar_weight_frame(</span>
-<span id="cb46-296"><a href="#cb46-296" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
-<span id="cb46-297"><a href="#cb46-297" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
-<span id="cb46-298"><a href="#cb46-298" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>minvar_cov,</span>
-<span id="cb46-299"><a href="#cb46-299" aria-hidden="true" tabindex="-1"></a>    alpha<span class="op">=</span><span class="fl">0.95</span>,</span>
-<span id="cb46-300"><a href="#cb46-300" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
-<span id="cb46-301"><a href="#cb46-301" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
-<span id="cb46-302"><a href="#cb46-302" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-303"><a href="#cb46-303" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-304"><a href="#cb46-304" aria-hidden="true" tabindex="-1"></a>weights_mean_cvar <span class="op">=</span> mean_cvar_weight_frame(</span>
-<span id="cb46-305"><a href="#cb46-305" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
-<span id="cb46-306"><a href="#cb46-306" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
-<span id="cb46-307"><a href="#cb46-307" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>maxsharpe_cov,</span>
-<span id="cb46-308"><a href="#cb46-308" aria-hidden="true" tabindex="-1"></a>    mu_model<span class="op">=</span>maxsharpe_mu,</span>
-<span id="cb46-309"><a href="#cb46-309" aria-hidden="true" tabindex="-1"></a>    reference<span class="op">=</span><span class="st">"equal"</span>,</span>
-<span id="cb46-310"><a href="#cb46-310" aria-hidden="true" tabindex="-1"></a>    alpha<span class="op">=</span><span class="fl">0.95</span>,</span>
-<span id="cb46-311"><a href="#cb46-311" aria-hidden="true" tabindex="-1"></a>    budget_scale<span class="op">=</span><span class="fl">0.90</span>,</span>
-<span id="cb46-312"><a href="#cb46-312" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
-<span id="cb46-313"><a href="#cb46-313" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
-<span id="cb46-314"><a href="#cb46-314" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-315"><a href="#cb46-315" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-316"><a href="#cb46-316" aria-hidden="true" tabindex="-1"></a>weights_rp <span class="op">=</span> risk_parity_weight_frame(</span>
-<span id="cb46-317"><a href="#cb46-317" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
-<span id="cb46-318"><a href="#cb46-318" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
-<span id="cb46-319"><a href="#cb46-319" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>minvar_cov,</span>
-<span id="cb46-320"><a href="#cb46-320" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
-<span id="cb46-321"><a href="#cb46-321" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
-<span id="cb46-322"><a href="#cb46-322" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-323"><a href="#cb46-323" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-324"><a href="#cb46-324" aria-hidden="true" tabindex="-1"></a>weights_hrp <span class="op">=</span> hrp_weight_frame(</span>
-<span id="cb46-325"><a href="#cb46-325" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
-<span id="cb46-326"><a href="#cb46-326" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
-<span id="cb46-327"><a href="#cb46-327" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>minvar_cov,</span>
-<span id="cb46-328"><a href="#cb46-328" aria-hidden="true" tabindex="-1"></a>    linkage_method<span class="op">=</span><span class="st">"average"</span>,</span>
-<span id="cb46-329"><a href="#cb46-329" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
-<span id="cb46-330"><a href="#cb46-330" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
-<span id="cb46-331"><a href="#cb46-331" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-332"><a href="#cb46-332" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-333"><a href="#cb46-333" aria-hidden="true" tabindex="-1"></a>weights_nco <span class="op">=</span> nco_mv_weight_frame(</span>
-<span id="cb46-334"><a href="#cb46-334" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
-<span id="cb46-335"><a href="#cb46-335" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
-<span id="cb46-336"><a href="#cb46-336" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>maxsharpe_cov,</span>
-<span id="cb46-337"><a href="#cb46-337" aria-hidden="true" tabindex="-1"></a>    mu_model<span class="op">=</span>maxsharpe_mu,</span>
-<span id="cb46-338"><a href="#cb46-338" aria-hidden="true" tabindex="-1"></a>    n_clusters<span class="op">=</span><span class="dv">3</span>,</span>
-<span id="cb46-339"><a href="#cb46-339" aria-hidden="true" tabindex="-1"></a>    inner_lambda<span class="op">=</span>alt_mv_lambda,</span>
-<span id="cb46-340"><a href="#cb46-340" aria-hidden="true" tabindex="-1"></a>    outer_lambda<span class="op">=</span>alt_mv_lambda,</span>
-<span id="cb46-341"><a href="#cb46-341" aria-hidden="true" tabindex="-1"></a>    cluster_cap<span class="op">=</span><span class="fl">0.75</span>,</span>
-<span id="cb46-342"><a href="#cb46-342" aria-hidden="true" tabindex="-1"></a>    linkage_method<span class="op">=</span><span class="st">"average"</span>,</span>
-<span id="cb46-343"><a href="#cb46-343" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
-<span id="cb46-344"><a href="#cb46-344" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
-<span id="cb46-345"><a href="#cb46-345" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-346"><a href="#cb46-346" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-347"><a href="#cb46-347" aria-hidden="true" tabindex="-1"></a>weights_box <span class="op">=</span> box_robust_weight_frame(</span>
-<span id="cb46-348"><a href="#cb46-348" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
-<span id="cb46-349"><a href="#cb46-349" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
-<span id="cb46-350"><a href="#cb46-350" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>maxsharpe_cov,</span>
-<span id="cb46-351"><a href="#cb46-351" aria-hidden="true" tabindex="-1"></a>    mu_model<span class="op">=</span>maxsharpe_mu,</span>
-<span id="cb46-352"><a href="#cb46-352" aria-hidden="true" tabindex="-1"></a>    radius<span class="op">=</span><span class="fl">0.25</span>,</span>
-<span id="cb46-353"><a href="#cb46-353" aria-hidden="true" tabindex="-1"></a>    mv_lambda<span class="op">=</span>alt_mv_lambda,</span>
-<span id="cb46-354"><a href="#cb46-354" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
-<span id="cb46-355"><a href="#cb46-355" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
-<span id="cb46-356"><a href="#cb46-356" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-357"><a href="#cb46-357" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-358"><a href="#cb46-358" aria-hidden="true" tabindex="-1"></a>weights_ellipsoid <span class="op">=</span> ellipsoid_robust_weight_frame(</span>
-<span id="cb46-359"><a href="#cb46-359" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
-<span id="cb46-360"><a href="#cb46-360" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
-<span id="cb46-361"><a href="#cb46-361" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>maxsharpe_cov,</span>
-<span id="cb46-362"><a href="#cb46-362" aria-hidden="true" tabindex="-1"></a>    mu_model<span class="op">=</span>maxsharpe_mu,</span>
-<span id="cb46-363"><a href="#cb46-363" aria-hidden="true" tabindex="-1"></a>    radius<span class="op">=</span><span class="fl">0.25</span>,</span>
-<span id="cb46-364"><a href="#cb46-364" aria-hidden="true" tabindex="-1"></a>    mv_lambda<span class="op">=</span>alt_mv_lambda,</span>
-<span id="cb46-365"><a href="#cb46-365" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
-<span id="cb46-366"><a href="#cb46-366" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
-<span id="cb46-367"><a href="#cb46-367" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-368"><a href="#cb46-368" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-369"><a href="#cb46-369" aria-hidden="true" tabindex="-1"></a>weights_wasserstein <span class="op">=</span> wasserstein_weight_frame(</span>
-<span id="cb46-370"><a href="#cb46-370" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
-<span id="cb46-371"><a href="#cb46-371" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
-<span id="cb46-372"><a href="#cb46-372" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>maxsharpe_cov,</span>
-<span id="cb46-373"><a href="#cb46-373" aria-hidden="true" tabindex="-1"></a>    mu_model<span class="op">=</span>maxsharpe_mu,</span>
-<span id="cb46-374"><a href="#cb46-374" aria-hidden="true" tabindex="-1"></a>    radius<span class="op">=</span><span class="fl">0.10</span>,</span>
-<span id="cb46-375"><a href="#cb46-375" aria-hidden="true" tabindex="-1"></a>    mv_lambda<span class="op">=</span>alt_mv_lambda,</span>
-<span id="cb46-376"><a href="#cb46-376" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
-<span id="cb46-377"><a href="#cb46-377" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
-<span id="cb46-378"><a href="#cb46-378" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-379"><a href="#cb46-379" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-380"><a href="#cb46-380" aria-hidden="true" tabindex="-1"></a>weights_by_name <span class="op">=</span> {</span>
-<span id="cb46-381"><a href="#cb46-381" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Min-CVaR 95"</span>: weights_min_cvar,</span>
-<span id="cb46-382"><a href="#cb46-382" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Mean-CVaR 95"</span>: weights_mean_cvar,</span>
-<span id="cb46-383"><a href="#cb46-383" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Risk Parity"</span>: weights_rp,</span>
-<span id="cb46-384"><a href="#cb46-384" aria-hidden="true" tabindex="-1"></a>    <span class="st">"HRP"</span>: weights_hrp,</span>
-<span id="cb46-385"><a href="#cb46-385" aria-hidden="true" tabindex="-1"></a>    <span class="st">"NCO-MV"</span>: weights_nco,</span>
-<span id="cb46-386"><a href="#cb46-386" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Box Robust MV"</span>: weights_box,</span>
-<span id="cb46-387"><a href="#cb46-387" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Ellipsoid Robust MV"</span>: weights_ellipsoid,</span>
-<span id="cb46-388"><a href="#cb46-388" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Wasserstein DRMV"</span>: weights_wasserstein,</span>
-<span id="cb46-389"><a href="#cb46-389" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb46-390"><a href="#cb46-390" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-391"><a href="#cb46-391" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> <span class="bu">dict</span>(benchmark_results)</span>
-<span id="cb46-392"><a href="#cb46-392" aria-hidden="true" tabindex="-1"></a>results.update(</span>
-<span id="cb46-393"><a href="#cb46-393" aria-hidden="true" tabindex="-1"></a>    run_many_weights_backtests(</span>
-<span id="cb46-394"><a href="#cb46-394" aria-hidden="true" tabindex="-1"></a>        weights_by_name,</span>
-<span id="cb46-395"><a href="#cb46-395" aria-hidden="true" tabindex="-1"></a>        returns<span class="op">=</span>returns,</span>
-<span id="cb46-396"><a href="#cb46-396" aria-hidden="true" tabindex="-1"></a>        cost_bps<span class="op">=</span>cost_bps,</span>
-<span id="cb46-397"><a href="#cb46-397" aria-hidden="true" tabindex="-1"></a>        rf_daily<span class="op">=</span>risk_free_daily,</span>
-<span id="cb46-398"><a href="#cb46-398" aria-hidden="true" tabindex="-1"></a>        w_min<span class="op">=</span>w_min,</span>
-<span id="cb46-399"><a href="#cb46-399" aria-hidden="true" tabindex="-1"></a>        w_max<span class="op">=</span>w_max,</span>
-<span id="cb46-400"><a href="#cb46-400" aria-hidden="true" tabindex="-1"></a>        long_only<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb46-401"><a href="#cb46-401" aria-hidden="true" tabindex="-1"></a>        normalize<span class="op">=</span><span class="va">True</span>,</span>
-<span id="cb46-402"><a href="#cb46-402" aria-hidden="true" tabindex="-1"></a>        weight_timing<span class="op">=</span><span class="st">"next_close"</span>,</span>
-<span id="cb46-403"><a href="#cb46-403" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb46-404"><a href="#cb46-404" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-405"><a href="#cb46-405" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-406"><a href="#cb46-406" aria-hidden="true" tabindex="-1"></a>summary <span class="op">=</span> selection.build_strategy_summary(</span>
-<span id="cb46-407"><a href="#cb46-407" aria-hidden="true" tabindex="-1"></a>    results,</span>
-<span id="cb46-408"><a href="#cb46-408" aria-hidden="true" tabindex="-1"></a>    rf_daily<span class="op">=</span>risk_free_daily,</span>
-<span id="cb46-409"><a href="#cb46-409" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>annualization,</span>
-<span id="cb46-410"><a href="#cb46-410" aria-hidden="true" tabindex="-1"></a>).sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Calmar"</span>, <span class="st">"CAGR"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">False</span>])</span>
-<span id="cb46-411"><a href="#cb46-411" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-412"><a href="#cb46-412" aria-hidden="true" tabindex="-1"></a>best_cvar <span class="op">=</span> summary.loc[[<span class="st">"Min-CVaR 95"</span>, <span class="st">"Mean-CVaR 95"</span>]].sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Calmar"</span>, <span class="st">"CAGR"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">False</span>]).index[<span class="dv">0</span>]</span>
-<span id="cb46-413"><a href="#cb46-413" aria-hidden="true" tabindex="-1"></a>best_hier <span class="op">=</span> summary.loc[[<span class="st">"HRP"</span>, <span class="st">"NCO-MV"</span>]].sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Calmar"</span>, <span class="st">"CAGR"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">False</span>]).index[<span class="dv">0</span>]</span>
-<span id="cb46-414"><a href="#cb46-414" aria-hidden="true" tabindex="-1"></a>best_robust <span class="op">=</span> summary.loc[[<span class="st">"Box Robust MV"</span>, <span class="st">"Ellipsoid Robust MV"</span>]].sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Calmar"</span>, <span class="st">"CAGR"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">False</span>]).index[<span class="dv">0</span>]</span>
-<span id="cb46-415"><a href="#cb46-415" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-416"><a href="#cb46-416" aria-hidden="true" tabindex="-1"></a>finalists <span class="op">=</span> <span class="bu">list</span>(</span>
-<span id="cb46-417"><a href="#cb46-417" aria-hidden="true" tabindex="-1"></a>    <span class="bu">dict</span>.fromkeys(</span>
-<span id="cb46-418"><a href="#cb46-418" aria-hidden="true" tabindex="-1"></a>        [</span>
-<span id="cb46-419"><a href="#cb46-419" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Equal Weight"</span>,</span>
-<span id="cb46-420"><a href="#cb46-420" aria-hidden="true" tabindex="-1"></a>            <span class="st">"MinVar"</span>,</span>
-<span id="cb46-421"><a href="#cb46-421" aria-hidden="true" tabindex="-1"></a>            <span class="st">"MV"</span>,</span>
-<span id="cb46-422"><a href="#cb46-422" aria-hidden="true" tabindex="-1"></a>            <span class="st">"MaxSharpe"</span>,</span>
-<span id="cb46-423"><a href="#cb46-423" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Learned-Confidence BL"</span>,</span>
-<span id="cb46-424"><a href="#cb46-424" aria-hidden="true" tabindex="-1"></a>            best_cvar,</span>
-<span id="cb46-425"><a href="#cb46-425" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Risk Parity"</span>,</span>
-<span id="cb46-426"><a href="#cb46-426" aria-hidden="true" tabindex="-1"></a>            best_hier,</span>
-<span id="cb46-427"><a href="#cb46-427" aria-hidden="true" tabindex="-1"></a>            best_robust,</span>
-<span id="cb46-428"><a href="#cb46-428" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Wasserstein DRMV"</span>,</span>
-<span id="cb46-429"><a href="#cb46-429" aria-hidden="true" tabindex="-1"></a>        ]</span>
-<span id="cb46-430"><a href="#cb46-430" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb46-431"><a href="#cb46-431" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-432"><a href="#cb46-432" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-433"><a href="#cb46-433" aria-hidden="true" tabindex="-1"></a>final_table <span class="op">=</span> summary.loc[finalists, [<span class="st">"CAGR"</span>, <span class="st">"Vol"</span>, <span class="st">"Sharpe"</span>, <span class="st">"Sortino"</span>, <span class="st">"Calmar"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Turnover"</span>, <span class="st">"Effective N"</span>]]</span>
-<span id="cb46-434"><a href="#cb46-434" aria-hidden="true" tabindex="-1"></a>display(final_table.<span class="bu">round</span>(<span class="dv">4</span>))</span>
-<span id="cb46-435"><a href="#cb46-435" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-436"><a href="#cb46-436" aria-hidden="true" tabindex="-1"></a>nav <span class="op">=</span> pd.concat({name: results[name].net_values <span class="cf">for</span> name <span class="kw">in</span> finalists}, axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb46-437"><a href="#cb46-437" aria-hidden="true" tabindex="-1"></a>returns_final <span class="op">=</span> pd.concat({name: results[name].net_returns <span class="cf">for</span> name <span class="kw">in</span> finalists}, axis<span class="op">=</span><span class="dv">1</span>).dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
-<span id="cb46-438"><a href="#cb46-438" aria-hidden="true" tabindex="-1"></a>weights_final <span class="op">=</span> {name: results[name].weights <span class="cf">for</span> name <span class="kw">in</span> finalists}</span>
-<span id="cb46-439"><a href="#cb46-439" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-440"><a href="#cb46-440" aria-hidden="true" tabindex="-1"></a>latest_dt <span class="op">=</span> pd.Timestamp(weights_wasserstein.index[<span class="op">-</span><span class="dv">1</span>])</span>
-<span id="cb46-441"><a href="#cb46-441" aria-hidden="true" tabindex="-1"></a>latest_state <span class="op">=</span> sector_grid.cache[latest_dt]</span>
-<span id="cb46-442"><a href="#cb46-442" aria-hidden="true" tabindex="-1"></a>latest_tickers <span class="op">=</span> <span class="bu">list</span>(latest_state[<span class="st">"tickers"</span>])</span>
-<span id="cb46-443"><a href="#cb46-443" aria-hidden="true" tabindex="-1"></a>latest_cov <span class="op">=</span> pd.DataFrame(latest_state[<span class="st">"cov_ann_map"</span>][maxsharpe_cov], index<span class="op">=</span>latest_tickers, columns<span class="op">=</span>latest_tickers)</span>
-<span id="cb46-444"><a href="#cb46-444" aria-hidden="true" tabindex="-1"></a>latest_mu <span class="op">=</span> latest_state[<span class="st">"mu_ann_map"</span>][maxsharpe_cov][maxsharpe_mu].reindex(latest_tickers).fillna(<span class="fl">0.0</span>)</span>
-<span id="cb46-445"><a href="#cb46-445" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-446"><a href="#cb46-446" aria-hidden="true" tabindex="-1"></a>cvar_path <span class="op">=</span> cvar_budget_path(</span>
-<span id="cb46-447"><a href="#cb46-447" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>latest_state[<span class="st">"R_cov"</span>].reindex(columns<span class="op">=</span>latest_tickers),</span>
-<span id="cb46-448"><a href="#cb46-448" aria-hidden="true" tabindex="-1"></a>    mu_ann<span class="op">=</span>latest_mu,</span>
-<span id="cb46-449"><a href="#cb46-449" aria-hidden="true" tabindex="-1"></a>    budget_scales<span class="op">=</span>[<span class="fl">0.80</span>, <span class="fl">0.90</span>, <span class="fl">1.00</span>, <span class="fl">1.10</span>, <span class="fl">1.25</span>],</span>
-<span id="cb46-450"><a href="#cb46-450" aria-hidden="true" tabindex="-1"></a>    alpha<span class="op">=</span><span class="fl">0.95</span>,</span>
-<span id="cb46-451"><a href="#cb46-451" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
-<span id="cb46-452"><a href="#cb46-452" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
-<span id="cb46-453"><a href="#cb46-453" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-454"><a href="#cb46-454" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-455"><a href="#cb46-455" aria-hidden="true" tabindex="-1"></a>rp_table <span class="op">=</span> risk_contribution_table(</span>
-<span id="cb46-456"><a href="#cb46-456" aria-hidden="true" tabindex="-1"></a>    weights<span class="op">=</span>weights_rp.iloc[<span class="op">-</span><span class="dv">1</span>].reindex(latest_tickers).fillna(<span class="fl">0.0</span>),</span>
-<span id="cb46-457"><a href="#cb46-457" aria-hidden="true" tabindex="-1"></a>    cov_ann<span class="op">=</span>latest_state[<span class="st">"cov_ann_map"</span>][minvar_cov],</span>
-<span id="cb46-458"><a href="#cb46-458" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-459"><a href="#cb46-459" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-460"><a href="#cb46-460" aria-hidden="true" tabindex="-1"></a>cluster_table <span class="op">=</span> cluster_membership_table(</span>
-<span id="cb46-461"><a href="#cb46-461" aria-hidden="true" tabindex="-1"></a>    cov_ann<span class="op">=</span>latest_state[<span class="st">"cov_ann_map"</span>][maxsharpe_cov],</span>
-<span id="cb46-462"><a href="#cb46-462" aria-hidden="true" tabindex="-1"></a>    tickers<span class="op">=</span>latest_tickers,</span>
-<span id="cb46-463"><a href="#cb46-463" aria-hidden="true" tabindex="-1"></a>    n_clusters<span class="op">=</span><span class="dv">3</span>,</span>
-<span id="cb46-464"><a href="#cb46-464" aria-hidden="true" tabindex="-1"></a>    linkage_method<span class="op">=</span><span class="st">"average"</span>,</span>
-<span id="cb46-465"><a href="#cb46-465" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-466"><a href="#cb46-466" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-467"><a href="#cb46-467" aria-hidden="true" tabindex="-1"></a>wasserstein_path <span class="op">=</span> robust_radius_path(</span>
-<span id="cb46-468"><a href="#cb46-468" aria-hidden="true" tabindex="-1"></a>    model<span class="op">=</span><span class="st">"wasserstein"</span>,</span>
-<span id="cb46-469"><a href="#cb46-469" aria-hidden="true" tabindex="-1"></a>    mu_ann<span class="op">=</span>latest_mu,</span>
-<span id="cb46-470"><a href="#cb46-470" aria-hidden="true" tabindex="-1"></a>    cov_ann<span class="op">=</span>latest_cov,</span>
-<span id="cb46-471"><a href="#cb46-471" aria-hidden="true" tabindex="-1"></a>    n_mu_obs<span class="op">=</span><span class="bu">len</span>(latest_state[<span class="st">"R_mu"</span>]),</span>
-<span id="cb46-472"><a href="#cb46-472" aria-hidden="true" tabindex="-1"></a>    radii<span class="op">=</span>[<span class="fl">0.0</span>, <span class="fl">0.05</span>, <span class="fl">0.10</span>, <span class="fl">0.25</span>, <span class="fl">0.50</span>, <span class="fl">1.00</span>],</span>
-<span id="cb46-473"><a href="#cb46-473" aria-hidden="true" tabindex="-1"></a>    mv_lambda<span class="op">=</span>alt_mv_lambda,</span>
-<span id="cb46-474"><a href="#cb46-474" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
-<span id="cb46-475"><a href="#cb46-475" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
-<span id="cb46-476"><a href="#cb46-476" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-477"><a href="#cb46-477" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-478"><a href="#cb46-478" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">3</span>, <span class="dv">4</span>, figsize<span class="op">=</span>(<span class="dv">20</span>, <span class="dv">14</span>))</span>
-<span id="cb46-479"><a href="#cb46-479" aria-hidden="true" tabindex="-1"></a>axes <span class="op">=</span> axes.ravel()</span>
-<span id="cb46-480"><a href="#cb46-480" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-481"><a href="#cb46-481" aria-hidden="true" tabindex="-1"></a>plot_cvar_budget_path(cvar_path, ax<span class="op">=</span>axes[<span class="dv">0</span>], title<span class="op">=</span><span class="st">"Mean-CVaR budget path"</span>)</span>
-<span id="cb46-482"><a href="#cb46-482" aria-hidden="true" tabindex="-1"></a>plot_risk_contribution_bar(rp_table, ax<span class="op">=</span>axes[<span class="dv">1</span>], title<span class="op">=</span><span class="st">"Risk Parity risk contribution"</span>)</span>
-<span id="cb46-483"><a href="#cb46-483" aria-hidden="true" tabindex="-1"></a>plot_hrp_dendrogram(latest_state[<span class="st">"cov_ann_map"</span>][maxsharpe_cov], labels<span class="op">=</span>latest_tickers, linkage_method<span class="op">=</span><span class="st">"average"</span>, ax<span class="op">=</span>axes[<span class="dv">2</span>], title<span class="op">=</span><span class="st">"sector cluster tree"</span>)</span>
-<span id="cb46-484"><a href="#cb46-484" aria-hidden="true" tabindex="-1"></a>plot_nco_cluster_weights(cluster_table, weights_nco.iloc[<span class="op">-</span><span class="dv">1</span>], ax<span class="op">=</span>axes[<span class="dv">3</span>], title<span class="op">=</span><span class="st">"NCO-MV cluster allocation"</span>)</span>
-<span id="cb46-485"><a href="#cb46-485" aria-hidden="true" tabindex="-1"></a>plot_finalist_nav(nav, strategies<span class="op">=</span>finalists, ax<span class="op">=</span>axes[<span class="dv">4</span>], title<span class="op">=</span><span class="st">"net wealth"</span>, short_labels<span class="op">=</span>label_map)</span>
-<span id="cb46-486"><a href="#cb46-486" aria-hidden="true" tabindex="-1"></a>plot_finalist_drawdowns(nav, strategies<span class="op">=</span>finalists, ax<span class="op">=</span>axes[<span class="dv">5</span>], title<span class="op">=</span><span class="st">"drawdowns"</span>, short_labels<span class="op">=</span>label_map)</span>
-<span id="cb46-487"><a href="#cb46-487" aria-hidden="true" tabindex="-1"></a>plot_wasserstein_radius_path(wasserstein_path, ax<span class="op">=</span>axes[<span class="dv">6</span>], title<span class="op">=</span><span class="st">"Wasserstein radius path"</span>)</span>
-<span id="cb46-488"><a href="#cb46-488" aria-hidden="true" tabindex="-1"></a>plot_average_weight_heatmap(weights_final, ax<span class="op">=</span>axes[<span class="dv">7</span>], title<span class="op">=</span><span class="st">"average finalist weights"</span>, short_labels<span class="op">=</span>label_map)</span>
-<span id="cb46-489"><a href="#cb46-489" aria-hidden="true" tabindex="-1"></a>plot_sleeve_exposure_bar(weights_final, sleeve_map, ax<span class="op">=</span>axes[<span class="dv">8</span>], title<span class="op">=</span><span class="st">"average sleeve exposure"</span>, short_labels<span class="op">=</span>label_map)</span>
-<span id="cb46-490"><a href="#cb46-490" aria-hidden="true" tabindex="-1"></a>plot_risk_return_scatter(final_table, ax<span class="op">=</span>axes[<span class="dv">9</span>], title<span class="op">=</span><span class="st">"risk-return"</span>, risk_col<span class="op">=</span><span class="st">"Vol"</span>, return_col<span class="op">=</span><span class="st">"CAGR"</span>, color_col<span class="op">=</span><span class="st">"Sharpe"</span>, short_labels<span class="op">=</span>label_map)</span>
-<span id="cb46-491"><a href="#cb46-491" aria-hidden="true" tabindex="-1"></a>plot_finalist_metric_bar(final_table, metric<span class="op">=</span><span class="st">"Sharpe"</span>, ax<span class="op">=</span>axes[<span class="dv">10</span>], title<span class="op">=</span><span class="st">"Sharpe"</span>, short_labels<span class="op">=</span>label_map)</span>
-<span id="cb46-492"><a href="#cb46-492" aria-hidden="true" tabindex="-1"></a>plot_finalist_metric_bar(final_table, metric<span class="op">=</span><span class="st">"Max Drawdown"</span>, ax<span class="op">=</span>axes[<span class="dv">11</span>], title<span class="op">=</span><span class="st">"max drawdown"</span>, short_labels<span class="op">=</span>label_map)</span>
-<span id="cb46-493"><a href="#cb46-493" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-494"><a href="#cb46-494" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb46-495"><a href="#cb46-495" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
-<span id="cb46-496"><a href="#cb46-496" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-497"><a href="#cb46-497" aria-hidden="true" tabindex="-1"></a>stress_windows <span class="op">=</span> {</span>
-<span id="cb46-498"><a href="#cb46-498" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2018_q4"</span>: (<span class="st">"2018-10-01"</span>, <span class="st">"2018-12-31"</span>),</span>
-<span id="cb46-499"><a href="#cb46-499" aria-hidden="true" tabindex="-1"></a>    <span class="st">"covid_crash_2020"</span>: (<span class="st">"2020-02-19"</span>, <span class="st">"2020-03-23"</span>),</span>
-<span id="cb46-500"><a href="#cb46-500" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inflation_rate_shock_2022"</span>: (<span class="st">"2022-01-03"</span>, <span class="st">"2022-10-14"</span>),</span>
-<span id="cb46-501"><a href="#cb46-501" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb46-502"><a href="#cb46-502" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-503"><a href="#cb46-503" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> returns_final.index.<span class="bu">max</span>() <span class="op">&gt;=</span> pd.Timestamp(<span class="st">"2025-01-01"</span>):</span>
-<span id="cb46-504"><a href="#cb46-504" aria-hidden="true" tabindex="-1"></a>    stress_windows[<span class="st">"recent_2025_2026"</span>] <span class="op">=</span> (<span class="st">"2025-01-01"</span>, <span class="bu">str</span>(returns_final.index.<span class="bu">max</span>().date()))</span>
-<span id="cb46-505"><a href="#cb46-505" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-506"><a href="#cb46-506" aria-hidden="true" tabindex="-1"></a>market_ret <span class="op">=</span> signal_returns[<span class="st">"SPY"</span>].reindex(returns_final.index) <span class="cf">if</span> <span class="st">"SPY"</span> <span class="kw">in</span> signal_returns.columns <span class="cf">else</span> returns.mean(axis<span class="op">=</span><span class="dv">1</span>).reindex(returns_final.index)</span>
-<span id="cb46-507"><a href="#cb46-507" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-508"><a href="#cb46-508" aria-hidden="true" tabindex="-1"></a>sector_risk_report <span class="op">=</span> risk_report(</span>
-<span id="cb46-509"><a href="#cb46-509" aria-hidden="true" tabindex="-1"></a>    objects<span class="op">=</span>{name: returns_final[name].dropna() <span class="cf">for</span> name <span class="kw">in</span> finalists},</span>
-<span id="cb46-510"><a href="#cb46-510" aria-hidden="true" tabindex="-1"></a>    market_ret<span class="op">=</span>market_ret,</span>
-<span id="cb46-511"><a href="#cb46-511" aria-hidden="true" tabindex="-1"></a>    rf_daily<span class="op">=</span>risk_free_daily,</span>
-<span id="cb46-512"><a href="#cb46-512" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span>{</span>
-<span id="cb46-513"><a href="#cb46-513" aria-hidden="true" tabindex="-1"></a>        <span class="st">"performance_tables"</span>: <span class="va">False</span>,</span>
-<span id="cb46-514"><a href="#cb46-514" aria-hidden="true" tabindex="-1"></a>        <span class="st">"shape_tables"</span>: <span class="va">False</span>,</span>
-<span id="cb46-515"><a href="#cb46-515" aria-hidden="true" tabindex="-1"></a>        <span class="st">"drawdowns"</span>: <span class="va">False</span>,</span>
-<span id="cb46-516"><a href="#cb46-516" aria-hidden="true" tabindex="-1"></a>        <span class="st">"drawdown_episodes"</span>: <span class="va">False</span>,</span>
-<span id="cb46-517"><a href="#cb46-517" aria-hidden="true" tabindex="-1"></a>        <span class="st">"var_es"</span>: <span class="va">True</span>,</span>
-<span id="cb46-518"><a href="#cb46-518" aria-hidden="true" tabindex="-1"></a>        <span class="st">"var_backtest"</span>: <span class="va">True</span>,</span>
-<span id="cb46-519"><a href="#cb46-519" aria-hidden="true" tabindex="-1"></a>        <span class="st">"stress"</span>: <span class="va">True</span>,</span>
-<span id="cb46-520"><a href="#cb46-520" aria-hidden="true" tabindex="-1"></a>        <span class="st">"capm"</span>: <span class="va">True</span>,</span>
-<span id="cb46-521"><a href="#cb46-521" aria-hidden="true" tabindex="-1"></a>        <span class="st">"rolling_beta"</span>: <span class="va">True</span>,</span>
-<span id="cb46-522"><a href="#cb46-522" aria-hidden="true" tabindex="-1"></a>        <span class="st">"correlation"</span>: <span class="va">False</span>,</span>
-<span id="cb46-523"><a href="#cb46-523" aria-hidden="true" tabindex="-1"></a>        <span class="st">"attribution"</span>: <span class="va">False</span>,</span>
-<span id="cb46-524"><a href="#cb46-524" aria-hidden="true" tabindex="-1"></a>        <span class="st">"exec_bullets"</span>: <span class="va">False</span>,</span>
-<span id="cb46-525"><a href="#cb46-525" aria-hidden="true" tabindex="-1"></a>    },</span>
-<span id="cb46-526"><a href="#cb46-526" aria-hidden="true" tabindex="-1"></a>    var_settings<span class="op">=</span>{<span class="st">"alpha"</span>: <span class="fl">0.05</span>, <span class="st">"methods"</span>: [<span class="st">"hist"</span>, <span class="st">"cf"</span>, <span class="st">"fhs"</span>]},</span>
-<span id="cb46-527"><a href="#cb46-527" aria-hidden="true" tabindex="-1"></a>    backtest_settings<span class="op">=</span>{<span class="st">"alpha"</span>: <span class="fl">0.05</span>, <span class="st">"methods"</span>: [<span class="st">"hist"</span>, <span class="st">"cf"</span>, <span class="st">"fhs"</span>], <span class="st">"lookback"</span>: <span class="dv">252</span>, <span class="st">"plot_method"</span>: <span class="st">"best"</span>},</span>
-<span id="cb46-528"><a href="#cb46-528" aria-hidden="true" tabindex="-1"></a>    rolling_settings<span class="op">=</span>{<span class="st">"vol_windows"</span>: [<span class="dv">252</span>], <span class="st">"beta_windows"</span>: [<span class="dv">252</span>]},</span>
-<span id="cb46-529"><a href="#cb46-529" aria-hidden="true" tabindex="-1"></a>    stress_settings<span class="op">=</span>{<span class="st">"windows"</span>: stress_windows, <span class="st">"worst_only"</span>: <span class="va">False</span>},</span>
-<span id="cb46-530"><a href="#cb46-530" aria-hidden="true" tabindex="-1"></a>    layout<span class="op">=</span>{<span class="st">"ncols"</span>: <span class="dv">5</span>, <span class="st">"sharex"</span>: <span class="va">True</span>, <span class="st">"sharey"</span>: <span class="va">False</span>},</span>
-<span id="cb46-531"><a href="#cb46-531" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span>{</span>
-<span id="cb46-532"><a href="#cb46-532" aria-hidden="true" tabindex="-1"></a>        <span class="st">"display_table_keys"</span>: [<span class="st">"var_es"</span>],</span>
-<span id="cb46-533"><a href="#cb46-533" aria-hidden="true" tabindex="-1"></a>        <span class="st">"round_tables"</span>: <span class="dv">4</span>,</span>
-<span id="cb46-534"><a href="#cb46-534" aria-hidden="true" tabindex="-1"></a>        <span class="st">"print_exec_bullets"</span>: <span class="va">False</span>,</span>
-<span id="cb46-535"><a href="#cb46-535" aria-hidden="true" tabindex="-1"></a>        <span class="st">"show_figures"</span>: <span class="va">False</span>,</span>
-<span id="cb46-536"><a href="#cb46-536" aria-hidden="true" tabindex="-1"></a>        <span class="st">"short_labels"</span>: <span class="va">True</span>,</span>
-<span id="cb46-537"><a href="#cb46-537" aria-hidden="true" tabindex="-1"></a>        <span class="st">"label_max_len"</span>: <span class="dv">12</span>,</span>
-<span id="cb46-538"><a href="#cb46-538" aria-hidden="true" tabindex="-1"></a>        <span class="st">"label_map"</span>: label_map,</span>
-<span id="cb46-539"><a href="#cb46-539" aria-hidden="true" tabindex="-1"></a>    },</span>
-<span id="cb46-540"><a href="#cb46-540" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb46-541"><a href="#cb46-541" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-542"><a href="#cb46-542" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> key <span class="kw">in</span> [<span class="st">"var_backtest"</span>, <span class="st">"stress"</span>, <span class="st">"rolling_beta"</span>]:</span>
-<span id="cb46-543"><a href="#cb46-543" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> fig <span class="kw">in</span> sector_risk_report.figures.get(key, []):</span>
-<span id="cb46-544"><a href="#cb46-544" aria-hidden="true" tabindex="-1"></a>        display(fig)</span>
-<span id="cb46-545"><a href="#cb46-545" aria-hidden="true" tabindex="-1"></a>        plt.close(fig)</span>
-<span id="cb46-546"><a href="#cb46-546" aria-hidden="true" tabindex="-1"></a></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb46-109"><a href="#cb46-109" aria-hidden="true" tabindex="-1"></a>data_dir <span class="op">=</span> Path(<span class="st">"../data"</span>)</span>
+<span id="cb46-110"><a href="#cb46-110" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> (data_dir <span class="op">/</span> <span class="st">"sector_etfs.csv"</span>).exists():</span>
+<span id="cb46-111"><a href="#cb46-111" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">=</span> Path(<span class="st">"data"</span>)</span>
+<span id="cb46-112"><a href="#cb46-112" aria-hidden="true" tabindex="-1"></a>data_paths <span class="op">=</span> [data_dir <span class="op">/</span> <span class="st">"sector_etfs.csv"</span>, data_dir <span class="op">/</span> <span class="st">"core_cross_asset_etfs.csv"</span>]</span>
+<span id="cb46-113"><a href="#cb46-113" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-114"><a href="#cb46-114" aria-hidden="true" tabindex="-1"></a>close_all <span class="op">=</span> load_yfinance_panel(data_paths, fields<span class="op">=</span>(<span class="st">"close"</span>,), lowercase<span class="op">=</span><span class="va">False</span>, source<span class="op">=</span><span class="st">"yfinance_export"</span>)[<span class="st">"close"</span>]</span>
+<span id="cb46-115"><a href="#cb46-115" aria-hidden="true" tabindex="-1"></a>available_assets <span class="op">=</span> [ticker <span class="cf">for</span> ticker <span class="kw">in</span> assets <span class="cf">if</span> ticker <span class="kw">in</span> close_all.columns]</span>
+<span id="cb46-116"><a href="#cb46-116" aria-hidden="true" tabindex="-1"></a>available_signals <span class="op">=</span> [ticker <span class="cf">for</span> ticker <span class="kw">in</span> signal_assets <span class="cf">if</span> ticker <span class="kw">in</span> close_all.columns]</span>
+<span id="cb46-117"><a href="#cb46-117" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="bu">len</span>(available_assets) <span class="op">!=</span> <span class="bu">len</span>(assets):</span>
+<span id="cb46-118"><a href="#cb46-118" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"missing sector ETF data: </span><span class="sc">{</span><span class="bu">sorted</span>(<span class="bu">set</span>(assets) <span class="op">-</span> <span class="bu">set</span>(available_assets))<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb46-119"><a href="#cb46-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-120"><a href="#cb46-120" aria-hidden="true" tabindex="-1"></a>close <span class="op">=</span> close_all.loc[pd.Timestamp(sector_start):, assets].ffill(limit<span class="op">=</span><span class="dv">3</span>).dropna(how<span class="op">=</span><span class="st">"any"</span>)</span>
+<span id="cb46-121"><a href="#cb46-121" aria-hidden="true" tabindex="-1"></a>returns <span class="op">=</span> prices_to_returns(close, kind<span class="op">=</span><span class="st">"simple"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).dropna(how<span class="op">=</span><span class="st">"all"</span>).fillna(<span class="fl">0.0</span>)</span>
+<span id="cb46-122"><a href="#cb46-122" aria-hidden="true" tabindex="-1"></a>close <span class="op">=</span> close.reindex(returns.index).ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb46-123"><a href="#cb46-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-124"><a href="#cb46-124" aria-hidden="true" tabindex="-1"></a>signal_tickers <span class="op">=</span> <span class="bu">list</span>(<span class="bu">dict</span>.fromkeys(assets <span class="op">+</span> available_signals))</span>
+<span id="cb46-125"><a href="#cb46-125" aria-hidden="true" tabindex="-1"></a>signal_close <span class="op">=</span> close_all.loc[returns.index.<span class="bu">min</span>():, signal_tickers].ffill(limit<span class="op">=</span><span class="dv">3</span>).reindex(returns.index).ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb46-126"><a href="#cb46-126" aria-hidden="true" tabindex="-1"></a>signal_returns <span class="op">=</span> prices_to_returns(signal_close, kind<span class="op">=</span><span class="st">"simple"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).reindex(returns.index).fillna(<span class="fl">0.0</span>)</span>
+<span id="cb46-127"><a href="#cb46-127" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-128"><a href="#cb46-128" aria-hidden="true" tabindex="-1"></a>rebalance_dates <span class="op">=</span> make_rebalance_dates(</span>
+<span id="cb46-129"><a href="#cb46-129" aria-hidden="true" tabindex="-1"></a>    returns.index,</span>
+<span id="cb46-130"><a href="#cb46-130" aria-hidden="true" tabindex="-1"></a>    freq<span class="op">=</span>rebal_freq,</span>
+<span id="cb46-131"><a href="#cb46-131" aria-hidden="true" tabindex="-1"></a>    min_history_days<span class="op">=</span><span class="bu">max</span>(cov_lookback, mu_lookback),</span>
+<span id="cb46-132"><a href="#cb46-132" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-133"><a href="#cb46-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-134"><a href="#cb46-134" aria-hidden="true" tabindex="-1"></a>universe_by_date <span class="op">=</span> {</span>
+<span id="cb46-135"><a href="#cb46-135" aria-hidden="true" tabindex="-1"></a>    pd.Timestamp(dt): {<span class="st">"tickers"</span>: <span class="bu">list</span>(assets), <span class="st">"avg_dollar_volume"</span>: pd.Series(<span class="fl">1.0</span>, index<span class="op">=</span>assets)}</span>
+<span id="cb46-136"><a href="#cb46-136" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> dt <span class="kw">in</span> rebalance_dates</span>
+<span id="cb46-137"><a href="#cb46-137" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb46-138"><a href="#cb46-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-139"><a href="#cb46-139" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"sector returns:"</span>, returns.shape, returns.index.<span class="bu">min</span>().date(), <span class="st">"to"</span>, returns.index.<span class="bu">max</span>().date())</span>
+<span id="cb46-140"><a href="#cb46-140" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"rebalance dates:"</span>, <span class="bu">len</span>(rebalance_dates), rebalance_dates[<span class="dv">0</span>].date(), <span class="st">"to"</span>, rebalance_dates[<span class="op">-</span><span class="dv">1</span>].date())</span>
+<span id="cb46-141"><a href="#cb46-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-142"><a href="#cb46-142" aria-hidden="true" tabindex="-1"></a>sector_grid <span class="op">=</span> run_walkforward_grid(</span>
+<span id="cb46-143"><a href="#cb46-143" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>returns,</span>
+<span id="cb46-144"><a href="#cb46-144" aria-hidden="true" tabindex="-1"></a>    close<span class="op">=</span>close,</span>
+<span id="cb46-145"><a href="#cb46-145" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
+<span id="cb46-146"><a href="#cb46-146" aria-hidden="true" tabindex="-1"></a>    universe_by_date<span class="op">=</span>universe_by_date,</span>
+<span id="cb46-147"><a href="#cb46-147" aria-hidden="true" tabindex="-1"></a>    cov_lookback<span class="op">=</span>cov_lookback,</span>
+<span id="cb46-148"><a href="#cb46-148" aria-hidden="true" tabindex="-1"></a>    mu_lookback<span class="op">=</span>mu_lookback,</span>
+<span id="cb46-149"><a href="#cb46-149" aria-hidden="true" tabindex="-1"></a>    min_cov_observations<span class="op">=</span>cov_lookback <span class="op">-</span> <span class="dv">1</span>,</span>
+<span id="cb46-150"><a href="#cb46-150" aria-hidden="true" tabindex="-1"></a>    min_mu_observations<span class="op">=</span>mu_lookback <span class="op">-</span> <span class="dv">1</span>,</span>
+<span id="cb46-151"><a href="#cb46-151" aria-hidden="true" tabindex="-1"></a>    max_weight<span class="op">=</span>w_max,</span>
+<span id="cb46-152"><a href="#cb46-152" aria-hidden="true" tabindex="-1"></a>    min_weight<span class="op">=</span>w_min,</span>
+<span id="cb46-153"><a href="#cb46-153" aria-hidden="true" tabindex="-1"></a>    long_only<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb46-154"><a href="#cb46-154" aria-hidden="true" tabindex="-1"></a>    trading_cost_bps<span class="op">=</span>cost_bps,</span>
+<span id="cb46-155"><a href="#cb46-155" aria-hidden="true" tabindex="-1"></a>    turnover_penalty_bps<span class="op">=</span>cost_bps,</span>
+<span id="cb46-156"><a href="#cb46-156" aria-hidden="true" tabindex="-1"></a>    fallback<span class="op">=</span><span class="st">"equal"</span>,</span>
+<span id="cb46-157"><a href="#cb46-157" aria-hidden="true" tabindex="-1"></a>    rf_daily<span class="op">=</span>risk_free_daily,</span>
+<span id="cb46-158"><a href="#cb46-158" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>annualization,</span>
+<span id="cb46-159"><a href="#cb46-159" aria-hidden="true" tabindex="-1"></a>    ewma_lambda<span class="op">=</span>ewma_lambda,</span>
+<span id="cb46-160"><a href="#cb46-160" aria-hidden="true" tabindex="-1"></a>    optimizer_params<span class="op">=</span>{</span>
+<span id="cb46-161"><a href="#cb46-161" aria-hidden="true" tabindex="-1"></a>        <span class="st">"MV"</span>: {<span class="st">"mv_lambda"</span>: mv_lambda},</span>
+<span id="cb46-162"><a href="#cb46-162" aria-hidden="true" tabindex="-1"></a>        <span class="st">"RidgeMV"</span>: {<span class="st">"mv_lambda"</span>: mv_lambda},</span>
+<span id="cb46-163"><a href="#cb46-163" aria-hidden="true" tabindex="-1"></a>        <span class="st">"FrontierGrid"</span>: {<span class="st">"grid_n"</span>: <span class="dv">15</span>},</span>
+<span id="cb46-164"><a href="#cb46-164" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb46-165"><a href="#cb46-165" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-166"><a href="#cb46-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-167"><a href="#cb46-167" aria-hidden="true" tabindex="-1"></a>sector_grid <span class="op">=</span> append_frontiergrid_from_best_maxsharpe(sector_grid, metric<span class="op">=</span><span class="st">"Sharpe"</span>, grid_n<span class="op">=</span><span class="dv">25</span>)</span>
+<span id="cb46-168"><a href="#cb46-168" aria-hidden="true" tabindex="-1"></a>grid_summary <span class="op">=</span> sector_grid.results.replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
+<span id="cb46-169"><a href="#cb46-169" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-170"><a href="#cb46-170" aria-hidden="true" tabindex="-1"></a>equal_grid_name <span class="op">=</span> <span class="st">"EW"</span> <span class="cf">if</span> <span class="st">"EW"</span> <span class="kw">in</span> sector_grid.backtests <span class="cf">else</span> <span class="bu">str</span>(grid_summary.index[grid_summary[<span class="st">"Optimizer"</span>].eq(<span class="st">"EW"</span>)][<span class="dv">0</span>])</span>
+<span id="cb46-171"><a href="#cb46-171" aria-hidden="true" tabindex="-1"></a>minvar_name <span class="op">=</span> <span class="bu">str</span>(grid_summary.loc[grid_summary[<span class="st">"Optimizer"</span>].eq(<span class="st">"MinVar"</span>)].dropna(subset<span class="op">=</span>[<span class="st">"Sharpe"</span>]).sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Turnover"</span>, <span class="st">"CAGR"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">True</span>, <span class="va">False</span>]).index[<span class="dv">0</span>])</span>
+<span id="cb46-172"><a href="#cb46-172" aria-hidden="true" tabindex="-1"></a>mv_name <span class="op">=</span> <span class="bu">str</span>(grid_summary.loc[grid_summary[<span class="st">"Optimizer"</span>].eq(<span class="st">"MV"</span>)].dropna(subset<span class="op">=</span>[<span class="st">"Sharpe"</span>]).sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Turnover"</span>, <span class="st">"CAGR"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">True</span>, <span class="va">False</span>]).index[<span class="dv">0</span>])</span>
+<span id="cb46-173"><a href="#cb46-173" aria-hidden="true" tabindex="-1"></a>maxsharpe_candidates <span class="op">=</span> grid_summary.loc[grid_summary[<span class="st">"Optimizer"</span>].eq(<span class="st">"MaxSharpe"</span>)].dropna(subset<span class="op">=</span>[<span class="st">"Sharpe"</span>])</span>
+<span id="cb46-174"><a href="#cb46-174" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> maxsharpe_candidates.empty:</span>
+<span id="cb46-175"><a href="#cb46-175" aria-hidden="true" tabindex="-1"></a>    maxsharpe_candidates <span class="op">=</span> grid_summary.loc[grid_summary[<span class="st">"Optimizer"</span>].eq(<span class="st">"FrontierGrid"</span>)].dropna(subset<span class="op">=</span>[<span class="st">"Sharpe"</span>])</span>
+<span id="cb46-176"><a href="#cb46-176" aria-hidden="true" tabindex="-1"></a>maxsharpe_name <span class="op">=</span> <span class="bu">str</span>(maxsharpe_candidates.sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Turnover"</span>, <span class="st">"CAGR"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">True</span>, <span class="va">False</span>]).index[<span class="dv">0</span>])</span>
+<span id="cb46-177"><a href="#cb46-177" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-178"><a href="#cb46-178" aria-hidden="true" tabindex="-1"></a>_, _, minvar_cov <span class="op">=</span> selection.parse_strategy_spec(minvar_name, sector_grid.backtests[minvar_name])</span>
+<span id="cb46-179"><a href="#cb46-179" aria-hidden="true" tabindex="-1"></a>_, mv_mu, mv_cov <span class="op">=</span> selection.parse_strategy_spec(mv_name, sector_grid.backtests[mv_name])</span>
+<span id="cb46-180"><a href="#cb46-180" aria-hidden="true" tabindex="-1"></a>_, maxsharpe_mu, maxsharpe_cov <span class="op">=</span> selection.parse_strategy_spec(maxsharpe_name, sector_grid.backtests[maxsharpe_name])</span>
+<span id="cb46-181"><a href="#cb46-181" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-182"><a href="#cb46-182" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"selected grid models:"</span>, {<span class="st">"MinVar"</span>: minvar_name, <span class="st">"MV"</span>: mv_name, <span class="st">"MaxSharpe"</span>: maxsharpe_name})</span>
+<span id="cb46-183"><a href="#cb46-183" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-184"><a href="#cb46-184" aria-hidden="true" tabindex="-1"></a>sector_benchmark_w <span class="op">=</span> pd.Series(<span class="fl">1.0</span> <span class="op">/</span> <span class="bu">len</span>(assets), index<span class="op">=</span>assets, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb46-185"><a href="#cb46-185" aria-hidden="true" tabindex="-1"></a>sector_roles_raw <span class="op">=</span> {</span>
+<span id="cb46-186"><a href="#cb46-186" aria-hidden="true" tabindex="-1"></a>    <span class="st">"assets"</span>: assets,</span>
+<span id="cb46-187"><a href="#cb46-187" aria-hidden="true" tabindex="-1"></a>    <span class="st">"growth"</span>: [<span class="st">"XLK"</span>, <span class="st">"XLC"</span>, <span class="st">"XLY"</span>],</span>
+<span id="cb46-188"><a href="#cb46-188" aria-hidden="true" tabindex="-1"></a>    <span class="st">"defensive"</span>: [<span class="st">"XLP"</span>, <span class="st">"XLU"</span>, <span class="st">"XLV"</span>],</span>
+<span id="cb46-189"><a href="#cb46-189" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cyclical"</span>: [<span class="st">"XLI"</span>, <span class="st">"XLF"</span>, <span class="st">"XLB"</span>, <span class="st">"XLE"</span>],</span>
+<span id="cb46-190"><a href="#cb46-190" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inflation_beneficiaries"</span>: [<span class="st">"XLE"</span>, <span class="st">"XLB"</span>],</span>
+<span id="cb46-191"><a href="#cb46-191" aria-hidden="true" tabindex="-1"></a>    <span class="st">"rate_sensitive"</span>: [<span class="st">"XLU"</span>, <span class="st">"XLV"</span>, <span class="st">"XLRE"</span>],</span>
+<span id="cb46-192"><a href="#cb46-192" aria-hidden="true" tabindex="-1"></a>    <span class="st">"credit_sensitive"</span>: [<span class="st">"XLF"</span>, <span class="st">"XLY"</span>, <span class="st">"XLI"</span>],</span>
+<span id="cb46-193"><a href="#cb46-193" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quality_defensive"</span>: [<span class="st">"XLV"</span>, <span class="st">"XLP"</span>],</span>
+<span id="cb46-194"><a href="#cb46-194" aria-hidden="true" tabindex="-1"></a>    <span class="st">"small_cap_sensitive"</span>: [<span class="st">"XLI"</span>, <span class="st">"XLF"</span>, <span class="st">"XLY"</span>],</span>
+<span id="cb46-195"><a href="#cb46-195" aria-hidden="true" tabindex="-1"></a>    <span class="st">"risky"</span>: assets,</span>
+<span id="cb46-196"><a href="#cb46-196" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sleeve_map"</span>: {ticker: <span class="st">"Sector"</span> <span class="cf">for</span> ticker <span class="kw">in</span> assets},</span>
+<span id="cb46-197"><a href="#cb46-197" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb46-198"><a href="#cb46-198" aria-hidden="true" tabindex="-1"></a>sector_roles <span class="op">=</span> {</span>
+<span id="cb46-199"><a href="#cb46-199" aria-hidden="true" tabindex="-1"></a>    key: ([ticker <span class="cf">for</span> ticker <span class="kw">in</span> value <span class="cf">if</span> ticker <span class="kw">in</span> assets] <span class="cf">if</span> <span class="bu">isinstance</span>(value, <span class="bu">list</span>) <span class="cf">else</span> value)</span>
+<span id="cb46-200"><a href="#cb46-200" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> key, value <span class="kw">in</span> sector_roles_raw.items()</span>
+<span id="cb46-201"><a href="#cb46-201" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb46-202"><a href="#cb46-202" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-203"><a href="#cb46-203" aria-hidden="true" tabindex="-1"></a>sector_family_caps <span class="op">=</span> {</span>
+<span id="cb46-204"><a href="#cb46-204" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sector_momentum"</span>: <span class="fl">0.012</span>,</span>
+<span id="cb46-205"><a href="#cb46-205" aria-hidden="true" tabindex="-1"></a>    <span class="st">"growth_leadership"</span>: <span class="fl">0.030</span>,</span>
+<span id="cb46-206"><a href="#cb46-206" aria-hidden="true" tabindex="-1"></a>    <span class="st">"defensive_rotation"</span>: <span class="fl">0.006</span>,</span>
+<span id="cb46-207"><a href="#cb46-207" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cyclical_breadth"</span>: <span class="fl">0.020</span>,</span>
+<span id="cb46-208"><a href="#cb46-208" aria-hidden="true" tabindex="-1"></a>    <span class="st">"credit_beta"</span>: <span class="fl">0.012</span>,</span>
+<span id="cb46-209"><a href="#cb46-209" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inflation_beneficiaries"</span>: <span class="fl">0.008</span>,</span>
+<span id="cb46-210"><a href="#cb46-210" aria-hidden="true" tabindex="-1"></a>    <span class="st">"duration_sensitive"</span>: <span class="fl">0.014</span>,</span>
+<span id="cb46-211"><a href="#cb46-211" aria-hidden="true" tabindex="-1"></a>    <span class="st">"small_cap_risk_on"</span>: <span class="fl">0.010</span>,</span>
+<span id="cb46-212"><a href="#cb46-212" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quality_defensive"</span>: <span class="fl">0.004</span>,</span>
+<span id="cb46-213"><a href="#cb46-213" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sector_reversal"</span>: <span class="fl">0.004</span>,</span>
+<span id="cb46-214"><a href="#cb46-214" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb46-215"><a href="#cb46-215" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-216"><a href="#cb46-216" aria-hidden="true" tabindex="-1"></a>sector_view_settings <span class="op">=</span> bl_views.ViewSettings(</span>
+<span id="cb46-217"><a href="#cb46-217" aria-hidden="true" tabindex="-1"></a>    family_q_caps<span class="op">=</span>sector_family_caps,</span>
+<span id="cb46-218"><a href="#cb46-218" aria-hidden="true" tabindex="-1"></a>    family_display_names<span class="op">=</span>bl_views.DEFAULT_SECTOR_DISPLAY_NAMES,</span>
+<span id="cb46-219"><a href="#cb46-219" aria-hidden="true" tabindex="-1"></a>    assets<span class="op">=</span>assets,</span>
+<span id="cb46-220"><a href="#cb46-220" aria-hidden="true" tabindex="-1"></a>    entry_z<span class="op">=</span><span class="fl">0.50</span>,</span>
+<span id="cb46-221"><a href="#cb46-221" aria-hidden="true" tabindex="-1"></a>    q_strength_scale<span class="op">=</span><span class="fl">1.25</span>,</span>
+<span id="cb46-222"><a href="#cb46-222" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>annualization,</span>
+<span id="cb46-223"><a href="#cb46-223" aria-hidden="true" tabindex="-1"></a>    view_horizon_days<span class="op">=</span><span class="dv">21</span>,</span>
+<span id="cb46-224"><a href="#cb46-224" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-225"><a href="#cb46-225" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-226"><a href="#cb46-226" aria-hidden="true" tabindex="-1"></a>sector_bl_settings <span class="op">=</span> bl.BLSettings(</span>
+<span id="cb46-227"><a href="#cb46-227" aria-hidden="true" tabindex="-1"></a>    cov_lookback<span class="op">=</span><span class="dv">504</span>,</span>
+<span id="cb46-228"><a href="#cb46-228" aria-hidden="true" tabindex="-1"></a>    mu_lookback<span class="op">=</span><span class="dv">252</span>,</span>
+<span id="cb46-229"><a href="#cb46-229" aria-hidden="true" tabindex="-1"></a>    risk_free_rate_annual<span class="op">=</span>risk_free_rate_annual,</span>
+<span id="cb46-230"><a href="#cb46-230" aria-hidden="true" tabindex="-1"></a>    transaction_cost_bps<span class="op">=</span>cost_bps,</span>
+<span id="cb46-231"><a href="#cb46-231" aria-hidden="true" tabindex="-1"></a>    tau<span class="op">=</span><span class="fl">0.05</span>,</span>
+<span id="cb46-232"><a href="#cb46-232" aria-hidden="true" tabindex="-1"></a>    ewma_lambda<span class="op">=</span>ewma_lambda,</span>
+<span id="cb46-233"><a href="#cb46-233" aria-hidden="true" tabindex="-1"></a>    max_weight<span class="op">=</span><span class="fl">0.35</span>,</span>
+<span id="cb46-234"><a href="#cb46-234" aria-hidden="true" tabindex="-1"></a>    active_weight_limit<span class="op">=</span><span class="fl">0.15</span>,</span>
+<span id="cb46-235"><a href="#cb46-235" aria-hidden="true" tabindex="-1"></a>    active_weight_relaxed<span class="op">=</span><span class="fl">0.22</span>,</span>
+<span id="cb46-236"><a href="#cb46-236" aria-hidden="true" tabindex="-1"></a>    max_selected_views<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb46-237"><a href="#cb46-237" aria-hidden="true" tabindex="-1"></a>    redundancy_similarity<span class="op">=</span><span class="fl">0.85</span>,</span>
+<span id="cb46-238"><a href="#cb46-238" aria-hidden="true" tabindex="-1"></a>    max_same_direction<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb46-239"><a href="#cb46-239" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-240"><a href="#cb46-240" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-241"><a href="#cb46-241" aria-hidden="true" tabindex="-1"></a>sector_view_functions <span class="op">=</span> (</span>
+<span id="cb46-242"><a href="#cb46-242" aria-hidden="true" tabindex="-1"></a>    bl_views.sector_momentum,</span>
+<span id="cb46-243"><a href="#cb46-243" aria-hidden="true" tabindex="-1"></a>    bl_views.growth_leadership,</span>
+<span id="cb46-244"><a href="#cb46-244" aria-hidden="true" tabindex="-1"></a>    bl_views.defensive_rotation,</span>
+<span id="cb46-245"><a href="#cb46-245" aria-hidden="true" tabindex="-1"></a>    bl_views.cyclical_breadth,</span>
+<span id="cb46-246"><a href="#cb46-246" aria-hidden="true" tabindex="-1"></a>    bl_views.credit_beta,</span>
+<span id="cb46-247"><a href="#cb46-247" aria-hidden="true" tabindex="-1"></a>    bl_views.inflation_beneficiaries,</span>
+<span id="cb46-248"><a href="#cb46-248" aria-hidden="true" tabindex="-1"></a>    bl_views.duration_sensitive,</span>
+<span id="cb46-249"><a href="#cb46-249" aria-hidden="true" tabindex="-1"></a>    bl_views.small_cap_risk_on,</span>
+<span id="cb46-250"><a href="#cb46-250" aria-hidden="true" tabindex="-1"></a>    bl_views.quality_defensive,</span>
+<span id="cb46-251"><a href="#cb46-251" aria-hidden="true" tabindex="-1"></a>    bl_views.sector_reversal,</span>
+<span id="cb46-252"><a href="#cb46-252" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-253"><a href="#cb46-253" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-254"><a href="#cb46-254" aria-hidden="true" tabindex="-1"></a>sector_asset_caps <span class="op">=</span> pd.Series(sector_bl_settings.max_weight, index<span class="op">=</span>assets, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb46-255"><a href="#cb46-255" aria-hidden="true" tabindex="-1"></a>sector_bl_run <span class="op">=</span> bl.learned_confidence_bl(</span>
+<span id="cb46-256"><a href="#cb46-256" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>returns,</span>
+<span id="cb46-257"><a href="#cb46-257" aria-hidden="true" tabindex="-1"></a>    signal_returns<span class="op">=</span>signal_returns,</span>
+<span id="cb46-258"><a href="#cb46-258" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
+<span id="cb46-259"><a href="#cb46-259" aria-hidden="true" tabindex="-1"></a>    benchmark_weights<span class="op">=</span>sector_benchmark_w,</span>
+<span id="cb46-260"><a href="#cb46-260" aria-hidden="true" tabindex="-1"></a>    roles<span class="op">=</span>sector_roles,</span>
+<span id="cb46-261"><a href="#cb46-261" aria-hidden="true" tabindex="-1"></a>    view_functions<span class="op">=</span>sector_view_functions,</span>
+<span id="cb46-262"><a href="#cb46-262" aria-hidden="true" tabindex="-1"></a>    view_settings<span class="op">=</span>sector_view_settings,</span>
+<span id="cb46-263"><a href="#cb46-263" aria-hidden="true" tabindex="-1"></a>    settings<span class="op">=</span>sector_bl_settings,</span>
+<span id="cb46-264"><a href="#cb46-264" aria-hidden="true" tabindex="-1"></a>    constraints<span class="op">=</span>{<span class="st">"asset_caps"</span>: sector_asset_caps},</span>
+<span id="cb46-265"><a href="#cb46-265" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-266"><a href="#cb46-266" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-267"><a href="#cb46-267" aria-hidden="true" tabindex="-1"></a>sector_bl_result <span class="op">=</span> run_many_weights_backtests(</span>
+<span id="cb46-268"><a href="#cb46-268" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"Learned-Confidence BL"</span>: sector_bl_run.weights},</span>
+<span id="cb46-269"><a href="#cb46-269" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>returns,</span>
+<span id="cb46-270"><a href="#cb46-270" aria-hidden="true" tabindex="-1"></a>    cost_bps<span class="op">=</span>cost_bps,</span>
+<span id="cb46-271"><a href="#cb46-271" aria-hidden="true" tabindex="-1"></a>    rf_daily<span class="op">=</span>risk_free_daily,</span>
+<span id="cb46-272"><a href="#cb46-272" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>sector_bl_settings.min_weight,</span>
+<span id="cb46-273"><a href="#cb46-273" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>sector_bl_settings.max_weight,</span>
+<span id="cb46-274"><a href="#cb46-274" aria-hidden="true" tabindex="-1"></a>    long_only<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb46-275"><a href="#cb46-275" aria-hidden="true" tabindex="-1"></a>    normalize<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb46-276"><a href="#cb46-276" aria-hidden="true" tabindex="-1"></a>    weight_timing<span class="op">=</span><span class="st">"next_close"</span>,</span>
+<span id="cb46-277"><a href="#cb46-277" aria-hidden="true" tabindex="-1"></a>)[<span class="st">"Learned-Confidence BL"</span>]</span>
+<span id="cb46-278"><a href="#cb46-278" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-279"><a href="#cb46-279" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"BL view rows:"</span>, <span class="bu">len</span>(sector_bl_run.candidate_view_log), <span class="st">"candidate,"</span>, <span class="bu">len</span>(sector_bl_run.selected_view_log), <span class="st">"selected"</span>)</span>
+<span id="cb46-280"><a href="#cb46-280" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-281"><a href="#cb46-281" aria-hidden="true" tabindex="-1"></a>benchmark_results <span class="op">=</span> {</span>
+<span id="cb46-282"><a href="#cb46-282" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Equal Weight"</span>: sector_grid.backtests[equal_grid_name],</span>
+<span id="cb46-283"><a href="#cb46-283" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MinVar"</span>: sector_grid.backtests[minvar_name],</span>
+<span id="cb46-284"><a href="#cb46-284" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MV"</span>: sector_grid.backtests[mv_name],</span>
+<span id="cb46-285"><a href="#cb46-285" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MaxSharpe"</span>: sector_grid.backtests[maxsharpe_name],</span>
+<span id="cb46-286"><a href="#cb46-286" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Learned-Confidence BL"</span>: sector_bl_result,</span>
+<span id="cb46-287"><a href="#cb46-287" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb46-288"><a href="#cb46-288" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-289"><a href="#cb46-289" aria-hidden="true" tabindex="-1"></a>benchmark_table <span class="op">=</span> selection.build_strategy_summary(</span>
+<span id="cb46-290"><a href="#cb46-290" aria-hidden="true" tabindex="-1"></a>    benchmark_results,</span>
+<span id="cb46-291"><a href="#cb46-291" aria-hidden="true" tabindex="-1"></a>    rf_daily<span class="op">=</span>risk_free_daily,</span>
+<span id="cb46-292"><a href="#cb46-292" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>annualization,</span>
+<span id="cb46-293"><a href="#cb46-293" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-294"><a href="#cb46-294" aria-hidden="true" tabindex="-1"></a>display(benchmark_table[[<span class="st">"CAGR"</span>, <span class="st">"Vol"</span>, <span class="st">"Sharpe"</span>, <span class="st">"Sortino"</span>, <span class="st">"Calmar"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Turnover"</span>, <span class="st">"Effective N"</span>]].<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb46-295"><a href="#cb46-295" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-296"><a href="#cb46-296" aria-hidden="true" tabindex="-1"></a>weights_min_cvar <span class="op">=</span> min_cvar_weight_frame(</span>
+<span id="cb46-297"><a href="#cb46-297" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
+<span id="cb46-298"><a href="#cb46-298" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
+<span id="cb46-299"><a href="#cb46-299" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>minvar_cov,</span>
+<span id="cb46-300"><a href="#cb46-300" aria-hidden="true" tabindex="-1"></a>    alpha<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span id="cb46-301"><a href="#cb46-301" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
+<span id="cb46-302"><a href="#cb46-302" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
+<span id="cb46-303"><a href="#cb46-303" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-304"><a href="#cb46-304" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-305"><a href="#cb46-305" aria-hidden="true" tabindex="-1"></a>weights_mean_cvar <span class="op">=</span> mean_cvar_weight_frame(</span>
+<span id="cb46-306"><a href="#cb46-306" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
+<span id="cb46-307"><a href="#cb46-307" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
+<span id="cb46-308"><a href="#cb46-308" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>maxsharpe_cov,</span>
+<span id="cb46-309"><a href="#cb46-309" aria-hidden="true" tabindex="-1"></a>    mu_model<span class="op">=</span>maxsharpe_mu,</span>
+<span id="cb46-310"><a href="#cb46-310" aria-hidden="true" tabindex="-1"></a>    reference<span class="op">=</span><span class="st">"equal"</span>,</span>
+<span id="cb46-311"><a href="#cb46-311" aria-hidden="true" tabindex="-1"></a>    alpha<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span id="cb46-312"><a href="#cb46-312" aria-hidden="true" tabindex="-1"></a>    budget_scale<span class="op">=</span><span class="fl">0.90</span>,</span>
+<span id="cb46-313"><a href="#cb46-313" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
+<span id="cb46-314"><a href="#cb46-314" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
+<span id="cb46-315"><a href="#cb46-315" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-316"><a href="#cb46-316" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-317"><a href="#cb46-317" aria-hidden="true" tabindex="-1"></a>weights_rp <span class="op">=</span> risk_parity_weight_frame(</span>
+<span id="cb46-318"><a href="#cb46-318" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
+<span id="cb46-319"><a href="#cb46-319" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
+<span id="cb46-320"><a href="#cb46-320" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>minvar_cov,</span>
+<span id="cb46-321"><a href="#cb46-321" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
+<span id="cb46-322"><a href="#cb46-322" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
+<span id="cb46-323"><a href="#cb46-323" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-324"><a href="#cb46-324" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-325"><a href="#cb46-325" aria-hidden="true" tabindex="-1"></a>weights_hrp <span class="op">=</span> hrp_weight_frame(</span>
+<span id="cb46-326"><a href="#cb46-326" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
+<span id="cb46-327"><a href="#cb46-327" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
+<span id="cb46-328"><a href="#cb46-328" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>minvar_cov,</span>
+<span id="cb46-329"><a href="#cb46-329" aria-hidden="true" tabindex="-1"></a>    linkage_method<span class="op">=</span><span class="st">"average"</span>,</span>
+<span id="cb46-330"><a href="#cb46-330" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
+<span id="cb46-331"><a href="#cb46-331" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
+<span id="cb46-332"><a href="#cb46-332" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-333"><a href="#cb46-333" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-334"><a href="#cb46-334" aria-hidden="true" tabindex="-1"></a>weights_nco <span class="op">=</span> nco_mv_weight_frame(</span>
+<span id="cb46-335"><a href="#cb46-335" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
+<span id="cb46-336"><a href="#cb46-336" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
+<span id="cb46-337"><a href="#cb46-337" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>maxsharpe_cov,</span>
+<span id="cb46-338"><a href="#cb46-338" aria-hidden="true" tabindex="-1"></a>    mu_model<span class="op">=</span>maxsharpe_mu,</span>
+<span id="cb46-339"><a href="#cb46-339" aria-hidden="true" tabindex="-1"></a>    n_clusters<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb46-340"><a href="#cb46-340" aria-hidden="true" tabindex="-1"></a>    inner_lambda<span class="op">=</span>alt_mv_lambda,</span>
+<span id="cb46-341"><a href="#cb46-341" aria-hidden="true" tabindex="-1"></a>    outer_lambda<span class="op">=</span>alt_mv_lambda,</span>
+<span id="cb46-342"><a href="#cb46-342" aria-hidden="true" tabindex="-1"></a>    cluster_cap<span class="op">=</span><span class="fl">0.75</span>,</span>
+<span id="cb46-343"><a href="#cb46-343" aria-hidden="true" tabindex="-1"></a>    linkage_method<span class="op">=</span><span class="st">"average"</span>,</span>
+<span id="cb46-344"><a href="#cb46-344" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
+<span id="cb46-345"><a href="#cb46-345" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
+<span id="cb46-346"><a href="#cb46-346" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-347"><a href="#cb46-347" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-348"><a href="#cb46-348" aria-hidden="true" tabindex="-1"></a>weights_box <span class="op">=</span> box_robust_weight_frame(</span>
+<span id="cb46-349"><a href="#cb46-349" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
+<span id="cb46-350"><a href="#cb46-350" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
+<span id="cb46-351"><a href="#cb46-351" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>maxsharpe_cov,</span>
+<span id="cb46-352"><a href="#cb46-352" aria-hidden="true" tabindex="-1"></a>    mu_model<span class="op">=</span>maxsharpe_mu,</span>
+<span id="cb46-353"><a href="#cb46-353" aria-hidden="true" tabindex="-1"></a>    radius<span class="op">=</span><span class="fl">0.25</span>,</span>
+<span id="cb46-354"><a href="#cb46-354" aria-hidden="true" tabindex="-1"></a>    mv_lambda<span class="op">=</span>alt_mv_lambda,</span>
+<span id="cb46-355"><a href="#cb46-355" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
+<span id="cb46-356"><a href="#cb46-356" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
+<span id="cb46-357"><a href="#cb46-357" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-358"><a href="#cb46-358" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-359"><a href="#cb46-359" aria-hidden="true" tabindex="-1"></a>weights_ellipsoid <span class="op">=</span> ellipsoid_robust_weight_frame(</span>
+<span id="cb46-360"><a href="#cb46-360" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
+<span id="cb46-361"><a href="#cb46-361" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
+<span id="cb46-362"><a href="#cb46-362" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>maxsharpe_cov,</span>
+<span id="cb46-363"><a href="#cb46-363" aria-hidden="true" tabindex="-1"></a>    mu_model<span class="op">=</span>maxsharpe_mu,</span>
+<span id="cb46-364"><a href="#cb46-364" aria-hidden="true" tabindex="-1"></a>    radius<span class="op">=</span><span class="fl">0.25</span>,</span>
+<span id="cb46-365"><a href="#cb46-365" aria-hidden="true" tabindex="-1"></a>    mv_lambda<span class="op">=</span>alt_mv_lambda,</span>
+<span id="cb46-366"><a href="#cb46-366" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
+<span id="cb46-367"><a href="#cb46-367" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
+<span id="cb46-368"><a href="#cb46-368" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-369"><a href="#cb46-369" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-370"><a href="#cb46-370" aria-hidden="true" tabindex="-1"></a>weights_wasserstein <span class="op">=</span> wasserstein_weight_frame(</span>
+<span id="cb46-371"><a href="#cb46-371" aria-hidden="true" tabindex="-1"></a>    cache<span class="op">=</span>sector_grid.cache,</span>
+<span id="cb46-372"><a href="#cb46-372" aria-hidden="true" tabindex="-1"></a>    rebalance_dates<span class="op">=</span>rebalance_dates,</span>
+<span id="cb46-373"><a href="#cb46-373" aria-hidden="true" tabindex="-1"></a>    cov_model<span class="op">=</span>maxsharpe_cov,</span>
+<span id="cb46-374"><a href="#cb46-374" aria-hidden="true" tabindex="-1"></a>    mu_model<span class="op">=</span>maxsharpe_mu,</span>
+<span id="cb46-375"><a href="#cb46-375" aria-hidden="true" tabindex="-1"></a>    radius<span class="op">=</span><span class="fl">0.10</span>,</span>
+<span id="cb46-376"><a href="#cb46-376" aria-hidden="true" tabindex="-1"></a>    mv_lambda<span class="op">=</span>alt_mv_lambda,</span>
+<span id="cb46-377"><a href="#cb46-377" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
+<span id="cb46-378"><a href="#cb46-378" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
+<span id="cb46-379"><a href="#cb46-379" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-380"><a href="#cb46-380" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-381"><a href="#cb46-381" aria-hidden="true" tabindex="-1"></a>weights_by_name <span class="op">=</span> {</span>
+<span id="cb46-382"><a href="#cb46-382" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Min-CVaR 95"</span>: weights_min_cvar,</span>
+<span id="cb46-383"><a href="#cb46-383" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Mean-CVaR 95"</span>: weights_mean_cvar,</span>
+<span id="cb46-384"><a href="#cb46-384" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Risk Parity"</span>: weights_rp,</span>
+<span id="cb46-385"><a href="#cb46-385" aria-hidden="true" tabindex="-1"></a>    <span class="st">"HRP"</span>: weights_hrp,</span>
+<span id="cb46-386"><a href="#cb46-386" aria-hidden="true" tabindex="-1"></a>    <span class="st">"NCO-MV"</span>: weights_nco,</span>
+<span id="cb46-387"><a href="#cb46-387" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Box Robust MV"</span>: weights_box,</span>
+<span id="cb46-388"><a href="#cb46-388" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Ellipsoid Robust MV"</span>: weights_ellipsoid,</span>
+<span id="cb46-389"><a href="#cb46-389" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Wasserstein DRMV"</span>: weights_wasserstein,</span>
+<span id="cb46-390"><a href="#cb46-390" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb46-391"><a href="#cb46-391" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-392"><a href="#cb46-392" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> <span class="bu">dict</span>(benchmark_results)</span>
+<span id="cb46-393"><a href="#cb46-393" aria-hidden="true" tabindex="-1"></a>results.update(</span>
+<span id="cb46-394"><a href="#cb46-394" aria-hidden="true" tabindex="-1"></a>    run_many_weights_backtests(</span>
+<span id="cb46-395"><a href="#cb46-395" aria-hidden="true" tabindex="-1"></a>        weights_by_name,</span>
+<span id="cb46-396"><a href="#cb46-396" aria-hidden="true" tabindex="-1"></a>        returns<span class="op">=</span>returns,</span>
+<span id="cb46-397"><a href="#cb46-397" aria-hidden="true" tabindex="-1"></a>        cost_bps<span class="op">=</span>cost_bps,</span>
+<span id="cb46-398"><a href="#cb46-398" aria-hidden="true" tabindex="-1"></a>        rf_daily<span class="op">=</span>risk_free_daily,</span>
+<span id="cb46-399"><a href="#cb46-399" aria-hidden="true" tabindex="-1"></a>        w_min<span class="op">=</span>w_min,</span>
+<span id="cb46-400"><a href="#cb46-400" aria-hidden="true" tabindex="-1"></a>        w_max<span class="op">=</span>w_max,</span>
+<span id="cb46-401"><a href="#cb46-401" aria-hidden="true" tabindex="-1"></a>        long_only<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb46-402"><a href="#cb46-402" aria-hidden="true" tabindex="-1"></a>        normalize<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb46-403"><a href="#cb46-403" aria-hidden="true" tabindex="-1"></a>        weight_timing<span class="op">=</span><span class="st">"next_close"</span>,</span>
+<span id="cb46-404"><a href="#cb46-404" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb46-405"><a href="#cb46-405" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-406"><a href="#cb46-406" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-407"><a href="#cb46-407" aria-hidden="true" tabindex="-1"></a>summary <span class="op">=</span> selection.build_strategy_summary(</span>
+<span id="cb46-408"><a href="#cb46-408" aria-hidden="true" tabindex="-1"></a>    results,</span>
+<span id="cb46-409"><a href="#cb46-409" aria-hidden="true" tabindex="-1"></a>    rf_daily<span class="op">=</span>risk_free_daily,</span>
+<span id="cb46-410"><a href="#cb46-410" aria-hidden="true" tabindex="-1"></a>    annualization<span class="op">=</span>annualization,</span>
+<span id="cb46-411"><a href="#cb46-411" aria-hidden="true" tabindex="-1"></a>).sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Calmar"</span>, <span class="st">"CAGR"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">False</span>])</span>
+<span id="cb46-412"><a href="#cb46-412" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-413"><a href="#cb46-413" aria-hidden="true" tabindex="-1"></a>best_cvar <span class="op">=</span> summary.loc[[<span class="st">"Min-CVaR 95"</span>, <span class="st">"Mean-CVaR 95"</span>]].sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Calmar"</span>, <span class="st">"CAGR"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">False</span>]).index[<span class="dv">0</span>]</span>
+<span id="cb46-414"><a href="#cb46-414" aria-hidden="true" tabindex="-1"></a>best_hier <span class="op">=</span> summary.loc[[<span class="st">"HRP"</span>, <span class="st">"NCO-MV"</span>]].sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Calmar"</span>, <span class="st">"CAGR"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">False</span>]).index[<span class="dv">0</span>]</span>
+<span id="cb46-415"><a href="#cb46-415" aria-hidden="true" tabindex="-1"></a>best_robust <span class="op">=</span> summary.loc[[<span class="st">"Box Robust MV"</span>, <span class="st">"Ellipsoid Robust MV"</span>]].sort_values([<span class="st">"Sharpe"</span>, <span class="st">"Calmar"</span>, <span class="st">"CAGR"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">False</span>]).index[<span class="dv">0</span>]</span>
+<span id="cb46-416"><a href="#cb46-416" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-417"><a href="#cb46-417" aria-hidden="true" tabindex="-1"></a>finalists <span class="op">=</span> <span class="bu">list</span>(</span>
+<span id="cb46-418"><a href="#cb46-418" aria-hidden="true" tabindex="-1"></a>    <span class="bu">dict</span>.fromkeys(</span>
+<span id="cb46-419"><a href="#cb46-419" aria-hidden="true" tabindex="-1"></a>        [</span>
+<span id="cb46-420"><a href="#cb46-420" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Equal Weight"</span>,</span>
+<span id="cb46-421"><a href="#cb46-421" aria-hidden="true" tabindex="-1"></a>            <span class="st">"MinVar"</span>,</span>
+<span id="cb46-422"><a href="#cb46-422" aria-hidden="true" tabindex="-1"></a>            <span class="st">"MV"</span>,</span>
+<span id="cb46-423"><a href="#cb46-423" aria-hidden="true" tabindex="-1"></a>            <span class="st">"MaxSharpe"</span>,</span>
+<span id="cb46-424"><a href="#cb46-424" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Learned-Confidence BL"</span>,</span>
+<span id="cb46-425"><a href="#cb46-425" aria-hidden="true" tabindex="-1"></a>            best_cvar,</span>
+<span id="cb46-426"><a href="#cb46-426" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Risk Parity"</span>,</span>
+<span id="cb46-427"><a href="#cb46-427" aria-hidden="true" tabindex="-1"></a>            best_hier,</span>
+<span id="cb46-428"><a href="#cb46-428" aria-hidden="true" tabindex="-1"></a>            best_robust,</span>
+<span id="cb46-429"><a href="#cb46-429" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Wasserstein DRMV"</span>,</span>
+<span id="cb46-430"><a href="#cb46-430" aria-hidden="true" tabindex="-1"></a>        ]</span>
+<span id="cb46-431"><a href="#cb46-431" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb46-432"><a href="#cb46-432" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-433"><a href="#cb46-433" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-434"><a href="#cb46-434" aria-hidden="true" tabindex="-1"></a>final_table <span class="op">=</span> summary.loc[finalists, [<span class="st">"CAGR"</span>, <span class="st">"Vol"</span>, <span class="st">"Sharpe"</span>, <span class="st">"Sortino"</span>, <span class="st">"Calmar"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Turnover"</span>, <span class="st">"Effective N"</span>]]</span>
+<span id="cb46-435"><a href="#cb46-435" aria-hidden="true" tabindex="-1"></a>display(final_table.<span class="bu">round</span>(<span class="dv">4</span>))</span>
+<span id="cb46-436"><a href="#cb46-436" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-437"><a href="#cb46-437" aria-hidden="true" tabindex="-1"></a>nav <span class="op">=</span> pd.concat({name: results[name].net_values <span class="cf">for</span> name <span class="kw">in</span> finalists}, axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb46-438"><a href="#cb46-438" aria-hidden="true" tabindex="-1"></a>returns_final <span class="op">=</span> pd.concat({name: results[name].net_returns <span class="cf">for</span> name <span class="kw">in</span> finalists}, axis<span class="op">=</span><span class="dv">1</span>).dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
+<span id="cb46-439"><a href="#cb46-439" aria-hidden="true" tabindex="-1"></a>weights_final <span class="op">=</span> {name: results[name].weights <span class="cf">for</span> name <span class="kw">in</span> finalists}</span>
+<span id="cb46-440"><a href="#cb46-440" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-441"><a href="#cb46-441" aria-hidden="true" tabindex="-1"></a>latest_dt <span class="op">=</span> pd.Timestamp(weights_wasserstein.index[<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb46-442"><a href="#cb46-442" aria-hidden="true" tabindex="-1"></a>latest_state <span class="op">=</span> sector_grid.cache[latest_dt]</span>
+<span id="cb46-443"><a href="#cb46-443" aria-hidden="true" tabindex="-1"></a>latest_tickers <span class="op">=</span> <span class="bu">list</span>(latest_state[<span class="st">"tickers"</span>])</span>
+<span id="cb46-444"><a href="#cb46-444" aria-hidden="true" tabindex="-1"></a>latest_cov <span class="op">=</span> pd.DataFrame(latest_state[<span class="st">"cov_ann_map"</span>][maxsharpe_cov], index<span class="op">=</span>latest_tickers, columns<span class="op">=</span>latest_tickers)</span>
+<span id="cb46-445"><a href="#cb46-445" aria-hidden="true" tabindex="-1"></a>latest_mu <span class="op">=</span> latest_state[<span class="st">"mu_ann_map"</span>][maxsharpe_cov][maxsharpe_mu].reindex(latest_tickers).fillna(<span class="fl">0.0</span>)</span>
+<span id="cb46-446"><a href="#cb46-446" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-447"><a href="#cb46-447" aria-hidden="true" tabindex="-1"></a>cvar_path <span class="op">=</span> cvar_budget_path(</span>
+<span id="cb46-448"><a href="#cb46-448" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>latest_state[<span class="st">"R_cov"</span>].reindex(columns<span class="op">=</span>latest_tickers),</span>
+<span id="cb46-449"><a href="#cb46-449" aria-hidden="true" tabindex="-1"></a>    mu_ann<span class="op">=</span>latest_mu,</span>
+<span id="cb46-450"><a href="#cb46-450" aria-hidden="true" tabindex="-1"></a>    budget_scales<span class="op">=</span>[<span class="fl">0.80</span>, <span class="fl">0.90</span>, <span class="fl">1.00</span>, <span class="fl">1.10</span>, <span class="fl">1.25</span>],</span>
+<span id="cb46-451"><a href="#cb46-451" aria-hidden="true" tabindex="-1"></a>    alpha<span class="op">=</span><span class="fl">0.95</span>,</span>
+<span id="cb46-452"><a href="#cb46-452" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
+<span id="cb46-453"><a href="#cb46-453" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
+<span id="cb46-454"><a href="#cb46-454" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-455"><a href="#cb46-455" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-456"><a href="#cb46-456" aria-hidden="true" tabindex="-1"></a>rp_table <span class="op">=</span> risk_contribution_table(</span>
+<span id="cb46-457"><a href="#cb46-457" aria-hidden="true" tabindex="-1"></a>    weights<span class="op">=</span>weights_rp.iloc[<span class="op">-</span><span class="dv">1</span>].reindex(latest_tickers).fillna(<span class="fl">0.0</span>),</span>
+<span id="cb46-458"><a href="#cb46-458" aria-hidden="true" tabindex="-1"></a>    cov_ann<span class="op">=</span>latest_state[<span class="st">"cov_ann_map"</span>][minvar_cov],</span>
+<span id="cb46-459"><a href="#cb46-459" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-460"><a href="#cb46-460" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-461"><a href="#cb46-461" aria-hidden="true" tabindex="-1"></a>cluster_table <span class="op">=</span> cluster_membership_table(</span>
+<span id="cb46-462"><a href="#cb46-462" aria-hidden="true" tabindex="-1"></a>    cov_ann<span class="op">=</span>latest_state[<span class="st">"cov_ann_map"</span>][maxsharpe_cov],</span>
+<span id="cb46-463"><a href="#cb46-463" aria-hidden="true" tabindex="-1"></a>    tickers<span class="op">=</span>latest_tickers,</span>
+<span id="cb46-464"><a href="#cb46-464" aria-hidden="true" tabindex="-1"></a>    n_clusters<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb46-465"><a href="#cb46-465" aria-hidden="true" tabindex="-1"></a>    linkage_method<span class="op">=</span><span class="st">"average"</span>,</span>
+<span id="cb46-466"><a href="#cb46-466" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-467"><a href="#cb46-467" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-468"><a href="#cb46-468" aria-hidden="true" tabindex="-1"></a>wasserstein_path <span class="op">=</span> robust_radius_path(</span>
+<span id="cb46-469"><a href="#cb46-469" aria-hidden="true" tabindex="-1"></a>    model<span class="op">=</span><span class="st">"wasserstein"</span>,</span>
+<span id="cb46-470"><a href="#cb46-470" aria-hidden="true" tabindex="-1"></a>    mu_ann<span class="op">=</span>latest_mu,</span>
+<span id="cb46-471"><a href="#cb46-471" aria-hidden="true" tabindex="-1"></a>    cov_ann<span class="op">=</span>latest_cov,</span>
+<span id="cb46-472"><a href="#cb46-472" aria-hidden="true" tabindex="-1"></a>    n_mu_obs<span class="op">=</span><span class="bu">len</span>(latest_state[<span class="st">"R_mu"</span>]),</span>
+<span id="cb46-473"><a href="#cb46-473" aria-hidden="true" tabindex="-1"></a>    radii<span class="op">=</span>[<span class="fl">0.0</span>, <span class="fl">0.05</span>, <span class="fl">0.10</span>, <span class="fl">0.25</span>, <span class="fl">0.50</span>, <span class="fl">1.00</span>],</span>
+<span id="cb46-474"><a href="#cb46-474" aria-hidden="true" tabindex="-1"></a>    mv_lambda<span class="op">=</span>alt_mv_lambda,</span>
+<span id="cb46-475"><a href="#cb46-475" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
+<span id="cb46-476"><a href="#cb46-476" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
+<span id="cb46-477"><a href="#cb46-477" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-478"><a href="#cb46-478" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-479"><a href="#cb46-479" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">3</span>, <span class="dv">4</span>, figsize<span class="op">=</span>(<span class="dv">20</span>, <span class="dv">14</span>))</span>
+<span id="cb46-480"><a href="#cb46-480" aria-hidden="true" tabindex="-1"></a>axes <span class="op">=</span> axes.ravel()</span>
+<span id="cb46-481"><a href="#cb46-481" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-482"><a href="#cb46-482" aria-hidden="true" tabindex="-1"></a>plot_cvar_budget_path(cvar_path, ax<span class="op">=</span>axes[<span class="dv">0</span>], title<span class="op">=</span><span class="st">"Mean-CVaR budget path"</span>)</span>
+<span id="cb46-483"><a href="#cb46-483" aria-hidden="true" tabindex="-1"></a>plot_risk_contribution_bar(rp_table, ax<span class="op">=</span>axes[<span class="dv">1</span>], title<span class="op">=</span><span class="st">"Risk Parity risk contribution"</span>)</span>
+<span id="cb46-484"><a href="#cb46-484" aria-hidden="true" tabindex="-1"></a>plot_hrp_dendrogram(latest_state[<span class="st">"cov_ann_map"</span>][maxsharpe_cov], labels<span class="op">=</span>latest_tickers, linkage_method<span class="op">=</span><span class="st">"average"</span>, ax<span class="op">=</span>axes[<span class="dv">2</span>], title<span class="op">=</span><span class="st">"sector cluster tree"</span>)</span>
+<span id="cb46-485"><a href="#cb46-485" aria-hidden="true" tabindex="-1"></a>plot_nco_cluster_weights(cluster_table, weights_nco.iloc[<span class="op">-</span><span class="dv">1</span>], ax<span class="op">=</span>axes[<span class="dv">3</span>], title<span class="op">=</span><span class="st">"NCO-MV cluster allocation"</span>)</span>
+<span id="cb46-486"><a href="#cb46-486" aria-hidden="true" tabindex="-1"></a>plot_finalist_nav(nav, strategies<span class="op">=</span>finalists, ax<span class="op">=</span>axes[<span class="dv">4</span>], title<span class="op">=</span><span class="st">"net wealth"</span>, short_labels<span class="op">=</span>label_map)</span>
+<span id="cb46-487"><a href="#cb46-487" aria-hidden="true" tabindex="-1"></a>plot_finalist_drawdowns(nav, strategies<span class="op">=</span>finalists, ax<span class="op">=</span>axes[<span class="dv">5</span>], title<span class="op">=</span><span class="st">"drawdowns"</span>, short_labels<span class="op">=</span>label_map)</span>
+<span id="cb46-488"><a href="#cb46-488" aria-hidden="true" tabindex="-1"></a>plot_wasserstein_radius_path(wasserstein_path, ax<span class="op">=</span>axes[<span class="dv">6</span>], title<span class="op">=</span><span class="st">"Wasserstein radius path"</span>)</span>
+<span id="cb46-489"><a href="#cb46-489" aria-hidden="true" tabindex="-1"></a>plot_average_weight_heatmap(weights_final, ax<span class="op">=</span>axes[<span class="dv">7</span>], title<span class="op">=</span><span class="st">"average finalist weights"</span>, short_labels<span class="op">=</span>label_map)</span>
+<span id="cb46-490"><a href="#cb46-490" aria-hidden="true" tabindex="-1"></a>plot_sleeve_exposure_bar(weights_final, sleeve_map, ax<span class="op">=</span>axes[<span class="dv">8</span>], title<span class="op">=</span><span class="st">"average sleeve exposure"</span>, short_labels<span class="op">=</span>label_map)</span>
+<span id="cb46-491"><a href="#cb46-491" aria-hidden="true" tabindex="-1"></a>plot_risk_return_scatter(final_table, ax<span class="op">=</span>axes[<span class="dv">9</span>], title<span class="op">=</span><span class="st">"risk-return"</span>, risk_col<span class="op">=</span><span class="st">"Vol"</span>, return_col<span class="op">=</span><span class="st">"CAGR"</span>, color_col<span class="op">=</span><span class="st">"Sharpe"</span>, short_labels<span class="op">=</span>label_map)</span>
+<span id="cb46-492"><a href="#cb46-492" aria-hidden="true" tabindex="-1"></a>plot_finalist_metric_bar(final_table, metric<span class="op">=</span><span class="st">"Sharpe"</span>, ax<span class="op">=</span>axes[<span class="dv">10</span>], title<span class="op">=</span><span class="st">"Sharpe"</span>, short_labels<span class="op">=</span>label_map)</span>
+<span id="cb46-493"><a href="#cb46-493" aria-hidden="true" tabindex="-1"></a>plot_finalist_metric_bar(final_table, metric<span class="op">=</span><span class="st">"Max Drawdown"</span>, ax<span class="op">=</span>axes[<span class="dv">11</span>], title<span class="op">=</span><span class="st">"max drawdown"</span>, short_labels<span class="op">=</span>label_map)</span>
+<span id="cb46-494"><a href="#cb46-494" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-495"><a href="#cb46-495" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb46-496"><a href="#cb46-496" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
+<span id="cb46-497"><a href="#cb46-497" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-498"><a href="#cb46-498" aria-hidden="true" tabindex="-1"></a>stress_windows <span class="op">=</span> {</span>
+<span id="cb46-499"><a href="#cb46-499" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2018_q4"</span>: (<span class="st">"2018-10-01"</span>, <span class="st">"2018-12-31"</span>),</span>
+<span id="cb46-500"><a href="#cb46-500" aria-hidden="true" tabindex="-1"></a>    <span class="st">"covid_crash_2020"</span>: (<span class="st">"2020-02-19"</span>, <span class="st">"2020-03-23"</span>),</span>
+<span id="cb46-501"><a href="#cb46-501" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inflation_rate_shock_2022"</span>: (<span class="st">"2022-01-03"</span>, <span class="st">"2022-10-14"</span>),</span>
+<span id="cb46-502"><a href="#cb46-502" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb46-503"><a href="#cb46-503" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-504"><a href="#cb46-504" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> returns_final.index.<span class="bu">max</span>() <span class="op">&gt;=</span> pd.Timestamp(<span class="st">"2025-01-01"</span>):</span>
+<span id="cb46-505"><a href="#cb46-505" aria-hidden="true" tabindex="-1"></a>    stress_windows[<span class="st">"recent_2025_2026"</span>] <span class="op">=</span> (<span class="st">"2025-01-01"</span>, <span class="bu">str</span>(returns_final.index.<span class="bu">max</span>().date()))</span>
+<span id="cb46-506"><a href="#cb46-506" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-507"><a href="#cb46-507" aria-hidden="true" tabindex="-1"></a>market_ret <span class="op">=</span> signal_returns[<span class="st">"SPY"</span>].reindex(returns_final.index) <span class="cf">if</span> <span class="st">"SPY"</span> <span class="kw">in</span> signal_returns.columns <span class="cf">else</span> returns.mean(axis<span class="op">=</span><span class="dv">1</span>).reindex(returns_final.index)</span>
+<span id="cb46-508"><a href="#cb46-508" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-509"><a href="#cb46-509" aria-hidden="true" tabindex="-1"></a>sector_risk_report <span class="op">=</span> risk_report(</span>
+<span id="cb46-510"><a href="#cb46-510" aria-hidden="true" tabindex="-1"></a>    objects<span class="op">=</span>{name: returns_final[name].dropna() <span class="cf">for</span> name <span class="kw">in</span> finalists},</span>
+<span id="cb46-511"><a href="#cb46-511" aria-hidden="true" tabindex="-1"></a>    market_ret<span class="op">=</span>market_ret,</span>
+<span id="cb46-512"><a href="#cb46-512" aria-hidden="true" tabindex="-1"></a>    rf_daily<span class="op">=</span>risk_free_daily,</span>
+<span id="cb46-513"><a href="#cb46-513" aria-hidden="true" tabindex="-1"></a>    include<span class="op">=</span>{</span>
+<span id="cb46-514"><a href="#cb46-514" aria-hidden="true" tabindex="-1"></a>        <span class="st">"performance_tables"</span>: <span class="va">False</span>,</span>
+<span id="cb46-515"><a href="#cb46-515" aria-hidden="true" tabindex="-1"></a>        <span class="st">"shape_tables"</span>: <span class="va">False</span>,</span>
+<span id="cb46-516"><a href="#cb46-516" aria-hidden="true" tabindex="-1"></a>        <span class="st">"drawdowns"</span>: <span class="va">False</span>,</span>
+<span id="cb46-517"><a href="#cb46-517" aria-hidden="true" tabindex="-1"></a>        <span class="st">"drawdown_episodes"</span>: <span class="va">False</span>,</span>
+<span id="cb46-518"><a href="#cb46-518" aria-hidden="true" tabindex="-1"></a>        <span class="st">"var_es"</span>: <span class="va">True</span>,</span>
+<span id="cb46-519"><a href="#cb46-519" aria-hidden="true" tabindex="-1"></a>        <span class="st">"var_backtest"</span>: <span class="va">True</span>,</span>
+<span id="cb46-520"><a href="#cb46-520" aria-hidden="true" tabindex="-1"></a>        <span class="st">"stress"</span>: <span class="va">True</span>,</span>
+<span id="cb46-521"><a href="#cb46-521" aria-hidden="true" tabindex="-1"></a>        <span class="st">"capm"</span>: <span class="va">True</span>,</span>
+<span id="cb46-522"><a href="#cb46-522" aria-hidden="true" tabindex="-1"></a>        <span class="st">"rolling_beta"</span>: <span class="va">True</span>,</span>
+<span id="cb46-523"><a href="#cb46-523" aria-hidden="true" tabindex="-1"></a>        <span class="st">"correlation"</span>: <span class="va">False</span>,</span>
+<span id="cb46-524"><a href="#cb46-524" aria-hidden="true" tabindex="-1"></a>        <span class="st">"attribution"</span>: <span class="va">False</span>,</span>
+<span id="cb46-525"><a href="#cb46-525" aria-hidden="true" tabindex="-1"></a>        <span class="st">"exec_bullets"</span>: <span class="va">False</span>,</span>
+<span id="cb46-526"><a href="#cb46-526" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb46-527"><a href="#cb46-527" aria-hidden="true" tabindex="-1"></a>    var_settings<span class="op">=</span>{<span class="st">"alpha"</span>: <span class="fl">0.05</span>, <span class="st">"methods"</span>: [<span class="st">"hist"</span>, <span class="st">"cf"</span>, <span class="st">"fhs"</span>]},</span>
+<span id="cb46-528"><a href="#cb46-528" aria-hidden="true" tabindex="-1"></a>    backtest_settings<span class="op">=</span>{<span class="st">"alpha"</span>: <span class="fl">0.05</span>, <span class="st">"methods"</span>: [<span class="st">"hist"</span>, <span class="st">"cf"</span>, <span class="st">"fhs"</span>], <span class="st">"lookback"</span>: <span class="dv">252</span>, <span class="st">"plot_method"</span>: <span class="st">"best"</span>},</span>
+<span id="cb46-529"><a href="#cb46-529" aria-hidden="true" tabindex="-1"></a>    rolling_settings<span class="op">=</span>{<span class="st">"vol_windows"</span>: [<span class="dv">252</span>], <span class="st">"beta_windows"</span>: [<span class="dv">252</span>]},</span>
+<span id="cb46-530"><a href="#cb46-530" aria-hidden="true" tabindex="-1"></a>    stress_settings<span class="op">=</span>{<span class="st">"windows"</span>: stress_windows, <span class="st">"worst_only"</span>: <span class="va">False</span>},</span>
+<span id="cb46-531"><a href="#cb46-531" aria-hidden="true" tabindex="-1"></a>    layout<span class="op">=</span>{<span class="st">"ncols"</span>: <span class="dv">5</span>, <span class="st">"sharex"</span>: <span class="va">True</span>, <span class="st">"sharey"</span>: <span class="va">False</span>},</span>
+<span id="cb46-532"><a href="#cb46-532" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span>{</span>
+<span id="cb46-533"><a href="#cb46-533" aria-hidden="true" tabindex="-1"></a>        <span class="st">"display_table_keys"</span>: [<span class="st">"var_es"</span>],</span>
+<span id="cb46-534"><a href="#cb46-534" aria-hidden="true" tabindex="-1"></a>        <span class="st">"round_tables"</span>: <span class="dv">4</span>,</span>
+<span id="cb46-535"><a href="#cb46-535" aria-hidden="true" tabindex="-1"></a>        <span class="st">"print_exec_bullets"</span>: <span class="va">False</span>,</span>
+<span id="cb46-536"><a href="#cb46-536" aria-hidden="true" tabindex="-1"></a>        <span class="st">"show_figures"</span>: <span class="va">False</span>,</span>
+<span id="cb46-537"><a href="#cb46-537" aria-hidden="true" tabindex="-1"></a>        <span class="st">"short_labels"</span>: <span class="va">True</span>,</span>
+<span id="cb46-538"><a href="#cb46-538" aria-hidden="true" tabindex="-1"></a>        <span class="st">"label_max_len"</span>: <span class="dv">12</span>,</span>
+<span id="cb46-539"><a href="#cb46-539" aria-hidden="true" tabindex="-1"></a>        <span class="st">"label_map"</span>: label_map,</span>
+<span id="cb46-540"><a href="#cb46-540" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb46-541"><a href="#cb46-541" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb46-542"><a href="#cb46-542" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-543"><a href="#cb46-543" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> key <span class="kw">in</span> [<span class="st">"var_backtest"</span>, <span class="st">"stress"</span>, <span class="st">"rolling_beta"</span>]:</span>
+<span id="cb46-544"><a href="#cb46-544" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> fig <span class="kw">in</span> sector_risk_report.figures.get(key, []):</span>
+<span id="cb46-545"><a href="#cb46-545" aria-hidden="true" tabindex="-1"></a>        display(fig)</span>
+<span id="cb46-546"><a href="#cb46-546" aria-hidden="true" tabindex="-1"></a>        plt.close(fig)</span>
+<span id="cb46-547"><a href="#cb46-547" aria-hidden="true" tabindex="-1"></a></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>sector returns: (1972, 11) 2018-07-03 to 2026-05-07
 rebalance dates: 59 2021-07-30 to 2026-05-07

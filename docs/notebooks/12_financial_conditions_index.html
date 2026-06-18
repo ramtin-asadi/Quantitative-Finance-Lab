@@ -243,17 +243,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Rough Volatiility For Option Pricing</span></a>
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
+  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Reinforcement Learning for Portfolio Allocation</span></a>
+  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">20. Reinforcement Learning for Portfolio Allocation</span></a>
   </div>
 </li>
     </ul>
@@ -331,8 +331,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>repo_dir <span class="op">=</span> Path.cwd().parent <span class="cf">if</span> Path.cwd().name <span class="op">==</span> <span class="st">"notebooks"</span> <span class="cf">else</span> Path.cwd()</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>data_dir <span class="op">=</span> repo_dir <span class="op">/</span> <span class="st">"data"</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>factor_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"us_macro_factors.csv"</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>etf_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"ETF_data.csv"</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>nfci_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"nfci-data-series.csv"</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>etf_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"canada_sector_etfs.csv"</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>nfci_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"nfci.csv"</span></span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>rf_annual <span class="op">=</span> <span class="fl">0.04</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>rf_monthly <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> rf_annual) <span class="op">**</span> (<span class="fl">1.0</span> <span class="op">/</span> <span class="fl">12.0</span>) <span class="op">-</span> <span class="fl">1.0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -1679,8 +1679,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="40a75482" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>nfci_raw <span class="op">=</span> pd.read_csv(nfci_path)</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>nfci_raw.columns <span class="op">=</span> [<span class="bu">str</span>(col).lower() <span class="cf">for</span> col <span class="kw">in</span> nfci_raw.columns]</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>nfci_raw[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(nfci_raw[<span class="st">"friday_of_week"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>nfci <span class="op">=</span> nfci_raw.dropna(subset<span class="op">=</span>[<span class="st">"date"</span>]).set_index(<span class="st">"date"</span>).sort_index().drop(columns<span class="op">=</span>[<span class="st">"friday_of_week"</span>])</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>nfci_raw[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(nfci_raw[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>nfci <span class="op">=</span> nfci_raw.dropna(subset<span class="op">=</span>[<span class="st">"date"</span>]).set_index(<span class="st">"date"</span>).sort_index().drop(columns<span class="op">=</span>[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"ignore"</span>)</span>
 <span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>nfci <span class="op">=</span> nfci.<span class="bu">apply</span>(pd.to_numeric, errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
 <span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>nfci_month <span class="op">=</span> nfci.groupby(nfci.index.to_period(<span class="st">"M"</span>)).last()</span>
 <span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>nfci_month.index <span class="op">=</span> nfci_month.index.to_timestamp(<span class="st">"M"</span>)</span>

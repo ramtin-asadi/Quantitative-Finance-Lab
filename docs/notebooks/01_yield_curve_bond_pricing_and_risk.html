@@ -272,17 +272,17 @@ window.Quarto = {
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Rough Volatiility For Option Pricing</span></a>
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
+  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Reinforcement Learning for Portfolio Allocation</span></a>
+  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">20. Reinforcement Learning for Portfolio Allocation</span></a>
   </div>
 </li>
     </ul>
@@ -401,7 +401,7 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 <span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">7</span>})</span>
 <span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="vs">r"</span><span class="dv">..\d</span><span class="vs">ata</span><span class="er">\</span><span class="vs">par-yield-curve-rates-1990-2026</span><span class="dv">.</span><span class="vs">csv"</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="vs">r"</span><span class="dv">..\d</span><span class="vs">ata</span><span class="er">\</span><span class="vs">us_treasury_yields</span><span class="dv">.</span><span class="vs">csv"</span>)</span>
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>col_map <span class="op">=</span> {<span class="st">"date"</span>: <span class="st">"Date"</span>,<span class="st">"1 mo"</span>: <span class="st">"1M"</span>,<span class="st">"2 mo"</span>: <span class="st">"2M"</span>,<span class="st">"3 mo"</span>: <span class="st">"3M"</span>,<span class="st">"4 mo"</span>: <span class="st">"4M"</span>,<span class="st">"6 mo"</span>: <span class="st">"6M"</span>,<span class="st">"1 yr"</span>: <span class="st">"1Y"</span>,<span class="st">"2 yr"</span>: <span class="st">"2Y"</span>,<span class="st">"3 yr"</span>: <span class="st">"3Y"</span>,<span class="st">"5 yr"</span>: <span class="st">"5Y"</span>,<span class="st">"7 yr"</span>: <span class="st">"7Y"</span>,<span class="st">"10 yr"</span>: <span class="st">"10Y"</span>,<span class="st">"20 yr"</span>: <span class="st">"20Y"</span>,<span class="st">"30 yr"</span>: <span class="st">"30Y"</span>}</span>
 <span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
@@ -3952,7 +3952,7 @@ Strategy comparison summary:</code></pre>
 <span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting <span class="im">import</span> fixed_income <span class="im">as</span> fi_plots</span>
 <span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
-<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>second_path <span class="op">=</span> Path(<span class="st">"../data/japan_yield_curve_all.csv"</span>)</span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>second_path <span class="op">=</span> Path(<span class="st">"../data/japan_mof_yields.csv"</span>)</span>
 <span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> second_path.exists():</span>
 <span id="cb35-23"><a href="#cb35-23" aria-hidden="true" tabindex="-1"></a>    par <span class="op">=</span> load_par_yield_curve(second_path, source<span class="op">=</span><span class="st">"japan_mof"</span>)</span>

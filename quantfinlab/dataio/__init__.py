@@ -20,6 +20,8 @@ from .option_chain import (
 )
 from .panel import (
     align_panels,
+    load_hkex_close_volume,
+    load_nasdaq_close_volume,
     load_vix,
     load_yfinance_panel,
     prices_to_returns_panel,
@@ -27,6 +29,7 @@ from .panel import (
 )
 from .macro import (
     clean_monthly_index,
+    load_acm_term_premium,
     load_macro_factors,
     load_nfci,
     macro_availability_table,
@@ -48,7 +51,10 @@ __all__ = [
     "filter_liquidity",
     "filter_valid_quotes",
     "clean_monthly_index",
+    "load_acm_term_premium",
+    "load_hkex_close_volume",
     "load_macro_factors",
+    "load_nasdaq_close_volume",
     "load_ohlcv",
     "load_nfci",
     "load_vix",

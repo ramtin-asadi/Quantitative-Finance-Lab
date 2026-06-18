@@ -383,13 +383,14 @@ def plot_straddle_payoff(
 
 
 def tree_structure(ax=None, *, steps: int = 3, spot: float = 100.0, up: float = 1.12, down: float = 0.90, strike: float = 100.0, rate: float = 0.04, p: float = 0.52, title: str | None = None):
-    set_plot_style()
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(10.5, 5.8))
-    else:
-        fig = ax.get_figure()
-    ax.axis("off")
     n = int(max(2, steps))
+    fig, ax = _course_canvas(
+        ax,
+        figsize=(10.5, 5.8),
+        title=title or "American binomial tree: stock moves and backward induction",
+        xlim=(-0.65, n + 1.45),
+        ylim=(-n / 2 - 0.85, n / 2 + 0.85),
+    )
     disc = np.exp(-float(rate) / max(n, 1))
     stock = {}
     value = {}
@@ -416,48 +417,46 @@ def tree_structure(ax=None, *, steps: int = 3, spot: float = 100.0, up: float = 
             x0, y0 = positions[(i, j)]
             for jj, label in ((j, "d"), (j + 1, "u")):
                 x1, y1 = positions[(i + 1, jj)]
-                ax.add_patch(FancyArrowPatch((x0 + 0.13, y0), (x1 - 0.13, y1), arrowstyle="-|>", mutation_scale=10, lw=1.0, color="#6b7280", alpha=0.75))
-                ax.text((x0 + x1) / 2, (y0 + y1) / 2 + 0.06, label, ha="center", va="center", fontsize=8, color="#374151")
+                ax.add_patch(FancyArrowPatch((x0 + 0.13, y0), (x1 - 0.13, y1), arrowstyle="-|>", mutation_scale=10, lw=1.0, color=LAB_COLORS[8], alpha=0.95))
+                ax.text((x0 + x1) / 2, (y0 + y1) / 2 + 0.06, rf"${label}$", ha="center", va="center", fontsize=8, color=LAB_COLORS[2])
     for i in range(n + 1):
         for j in range(i + 1):
             x, y = positions[(i, j)]
             terminal = i == n
             early = bool(exercise[(i, j)]) and not terminal
-            face = "#dbeafe" if not terminal else "#fef3c7"
+            face = "#eaf3ff" if not terminal else "#fff7ed"
             if early:
-                face = "#fecaca"
-            box = mpatches.FancyBboxPatch((x - 0.34, y - 0.18), 0.68, 0.36, boxstyle="round,pad=0.035,rounding_size=0.04", fc=face, ec="#111827", lw=1.0)
+                face = "#fff1f2"
+            box = mpatches.FancyBboxPatch((x - 0.34, y - 0.18), 0.68, 0.36, boxstyle="round,pad=0.035,rounding_size=0.04", fc=face, ec=LAB_COLORS[2], lw=1.0)
             ax.add_patch(box)
             if i == 0:
-                label = f"S0={stock[(i, j)]:.0f}\nV={value[(i, j)]:.2f}"
+                label = rf"$S_0={stock[(i, j)]:.0f}$" + "\n" + rf"$V={value[(i, j)]:.2f}$"
             elif terminal:
-                label = f"S={stock[(i, j)]:.0f}\npayoff={value[(i, j)]:.2f}"
+                label = rf"$S={stock[(i, j)]:.0f}$" + "\n" + rf"payoff $={value[(i, j)]:.2f}$"
             else:
                 payoff = max(float(strike) - stock[(i, j)], 0.0)
-                label = f"S={stock[(i, j)]:.0f}\nmax({payoff:.2f}, C)"
-            ax.text(x, y, label, ha="center", va="center", fontsize=8)
-    ax.text(n + 0.35, 0.58 * n, "terminal payoff", ha="left", va="center", fontsize=9, color="#92400e")
-    ax.text(0.35, -0.58 * n, "backward induction:\nV = max(exercise, continuation)", ha="left", va="center", fontsize=9, color="#991b1b")
+                label = rf"$S={stock[(i, j)]:.0f}$" + "\n" + rf"$\max({payoff:.2f}, C)$"
+            ax.text(x, y, label, ha="center", va="center", fontsize=8, color=LAB_COLORS[2])
+    ax.text(n + 0.35, 0.58 * n, "terminal payoff", ha="left", va="center", fontsize=9, color="#9a3412")
+    ax.text(0.35, -0.58 * n, "backward induction:\n" + r"$V=\max(\mathrm{exercise},\mathrm{continuation})$", ha="left", va="center", fontsize=9, color=LAB_COLORS[1])
     handles = [
-        mpatches.Patch(fc="#dbeafe", ec="#111827", label="continuation node"),
-        mpatches.Patch(fc="#fef3c7", ec="#111827", label="terminal payoff"),
-        mpatches.Patch(fc="#fecaca", ec="#111827", label="early exercise"),
+        mpatches.Patch(fc="#eaf3ff", ec=LAB_COLORS[2], label="continuation node"),
+        mpatches.Patch(fc="#fff7ed", ec=LAB_COLORS[2], label="terminal payoff"),
+        mpatches.Patch(fc="#fff1f2", ec=LAB_COLORS[2], label="early exercise"),
     ]
     ax.legend(handles=handles, loc="upper left", frameon=True, fontsize=8)
-    ax.set_xlim(-0.65, n + 1.45)
-    ax.set_ylim(-n / 2 - 0.85, n / 2 + 0.85)
-    ax.set_title(title or "American binomial tree: stock moves, terminal payoff, and backward max step")
     fig.tight_layout()
     return fig, ax
 
 
-def overlay_payoffs(axs=None, *, spot: float = 100.0, call_strike: float = 105.0, put_strike: float = 95.0, call_premium: float = 2.5, put_premium: float = 2.0):
+def overlay_payoffs(axs=None, *, spot: float = 100.0, call_strike: float = 105.0, put_strike: float = 95.0, call_premium: float = 2.5, put_premium: float = 2.0, title: str | None = "Covered call, protective put, and collar"):
     set_plot_style()
     if axs is None:
-        fig, axs = plt.subplots(1, 3, figsize=(13.5, 4.2))
+        fig, axs = plt.subplots(1, 3, figsize=(13.5, 4.4), facecolor="white")
     else:
         axs = np.asarray(axs).ravel()
         fig = axs[0].get_figure()
+        fig.patch.set_facecolor("white")
     s = np.linspace(0.65 * spot, 1.35 * spot, 301)
     stock = s - spot
     short_call = -np.maximum(s - call_strike, 0.0) + call_premium
@@ -470,23 +469,32 @@ def overlay_payoffs(axs=None, *, spot: float = 100.0, call_strike: float = 105.0
         (protective, [("stock", stock), ("long put", long_put)], "protective put", [put_strike], spot + put_premium),
         (collar, [("stock", stock), ("short call", short_call), ("long put", long_put)], "collar", [put_strike, call_strike], spot - call_premium + put_premium),
     ]
+    leg_colors = {
+        "stock": LAB_COLORS[0],
+        "short call": LAB_COLORS[1],
+        "long put": LAB_COLORS[6],
+    }
+    if title:
+        _course_header(fig, title)
     for ax, (combined, legs, label, strikes, breakeven) in zip(axs[:3], specs):
-        ax.axhline(0.0, color="#222222", lw=0.8)
-        ax.axvline(spot, color="#666666", lw=0.8, ls="--")
+        ax.set_facecolor("white")
+        ax.axhline(0.0, color=LAB_COLORS[2], lw=0.8)
+        ax.axvline(spot, color=LAB_COLORS[8], lw=0.8, ls="--")
         for name, leg in legs:
-            ax.plot(s, leg, lw=1.1, alpha=0.62, ls="--", label=name)
-        ax.plot(s, combined, lw=2.2, color="#111827", label="combined")
+            ax.plot(s, leg, lw=1.1, alpha=0.72, ls="--", color=leg_colors.get(name, LAB_COLORS[8]), label=name)
+        ax.plot(s, combined, lw=2.2, color=LAB_COLORS[2], label="combined")
         for k in strikes:
-            ax.axvline(k, color="#9ca3af", lw=0.9)
-            ax.text(k, ax.get_ylim()[0], f"K={k:.0f}", ha="center", va="bottom", fontsize=7)
-        ax.axvline(breakeven, color="#ef4444", lw=0.9, ls=":")
-        ax.fill_between(s, combined, 0.0, where=combined < 0, color="#fecaca", alpha=0.18)
-        ax.fill_between(s, combined, 0.0, where=combined > 0, color="#bbf7d0", alpha=0.15)
-        ax.set_xlabel("final underlying price")
+            ax.axvline(k, color=LAB_COLORS[8], lw=0.9)
+            ax.text(k, ax.get_ylim()[0], rf"$K={k:.0f}$", ha="center", va="bottom", fontsize=7, color=LAB_COLORS[2])
+        ax.axvline(breakeven, color=LAB_COLORS[1], lw=0.9, ls=":")
+        ax.fill_between(s, combined, 0.0, where=combined < 0, color=LAB_COLORS[1], alpha=0.12)
+        ax.fill_between(s, combined, 0.0, where=combined > 0, color=LAB_COLORS[4], alpha=0.12)
+        ax.set_xlabel("Final underlying price")
         ax.set_ylabel("P&L per share")
-        ax.set_title(label)
+        ax.set_title(label.title(), fontsize=11, color=LAB_COLORS[2], pad=8)
+        ax.grid(True, alpha=0.16)
         ax.legend(fontsize=7, loc="best")
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0, 1, 0.88) if title else None)
     return fig, axs
 
 
@@ -496,24 +504,15 @@ def plot_fixed_float_swap_diagram(
     title: str = "Fixed-for-floating swap: payer and receiver views",
     figsize: tuple[float, float] = (13.0, 6.3),
 ):
-    set_plot_style()
-    if ax is None:
-        fig, ax = plt.subplots(figsize=figsize)
-    else:
-        fig = ax.get_figure()
-    ax.axis("off")
-    ax.set_xlim(0, 14)
-    ax.set_ylim(0, 7)
+    fig, ax = _course_canvas(ax, figsize=figsize, title=title, xlim=(0, 14), ylim=(0, 7))
 
-    bg = "#fbfbfb"
-    panel_edge = "#d5d9df"
-    fixed_color = "#1f77b4"
-    float_color = "#c44e52"
-    receive_color = "#eaf3ff"
-    pay_color = "#fff1ed"
-    dealer_color = "#f6f7f9"
+    panel_edge = "#d7e3f5"
+    fixed_color = LAB_COLORS[0]
+    float_color = LAB_COLORS[1]
+    receive_color = "#f0f8ff"
+    pay_color = "#fff8f0"
+    dealer_color = "#f8fafc"
 
-    ax.set_facecolor(bg)
     panel = mpatches.FancyBboxPatch(
         (0.35, 0.45),
         13.3,
@@ -522,6 +521,7 @@ def plot_fixed_float_swap_diagram(
         fc="white",
         ec=panel_edge,
         lw=1.2,
+        zorder=0,
     )
     ax.add_patch(panel)
 
@@ -538,11 +538,12 @@ def plot_fixed_float_swap_diagram(
             h,
             boxstyle="round,pad=0.18,rounding_size=0.16",
             fc=color,
-            ec="#30343b",
+            ec=LAB_COLORS[8],
             lw=1.1,
+            zorder=2,
         )
         ax.add_patch(patch)
-        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=10, fontweight="bold")
+        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=10, fontweight="bold", color=LAB_COLORS[2], zorder=3)
 
     def arrow(start, end, color, rad=0.0):
         patch = FancyArrowPatch(
@@ -553,6 +554,7 @@ def plot_fixed_float_swap_diagram(
             lw=2.1,
             color=color,
             connectionstyle=f"arc3,rad={rad}",
+            zorder=3,
         )
         ax.add_patch(patch)
         return patch
@@ -577,19 +579,18 @@ def plot_fixed_float_swap_diagram(
     ax.text(9.25, 2.72, "fixed leg", ha="center", va="bottom", fontsize=9, color=fixed_color)
     ax.text(9.25, 1.45, "floating leg", ha="center", va="top", fontsize=9, color=float_color)
 
-    ax.text(2.50, 5.75, "Receiver swap", ha="center", fontsize=11, fontweight="bold", color="#20242a")
-    ax.text(11.50, 5.75, "Payer swap", ha="center", fontsize=11, fontweight="bold", color="#20242a")
+    ax.text(2.50, 5.75, "Receiver swap", ha="center", fontsize=11, fontweight="bold", color=LAB_COLORS[2])
+    ax.text(11.50, 5.75, "Payer swap", ha="center", fontsize=11, fontweight="bold", color=LAB_COLORS[2])
     ax.plot([7.0, 7.0], [0.8, 5.95], color=panel_edge, lw=1.0, ls="--")
     ax.text(
         7.0,
         0.85,
-        "Synthetic overlay notional is set from target DV01; the figure shows cashflow direction, not a market OIS curve.",
+        r"Synthetic overlay notional is set from target $DV01$; the figure shows cashflow direction, not a market OIS curve.",
         ha="center",
         va="bottom",
         fontsize=9,
-        color="#555b63",
+        color=LAB_COLORS[2],
     )
-    ax.set_title(title, fontsize=14, pad=14)
     fig.tight_layout()
     return fig, ax
 
@@ -1595,114 +1596,357 @@ def sequence_memory_comparison(ax=None, *, title: str = "How forecasting models 
     return fig, ax
 
 
+def _rl_panel(ax, xy, wh, label, *, fc="#f8fafc", ec="#d7e3f5", fontsize=10, ls="-", lw=1.35):
+    x, y = xy
+    w, h = wh
+    box = mpatches.FancyBboxPatch(
+        (x, y),
+        w,
+        h,
+        boxstyle="round,pad=0.16,rounding_size=0.18",
+        fc=fc,
+        ec=ec,
+        lw=lw,
+        ls=ls,
+        zorder=0,
+    )
+    ax.add_patch(box)
+    ax.text(x + 0.22, y + h - 0.32, label, ha="left", va="top", fontsize=fontsize, fontweight="bold", color=LAB_COLORS[2], zorder=3)
+    return box
+
+
+def _rl_chip(ax, xy, text, *, fc="white", ec="#d4dff0", color=LAB_COLORS[2], fontsize=8.2):
+    x, y = xy
+    w = max(0.70, 0.082 * len(text) + 0.32)
+    h = 0.30
+    patch = mpatches.FancyBboxPatch(
+        (x, y),
+        w,
+        h,
+        boxstyle="round,pad=0.05,rounding_size=0.09",
+        fc=fc,
+        ec=ec,
+        lw=0.9,
+        zorder=4,
+    )
+    ax.add_patch(patch)
+    ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fontsize, color=color, zorder=5)
+    return patch
+
+
+def _network_icon(ax, xy, wh, *, color=LAB_COLORS[0], title="network", layers=(4, 5, 4), node_fc="white", fontsize=8.5):
+    x, y = xy
+    w, h = wh
+    ax.add_patch(
+        mpatches.FancyBboxPatch(
+            (x, y),
+            w,
+            h,
+            boxstyle="round,pad=0.12,rounding_size=0.18",
+            fc="#ffffff",
+            ec=color,
+            lw=1.35,
+            zorder=3,
+        )
+    )
+    xs = np.linspace(x + 0.36, x + w - 0.36, len(layers))
+    layer_nodes = []
+    for lx, n in zip(xs, layers, strict=False):
+        ys = np.linspace(y + 0.44, y + h - 0.58, n)
+        layer_nodes.append([(lx, yy) for yy in ys])
+    for src_layer, dst_layer in zip(layer_nodes, layer_nodes[1:], strict=False):
+        for sx, sy in src_layer:
+            for dx, dy in dst_layer:
+                ax.plot([sx, dx], [sy, dy], color=color, lw=0.55, alpha=0.45, zorder=3)
+    for layer in layer_nodes:
+        for px, py in layer:
+            ax.add_patch(mpatches.Circle((px, py), 0.085, fc=node_fc, ec=color, lw=1.0, zorder=4))
+    ax.text(x + w / 2, y + h - 0.18, title, ha="center", va="top", fontsize=fontsize, fontweight="bold", color=LAB_COLORS[2], zorder=5)
+
+
+def _portfolio_bars(ax, xy, wh, *, weights=(0.22, 0.18, 0.15, 0.13, 0.12, 0.20), labels=None, title="weights"):
+    x, y = xy
+    w, h = wh
+    colors = [LAB_COLORS[0], LAB_COLORS[3], LAB_COLORS[4], LAB_COLORS[9], LAB_COLORS[7], "#cbd5e1"]
+    ax.add_patch(mpatches.FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.07,rounding_size=0.10", fc="white", ec="#d4dff0", lw=1.0, zorder=2))
+    small = h < 0.70
+    title_fs = 7.3 if small else 8.2
+    ax.text(x + 0.12, y + h - 0.09, title, ha="left", va="top", fontsize=title_fs, color=LAB_COLORS[2], fontweight="bold", zorder=4)
+    left = x + 0.14
+    bar_y = y + (0.10 if small else 0.12)
+    bar_h = 0.17 if small else 0.22
+    bar_w = w - 0.28
+    for i, wt in enumerate(weights):
+        seg = bar_w * float(wt)
+        ax.add_patch(mpatches.Rectangle((left, bar_y), seg, bar_h, fc=colors[i % len(colors)], ec="white", lw=0.7, zorder=3))
+        left += seg
+    if labels:
+        for i, label in enumerate(labels[:4]):
+            step = min(0.54, (w - 0.42) / max(1, len(labels[:4]) - 1))
+            ax.text(x + 0.14 + step * i, y + h - 0.37, label, ha="left", va="center", fontsize=6.4, color="#475569", zorder=4)
+
+
+def _sparkline(ax, xy, wh, *, color=LAB_COLORS[3], fill=True):
+    x, y = xy
+    w, h = wh
+    t = np.linspace(0.0, 1.0, 40)
+    path = 0.45 + 0.28 * np.sin(2 * np.pi * (t + 0.06)) + 0.18 * t
+    xs = x + t * w
+    ys = y + path * h
+    if fill:
+        ax.fill_between(xs, y + 0.08 * h, ys, color=color, alpha=0.10, zorder=2)
+    ax.plot(xs, ys, color=color, lw=1.8, zorder=3)
+    ax.plot([x, x + w], [y + 0.08 * h, y + 0.08 * h], color="#cbd5e1", lw=0.8, zorder=2)
+
+
+def _replay_cylinder(ax, xy, wh, text, *, fc="#eefbe4", ec="#58b947"):
+    x, y = xy
+    w, h = wh
+    ax.add_patch(mpatches.Rectangle((x, y + 0.14), w, h - 0.28, fc=fc, ec=ec, lw=1.2, zorder=2))
+    ax.add_patch(mpatches.Ellipse((x + w / 2, y + h - 0.14), w, 0.28, fc=fc, ec=ec, lw=1.2, zorder=3))
+    ax.add_patch(mpatches.Ellipse((x + w / 2, y + 0.14), w, 0.28, fc=fc, ec=ec, lw=1.2, zorder=2))
+    ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=9, color=LAB_COLORS[2], fontweight="bold", zorder=4)
+
+
 def agent_environment_loop_diagram(ax=None, *, title: str = "RL portfolio loop"):
-    fig, ax = _course_canvas(ax, figsize=(12.4, 5.4), title=title, xlim=(0, 12.4), ylim=(0, 5.2))
-    _round_box(ax, (0.75, 2.05), (2.05, 0.90), "State\nfeatures", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white")
-    _round_box(ax, (4.95, 2.05), (2.05, 0.90), "Policy\nnetwork", fc=LAB_COLORS[3], ec=LAB_COLORS[3], text_color="white")
-    _round_box(ax, (9.15, 2.05), (2.10, 0.90), "Portfolio\nenvironment", fc=LAB_COLORS[1], ec=LAB_COLORS[1], text_color="white")
-    _arrow(ax, (2.85, 2.50), (4.90, 2.50), color=LAB_COLORS[2])
-    _arrow(ax, (7.05, 2.50), (9.10, 2.50), color=LAB_COLORS[2])
-    _arrow(ax, (10.20, 2.00), (10.20, 0.85), color=LAB_COLORS[1])
-    _arrow(ax, (10.20, 0.85), (1.80, 0.85), color=LAB_COLORS[1])
-    _arrow(ax, (1.80, 0.85), (1.80, 2.00), color=LAB_COLORS[1])
-    _soft_label(ax, (3.85, 2.86), "observation")
-    _soft_label(ax, (8.05, 2.86), "weights")
-    _soft_label(ax, (6.0, 0.52), "return, cost, drawdown, next state", color=LAB_COLORS[1])
+    fig, ax = _course_canvas(ax, figsize=(14.6, 7.0), title=title, xlim=(0, 14.6), ylim=(0, 6.4))
+    _rl_panel(ax, (0.45, 1.22), (3.15, 4.10), "State observation", fc="#f0f8ff", ec="#b7d7f2")
+    for yy, label in zip([4.35, 3.88, 3.41, 2.94, 2.47], ["returns", "vol/corr", "forecasts", "priors", "prev weights"], strict=False):
+        _rl_chip(ax, (0.78, yy), label, fc="white", ec="#c7def2", color=LAB_COLORS[2])
+    _portfolio_bars(ax, (0.92, 1.52), (2.20, 0.78), weights=(0.18, 0.15, 0.14, 0.12, 0.11, 0.30), labels=["SPY", "QQQ", "TLT", "cash"], title="portfolio state")
+
+    _rl_panel(ax, (4.78, 0.72), (4.20, 5.12), "Agent", fc="#f9fbff", ec=LAB_COLORS[8], ls=(0, (5, 3)))
+    _network_icon(ax, (5.38, 3.12), (2.85, 1.82), color=LAB_COLORS[0], title="policy network", layers=(4, 5, 4))
+    _round_box(ax, (5.38, 1.55), (2.85, 0.74), "active tilts +\nrisky exposure", fc="#f5f3ff", ec=LAB_COLORS[6], text_color=LAB_COLORS[2], fontsize=8.7)
+    _rl_chip(ax, (5.30, 2.55), "caps", fc="#fff7ed", ec="#fed7aa", color="#9a3412")
+    _rl_chip(ax, (6.28, 2.55), "cash", fc="#f8fafc", ec="#cbd5e1", color="#334155")
+    _rl_chip(ax, (7.27, 2.55), "cost", fc="#fff1f2", ec="#fecdd3", color="#9f1239")
+
+    _rl_panel(ax, (10.62, 1.10), (3.45, 4.30), "Portfolio environment", fc="#fff8f0", ec="#ffd6a6")
+    _sparkline(ax, (11.05, 3.55), (2.40, 1.02), color=LAB_COLORS[3])
+    _portfolio_bars(ax, (11.05, 2.42), (2.35, 0.64), weights=(0.21, 0.18, 0.16, 0.15, 0.10, 0.20), title="daily drift")
+    for yy, label in zip([1.92, 1.48], ["trading cost", "drawdown + vol"], strict=False):
+        _rl_chip(ax, (11.12, yy), label, fc="white", ec="#fed7aa", color="#7c2d12")
+
+    _arrow(ax, (3.72, 3.52), (4.68, 3.52), color=LAB_COLORS[2], lw=2.1, scale=16)
+    ax.text(4.20, 3.82, r"state $s_t$", ha="center", va="bottom", fontsize=8.6, color=LAB_COLORS[2])
+    _arrow(ax, (8.36, 2.02), (10.50, 2.96), color=LAB_COLORS[6], lw=2.1, scale=16)
+    ax.text(9.52, 3.08, r"action $a_t$: weights", ha="center", va="bottom", fontsize=8.6, color=LAB_COLORS[6])
+    _arrow(ax, (12.35, 1.02), (12.35, 0.50), color=LAB_COLORS[1], lw=1.9, scale=13)
+    _arrow(ax, (12.35, 0.50), (1.82, 0.50), color=LAB_COLORS[1], lw=1.9, rad=0.0, scale=13)
+    _arrow(ax, (1.82, 0.50), (1.82, 1.12), color=LAB_COLORS[1], lw=1.9, scale=13)
+    ax.text(7.08, 0.18, r"reward $r_t$, next state $s_{t+1}$, updated portfolio path", ha="center", va="center", fontsize=8.5, color=LAB_COLORS[1])
+    ax.text(7.80, 5.98, "Same daily holding-path mechanics for training and backtest", ha="center", va="center", fontsize=8.6, color=LAB_COLORS[2], bbox={"boxstyle": "round,pad=0.22", "fc": "white", "ec": "#c7def2", "alpha": 0.9})
     fig.tight_layout()
     return fig, ax
 
 
 def mdp_diagram(ax=None, *, title: str = "Portfolio allocation as an MDP"):
-    fig, ax = _course_canvas(ax, figsize=(12.2, 5.2), title=title, xlim=(0, 12.2), ylim=(0, 5.0))
-    nodes = [
-        (0.75, 2.6, "S(t)\nstate", LAB_COLORS[0]),
-        (3.15, 2.6, "A(t)\nweights", LAB_COLORS[3]),
-        (5.80, 2.6, "R(t+1)\nreward", LAB_COLORS[1]),
-        (8.45, 2.6, "S(t+1)\nstate", LAB_COLORS[0]),
-    ]
-    for x, y, text, color in nodes:
-        _round_box(ax, (x, y), (1.55, 0.86), text, fc=color, ec=color, text_color="white", fontsize=9)
-    for a, b in zip(nodes, nodes[1:], strict=False):
-        _arrow(ax, (a[0] + 1.58, a[1] + 0.43), (b[0] - 0.05, b[1] + 0.43), color=LAB_COLORS[2])
-    _soft_label(ax, (6.1, 1.35), "transition uses market returns and transaction costs")
+    fig, ax = _course_canvas(ax, figsize=(13.8, 6.2), title=title, xlim=(0, 13.8), ylim=(0, 5.8))
+    _round_box(ax, (0.70, 3.10), (2.25, 0.92), "$S_t$\nfeatures + portfolio", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white", fontsize=9)
+    _round_box(ax, (3.82, 3.10), (2.05, 0.92), "$A_t$\nlong-only weights", fc=LAB_COLORS[6], ec=LAB_COLORS[6], text_color="white", fontsize=9)
+    _round_box(ax, (6.88, 2.86), (2.60, 1.40), "Transition\nmarket path + cost", fc="#fff7ed", ec="#fb923c", text_color="#7c2d12", fontsize=9)
+    _portfolio_bars(ax, (10.62, 3.30), (1.85, 0.66), weights=(0.20, 0.18, 0.14, 0.13, 0.10, 0.25), title=r"$S_{t+1}$")
+    _sparkline(ax, (10.64, 2.36), (1.82, 0.72), color=LAB_COLORS[3])
+    _round_box(ax, (6.96, 1.00), (2.44, 0.72), "$R_{t+1}$\nactive reward", fc=LAB_COLORS[1], ec=LAB_COLORS[1], text_color="white", fontsize=8.8)
+    _arrow(ax, (3.02, 3.56), (3.76, 3.56), color=LAB_COLORS[2], lw=1.9)
+    _arrow(ax, (5.94, 3.56), (6.82, 3.56), color=LAB_COLORS[6], lw=1.9)
+    _arrow(ax, (9.56, 3.54), (10.54, 3.54), color=LAB_COLORS[2], lw=1.9)
+    _arrow(ax, (8.20, 2.78), (8.20, 1.78), color=LAB_COLORS[1], lw=1.9)
+    ax.text(
+        3.40,
+        3.92,
+        r"policy $\pi(a\mid s)$",
+        ha="center",
+        va="bottom",
+        fontsize=8.5,
+        color=LAB_COLORS[2],
+        bbox={"boxstyle": "round,pad=0.12", "fc": "white", "ec": "none", "alpha": 0.86},
+        zorder=5,
+    )
+    ax.text(
+        6.38,
+        3.92,
+        "rebalance",
+        ha="center",
+        va="bottom",
+        fontsize=8.5,
+        color=LAB_COLORS[6],
+        bbox={"boxstyle": "round,pad=0.12", "fc": "white", "ec": "none", "alpha": 0.86},
+        zorder=5,
+    )
+    ax.text(9.04, 2.22, "next observation", ha="left", va="center", fontsize=8.2, color=LAB_COLORS[2])
+    ax.text(9.58, 1.36, "log excess, active return, cost, risk", ha="left", va="center", fontsize=8.1, color=LAB_COLORS[1])
+    _soft_label(ax, (5.80, 0.42), "State includes previous weights, NAV, drawdown and recent returns.", fontsize=8.2, color=LAB_COLORS[2])
     fig.tight_layout()
     return fig, ax
 
 
 def mdp_pomdp_diagram(ax=None, *, title: str = "MDP vs POMDP in markets"):
-    fig, ax = _course_canvas(ax, figsize=(12.4, 5.4), title=title, xlim=(0, 12.4), ylim=(0, 5.2))
-    _round_box(ax, (0.75, 3.15), (1.75, 0.72), "Hidden\nmarket state", fc=LAB_COLORS[5], ec=LAB_COLORS[5], text_color="white", fontsize=8)
-    _round_box(ax, (3.65, 3.15), (1.75, 0.72), "Observed\nfeatures", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white", fontsize=8)
-    _round_box(ax, (6.55, 3.15), (1.75, 0.72), "Action", fc=LAB_COLORS[3], ec=LAB_COLORS[3], text_color="white", fontsize=8)
-    _round_box(ax, (9.45, 3.15), (1.75, 0.72), "Next\nobservation", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white", fontsize=8)
-    _arrow(ax, (2.55, 3.51), (3.60, 3.51), color=LAB_COLORS[5])
-    _arrow(ax, (5.45, 3.51), (6.50, 3.51), color=LAB_COLORS[2])
-    _arrow(ax, (8.35, 3.51), (9.40, 3.51), color=LAB_COLORS[2])
-    _round_box(ax, (1.25, 1.10), (2.30, 0.76), "MDP assumption:\nstate is enough", fc="white", ec=LAB_COLORS[3], fontsize=8)
-    _round_box(ax, (7.20, 1.10), (2.65, 0.76), "POMDP reality:\nhistory helps", fc="white", ec=LAB_COLORS[1], fontsize=8)
-    _soft_label(ax, (6.05, 0.55), "Recurrent PPO lets the policy remember recent hidden context")
+    fig, ax = _course_canvas(ax, figsize=(13.4, 6.2), title=title, xlim=(0, 13.4), ylim=(0, 5.8))
+    _rl_panel(ax, (0.48, 0.78), (5.85, 4.45), "MDP view", fc="#f8fafc", ec="#cbd5e1")
+    _rl_panel(ax, (7.05, 0.78), (5.85, 4.45), "POMDP market reality", fc="#fbfbff", ec="#c4b5fd")
+    _round_box(ax, (1.00, 3.45), (2.02, 0.82), "complete\nstate $S_t$", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white", fontsize=8.6)
+    _round_box(ax, (3.75, 3.45), (1.66, 0.82), "action\nweights", fc=LAB_COLORS[6], ec=LAB_COLORS[6], text_color="white", fontsize=8.6)
+    _round_box(ax, (2.15, 1.55), (2.20, 0.82), "next state\nis enough", fc="white", ec=LAB_COLORS[3], fontsize=8.6)
+    _arrow(ax, (3.07, 3.86), (3.70, 3.86), color=LAB_COLORS[2])
+    _arrow(ax, (4.58, 3.38), (4.24, 2.43), color=LAB_COLORS[6])
+    _arrow(ax, (2.34, 2.43), (1.98, 3.38), color=LAB_COLORS[3])
+
+    _round_box(ax, (7.62, 3.62), (2.18, 0.78), "hidden regime\nliquidity, risk", fc=LAB_COLORS[5], ec=LAB_COLORS[5], text_color="white", fontsize=8.3)
+    _round_box(ax, (10.25, 3.62), (1.90, 0.78), "observed\nfeatures", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white", fontsize=8.3)
+    _round_box(ax, (10.25, 1.55), (1.90, 0.78), "recurrent\nbelief state", fc="#f5f3ff", ec=LAB_COLORS[6], text_color=LAB_COLORS[2], fontsize=8.3)
+    _round_box(ax, (7.72, 1.55), (1.80, 0.78), "action\nweights", fc=LAB_COLORS[6], ec=LAB_COLORS[6], text_color="white", fontsize=8.3)
+    _arrow(ax, (9.86, 4.01), (10.20, 4.01), color=LAB_COLORS[5])
+    _arrow(ax, (11.20, 3.55), (11.20, 2.38), color=LAB_COLORS[2])
+    _arrow(ax, (10.18, 1.94), (9.57, 1.94), color=LAB_COLORS[6])
+    _arrow(ax, (8.62, 2.39), (8.62, 3.55), color=LAB_COLORS[6])
+    _soft_label(ax, (3.36, 0.98), "Works when the state captures all information needed for transition probabilities.", fontsize=8.2)
+    _soft_label(ax, (10.00, 0.98), "Markets are partly observed, so Recurrent PPO carries memory across weeks.", fontsize=8.2, color=LAB_COLORS[6])
     fig.tight_layout()
     return fig, ax
 
 
 def policy_gradient_diagram(ax=None, *, title: str = "Policy-gradient intuition"):
-    fig, ax = _course_canvas(ax, figsize=(12.2, 5.2), title=title, xlim=(0, 12.2), ylim=(0, 5.0))
-    _round_box(ax, (0.75, 2.70), (2.0, 0.74), "sample\nweights", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white", fontsize=9)
-    _round_box(ax, (4.00, 2.70), (2.0, 0.74), "observe\nreward", fc=LAB_COLORS[1], ec=LAB_COLORS[1], text_color="white", fontsize=9)
-    _round_box(ax, (7.25, 2.70), (2.0, 0.74), "increase log\nprobability", fc=LAB_COLORS[3], ec=LAB_COLORS[3], text_color="white", fontsize=9)
-    _arrow(ax, (2.80, 3.07), (3.95, 3.07), color=LAB_COLORS[2])
-    _arrow(ax, (6.05, 3.07), (7.20, 3.07), color=LAB_COLORS[2])
-    _soft_label(ax, (5.95, 1.85), "good actions are reinforced; bad actions are discouraged")
-    ax.plot([1.0, 10.4], [1.10, 1.10], color=LAB_COLORS[8], lw=1.0, ls="--")
-    ax.text(5.7, 0.75, "gradient direction is weighted by advantage, not just raw return", ha="center", fontsize=9, color=LAB_COLORS[2])
+    fig, ax = _course_canvas(ax, figsize=(13.8, 6.2), title=title, xlim=(0, 13.8), ylim=(0, 5.8))
+    _rl_panel(ax, (0.62, 1.02), (3.35, 4.18), "Portfolio state", fc="#f0f8ff", ec="#b7d7f2")
+    _rl_chip(ax, (0.95, 4.35), "asset features", fc="white", ec="#c7def2")
+    _rl_chip(ax, (0.95, 3.88), "forecast signals", fc="white", ec="#c7def2")
+    _rl_chip(ax, (0.95, 3.41), "prior weights", fc="white", ec="#c7def2")
+    _portfolio_bars(ax, (1.05, 1.55), (2.15, 0.82), weights=(0.19, 0.16, 0.14, 0.12, 0.10, 0.29), title=r"$s_t$")
+    _rl_panel(ax, (4.72, 0.98), (3.16, 4.22), "Stochastic policy", fc="#fbfbff", ec="#c4b5fd")
+    _network_icon(ax, (5.18, 3.05), (2.25, 1.48), color=LAB_COLORS[6], title="policy network", layers=(4, 4, 3))
+    xs = np.linspace(5.28, 7.32, 70)
+    curve = 2.02 + 0.46 * np.exp(-((xs - 6.10) ** 2) / 0.16)
+    ax.fill_between(xs, 1.78, curve, color=LAB_COLORS[0], alpha=0.14, zorder=2)
+    ax.plot(xs, curve, color=LAB_COLORS[0], lw=1.7, zorder=3)
+    ax.text(6.23, 1.48, "sample action\n" + r"$a_t \sim \pi_\theta(\cdot\mid s_t)$", ha="center", va="top", fontsize=8.1, color=LAB_COLORS[2])
+    _rl_panel(ax, (9.10, 1.02), (3.95, 4.18), "Daily portfolio path", fc="#fff8f0", ec="#ffd6a6")
+    _portfolio_bars(ax, (9.68, 3.92), (2.55, 0.66), weights=(0.23, 0.18, 0.12, 0.10, 0.12, 0.25), title="chosen weights")
+    _sparkline(ax, (9.82, 2.50), (2.25, 0.90), color=LAB_COLORS[3])
+    _round_box(ax, (9.78, 1.50), (2.28, 0.56), "reward = active return\nminus cost and risk", fc="white", ec=LAB_COLORS[1], text_color=LAB_COLORS[1], fontsize=8.0)
+    _arrow(ax, (4.04, 3.18), (4.66, 3.18), color=LAB_COLORS[2], lw=2.0)
+    _arrow(ax, (7.94, 3.20), (9.04, 3.20), color=LAB_COLORS[6], lw=2.0)
+    ax.text(8.50, 3.52, "action weights", ha="center", va="bottom", fontsize=8.3, color=LAB_COLORS[6])
+    _arrow(ax, (9.72, 1.78), (7.38, 2.02), color=LAB_COLORS[1], lw=2.0)
+    ax.text(
+        8.55,
+        1.47,
+        "advantage-weighted reward",
+        ha="center",
+        va="top",
+        fontsize=8.1,
+        color=LAB_COLORS[1],
+        bbox={"boxstyle": "round,pad=0.12", "fc": "white", "ec": "none", "alpha": 0.84},
+        zorder=5,
+    )
+    _soft_label(ax, (6.90, 0.46), r"Update: $\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\hat A_t$", fontsize=8.5, color=LAB_COLORS[1])
     fig.tight_layout()
     return fig, ax
 
 
 def actor_critic_diagram(ax=None, *, title: str = "Actor-critic portfolio policy"):
-    fig, ax = _course_canvas(ax, figsize=(12.4, 5.4), title=title, xlim=(0, 12.4), ylim=(0, 5.2))
-    _round_box(ax, (0.70, 2.15), (2.0, 0.90), "State\nencoder", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white")
-    _round_box(ax, (4.35, 3.15), (2.15, 0.82), "Actor\npi(a|s)", fc=LAB_COLORS[3], ec=LAB_COLORS[3], text_color="white")
-    _round_box(ax, (4.35, 1.15), (2.15, 0.82), "Critic\nV(s)", fc=LAB_COLORS[1], ec=LAB_COLORS[1], text_color="white")
-    _round_box(ax, (8.35, 3.15), (2.10, 0.82), "continuous\nweights", fc=LAB_COLORS[4], ec=LAB_COLORS[4], text_color="white")
-    _round_box(ax, (8.35, 1.15), (2.10, 0.82), "advantage\nestimate", fc=LAB_COLORS[6], ec=LAB_COLORS[6], text_color="white")
-    _arrow(ax, (2.75, 2.72), (4.30, 3.54), color=LAB_COLORS[2])
-    _arrow(ax, (2.75, 2.45), (4.30, 1.54), color=LAB_COLORS[2])
-    _arrow(ax, (6.55, 3.56), (8.30, 3.56), color=LAB_COLORS[2])
-    _arrow(ax, (6.55, 1.56), (8.30, 1.56), color=LAB_COLORS[2])
+    fig, ax = _course_canvas(ax, figsize=(14.2, 6.6), title=title, xlim=(0, 14.2), ylim=(0, 6.1))
+    _rl_panel(ax, (0.55, 1.10), (3.10, 4.30), "Shared observation", fc="#f0f8ff", ec="#b7d7f2")
+    _portfolio_bars(ax, (0.98, 4.05), (2.05, 0.64), weights=(0.18, 0.15, 0.14, 0.13, 0.10, 0.30), title="state")
+    for yy, label in zip([3.38, 2.93, 2.48], ["forecasts", "risk regime", "previous weights"], strict=False):
+        _rl_chip(ax, (0.92, yy), label, fc="white", ec="#c7def2")
+    _rl_panel(ax, (4.38, 0.72), (4.25, 4.95), "Agent", fc="#fbfdff", ec=LAB_COLORS[8], ls=(0, (5, 3)))
+    _network_icon(ax, (4.88, 3.58), (2.60, 1.30), color=LAB_COLORS[6], title=r"actor: $\pi(a\mid s)$", layers=(4, 4, 3))
+    _network_icon(ax, (4.88, 1.35), (2.60, 1.30), color=LAB_COLORS[1], title=r"critic: $V(s)$", layers=(4, 4, 2))
+    _round_box(ax, (7.92, 3.82), (2.06, 0.62), "portfolio weights", fc="#f5f3ff", ec=LAB_COLORS[6], text_color=LAB_COLORS[2], fontsize=8.4)
+    _round_box(ax, (7.92, 1.58), (2.06, 0.62), r"advantage / $\delta_t$", fc="#fff1f2", ec=LAB_COLORS[1], text_color=LAB_COLORS[1], fontsize=8.4)
+    _rl_panel(ax, (10.88, 1.12), (2.70, 4.22), "Environment", fc="#fff8f0", ec="#ffd6a6")
+    _sparkline(ax, (11.28, 3.58), (1.84, 0.82), color=LAB_COLORS[3])
+    _portfolio_bars(ax, (11.26, 2.42), (1.88, 0.62), weights=(0.23, 0.17, 0.15, 0.10, 0.10, 0.25), title="path")
+    _round_box(ax, (11.30, 1.56), (1.80, 0.52), r"$r_t,\ s_{t+1}$", fc="white", ec=LAB_COLORS[1], text_color=LAB_COLORS[1], fontsize=8.2)
+    _arrow(ax, (3.72, 3.48), (4.82, 4.23), color=LAB_COLORS[2], lw=1.9)
+    _arrow(ax, (3.72, 3.02), (4.82, 2.00), color=LAB_COLORS[2], lw=1.9)
+    _arrow(ax, (7.55, 4.23), (7.86, 4.13), color=LAB_COLORS[6], lw=1.8)
+    _arrow(ax, (10.04, 4.13), (10.82, 4.02), color=LAB_COLORS[6], lw=1.8)
+    _arrow(ax, (11.20, 1.82), (10.04, 1.88), color=LAB_COLORS[1], lw=1.8)
+    _arrow(ax, (7.86, 1.88), (7.54, 1.96), color=LAB_COLORS[1], lw=1.8)
+    _arrow(ax, (6.10, 2.72), (6.10, 3.50), color=LAB_COLORS[1], lw=1.8)
+    ax.text(6.28, 3.10, r"update $\pi_\theta$", ha="left", va="center", fontsize=8.0, color=LAB_COLORS[1])
+    _soft_label(ax, (6.05, 0.42), "Actor chooses allocation; critic turns reward and next state into a lower-variance update.", fontsize=8.4)
     fig.tight_layout()
     return fig, ax
 
 
 def ppo_diagram(ax=None, *, title: str = "PPO clipped update"):
-    fig, ax = _course_canvas(ax, figsize=(12.4, 5.3), title=title, xlim=(0, 12.4), ylim=(0, 5.1))
-    _round_box(ax, (0.75, 2.75), (1.85, 0.72), "old policy", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white", fontsize=9)
-    _round_box(ax, (3.55, 2.75), (2.0, 0.72), "probability\nratio", fc=LAB_COLORS[3], ec=LAB_COLORS[3], text_color="white", fontsize=9)
-    _round_box(ax, (6.55, 2.75), (2.0, 0.72), "clip band\n1 +/- eps", fc=LAB_COLORS[1], ec=LAB_COLORS[1], text_color="white", fontsize=9)
-    _round_box(ax, (9.55, 2.75), (1.85, 0.72), "new policy", fc=LAB_COLORS[4], ec=LAB_COLORS[4], text_color="white", fontsize=9)
-    _arrow(ax, (2.65, 3.11), (3.50, 3.11), color=LAB_COLORS[2])
-    _arrow(ax, (5.60, 3.11), (6.50, 3.11), color=LAB_COLORS[2])
-    _arrow(ax, (8.60, 3.11), (9.50, 3.11), color=LAB_COLORS[2])
-    ax.plot([3.3, 9.0], [1.45, 1.45], color=LAB_COLORS[8], lw=1.2)
-    ax.fill_between([5.0, 7.3], [1.17, 1.17], [1.73, 1.73], color=LAB_COLORS[0], alpha=0.12)
-    ax.text(6.15, 1.87, "stable update region", ha="center", fontsize=9, color=LAB_COLORS[2])
-    _soft_label(ax, (6.15, 0.72), "PPO improves the policy while limiting destructive jumps")
+    fig, ax = _course_canvas(ax, figsize=(14.0, 6.3), title=title, xlim=(0, 14.0), ylim=(0, 5.9))
+    _rl_panel(ax, (0.52, 1.00), (2.80, 4.18), "Rollout memory", fc="#f8fafc", ec="#cbd5e1")
+    for i, label in enumerate([r"$s_t$", r"$a_t$", r"$r_t$", r"$s_{t+1}$"]):
+        _rl_chip(ax, (0.95, 4.35 - 0.48 * i), label, fc="white", ec="#d7e3f5", fontsize=8.0)
+    _portfolio_bars(ax, (0.88, 1.62), (1.94, 0.68), weights=(0.20, 0.15, 0.14, 0.11, 0.10, 0.30), title="old weights")
+    _rl_panel(ax, (4.05, 1.00), (3.20, 4.18), "Actor-critic PPO", fc="#fbfbff", ec="#c4b5fd")
+    _network_icon(ax, (4.55, 3.35), (2.10, 1.22), color=LAB_COLORS[6], title="actor", layers=(4, 4, 3))
+    _network_icon(ax, (4.55, 1.58), (2.10, 1.22), color=LAB_COLORS[1], title="critic", layers=(4, 4, 2))
+    _rl_panel(ax, (8.25, 1.00), (4.90, 4.18), "Clipped objective", fc="#fffdf7", ec="#fde68a")
+    _round_box(ax, (8.72, 3.95), (1.95, 0.58), "ratio\n" + r"$\pi_{\mathrm{new}}/\pi_{\mathrm{old}}$", fc="white", ec=LAB_COLORS[6], text_color=LAB_COLORS[6], fontsize=8.0)
+    _round_box(ax, (11.10, 3.95), (1.38, 0.58), "clip\n" + r"$1 \pm \epsilon$", fc="white", ec=LAB_COLORS[1], text_color=LAB_COLORS[1], fontsize=8.0)
+    x = np.linspace(8.90, 12.45, 80)
+    y = 2.08 + 0.38 * np.tanh(1.8 * (x - 10.45))
+    ax.plot(x, y, color=LAB_COLORS[2], lw=2.0, zorder=3)
+    ax.fill_between([9.85, 11.25], [1.62, 1.62], [2.62, 2.62], color=LAB_COLORS[0], alpha=0.13, zorder=2)
+    ax.text(10.55, 2.82, "trusted update band", ha="center", fontsize=8.2, color=LAB_COLORS[2], zorder=4)
+    _round_box(ax, (9.42, 1.06), (2.70, 0.48), "SGD update with clipped objective", fc="white", ec="#facc15", text_color="#854d0e", fontsize=8.0)
+    _arrow(ax, (3.38, 3.42), (4.00, 3.98), color=LAB_COLORS[2], lw=1.8)
+    _arrow(ax, (6.72, 3.96), (8.66, 4.24), color=LAB_COLORS[6], lw=1.8)
+    _arrow(ax, (10.70, 4.24), (11.04, 4.24), color=LAB_COLORS[2], lw=1.6)
+    _arrow(ax, (9.34, 1.30), (6.72, 1.88), color=LAB_COLORS[1], lw=1.8)
+    ax.text(
+        7.88,
+        1.02,
+        "parameter update",
+        ha="center",
+        va="center",
+        fontsize=8.1,
+        color=LAB_COLORS[1],
+        bbox={"boxstyle": "round,pad=0.16", "fc": "white", "ec": "none", "alpha": 0.82},
+        zorder=5,
+    )
+    _soft_label(ax, (6.95, 0.48), "PPO improves the policy while limiting destructive probability-ratio jumps.", fontsize=8.2)
     fig.tight_layout()
     return fig, ax
 
 
 def sac_diagram(ax=None, *, title: str = "SAC entropy-regularized control"):
-    fig, ax = _course_canvas(ax, figsize=(12.4, 5.4), title=title, xlim=(0, 12.4), ylim=(0, 5.2))
-    _round_box(ax, (0.65, 2.35), (1.95, 0.82), "Replay\nbuffer", fc=LAB_COLORS[0], ec=LAB_COLORS[0], text_color="white", fontsize=9)
-    _round_box(ax, (4.10, 3.25), (1.85, 0.72), "Actor", fc=LAB_COLORS[3], ec=LAB_COLORS[3], text_color="white", fontsize=9)
-    _round_box(ax, (4.10, 1.35), (1.85, 0.72), "Q1 / Q2", fc=LAB_COLORS[1], ec=LAB_COLORS[1], text_color="white", fontsize=9)
-    _round_box(ax, (7.65, 2.35), (2.15, 0.82), "soft value\ntarget", fc=LAB_COLORS[4], ec=LAB_COLORS[4], text_color="white", fontsize=9)
-    _round_box(ax, (10.25, 2.35), (1.55, 0.82), "policy\nupdate", fc=LAB_COLORS[6], ec=LAB_COLORS[6], text_color="white", fontsize=9)
-    _arrow(ax, (2.65, 2.76), (4.05, 3.55), color=LAB_COLORS[2])
-    _arrow(ax, (2.65, 2.61), (4.05, 1.73), color=LAB_COLORS[2])
-    _arrow(ax, (6.00, 1.72), (7.60, 2.63), color=LAB_COLORS[2])
-    _arrow(ax, (9.85, 2.76), (10.20, 2.76), color=LAB_COLORS[2])
-    _soft_label(ax, (6.15, 0.72), "entropy term keeps exploration alive in continuous weights")
+    fig, ax = _course_canvas(ax, figsize=(14.2, 6.4), title=title, xlim=(0, 14.2), ylim=(0, 6.0))
+    _rl_panel(ax, (0.55, 0.92), (3.08, 4.38), "Historical transitions", fc="#f8fafc", ec="#cbd5e1")
+    _sparkline(ax, (1.02, 3.78), (1.95, 0.72), color=LAB_COLORS[3])
+    _portfolio_bars(ax, (1.00, 2.72), (1.98, 0.64), weights=(0.20, 0.16, 0.15, 0.11, 0.08, 0.30), title="action")
+    _replay_cylinder(ax, (1.05, 1.30), (1.90, 0.86), "replay\nbuffer")
+
+    _rl_panel(ax, (4.35, 0.92), (3.05, 4.38), "Actor", fc="#fff7ed", ec="#fdba74")
+    _network_icon(ax, (4.90, 3.22), (1.95, 1.30), color=LAB_COLORS[6], title="policy", layers=(4, 4, 3))
+    _round_box(ax, (4.94, 2.08), (1.88, 0.62), "sample weights\n+ entropy", fc="white", ec=LAB_COLORS[6], text_color=LAB_COLORS[6], fontsize=8.0)
+
+    _rl_panel(ax, (8.18, 0.92), (5.15, 4.38), "Twin critics", fc="#f8fbff", ec="#bfdbfe")
+    _network_icon(ax, (8.70, 3.28), (1.74, 1.16), color=LAB_COLORS[1], title=r"$Q_1$", layers=(4, 3, 1), fontsize=8.0)
+    _network_icon(ax, (10.92, 3.28), (1.74, 1.16), color=LAB_COLORS[1], title=r"$Q_2$", layers=(4, 3, 1), fontsize=8.0)
+    _round_box(ax, (8.88, 1.34), (3.62, 0.64), r"target: $r_t + \gamma[\min(Q_1,Q_2)-\alpha\log\pi]$", fc="white", ec=LAB_COLORS[0], text_color=LAB_COLORS[2], fontsize=7.8)
+
+    _arrow(ax, (3.05, 1.74), (4.28, 1.98), color=LAB_COLORS[2], lw=1.8)
+    ax.text(3.67, 1.50, "sample tuples", ha="center", va="top", fontsize=8.0, color=LAB_COLORS[2])
+    _arrow(ax, (6.88, 2.39), (8.80, 2.00), color=LAB_COLORS[6], lw=1.8)
+    ax.text(7.82, 2.58, "action + entropy", ha="center", va="bottom", fontsize=8.0, color=LAB_COLORS[6])
+    _arrow(ax, (10.72, 3.22), (10.72, 2.06), color=LAB_COLORS[0], lw=1.6)
+    _arrow(ax, (8.82, 1.56), (6.88, 2.18), color=LAB_COLORS[1], lw=1.8)
+    ax.text(
+        7.82,
+        1.36,
+        "critic signal",
+        ha="center",
+        va="top",
+        fontsize=8.0,
+        color=LAB_COLORS[1],
+        bbox={"boxstyle": "round,pad=0.12", "fc": "white", "ec": "none", "alpha": 0.82},
+        zorder=5,
+    )
+    _arrow(ax, (10.70, 1.28), (10.70, 0.96), color=LAB_COLORS[0], lw=1.4)
+    ax.text(10.70, 0.80, "soft target update", ha="center", va="top", fontsize=8.0, color=LAB_COLORS[0])
+    _soft_label(ax, (7.10, 0.42), r"SAC can run as a contextual allocator with $\gamma=0$ for safer off-policy updates.", fontsize=8.2)
     fig.tight_layout()
     return fig, ax
 

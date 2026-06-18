@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Rough Volatiility For Option Pricing – Quantitative Finance Lab</title>
+<title>18. Rough Volatility For Option Pricing – Quantitative Finance Lab</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -121,7 +121,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../notebooks/18_rough_volatility.html"><span class="chapter-title">Rough Volatiility For Option Pricing</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../notebooks/18_rough_volatility.html"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -243,17 +243,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">Rough Volatiility For Option Pricing</span></a>
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
+  <a href="../notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Reinforcement Learning for Portfolio Allocation</span></a>
+  <a href="../notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">20. Reinforcement Learning for Portfolio Allocation</span></a>
   </div>
 </li>
     </ul>
@@ -267,7 +267,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">Rough Volatiility For Option Pricing</span></h1>
+<h1 class="title"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></h1>
 </div>
 
 
@@ -348,14 +348,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div id="project18-01" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>spx_spot <span class="op">=</span> load_ohlcv(</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">/</span> <span class="st">"spx_daily_yfinance.csv"</span>,</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">/</span> <span class="st">"spx_index_ohlcv.csv"</span>,</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"yfinance_csv"</span>,</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    fields<span class="op">=</span>(<span class="st">"close"</span>, <span class="st">"raw_close"</span>, <span class="st">"open"</span>, <span class="st">"high"</span>, <span class="st">"low"</span>, <span class="st">"volume"</span>),</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>spx_spot <span class="op">=</span> spx_spot.loc[<span class="st">"1990"</span>:].copy()</span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>spx_pairs_raw <span class="op">=</span> load_spx_option_pairs(</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">/</span> <span class="st">"spx_options_chain_202201_202312.parquet"</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">/</span> <span class="st">"spx_options_chain.parquet"</span>,</span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    annualization_days<span class="op">=</span>ann_days,</span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    max_rel_spread<span class="op">=</span><span class="fl">0.60</span>,</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    tau_min_days<span class="op">=</span><span class="fl">7.0</span>,</span>
@@ -366,7 +366,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>us_par <span class="op">=</span> load_par_yield_curve(</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">/</span> <span class="st">"par-yield-curve-rates-1990-2026.csv"</span>,</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">/</span> <span class="st">"us_treasury_yields.csv"</span>,</span>
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"us_treasury"</span>,</span>
 <span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -9188,12 +9188,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb55-36"><a href="#cb55-36" aria-hidden="true" tabindex="-1"></a>lags <span class="op">=</span> (<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">8</span>, <span class="dv">16</span>, <span class="dv">32</span>)</span>
 <span id="cb55-37"><a href="#cb55-37" aria-hidden="true" tabindex="-1"></a>horizons <span class="op">=</span> (<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">21</span>, <span class="dv">42</span>, <span class="dv">63</span>)</span>
 <span id="cb55-38"><a href="#cb55-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-39"><a href="#cb55-39" aria-hidden="true" tabindex="-1"></a>btc_history_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"btc_usd_yfinance_max.csv"</span></span>
+<span id="cb55-39"><a href="#cb55-39" aria-hidden="true" tabindex="-1"></a>btc_history_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"btc_usd_ohlcv.csv"</span></span>
 <span id="cb55-40"><a href="#cb55-40" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> btc_history_path.exists():</span>
-<span id="cb55-41"><a href="#cb55-41" aria-hidden="true" tabindex="-1"></a>    btc_history_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"btc_usd_yfinance_2023_10_01_2024_10_15.csv"</span></span>
+<span id="cb55-41"><a href="#cb55-41" aria-hidden="true" tabindex="-1"></a>    btc_history_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"btc_usd_ohlcv.csv"</span></span>
 <span id="cb55-42"><a href="#cb55-42" aria-hidden="true" tabindex="-1"></a>btc_spot <span class="op">=</span> load_ohlcv(btc_history_path, source<span class="op">=</span><span class="st">"yfinance_csv"</span>, fields<span class="op">=</span>(<span class="st">"close"</span>,))</span>
-<span id="cb55-43"><a href="#cb55-43" aria-hidden="true" tabindex="-1"></a>btc_raw <span class="op">=</span> load_option_chain(data_dir <span class="op">/</span> <span class="st">"btc_deribit_optiondx_2024_01_09.parquet"</span>, source<span class="op">=</span><span class="st">"btc_deribit"</span>, annualization_days<span class="op">=</span>ann_days)</span>
-<span id="cb55-44"><a href="#cb55-44" aria-hidden="true" tabindex="-1"></a>us_par_btc <span class="op">=</span> load_par_yield_curve(data_dir <span class="op">/</span> <span class="st">"par-yield-curve-rates-1990-2026.csv"</span>, source<span class="op">=</span><span class="st">"us_treasury"</span>)</span>
+<span id="cb55-43"><a href="#cb55-43" aria-hidden="true" tabindex="-1"></a>btc_raw <span class="op">=</span> load_option_chain(data_dir <span class="op">/</span> <span class="st">"btc_options_chain.parquet"</span>, source<span class="op">=</span><span class="st">"btc_deribit"</span>, annualization_days<span class="op">=</span>ann_days)</span>
+<span id="cb55-44"><a href="#cb55-44" aria-hidden="true" tabindex="-1"></a>us_par_btc <span class="op">=</span> load_par_yield_curve(data_dir <span class="op">/</span> <span class="st">"us_treasury_yields.csv"</span>, source<span class="op">=</span><span class="st">"us_treasury"</span>)</span>
 <span id="cb55-45"><a href="#cb55-45" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-46"><a href="#cb55-46" aria-hidden="true" tabindex="-1"></a>btc_ret <span class="op">=</span> log_returns(btc_spot[<span class="st">"close"</span>]).dropna()</span>
 <span id="cb55-47"><a href="#cb55-47" aria-hidden="true" tabindex="-1"></a>btc_var_1d <span class="op">=</span> daily_variance(btc_ret, annualization<span class="op">=</span>ann_trading)</span>
@@ -9468,7 +9468,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <tbody>
 <tr class="odd">
 <th data-quarto-table-cell-role="th">0</th>
-<td>btc_usd_yfinance_max.csv</td>
+<td>btc_usd_ohlcv.csv</td>
 <td>base</td>
 <td>63931.0229</td>
 <td>0.054625</td>
@@ -11352,8 +11352,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../notebooks/19_forecasting_kelly_allocation.html" class="pagination-link" aria-label="Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation">
-        <span class="nav-page-text"><span class="chapter-title">Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../notebooks/19_forecasting_kelly_allocation.html" class="pagination-link" aria-label="19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation">
+        <span class="nav-page-text"><span class="chapter-title">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
