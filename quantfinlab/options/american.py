@@ -424,7 +424,7 @@ def tree_batch(
             raise
     out = np.empty(s_arr.size, dtype=float)
     for i, vals in enumerate(zip(s_arr.reshape(-1), k_arr.reshape(-1), r_arr.reshape(-1), q_arr.reshape(-1), sig_arr.reshape(-1), tau_arr.reshape(-1), flags, strict=False)):
-        out[i] = tree_price(*vals[:6], int(vals[6]), steps=steps, tree_type=tree_type, american=american)
+        out[i] = tree_price(*vals[:6], int(vals[6]), steps=steps, tree_type=tree_type, american=american, engine=resolved)
     return out.reshape(s_arr.shape)
 
 
