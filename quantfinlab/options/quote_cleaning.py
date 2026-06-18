@@ -551,7 +551,7 @@ def pair_put_call_quotes(
 ) -> pd.DataFrame:
     calls, puts = split_calls_puts(quotes)
     common = [c for c in on if c in quotes.columns]
-    keep = list(dict.fromkeys([*common, price_col, "bid", "ask", "spot", "tau", "rate", "moneyness"]))
+    keep = list(dict.fromkeys([*common, price_col, "bid", "ask", "spot", "forward", "tau", "rate", "moneyness"]))
     calls = calls[[c for c in keep if c in calls.columns]].rename(
         columns={c: f"call_{c}" for c in keep if c not in common}
     )

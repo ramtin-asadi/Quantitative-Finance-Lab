@@ -13,8 +13,8 @@ from . import (
     scenarios,
     smoothers,
     swaps,
-    term_models,
     tenors,
+    term_models,
 )
 from .bond_pricing import (
     bond_cashflows,

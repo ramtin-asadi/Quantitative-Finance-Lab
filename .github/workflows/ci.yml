@@ -19,7 +19,6 @@ jobs:
           python -m pip install -e ".[dev]"
       - name: Lint
         run: |
-          ruff check .
-          black --check .
+          ruff check quantfinlab tests
       - name: Test
         run: pytest

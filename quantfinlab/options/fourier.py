@@ -3,12 +3,11 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from quantfinlab.options.bsm import bsm_cf
-from quantfinlab.options.merton import merton_cf
-from quantfinlab.options.heston import heston_cf
 from quantfinlab.options.bates import bates_cf
+from quantfinlab.options.bsm import bsm_cf
+from quantfinlab.options.heston import heston_cf
+from quantfinlab.options.merton import merton_cf
 from quantfinlab.options.variance_gamma import vg_cf
-
 
 MODEL_IDS = {"bsm": 0, "merton": 1, "vg": 2, "variance_gamma": 2, "heston": 3, "bates": 4}
 
@@ -165,7 +164,7 @@ def direct_price(
             if str(engine).lower() == "numba":
                 raise
     out = np.empty(k.size, dtype=float)
-    for i, vals in enumerate(zip(s.reshape(-1), k.reshape(-1), r.reshape(-1), q.reshape(-1), t.reshape(-1), flags.reshape(-1))):
+    for i, vals in enumerate(zip(s.reshape(-1), k.reshape(-1), r.reshape(-1), q.reshape(-1), t.reshape(-1), flags.reshape(-1), strict=False)):
         call = _direct_call_numpy(model, p, vals[0], vals[1], vals[2], vals[3], vals[4], n=n, u_max=u_max)
         out[i] = call if vals[5] > 0 else call - vals[0] * np.exp(-vals[3] * vals[4]) + vals[1] * np.exp(-vals[2] * vals[4])
     return out.reshape(k.shape)

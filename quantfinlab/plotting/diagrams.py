@@ -476,7 +476,7 @@ def overlay_payoffs(axs=None, *, spot: float = 100.0, call_strike: float = 105.0
     }
     if title:
         _course_header(fig, title)
-    for ax, (combined, legs, label, strikes, breakeven) in zip(axs[:3], specs):
+    for ax, (combined, legs, label, strikes, breakeven) in zip(axs[:3], specs, strict=False):
         ax.set_facecolor("white")
         ax.axhline(0.0, color=LAB_COLORS[2], lw=0.8)
         ax.axvline(spot, color=LAB_COLORS[8], lw=0.8, ls="--")

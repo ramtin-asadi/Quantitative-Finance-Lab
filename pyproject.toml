@@ -2,12 +2,13 @@
 requires = [
     "scikit-build-core>=0.9.0",
     "pybind11>=2.11.0",
-    "numpy>=1.24.0,<2.0.0"]
+    "numpy>=1.24.0,<2.0.0",
+]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "quantfinlab"
-version = "0.0.1"
+version = "0.5"
 description = "Quantitative finance research library: Implementation of quantitative finance topics like option pricing, portfolio optimization and ML for finance projects"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
@@ -41,32 +42,40 @@ dependencies = [
     "scipy>=1.10.0,<2.0.0",
     "cvxpy>=1.4.0,<2.0.0",
     "typing-extensions>=4.8.0",
-    "scikit-learn>=1.3.0,<2.0.0"]
+    "scikit-learn>=1.3.0,<2.0.0",
+]
 
 [project.optional-dependencies]
 speed = [
-    "numba>=0.58.0,<0.65.0"]
+    "numba>=0.58.0,<0.65.0",
+]
 
 numerics = [
     "jax>=0.4.20,<0.5.0",
     "jaxlib>=0.4.20,<0.5.0",
-    "numba>=0.58.0,<0.65.0"]
+    "numba>=0.58.0,<0.65.0",
+]
 
 volatility = [
     "arch>=6.0.0,<7.0.0",
-    "statsmodels>=0.14.0,<0.15.0"]
+    "statsmodels>=0.14.0,<0.15.0",
+]
 
 hedging = [
-    "statsmodels>=0.14.0,<0.15.0"]
+    "statsmodels>=0.14.0,<0.15.0",
+]
 
 ml = [
-    "torch>=2.4,<3.0"]
+    "torch>=2.4,<3.0",
+]
 
 network = [
-    "networkx>=3.2,<4.0"]
+    "networkx>=3.2,<4.0",
+]
 
 plotting = [
-    "seaborn>=0.13.0,<0.14.0"]
+    "seaborn>=0.13.0,<0.14.0",
+]
 
 all = [
     "quantfinlab[numerics]",
@@ -74,17 +83,19 @@ all = [
     "quantfinlab[hedging]",
     "quantfinlab[ml]",
     "quantfinlab[network]",
-    "quantfinlab[plotting]"]
+    "quantfinlab[plotting]",
+]
 
 dev = [
     "black>=23.0.0,<25.0.0",
-    "ruff>=0.1.0,<0.4.0",
+    "ruff>=0.6.7,<0.7.0",
     "mypy>=1.7.0,<2.0.0",
     "pytest>=7.4.0,<9.0.0",
     "pytest-cov>=4.1.0",
     "pytest-xdist>=3.3.0",
     "pre-commit>=3.5.0",
-    "pdoc>=14.0.0"]
+    "pdoc>=14.0.0",
+]
 
 notebooks = [
     "jupyter>=1.0.0",
@@ -92,7 +103,8 @@ notebooks = [
     "nbformat>=5.9.0",
     "quarto>=1.4.0",
     "xlrd>=2.0.1,<3.0.0",
-    "quantfinlab[all]"]
+    "quantfinlab[all]",
+]
 
 [project.urls]
 Homepage = "https://github.com/ramtin-asadi/Quantitative-Finance-Lab"
@@ -107,7 +119,8 @@ include-package-data = true
 [tool.setuptools.package-data]
 quantfinlab = [
     "py.typed",
-    "*.pyi"]
+    "*.pyi",
+]
 
 [tool.scikit-build]
 cmake.source-dir = "cpp"
@@ -135,23 +148,29 @@ exclude = [
     ".venv",
     "__pycache__",
     "build",
-    "dist"]
+    "dist",
+    "docs",
+    "notebooks",
+    ".quarto",
+    "*.ipynb",
+]
 
 [tool.ruff.lint]
 select = [
-    "E",
+    "E4",
+    "E7",
+    "E9",
     "F",
     "I",
-    "UP",
     "B",
-    "C4",
-    "SIM",
-    "RUF"]
+]
 
 ignore = [
     "E501",
     "B008",
-    "RUF001"]
+    "B023",
+    "B905",
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["quantfinlab"]
@@ -171,13 +190,15 @@ warn_no_return = true
 exclude = [
     "build/",
     "dist/",
-    "notebooks/"]
+    "notebooks/",
+]
 
 [[tool.mypy.overrides]]
 module = [
     "numba.*",
     "arch.*",
-    "cvxpy.*"]
+    "cvxpy.*",
+]
 
 ignore_missing_imports = true
 
@@ -187,22 +208,29 @@ addopts = [
     "-ra",
     "-q",
     "--strict-markers",
-    "--tb=short"]
+    "--tb=short",
+]
 
 testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
 pythonpath = ["."]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "numerics: tests requiring JAX",
-    "ml: tests requiring PyTorch",
-    "notebook: tests that validate notebook outputs"]
+    "cpp: tests requiring the optional C++ extension",
+    "ml: tests requiring optional machine-learning dependencies",
+    "numerics: tests requiring optional numerical acceleration dependencies",
+    "notebook: tests that validate notebook outputs",
+]
 
 [tool.coverage.run]
 source = ["quantfinlab"]
 omit = [
     "*/tests/*",
     "*/notebooks/*",
-    "*/__pycache__/*"]
+    "*/__pycache__/*",
+]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -211,7 +239,8 @@ exclude_lines = [
     "if self.debug:",
     "if __name__ == .__main__.:",
     "raise AssertionError",
-    "raise NotImplementedError"]
+    "raise NotImplementedError",
+]
 
 [tool.pdoc]
 output-dir = "docs/api"

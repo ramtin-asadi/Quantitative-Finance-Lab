@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
-
 _RATE_SOURCES: dict[str, dict[str, object]] = {
     # US Treasury par-yield CSV (Fed/Treasury direct download).
     # Columns like '1 mo', '3 mo', '1 yr', '10 yr' ... values in percent.

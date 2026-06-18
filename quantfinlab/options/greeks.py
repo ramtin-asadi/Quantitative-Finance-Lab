@@ -248,7 +248,7 @@ def forward_bsm_greeks_jax(
     sigma_arr = np.asarray(sigma, dtype=float).reshape(-1)
     rate_arr = np.asarray(rate, dtype=float).reshape(-1)
     arrays = np.broadcast_arrays(fwd, strike_arr, tau_arr, sigma_arr, rate_arr)
-    fwd, strike_arr, tau_arr, sigma_arr, rate_arr = [np.asarray(a, dtype=float).reshape(-1) for a in arrays]
+    fwd, strike_arr, tau_arr, sigma_arr, rate_arr = (np.asarray(a, dtype=float).reshape(-1) for a in arrays)
     if opt.ndim == 0:
         opt = np.full(len(fwd), opt.item(), dtype=object)
     opt_bool = _is_call(opt).reshape(-1)
@@ -343,9 +343,9 @@ def _spot_bsm_greeks_jax(
         np.asarray(div, dtype=float),
         np.asarray(sigma, dtype=float),
     )
-    spot_arr, strike_arr, tau_arr, rate_arr, div_arr, sigma_arr = [
+    spot_arr, strike_arr, tau_arr, rate_arr, div_arr, sigma_arr = (
         np.asarray(a, dtype=float).reshape(-1) for a in [spot_arr, strike_arr, tau_arr, rate_arr, div_arr, sigma_arr]
-    ]
+    )
     if opt.ndim == 0:
         opt = np.full(len(spot_arr), opt.item(), dtype=object)
     opt_bool = _is_call(opt).reshape(-1)
@@ -707,7 +707,10 @@ def _surface_delta_gamma_eval_jax_fn():
                 + 0.5 * sig * sig * t
             ) / (sig * sqrt_t)
             d2 = d1 - sig * sqrt_t
-            ncdf = lambda x: 0.5 * (1.0 + jax.lax.erf(x / jnp.sqrt(2.0)))
+
+            def ncdf(x):
+                return 0.5 * (1.0 + jax.lax.erf(x / jnp.sqrt(2.0)))
+
             return jnp.exp(-r * t) * (fwd * ncdf(d1) - k_strike * ncdf(d2))
 
         surface_delta = jax.grad(call_price, argnums=0)
@@ -797,7 +800,7 @@ def surface_delta_gamma_grid(
             vals, sigma0 = _surface_delta_gamma_jax(fit, spot_value, strike, tau, rate, carry)
             price, delta_surface, gamma_surface, delta_flat, gamma_flat = vals
             engine_used = "jax"
-        except Exception as exc:
+        except Exception:
             if not fallback:
                 raise
             warnings.warn(

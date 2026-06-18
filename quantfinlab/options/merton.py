@@ -209,7 +209,7 @@ def fit_merton_jump_diffusion(quotes: pd.DataFrame, weight_col: str = "obs_weigh
         if np.all(np.isfinite(p)):
             last = p
         values = key if isinstance(key, tuple) else (key,) if group_cols else ()
-        row = dict(zip(group_cols, values))
+        row = dict(zip(group_cols, values, strict=False))
         row.update({"sigma": p[0], "lambda_jump": p[1], "mu_jump": p[2], "sigma_jump": p[3], "loss": loss, "success": ok, "nfev": nfev, "quotes": len(g), "dte_days": float(np.nanmedian(g.get("dte_days", g["tau"] * 365.25)))})
         rows.append(row)
     params = pd.DataFrame(rows)

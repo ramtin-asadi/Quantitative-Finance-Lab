@@ -26,7 +26,7 @@ from .common.contracts import (
 )
 from .common.errors import BacktestError, DataError, InputError, ModelError, QuantFinLabError
 
-__version__ = "0.0.1"
+__version__ = "0.5"
 
 __all__ = [
     "BacktestError",

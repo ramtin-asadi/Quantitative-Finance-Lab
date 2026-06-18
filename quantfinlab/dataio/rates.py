@@ -18,7 +18,6 @@ from ..fixed_income.bootstrap import normalize_par_yields
 from ..fixed_income.tenors import TENOR_PATTERN, tenor_to_years
 from .schemas import get_rate_source
 
-
 _TENOR_NORMALIZE_REPLACEMENTS = (
     ("MONTHS", "M"),
     ("MONTH", "M"),

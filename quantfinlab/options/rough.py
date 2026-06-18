@@ -166,7 +166,7 @@ def forward_variance_curve(
     forward = []
     last_tau = 0.0
     last_total = 0.0
-    for tau_i, total_i in zip(tau_arr, tv_arr):
+    for tau_i, total_i in zip(tau_arr, tv_arr, strict=False):
         forward.append(max((total_i - last_total) / max(tau_i - last_tau, 1e-8), float(floor)))
         last_tau = tau_i
         last_total = total_i
@@ -345,7 +345,7 @@ def rbergomi_smile(
         price, price_se = _mc_price_and_se_from_terminal(sim["spot"][:, -1], strikes, "call", discount)
         forward = spot * np.exp((rate - div) * tau)
         iv = implied_vol("call", price, forward, strikes, tau, discount, engine="auto")
-        for kk, strike, px, se, sigma in zip(k_values, strikes, price, price_se, iv):
+        for kk, strike, px, se, sigma in zip(k_values, strikes, price, price_se, iv, strict=False):
             rows.append({"tau": tau, "tau_days": float(d), "k": float(kk), "strike": float(strike), "price": float(px), "price_se": float(se), "iv": float(sigma), "model": "rbergomi"})
     return pd.DataFrame(rows)
 
@@ -355,8 +355,8 @@ def _generate_crn(paths: int, steps: int, seed: int, use_sobol: bool = True):
     half = max(1, paths // 2)
     if use_sobol:
         try:
-            from scipy.stats.qmc import Sobol
             from scipy.special import ndtri
+            from scipy.stats.qmc import Sobol
             n_sobol = int(2 ** int(np.ceil(np.log2(max(half, 2)))))
             sampler = Sobol(d=int(steps) * 2, scramble=True, seed=int(seed))
             q_samples = sampler.random(n_sobol)
@@ -452,7 +452,7 @@ def rbergomi_calibration(
             sigma_mc = implied_vol("call", price_mc, forward, strikes, tau_d, discount, engine="auto")
             for i, (iv_market, w_raw) in enumerate(zip(
                 pd.to_numeric(tgt_d["iv_mid"], errors="coerce").to_numpy(float),
-                tgt_d.get("surface_weight", pd.Series(1.0, index=tgt_d.index)).to_numpy(float),
+                tgt_d.get("surface_weight", pd.Series(1.0, index=tgt_d.index)).to_numpy(float), strict=False,
             )):
                 if not np.isfinite(sigma_mc[i]) or not np.isfinite(iv_market):
                     continue
@@ -1015,7 +1015,6 @@ def fit_rough_heston_dates(
         err[finite_px] = (px[finite_px] - target[finite_px]) / scale[finite_px]
         finite_share = float(np.mean(finite_px)) if len(finite_px) else 0.0
         vega = _numeric(fit, ("vega",), 1.0).abs().replace(0.0, np.nan).to_numpy(float)
-        half = pd.to_numeric(fit.get("half_spread", 0.5 * (fit["ask"] - fit["bid"]) if {"ask", "bid"}.issubset(fit.columns) else 1.0), errors="coerce").fillna(1.0).clip(lower=1e-6).to_numpy(float)
         inside = ((px >= pd.to_numeric(fit.get("bid", fit["mid"]), errors="coerce").to_numpy(float)) & (px <= pd.to_numeric(fit.get("ask", fit["mid"]), errors="coerce").to_numpy(float)))
         opt = fit["option_type"].astype(str).str.lower()
         dte = pd.to_numeric(fit.get("dte_days", fit["tau"] * 365.25), errors="coerce").to_numpy(float)

@@ -635,7 +635,7 @@ def gated_blend_weight_frame(
     asset_list = list(assets) if assets is not None else list(base.columns)
     idx = pd.DatetimeIndex(overlay.index).sort_values().unique()
     B = base.sort_index().reindex(idx).ffill().reindex(columns=asset_list).fillna(0.0)
-    O = overlay.sort_index().reindex(idx).ffill().reindex(columns=asset_list).fillna(0.0)
+    overlay_aligned = overlay.sort_index().reindex(idx).ffill().reindex(columns=asset_list).fillna(0.0)
     rows = []
     for dt, base_row in B.iterrows():
         row = f[f[date_col].eq(pd.Timestamp(dt))].drop_duplicates(asset_col).set_index(asset_col).reindex(asset_list)
@@ -646,7 +646,7 @@ def gated_blend_weight_frame(
             gate = (score.rank(pct=True) >= (1.0 - float(keep_k) / max(len(asset_list), 1))).astype(float)
             gated = base_row * (float(weak_scale) + (1.0 - float(weak_scale)) * gate)
         gated = cap_weights(gated.reindex(asset_list).fillna(0.0), max_weight=max_weight)
-        blended = (1.0 - float(alpha)) * gated + float(alpha) * O.loc[dt].reindex(asset_list).fillna(0.0)
+        blended = (1.0 - float(alpha)) * gated + float(alpha) * overlay_aligned.loc[dt].reindex(asset_list).fillna(0.0)
         rows.append(cap_weights(blended, max_weight=max_weight).rename(pd.Timestamp(dt)))
     return pd.DataFrame(rows).fillna(0.0).sort_index()
 

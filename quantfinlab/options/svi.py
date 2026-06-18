@@ -151,7 +151,7 @@ def fit_svi_surface(quotes: pd.DataFrame, weight_col: str = "obs_weight", engine
         if np.all(np.isfinite(p)):
             last = p
         values = key if isinstance(key, tuple) else (key,)
-        row = dict(zip(group_cols, values))
+        row = dict(zip(group_cols, values, strict=False))
         row.update({"a": p[0], "b": p[1], "rho": p[2], "m": p[3], "sigma": p[4], "loss": loss, "success": ok, "nfev": nfev, "quotes": len(g), "dte_days": float(np.nanmedian(g.get("dte_days", g["tau"] * 365.25)))})
         rows.append(row)
     params = pd.DataFrame(rows)

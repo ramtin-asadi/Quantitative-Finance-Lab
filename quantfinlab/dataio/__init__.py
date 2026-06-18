@@ -8,6 +8,13 @@ Filter functions are small composable steps to be chained via ``df.pipe``.
 from __future__ import annotations
 
 from .equity_ohlcv import load_ohlcv
+from .macro import (
+    clean_monthly_index,
+    load_acm_term_premium,
+    load_macro_factors,
+    load_nfci,
+    macro_availability_table,
+)
 from .option_chain import (
     combine_optionsdx_texts,
     filter_atm_window,
@@ -26,13 +33,6 @@ from .panel import (
     load_yfinance_panel,
     prices_to_returns_panel,
     vix_feature_frame,
-)
-from .macro import (
-    clean_monthly_index,
-    load_acm_term_premium,
-    load_macro_factors,
-    load_nfci,
-    macro_availability_table,
 )
 from .rates import (
     load_par_yield_curve,

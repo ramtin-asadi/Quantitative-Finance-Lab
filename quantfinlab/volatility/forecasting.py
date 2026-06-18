@@ -6,7 +6,6 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-
 DEFAULT_ARCH_MODEL_SPECS: tuple[dict[str, Any], ...] = (
     {"name": "garch11_normal", "vol": "GARCH", "p": 1, "o": 0, "q": 1, "dist": "normal"},
     {"name": "garch11_student", "vol": "GARCH", "p": 1, "o": 0, "q": 1, "dist": "t"},
@@ -471,7 +470,7 @@ def select_forecast_by_rolling_loss(
                 forecast_sum = float(np.sum(chosen["forecast_var_sum"].to_numpy(dtype=float) * weights.to_numpy(dtype=float)))
                 forecast_daily = forecast_sum / float(horizon)
                 forecast_ann = 252.0 * forecast_daily
-                selected_model = "top{}_inverse_{}".format(len(top_models), loss)
+                selected_model = f"top{len(top_models)}_inverse_{loss}"
 
         if selected_model is None:
             for fallback in fallback_order:

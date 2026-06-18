@@ -14,10 +14,10 @@ Most folders do not need manual raw files because their scripts download from pu
 |---|---|---|
 | `stooq_nasdaq/raw/` | Stooq U.S. NASDAQ stock files only, usually `daily/us/nasdaq stocks/*.us.txt`; examples: `aapl.us.txt`, `msft.us.txt`. | https://stooq.com/db/h/ |
 | `stooq_hkex/raw/` | Stooq Hong Kong HKEX stock files only, usually `daily/hk/hkex stocks/*.hk.txt`; examples: `5.hk.txt`, `700.hk.txt`. The builder also downloads the HKEX List of Securities workbook directly and renames numeric stock codes to security names. | https://stooq.com/db/h/ and https://www.hkex.com.hk/eng/services/trading/securities/securitieslists/ListOfSecurities.xlsx |
-| `spx_optionsdx/raw/` | Purchased SPX OptionsDX monthly `.txt` or `.csv` files. | https://www.optionsdx.com/product/spx-option-chain/ |
-| `spy_optionsdx/raw/` | Purchased SPY OptionsDX monthly `.txt` or `.csv` files. | https://www.optionsdx.com/product/spy-option-chain/ |
-| `qqq_optionsdx/raw/` | Purchased QQQ OptionsDX monthly `.txt` or `.csv` files. | https://www.optionsdx.com/product/qqq-option-chain/ |
-| `btc_optionsdx/raw/` | Purchased BTC/Deribit OptionsDX monthly `.txt` or `.csv` files. | https://www.optionsdx.com/product/btc-option-chains-deribit/ |
+| `spx_optionsdx/raw/` | Purchased (Free) SPX OptionsDX monthly `.txt` or `.csv` files. | https://www.optionsdx.com/product/spx-option-chain/ |
+| `spy_optionsdx/raw/` | Purchased (Free) SPY OptionsDX monthly `.txt` or `.csv` files. | https://www.optionsdx.com/product/spy-option-chain/ |
+| `qqq_optionsdx/raw/` | Purchased (Free) QQQ OptionsDX monthly `.txt` or `.csv` files. | https://www.optionsdx.com/product/qqq-option-chain/ |
+| `btc_optionsdx/raw/` | Purchased (Free) BTC/Deribit OptionsDX monthly `.txt` or `.csv` files. | https://www.optionsdx.com/product/btc-option-chains-deribit/ |
 | `acm_term_premium/raw/` | Nothing. `download.py` downloads the official NY Fed workbook directly. | https://www.newyorkfed.org/research/data_indicators/term-premia-tabs |
 | `chicago_fed_nfci/raw/` | Nothing. `download.py` downloads FRED `NFCI` directly. | https://fred.stlouisfed.org/series/NFCI |
 
@@ -49,7 +49,7 @@ python data/fama_french_us/download.py
 python data/fama_french_developed_ex_us/download.py
 ```
 
-OptionsDX scripts require the corresponding paid monthly raw files to be present in their `raw/` folders.
+OptionsDX scripts require the corresponding monthly raw files to be present in their `raw/` folders. The files need purchasing but the files we use are 0$ and just need creating an account on website.
 
 Source and terms cautions:
 

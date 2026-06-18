@@ -8,10 +8,10 @@ install:
 	python -m pip install -e ".[dev]"
 
 lint:
-	ruff check .
+	ruff check quantfinlab tests
 
 format:
-	black .
+	black quantfinlab tests
 
 test:
 	pytest

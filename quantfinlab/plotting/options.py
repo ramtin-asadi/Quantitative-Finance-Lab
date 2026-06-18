@@ -1589,7 +1589,7 @@ def pricing_error_spread(ax, quotes: pd.DataFrame, title: str | None = None):
     if ratio.empty:
         return _quiet_axis(ax, "No scaled errors", title or "Spread-Scaled Error")
     ax.hist(ratio, bins=80, color=LAB_COLORS[0], alpha=0.82)
-    for x, label in [(-1.0, "bid"), (0.0, "mid"), (1.0, "ask")]:
+    for x, _label in [(-1.0, "bid"), (0.0, "mid"), (1.0, "ask")]:
         ax.axvline(x, color="black" if x == 0.0 else "#6b7280", lw=0.9, ls="-" if x == 0.0 else ":")
     ax.set_xlabel("(model price - mid) / half-spread")
     ax.set_ylabel("contracts")
@@ -2149,7 +2149,7 @@ def assignment_component_bars(ax, quotes: pd.DataFrame, title: str | None = None
     bottom = np.zeros(len(q))
     x = np.arange(len(q))
     colors = ["#2563eb", "#7c3aed", "#dc2626", "#f97316", "#059669", "#6b7280"]
-    for col, color in zip(cols, colors):
+    for col, color in zip(cols, colors, strict=False):
         values = pd.to_numeric(q[col], errors="coerce").fillna(0.0).to_numpy()
         ax.bar(x, values, bottom=bottom, label=col.replace("_", " "), color=color, alpha=0.85)
         bottom += values
@@ -2484,7 +2484,7 @@ def model_quality(ax, comparison: pd.DataFrame, title: str | None = None):
     ax.set_xlabel("weighted error")
     ax.set_title(title or "Model Quality")
     if "bid_ask_hit_rate" in q.columns:
-        for yi, hit in zip(y, pd.to_numeric(q["bid_ask_hit_rate"], errors="coerce")):
+        for yi, hit in zip(y, pd.to_numeric(q["bid_ask_hit_rate"], errors="coerce"), strict=False):
             if np.isfinite(hit):
                 ax.text(rmse.max() * 1.03 if np.isfinite(rmse.max()) else 0.0, yi, f"{hit:.0%}", va="center", fontsize=7, color=LAB_COLORS[3])
     _small_legend(ax, loc="lower right")
@@ -2678,7 +2678,7 @@ def engine_frontier(ax, table: pd.DataFrame, title: str | None = None):
     y = pd.to_numeric(q.get("median_abs_error", q.get("max_abs_error", q.get("error", 1.0))), errors="coerce")
     labels = q.get("engine", q.get("method", q.get("model", pd.Series("", index=q.index)))).astype(str)
     ax.scatter(x, y, s=55, color=[LAB_COLORS[i % len(LAB_COLORS)] for i in range(len(q))], alpha=0.85)
-    for xi, yi, lab in zip(x, y, labels):
+    for xi, yi, lab in zip(x, y, labels, strict=False):
         if np.isfinite(xi) and np.isfinite(yi):
             ax.annotate(str(lab), (xi, yi), fontsize=6, xytext=(3, 3), textcoords="offset points")
     ax.set_xscale("log")

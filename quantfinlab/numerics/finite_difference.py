@@ -56,7 +56,8 @@ def psor_solve(lower, diag, upper, rhs, payoff, *, omega: float = 1.35, tol: flo
     v = np.maximum(rhs.copy(), payoff)
     residual = np.inf
     it = 0
-    for it in range(1, int(max_iter) + 1):
+    for iteration in range(1, int(max_iter) + 1):
+        it = iteration
         old = v.copy()
         for i in range(1, len(v) - 1):
             y = (rhs[i] - lower[i] * v[i - 1] - upper[i] * v[i + 1]) / diag[i]

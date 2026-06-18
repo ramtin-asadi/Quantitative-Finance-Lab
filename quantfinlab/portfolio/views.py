@@ -8,7 +8,6 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-
 DEFAULT_PRIMARY_FAMILY_Q_CAPS = {
     "liquid_leadership": 0.042,
     "dual_momentum": 0.022,

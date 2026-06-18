@@ -7,17 +7,15 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from quantfinlab.options.rates_dividends import add_discount_factors, attach_rates
 from quantfinlab.options.american import (
     assignment_risk,
-    boundary_distance,
     european_tree_batch,
     model_disagreement,
     pricing_error,
     roll_signal,
     tree_batch,
-    tree_boundary,
 )
+from quantfinlab.options.rates_dividends import add_discount_factors, attach_rates
 
 
 def _settings_match(meta_path: Path, settings: dict) -> bool:
@@ -118,7 +116,7 @@ def prepare_american_quotes(
     days_to = np.full(len(q), np.nan, dtype=float)
     div_in_life = np.zeros(len(q), dtype=float)
     pv = np.zeros(len(q), dtype=float)
-    for d, amount in zip(div_dates, div_amt):
+    for d, amount in zip(div_dates, div_amt, strict=False):
         after_date = d > q_dates
         before_exp = d <= q_exp
         inside = after_date & before_exp

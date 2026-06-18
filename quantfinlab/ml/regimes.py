@@ -112,6 +112,7 @@ def duration_table(labels: pd.Series | Sequence[int]) -> pd.DataFrame:
     if lab.empty:
         return pd.DataFrame(columns=["state", "episodes", "avg_duration", "median_duration", "max_duration"])
     groups = (lab != lab.shift()).cumsum()
+    groups.name = None
     runs = pd.DataFrame({"state": lab.groupby(groups).first(), "duration": lab.groupby(groups).size()})
     out = runs.groupby("state")["duration"].agg(["count", "mean", "median", "max"])
     out.columns = ["episodes", "avg_duration", "median_duration", "max_duration"]

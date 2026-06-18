@@ -4,7 +4,6 @@ from typing import Any
 
 import numpy as np
 
-
 def american_tree_batch(
     s: np.ndarray,
     k: np.ndarray,

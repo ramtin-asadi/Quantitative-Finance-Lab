@@ -198,7 +198,7 @@ def calibration_grid_quotes(
     dte_targets = np.asarray(dte_targets, dtype=float)
     k_targets = np.asarray(k_targets, dtype=float)
     pieces = []
-    for d, day in x.groupby("date", sort=True):
+    for _d, day in x.groupby("date", sort=True):
         expiry_table = day.groupby("expiry", as_index=False).agg(dte=("dte_days", "median"), n=("quote_id", "size"))
         expiry_table = expiry_table[expiry_table["n"].ge(int(min_quotes_per_expiry))].copy()
         chosen_expiries = []
@@ -544,7 +544,6 @@ def _valid_params(model: str, p: np.ndarray) -> bool:
 def _date_metrics(q: pd.DataFrame, px: np.ndarray, scale: np.ndarray, model: str, success: bool, nfev: int, runtime: float, params: np.ndarray) -> dict:
     mid = pd.to_numeric(q["mid"], errors="coerce").to_numpy(float)
     residual = np.asarray(px, dtype=float) - mid
-    half = pd.to_numeric(q.get("half_spread", 0.5 * (q["ask"] - q["bid"]) if {"ask", "bid"}.issubset(q.columns) else 1.0), errors="coerce").fillna(1.0).clip(lower=1e-6).to_numpy(float)
     opt = q["option_type"].astype(str).str.lower()
     dte = pd.to_numeric(q.get("dte_days", q["tau"] * 365.25), errors="coerce")
     m = pd.to_numeric(q.get("moneyness", q["strike"] / q["spot"]), errors="coerce")

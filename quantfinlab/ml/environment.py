@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -58,7 +57,7 @@ class StateTables:
         asset_state: np.ndarray | None = None,
         global_state: np.ndarray | None = None,
         prior_weights: np.ndarray | None = None,
-    ) -> "StateTables":
+    ) -> StateTables:
         return replace(
             self,
             asset_state=np.array(self.asset_state if asset_state is None else asset_state, copy=True),

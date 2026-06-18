@@ -365,7 +365,7 @@ def _implied_vol_numba(
         np.asarray(tau, dtype=float).reshape(-1),
         np.asarray(discount_factor, dtype=float).reshape(-1),
     )
-    price_arr, forward_arr, strike_arr, tau_arr, df_arr = [np.asarray(a, dtype=float) for a in arrays]
+    price_arr, forward_arr, strike_arr, tau_arr, df_arr = (np.asarray(a, dtype=float) for a in arrays)
     opt = np.asarray(option_type)
     if opt.ndim == 0:
         opt = np.full(len(price_arr), opt.item(), dtype=object)

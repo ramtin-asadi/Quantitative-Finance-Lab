@@ -511,9 +511,7 @@ def run_overlay_backtest(
     put_frames = []
     trade_rows = []
     book = quotes.copy()
-    if schedules_have_terms and {"expiry", "strike", "option_type"}.issubset(book.columns):
-        book["contract_key"] = _contract_key_from_book(book)
-    elif "contract_key" not in book.columns:
+    if schedules_have_terms and {"expiry", "strike", "option_type"}.issubset(book.columns) or "contract_key" not in book.columns:
         book["contract_key"] = _contract_key_from_book(book)
     scheduled_keys = set()
     for schedule in schedules.values():

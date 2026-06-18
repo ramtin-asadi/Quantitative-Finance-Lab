@@ -24,7 +24,7 @@ def _theta_curve(q: pd.DataFrame) -> pd.DataFrame:
         theta = float(np.nanmedian(pd.to_numeric(near["iv_mid"], errors="coerce") ** 2 * pd.to_numeric(near["tau"], errors="coerce")))
         values = key if isinstance(key, tuple) else (key,)
         cols = ["date", "expiry"] if "date" in q.columns else ["expiry"]
-        row = dict(zip(cols, values))
+        row = dict(zip(cols, values, strict=False))
         row.update({"theta": max(theta, 1e-6), "tau": float(np.nanmedian(g["tau"])), "dte_days": float(np.nanmedian(g.get("dte_days", g["tau"] * 365.25)))})
         rows.append(row)
     return pd.DataFrame(rows)

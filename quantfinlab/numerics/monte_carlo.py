@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 
-
 _GBM_NUMBA = None
 
 

@@ -423,7 +423,7 @@ def tree_batch(
         except Exception:
             raise
     out = np.empty(s_arr.size, dtype=float)
-    for i, vals in enumerate(zip(s_arr.reshape(-1), k_arr.reshape(-1), r_arr.reshape(-1), q_arr.reshape(-1), sig_arr.reshape(-1), tau_arr.reshape(-1), flags)):
+    for i, vals in enumerate(zip(s_arr.reshape(-1), k_arr.reshape(-1), r_arr.reshape(-1), q_arr.reshape(-1), sig_arr.reshape(-1), tau_arr.reshape(-1), flags, strict=False)):
         out[i] = tree_price(*vals[:6], int(vals[6]), steps=steps, tree_type=tree_type, american=american)
     return out.reshape(s_arr.shape)
 
@@ -662,7 +662,12 @@ def assignment_risk(
     if time_value_col not in out.columns:
         out[time_value_col] = mid - intrinsic
     itm_score = (intrinsic / spot.replace(0, np.nan)).clip(lower=0.0, upper=1.0)
-    distance = pd.to_numeric(out.get(boundary_distance_col, np.nan), errors="coerce")
+    distance = pd.to_numeric(
+        out[boundary_distance_col]
+        if boundary_distance_col in out.columns
+        else pd.Series(np.nan, index=out.index),
+        errors="coerce",
+    )
     boundary_proximity = (1.0 - (distance.abs() / 0.08)).clip(lower=0.0, upper=1.0).fillna(0.0)
     dividend_gap = (pd.to_numeric(out.get(dividend_col, 0.0), errors="coerce") - pd.to_numeric(out[time_value_col], errors="coerce")).clip(lower=0.0)
     dividend_gap_score = (dividend_gap / spot.replace(0, np.nan) / 0.01).clip(lower=0.0, upper=1.0).fillna(0.0)

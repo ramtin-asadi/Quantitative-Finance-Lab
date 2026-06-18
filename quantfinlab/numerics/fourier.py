@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 
-
 _DIRECT_NUMBA = None
 _DIRECT_GRID_NUMBA = None
 _COS_NUMBA = None

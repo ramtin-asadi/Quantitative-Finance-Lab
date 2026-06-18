@@ -29,7 +29,6 @@ from ..options.quote_cleaning import (
 )
 from .schemas import get_option_chain_source
 
-
 _REQUIRED_LONG_COLUMNS = ("date", "expiry", "strike", "option_type", "underlying")
 
 

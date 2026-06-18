@@ -7,7 +7,6 @@ import pandas as pd
 
 from quantfinlab.numerics.monte_carlo import gbm_paths, payoff_paths
 
-
 _LSM_NUMBA = None
 _LSM_EVAL_NUMBA = None
 
@@ -141,7 +140,6 @@ def _get_lsm_numba():
         n_paths = paths.shape[0]
         steps = paths.shape[1] - 1
         dt = tau / steps
-        pcols = coeffs.shape[1]
         exercise = np.empty(n_paths, dtype=np.int64)
         total = 0.0
         for i in range(n_paths):
@@ -170,7 +168,7 @@ def _get_lsm_numba():
 def basis_matrix(x, degree: int = 3) -> np.ndarray:
     x = np.asarray(x, dtype=float)
     cols = [np.ones_like(x)]
-    for p in range(1, int(degree) + 1):
+    for _ in range(1, int(degree) + 1):
         cols.append(cols[-1] * x)
     return np.column_stack(cols)
 

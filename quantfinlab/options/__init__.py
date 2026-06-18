@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from . import (
-    bates,
     american,
+    bates,
     bsm,
     diagnostics,
     fourier,
