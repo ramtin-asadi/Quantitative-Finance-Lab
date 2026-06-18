@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from quantfinlab.common.errors import InputError, ModelError
 from quantfinlab.portfolio import covariance, expected_returns, optimizers
 from tests.synthetic.generators import return_panel
 
@@ -85,6 +86,104 @@ def test_optimizers_produce_feasible_long_only_portfolios() -> None:
     for weights in (equal, minvar, mv, ridge, sharpe, frontier):
         assert weights is not None
         _assert_feasible_weights(weights, upper=0.70)
+
+
+def test_optimizers_reject_or_report_infeasible_constraints() -> None:
+    pytest.importorskip("cvxpy")
+
+    mu = np.array([0.09, 0.06, 0.03])
+    cov_ann = np.diag([0.05, 0.04, 0.03])
+
+    assert optimizers.minimum_variance(cov_ann=cov_ann, w_max=0.20) is None
+    assert optimizers.mean_variance(mu_excess_ann=mu, cov_ann=cov_ann, w_max=0.20) is None
+    assert optimizers.ridge_mean_variance(mu_excess_ann=mu, cov_ann=cov_ann, w_max=0.20) is None
+    assert optimizers.max_sharpe_slsqp(mu_excess_ann=mu, cov_ann=cov_ann, w_max=0.20) is None
+    assert (
+        optimizers.max_sharpe_frontier_grid(
+            mu_excess_ann=mu,
+            cov_ann=cov_ann,
+            w_max=0.20,
+            grid_n=4,
+        )
+        is None
+    )
+
+    with pytest.raises(InputError):
+        optimizers.equal_weight([], w_max=0.70)
+    with pytest.raises(InputError):
+        optimizers.equal_weight(3, w_max=0.20)
+    with pytest.raises(ModelError):
+        optimizers.minimum_variance(cov_ann=cov_ann, w_max=0.20, raise_on_fail=True)
+    with pytest.raises(ModelError):
+        optimizers.mean_variance(
+            mu_excess_ann=mu,
+            cov_ann=cov_ann,
+            w_max=0.20,
+            raise_on_fail=True,
+        )
+    with pytest.raises(ModelError):
+        optimizers.max_sharpe_slsqp(
+            mu_excess_ann=mu,
+            cov_ann=cov_ann,
+            w_max=0.20,
+            raise_on_fail=True,
+        )
+
+
+def test_optimizers_handle_singular_covariance_solver_fallback_and_turnover_caps() -> None:
+    pytest.importorskip("cvxpy")
+
+    cov_ann = np.array(
+        [
+            [0.040, 0.040, 0.015],
+            [0.040, 0.040, 0.015],
+            [0.015, 0.015, 0.030],
+        ]
+    )
+    mu = np.array([0.08, 0.08, 0.03])
+    previous = np.array([0.65, 0.25, 0.10])
+    solver_order = ("NOT_A_SOLVER", "OSQP", "SCS")
+
+    minvar = optimizers.minimum_variance(
+        cov_ann=cov_ann,
+        w_prev=previous,
+        w_max=0.80,
+        solver_order=solver_order,
+    )
+    mv_slow_turnover = optimizers.mean_variance(
+        mu_excess_ann=mu,
+        cov_ann=cov_ann,
+        w_prev=previous,
+        w_max=0.80,
+        kappa_target_annual=5.0,
+        solver_order=solver_order,
+    )
+    mv_loose_turnover = optimizers.mean_variance(
+        mu_excess_ann=mu,
+        cov_ann=cov_ann,
+        w_prev=previous,
+        w_max=0.80,
+        kappa_target_annual=0.0,
+        solver_order=solver_order,
+    )
+    sharpe_zero_mu = optimizers.max_sharpe_slsqp(
+        mu_excess_ann=np.zeros(3),
+        cov_ann=cov_ann,
+        w_prev=previous,
+        w_max=0.80,
+    )
+    frontier_zero_mu = optimizers.max_sharpe_frontier_grid(
+        mu_excess_ann=np.zeros(3),
+        cov_ann=cov_ann,
+        w_prev=previous,
+        w_max=0.80,
+        solver_order=solver_order,
+    )
+
+    for weights in (minvar, mv_slow_turnover, mv_loose_turnover, sharpe_zero_mu, frontier_zero_mu):
+        assert weights is not None
+        _assert_feasible_weights(weights, upper=0.80)
+    assert np.abs(mv_slow_turnover - previous).sum() <= np.abs(mv_loose_turnover - previous).sum() + 1e-8
 
 
 def test_max_sharpe_falls_back_to_min_variance_for_zero_mu() -> None:

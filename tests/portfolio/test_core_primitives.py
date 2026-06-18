@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from quantfinlab.common.errors import InputError
 from quantfinlab.portfolio import attribution, constraints, costs, covariance
 from tests.synthetic.generators import return_panel
 
@@ -23,6 +24,20 @@ def test_constraints_normalize_and_validate_box_weights() -> None:
     bounds = constraints.long_only_box_constraints(3, w_max=0.50)
     assert bounds == [(0.0, 0.5)] * 3
     assert np.allclose(constraints.coerce_prev_weights(None, 3), np.ones(3) / 3.0)
+
+
+def test_constraints_reject_infeasible_boxes_and_bad_previous_weights() -> None:
+    assert not constraints.constraints_feasible(0)
+    assert not constraints.constraints_feasible(3, w_max=0.20)
+    assert constraints.normalize_weights([0.25, np.nan, 0.75]) is None
+
+    with pytest.raises(InputError):
+        constraints.long_only_box_constraints(3, w_max=0.20)
+    with pytest.raises(InputError):
+        constraints.coerce_prev_weights([0.50, 0.50], 3)
+
+    fallback = constraints.coerce_prev_weights([np.nan, np.inf, -np.inf], 3)
+    np.testing.assert_allclose(fallback, np.ones(3) / 3.0)
 
 
 def test_turnover_costs_and_nav_adjustment() -> None:
@@ -60,6 +75,31 @@ def test_covariance_estimators_return_symmetric_psd_labeled_matrices() -> None:
     near_psd = covariance.make_psd(np.array([[1.0, 1.2], [1.2, 1.0]]))
     assert np.linalg.eigvalsh(near_psd).min() >= 0.0
     assert covariance.normalize_covariance_method("ledoit wolf") == "LedoitWolf"
+
+
+def test_covariance_handles_singular_missing_and_invalid_inputs() -> None:
+    dates = pd.bdate_range("2024-01-02", periods=5)
+    singular = pd.DataFrame(
+        {
+            "AAA": [0.01, 0.02, 0.03, 0.04, 0.05],
+            "BBB": [0.02, 0.04, 0.06, 0.08, 0.10],
+            "CCC": [-0.01, -0.02, -0.03, -0.04, -0.05],
+        },
+        index=dates,
+    )
+
+    cov_df = covariance.sample_covariance(singular, annualization=1.0, return_df=True)
+
+    assert list(cov_df.index) == ["AAA", "BBB", "CCC"]
+    assert np.linalg.eigvalsh(cov_df.to_numpy()).min() >= 0.0
+    with pytest.raises(InputError):
+        covariance.make_psd(np.ones((2, 3)))
+    with pytest.raises(InputError):
+        covariance.sample_covariance(
+            pd.DataFrame({"AAA": [0.01, np.nan, 0.03], "BBB": [0.02, 0.01, np.nan]})
+        )
+    with pytest.raises(InputError):
+        covariance.ewma_covariance(np.ones((1, 2)))
 
 
 def test_attribution_effective_n_concentration_and_risk_contribution() -> None:

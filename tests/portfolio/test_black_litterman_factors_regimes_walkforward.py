@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from quantfinlab.common.contracts import BacktestResult
+from quantfinlab.common.errors import InputError
 from quantfinlab.portfolio import black_litterman, factors, regimes, walkforward
 from tests.synthetic.generators import price_panel, return_panel
 
@@ -85,6 +86,53 @@ def test_black_litterman_diagnostics_tables_from_synthetic_results() -> None:
     assert active.index[0] == "Learned-Confidence BL"
     assert "kept" in selection_summary.index
     assert set(stress["strategy"]) == {"Strategy", "Benchmark"}
+
+
+def test_black_litterman_missing_data_tables_market_state_and_solver_fallback(monkeypatch) -> None:
+    prices = price_panel(n=45, assets=("AAA", "SPY"))
+    prices.loc[prices.index[5:10], "AAA"] = np.nan
+    coverage = black_litterman.data_coverage_table(
+        prices,
+        tradable_assets=["AAA", "MISSING"],
+        signal_assets=["SPY", "MISSING_SIGNAL"],
+    ).set_index("ticker")
+    returns = prices.pct_change(fill_method=None).dropna(how="all")
+    early_state = black_litterman.market_state(
+        returns=returns[["AAA"]],
+        signal_returns=returns[["SPY"]],
+        date=prices.index[0] - pd.Timedelta(days=5),
+        roles={"assets": ["AAA"], "risky": ["AAA"]},
+    )
+
+    assets = pd.Index(["AAA", "BBB", "CCC"])
+    mu = pd.Series([0.08, 0.05, 0.03], index=assets)
+    cov_ann = pd.DataFrame(
+        [[0.05, 0.01, 0.00], [0.01, 0.04, 0.005], [0.00, 0.005, 0.03]],
+        index=assets,
+        columns=assets,
+    )
+    benchmark = pd.Series([0.40, 0.35, 0.25], index=assets)
+    previous = pd.Series([0.60, 0.30, 0.10], index=assets)
+    monkeypatch.setattr(black_litterman, "cp", None)
+
+    weights, fallback, info = black_litterman.posterior_weights(
+        mu,
+        cov_ann,
+        benchmark,
+        previous_weights=previous,
+        settings=black_litterman.BLSettings(max_weight=0.80),
+    )
+
+    assert not bool(coverage.loc["MISSING", "included"])
+    assert coverage.loc["MISSING", "observations"] == 0
+    assert coverage.loc["MISSING_SIGNAL", "role"] == "signal"
+    assert coverage.loc["AAA", "missing_pct_after_first_valid"] > 0.0
+    assert early_state.signal_table.empty
+    assert early_state.returns.empty
+    assert fallback
+    assert weights.sum() == pytest.approx(1.0)
+    pd.testing.assert_series_equal(weights, previous.astype(float), check_names=False)
+    assert np.isnan(info["te_gamma"])
 
 
 def test_factor_pipeline_scores_validation_tables_and_exposures() -> None:
@@ -177,3 +225,50 @@ def test_walkforward_result_contract_and_rebalance_frequency() -> None:
     assert result.as_dict()["metadata"] == {"sample": True}
     with pytest.raises(KeyError):
         _ = result["missing"]
+
+
+def test_walkforward_rejects_empty_state_and_invalid_strategy_specs() -> None:
+    returns = return_panel(n=70, assets=("AAA", "BBB", "CCC"))
+    dt = returns.index[40]
+    cache = {
+        dt: {
+            "tickers": ["AAA", "BBB"],
+            "cov_ann_map": {"Sample": np.eye(2)},
+            "mu_ann_map": {"Sample": {"Momentum": pd.Series([0.08, 0.04], index=["AAA", "BBB"])}},
+        }
+    }
+
+    with pytest.raises(InputError):
+        walkforward.build_rebalance_state_cache(returns=pd.DataFrame(), rebalance_dates=[])
+    with pytest.raises(InputError):
+        walkforward.build_rebalance_state_cache(returns=returns, rebalance_dates=[dt])
+    with pytest.raises(InputError):
+        walkforward.run_walkforward_grid(
+            returns=returns,
+            rebalance_dates=[dt],
+            universe_by_date={},
+        )
+    with pytest.raises(InputError):
+        walkforward.run_walkforward_grid(
+            returns=returns[["AAA", "BBB"]],
+            rebalance_dates=[dt],
+            cache=cache,
+            strategy_specs=[{"name": "bad", "optimizer": "unknown"}],
+        )
+    with pytest.raises(InputError):
+        walkforward.run_walkforward_grid(
+            returns=returns[["AAA", "BBB"]],
+            rebalance_dates=[dt],
+            cache=cache,
+            strategy_specs=[{"name": "bad-mv", "optimizer": "MV", "cov_model": "Sample"}],
+        )
+    with pytest.raises(InputError):
+        walkforward.run_walkforward_grid(
+            returns=returns[["AAA", "BBB"]],
+            rebalance_dates=[dt],
+            cache=cache,
+            strategy_specs=[
+                {"name": "duplicate", "optimizer": "EW"},
+                {"name": "duplicate", "optimizer": "EW"},
+            ],
+        )

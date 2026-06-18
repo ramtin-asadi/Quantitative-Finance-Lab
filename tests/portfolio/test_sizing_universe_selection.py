@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from quantfinlab.common.contracts import BacktestResult
+from quantfinlab.common.errors import InputError
 from quantfinlab.portfolio import selection, sizing, universe
 from tests.synthetic.generators import price_panel, return_panel, volume_panel
 
@@ -61,6 +62,69 @@ def test_universe_cleaning_rebalances_and_liquidity_selection() -> None:
     assert by_date
 
 
+def test_universe_handles_duplicate_tickers_empty_history_and_missing_blocks() -> None:
+    dates = pd.bdate_range("2024-01-02", periods=35)
+    close = pd.DataFrame(
+        np.column_stack(
+            [
+                np.linspace(100.0, 110.0, len(dates)),
+                np.linspace(200.0, 220.0, len(dates)),
+                np.linspace(50.0, 55.0, len(dates)),
+            ]
+        ),
+        index=dates,
+        columns=["AAA", "AAA", "BBB"],
+    )
+    volume = pd.DataFrame(
+        np.column_stack(
+            [
+                np.full(len(dates), 1_000.0),
+                np.full(len(dates), 2_000.0),
+                np.full(len(dates), 3_000.0),
+            ]
+        ),
+        index=dates,
+        columns=["AAA", "AAA", "BBB"],
+    )
+
+    clean_close, clean_volume = universe.clean_close_volume_panels(close, volume, start=dates[0])
+    early_tickers, early_adv = universe.select_liquid_universe(
+        dates[5],
+        close=clean_close,
+        volume=clean_volume,
+        top_n=2,
+        liquidity_lookback=10,
+        min_listing_days=10,
+        min_obs=8,
+    )
+    zero_liquidity_tickers, zero_liquidity_adv = universe.select_liquid_universe(
+        dates[-1],
+        close=clean_close,
+        volume=clean_volume * 0.0,
+        top_n=2,
+        liquidity_lookback=10,
+        min_listing_days=10,
+        min_obs=8,
+    )
+
+    assert list(clean_close.columns) == ["AAA", "BBB"]
+    assert clean_close["AAA"].iloc[0] == pytest.approx(200.0)
+    assert early_tickers == []
+    assert early_adv.empty
+    assert zero_liquidity_tickers == []
+    assert zero_liquidity_adv.empty
+    with pytest.raises(InputError):
+        universe.select_liquid_universe(dates[-1], close=clean_close, volume=clean_volume, top_n=0)
+    with pytest.raises(InputError):
+        universe.select_liquid_universe(dates[-1], close=clean_close, volume=None)
+    with pytest.raises(InputError):
+        universe.clean_close_volume_panels(
+            clean_close.assign(BBB=np.nan),
+            clean_volume.assign(BBB=np.nan),
+            start=dates[0],
+        )
+
+
 def test_sizing_caps_smoothing_forecast_and_rank_weights() -> None:
     returns = return_panel(n=95, assets=("AAA", "BBB", "CCC", "CASH"))
     dates = returns.index[-3:]
@@ -108,6 +172,72 @@ def test_sizing_caps_smoothing_forecast_and_rank_weights() -> None:
     assert np.allclose(ranked.sum(axis=1), 1.0)
     assert not kelly_frame.empty
     assert np.allclose(kelly_frame.sum(axis=1), 1.0)
+
+
+def test_sizing_handles_empty_weights_missing_forecasts_cash_and_singular_covariance() -> None:
+    dates = pd.bdate_range("2024-01-02", periods=3)
+    aligned_empty = sizing.align_weight_frame(
+        pd.DataFrame(),
+        target_dates=dates,
+        assets=["AAA", "BBB"],
+        cash_asset="CASH",
+        max_weight=0.70,
+    )
+    aligned_zero = sizing.align_weight_frame(
+        pd.DataFrame([[0.0, 0.0]], index=[dates[0]], columns=["AAA", "BBB"]),
+        target_dates=dates[:1],
+        assets=["AAA", "BBB"],
+    )
+    missing_score = sizing.rank_signal_weight_frame(
+        pd.DataFrame({"date": [dates[-1]], "asset": ["AAA"], "vol_63": [0.20]}),
+        score_col="score",
+        rebalance_dates=dates,
+        assets=["AAA", "BBB"],
+        cash_asset="CASH",
+    )
+    singular_kelly = sizing.kelly_weight_vector(
+        pd.Series([0.08, 0.08, -0.02], index=["AAA", "BBB", "CCC"]),
+        pd.DataFrame(
+            [[0.04, 0.04, 0.01], [0.04, 0.04, 0.01], [0.01, 0.01, 0.03]],
+            index=["AAA", "BBB", "CCC"],
+            columns=["AAA", "BBB", "CCC"],
+        ),
+        max_weight=0.60,
+    )
+    negative_kelly = sizing.kelly_weight_vector(
+        pd.Series([-0.01, -0.02], index=["AAA", "BBB"]),
+        np.eye(2),
+    )
+
+    returns = return_panel(n=90, assets=("AAA", "BBB", "CASH"))
+    rebalance = returns.index[-1]
+    negative_forecast = pd.DataFrame(
+        {
+            "date": [rebalance, rebalance],
+            "asset": ["AAA", "BBB"],
+            "mu": [-0.01, -0.02],
+        }
+    )
+    cash_weights = sizing.weights_from_forecasts(
+        negative_forecast,
+        date_col="date",
+        asset_col="asset",
+        mu_col="mu",
+        returns=returns,
+        rebalance_dates=[rebalance],
+        cash_asset="CASH",
+    )
+    capped = sizing.cap_weights(pd.Series({"AAA": 0.90, "BBB": 0.10}), max_weight={"AAA": 0.10, "BBB": 0.10})
+
+    assert np.allclose(aligned_empty[["AAA", "BBB"]], 0.50)
+    assert (aligned_empty["CASH"] == 0.0).all()
+    assert aligned_zero.iloc[0].to_numpy() == pytest.approx([0.50, 0.50])
+    assert missing_score.empty
+    assert singular_kelly.sum() <= 1.0 + 1e-12
+    assert singular_kelly.max() <= 0.60 + 1e-12
+    assert np.allclose(negative_kelly, 0.0)
+    assert cash_weights.loc[rebalance, "CASH"] == pytest.approx(1.0)
+    assert capped.sum() == pytest.approx(1.0)
 
 
 def test_align_and_gated_blend_weight_frames() -> None:
