@@ -51,7 +51,7 @@ The rendered website is the best way to read the work. code, output, and plots a
 
 **10. Tail Risk, Risk Parity & Robust Portfolios.** Builds CVaR-aware and robust (box/ellipsoid/Wasserstein) portfolio optimizers that explicitly account for estimation error and tail risk, compared against risk-parity, HRP and classical mean-variance baselines.
 
-**11 — Stochastic Volatility & Model-Risk Relative Value.** Calibrates Heston, SABR, SVI/SSVI, Merton and Bates models to the option surface and uses the spread between model families as a model-risk-aware relative-value signal for option trading.
+**11. Stochastic Volatility & Model-Risk Relative Value.** Calibrates Heston, SABR, SVI/SSVI, Merton and Bates models to the option surface and uses the spread between model families as a model-risk-aware relative-value signal for option trading.
 
 **12. Macro Financial Conditions Index.** Builds a financial-conditions index from macro and market variables using transformations, standardization, dimensionality reduction or supervised components, compares to the Chicago Fed NFCI, and uses it for stress classification and allocation rules.
 
@@ -67,7 +67,7 @@ The rendered website is the best way to read the work. code, output, and plots a
 
 **18. Rough Volatility.** Implements rough Bergomi and rough Heston-style models, estimates the Hurst roughness parameter from realized variance, and compares rough-volatility dynamics against classical (Markovian) stochastic-volatility models.
 
-**19 — ML Forecasting & Kelly Allocation.** Builds return-forecasting models (gradient-boosted trees, sequence models, probabilistic models, Neural Networks) with proper evaluation (rank metrics, pinball loss, coverage), and converts forecasts into position sizes through a fractional-Kelly allocation and a Forecast-Gated Max-Sharpe model.
+**19. ML Forecasting & Kelly Allocation.** Builds return-forecasting models (gradient-boosted trees, sequence models, probabilistic models, Neural Networks) with proper evaluation (rank metrics, pinball loss, coverage), and converts forecasts into position sizes through a fractional-Kelly allocation and a Forecast-Gated Max-Sharpe model.
 
 **20. RL Portfolio Allocation.** builds reinforcement-learning environment,trains PPO, recurrent PPO, and SAC policies to allocate across the asset set directly, using a differential Sharpe ratio reward, and evaluates the learned policies against the rule-based strategies from earlier projects.
 
