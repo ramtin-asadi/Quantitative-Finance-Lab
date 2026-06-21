@@ -1,24 +1,23 @@
 ---
 title: "Overview"
-description: "How Quantitative Finance Lab is organized: project structure, notebook-to-library workflow, reproducibility standards, and interpretation conventions."
+description: "Quantitative Finance Lab project structure, the notebook-to-library workflow, data reproducibility, and interpretation conventions."
 toc: true
 ---
 
 ## Purpose
 
-**Quantitative Finance Lab** is a project-based research and engineering portfolio in quantitative finance.
+**Quantitative Finance Lab** is a project-based research and engineering program in quantitative finance, organized as end-to-end projects backed by a reusable Python library, `quantfinlab`.
 
 Each project is designed to show more than a final result. The goal is to demonstrate the full workflow behind a quantitative finance problem:
 
-- understanding the financial question;
-- developing the mathematical model;
-- implementing the method in Python;
-- working with real market data;
-- evaluating assumptions, diagnostics, and limitations;
-- interpreting results clearly;
-- extracting reusable code into a python package named `quantfinlab`.
+- understand the financial question and why it matters in practice.
+- develop the mathematical model from first principles.
+- implement the method in Python against real market data.
+- evaluate assumptions and diagnostics.
+- interpret the results.
+- extract the reusable parts into the `quantfinlab` package and prove they generalize by re-running the workflow on an independent second market/ data.
 
-The repository is therefore both a research notebook collection and a software-engineering exercise.
+The repository is therefore a research notebook collection, a software-engineering exercise, and a reproducibility exercise, all at once.
 
 ---
 
@@ -26,124 +25,125 @@ The repository is therefore both a research notebook collection and a software-e
 
 The central design principle is:
 
-> **The notebooks explain and implement the research; the library turns that implementation into reusable code.**
+> **The notebooks explain and implement the research, the library turns that implementation into reusable, tested code, and the secondary-market repeat proves the library actually generalizes and can re-implemment the whole project.**
 
-A notebook is used when the goal is exploration, explanation, diagnostics, or interpretation. Library code is used when the logic becomes reusable enough to support another dataset, another market, or a later project.
+A notebook is used when the goal is exploration, derivation, diagnostics, or interpretation. Library code is used once the logic is stable enough to support another dataset, another market, or a later project. The secondary-market step at the end of most notebooks exists specifically to falsify the claim of reusability.
 
-This keeps the project honest: the library is not presented as a general-purpose finance library. It is a focused companion package for the workflows developed in the notebooks.
+`quantfinlab` is not presented as a general-purpose finance library that does everything, it's a focused package for exactly the workflows developed in these projects, and every claim of reuse in this repository is backed by a second run on different data.
 
 ---
 
 ## How each project is structured
 
-A complete project usually contains the following parts.
+A complete project contains the following parts, in order.
 
 ### 1. Motivation
-
-The notebook starts with the financial problem and explains why the topic matters in practice.
+The notebook opens with the financial problem and why it matters in practice.
 
 ### 2. Mathematical setup
-
-The relevant equations, assumptions, and model logic are introduced before the implementation.
+The relevant equations, assumptions, and derivations are introduced and worked through before any code is written. Formulas are derived.
 
 ### 3. Data and implementation
-
-The notebook explains the dataset, cleaning steps, modeling choices, and implementation details.
+The notebook documents the dataset, cleaning steps, modeling choices, and implementation details needed to go from raw data to a working model.
 
 ### 4. Experiments and diagnostics
-
-The project compares methods, checks assumptions, and studies model behavior using tables, plots, and diagnostic summaries.
+The project compares methods, checks assumptions, and studies model behavior using tables, plots, and diagnostic summaries including where the model breaks or behaves unexpectedly.
 
 ### 5. Interpretation
-
-Results are interpreted rather than only displayed.
+Results are interpreted, not only displayed. See [Interpretation standard](#interpretation-standard) below.
 
 ### 6. Library implementation
-
-The final section of each notebook applies reusable `quantfinlab` components to a secondary dataset, market, or workflow. This section is meant to show that the project logic can be refactored and reused, not only executed once inside a notebook.
+The closing section of all notebooks applies the reusable `quantfinlab` components extracted from the project to a second, independent dataset or market, using library code only. No notebook-side logic that wasn't already promoted to the library. This section is the actual evidence that the project's logic generalizes beyond the one dataset it was built on.
 
 ---
 
 ## Current project areas
 
-The implemented projects currently cover four areas.
+The implemented projects currently span eight areas.
 
 ### Fixed income
-
-Yield curve construction, discount factors, forward rates, bond pricing, duration, convexity, PV01, key-rate duration, and duration-targeted laddering.
+Yield curve construction, discount factors, forward rates, bond pricing, duration, convexity, PV01, key-rate duration, short-rate/term-structure models, and duration-targeted laddering. *(Projects 01, 09)*
 
 ### Portfolio construction
-
-Walk-forward allocation, liquidity-based universe selection, expected-return estimation, covariance estimation, mean-variance optimization, regularization, transaction costs, turnover control, and performance comparison.
+Walk-forward allocation, liquidity-based universe selection, expected-return and covariance estimation, mean-variance and frontier optimization, Black–Litterman, risk parity, CVaR and robust optimization, factor investing, regime-aware allocation, network-based portfolio construction, and kelly sizing allocation. *(Projects 02, 06, 10, 12, 15, 16, 17, 19, 20)*
 
 ### Risk analysis
+Drawdowns, volatility, VaR, expected shortfall, VaR backtesting, stress testing, CAPM beta, rolling risk behavior, and risk contribution/attribution. *(Project 03, used in all portfolio projects)*
 
-Drawdowns, volatility, VaR, expected shortfall, VaR backtesting, stress testing, CAPM beta analysis, rolling risk behavior, and risk contribution.
+### Options, volatility, and hedging
+Black–Scholes pricing, put-call parity, quote filtering, implied-volatility solving, analytic and autodiff Greeks, GARCH and realized-volatility forecasting, volatility-surface and local-volatility modeling, stochastic-volatility (Heston/SABR/SVI) and rough-volatility (rBergomi) calibration, dynamic hedge ratios, and hedging P&L analysis. *(Projects 04, 05, 07, 08, 11, 13, 14 18)*
 
-### Options and hedging
+### Numerical and Fourier methods
+American option pricing via binomial trees, PSOR finite-difference PDE solvers, and Longstaff–Schwartz Monte Carlo; Fourier/COS-method pricing under affine and jump-diffusion models with the performance-critical kernels written in C++ and bound to Python via pybind11. *(Projects 13, 14)*
 
-Black–Scholes pricing, put-call parity, quote filtering, implied-volatility solving, analytic Greeks, autodiff Greeks, Greek uncertainty, and hedging P&L analysis.
+### Macro and financial conditions
+Financial-conditions index construction from macro and market variables via PCA/factor methods, and macro-aware regime detection. *(Projects 12, 16)*
+
+### Networks
+Dependence-network construction (MST, PMFG) over equity data, and network-structure-derived portfolio signals like centrality measures. *(Project 17)*
+
+### Machine learning and reinforcement learning
+Return-forecasting with gradient-boosted trees and sequence models, proper out-of-sample evaluation (rank metrics, pinball loss, coverage), fractional-Kelly position sizing, and policy-gradient/actor-critic reinforcement learning (PPO, recurrent PPO, SAC) for direct portfolio allocation. *(Projects 19, 20)*
 
 ---
 
 ## What belongs in `quantfinlab`
 
-Code is moved into **`quantfinlab`** when it is useful beyond one notebook cell.
+Code moves into **`quantfinlab`** when it is useful beyond the one notebook cell that produced it.
 
 Examples include:
 
-- curve construction and bond-pricing utilities;
-- portfolio selection, estimation, and optimization helpers;
-- risk metrics and reporting functions;
-- options-pricing, implied-volatility, and Greeks routines;
-- plotting and diagnostics used across project sections;
-- shared validation, data-cleaning, and result-formatting utilities.
+- curve construction, bond-pricing, and term-structure utilities
+- portfolio selection, estimation, optimization, and risk-parity/robust-allocation routines
+- options pricing, implied-volatility, Greeks, and surface/calibration routines, including the C++-backed numerical kernels;
+- risk metrics and reporting functions (VaR/ES, drawdown, CAPM, attribution)
+- volatility forecasting and hedging utilities
+- dependence-network construction and network-based portfolio signals
+- ML/RL components — features, evaluation metrics, sequence models, RL environments and policies
+- a data-loading layer (`quantfinlab.dataio`) that normalizes every external data source into a consistent schema
+- plotting and diagnostics used across project sections
+- shared validation, data-cleaning, and result-formatting utilities (`quantfinlab.common`).
 
-Exploratory code can remain in notebooks. Stable logic should move into the library when it improves clarity, reuse, or secondary-market implementation.
+Exploratory code stays in notebooks. Stable logic moves into the library when it improves clarity, reuse, or makes the secondary-market repeat possible. See [`quantfinlab/README.md`](https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md) for the full module map and usage examples.
+
+> NOTE: a method is implemented manually the first time it's used in this series. From the second time onward, the library implementation is used instead of re-deriving the same long-form code.
 
 ---
 
 ## Data and reproducibility
 
-Many financial datasets are large, licensed, or not suitable for direct redistribution. For that reason, raw data are generally not committed to the repository.
+Financial data is, almost without exception, large, licensed, or both — so raw or processed market data is not committed to this repository. **This means the notebooks cannot be re-run directly on a fresh clone, data has to be prepared first**, using the `data/` reproducibility layer that ships with the repository.
 
-In future, the process of data will be made clearer:
+The layer works like this:
 
-1. The notebook will specify the required data, including source, format, and expected location.
-2. A data-processing script will be provided to transform raw data into the required format.
+1. Each data source has its own folder under `data/` with a `README.md` and either a `download.py` (fully automatic sources: FRED, NY Fed ACM term premia, Japan MOF JGB yields, yfinance, Kenneth French factor library) or a `build.py` that processes manually-obtained raw files (OptionsDX option chains, Stooq bulk equity archives) into a clean, notebook-ready panel.
+2. Manual sources require placing the licensed raw files into the matching `data/<source>/raw/` folder yourself — the top-level `data/README.md` lists exactly what file pattern goes where and links to the source.
+3. Running the scripts listed in `data/README.md` (in the order given there) reproduces every dataset used anywhere in the repository, from primary-market data through every secondary-market repeat.
 
 ---
 
 ## Evaluation conventions
 
-Projects use consistent evaluation ideas where possible.
+Projects use consistent evaluation language where possible, by domain.
 
-For portfolio and strategy work, important metrics include return, volatility, Sharpe ratio, drawdown, turnover, transaction costs, and benchmark comparison.
+**Portfolio and strategy work**: return, volatility, Sharpe ratio, maximum drawdown, turnover, transaction costs, and benchmark comparison.
 
-For risk work, important diagnostics include VaR, expected shortfall, exception counts, backtesting tests, stress windows, contribution analysis, and regime behavior.
+**Risk work**: VaR, expected shortfall, exception counts, VaR-backtesting tests (Kupiec/Christoffersen-style), stress windows, risk contribution/attribution, and regime behavior.
 
-For options work, important diagnostics include quote filters, parity checks, solver success rates, pricing residuals, Greek consistency, uncertainty bands, and hedging P&L attribution.
+**Options work**: quote filters, parity checks, solver success rates, pricing residuals, Greek consistency, calibration error, uncertainty bands, and hedging P&L attribution.
 
-> NOTE: We implement everything maunually if it's the first time implementing it, from the second time to more, we use library to don't repeat long codes that have been shown in the first time.
-
----
-
-## Interpretation standard
-
-The notebooks are intended to be readable research artifacts. A result table or plot is not complete until it is interpreted.
-
-A strong result discussion should explain:
-
-1. the main pattern in the output;
-2. whether the result is expected or surprising;
-3. what assumption may be driving it;
-4. how it changes the financial interpretation;
-5. what limitation should be kept in mind.
-
-This is especially important in the final library implementation sections, where the same workflow is applied to a secondary market or dataset. Those sections should not only show that the code runs; they should explain whether the transferred workflow behaves similarly, where it differs, and what that says about the model.
+**ML/RL work**: out-of-sample rank correlation, pinball loss, prediction-interval coverage, and policy evaluation against rule-based baselines rather than against the training objective alone.
 
 ---
 
-## Disclaimer
+## Interpretation standard {#interpretation-standard}
 
-This project is for research, education, and portfolio demonstration only. Nothing here is investment advice. Results depend on data quality, assumptions, market conditions, transaction costs, constraints, and implementation choices.
+The notebooks are intended to be readable research artifacts. A result table or plot is not complete until it is interpreted. A strong result discussion explains:
+
+1. the main pattern in the output
+2. whether the result is expected or surprising
+3. what assumption is likely driving it
+4. how it changes the financial interpretation
+5. what limitation should be kept in mind when using it.
+
+This matters most in the closing library-implementation sections, where the same workflow is applied to a secondary market or dataset. Those sections should not just show that the code runs. they say whether the transferred workflow behaves similarly to the primary market, where it diverges, and what that divergence implies about the model's assumptions.

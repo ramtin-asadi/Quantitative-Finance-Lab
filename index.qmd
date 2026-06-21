@@ -1,7 +1,7 @@
 ---
 title: "Home"
-subtitle: "Project-based research + a reusable Python library for quantitative finance"
-description: "A living lab of reproducible quant-finance projects (notes, math, experiments) backed by a growing Python package: quantfinlab."
+subtitle: "Project-based research & a reusable Python library for quantitative finance"
+description: "A research lab of reproducible quant-finance projects (notes, math, experiments) backed by a growing Python package: quantfinlab."
 toc: false
 page-layout: full
 ---
@@ -11,23 +11,22 @@ This site is the published companion to the GitHub repository:
 `https://github.com/ramtin-asadi/Quantitative-Finance-Lab`
 :::
 
-## What this is
+**Quantitative-Finance-Lab** is a sequence of research projects in quantitative finance, each built end-to-end: financial motivation, mathematical derivation, real-data implementation, diagnostics, and honest interpretation. It is meant to be used as three things: A self-study curriculum that forces every model to be implemented and tested rather than just read about, a research notebook series, and a real software library (`quantfinlab`) that can be reusable for parts of the notebook that created it.
 
-**Quantitative-Finance-Lab** is a project series where each topic is developed end-to-end:
-
-- **Clear narrative**: intuition → math → implementation
+- **Clear narrative**: intuition to math to implementation
 - **Reproducible experiments**: consistent metrics, plots, and comparisons
 - **Library-first engineering**: reusable components are extracted into **`quantfinlab`**
 
-The goal is to build a portfolio that is both **research-grade** (well explained) and **engineering-grade** (reusable, testable, maintainable).
+The goal is to build a series that is both **research-grade** (well explained) and **engineering-grade** (reusable, testable, maintainable).
 
 ---
 
 ## Start here
 
-- Read the **Overview** for conventions, reproducibility notes, and how projects are structured.
-- Then open a project notebook and follow it top-to-bottom.
-
+- Read the **[Overview](overview.qmd)** for how projects are structured, what the notebook-to-library workflow means, and the evaluation conventions used throughout.
+- Read **[Data](#data)** below before trying to run anything locally — the notebooks are not directly re-runnable on a fresh clone without first preparing data.
+- Then open a project notebook and read it top to bottom; the final section of most notebooks re-runs the same workflow on a second market using only `quantfinlab`.
+- The library itself is documented in [`quantfinlab/README.md`](https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md) on GitHub, with the full module map and code examples.
 ---
 
 ## Projects
@@ -200,29 +199,71 @@ The goal is to build a portfolio that is both **research-grade** (well explained
 
 ::::
 
+:::: {.columns}
+::: {.column width="50%"}
+### 15 — Factor Investing
+uses Fama-French factors, industry portfolios, factor proxies and validation-weighted scoring for evaluating portfolio construction choices and factor-timing.
+
+[Open Project 15](notebooks/15_factor_investing.html)
+:::
+::: {.column width="50%"}
+### 16 — Regime-Switching Portfolio Allocation
+Detects macro and market regimes with different Econometrics and Machine learning models (Markov-switching, clustering, or classification) and adapts portfolio allocation rules conditional on the detected regime.
+
+[Open Project 16](notebooks/16_regime_switching_portfolio.html)
+:::
+::::
+
+:::: {.columns}
+::: {.column width="50%"}
+### 17 — Network Portfolio Construction
+Builds dependence networks (Dense, MST and PMFG) from the equity panel correlation and Copula tail dependence, and uses network structure for portfolio construction using centrality measures.
+
+[Open Project 17](notebooks/17_network_portfolio.html)
+:::
+::: {.column width="50%"}
+### 18 — Rough Volatility
+Implements rough Bergomi and rough Heston-style models, estimates the Hurst roughness parameter from realized variance, and compares rough-volatility dynamics against classical (Markovian) stochastic-volatility models.
+
+[Open Project 18](notebooks/18_rough_volatility.html)
+:::
+::::
+
+:::: {.columns}
+::: {.column width="50%"}
+### 19 — ML Forecasting & Kelly Allocation
+ Builds return-forecasting models (gradient-boosted trees, sequence models, probabilistic models, Neural Networks) with proper evaluation (rank metrics, pinball loss, coverage), and converts forecasts into position sizes through a fractional-Kelly allocation and a Forecast-Gated Max-Sharpe model.
+
+
+[Open Project 19](notebooks/19_forecasting_kelly_allocation.html)
+:::
+::: {.column width="50%"}
+### 20 — RL Portfolio Allocation
+builds reinforcement-learning environment,trains PPO, recurrent PPO, and SAC policies to allocate across the asset set directly, using a differential Sharpe ratio reward, and evaluates the learned policies against the rule-based strategies from earlier projects.
+
+[Open Project 20](notebooks/20_rl_portfolio_allocation.html)
+:::
+::::
+
 ---
 
-## The `quantfinlab` library
+## Data {#data}
 
-As the series grows, reusable code is consolidated into **`quantfinlab`**:
+**The notebooks cannot be re-run directly on a fresh clone. Data has to be prepared first.** No large or licensed market data is committed to the repository. Instead, the repository ships a `data/` reproducibility layer: one small, readable script per data source, plus a `README.md` documenting exactly what each one does and where its data comes from.
 
-- shared fixed-income helpers
-- portfolio utilities
-- plotting/diagnostic helpers
-- common conventions (metrics, configs, I/O)
+Two kinds of sources are handled differently:
 
-The intent is simple: **notebooks explain and experiment**; **the library implements**.
+- **Scripted/automatic sources**: FRED (US Treasury yields, NFCI), the NY Fed (ACM term premia), Japan's Ministry of Finance (JGB yields), yfinance (equities, ETFs, BTC), the Kenneth French data library (factor returns) download themselves when you run the corresponding script, for example `python data/us_treasury_yields/download.py`.
+- **Manual/licensed sources**: OptionsDX option chains (SPX, SPY, QQQ, BTC/Deribit) and Stooq's bulk equity archives require you to obtain the files yourself from the linked source (free registration in OptionsDX's case) and place them in the matching `data/<source>/raw/` folder; a `build.py` script then turns them into the clean file each notebook expects.
 
----
+The complete list of sources, what to put where, and citation requirements per source live in `data/README.md` in the repository. Every number in every notebook has a scripted path back to where it came from.
 
-## Reproducibility
+## The library
 
-- This repo follows a reproducibility-first workflow (formatting/linting/testing/CI).
-- Large datasets are typically **not committed**. If a notebook expects data files, place them under a local `data/` directory (gitignored) and follow any project-specific notes.
+Reusable logic from every project lives in **`quantfinlab`**, a typed, tested Python package covering fixed income, options pricing (with a compiled C++ pricing core for the numerically heavy methods), portfolio construction, risk reporting, volatility modeling, hedging, macro indicators, and ML/RL Applications for finance. It ships with 171 tests covering everything from optimizer invariants to the C++ kernels, all passing in CI. Full documentation, the module map, and worked code examples are in [`quantfinlab/README.md`](https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md) on GitHub.
 
 ---
 
 ## Disclaimer
 
 This repository is for **research and educational purposes**. Nothing here is investment advice, and results may vary by dataset, assumptions, costs, constraints, and implementation details.
-
