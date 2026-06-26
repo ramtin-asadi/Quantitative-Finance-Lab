@@ -5,7 +5,7 @@ from collections.abc import Mapping, Sequence
 import numpy as np
 import pandas as pd
 
-from quantfinlab.plotting.curves import choose_heatmap_cmap, set_plot_style
+from quantfinlab.plotting.curves import set_plot_style
 from quantfinlab.risk import drawdown_series
 
 HEDGE_COLORS = [
