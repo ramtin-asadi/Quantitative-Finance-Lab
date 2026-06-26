@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -11,9 +11,6 @@
 
 <title>Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -38,14 +35,15 @@ ul.task-list li input[type="checkbox"] {
 <link href="./overview.html" rel="next">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-2641b481724464e61c86985d8c912b6f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -297,22 +295,24 @@ Note
 <h2 class="anchored" data-anchor-id="projects">Projects</h2>
 <div class="columns">
 <div class="column" style="width:50%;">
-<section id="yield-curve-bond-pricing-risk" class="level3">
-<h3 class="anchored" data-anchor-id="yield-curve-bond-pricing-risk">01 — Yield Curve, Bond Pricing &amp; Risk</h3>
+<section id="fixed-income-and-yield-curve-construction" class="level3">
+<h3 class="anchored" data-anchor-id="fixed-income-and-yield-curve-construction">1. Fixed Income and Yield Curve Construction</h3>
 <ul>
-<li>Yield curve construction from par yields using discount, zero-rate, and forward-rate methods</li>
-<li>Bond pricing, duration, convexity, PV01, and key-rate duration analysis</li>
-<li>Duration-targeted fixed-income portfolio design with reusable fixed-income utilities</li>
+<li>Bootstrap US and Japan Treasury curves from par yields into discount, zero-rate, and forward-rate curves</li>
+<li>Price fixed-coupon bonds and rolling synthetic bond issuance from curve inputs</li>
+<li>Measure duration, convexity, PV01, and key-rate duration exposures</li>
+<li>Build duration-targeted bond portfolios with reusable fixed-income utilities</li>
 </ul>
 <p><a href="notebooks/01_yield_curve_bond_pricing_and_risk.html">Open Project 01</a></p>
 </section>
 </div><div class="column" style="width:50%;">
-<section id="portfolio-optimization-meanvariance" class="level3">
-<h3 class="anchored" data-anchor-id="portfolio-optimization-meanvariance">02 — Portfolio Optimization (Mean–Variance)</h3>
+<section id="portfolio-optimization-with-mean-variance-models" class="level3">
+<h3 class="anchored" data-anchor-id="portfolio-optimization-with-mean-variance-models">2. Portfolio Optimization with Mean-Variance Models</h3>
 <ul>
-<li>Mean–variance portfolio construction with practical universe filtering</li>
-<li>Expected-return models, covariance estimators, shrinkage methods, and frontier diagnostics</li>
-<li>Backtest-style evaluation using performance, drawdown, turnover, and risk metrics</li>
+<li>Select a liquid Nasdaq stock universe with realistic history and liquidity filters</li>
+<li>Estimate expected returns with momentum, Bayes-Stein shrinkage, and Bayes-Stein momentum</li>
+<li>Compare sample, Ledoit-Wolf, OAS, and EWMA covariance estimators inside constrained optimizers</li>
+<li>Backtest min-variance, mean-variance, and max-Sharpe portfolios with turnover, drawdown, and risk diagnostics</li>
 </ul>
 <p><a href="notebooks/02_portfolio_optimization_MV_models.html">Open Project 02</a></p>
 </section>
@@ -320,22 +320,24 @@ Note
 </div>
 <div class="columns">
 <div class="column" style="width:50%;">
-<section id="risk-report-engine-capm" class="level3">
-<h3 class="anchored" data-anchor-id="risk-report-engine-capm">03 — Risk Report Engine &amp; CAPM</h3>
+<section id="risk-analysis-and-capm" class="level3">
+<h3 class="anchored" data-anchor-id="risk-analysis-and-capm">3. Risk Analysis and CAPM</h3>
 <ul>
-<li>Reusable portfolio risk-reporting framework for volatility, drawdowns, VaR, and expected shortfall</li>
-<li>CAPM beta, alpha, rolling exposure, benchmark comparison, and stress-period analysis</li>
-<li>Risk contribution, diversification diagnostics, and reporting tools used across later projects</li>
+<li>Build a reusable risk report for assets, strategies, and portfolios</li>
+<li>Compute performance, distribution shape, drawdowns, VaR, expected shortfall, and stress windows</li>
+<li>Estimate CAPM alpha, beta, rolling exposure, and benchmark-relative behavior</li>
+<li>Add risk contribution and diversification diagnostics reused across later projects</li>
 </ul>
 <p><a href="notebooks/03_risk_report_engine_and_CAPM.html">Open Project 03</a></p>
 </section>
 </div><div class="column" style="width:50%;">
-<section id="blackscholes-implied-volatility-greeks-hedging" class="level3">
-<h3 class="anchored" data-anchor-id="blackscholes-implied-volatility-greeks-hedging">04 — Black–Scholes, Implied Volatility, Greeks &amp; Hedging</h3>
+<section id="black-scholes-implied-volatility-greeks-and-hedging" class="level3">
+<h3 class="anchored" data-anchor-id="black-scholes-implied-volatility-greeks-and-hedging">4. Black-Scholes, Implied Volatility, Greeks and Hedging</h3>
 <ul>
-<li>Black–Scholes pricing, implied-volatility inversion, option-chain cleaning, and solver benchmarking</li>
-<li>Greek calculation, finite-difference validation, put-call parity checks, and IV diagnostics</li>
-<li>Delta and delta-vega hedging with P&amp;L attribution, transaction costs, and a BTC options repeat</li>
+<li>Build option payoffs, risk-neutral pricing intuition, and the Black-Scholes-Merton model</li>
+<li>Clean SPX option chains and invert implied volatility with robust solver diagnostics</li>
+<li>Compute Greeks with analytic, autodiff, and finite-difference validation</li>
+<li>Test delta and delta-vega hedging with P&amp;L attribution, transaction costs, and a BTC options repeat</li>
 </ul>
 <p><a href="notebooks/04_BSM_IV_greeks_hedging.html">Open Project 04</a></p>
 </section>
@@ -343,22 +345,24 @@ Note
 </div>
 <div class="columns">
 <div class="column" style="width:50%;">
-<section id="volatility-forecasting-garch-variance-risk-premium" class="level3">
-<h3 class="anchored" data-anchor-id="volatility-forecasting-garch-variance-risk-premium">05 — Volatility Forecasting, GARCH &amp; Variance Risk Premium</h3>
+<section id="volatility-forecasting-with-garch-and-variance-risk-premium" class="level3">
+<h3 class="anchored" data-anchor-id="volatility-forecasting-with-garch-and-variance-risk-premium">5. Volatility Forecasting with GARCH and Variance Risk Premium</h3>
 <ul>
-<li>Realized-volatility forecasting with GARCH, GJR-GARCH, EGARCH, and HAR-RV models</li>
-<li>Construction of a clean 30-day ATM implied-volatility panel from SPX option chains</li>
-<li>Variance-risk-premium signals translated into straddle overlays and strategy diagnostics</li>
+<li>Forecast realized volatility with GARCH, GJR-GARCH, EGARCH, and HAR-RV models</li>
+<li>Build a clean 30-day ATM implied-volatility panel from SPX option chains</li>
+<li>Estimate the variance risk premium as an implied-versus-realized variance spread</li>
+<li>Translate VRP signals into straddle overlays with performance, risk, and diagnostic checks</li>
 </ul>
 <p><a href="notebooks/05_GARCH_forecasting_VRP.html">Open Project 05</a></p>
 </section>
 </div><div class="column" style="width:50%;">
-<section id="blacklitterman-with-learned-confidence" class="level3">
-<h3 class="anchored" data-anchor-id="blacklitterman-with-learned-confidence">06 — Black–Litterman with Learned Confidence</h3>
+<section id="black-litterman-with-learned-confidence" class="level3">
+<h3 class="anchored" data-anchor-id="black-litterman-with-learned-confidence">6. Black-Litterman with Learned Confidence</h3>
 <ul>
-<li>ETF portfolio construction with strategic benchmarks, market-implied priors, and active views</li>
-<li>Black–Litterman posterior-return modeling with learned confidence and reliability diagnostics</li>
-<li>Active portfolio evaluation using tracking error, information ratio, redundancy gates, and library replication</li>
+<li>Build ETF strategic benchmarks, covariance estimates, and market-implied priors</li>
+<li>Encode active views and learn confidence from realized historical view payoff reliability</li>
+<li>Convert Black-Litterman posterior returns into active weights with tracking-error controls</li>
+<li>Evaluate active portfolios against benchmarks and repeat the workflow on sector ETFs through the library</li>
 </ul>
 <p><a href="notebooks/06_portfolio_black_littreman.html">Open Project 06</a></p>
 </section>
@@ -366,22 +370,24 @@ Note
 </div>
 <div class="columns">
 <div class="column" style="width:50%;">
-<section id="dynamic-hedge-ratios-residual-trading" class="level3">
-<h3 class="anchored" data-anchor-id="dynamic-hedge-ratios-residual-trading">07 — Dynamic Hedge Ratios &amp; Residual Trading</h3>
+<section id="dynamic-hedge-ratios-and-residual-trading" class="level3">
+<h3 class="anchored" data-anchor-id="dynamic-hedge-ratios-and-residual-trading">7. Dynamic Hedge Ratios and Residual Trading</h3>
 <ul>
-<li>Hedge-ratio estimation using static OLS, rolling OLS, ridge regression, and Kalman/state-space methods</li>
-<li>Pair-level hedgeability analysis across equity, commodity, currency, and ETF relationships</li>
-<li>Residual trading tests with no-trade bands, transaction costs, model comparison, and robustness repeats</li>
+<li>Estimate static, rolling, ridge, and Kalman/state-space hedge ratios</li>
+<li>Diagnose hedgeability across equity, commodity, currency, and ETF relationships</li>
+<li>Measure hedged books with volatility, expected shortfall, drawdown, beta, turnover, and cost drag</li>
+<li>Test residual spreads with ADF, Engle-Granger, half-life, z-score rules, no-trade bands, and robustness repeats</li>
 </ul>
 <p><a href="notebooks/07_dynamic_hedge_ratios.html">Open Project 07</a></p>
 </section>
 </div><div class="column" style="width:50%;">
-<section id="volatility-surface-local-volatility" class="level3">
-<h3 class="anchored" data-anchor-id="volatility-surface-local-volatility">08 — Volatility Surface &amp; Local Volatility</h3>
+<section id="volatility-surface-and-local-volatility" class="level3">
+<h3 class="anchored" data-anchor-id="volatility-surface-and-local-volatility">8. Volatility Surface and Local Volatility</h3>
 <ul>
-<li>SPX option-surface construction from cleaned market quotes across moneyness and maturity</li>
-<li>Surface diagnostics, smile/skew behavior, PCA-style surface dynamics, and Greek-risk scoring</li>
-<li>Dupire-style local-volatility analysis with a secondary BTC options implementation using the library</li>
+<li>Construct a clean SPX option surface from forwards, rates, paired quotes, and bid-ask-aware IV</li>
+<li>Fit raw PCHIP and smoother log-total-variance B-spline volatility surfaces</li>
+<li>Derive Dupire local volatility with no-arbitrage, stress, and surface-quality diagnostics</li>
+<li>Build historical surface features, PCA surface dynamics, surface-aware Greeks, and a BTC options repeat</li>
 </ul>
 <p><a href="notebooks/08_vol_surface_local_vol.html">Open Project 08</a></p>
 </section>
@@ -389,22 +395,24 @@ Note
 </div>
 <div class="columns">
 <div class="column" style="width:50%;">
-<section id="short-rate-term-structure-models" class="level3">
-<h3 class="anchored" data-anchor-id="short-rate-term-structure-models">09 — Short-Rate &amp; Term-Structure Models</h3>
+<section id="term-structure-models-curve-factors-and-swap-based-duration-overlays" class="level3">
+<h3 class="anchored" data-anchor-id="term-structure-models-curve-factors-and-swap-based-duration-overlays">9. Term Structure Models, Curve Factors, and Swap-Based Duration Overlays</h3>
 <ul>
-<li>Treasury curve modeling with zero curves, slopes, term-premium data, SOFR returns, and monthly panels</li>
-<li>Vasicek, CIR, and multi-factor term-structure experiments with calibration and diagnostic checks</li>
-<li>Duration-ladder backtesting, curve overlays, fixed-income risk reporting, and reusable library implementation</li>
+<li>Reuse Treasury curve data to build monthly zero-rate panels, SOFR returns, and curve factors</li>
+<li>Calibrate Vasicek, CIR, HW1F, and G2-style term-structure models with diagnostic checks</li>
+<li>Decompose curve moves with PCA level, slope, and curvature factors plus term-premium proxies</li>
+<li>Convert curve views into duration-ladder and fixed-for-floating swap overlay backtests</li>
 </ul>
 <p><a href="notebooks/09_term_structure_models.html">Open Project 09</a></p>
 </section>
 </div><div class="column" style="width:50%;">
-<section id="tail-risk-risk-parity-robust-portfolio-models" class="level3">
-<h3 class="anchored" data-anchor-id="tail-risk-risk-parity-robust-portfolio-models">10 — Tail Risk, Risk Parity &amp; Robust Portfolio Models</h3>
+<section id="portfolio-optimization-tail-risk-risk-parity-and-robust-models" class="level3">
+<h3 class="anchored" data-anchor-id="portfolio-optimization-tail-risk-risk-parity-and-robust-models">10. Portfolio Optimization: Tail Risk, Risk Parity and Robust Models</h3>
 <ul>
-<li>Portfolio optimization under tail-risk, CVaR, risk-parity, HRP, and robust-optimization objectives</li>
-<li>Comparison of mean-variance, Black–Litterman, CVaR, Wasserstein-DRO, and ellipsoid-robust models</li>
-<li>Strategy evaluation with drawdowns, turnover, transaction costs, risk contributions, and secondary replication</li>
+<li>Compare tail-risk, CVaR, risk-parity, HRP, robust, and Wasserstein-DRO portfolio objectives</li>
+<li>Stress optimizer sensitivity to expected-return, covariance, and scenario assumptions</li>
+<li>Study mean-variance, Black-Litterman, CVaR, ellipsoid-robust, and distributionally robust allocations</li>
+<li>Evaluate drawdowns, costs, turnover, risk contributions, and secondary library replication</li>
 </ul>
 <p><a href="notebooks/10_portfolio_tail_parity_robust.html">Open Project 10</a></p>
 </section>
@@ -412,22 +420,24 @@ Note
 </div>
 <div class="columns">
 <div class="column" style="width:50%;">
-<section id="stochastic-volatility-model-risk-aware-option-relative-value" class="level3">
-<h3 class="anchored" data-anchor-id="stochastic-volatility-model-risk-aware-option-relative-value">11 — Stochastic Volatility &amp; Model-Risk-Aware Option Relative Value</h3>
+<section id="stochastic-volatility-models-and-model-risk-aware-option-relative-value" class="level3">
+<h3 class="anchored" data-anchor-id="stochastic-volatility-models-and-model-risk-aware-option-relative-value">11. Stochastic Volatility Models and Model-Risk-Aware Option Relative Value</h3>
 <ul>
-<li>Smile and stochastic-volatility model comparison using SVI, SSVI, SABR, Merton, Heston, and Bates-style models</li>
-<li>Calibration diagnostics, residual analysis, weighted IV errors, runtime checks, and model-stability comparison</li>
-<li>Option relative-value signal testing with hedging attribution, model-risk controls, and secondary market repeats</li>
+<li>Build a clean SPX option modeling panel from the earlier option-chain and IV stack</li>
+<li>Fit SVI, SSVI, SABR, Merton, Heston, and Bates-style smile and stochastic-volatility models</li>
+<li>Compare fit quality, residuals, weighted IV errors, runtime, parameter warnings, and model stability</li>
+<li>Trade model-risk-aware option relative value with hedging attribution, controls, and secondary market repeats</li>
 </ul>
 <p><a href="notebooks/11_stochastic_volatility.html">Open Project 11</a></p>
 </section>
 </div><div class="column" style="width:50%;">
-<section id="macro-financial-conditions-index" class="level3">
-<h3 class="anchored" data-anchor-id="macro-financial-conditions-index">12 — Macro Financial Conditions Index</h3>
+<section id="macro-financial-conditions-index-and-macro-regime-allocation" class="level3">
+<h3 class="anchored" data-anchor-id="macro-financial-conditions-index-and-macro-regime-allocation">12. Macro Financial Conditions Index and Macro-Regime Allocation</h3>
 <ul>
-<li>Macro dataset construction from inflation, policy, growth, labor, housing, external, and breadth indicators</li>
-<li>Expanding PCA and supervised/embargoed alternatives for building financial-conditions signals</li>
-<li>Sector-rotation and risk-scaling experiments with performance comparison, drawdown analysis, and library replication</li>
+<li>Transform macro series into stress-oriented monthly features across inflation, policy, growth, labor, housing, trade, and breadth</li>
+<li>Build economic-weighted, PCA, PLS, stress-probability, and blended financial-conditions indexes</li>
+<li>Validate FCI signals against future equity stress, volatility, and drawdowns</li>
+<li>Apply macro-regime signals to sector rotation and risk scaling with performance, drawdown, and library replication</li>
 </ul>
 <p><a href="notebooks/12_financial_conditions_index.html">Open Project 12</a></p>
 </section>
@@ -435,22 +445,24 @@ Note
 </div>
 <div class="columns">
 <div class="column" style="width:50%;">
-<section id="american-options-numerical-pricing-methods" class="level3">
-<h3 class="anchored" data-anchor-id="american-options-numerical-pricing-methods">13 — American Options &amp; Numerical Pricing Methods</h3>
+<section id="american-options-and-numerical-pricing-methods" class="level3">
+<h3 class="anchored" data-anchor-id="american-options-and-numerical-pricing-methods">13. American Options and Numerical Pricing Methods</h3>
 <ul>
-<li>American option pricing with binomial trees, finite-difference/PDE validation, and Longstaff–Schwartz Monte Carlo</li>
-<li>Large-scale SPY option-chain cleaning with dividends, rates, early-exercise logic, and production-style pricing tests</li>
-<li>C++ and Numba engine comparison, convergence diagnostics, assignment analysis, and secondary library repeat</li>
+<li>Price American options with Cox-Ross-Rubinstein trees, finite differences, PDE logic, and Longstaff-Schwartz Monte Carlo</li>
+<li>Build a SPY American-option panel with dividends, rates, spreads, and early-exercise inputs</li>
+<li>Study convergence, PSOR, exercise boundaries, assignment risk, and model disagreement</li>
+<li>Compare Python, Numba, and C++ engines and repeat the workflow through reusable library tools</li>
 </ul>
 <p><a href="notebooks/13_american_option_numerics.html">Open Project 13</a></p>
 </section>
 </div><div class="column" style="width:50%;">
-<section id="fourier-based-option-pricing" class="level3">
-<h3 class="anchored" data-anchor-id="fourier-based-option-pricing">14 — Fourier-Based Option Pricing</h3>
+<section id="fourier-based-methods-for-option-pricing" class="level3">
+<h3 class="anchored" data-anchor-id="fourier-based-methods-for-option-pricing">14. Fourier-Based Methods for Option Pricing</h3>
 <ul>
-<li>Characteristic-function pricing with COS and Fourier-style methods for BSM, Merton, VG, Heston, and Bates models</li>
-<li>Large-scale SPX option calibration, pricing-error comparison, convergence checks, and runtime diagnostics</li>
-<li>Jump-risk and stochastic-volatility model evaluation with BTC options extension and reusable library implementation</li>
+<li>Price options from characteristic functions instead of closed-form formulas, trees, or simulated paths</li>
+<li>Implement direct Fourier integration, Carr-Madan FFT, and COS pricing methods</li>
+<li>Compare BSM, Merton, Variance Gamma, Heston, and Bates pricing and calibration behavior</li>
+<li>Diagnose SPX and BTC fit, convergence, runtime, jump risk, stochastic volatility, and reusable library implementation</li>
 </ul>
 <p><a href="notebooks/14_fourier_option_pricing.html">Open Project 14</a></p>
 </section>
@@ -458,45 +470,75 @@ Note
 </div>
 <div class="columns">
 <div class="column" style="width:50%;">
-<section id="factor-investing" class="level3">
-<h3 class="anchored" data-anchor-id="factor-investing">15 — Factor Investing</h3>
-<p>uses Fama-French factors, industry portfolios, factor proxies and validation-weighted scoring for evaluating portfolio construction choices and factor-timing.</p>
+<section id="factor-investing-and-fama-french-allocation" class="level3">
+<h3 class="anchored" data-anchor-id="factor-investing-and-fama-french-allocation">15. Factor Investing and Fama-French Allocation</h3>
+<ul>
+<li>Build Fama-French factor, sector ETF, industry portfolio, and broad ETF return panels</li>
+<li>Estimate full-sample and rolling factor exposures for sectors and tradable ETFs</li>
+<li>Convert factor states, residual alpha, and validation-weighted scores into allocation signals</li>
+<li>Test factor-timing and sector-rotation portfolios with risk, turnover, drawdown, and library diagnostics</li>
+</ul>
 <p><a href="notebooks/15_factor_investing.html">Open Project 15</a></p>
 </section>
 </div><div class="column" style="width:50%;">
-<section id="regime-switching-portfolio-allocation" class="level3">
-<h3 class="anchored" data-anchor-id="regime-switching-portfolio-allocation">16 — Regime-Switching Portfolio Allocation</h3>
-<p>Detects macro and market regimes with different Econometrics and Machine learning models (Markov-switching, clustering, or classification) and adapts portfolio allocation rules conditional on the detected regime.</p>
+<section id="regime-switching-portfolio-selection" class="level3">
+<h3 class="anchored" data-anchor-id="regime-switching-portfolio-selection">16. Regime Switching Portfolio Selection</h3>
+<ul>
+<li>Build cross-asset, macro, FCI, breadth, volatility, drawdown, and correlation features</li>
+<li>Define realized future regimes from forward risk-versus-defensive outcomes</li>
+<li>Compare clustering, Markov-switching, hidden Markov, and supervised classification models</li>
+<li>Convert regime probabilities into state-conditioned sleeves and repeat the workflow on sector ETFs</li>
+</ul>
 <p><a href="notebooks/16_regime_switching_portfolio.html">Open Project 16</a></p>
 </section>
 </div>
 </div>
 <div class="columns">
 <div class="column" style="width:50%;">
-<section id="network-portfolio-construction" class="level3">
-<h3 class="anchored" data-anchor-id="network-portfolio-construction">17 — Network Portfolio Construction</h3>
-<p>Builds dependence networks (Dense, MST and PMFG) from the equity panel correlation and Copula tail dependence, and uses network structure for portfolio construction using centrality measures.</p>
+<section id="network-aware-portfolio-construction" class="level3">
+<h3 class="anchored" data-anchor-id="network-aware-portfolio-construction">17. Network-Aware Portfolio Construction</h3>
+<ul>
+<li>Turn a rolling NASDAQ stock universe into correlation and tail-dependence networks</li>
+<li>Compare dense graphs with filtered MST and PMFG market structures</li>
+<li>Measure centrality, clustering, graph roles, and dependence concentration</li>
+<li>Use network scores as portfolio signals with diversification, turnover, and stress diagnostics</li>
+</ul>
 <p><a href="notebooks/17_network_portfolio.html">Open Project 17</a></p>
 </section>
 </div><div class="column" style="width:50%;">
-<section id="rough-volatility" class="level3">
-<h3 class="anchored" data-anchor-id="rough-volatility">18 — Rough Volatility</h3>
-<p>Implements rough Bergomi and rough Heston-style models, estimates the Hurst roughness parameter from realized variance, and compares rough-volatility dynamics against classical (Markovian) stochastic-volatility models.</p>
+<section id="rough-volatility-for-option-pricing" class="level3">
+<h3 class="anchored" data-anchor-id="rough-volatility-for-option-pricing">18. Rough Volatility for Option Pricing</h3>
+<ul>
+<li>Estimate physical roughness from log realized variance and moment-scaling diagnostics</li>
+<li>Compare rough-kernel variance forecasts with HAR and GARCH-style benchmarks</li>
+<li>Study option-implied roughness through short-maturity skew power laws</li>
+<li>Simulate and calibrate rBergomi and rough-Heston-style models for pricing, calibration, and hedge sensitivity</li>
+</ul>
 <p><a href="notebooks/18_rough_volatility.html">Open Project 18</a></p>
 </section>
 </div>
 </div>
 <div class="columns">
 <div class="column" style="width:50%;">
-<section id="ml-forecasting-kelly-allocation" class="level3">
-<h3 class="anchored" data-anchor-id="ml-forecasting-kelly-allocation">19 — ML Forecasting &amp; Kelly Allocation</h3>
-<p>Builds return-forecasting models (gradient-boosted trees, sequence models, probabilistic models, Neural Networks) with proper evaluation (rank metrics, pinball loss, coverage), and converts forecasts into position sizes through a fractional-Kelly allocation and a Forecast-Gated Max-Sharpe model.</p>
+<section id="machine-learning-and-neural-forecasting-for-uncertainty-aware-kelly-allocation" class="level3">
+<h3 class="anchored" data-anchor-id="machine-learning-and-neural-forecasting-for-uncertainty-aware-kelly-allocation">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</h3>
+<ul>
+<li>Build 21-day cross-asset forward alpha targets and date-asset feature panels</li>
+<li>Train tabular, neural sequence, and probabilistic forecasting models</li>
+<li>Evaluate rank IC, bucket spreads, pinball loss, coverage, calibration, and uncertainty diagnostics</li>
+<li>Convert forecasts into fractional Kelly and forecast-gated MaxSharpe allocations with sector ETF transfer</li>
+</ul>
 <p><a href="notebooks/19_forecasting_kelly_allocation.html">Open Project 19</a></p>
 </section>
 </div><div class="column" style="width:50%;">
-<section id="rl-portfolio-allocation" class="level3">
-<h3 class="anchored" data-anchor-id="rl-portfolio-allocation">20 — RL Portfolio Allocation</h3>
-<p>builds reinforcement-learning environment,trains PPO, recurrent PPO, and SAC policies to allocate across the asset set directly, using a differential Sharpe ratio reward, and evaluates the learned policies against the rule-based strategies from earlier projects.</p>
+<section id="reinforcement-learning-for-portfolio-allocation" class="level3">
+<h3 class="anchored" data-anchor-id="reinforcement-learning-for-portfolio-allocation">20. Reinforcement Learning for Portfolio Allocation</h3>
+<ul>
+<li>Build a weekly RL portfolio environment with costs, drawdown, volatility, prior weights, and market-state features</li>
+<li>Define a continuous action-to-weight map that always produces valid long-only portfolio allocations</li>
+<li>Train PPO, recurrent PPO, and SAC policies with a differential-Sharpe reward and risk penalties</li>
+<li>Compare RL policies against forecast-gated, Kelly, and regime-aware baselines plus a sector ETF library transfer</li>
+</ul>
 <p><a href="notebooks/20_rl_portfolio_allocation.html">Open Project 20</a></p>
 </section>
 </div>
