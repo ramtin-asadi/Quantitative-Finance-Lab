@@ -8,7 +8,7 @@ import pandas as pd
 
 from quantfinlab.common.errors import InputError
 from quantfinlab.hedging.relations import hedge_proxy_ret, rel
-from quantfinlab.risk import capm_ols, drawdown_series, historical_es, rolling_beta
+from quantfinlab.risk import capm_ols, historical_es, max_drawdown, rolling_beta, total_return
 
 
 def _frame(df: pd.DataFrame) -> pd.DataFrame:
@@ -32,18 +32,19 @@ def _ann_vol(x: pd.Series, ann: float) -> float:
     return float(s.std(ddof=1) * math.sqrt(float(ann))) if len(s) > 1 else float("nan")
 
 
-def _maxdd(ret: pd.Series) -> float:
-    s = pd.to_numeric(pd.Series(ret), errors="coerce").replace([np.inf, -np.inf], np.nan).dropna()
-    if len(s) == 0:
-        return float("nan")
-    return float(drawdown_series(s, input_kind="returns").min())
-
-
-def _total_return(values: pd.Series) -> float:
-    s = pd.to_numeric(pd.Series(values), errors="coerce").replace([np.inf, -np.inf], np.nan).dropna()
-    if len(s) < 2 or abs(float(s.iloc[0])) <= 1e-12:
-        return float("nan")
-    return float(s.iloc[-1] / s.iloc[0] - 1.0)
+def _average_holding_days(signal: pd.Series) -> float:
+    active = pd.Series(signal).fillna(0.0).ne(0.0)
+    runs = []
+    n = 0
+    for on in active:
+        if on:
+            n += 1
+        elif n:
+            runs.append(n)
+            n = 0
+    if n:
+        runs.append(n)
+    return float(np.mean(runs)) if runs else 0.0
 
 
 def coverage_table(frame: pd.DataFrame, rels: Sequence[rel]) -> pd.DataFrame:
@@ -62,7 +63,6 @@ def coverage_table(frame: pd.DataFrame, rels: Sequence[rel]) -> pd.DataFrame:
                 "relationship": r.name,
                 "target": r.target,
                 "hedges": ", ".join(r.hedges),
-                "description": r.desc,
                 "start": valid.index.min() if len(valid) else pd.NaT,
                 "end": valid.index.max() if len(valid) else pd.NaT,
                 "obs": obs,
@@ -156,8 +156,8 @@ def model_table(
             vol_model = float(z["model"].std(ddof=1) * math.sqrt(float(ann)))
             es_base = historical_es(z["base"], alpha=alpha)
             es_model = historical_es(z["model"], alpha=alpha)
-            dd_base = _maxdd(z["base"])
-            dd_model = _maxdd(z["model"])
+            dd_base = max_drawdown(z["base"], input_kind="returns")
+            dd_model = max_drawdown(z["model"], input_kind="returns")
             zbeta = _align(mret, proxy)
             _, beta_model, _ = capm_ols(zbeta["x"], zbeta["y"]) if len(zbeta) >= 3 else (np.nan, np.nan, np.nan)
             weights = getattr(res, "beta", None)
@@ -185,7 +185,7 @@ def model_table(
                     "beta_red": 1.0 - abs(beta_model) / abs(beta_base) if abs(beta_base) > 1e-12 else np.nan,
                     "turnover": float(turnover_s.mean()) if len(turnover_s) else 0.0,
                     "turnover_ann": float(turnover_s.mean() * float(ann)) if len(turnover_s) else 0.0,
-                    "cost_drag": max(_total_return(res.gross_values) - _total_return(res.net_values), 0.0),
+                    "cost_drag": max(total_return(res.gross_values) - total_return(res.net_values), 0.0),
                     "cost_drag_ann": float(cost_s.mean() * float(ann)) if len(cost_s) else 0.0,
                     "hedge_err_vol": vol_model,
                     "beta_iqr": beta_iqr,
@@ -318,12 +318,38 @@ def robust_table(tab: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows).sort_values(["median_score", "win_count"], ascending=False).reset_index(drop=True)
 
 
+def residual_trade_table(
+    backtests: Mapping[str, object],
+    signals: Mapping[str, pd.DataFrame],
+    metadata: Mapping[str, Mapping[str, object]],
+    *,
+    ann: float = 252.0,
+) -> pd.DataFrame:
+    """Performance table for residual spread trades."""
+    rows = []
+    for key, res in backtests.items():
+        ret = pd.Series(getattr(res, "net_returns", pd.Series(dtype=float)), dtype=float).dropna()
+        sig = signals.get(key, pd.DataFrame()).get("signal", pd.Series(dtype=float))
+        meta = metadata.get(key, {})
+        vol = float(ret.std(ddof=1) * math.sqrt(float(ann))) if len(ret) > 1 else float("nan")
+        sharpe = float(ret.mean() / ret.std(ddof=1) * math.sqrt(float(ann))) if ret.std(ddof=1) > 1e-12 else float("nan")
+        rows.append({
+            "pair": meta.get("pair", ""), "beta_source": meta.get("beta_source", ""),
+            "trades": int((sig.ne(0) & sig.shift(1).fillna(0).eq(0)).sum()) if len(sig) else 0,
+            "avg_hold": _average_holding_days(sig), "net_return": total_return(res.net_values),
+            "ann_vol": vol, "sharpe": sharpe, "maxdd": max_drawdown(ret, input_kind="returns"),
+            "cost_drag": max(total_return(res.gross_values) - total_return(res.net_values), 0.0),
+            "cost_drag_ann": res.cost.mean() * float(ann) if len(res.cost) else 0.0, "key": key})
+    return pd.DataFrame(rows)
+
+
 __all__ = [
     "best_table",
     "coverage_table",
     "diag_table",
     "model_table",
     "quality_table",
+    "residual_trade_table",
     "robust_table",
     "score_table",
 ]

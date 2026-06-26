@@ -35,6 +35,7 @@ from .drawdown import (
     drawdown_episodes_table,
     drawdown_series,
     drawdown_summary_table,
+    max_drawdown,
     ulcer_index,
 )
 from .es import cornish_fisher_es, filtered_historical_es, historical_es
@@ -44,6 +45,7 @@ from .performance import (
     performance_table,
     rolling_volatility,
     sortino_ratio,
+    total_return,
 )
 from .stress import historical_stress_table, stress_table
 from .utils import DEFAULT_ANNUALIZATION, VAR_BACKTEST_METHODS
@@ -120,6 +122,7 @@ __all__ = [
     "kupiec_test",
     "longest_true_streak",
     "make_returns_panel",
+    "max_drawdown",
     "nav_series",
     "performance",
     "performance_table",
@@ -137,6 +140,7 @@ __all__ = [
     "stress_table",
     "tail_ratio",
     "tail_shape_table",
+    "total_return",
     "ulcer_index",
     "utils",
     "var",

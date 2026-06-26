@@ -25,6 +25,16 @@ def drawdown_series(
         raise InputError("input_kind must be either 'returns' or 'nav'.")
     return nav / nav.cummax() - 1.0
 
+
+def max_drawdown(
+    returns_or_nav: pd.Series | Sequence[float] | np.ndarray,
+    *,
+    input_kind: str = "returns",
+) -> float:
+    dd = drawdown_series(returns_or_nav, input_kind=input_kind)
+    return float(dd.min()) if len(dd) else float("nan")
+
+
 def ulcer_index(
     returns_or_nav: pd.Series | Sequence[float] | np.ndarray,
     *,
@@ -123,5 +133,6 @@ __all__ = [
     "drawdown_episodes_table",
     "drawdown_series",
     "drawdown_summary_table",
+    "max_drawdown",
     "ulcer_index",
 ]

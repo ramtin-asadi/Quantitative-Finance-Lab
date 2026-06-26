@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>18. Rough Volatility For Option Pricing – Quantitative Finance Lab</title>
+<title>18. Rough Volatility for Option Pricing – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/17_network_portfolio.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2641b481724464e61c86985d8c912b6f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -111,6 +109,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -123,7 +150,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../notebooks/18_rough_volatility.html"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../notebooks/18_rough_volatility.html"><span class="chapter-title">18. Rough Volatility for Option Pricing</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -190,32 +217,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/07_dynamic_hedge_ratios.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">7. Dynamic Hedge Ratio and Residual Trading</span></a>
+  <a href="../notebooks/07_dynamic_hedge_ratios.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">7. Dynamic Hedge Ratios and Residual Trading</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/08_vol_surface_local_vol.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">8. Volatility Surface and Local Volatility model</span></a>
+  <a href="../notebooks/08_vol_surface_local_vol.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">8. Volatility Surface and Local Volatility</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/09_term_structure_models.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">9. Short Rate and Term Structure Models</span></a>
+  <a href="../notebooks/09_term_structure_models.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">9. Term Structure Models, Curve Factors, and Swap-Based Duration Overlays</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/10_portfolio_tail_parity_robust.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">10. Portfolio Optimization: Tail risk, Risk Parity and Robust Models</span></a>
+  <a href="../notebooks/10_portfolio_tail_parity_robust.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">10. Portfolio Optimization: Tail Risk, Risk Parity and Robust Models</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/11_stochastic_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">11. Stochastic Volatility Models</span></a>
+  <a href="../notebooks/11_stochastic_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">11. Stochastic Volatility Models and Model-Risk-Aware Option Relative Value</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/12_financial_conditions_index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">12. Macro Fiancial Conditions Index</span></a>
+  <a href="../notebooks/12_financial_conditions_index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">12. Macro Financial Conditions Index and Macro-Regime Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -225,17 +252,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/14_fourier_option_pricing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">14. Fourier Based Methods for Option Pricing</span></a>
+  <a href="../notebooks/14_fourier_option_pricing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">14. Fourier-Based Methods for Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/15_factor_investing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">15. Factor Investing and Fama French Allocation</span></a>
+  <a href="../notebooks/15_factor_investing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">15. Factor Investing and Fama-French Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/16_regime_switching_portfolio.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">16. Regime Switching models for portfolio selection</span></a>
+  <a href="../notebooks/16_regime_switching_portfolio.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">16. Regime Switching Portfolio Selection</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -245,7 +272,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a>
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">18. Rough Volatility for Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -269,7 +296,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></h1>
+<h1 class="title"><span class="chapter-title">18. Rough Volatility for Option Pricing</span></h1>
 </div>
 
 
@@ -286,6 +313,115 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<p>In this project we move from stochastic volatility to <strong>rough volatility</strong>. The goal is to understand why the volatility process can look much more irregular than a Brownian path, how we can estimate that roughness from realized variance and option skew, and how rough models change pricing, calibration, and hedge sensitivities.</p>
+<p>We focus on five main layers:</p>
+<ul>
+<li><strong>roughness as a statistical property</strong> of log realized variance, measured with fractional Brownian motion and moment scaling,</li>
+<li><strong>rough-kernel forecasting</strong>, compared with HAR and GARCH-style variance forecasts,</li>
+<li><strong>short-maturity skew power laws</strong>, where options reveal roughness through the shape of the implied-volatility surface,</li>
+<li><strong>rough Bergomi and rough Heston</strong>, two different ways to put rough volatility into option pricing,</li>
+<li><strong>model comparison and secondary BTC implementation</strong>, where we test whether the same logic survives in a much noisier crypto option market.</li>
+</ul>
+<p>We won’t re-explain option payoffs, implied volatility, Greeks, local volatility, Heston, COS pricing, or American-option numerics from scratch. Those are already covered in <a href="https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/04_BSM_IV_greeks_hedging.html">Project 4</a>, <a href="https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/08_vol_surface_local_vol.html">Project 8</a>, <a href="https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/11_stochastic_volatility.html">Project 11</a>, <a href="https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/13_american_option_numerics.html">Project 13</a>, and <a href="https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/14_fourier_option_pricing.html">Project 14</a>. Here the new story is the <strong>regularity of volatility paths</strong> and what happens when pricing models respect that regularity.</p>
+<p>The main datasets are reused. To reproduce them, check the relevant folders in the data reproducibility layer:</p>
+<ul>
+<li><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/underlying_yfinance">underlying_yfinance</a> for SPX and other underlying price histories,</li>
+<li><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/spx_optionsdx">spx_optionsdx</a> for SPX option chains,</li>
+<li><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/us_treasury_yields">us_treasury_yields</a> for the risk-free curve,</li>
+<li><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/btc_yfinance">btc_yfinance</a> for BTC spot history,</li>
+<li><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/btc_optionsdx">btc_optionsdx</a> for BTC/Deribit option chains.</li>
+</ul>
+<p>The literature behind the project is also important. The rough-volatility idea became central after empirical work showing that log volatility behaves close to fractional Brownian motion with <span class="math inline">\(H &lt; 1/2\)</span>, often much lower than the Brownian value <span class="math inline">\(H = 1/2\)</span>. Option-price evidence then connected this to short-maturity implied-volatility skew. Rough Bergomi and rough Heston are two model families that translate this empirical fact into pricing engines.</p>
+<section id="setup-reused-data-and-the-new-object" class="level2">
+<h2 class="anchored" data-anchor-id="setup-reused-data-and-the-new-object">1) Setup, Reused Data, and the New Object</h2>
+<p>The first code cell imports the option, surface, Fourier, volatility-forecasting, and rough-volatility tools. Most of those objects have already appeared in earlier projects. The new modules are the ones around <strong>rough realized-variance diagnostics</strong>, <strong>rough-kernel forecasts</strong>, <strong>rBergomi simulation</strong>, <strong>rough-Heston calibration</strong>, and <strong>fractional Riccati stability</strong>.</p>
+<p>The SPX side uses three inputs:</p>
+<ul>
+<li>SPX spot history, used to build realized variance and log-variance proxies,</li>
+<li>SPX option chains, used to reconstruct implied-volatility surfaces and short-end skew,</li>
+<li>Treasury yields, used to attach discounting and forward/carry estimates to option prices.</li>
+</ul>
+<p>The important new object is not the price <span class="math inline">\(S_t\)</span> and not even implied volatility <span class="math inline">\(\sigma_{\text{imp}}(K,T)\)</span> by itself. The new object is the <strong>regularity of the volatility path</strong>. We want to understand how jagged the process is when we zoom into time.</p>
+<p>A useful way to phrase the problem is:</p>
+<p><span class="math display">\[
+\text{how fast do volatility increments shrink when the time step shrinks?}
+\]</span></p>
+<p>For a process <span class="math inline">\(X_t\)</span>, the size of a small increment over a time step <span class="math inline">\(\Delta\)</span> is roughly controlled by a power law:</p>
+<p><span class="math display">\[
+|X_{t+\Delta} - X_t| \sim C \Delta^H
+\]</span></p>
+<p>Here <span class="math inline">\(H\)</span> is the <strong>Hurst exponent</strong>. If <span class="math inline">\(H\)</span> is high, increments shrink quickly as <span class="math inline">\(\Delta\)</span> gets smaller, so paths look smoother. If <span class="math inline">\(H\)</span> is low, increments shrink slowly, so the path stays jagged even at small time scales.</p>
+<p>Brownian motion has <span class="math inline">\(H = 1/2\)</span>. Rough volatility means the volatility-related process has <span class="math inline">\(H &lt; 1/2\)</span>. A value like <span class="math inline">\(H = 0.1\)</span> means the path is much rougher than Brownian motion. This is already a strong shift from the classical stochastic-volatility models in Project 11, where variance is usually driven by Markovian Brownian shocks with much smoother short-time behavior.</p>
+<blockquote class="blockquote">
+<p>The key financial idea is simple: if volatility is rough, then very short-dated option smiles can move and steepen much faster than classical Markovian diffusion models naturally expect.</p>
+</blockquote>
+<section id="physical-roughness-and-risk-neutral-roughness" class="level3">
+<h3 class="anchored" data-anchor-id="physical-roughness-and-risk-neutral-roughness">1.1 Physical Roughness and Risk-Neutral Roughness</h3>
+<p>There are two roughness stories running in parallel.</p>
+<p>The first is <strong>physical roughness</strong>, estimated from realized returns. It uses the historical probability measure <span class="math inline">\(\mathbb{P}\)</span> because it is based on what actually happened:</p>
+<p><span class="math display">\[
+X_t^{\mathbb{P}} = \log RV_t
+\]</span></p>
+<p>When we estimate <span class="math inline">\(H\)</span> from this series, we are asking how the realized variance process behaves in historical data. This connects naturally to forecasting because a forecast is also a physical-measure object:</p>
+<p><span class="math display">\[
+\mathbb{E}^{\mathbb{P}}_t[RV_{t,t+h}]
+\]</span></p>
+<p>The second is <strong>risk-neutral roughness</strong>, estimated from option prices. It uses the pricing measure <span class="math inline">\(\mathbb{Q}\)</span> because option prices are expectations under risk-neutral pricing plus discounting:</p>
+<p><span class="math display">\[
+C_t(K,T) = D(t,T)\mathbb{E}^{\mathbb{Q}}_t[(S_T-K)^+]
+\]</span></p>
+<p>When we estimate <span class="math inline">\(H\)</span> from ATM skew, we are not estimating the same thing as historical log variance. We are estimating the roughness that the option market is pricing into short-maturity smiles:</p>
+<p><span class="math display">\[
+|\partial_k \sigma_{\text{imp}}(0,\tau)| \sim c\tau^{H-\frac{1}{2}}
+\]</span></p>
+<p>These two values of <span class="math inline">\(H\)</span> can differ. A historical <span class="math inline">\(H\)</span> comes from realized variance. An option-implied <span class="math inline">\(H\)</span> comes from option prices, risk premia, hedging flows, and market demand for convexity. In SPX, short-dated downside protection is a structural market object. In BTC, short-dated option skew can also reflect leverage and liquidation risk. So we don’t force the two <span class="math inline">\(H\)</span> estimates to be equal. We compare them and use each one where it belongs.</p>
+<p>This separation is important for the implementation:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Object</th>
+<th>Measure</th>
+<th>Used for</th>
+<th>Main diagnostic</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Log realized variance</td>
+<td><span class="math inline">\(\mathbb{P}\)</span></td>
+<td>roughness estimation and forecasting</td>
+<td>moment scaling</td>
+</tr>
+<tr class="even">
+<td>ATM implied skew</td>
+<td><span class="math inline">\(\mathbb{Q}\)</span></td>
+<td>option-implied roughness</td>
+<td>skew power law</td>
+</tr>
+<tr class="odd">
+<td>rBergomi</td>
+<td><span class="math inline">\(\mathbb{Q}\)</span></td>
+<td>Monte Carlo smile generation</td>
+<td>IV fit and path behavior</td>
+</tr>
+<tr class="even">
+<td>Rough Heston</td>
+<td><span class="math inline">\(\mathbb{Q}\)</span></td>
+<td>Fourier-style pricing and calibration</td>
+<td>price/IV residuals and Riccati convergence</td>
+</tr>
+</tbody>
+</table>
+<p>This project is strong because it doesn’t only fit one model. It tests roughness from both realized variance and option prices, then checks whether rough models actually improve pricing and Greeks.</p>
+</section>
+<section id="imports-and-plotting-settings" class="level3">
+<h3 class="anchored" data-anchor-id="imports-and-plotting-settings">Imports and plotting settings</h3>
 <div id="project18-00" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
@@ -372,6 +508,73 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"us_treasury"</span>,</span>
 <span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p>We start by loading the SPX spot series, the SPX option pairs, and the Treasury yield curve. This is a reused data layer, so the main thing to check is that the time coverage is sufficient for two different tasks: long realized-volatility roughness estimation and shorter option-surface calibration.</p>
+<p>The realized-variance side starts in 1990 and gives us thousands of observations. The option calibration side is shorter because it uses the SPX option-chain panel. This split matters. Historical roughness estimation benefits from a long time series, while option-implied roughness depends on surface quality across strikes and maturities.</p>
+</section>
+</section>
+<section id="realized-variance-and-log-variance-proxies" class="level2">
+<h2 class="anchored" data-anchor-id="realized-variance-and-log-variance-proxies">2) Realized Variance and Log-Variance Proxies</h2>
+<p>We now build realized-variance proxies from SPX log returns. We already used realized variance in <a href="https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/05_GARCH_forecasting_VRP.html">Project 5</a>, so the definition doesn’t need to be repeated too much. The new point is that realized variance becomes a <strong>path</strong> whose roughness we estimate.</p>
+<p>The daily log return is:</p>
+<p><span class="math display">\[
+r_t = \log S_t - \log S_{t-1}
+\]</span></p>
+<p>A one-day realized variance proxy is:</p>
+<p><span class="math display">\[
+RV_t^{1d} = r_t^2
+\]</span></p>
+<p>This is extremely noisy because one squared return is a very weak estimate of the latent variance on that day. So we also use short rolling sums and averages:</p>
+<p><span class="math display">\[
+RV_t^{(m)} = \frac{1}{m}\sum_{j=0}^{m-1} r_{t-j}^2
+\]</span></p>
+<p>where <span class="math inline">\(m\)</span> can be 5, 10, or 21 trading days. The code uses the 10-day proxy as the main realized-variance path:</p>
+<p><span class="math display">\[
+v_t = RV_t^{(10)}
+\]</span></p>
+<p>and then works with log variance:</p>
+<p><span class="math display">\[
+X_t = \log(v_t)
+\]</span></p>
+<p>The log transformation is useful because variance is positive and very skewed. Log variance compresses huge volatility spikes and makes changes closer to additive. When we later compute increments <span class="math inline">\(X_{t+\ell}-X_t\)</span>, we are asking how the <strong>log variance state</strong> moves across different lags.</p>
+<p>For example, a move from annualized volatility 10% to 20% is a much bigger variance move than it looks in volatility units:</p>
+<p><span class="math display">\[
+0.20^2 - 0.10^2 = 0.03
+\]</span></p>
+<p>but in log variance it becomes a more balanced relative movement:</p>
+<p><span class="math display">\[
+\log(0.20^2) - \log(0.10^2) = \log(4)
+\]</span></p>
+<p>That relative interpretation is closer to how volatility shocks behave: a volatility doubling is meaningful whether it happens from 8% to 16% or from 20% to 40%.</p>
+<section id="variance-proxy-design" class="level3">
+<h3 class="anchored" data-anchor-id="variance-proxy-design">2.1 Variance Proxy Design</h3>
+<p>The choice of variance proxy matters more in this project than in most earlier notebooks. In a GARCH or HAR forecast, a noisy realized variance proxy can still be useful if the model smooths it. For roughness estimation, the proxy directly changes the slope of the scaling regression.</p>
+<p>A one-day squared return is:</p>
+<p><span class="math display">\[
+RV_t^{1d} = r_t^2
+\]</span></p>
+<p>This is unbiased in a loose daily sense if the return has conditional variance <span class="math inline">\(v_t\)</span>, but it has huge noise:</p>
+<p><span class="math display">\[
+r_t^2 = v_t \varepsilon_t^2
+\]</span></p>
+<p>where <span class="math inline">\(\varepsilon_t^2\)</span> can be very small or very large even when <span class="math inline">\(v_t\)</span> is unchanged. Taking logs makes this worse when <span class="math inline">\(r_t^2\)</span> is near zero:</p>
+<p><span class="math display">\[
+\log(r_t^2)
+\]</span></p>
+<p>can jump to very negative values because the return happened to be tiny. This is why the raw daily squared-return proxy has weak scaling quality.</p>
+<p>A rolling <span class="math inline">\(m\)</span>-day proxy reduces noise:</p>
+<p><span class="math display">\[
+RV_t^{(m)} = \frac{1}{m}\sum_{j=0}^{m-1}r_{t-j}^2
+\]</span></p>
+<p>but introduces overlap. For example, <span class="math inline">\(RV_t^{(10)}\)</span> and <span class="math inline">\(RV_{t+1}^{(10)}\)</span> share 9 of 10 squared returns. This creates mechanical persistence. If we estimate roughness from a heavily overlapping proxy, we may estimate smoothness created by the estimator rather than the latent variance process.</p>
+<p>We handle this by showing multiple proxies and adding non-overlapping block checks. This is the right statistical attitude: roughness estimation is sensitive, so we don’t trust one proxy blindly.</p>
+<p>A compact way to think about the bias tradeoff is:</p>
+<p><span class="math display">\[
+\text{raw daily proxy} = \text{low smoothing} + \text{high noise}
+\]</span></p>
+<p><span class="math display">\[
+\text{rolling proxy} = \text{lower noise} + \text{overlap-induced persistence}
+\]</span></p>
+<p>The useful estimate is the one that remains plausible after comparing both sides.</p>
 <div id="project18-02" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>spx_ret <span class="op">=</span> log_returns(spx_spot[<span class="st">"close"</span>]).dropna()</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>spx_var_1d <span class="op">=</span> spx_ret.<span class="bu">pow</span>(<span class="dv">2</span>).rename(<span class="st">"rv_1d"</span>)</span>
@@ -453,6 +656,132 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>From the summary table we can see that the SPX return panel runs from 1990 to 2026 with about 9,100 observations. The median annualized 10-day volatility proxy is around <strong>12.6%</strong>, while the 95th percentile is around <strong>31.3%</strong>. This already tells us that volatility is highly state-dependent: the upper tail of volatility is more than twice the median level.</p>
+<p>The plot makes this clearer. The price series trends upward over decades, but realized volatility appears as a sequence of sharp bursts. The 10-day realized-variance proxy smooths the raw daily squared return series enough to be readable, but it still has clear volatility clustering around crisis periods. The log-variance panel keeps the same burst structure while reducing the extreme visual dominance of the largest spikes.</p>
+<p>This is exactly the kind of series where roughness becomes interesting. The volatility path is persistent enough to form regimes, but it is also jagged enough that a smooth mean-reverting diffusion can miss the short-time behavior.</p>
+</section>
+</section>
+<section id="fractional-brownian-motion-as-the-roughness-benchmark" class="level2">
+<h2 class="anchored" data-anchor-id="fractional-brownian-motion-as-the-roughness-benchmark">3) Fractional Brownian Motion as the Roughness Benchmark</h2>
+<p>To understand rough volatility, we first need a clean mathematical object that can represent different levels of path roughness. That object is <strong>fractional Brownian motion</strong>, written <span class="math inline">\(B_t^H\)</span>.</p>
+<p>A fractional Brownian motion is a centered Gaussian process with covariance:</p>
+<p><span class="math display">\[
+\mathbb{E}[B_t^H B_s^H] = \frac{1}{2}\left(t^{2H} + s^{2H} - |t-s|^{2H}\right)
+\]</span></p>
+<p>The parameter <span class="math inline">\(H \in (0,1)\)</span> controls the path regularity.</p>
+<p>The variance of an increment is:</p>
+<p><span class="math display">\[
+\operatorname{Var}(B_{t+\Delta}^H - B_t^H) = \Delta^{2H}
+\]</span></p>
+<p>So the typical size of the increment is:</p>
+<p><span class="math display">\[
+|B_{t+\Delta}^H - B_t^H| \sim \Delta^H
+\]</span></p>
+<p>This is the power-law scaling we care about. Brownian motion is the special case <span class="math inline">\(H = 1/2\)</span> because Brownian increments scale like <span class="math inline">\(\sqrt{\Delta}\)</span>.</p>
+<p>The sign of increment dependence also changes with <span class="math inline">\(H\)</span>:</p>
+<ul>
+<li><span class="math inline">\(H &lt; 1/2\)</span>: increments are <strong>anti-persistent</strong>. A positive increment is more likely to be followed by a negative one. The path looks jagged and choppy.</li>
+<li><span class="math inline">\(H = 1/2\)</span>: increments are independent. This is ordinary Brownian motion.</li>
+<li><span class="math inline">\(H &gt; 1/2\)</span>: increments are <strong>persistent</strong>. Positive increments tend to be followed by positive increments. The path looks smoother and more trend-like.</li>
+</ul>
+<p>The covariance of fractional Gaussian noise, which is the increment process of fBM, is:</p>
+<p><span class="math display">\[
+\gamma_H(k) = \frac{1}{2}\left(|k+1|^{2H} - 2|k|^{2H} + |k-1|^{2H}\right)
+\]</span></p>
+<p>Here <span class="math inline">\(k\)</span> is the lag between increments. This formula is what the simulation uses to build the covariance matrix of increments. Once the covariance matrix is known, the simulation draws correlated Gaussian increments using a Cholesky factorization:</p>
+<p><span class="math display">\[
+\Delta B^H = LZ
+\]</span></p>
+<p>where <span class="math inline">\(Z\)</span> is a vector of independent standard normal draws and <span class="math inline">\(LL^\top\)</span> is the fractional Gaussian noise covariance matrix. After that we cumulatively sum the increments to obtain the fBM path.</p>
+<p>The Cholesky approach is easy to understand and accurate for teaching, although it becomes expensive for large simulations because the covariance matrix is dense. That cost is one reason rough models become computationally heavier than classical Markovian models.</p>
+<section id="path-regularity-by-scale" class="level3">
+<h3 class="anchored" data-anchor-id="path-regularity-by-scale">3.1 Path Regularity by Scale</h3>
+<p>The easiest way to understand <span class="math inline">\(H\)</span> is to compare the size of increments at a small time scale. Suppose we shrink the time step from one month to one day. If the step size is roughly divided by 21, the typical increment scales by:</p>
+<p><span class="math display">\[
+21^{-H}
+\]</span></p>
+<p>For <span class="math inline">\(H=0.5\)</span>:</p>
+<p><span class="math display">\[
+21^{-0.5} \approx 0.218
+\]</span></p>
+<p>For <span class="math inline">\(H=0.1\)</span>:</p>
+<p><span class="math display">\[
+21^{-0.1} \approx 0.738
+\]</span></p>
+<p>This is the whole rough-volatility intuition in one calculation. Under Brownian scaling, daily increments are much smaller than monthly increments. Under rough scaling with <span class="math inline">\(H=0.1\)</span>, the daily increment is still a large fraction of the monthly increment. The process remains jagged when we zoom in.</p>
+<p>That is exactly what the option market cares about. A short-dated option is highly sensitive to what happens over the next few days. If volatility can move violently on short horizons, then short-maturity skew should be steep. Classical Heston can generate stochastic variance, but its short-time regularity is tied to ordinary Brownian diffusion. Rough models change the short-time scaling itself.</p>
+<p>There is also a common confusion between <strong>roughness</strong> and <strong>long memory</strong>. Low <span class="math inline">\(H\)</span> in rough volatility doesn’t mean volatility is a slow, persistent long-memory process. It means local paths are irregular. A process can look highly persistent in autocorrelation tests because it has clustered volatility, but its local regularity can still be rough. So we focus on increment scaling rather than only autocorrelation.</p>
+</section>
+<section id="moment-scaling-on-simulated-paths" class="level3">
+<h3 class="anchored" data-anchor-id="moment-scaling-on-simulated-paths">3.2 Moment Scaling on Simulated Paths</h3>
+<p>The moment-scaling method estimates <span class="math inline">\(H\)</span> from how increments behave across lags. For a process <span class="math inline">\(X_t\)</span>, define the <span class="math inline">\(q\)</span>-moment of increments at lag <span class="math inline">\(\ell\)</span>:</p>
+<p><span class="math display">\[
+m_q(\ell) = \mathbb{E}\left[|X_{t+\ell} - X_t|^q\right]
+\]</span></p>
+<p>For fractional Brownian motion, increments scale as <span class="math inline">\(\ell^H\)</span>, so the <span class="math inline">\(q\)</span>-moment scales as:</p>
+<p><span class="math display">\[
+m_q(\ell) \propto \ell^{qH}
+\]</span></p>
+<p>Taking logs gives a line:</p>
+<p><span class="math display">\[
+\log m_q(\ell) = a_q + qH \log \ell
+\]</span></p>
+<p>where <span class="math inline">\(a_q\)</span> is a constant that depends on <span class="math inline">\(q\)</span> but not on the lag. This is the core estimation equation. For each <span class="math inline">\(q\)</span>, we regress <span class="math inline">\(\log m_q(\ell)\)</span> on <span class="math inline">\(\log \ell\)</span>:</p>
+<p><span class="math display">\[
+\log m_q(\ell) = \beta_{0,q} + \beta_{1,q}\log \ell + \varepsilon_{\ell,q}
+\]</span></p>
+<p>Then:</p>
+<p><span class="math display">\[
+\widehat{H}_q = \frac{\widehat{\beta}_{1,q}}{q}
+\]</span></p>
+<p>If the process really behaves like fractional Brownian motion over the tested scales, then <span class="math inline">\(\widehat{H}_q\)</span> should be fairly stable across different <span class="math inline">\(q\)</span> values.</p>
+<p>For example, if <span class="math inline">\(q=2\)</span> and the regression slope is <span class="math inline">\(0.20\)</span>, then:</p>
+<p><span class="math display">\[
+\widehat{H} = \frac{0.20}{2} = 0.10
+\]</span></p>
+<p>That means a four-times larger lag increases the typical squared increment by approximately <span class="math inline">\(4^{0.20}\)</span> rather than by <span class="math inline">\(4^1\)</span> as we would see for a much smoother process in variance units. The power law is the signal.</p>
+</section>
+<section id="the-meaning-of-h-in-volatility-modeling" class="level3">
+<h3 class="anchored" data-anchor-id="the-meaning-of-h-in-volatility-modeling">3.3 The Meaning of <span class="math inline">\(H\)</span> in Volatility Modeling</h3>
+<p>The Hurst exponent is the number that controls how quickly increments shrink as we look at shorter time intervals. For a process <span class="math inline">\(X_t\)</span>, the scaling idea is:</p>
+<p><span class="math display">\[
+\mathbb{E}\left[|X_{t+\Delta}-X_t|^q\right] \propto \Delta^{qH}
+\]</span></p>
+<p>Each part has a role:</p>
+<ul>
+<li><span class="math inline">\(X_{t+\Delta}-X_t\)</span> is the move over a time step of length <span class="math inline">\(\Delta\)</span>,</li>
+<li><span class="math inline">\(q\)</span> chooses which moment we measure,</li>
+<li><span class="math inline">\(H\)</span> controls the slope of the log-log scaling relation,</li>
+<li>the proportionality sign means we care about the power-law slope, not the exact level.</li>
+</ul>
+<p>Taking logs gives a regression-style expression:</p>
+<p><span class="math display">\[
+\log \mathbb{E}\left[|X_{t+\Delta}-X_t|^q\right] = a_q + qH\log \Delta
+\]</span></p>
+<p>So if we plot log-moment against log-time-step, the slope should be close to <span class="math inline">\(qH\)</span>. Dividing the slope by <span class="math inline">\(q\)</span> gives an estimate of <span class="math inline">\(H\)</span>.</p>
+<p>For Brownian motion, <span class="math inline">\(H=0.5\)</span>. That means typical increments shrink like <span class="math inline">\(\sqrt{\Delta}\)</span>. If we cut the time interval from one day to one quarter of a day, the typical move is cut roughly in half. For rough volatility, <span class="math inline">\(H&lt;0.5\)</span>. This means the path is less smooth at short horizons. Very small time intervals can still contain relatively sharp changes.</p>
+<p>This matters for option pricing because short-maturity options are almost entirely about short-horizon behavior. A one-week option doesn’t care much about the average volatility over the next two years. It cares about whether variance can jump or roughen over the next few trading days. If volatility has <span class="math inline">\(H=0.1\)</span>, the short-term variance path is much more jagged than a Brownian volatility path with <span class="math inline">\(H=0.5\)</span>. That jaggedness is one reason rough models can generate steeper short-end smiles and skews.</p>
+<p>There is also a practical warning. Estimated <span class="math inline">\(H\)</span> depends heavily on the object we measure. Raw squared returns are noisy. Rolling realized variance is smoother but overlap can inflate persistence. Option-implied skew measures risk-neutral roughness, not historical realized roughness. So we shouldn’t expect one universal <span class="math inline">\(H\)</span> number to appear in every diagnostic. The project uses several estimates because each estimate tells us something different about the volatility process.</p>
+<p>The regression form also gives a visual diagnostic. If we plot <span class="math inline">\(\log \widehat m_q(\ell)\)</span> against <span class="math inline">\(\log \ell\)</span>, a power law appears as a straight line. The slope of that line is <span class="math inline">\(qH\)</span>.</p>
+<p>The steps are:</p>
+<ol type="1">
+<li>choose a moment order <span class="math inline">\(q\)</span>,</li>
+<li>choose lags <span class="math inline">\(\ell \in \{1,2,4,8,16,32\}\)</span>,</li>
+<li>compute increments at each lag,</li>
+<li>compute the average absolute <span class="math inline">\(q\)</span>-power of those increments,</li>
+<li>take logs,</li>
+<li>fit a line.</li>
+</ol>
+<p>For a single <span class="math inline">\(q\)</span>:</p>
+<p><span class="math display">\[
+\widehat{\beta}_{1,q} = \frac{\sum_\ell (\log \ell - \overline{\log \ell})(\log \widehat m_q(\ell)-\overline{\log \widehat m_q})}{\sum_\ell(\log \ell-\overline{\log \ell})^2}
+\]</span></p>
+<p>and:</p>
+<p><span class="math display">\[
+\widehat H_q = \frac{\widehat{\beta}_{1,q}}{q}
+\]</span></p>
+<p>The <span class="math inline">\(R^2\)</span> of this regression matters. A nice-looking <span class="math inline">\(H\)</span> estimate with poor <span class="math inline">\(R^2\)</span> is not useful. It means the power-law relationship is weak. So we report both <span class="math inline">\(H\)</span> and <span class="math inline">\(R^2\)</span>. We need the estimate and the quality of the scaling relationship.</p>
+<p>For example, if <span class="math inline">\(q=1\)</span> gives <span class="math inline">\(H=0.12\)</span> with <span class="math inline">\(R^2=0.98\)</span>, and <span class="math inline">\(q=2\)</span> gives <span class="math inline">\(H=0.13\)</span> with <span class="math inline">\(R^2=0.97\)</span>, that is strong evidence of stable rough scaling. If <span class="math inline">\(q=1\)</span> gives <span class="math inline">\(H=0.02\)</span> with <span class="math inline">\(R^2=0.10\)</span>, that is just noise.</p>
 <div id="project18-04" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fgn_covariance(h, n):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> np.arange(<span class="bu">int</span>(n), dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -584,6 +913,73 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The simulation table works as a sanity check. We generate fBM paths with known <span class="math inline">\(H\)</span> values and then estimate <span class="math inline">\(H\)</span> back from moment scaling. The recovered medians are close to the true values: the <span class="math inline">\(H=0.10\)</span> simulation is estimated around <strong>0.123</strong>, the Brownian-like <span class="math inline">\(H=0.50\)</span> case is estimated around <strong>0.522</strong>, and the smoother <span class="math inline">\(H=0.80\)</span> case is estimated around <strong>0.809</strong>.</p>
+<p>The figure is very useful visually. The <span class="math inline">\(H=0.05\)</span> and <span class="math inline">\(H=0.10\)</span> paths have very jagged increments. The <span class="math inline">\(H=0.80\)</span> path looks much more persistent. The bottom-left panel shows the log-moment lines. The bottom-right panel shows the slope relationship with <span class="math inline">\(q\)</span>, and the straight reference lines make the point: for fBM, the slope is approximately <span class="math inline">\(qH\)</span>.</p>
+<p>This is why the moment-scaling method is a good teaching bridge. It turns a complicated path-regularity idea into a regression slope.</p>
+</section>
+</section>
+<section id="estimating-roughness-from-spx-realized-variance" class="level2">
+<h2 class="anchored" data-anchor-id="estimating-roughness-from-spx-realized-variance">4) Estimating Roughness from SPX Realized Variance</h2>
+<p>Now we apply the same scaling logic to SPX log realized variance. The object is:</p>
+<p><span class="math display">\[
+X_t = \log RV_t
+\]</span></p>
+<p>and the increments are:</p>
+<p><span class="math display">\[
+\Delta_\ell X_t = X_{t+\ell} - X_t
+\]</span></p>
+<p>For each moment order <span class="math inline">\(q\)</span> and each lag <span class="math inline">\(\ell\)</span>, we estimate:</p>
+<p><span class="math display">\[
+\widehat{m}_q(\ell) = \frac{1}{N_\ell}\sum_t |\Delta_\ell X_t|^q
+\]</span></p>
+<p>Then we fit:</p>
+<p><span class="math display">\[
+\log \widehat{m}_q(\ell) = \beta_{0,q} + \beta_{1,q}\log \ell + e_{\ell,q}
+\]</span></p>
+<p>and use:</p>
+<p><span class="math display">\[
+\widehat{H}_q = \frac{\widehat{\beta}_{1,q}}{q}
+\]</span></p>
+<p>There are two implementation details that matter here.</p>
+<p>First, the code estimates <span class="math inline">\(H\)</span> separately for different realized-variance proxies: raw daily squared returns, 5-day rolling RV, 10-day rolling RV, and 21-day rolling RV. This helps separate true roughness from measurement noise. A one-day squared return is too noisy and can make the scaling estimate meaningless. Longer rolling RV proxies are smoother, but overlapping windows can artificially increase persistence.</p>
+<p>Second, the code also uses a pooled regression. Instead of estimating <span class="math inline">\(H\)</span> separately for each <span class="math inline">\(q\)</span>, the pooled version stacks all moment orders and estimates one shared <span class="math inline">\(H\)</span>:</p>
+<p><span class="math display">\[
+\log \widehat{m}_q(\ell) = a_q + Hq\log \ell + e_{q,\ell}
+\]</span></p>
+<p>Here each <span class="math inline">\(q\)</span> gets its own intercept <span class="math inline">\(a_q\)</span>, but the slope coefficient is constrained to be <span class="math inline">\(Hq\)</span>. In matrix form, if each row is one pair <span class="math inline">\((q,\ell)\)</span>, the first column of the design matrix is <span class="math inline">\(q\log \ell\)</span>:</p>
+<p><span class="math display">\[
+y = X\theta + e
+\]</span></p>
+<p>with:</p>
+<p><span class="math display">\[
+y_{q,\ell} = \log \widehat{m}_q(\ell), \qquad X_{q,\ell,1} = q\log \ell
+\]</span></p>
+<p>The coefficient on this first column is the pooled estimate of <span class="math inline">\(H\)</span>. This is useful because individual <span class="math inline">\(q\)</span> estimates can be noisy, especially at high moment orders where extreme volatility jumps dominate the moment.</p>
+<section id="separate-q-and-pooled-q-estimation" class="level3">
+<h3 class="anchored" data-anchor-id="separate-q-and-pooled-q-estimation">4.1 Separate-<span class="math inline">\(q\)</span> and Pooled-<span class="math inline">\(q\)</span> Estimation</h3>
+<p>The separate-<span class="math inline">\(q\)</span> estimator is easy to read:</p>
+<p><span class="math display">\[
+\widehat H_q = \frac{\widehat\beta_{1,q}}{q}
+\]</span></p>
+<p>but every <span class="math inline">\(q\)</span> sees the data differently. Low <span class="math inline">\(q\)</span> values treat ordinary fluctuations more evenly. High <span class="math inline">\(q\)</span> values give much more weight to extreme volatility jumps. In financial variance data, <span class="math inline">\(q=3\)</span> can be strongly influenced by crisis observations.</p>
+<p>The pooled estimator tries to stabilize this by estimating one <span class="math inline">\(H\)</span> across all <span class="math inline">\(q\)</span> values:</p>
+<p><span class="math display">\[
+\log \widehat m_q(\ell) = a_q + Hq\log \ell + e_{q,\ell}
+\]</span></p>
+<p>The intercept <span class="math inline">\(a_q\)</span> is allowed to change with <span class="math inline">\(q\)</span> because the level of the moment is different for <span class="math inline">\(q=0.5\)</span>, <span class="math inline">\(q=1\)</span>, or <span class="math inline">\(q=2\)</span>. But the slope structure is constrained: the lag slope must be proportional to <span class="math inline">\(q\)</span>.</p>
+<p>This is a simple but powerful design. In matrix notation, we can write:</p>
+<p><span class="math display">\[
+\mathbf{y} = \mathbf{X}\boldsymbol{\theta} + \boldsymbol{\varepsilon}
+\]</span></p>
+<p>where the first coefficient of <span class="math inline">\(\boldsymbol{\theta}\)</span> is <span class="math inline">\(H\)</span>. A row corresponding to moment order <span class="math inline">\(q_i\)</span> and lag <span class="math inline">\(\ell_i\)</span> has:</p>
+<p><span class="math display">\[
+X_{i,1}=q_i\log \ell_i
+\]</span></p>
+<p>and then dummy/intercept columns for each <span class="math inline">\(q\)</span>. The pooled OLS estimate is:</p>
+<p><span class="math display">\[
+\widehat{\boldsymbol{\theta}} = (\mathbf{X}^\top \mathbf{X})^{-1}\mathbf{X}^\top \mathbf{y}
+\]</span></p>
+<p>We also use a robust option when available. The reason is that volatility data has extreme jumps. A Huber-style regression reduces the influence of huge observations without throwing them away entirely. That fits the financial problem: crisis spikes are real, but we don’t want one crash week to determine the roughness exponent alone.</p>
 <div id="project18-07" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> power_variation(x, q_values, lags):</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> pd.Series(x).dropna()</span>
@@ -1094,6 +1490,69 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The roughness tables show a very important nuance. The raw daily squared-return proxy produces an <span class="math inline">\(H\)</span> estimate close to zero, but the <span class="math inline">\(R^2\)</span> is terrible. That means the raw proxy is too noisy for a clean scaling relationship. The 5-day, 10-day, and 21-day rolling proxies give much stronger <span class="math inline">\(R^2\)</span>, but their <span class="math inline">\(H\)</span> estimates increase as the aggregation window gets longer: about <strong>0.288</strong> for 5-day, <strong>0.457</strong> for 10-day, and <strong>0.604</strong> for 21-day.</p>
+<p>That doesn’t mean volatility suddenly becomes smooth at 21 days. It means the measurement process has changed. A 21-day rolling window overlaps heavily with the previous 21-day window, so consecutive observations share most of their returns. This overlap mechanically smooths the series and inflates apparent persistence.</p>
+<p>The multi-window diagnostic is useful because it doesn’t blindly trust the smoothest proxy. The selected main <span class="math inline">\(H\)</span> is around <strong>0.131</strong>, closer to the rough-volatility range. The non-overlapping block checks are also important: block RV estimates around <strong>0.094 to 0.157</strong> are much closer to rough behavior than the overlapping 10-day and 21-day rolling values.</p>
+<p>The plot confirms this. The raw daily diagnostic is messy, while the 10-day Project-5 RV proxy gives clean lines. The clean lines are helpful, but the proxy comparison warns us not to treat one smooth proxy as the true latent roughness. In this project, <span class="math inline">\(H\)</span> is treated as a robust diagnostic, not as a single sacred number.</p>
+<p>The proxy comparison deserves extra attention because it prevents a common mistake. If we only looked at the 21-day rolling proxy, we would conclude that <span class="math inline">\(H\)</span> is around <strong>0.60</strong>, which is smoother than Brownian motion and therefore not rough. But the 21-day rolling proxy is constructed by overlapping windows, so it has built-in smoothness.</p>
+<p>The non-overlapping block estimates are much closer to the rough range. They say: when we remove the overlap effect, <span class="math inline">\(H\)</span> comes back toward <strong>0.10–0.16</strong>. That is much more consistent with the rough-volatility literature and with the project’s final selected <span class="math inline">\(h_rv \approx 0.131\)</span>.</p>
+<p>The lesson here is methodological:</p>
+<ul>
+<li>raw squared returns are too noisy,</li>
+<li>rolling realized variance is cleaner but can over-smooth,</li>
+<li>non-overlapping checks help detect artificial persistence,</li>
+<li>option-implied skew gives a separate risk-neutral roughness estimate.</li>
+</ul>
+<p>This is also why we shouldn’t use <span class="math inline">\(H\)</span> like a magic constant. Roughness estimation is an inference problem with measurement error. The model is only as reliable as the diagnostics around the estimate.</p>
+</section>
+</section>
+<section id="rough-kernel-forecasting" class="level2">
+<h2 class="anchored" data-anchor-id="rough-kernel-forecasting">5) Rough-Kernel Forecasting</h2>
+<p>After estimating roughness from realized variance, we use it in a forecasting model. This is the physical-measure side of the project: we ask whether a rough-memory kernel can help forecast future realized variance.</p>
+<p>The rough-kernel forecast is built from past realized variance values:</p>
+<p><span class="math display">\[
+\widehat{v}_{t,h} = \sum_{j=1}^{L} w_{j,h}(H)v_{t-j+1}
+\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(v_{t-j+1}\)</span> is a past daily variance proxy,</li>
+<li><span class="math inline">\(L\)</span> is the lookback length,</li>
+<li><span class="math inline">\(h\)</span> is the forecast horizon,</li>
+<li><span class="math inline">\(w_{j,h}(H)\)</span> is the weight assigned to that lag.</li>
+</ul>
+<p>The code uses horizon-adjusted power-law weights:</p>
+<p><span class="math display">\[
+w_{j,h}(H) = \frac{(j+h)^{H+1/2} - j^{H+1/2}}{\sum_{\ell=1}^{L}\left[(\ell+h)^{H+1/2} - \ell^{H+1/2}\right]}
+\]</span></p>
+<p>These weights are positive and normalized:</p>
+<p><span class="math display">\[
+\sum_{j=1}^{L} w_{j,h}(H) = 1
+\]</span></p>
+<p>The finance meaning is clear: we forecast future variance as a weighted average of past variance, but the weights decay in a fractional way rather than an exponential way. GARCH-like models usually rely on recursive exponential-type updating. HAR-RV uses a few block averages such as daily, weekly, and monthly variance. The rough kernel uses a smoother continuum of memory weights.</p>
+<p>The estimated <span class="math inline">\(H\)</span> changes the shape of the weights. When <span class="math inline">\(H\)</span> is low, the near past receives more weight, but the decay isn’t just a short exponential cutoff. The model still keeps a long fractional tail. That is the rough-volatility compromise: volatility reacts sharply at short horizons while still carrying memory across longer horizons.</p>
+<p>The evaluation uses variance losses, not just volatility errors. A key loss is QLIKE:</p>
+<p><span class="math display">\[
+QLIKE(v,\widehat{v}) = \frac{v}{\widehat{v}} - \log\left(\frac{v}{\widehat{v}}\right) - 1
+\]</span></p>
+<p>where <span class="math inline">\(v\)</span> is realized variance and <span class="math inline">\(\widehat{v}\)</span> is forecast variance. Lower is better. QLIKE is useful because it penalizes variance forecasts in a scale-aware way and is commonly used for volatility-forecast evaluation.</p>
+<section id="relation-to-har-and-garch" class="level3">
+<h3 class="anchored" data-anchor-id="relation-to-har-and-garch">5.1 Relation to HAR and GARCH</h3>
+<p>The comparison models are reused from Project 5, so we don’t need to re-derive them deeply. But it helps to understand what the rough kernel is competing against.</p>
+<p>HAR-RV uses a small set of block averages:</p>
+<p><span class="math display">\[
+RV_{t+1} = \beta_0 + \beta_d RV_t^{(d)} + \beta_w RV_t^{(w)} + \beta_m RV_t^{(m)} + \varepsilon_{t+1}
+\]</span></p>
+<p>It approximates heterogeneous market horizons: daily traders, weekly traders, and monthly investors. It is simple, stable, and very hard to beat.</p>
+<p>GARCH updates variance recursively:</p>
+<p><span class="math display">\[
+\sigma_{t+1}^2 = \omega + \alpha r_t^2 + \beta \sigma_t^2
+\]</span></p>
+<p>This is a compact exponential-memory model. Shocks decay through the <span class="math inline">\(\beta\)</span> term. Extensions such as GJR and EGARCH add asymmetry and log-variance behavior, but the basic idea is still recursive updating.</p>
+<p>The rough kernel takes a different route. It doesn’t use a few block averages and doesn’t use a one-step recursion. It uses many lags with a power-law memory shape:</p>
+<p><span class="math display">\[
+\widehat v_{t,h} = \sum_{j=1}^{L}w_{j,h}(H)v_{t-j+1}
+\]</span></p>
+<p>If HAR is a three-bucket approximation and GARCH is an exponential-recursion approximation, the rough kernel is a fractional-memory approximation. This makes it a natural forecast model after we estimate <span class="math inline">\(H\)</span>.</p>
 <div id="project18-10" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> kernel_weights(h, lookback):</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    j <span class="op">=</span> np.arange(<span class="dv">1</span>, <span class="bu">int</span>(lookback) <span class="op">+</span> <span class="dv">1</span>, dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -1644,6 +2103,65 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The forecast comparison is mixed, which is the right kind of result for this project. The rough-kernel model is competitive, especially at very short horizons. In the SPX forecast table, the rough kernel ranks best by QLIKE at the 1-day horizon, while HAR and GARCH variants remain strong at some longer horizons and under other error metrics.</p>
+<p>The heatmap and rank plot make the model behavior easier to read than the raw table. The rough-kernel forecast tracks volatility bursts better than a flat historical mean would, but it isn’t a universal winner. HAR is hard to beat because it is a very strong low-parameter benchmark for realized variance. GARCH variants also do well in some horizons because they adapt quickly to recent shocks.</p>
+<p>This is a useful reminder: roughness is not a magic forecast engine. It gives us a way to encode the empirical scaling of variance paths, but forecast performance still depends on the proxy, the horizon, the loss function, and the market sample. The rough-kernel result is strongest when the problem is short-horizon variance timing, which is exactly where rough volatility should matter most.</p>
+<p>The model ranking also depends on the loss function. QLIKE is variance-focused and strongly penalizes under-forecasting during high-volatility periods. RMSE can be dominated by crisis spikes. MAE is more robust but less sensitive to getting the volatility scale right in stress. Correlation tells us whether the forecast moves in the same direction as realized volatility, but a forecast can have decent correlation and still be badly scaled.</p>
+<p>So we report several metrics:</p>
+<p><span class="math display">\[
+RMSE_v = \sqrt{\frac{1}{N}\sum_t(\widehat v_t-v_t)^2}
+\]</span></p>
+<p><span class="math display">\[
+MAE_v = \frac{1}{N}\sum_t|\widehat v_t-v_t|
+\]</span></p>
+<p><span class="math display">\[
+\rho_{\sigma} = \operatorname{Corr}(\widehat\sigma_t,\sigma_t)
+\]</span></p>
+<p>The rough-kernel model is strongest when the market’s variance dynamics are shaped by rough short-time scaling. HAR remains a robust benchmark because it captures slow variance persistence very well. GARCH remains useful because it reacts recursively to recent shocks. The comparison is meaningful because all three models encode different beliefs about memory.</p>
+</section>
+</section>
+<section id="option-chain-cleaning-and-implied-volatility-surface-support" class="level2">
+<h2 class="anchored" data-anchor-id="option-chain-cleaning-and-implied-volatility-surface-support">6) Option Chain Cleaning and Implied-Volatility Surface Support</h2>
+<p>We now move from realized variance to option-implied information. The data and basic IV extraction are repeated from Projects 4 and 8, so we keep the discussion short. The important point is that rough volatility is tested through the <strong>short-maturity skew</strong> of the implied-volatility surface.</p>
+<p>The cleaned option chain must support three things:</p>
+<ol type="1">
+<li>enough quotes across dates,</li>
+<li>enough expiries per date,</li>
+<li>enough moneyness range around the money to estimate ATM skew.</li>
+</ol>
+<p>The moneyness coordinate is log moneyness:</p>
+<p><span class="math display">\[
+k = \log\left(\frac{K}{S}\right)
+\]</span></p>
+<p>The implied-volatility surface is written as:</p>
+<p><span class="math display">\[
+\sigma_{\text{imp}} = \sigma_{\text{imp}}(k,\tau)
+\]</span></p>
+<p>where <span class="math inline">\(\tau\)</span> is time to maturity in years. We already built surfaces in Project 8, but here we use the surface for a different reason. Project 8 used the surface mainly for smooth interpolation, local volatility, and surface diagnostics. Here we need a smooth enough surface to estimate the derivative:</p>
+<p><span class="math display">\[
+\partial_k \sigma_{\text{imp}}(0,\tau)
+\]</span></p>
+<p>That derivative is the ATM skew at maturity <span class="math inline">\(\tau\)</span>. If the surface is noisy, the skew estimate becomes noisy too. So quote cleaning and surface smoothing are not decorative preprocessing steps; they directly determine the stability of the roughness estimate from options.</p>
+<section id="from-clean-quotes-to-surface-targets" class="level3">
+<h3 class="anchored" data-anchor-id="from-clean-quotes-to-surface-targets">6.1 From Clean Quotes to Surface Targets</h3>
+<p>The cleaning steps create a path from raw option quotes to surface-ready implied volatilities:</p>
+<p><span class="math display">\[
+\text{raw quotes} \rightarrow \text{clean prices} \rightarrow \text{forward/rate/carry} \rightarrow \text{IV} \rightarrow \text{surface fit}
+\]</span></p>
+<p>The forward is inferred from put-call parity where possible:</p>
+<p><span class="math display">\[
+C - P = D(F-K)
+\]</span></p>
+<p>so:</p>
+<p><span class="math display">\[
+F = K + \frac{C-P}{D}
+\]</span></p>
+<p>Once the forward and discount factor are available, the Black-76 implied volatility solves:</p>
+<p><span class="math display">\[
+C^{\text{Black76}}(F,K,\tau,\sigma,D) = C^{\text{market}}
+\]</span></p>
+<p>We already solved IV in Project 4, but the rough-volatility use is stricter. A noisy IV quote away from the money may not hurt a broad surface visualization, but it can distort skew derivatives and calibration residuals. That is why the code filters extreme IV values, low weights, and poor quote regions before surface fitting.</p>
+<p>The option-surface section also prepares calibration grids. Instead of calibrating to every raw quote directly, we build a controlled surface target grid across moneyness and maturity. This makes the model comparison more balanced: Heston and rough Heston are evaluated across comparable regions rather than being dominated by whatever strikes happen to have the most raw quotes.</p>
 <div id="project18-13" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>option_dates <span class="op">=</span> pd.DatetimeIndex(pd.to_datetime(spx_pairs_raw[<span class="st">"date"</span>].dropna().unique())).sort_values()</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>monthly_dates <span class="op">=</span> pd.Series(option_dates).groupby(pd.Series(option_dates).dt.to_period(<span class="st">"M"</span>)).last().to_list()</span>
@@ -2564,6 +3082,79 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The quote-coverage plots show that the SPX option panel has enough support for this exercise. Quote coverage is broad across selected dates, expiry coverage is stable enough, and the IV cloud has the usual equity-index shape: implied volatility is higher for negative log moneyness, especially on the put side.</p>
+<p>This is the standard index skew structure. Investors pay more for downside protection, dealers manage crash risk, and index returns have asymmetric tail risk. For rough volatility, the important part is how that skew changes as maturity becomes short. If short-dated skew explodes as <span class="math inline">\(\tau\)</span> gets smaller, the model must explain a strong maturity-dependent slope near ATM.</p>
+</section>
+</section>
+<section id="smooth-surface-fit-and-atm-skew-power-law" class="level2">
+<h2 class="anchored" data-anchor-id="smooth-surface-fit-and-atm-skew-power-law">7) Smooth Surface Fit and ATM Skew Power Law</h2>
+<p>We fit two versions of the surface: a visual/smoothed fit and a more regularized version for derivative-sensitive tasks. We don’t need to re-teach spline surfaces here. The key point is that ATM skew is a derivative, and derivatives amplify noise. A small wiggle in implied volatility can become a large error in <span class="math inline">\(\partial_k \sigma\)</span>.</p>
+<p>The ATM skew at maturity <span class="math inline">\(\tau\)</span> is estimated with a centered finite difference:</p>
+<p><span class="math display">\[
+\psi(\tau) = \partial_k \sigma_{\text{imp}}(0,\tau) \approx \frac{\sigma_{\text{imp}}(+\Delta k,\tau) - \sigma_{\text{imp}}(-\Delta k,\tau)}{2\Delta k}
+\]</span></p>
+<p>In equity indices, <span class="math inline">\(\psi(\tau)\)</span> is usually negative. The implied-volatility smile is higher for downside strikes, so as <span class="math inline">\(k\)</span> increases from negative to positive, IV tends to fall.</p>
+<p>Rough-volatility theory gives a short-maturity power law:</p>
+<p><span class="math display">\[
+|\psi(\tau)| \approx c \tau^{H - 1/2}
+\]</span></p>
+<p>Since <span class="math inline">\(H &lt; 1/2\)</span>, the exponent <span class="math inline">\(H - 1/2\)</span> is negative. That means the skew becomes steeper as maturity goes to zero.</p>
+<p>The code fits this in the form:</p>
+<p><span class="math display">\[
+|\psi(\tau)| \approx c \tau^{-\alpha}
+\]</span></p>
+<p>Taking logs gives:</p>
+<p><span class="math display">\[
+\log |\psi(\tau)| = \log c - \alpha \log \tau
+\]</span></p>
+<p>So the fitted roughness estimate is:</p>
+<p><span class="math display">\[
+\widehat{H} = \frac{1}{2} - \widehat{\alpha}
+\]</span></p>
+<p>For example, if the fitted slope gives <span class="math inline">\(\alpha = 0.25\)</span>, then:</p>
+<p><span class="math display">\[
+\widehat{H} = 0.50 - 0.25 = 0.25
+\]</span></p>
+<p>This is an option-implied estimate of roughness. It doesn’t have to match the realized-variance estimate exactly because it is risk-neutral, maturity-smoothed, and extracted from option prices rather than historical returns.</p>
+<section id="short-maturity-skew-as-a-roughness-fingerprint" class="level3">
+<h3 class="anchored" data-anchor-id="short-maturity-skew-as-a-roughness-fingerprint">7.1 Short-Maturity Skew as a Roughness Fingerprint</h3>
+<p>The ATM skew power law is one of the main reasons rough volatility became so important in option pricing. Classical diffusive stochastic-volatility models can generate skew, but their short-time asymptotics usually don’t produce the same steep power-law explosion.</p>
+<p>The rough-volatility relationship can be written:</p>
+<p><span class="math display">\[
+\psi(\tau) = \partial_k \sigma_{\text{imp}}(0,\tau)
+\]</span></p>
+<p>and for small <span class="math inline">\(\tau\)</span>:</p>
+<p><span class="math display">\[
+|\psi(\tau)| \approx c\tau^{H-\frac{1}{2}}
+\]</span></p>
+<p>If <span class="math inline">\(H=0.5\)</span>, then:</p>
+<p><span class="math display">\[
+H-\frac{1}{2}=0
+\]</span></p>
+<p>so the short-end skew is roughly flat in maturity. If <span class="math inline">\(H=0.1\)</span>, then:</p>
+<p><span class="math display">\[
+H-\frac{1}{2}=-0.4
+\]</span></p>
+<p>so the skew behaves like:</p>
+<p><span class="math display">\[
+|\psi(\tau)| \approx c\tau^{-0.4}
+\]</span></p>
+<p>Now compare two maturities, 7 days and 28 days. The maturity ratio is 4. With <span class="math inline">\(H=0.1\)</span>, the skew ratio is approximately:</p>
+<p><span class="math display">\[
+\left(\frac{7}{28}\right)^{-0.4} = 4^{0.4} \approx 1.74
+\]</span></p>
+<p>So the 7-day skew can be about 74% steeper than the 28-day skew under this rough scaling. That kind of short-end steepness is hard to ignore in equity-index options.</p>
+<p>The code fits <span class="math inline">\(\alpha\)</span> in:</p>
+<p><span class="math display">\[
+|\psi(\tau)| = c\tau^{-\alpha}
+\]</span></p>
+<p>and then maps:</p>
+<p><span class="math display">\[
+H = \frac{1}{2} - \alpha
+\]</span></p>
+<p>This mapping is the bridge from a market-observable surface derivative to a roughness parameter.</p>
+<p>The skew-window choice is not just a coding detail. Very short maturities can be noisy because of microstructure, pin risk, expiry effects, and low vega. Long maturities can dilute the rough short-time signature because the asymptotic relation is about <span class="math inline">\(\tau \to 0\)</span>.</p>
+<p>So we test several windows, such as 7–45 days, 7–60 days, 14–90 days, and 14–150 days. If the estimated <span class="math inline">\(H\)</span> changes drastically across windows, the power-law evidence is unstable. If the estimate is consistent and the <span class="math inline">\(R^2\)</span> is high, the skew roughness is more trustworthy.</p>
 <div id="project18-16" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>surface_fit <span class="op">=</span> fit_surface_panel(</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    surface_quotes,</span>
@@ -3686,6 +4277,65 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The smooth smile plot shows the familiar SPX pattern: short maturities have the steepest left skew, while longer maturities flatten. The residual panel is important too. The surface fit is close enough for extracting a rough skew slope, but there are still residuals, especially where quote quality is weaker or smile curvature changes quickly.</p>
+<p>The ATM skew term structure falls in absolute value as maturity increases. The log-log power-law fit is visually close on high-quality dates. For the main SPX date, the fitted short-window skew implies a roughness estimate around the mid-to-high 0.3 range depending on the window. The high-quality filter over the full sample gives a median <span class="math inline">\(H\)</span> around <strong>0.365</strong>.</p>
+<p>This is higher than the realized-variance roughness estimate around <strong>0.13</strong>, and that difference is meaningful. Option-implied skew is not spot log variance observed at daily frequency. It is an implied quantity averaged over maturity and shaped by risk premia, dealer positioning, downside demand, and smoothing across strikes. Option-implied roughness often comes out less rough than high-frequency realized-volatility estimates.</p>
+<p>The reported high-quality date filter keeps dates with enough maturities and strong power-law fit. This is important because a single date can always look convincing by accident. The sample-level result says whether the roughness signature appears repeatedly.</p>
+</section>
+</section>
+<section id="heston-as-the-markovian-control-model" class="level2">
+<h2 class="anchored" data-anchor-id="heston-as-the-markovian-control-model">8) Heston as the Markovian Control Model</h2>
+<p>Before going into rough models, we fit Heston as the classical stochastic-volatility control model. Heston was already explained in Project 11, so here we only need the structure that matters for comparison.</p>
+<p>Under a risk-neutral measure, the Heston model is:</p>
+<p><span class="math display">\[
+dS_t = (r-q)S_t\,dt + \sqrt{V_t}S_t\,dW_t^S
+\]</span></p>
+<p><span class="math display">\[
+dV_t = \kappa(\theta - V_t)\,dt + \sigma_v\sqrt{V_t}\,dW_t^V
+\]</span></p>
+<p>with:</p>
+<p><span class="math display">\[
+d\langle W^S, W^V\rangle_t = \rho\,dt
+\]</span></p>
+<p>The parameters mean:</p>
+<ul>
+<li><span class="math inline">\(V_0\)</span>: current instantaneous variance,</li>
+<li><span class="math inline">\(\kappa\)</span>: speed of mean reversion,</li>
+<li><span class="math inline">\(\theta\)</span>: long-run variance level,</li>
+<li><span class="math inline">\(\sigma_v\)</span>: volatility of variance,</li>
+<li><span class="math inline">\(\rho\)</span>: leverage correlation between spot shocks and variance shocks.</li>
+</ul>
+<p>The model is <strong>Markovian</strong> because the state at time <span class="math inline">\(t\)</span> is just <span class="math inline">\((S_t,V_t)\)</span>. Once we know those two values, the future distribution doesn’t need the full path history. This makes Heston fast and elegant, especially with Fourier/COS pricing from Project 14. But that Markovian structure also limits the short-time skew behavior. A finite-dimensional diffusion has a different short-maturity slope shape from rough-volatility models.</p>
+<p>The calibration objective is a weighted price error:</p>
+<p><span class="math display">\[
+\min_\Theta \sum_{i=1}^{N} w_i\left(C_i^{\text{model}}(\Theta) - C_i^{\text{market}}\right)^2
+\]</span></p>
+<p>where <span class="math inline">\(\Theta=(V_0,\kappa,\theta,\sigma_v,\rho)\)</span>, and the weights account for quote quality and scale. We use Heston as a disciplined baseline: if rough models can’t improve on it in the right places, then their extra complexity isn’t justified.</p>
+<section id="parameter-identifiability-in-heston" class="level3">
+<h3 class="anchored" data-anchor-id="parameter-identifiability-in-heston">8.1 Parameter Identifiability in Heston</h3>
+<p>Heston calibration is famous for parameter interaction. Different parameter sets can produce similar option surfaces, especially if the calibration window is short or the available maturities are limited.</p>
+<p>For example:</p>
+<ul>
+<li>increasing <span class="math inline">\(\sigma_v\)</span> can steepen skew and increase curvature,</li>
+<li>making <span class="math inline">\(\rho\)</span> more negative also steepens downside skew,</li>
+<li>changing <span class="math inline">\(\kappa\)</span> and <span class="math inline">\(\theta\)</span> can shift how variance term structure behaves,</li>
+<li><span class="math inline">\(V_0\)</span> mainly controls the very short end.</li>
+</ul>
+<p>This means a calibrated Heston parameter is not always a clean economic estimate. It is partly a coordinate system for fitting the surface.</p>
+<p>A useful way to think about Heston parameter roles is:</p>
+<p><span class="math display">\[
+\text{level} \approx V_0,\theta
+\]</span></p>
+<p><span class="math display">\[
+\text{term structure} \approx \kappa,\theta,V_0
+\]</span></p>
+<p><span class="math display">\[
+\text{skew} \approx \rho,\sigma_v
+\]</span></p>
+<p><span class="math display">\[
+\text{curvature} \approx \sigma_v,\rho,\kappa
+\]</span></p>
+<p>The rough-Heston model adds <span class="math inline">\(H\)</span>, which affects short-time regularity and skew scaling. This can reduce pressure on <span class="math inline">\(\rho\)</span> and <span class="math inline">\(\sigma_v\)</span> in some regions, but it also adds another dimension of calibration risk. So the comparison has to use diagnostics, not just parameter stories.</p>
 <div id="project18-21" class="cell" data-execution_count="22">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> surface_calib_grid(quotes, fits, dte_targets<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">10</span>, <span class="dv">14</span>, <span class="dv">21</span>, <span class="dv">30</span>, <span class="dv">45</span>, <span class="dv">60</span>, <span class="dv">90</span>, <span class="dv">120</span>, <span class="dv">150</span>), min_quotes_per_date<span class="op">=</span><span class="dv">45</span>, ann<span class="op">=</span>ann_days):</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    fit_map <span class="op">=</span> {pd.Timestamp(k).normalize(): v <span class="cf">for</span> k, v <span class="kw">in</span> fits.items()}</span>
@@ -4853,6 +5503,110 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The Heston calibration succeeds across the selected dates. The parameter-path plot shows a lot of movement in <span class="math inline">\(V_0\)</span>, <span class="math inline">\(\kappa\)</span>, <span class="math inline">\(\theta\)</span>, vol-of-vol, and <span class="math inline">\(\rho\)</span>. This movement is expected because every date has a different option surface and the calibration has to absorb changes in level, slope, and curvature.</p>
+<p>The Feller ratio is also reported:</p>
+<p><span class="math display">\[
+\frac{2\kappa\theta}{\sigma_v^2}
+\]</span></p>
+<p>In classical Heston, values above 1 keep the variance process away from zero more strongly. Values below 1 mean the variance boundary can be reached. In practical calibration, the Feller condition is often violated because the market smile wants more flexibility than the strict positivity condition allows. The plot shows that this ratio isn’t stable, which is another sign that Heston parameters are partly acting as surface-fitting knobs rather than clean structural economic constants.</p>
+<p>The fit table gives Heston a strong baseline: weighted IV RMSE is around 1 volatility point on the full daily set. That makes the later comparison harder, which is good. Rough volatility has to earn its place.</p>
+</section>
+</section>
+<section id="forward-variance-curve-and-rough-bergomi" class="level2">
+<h2 class="anchored" data-anchor-id="forward-variance-curve-and-rough-bergomi">9) Forward Variance Curve and Rough Bergomi</h2>
+<p>Rough Bergomi is the first rough pricing model we use. It starts from the <strong>forward variance curve</strong> rather than from a single variance state. This is a big conceptual shift.</p>
+<p>The forward variance curve is:</p>
+<p><span class="math display">\[
+\xi_0(t) = \mathbb{E}_0[V_t]
+\]</span></p>
+<p>It is the market-implied expected future variance at each horizon. We estimate it from the ATM total variance curve:</p>
+<p><span class="math display">\[
+w(\tau) = \tau \sigma_{\text{ATM}}^2(\tau)
+\]</span></p>
+<p>A practical approximation is:</p>
+<p><span class="math display">\[
+\xi_0(\tau) \approx \frac{\partial w(\tau)}{\partial \tau}
+\]</span></p>
+<p>The code computes this from the smooth surface by taking ATM implied volatility across maturities, converting it to total variance, and differentiating/interpolating carefully.</p>
+<p>Rough Bergomi then models variance as a lognormal rough process around this forward variance curve:</p>
+<p><span class="math display">\[
+V_t = \xi_0(t)\exp\left(\nu W_t^H - \frac{1}{2}\nu^2 t^{2H}\right)
+\]</span></p>
+<p>The fractional driver is usually built from a Brownian motion through a kernel:</p>
+<p><span class="math display">\[
+W_t^H = \sqrt{2H}\int_0^t (t-s)^{H-\frac{1}{2}}\,dW_s^V
+\]</span></p>
+<p>The spot process is:</p>
+<p><span class="math display">\[
+dS_t = (r-q)S_t\,dt + \sqrt{V_t}S_t\,dW_t^S
+\]</span></p>
+<p>with correlation:</p>
+<p><span class="math display">\[
+d\langle W^S,W^V\rangle_t = \rho\,dt
+\]</span></p>
+<p>The parameters are:</p>
+<ul>
+<li><span class="math inline">\(H\)</span>: roughness of volatility,</li>
+<li><span class="math inline">\(\nu\)</span>: vol-of-vol, controlling how strongly variance fluctuates around <span class="math inline">\(\xi_0(t)\)</span>,</li>
+<li><span class="math inline">\(\rho\)</span>: spot-volatility correlation, controlling the leverage effect and smile skew.</li>
+</ul>
+<p>A more negative <span class="math inline">\(\rho\)</span> usually creates a steeper equity-style downside skew. A larger <span class="math inline">\(\nu\)</span> increases smile curvature and variance uncertainty. A smaller <span class="math inline">\(H\)</span> makes the short-end skew steeper because variance reacts in a rougher, more irregular way near the present.</p>
+<p>The calibration uses Monte Carlo simulation, so it is noisier than Heston. We use variance reduction tools such as Sobol-style sampling and antithetic paths where available. Even then, rBergomi is computationally expensive because each option price depends on simulated rough variance paths.</p>
+<section id="forward-variance-extraction" class="level3">
+<h3 class="anchored" data-anchor-id="forward-variance-extraction">9.1 Forward Variance Extraction</h3>
+<p>The forward variance curve is one of the most important inputs in rBergomi. The ATM total variance is:</p>
+<p><span class="math display">\[
+w(\tau)=\tau\sigma^2_{\text{ATM}}(\tau)
+\]</span></p>
+<p>If total variance is the integral of forward variance,</p>
+<p><span class="math display">\[
+w(\tau)=\int_0^\tau \xi_0(u)\,du
+\]</span></p>
+<p>then differentiating gives:</p>
+<p><span class="math display">\[
+\xi_0(\tau)=\frac{dw(\tau)}{d\tau}
+\]</span></p>
+<p>This is exactly why the surface fit has to be smooth across maturity. A small wiggle in ATM IV becomes a larger wiggle in total variance derivative. The code uses a dense maturity grid and interpolation so the forward variance curve is positive and stable enough for simulation.</p>
+<p>There is also a financial interpretation. <span class="math inline">\(\xi_0(\tau)\)</span> is the market-implied expectation of instantaneous variance at future horizon <span class="math inline">\(\tau\)</span>. If the curve slopes upward, the market expects future variance to be higher than near-term variance. If it slopes downward, near-term risk is priced above longer-term variance. rBergomi uses this curve as the deterministic backbone, then adds rough random fluctuations around it.</p>
+<p>This is a nice separation:</p>
+<p><span class="math display">\[
+\text{forward variance curve} = \text{term structure level}
+\]</span></p>
+<p><span class="math display">\[
+(H,\nu,\rho) = \text{roughness, variance randomness, skew direction}
+\]</span></p>
+</section>
+<section id="simulating-rough-bergomi-paths" class="level3">
+<h3 class="anchored" data-anchor-id="simulating-rough-bergomi-paths">9.2 Simulating Rough Bergomi Paths</h3>
+<p>The rBergomi implementation is Monte Carlo based. That means the model doesn’t give one deterministic smile from a closed-form formula. It generates many joint paths for spot and variance, prices the option payoff on those paths, and then converts the average discounted payoff back into implied volatility.</p>
+<p>The rough variance path has two moving pieces:</p>
+<p><span class="math display">\[
+V_t = \xi_0(t)\exp\left(\nu W_t^H - \frac{1}{2}\nu^2 t^{2H}\right)
+\]</span></p>
+<p>The first part, <span class="math inline">\(\xi_0(t)\)</span>, is deterministic once we extract the forward variance curve from the surface. The second part is random. The term <span class="math inline">\(\nu W_t^H\)</span> pushes variance up and down, while the correction term <span class="math inline">\(-\frac{1}{2}\nu^2t^{2H}\)</span> keeps the lognormal multiplier centered correctly. Without that correction, the exponential transformation would bias variance upward because exponentials of normal random variables have mean greater than one.</p>
+<p>To see the idea with a simple example, suppose two maturities have the same forward variance backbone, but one simulation path receives a positive rough-vol shock early. Because <span class="math inline">\(W_t^H\)</span> is rough, that early shock can create a sharp near-term variance burst. A standard smooth-vol model tends to spread that shock more gently. This is exactly why rBergomi can create steep short-maturity smiles: option prices care a lot about what can happen over the next few days, and rough variance can move sharply over those few days.</p>
+<p>The spot path uses a correlated Brownian shock:</p>
+<p><span class="math display">\[
+dS_t = (r-q)S_tdt + \sqrt{V_t}S_tdW_t^S
+\]</span></p>
+<p>The variance driver and spot driver have correlation <span class="math inline">\(\rho\)</span>. In simulation form, we can think of the spot shock as:</p>
+<p><span class="math display">\[
+dW_t^S = \rho\,dW_t^V + \sqrt{1-\rho^2}\,dW_t^\perp
+\]</span></p>
+<p>where <span class="math inline">\(dW_t^\perp\)</span> is an independent Brownian shock. This construction makes the spot move partially with the variance shock and partially with independent price noise. If <span class="math inline">\(\rho&lt;0\)</span>, a negative spot move tends to arrive with a positive variance shock. That is the leverage effect behind the equity index skew.</p>
+<p>The pricing step is:</p>
+<p><span class="math display">\[
+C(K,T) = e^{-rT}\mathbb{E}\left[(S_T-K)^+\right]
+\]</span></p>
+<p>The expectation is approximated by averaging across simulation paths:</p>
+<p><span class="math display">\[
+\widehat{C}(K,T)=e^{-rT}\frac{1}{M}\sum_{m=1}^{M}(S_T^{(m)}-K)^+
+\]</span></p>
+<p>where <span class="math inline">\(M\)</span> is the number of Monte Carlo paths. The code repeats this for several strikes and maturities, then maps the model prices into implied volatilities so they can be compared to the market surface.</p>
+<p>This is why the path convergence table matters. When paths increase from hundreds to thousands, the option price estimate should stabilize. If the implied vol moves too much as path count changes, the model output is still dominated by Monte Carlo noise. The table shows that the rBergomi ATM call estimate moves by a few dollars across path counts, which is acceptable for a teaching implementation but still reminds us that Monte Carlo rough-vol calibration is expensive and noisy.</p>
+<blockquote class="blockquote">
+<p>The important implementation point is that rBergomi is useful for generating the right kind of rough smile shape, but it is not the fastest daily calibration engine. It is path-based, and every parameter evaluation requires many simulated paths.</p>
+</blockquote>
 <div id="project18-24" class="cell" data-execution_count="25">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> xi_from_surface(fit, tau_values):</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Dense grid for PCHIP interpolation of total variance w(tau) = tau * sigma_ATM(tau)^2</span></span>
@@ -5470,6 +6224,137 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The forward-variance table shows the ATM variance curve extracted from the surface. It gives rBergomi the term structure anchor it needs. This matters because rBergomi doesn’t try to learn the whole variance term structure from just three parameters. It uses <span class="math inline">\(\xi_0(t)\)</span> as the baseline and uses <span class="math inline">\((H,\nu,\rho)\)</span> to shape smile dynamics around that baseline.</p>
+<p>The rBergomi restart table shows that the best SPX fit sits around a moderate <span class="math inline">\(H\)</span>, negative <span class="math inline">\(\rho\)</span>, and a vol-of-vol level that gives enough curvature without exploding Monte Carlo noise. The ATM convergence table shows price estimates stabilizing as path count increases, but the standard errors remain visible. That is the unavoidable cost of Monte Carlo rough-vol pricing.</p>
+<p>The rBergomi path plot is one of the most useful teaching plots in the project. The variance paths can spike very sharply even without explicit jumps. The price paths inherit this stochastic variance behavior. The model smile tries to match the market smile, but it still carries simulation noise and parameter sensitivity.</p>
+<p>The main interpretation is that rBergomi is excellent conceptually for rough smile generation, but calibration is heavy. It is useful as a rough-volatility laboratory and benchmark, but less convenient for daily large-scale fitting unless the implementation is highly optimized.</p>
+<p>The rBergomi convergence table is especially important because Monte Carlo error can hide inside a calibration. The ATM call price estimates are close as paths increase, but the standard error is not negligible. When the target is an implied volatility surface, price noise maps into IV noise through vega:</p>
+<p><span class="math display">\[
+\Delta \sigma_{\text{imp}} \approx \frac{\Delta C}{\text{Vega}}
+\]</span></p>
+<p>For low-vega options, especially far OTM or very short maturity, a small price simulation error can become a large IV error. That is why rBergomi calibration is much harder than Heston calibration. Heston and rough Heston use characteristic-function pricing. rBergomi here uses simulation, so the optimizer sees a noisy objective.</p>
+<p>The restart table also tells us the parameter surface is irregular. Several combinations of <span class="math inline">\(H\)</span>, <span class="math inline">\(\nu\)</span>, and <span class="math inline">\(\rho\)</span> can produce similar smile shapes, but the model still struggles to hit every maturity and moneyness bucket. The concept is still useful, but the practical cost is clear: a non-Markovian Monte Carlo model is slower and noisier.</p>
+</section>
+</section>
+<section id="rough-heston-and-the-fractional-riccati-equation" class="level2">
+<h2 class="anchored" data-anchor-id="rough-heston-and-the-fractional-riccati-equation">10) Rough Heston and the Fractional Riccati Equation</h2>
+<p>Rough Heston keeps the Heston-style economic structure but replaces the ordinary mean-reverting variance diffusion with a <strong>Volterra fractional process</strong>. Instead of:</p>
+<p><span class="math display">\[
+dV_t = \kappa(\theta - V_t)dt + \sigma_v\sqrt{V_t}dB_t
+\]</span></p>
+<p>we write variance in integral form:</p>
+<p><span class="math display">\[
+V_t = V_0 + \frac{1}{\Gamma(\alpha)}\int_0^t (t-s)^{\alpha-1}\kappa(\theta - V_s)\,ds + \frac{1}{\Gamma(\alpha)}\int_0^t (t-s)^{\alpha-1}\sigma_v\sqrt{V_s}\,dB_s
+\]</span></p>
+<p>where:</p>
+<p><span class="math display">\[
+\alpha = H + \frac{1}{2}
+\]</span></p>
+<p>and <span class="math inline">\(H \in (0,1/2)\)</span> gives <span class="math inline">\(\alpha \in (1/2,1)\)</span>.</p>
+<p>The kernel is:</p>
+<p><span class="math display">\[
+K(t-s) = \frac{(t-s)^{\alpha-1}}{\Gamma(\alpha)}
+\]</span></p>
+<p>This kernel is singular near <span class="math inline">\(s=t\)</span> because <span class="math inline">\(\alpha-1&lt;0\)</span>. That singularity is the mathematical reason the process reacts sharply to recent shocks. At the same time, the kernel integrates over the entire past, so the model is non-Markovian.</p>
+<p>A useful operator here is the fractional integral:</p>
+<p><span class="math display">\[
+I^\alpha f(t) = \frac{1}{\Gamma(\alpha)}\int_0^t (t-s)^{\alpha-1}f(s)\,ds
+\]</span></p>
+<p>Rough Heston can be written compactly as:</p>
+<p><span class="math display">\[
+V_t = V_0 + I^\alpha\left[\kappa(\theta - V_\cdot)\right](t) + I^\alpha\left[\sigma_v\sqrt{V_\cdot}\,dB_\cdot\right](t)
+\]</span></p>
+<p>This explains why rough Heston is harder than Heston. In Heston, the next variance step depends on the current variance. In rough Heston, the current variance contains a weighted memory of the whole past path through a fractional kernel.</p>
+<p>The payoff is that rough Heston remains semi-tractable. Its characteristic function has a structure similar to classical Heston, but the ordinary Riccati equation becomes a <strong>fractional Riccati equation</strong>.</p>
+<section id="memory-kernel-shape" class="level3">
+<h3 class="anchored" data-anchor-id="memory-kernel-shape">10.1 Memory Kernel Shape</h3>
+<p>The kernel:</p>
+<p><span class="math display">\[
+K(t-s)=\frac{(t-s)^{\alpha-1}}{\Gamma(\alpha)}
+\]</span></p>
+<p>has two important properties.</p>
+<p>First, near <span class="math inline">\(s=t\)</span>, the term <span class="math inline">\((t-s)^{\alpha-1}\)</span> becomes large because <span class="math inline">\(\alpha-1&lt;0\)</span>. This means very recent shocks receive a large weight. That creates rough local behavior.</p>
+<p>Second, the kernel decays slowly enough that older shocks are not forgotten with a simple exponential half-life. This creates a fractional memory structure.</p>
+<p>Compare this with ordinary Heston. Ordinary Heston mean reversion creates exponential memory:</p>
+<p><span class="math display">\[
+e^{-\kappa(t-s)}
+\]</span></p>
+<p>A shock decays at a rate controlled by <span class="math inline">\(\kappa\)</span>. In rough Heston, the memory shape is power-law-like rather than exponential. The volatility path can be locally jagged and still remember past shocks in a non-exponential way.</p>
+<p>This is a big modeling difference. Exponential memory is easy to update recursively. Fractional memory requires keeping track of a weighted history or approximating it through numerical schemes. The pricing engine has to pay that cost through the fractional Riccati solver.</p>
+</section>
+<section id="fractional-riccati-structure" class="level3">
+<h3 class="anchored" data-anchor-id="fractional-riccati-structure">10.2 Fractional Riccati Structure</h3>
+<p>In classical Heston, Fourier pricing depends on a Riccati equation. Rough Heston keeps the same spirit but changes the derivative operator. In simplified form, the Riccati function <span class="math inline">\(\psi(t,u)\)</span> satisfies:</p>
+<p><span class="math display">\[
+D^\alpha \psi(t,u) = F(u,\psi(t,u))
+\]</span></p>
+<p>where <span class="math inline">\(D^\alpha\)</span> is a fractional derivative and <span class="math inline">\(u\)</span> is the Fourier variable. The function <span class="math inline">\(F\)</span> has the same economic ingredients as Heston:</p>
+<p><span class="math display">\[
+F(u,\psi) = \frac{1}{2}(u^2 + iu) + (\rho\sigma_v iu - \kappa)\psi + \frac{1}{2}\sigma_v^2\psi^2
+\]</span></p>
+<p>Different sign conventions appear depending on whether the characteristic function is written for <span class="math inline">\(X_t=\log S_t\)</span> or for shifted Fourier variables, but the structure is the key:</p>
+<ul>
+<li>the constant term comes from return variance exposure,</li>
+<li>the linear term contains mean reversion and spot-vol correlation,</li>
+<li>the quadratic term comes from volatility-of-volatility.</li>
+</ul>
+<p>The fractional derivative means <span class="math inline">\(\psi(t,u)\)</span> at time <span class="math inline">\(t\)</span> is not updated like an ordinary ODE step. It depends on a memory convolution. Numerically, we solve it on a grid. If the grid has <span class="math inline">\(N\)</span> time steps, each new step needs weighted contributions from previous steps. So we check <strong>Riccati convergence</strong> across different step counts.</p>
+<p>The pricing engine then uses the characteristic function inside the Fourier/COS machinery from Project 14. So the full rough-Heston pricing pipeline is:</p>
+<ol type="1">
+<li>choose parameters <span class="math inline">\((H,V_0,\kappa,\theta,\sigma_v,\rho)\)</span>,</li>
+<li>solve the fractional Riccati equation for each maturity and Fourier node,</li>
+<li>build the characteristic function,</li>
+<li>price options with Fourier/COS integration,</li>
+<li>compare model prices with market prices,</li>
+<li>calibrate parameters to minimize weighted pricing errors.</li>
+</ol>
+<p>The rough part enters through step 2. Everything after that looks familiar from characteristic-function pricing, but the characteristic function is much more expensive to obtain.</p>
+</section>
+<section id="from-fractional-riccati-to-option-prices" class="level3">
+<h3 class="anchored" data-anchor-id="from-fractional-riccati-to-option-prices">10.3 From Fractional Riccati to Option Prices</h3>
+<p>The fractional Riccati equation is the bridge between rough Heston dynamics and option prices. The model doesn’t simulate every variance path for pricing. Instead, it computes the <strong>characteristic function</strong> of log-price and then prices options with the Fourier machinery from Project 14.</p>
+<p>Let:</p>
+<p><span class="math display">\[
+X_T=\log S_T
+\]</span></p>
+<p>The characteristic function is:</p>
+<p><span class="math display">\[
+\phi_T(u)=\mathbb{E}\left[e^{iuX_T}\right]
+\]</span></p>
+<p>Once we know <span class="math inline">\(\phi_T(u)\)</span>, we can recover option prices through Fourier inversion or COS expansion. That is why rough Heston is powerful: even though the variance process is non-Markovian, the model still has a semi-analytical route to prices.</p>
+<p>The rough part enters through the Riccati function <span class="math inline">\(\psi(t,u)\)</span>. In an ordinary Heston model, <span class="math inline">\(\psi\)</span> solves a standard ODE. In rough Heston, it solves a fractional equation. The numerical solver builds <span class="math inline">\(\psi\)</span> on a time grid:</p>
+<p><span class="math display">\[
+0=t_0&lt;t_1&lt;\cdots&lt;t_N=T
+\]</span></p>
+<p>At each time step, the value of <span class="math inline">\(\psi(t_n,u)\)</span> depends on a weighted sum of previous values. The weights come from the fractional kernel. A rough way to write the discretized memory is:</p>
+<p><span class="math display">\[
+\psi_n \approx \sum_{j=0}^{n-1} a_{n-j}F(u,\psi_j)
+\]</span></p>
+<p>where the weights <span class="math inline">\(a_{n-j}\)</span> decay like a power law rather than exponentially. Recent values get large weights because the kernel is singular near the present, but older values still matter. That is the numerical signature of rough volatility.</p>
+<p>The model price then follows this chain:</p>
+<ol type="1">
+<li>choose rough-Heston parameters,</li>
+<li>solve the fractional Riccati equation for each Fourier frequency <span class="math inline">\(u\)</span>,</li>
+<li>assemble the characteristic function <span class="math inline">\(\phi_T(u)\)</span>,</li>
+<li>pass <span class="math inline">\(\phi_T(u)\)</span> into the Fourier/COS pricing formula,</li>
+<li>compare the model price to market prices.</li>
+</ol>
+<p>The convergence diagnostic checks whether this chain is stable when we increase the Riccati grid resolution. If prices change materially between 512 and 1024 steps, the calibration result can’t be trusted because the objective is reacting to numerical error. The SPX convergence table shows maximum price differences around a few cents across maturities in the test grid, which is reasonable for the simplified research engine.</p>
+<p>There is also a practical reason we keep this diagnostic close to the model fit. Rough volatility models can look impressive because they add advanced mathematics, but the numerical layer can quietly dominate the result. For example, a bad Fourier truncation range can make a parameter set look worse than it is. A coarse fractional grid can make short-maturity prices unstable. These convergence checks make the pricing engine part of the research result instead of treating it as a black box.</p>
+<p>The fractional Riccati equation is the mathematical center of rough Heston. In classical Heston, the Riccati equation is an ordinary differential equation:</p>
+<p><span class="math display">\[
+\frac{d\psi}{dt}=F(u,\psi)
+\]</span></p>
+<p>A numerical solver only needs the current value of <span class="math inline">\(\psi\)</span> to step forward. In rough Heston, we replace the ordinary derivative with a fractional derivative:</p>
+<p><span class="math display">\[
+D^\alpha\psi=F(u,\psi)
+\]</span></p>
+<p>This means the current update depends on a weighted history of previous <span class="math inline">\(\psi\)</span> values. A grid solver is effectively doing something like:</p>
+<p><span class="math display">\[
+\psi_n \approx \sum_{j=0}^{n-1} a_{n,j}F(u,\psi_j)
+\]</span></p>
+<p>where the weights <span class="math inline">\(a_{n,j}\)</span> come from the fractional kernel. The exact scheme can vary, but the interpretation is stable: every new Riccati value carries memory.</p>
+<p>This is why convergence checks across 128, 256, 512, and 1024 steps matter. If the fractional Riccati solution changes too much as the grid is refined, the resulting option prices cannot be trusted. The convergence diagnostics are not optional polish; they are part of making rough-Heston pricing credible.</p>
 <div id="project18-27" class="cell" data-execution_count="28">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rough_heston_params_array(params):</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(params, pd.Series):</span>
@@ -6122,6 +7007,79 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The Riccati convergence table is a numerical safety check. For several Fourier arguments and maturities, the code compares terminal values and option prices as the number of Riccati steps increases. The median differences are small, especially between 512 and 1024 steps, while some short-maturity OTM prices show visible sensitivity because those prices are tiny and highly skew-sensitive.</p>
+<p>This is exactly where we expect numerical fragility. Rough Heston is being asked to price short-dated wings, where the fractional kernel and skew shape matter most. A tiny absolute price error can become meaningful in implied-vol terms when vega is small.</p>
+<p>The diagnostic table with <code>phi_zero_error</code> and <code>martingale_error</code> is also useful. A characteristic function should satisfy:</p>
+<p><span class="math display">\[
+\phi(0)=1
+\]</span></p>
+<p>and the discounted stock process should remain consistent with the martingale condition under the risk-neutral measure. Seeing zero or near-zero errors in these checks means the numerical characteristic function is internally coherent before calibration starts.</p>
+</section>
+</section>
+<section id="rough-heston-calibration" class="level2">
+<h2 class="anchored" data-anchor-id="rough-heston-calibration">11) Rough-Heston Calibration</h2>
+<p>The rough-Heston calibration uses the same option target grid idea as the Heston calibration, but the parameter vector expands to:</p>
+<p><span class="math display">\[
+\Theta_{\text{rough}} = (H,V_0,\kappa,\theta,\sigma_v,\rho)
+\]</span></p>
+<p>In this implementation, <span class="math inline">\(H\)</span> is often anchored or constrained by the skew-estimation step rather than freely optimized every time. This is a practical choice. If <span class="math inline">\(H\)</span> is allowed to float freely with a small number of quotes and limited function evaluations, the optimizer can use it as a noise-fitting parameter. Anchoring <span class="math inline">\(H\)</span> to the skew power law keeps the model tied to the roughness evidence.</p>
+<p>The objective is still a weighted pricing error:</p>
+<p><span class="math display">\[
+\min_{\Theta_{\text{rough}}}\sum_{i=1}^{N} w_i\left(C_i^{\text{rough}}(\Theta_{\text{rough}})-C_i^{\text{market}}\right)^2
+\]</span></p>
+<p>but rough Heston has extra numerical layers:</p>
+<ul>
+<li>fractional Riccati grid size,</li>
+<li>Fourier/COS truncation and term count,</li>
+<li>parameter bounds,</li>
+<li>skew penalty if the model-implied short-end skew moves too far from the surface-implied roughness,</li>
+<li>finite-price and numerical stability filters.</li>
+</ul>
+<p>The code also builds bucket diagnostics by moneyness and maturity:</p>
+<p><span class="math display">\[
+\text{scaled residual}_i = \frac{C_i^{\text{model}}-C_i^{\text{market}}}{\text{calibration scale}_i}
+\]</span></p>
+<p>Then it groups residuals into buckets such as deep OTM puts, near-ATM options, short maturities, and medium maturities. This is more informative than a single global RMSE because rough models are mainly supposed to help in specific regions: short maturities and skew-sensitive downside strikes.</p>
+<section id="skew-penalty-and-fixed-h-design" class="level3">
+<h3 class="anchored" data-anchor-id="skew-penalty-and-fixed-h-design">11.1 Skew Penalty and Fixed-H Design</h3>
+<p>Rough-Heston calibration can become unstable if <span class="math inline">\(H\)</span> freely absorbs every small residual. We use a more controlled design. The roughness parameter is guided by the skew estimate, and the calibration can include a skew penalty.</p>
+<p>A simplified objective looks like:</p>
+<p><span class="math display">\[
+\mathcal{L}(\Theta) =
+\sum_{i=1}^{N} w_i\left(C_i^{\text{model}}(\Theta)-C_i^{\text{market}}\right)^2
++
+\lambda_{\text{skew}}\left(\psi_{\text{model}}-\psi_{\text{surface}}\right)^2
+\]</span></p>
+<p>The first part fits prices. The second part keeps the model’s short-end skew behavior close to the surface-implied skew. This is useful because the model could otherwise improve price fit in one region while damaging the roughness signature that motivated the model.</p>
+<p>The fixed-<span class="math inline">\(H\)</span> or skew-anchored approach is also a good research design. It separates two questions:</p>
+<ol type="1">
+<li>Is the market showing roughness through realized variance and ATM skew?</li>
+<li>Given that roughness, does the rough model improve pricing or Greeks?</li>
+</ol>
+<p>If we optimize <span class="math inline">\(H\)</span> freely, these questions become mixed together. A free optimizer may find an <span class="math inline">\(H\)</span> that improves price fit but has weak roughness interpretation. Anchoring <span class="math inline">\(H\)</span> keeps the model more honest.</p>
+</section>
+<section id="reading-the-rough-heston-diagnostics" class="level3">
+<h3 class="anchored" data-anchor-id="reading-the-rough-heston-diagnostics">Reading the Rough-Heston Diagnostics</h3>
+<p>The rough-Heston comparison shouldn’t be reduced to one RMSE number. A single weighted RMSE is useful, but rough volatility has a more specific purpose: it should help with the short-end skew and the regions where Markovian Heston struggles.</p>
+<p>That is why we build <strong>bucket diagnostics</strong>. Each quote is grouped by two dimensions:</p>
+<ul>
+<li><strong>moneyness bucket</strong>, based on log-moneyness <span class="math inline">\(k=\log(K/F)\)</span>,</li>
+<li><strong>maturity bucket</strong>, based on time to expiry <span class="math inline">\(\tau\)</span>.</li>
+</ul>
+<p>The residual is scaled first:</p>
+<p><span class="math display">\[
+\varepsilon_i^{\text{scaled}}=\frac{C_i^{\text{model}}-C_i^{\text{market}}}{s_i}
+\]</span></p>
+<p>The scale <span class="math inline">\(s_i\)</span> prevents expensive high-delta options from dominating all diagnostics. A raw dollar error of <span class="math inline">\(1\)</span> has a different meaning for a deep ITM option than for a cheap OTM put. Scaling makes the comparison closer to a relative pricing-quality measure.</p>
+<p>For each bucket, the improvement is:</p>
+<p><span class="math display">\[
+\text{Improvement}_{b} =
+1-\frac{\text{RMSE}_{b,\text{rough}}}{\text{RMSE}_{b,\text{Heston}}}
+\]</span></p>
+<p>A positive value means rough Heston reduces the bucket error. A negative value means ordinary Heston fits that bucket better. This is exactly the kind of diagnostic we need because a rough model can improve the downside skew while worsening near-ATM medium maturity fit.</p>
+<p>The SPX common-date table shows Heston winning the global metrics: lower weighted price RMSE, lower weighted IV RMSE, better bid-ask hit rate, lower OTM put RMSE, and faster runtime. That would make Heston look clearly better if we only cared about global pricing loss. But the bucket table shows rough Heston has strong positive improvements in some skew-sensitive zones, including several OTM/short-to-medium maturity buckets.</p>
+<p>This is a good result for the project because it is honest. Rough Heston is not presented as a magic replacement for Heston. We see exactly where it helps and where it costs. The model improves parts of the surface connected to rough skew behavior, but it is slower and not globally better on this dataset. That is a much more realistic research conclusion than claiming the most advanced model always wins.</p>
+<p>There is another important interpretation. The rough-Heston calibration in we use limited dates, limited iterations, fixed or anchored <span class="math inline">\(H\)</span>, and a teaching-oriented engine. A production calibration desk would tune optimizer restarts, parameter transformations, weighting schemes, time grids, and the Fourier/COS settings much more aggressively. So the result should be read as a controlled research comparison, not as a final claim that one model dominates across all calibration choices.</p>
 <div id="project18-29" class="cell" data-execution_count="30">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_rough_heston_one_date(q, start, h_fixed, max_nfev<span class="op">=</span><span class="dv">18</span>, n_terms<span class="op">=</span><span class="dv">72</span>, riccati_steps<span class="op">=</span><span class="dv">256</span>, surface_fit<span class="op">=</span><span class="va">None</span>, lambda_skew<span class="op">=</span><span class="fl">0.0</span>):</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    t0 <span class="op">=</span> time.perf_counter()</span>
@@ -7129,6 +8087,64 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The full comparison is honest rather than one-sided. On the 18 common SPX fit dates, Heston has a lower global weighted price RMSE than rough Heston: about <strong>0.987</strong> versus <strong>1.115</strong>, and a slightly lower weighted IV RMSE. So the rough model doesn’t simply dominate the classical model on the aggregate calibration metric.</p>
+<p>The bucket table changes the story. Rough Heston improves strongly in some regions: near-ATM 30–60 day options improve by about <strong>80.6%</strong> in median scaled residual, deep downside puts at 60–90 days improve by about <strong>76.1%</strong>, and some short downside buckets improve meaningfully too. But there are also buckets where rough Heston is worse, including some very short deep OTM puts and some 60–90 day near-ATM regions.</p>
+<p>This is a much better interpretation than saying one model is globally superior. Rough Heston is adding flexibility in the short-end skew and certain moneyness/maturity regions, but that flexibility comes with calibration cost, runtime, and sometimes worse global fit. In this run, rough Heston is a specialized improvement tool rather than a universal replacement for Heston.</p>
+<p>The runtime difference is also part of the comparison. In the common SPX sample, rough Heston takes roughly <strong>211 seconds</strong> versus about <strong>74 seconds</strong> for Heston on the reported comparison. For BTC, the difference is even more dramatic. A model that improves a few buckets but costs several times more runtime has to justify itself through use case.</p>
+<p>The use cases where rough Heston is most valuable are:</p>
+<ul>
+<li>short-dated skew-sensitive options,</li>
+<li>downside puts in equity indices,</li>
+<li>scenarios where delta and skew hedging are more important than global RMSE,</li>
+<li>research settings where the roughness parameter itself is the subject,</li>
+<li>pricing engines where characteristic-function rough models can be optimized in C++.</li>
+</ul>
+<p>The use cases where plain Heston can still be enough are:</p>
+<ul>
+<li>broad surface fitting,</li>
+<li>faster daily batch calibration,</li>
+<li>medium-maturity portfolios,</li>
+<li>cases where global RMSE matters more than short-end skew shape.</li>
+</ul>
+<p>This isn’t a generic model-risk warning. It follows directly from the results: Heston is faster and globally stronger on this SPX fit sample, while rough Heston gives targeted improvements in skew-sensitive buckets and changes Greeks materially.</p>
+</section>
+</section>
+<section id="model-implied-atm-skew" class="level2">
+<h2 class="anchored" data-anchor-id="model-implied-atm-skew">12) Model-Implied ATM Skew</h2>
+<p>After calibration, we compare market, Heston, and rough-Heston ATM skew term structures directly. This is one of the cleanest tests in the whole project because rough volatility is mainly motivated by the short-end skew power law.</p>
+<p>For each model, we compute prices at three nearby log-moneyness nodes:</p>
+<p><span class="math display">\[
+k \in \{-\Delta k, 0, +\Delta k\}
+\]</span></p>
+<p>convert those model prices back into implied volatilities, and estimate:</p>
+<p><span class="math display">\[
+\psi_{\text{model}}(\tau) \approx \frac{\sigma_{\text{model}}(+\Delta k,\tau)-\sigma_{\text{model}}(-\Delta k,\tau)}{2\Delta k}
+\]</span></p>
+<p>Then we fit the same power law:</p>
+<p><span class="math display">\[
+|\psi_{\text{model}}(\tau)| \approx c_{\text{model}}\tau^{-\alpha_{\text{model}}}
+\]</span></p>
+<p>with:</p>
+<p><span class="math display">\[
+H_{\text{model}} = \frac{1}{2} - \alpha_{\text{model}}
+\]</span></p>
+<p>We use this mainly as a diagnostic. It shows whether the model reproduces the slope behavior that motivated rough volatility.</p>
+<p>The selected market date has a market-implied short-end skew fit with <span class="math inline">\(R^2\)</span> around <strong>0.993</strong> and <span class="math inline">\(H\)</span> around <strong>0.258</strong> from the skew window. Heston also produces a declining skew term structure, but its implied power-law estimate is different. Rough Heston produces an even steeper short-end skew curve in this selected diagnostic, with a fitted exponent that can overshoot the market.</p>
+<p>That overshoot is useful to see. Rough models can generate steep short-end skew, but calibration still has to control how steep. Adding roughness creates the right kind of shape, but it doesn’t automatically guarantee the right magnitude.</p>
+<section id="market-skew-model-skew-and-calibration-tension" class="level3">
+<h3 class="anchored" data-anchor-id="market-skew-model-skew-and-calibration-tension">12.1 Market Skew, Model Skew, and Calibration Tension</h3>
+<p>A model can fit option prices well and still produce the wrong skew power law. The reason is that price errors are weighted across many strikes and maturities, while the skew power law focuses on a derivative at <span class="math inline">\(k=0\)</span> and short maturities.</p>
+<p>The market skew diagnostic uses:</p>
+<p><span class="math display">\[
+\psi_{\text{market}}(\tau) = \partial_k\sigma_{\text{surface}}(0,\tau)
+\]</span></p>
+<p>The model skew diagnostic uses:</p>
+<p><span class="math display">\[
+\psi_{\text{model}}(\tau) = \partial_k\sigma_{\text{model}}(0,\tau)
+\]</span></p>
+<p>where <span class="math inline">\(\sigma_{\text{model}}\)</span> is obtained by repricing model options and inverting them back to implied volatility.</p>
+<p>This model-to-IV inversion step matters. We don’t compare model variance parameters directly with market skew. We compare the <strong>implied-volatility surface generated by the model</strong> with the market surface. That keeps the diagnostic in the same units as option traders use.</p>
+<p>If rough Heston generates a too-steep short-end skew, the fitted <span class="math inline">\(H_{\text{model}}\)</span> from the power law can become lower or even unstable. If it generates a too-flat skew, <span class="math inline">\(H_{\text{model}}\)</span> becomes too high. The goal isn’t only to make <span class="math inline">\(H\)</span> small; it is to match the observed maturity decay of skew.</p>
 <div id="project18-32" class="cell" data-execution_count="33">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model_atm_skew(model_name, params, spot, rate, dividend_yield, tau_values, dk<span class="op">=</span><span class="fl">0.01</span>):</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
@@ -7535,6 +8551,56 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The plot comparing market, Heston, and rough-Heston skew term structures shows this visually. The market skew is strongly negative at the shortest maturities and becomes less negative as maturity increases. Heston captures part of this behavior but tends to be limited by its Markovian diffusion structure. Rough Heston bends the short-end shape more aggressively.</p>
+<p>The log-log panel is the most important part: the rough-volatility signature is a near-linear relationship between <span class="math inline">\(\log|\psi(\tau)|\)</span> and <span class="math inline">\(\log\tau\)</span>. The market curve has a clean power-law shape on the selected date. The model curves are also close to linear over the tested maturities, but their slopes differ.</p>
+<p>This diagnostic helps separate two ideas:</p>
+<ul>
+<li>fitting option prices well in aggregate,</li>
+<li>reproducing the short-maturity skew scaling.</li>
+</ul>
+<p>A model can do one better than the other. This project cares about both, because rough volatility is a theory about the <strong>shape and scaling</strong> of volatility, not just another calibration knob.</p>
+</section>
+</section>
+<section id="delta-under-rough-volatility" class="level2">
+<h2 class="anchored" data-anchor-id="delta-under-rough-volatility">13) Delta Under Rough Volatility</h2>
+<p>The last SPX modeling layer asks how rough volatility changes hedge sensitivities. We already covered Greeks in Project 4 and surface-aware Greeks in Project 8, so here we focus on the comparison.</p>
+<p>Delta is:</p>
+<p><span class="math display">\[
+\Delta = \frac{\partial C}{\partial S}
+\]</span></p>
+<p>For model prices that don’t have a simple closed-form delta, we use a finite difference:</p>
+<p><span class="math display">\[
+\Delta \approx \frac{C(S+\Delta S)-C(S-\Delta S)}{2\Delta S}
+\]</span></p>
+<p>with:</p>
+<p><span class="math display">\[
+\Delta S = bS
+\]</span></p>
+<p>where <span class="math inline">\(b\)</span> is the bump size. The code compares four delta notions:</p>
+<ul>
+<li>flat BSM delta using one ATM volatility,</li>
+<li>surface BSM delta using the local implied volatility at each <span class="math inline">\((k,\tau)\)</span>,</li>
+<li>Heston delta from finite differences,</li>
+<li>rough-Heston delta from finite differences.</li>
+</ul>
+<p>This matters because the delta of an option in a skewed stochastic-volatility model is not just the BSM delta with a better volatility number. When spot moves, the whole variance distribution and smile can move too. Rough volatility affects this interaction because variance shocks are more reactive near the present.</p>
+<p>For an equity index with negative spot-vol correlation, downside moves usually come with higher variance. That makes downside option values more sensitive to spot than flat BSM suggests. The finite-difference model delta captures this because the model reprices the option under bumped spot levels.</p>
+<section id="delta-with-smile-feedback" class="level3">
+<h3 class="anchored" data-anchor-id="delta-with-smile-feedback">13.1 Delta with Smile Feedback</h3>
+<p>Flat BSM delta treats volatility as constant:</p>
+<p><span class="math display">\[
+\Delta_{\text{flat}} = \frac{\partial C(S,K,\tau,\sigma)}{\partial S}
+\]</span></p>
+<p>Surface-BSM delta uses the implied volatility at each strike and maturity, but it still treats the surface mostly as an input map:</p>
+<p><span class="math display">\[
+\Delta_{\text{surface}} \approx \frac{\partial C(S,K,\tau,\sigma_{\text{imp}}(k,\tau))}{\partial S}
+\]</span></p>
+<p>A stochastic-volatility model delta is different because the model links spot and volatility through <span class="math inline">\(\rho\)</span> and through the variance process. When spot moves, the model-implied distribution changes. For rough Heston:</p>
+<p><span class="math display">\[
+\Delta_{\text{rough}} \approx \frac{C_{\text{rough}}(S+\Delta S)-C_{\text{rough}}(S-\Delta S)}{2\Delta S}
+\]</span></p>
+<p>The two bumped prices use the full rough-Heston pricing model, not just a BSM formula with a local IV. This captures the model’s belief about how spot and variance interact.</p>
+<p>For downside equity puts and near-ATM short-dated calls, this can matter a lot. A negative spot shock increases the probability of higher variance in leverage-effect models. That changes the option’s value beyond the direct intrinsic-value effect. Roughness can amplify the short-horizon version of this effect.</p>
 <div id="project18-33" class="cell" data-execution_count="34">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> heston_delta_fd(params, strike, tau, spot, rate, dividend_yield, bump):</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    ds <span class="op">=</span> spot <span class="op">*</span> bump</span>
@@ -7900,6 +8966,67 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The delta table shows that rough-Heston deltas are often higher than flat BSM and surface-BSM deltas around ATM and slightly downside moneyness. For example, at 30 days and near ATM, flat BSM delta is around <strong>0.508</strong>, surface-BSM delta is around <strong>0.508</strong>, while rough-Heston delta is around <strong>0.591</strong>. That is a large difference for hedge sizing.</p>
+<p>The heatmaps show where the difference is strongest. Rough-Heston minus surface-BSM delta is positive across much of the tested grid, especially on the downside and around short to medium maturities. Rough-Heston minus Heston is smaller and can change sign depending on moneyness, which means the stochastic-volatility effect is already present in Heston, while the roughness component adds a more specific adjustment.</p>
+<p>This is one of the practical reasons rough volatility matters. Even if a rough model doesn’t win every calibration metric, it can change Greeks in regions where hedging is most fragile. If a trader hedges a short-dated skew position with flat-BSM delta, the hedge can be materially under-sized.</p>
+<p>A practical hedge example makes the difference concrete. Suppose a trader is short 1,000 near-ATM 30-day SPX calls. If flat/surface BSM delta is around <span class="math inline">\(0.508\)</span> but rough-Heston delta is around <span class="math inline">\(0.591\)</span>, the hedge difference is:</p>
+<p><span class="math display">\[
+1000 \times (0.591-0.508) \approx 83
+\]</span></p>
+<p>That is about 83 SPX units of delta exposure. On an index level near 3,925 in the selected example, this is not a small discrepancy. The direction also matters: the rough model says the position is more spot-sensitive than the surface-BSM calculation suggests.</p>
+<p>This is one reason advanced models can be useful even when their calibration RMSE is not the lowest. A pricing model can affect risk management through Greeks and hedge ratios, not only through the quoted model price.</p>
+</section>
+</section>
+<section id="spx-dashboard-and-evidence-summary" class="level2">
+<h2 class="anchored" data-anchor-id="spx-dashboard-and-evidence-summary">14) SPX Dashboard and Evidence Summary</h2>
+<p>The SPX dashboard combines the whole workflow:</p>
+<ul>
+<li>realized-variance roughness,</li>
+<li>moment-scaling diagnostics,</li>
+<li>forecast comparisons,</li>
+<li>smooth IV smiles,</li>
+<li>ATM skew power law,</li>
+<li>Heston versus rough-Heston fits,</li>
+<li>rBergomi path/smile behavior,</li>
+<li>rough-Heston delta gaps.</li>
+</ul>
+<p>The roughness evidence table is the main summary. It shows several estimates of <span class="math inline">\(H\)</span>:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Source</th>
+<th>Approximate interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>raw daily squared-return RV</td>
+<td>too noisy, weak scaling fit</td>
+</tr>
+<tr class="even">
+<td>rolling Project-5 RV proxies</td>
+<td>smoother but overlap can inflate <span class="math inline">\(H\)</span></td>
+</tr>
+<tr class="odd">
+<td>non-overlapping/block checks</td>
+<td>closer to rough short-time behavior</td>
+</tr>
+<tr class="even">
+<td>ATM skew power law</td>
+<td>risk-neutral roughness from option prices</td>
+</tr>
+<tr class="odd">
+<td>rough-Heston calibration</td>
+<td>model-implied roughness under pricing constraints</td>
+</tr>
+</tbody>
+</table>
+<p>The table reports the high-quality ATM skew estimate around <strong>0.365</strong>, the broad ATM skew median around <strong>0.411</strong>, and rough-Heston calibrated median <span class="math inline">\(H\)</span> around <strong>0.383</strong>. The realized-variance diagnostics are lower when we account for proxy construction. That difference is not a contradiction. It shows that historical variance roughness and option-implied roughness are related but not identical objects.</p>
+<p>The model-fit table also gives a balanced view. Heston has better global fit on the common date set, while rough Heston improves some skew-sensitive buckets. This is exactly the kind of result we should expect from an advanced model: it doesn’t remove the need for diagnostics. It gives a richer way to represent short-end skew and variance roughness, but model selection still depends on the objective.</p>
 <div id="project18-36" class="cell" data-execution_count="37">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>spx_tables <span class="op">=</span> {</span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"roughness_evidence"</span>: pd.concat([</span>
@@ -9151,6 +10278,86 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<section id="reading-the-spx-evidence-as-one-workflow" class="level3">
+<h3 class="anchored" data-anchor-id="reading-the-spx-evidence-as-one-workflow">Reading the SPX Evidence as One Workflow</h3>
+<p>The dashboard is not just a summary figure. It links four separate kinds of evidence:</p>
+<ol type="1">
+<li><strong>historical roughness</strong> from realized-variance scaling,</li>
+<li><strong>forecast usefulness</strong> from rough-kernel variance forecasts,</li>
+<li><strong>option-implied roughness</strong> from ATM skew power laws,</li>
+<li><strong>pricing and hedging consequences</strong> from rough models.</li>
+</ol>
+<p>The strongest result is not one single table. It is the alignment between several diagnostics. The historical realized-variance side says volatility is locally rough after controlling for proxy issues. The option side says short-end skew follows a power law. The rough models can generate steep short-end skew and materially different deltas. The calibration comparison shows this comes with costs and doesn’t automatically dominate Heston.</p>
+<p>That is a good research outcome. It teaches the model’s purpose and its limitations at the same time.</p>
+</section>
+<section id="connecting-the-spx-evidence" class="level3">
+<h3 class="anchored" data-anchor-id="connecting-the-spx-evidence">Connecting the SPX Evidence</h3>
+<p>The SPX dashboard is useful because it puts three different roughness measurements next to each other:</p>
+<p><span class="math display">\[
+H_{\text{RV}}, \qquad H_{\text{skew}}, \qquad H_{\text{model}}
+\]</span></p>
+<p>These are related, but they are estimated from different objects.</p>
+<p><span class="math inline">\(H_{\text{RV}}\)</span> comes from historical realized variance. It is a physical-measure estimate because it uses actual realized returns. The raw daily squared-return proxy gives almost no reliable scaling structure because it is too noisy. The rolling proxies are smoother and produce larger <span class="math inline">\(H\)</span> values, but overlap and smoothing can push estimates upward. The block/non-overlapping checks help reduce that bias.</p>
+<p><span class="math inline">\(H_{\text{skew}}\)</span> comes from option prices. It is risk-neutral because it uses the implied volatility surface. The short-end skew power law is one of the most important rough-volatility diagnostics:</p>
+<p><span class="math display">\[
+|\psi(\tau)| \approx c\tau^{H-\frac{1}{2}}
+\]</span></p>
+<p>If the estimated slope is close to <span class="math inline">\(-\frac{1}{2}\)</span>, then <span class="math inline">\(H\)</span> is close to zero and the skew explodes very sharply as maturity gets short. If the slope is less steep, <span class="math inline">\(H\)</span> is larger. The SPX high-quality skew estimate around <span class="math inline">\(H\approx0.36\)</span> to <span class="math inline">\(0.41\)</span> is not as rough as the original <span class="math inline">\(H\approx0.1\)</span> empirical result from high-frequency realized variance literature, but it still points to rougher-than-Brownian implied volatility because it is below <span class="math inline">\(0.5\)</span>.</p>
+<p><span class="math inline">\(H_{\text{model}}\)</span> comes from rough-Heston calibration. It is constrained by the model’s ability to fit prices, not only by a slope regression. That makes it a hybrid diagnostic. It tells us what roughness level the model can support while fitting the surface under the chosen parameter bounds and numerical engine.</p>
+<p>The dashboard also shows why rough volatility is a full workflow rather than one test. If we only look at realized variance, the answer depends strongly on proxy construction. If we only look at option skew, the answer depends on surface quality and maturity filtering. If we only look at model calibration, the answer depends on optimizer and numerical choices. Putting all three together gives a more stable interpretation:</p>
+<ul>
+<li>realized variance shows evidence of non-smooth volatility dynamics,</li>
+<li>option skew shows a short-end power-law structure,</li>
+<li>rough Heston can reproduce parts of that skew structure,</li>
+<li>the pricing comparison still has to be checked bucket by bucket,</li>
+<li>deltas change because the model changes the spot-volatility interaction.</li>
+</ul>
+<p>This is also why the project belongs after Projects 4, 8, 11, 13, and 14. We already know how to extract IV, build surfaces, price under stochastic volatility, and use Fourier/COS methods. Here we use all of that machinery to ask a sharper question: whether volatility itself behaves like a rough process and whether that roughness matters for pricing and hedging.</p>
+<p>The most useful practical reading is:</p>
+<ol type="1">
+<li><strong>SPX volatility is rough in several diagnostics</strong>, especially when we avoid trusting only a smoothed overlapping RV proxy.</li>
+<li><strong>Option skew carries a clear roughness signature</strong>, because ATM skew follows a power-law shape across short maturities on many dates.</li>
+<li><strong>rBergomi is conceptually clean for rough smile generation</strong>, but Monte Carlo calibration is noisy and expensive.</li>
+<li><strong>rough Heston is more production-friendly than rBergomi</strong>, because it can use characteristic-function pricing, but fractional Riccati computation is still heavier than classical Heston.</li>
+<li><strong>rough models change hedge sensitivities</strong>, especially near ATM and downside short-maturity options.</li>
+</ol>
+<p>This gives the project its place in the series. Project 11 compared stochastic-volatility and jump models. Project 14 built the Fourier machinery. Here we use that machinery to test a deeper question: whether the time regularity of volatility itself should be part of the model.</p>
+</section>
+</section>
+<section id="btc-library-implementation" class="level2">
+<h2 class="anchored" data-anchor-id="btc-library-implementation">15) BTC Library Implementation</h2>
+<p>The final cell repeats the workflow on BTC using the packaged library. This secondary application is important because BTC has a very different volatility ecosystem from SPX:</p>
+<ul>
+<li>spot volatility is much higher,</li>
+<li>option quotes are noisier,</li>
+<li>moneyness and maturity support can be uneven,</li>
+<li>crypto options are strongly shaped by leverage, funding, liquidations, and weekend trading,</li>
+<li>BTC trades continuously, so the annualization basis uses 365 days rather than 252 trading days.</li>
+</ul>
+<p>The data comes from:</p>
+<ul>
+<li><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/btc_yfinance">btc_yfinance</a> for BTC spot,</li>
+<li><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/btc_optionsdx">btc_optionsdx</a> for BTC/Deribit options,</li>
+<li><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/us_treasury_yields">us_treasury_yields</a> for discounting.</li>
+</ul>
+<p>The BTC code also performs a unit audit because Deribit-style option prices can be quoted in BTC units while the spot is in USD. If the option mid is in BTC and BTC spot is around 64,000, a raw mid of <span class="math inline">\(0.05\)</span> BTC corresponds to several thousand dollars:</p>
+<p><span class="math display">\[
+C_{\text{USD}} = C_{\text{BTC}} \times S_{\text{BTCUSD}}
+\]</span></p>
+<p>The audit table confirms this conversion: the median raw mid is about <strong>0.0546 BTC</strong>, and the USD-equivalent median mid is about <strong>3,369 USD</strong>. This step is critical. Without it, the calibration would compare option prices and spot levels in inconsistent units.</p>
+<section id="continuous-time-market-structure" class="level3">
+<h3 class="anchored" data-anchor-id="continuous-time-market-structure">15.1 Continuous-Time Market Structure</h3>
+<p>BTC has a different time structure from SPX, not only a higher volatility level. SPX cash trading is tied to exchange hours, while BTC trades continuously. That changes the annualization convention and the meaning of weekend risk.</p>
+<p>We use:</p>
+<p><span class="math display">\[
+\text{annualization}_{BTC}=365
+\]</span></p>
+<p>instead of:</p>
+<p><span class="math display">\[
+\text{annualization}_{SPX}=252
+\]</span></p>
+<p>This affects realized variance, forecast scaling, and option maturity conversion. A 7-day BTC option really contains 7 calendar days of trading. A 7-calendar-day SPX option contains fewer cash-market trading sessions, though options still price overnight and weekend risk indirectly.</p>
+<p>This is one reason BTC roughness and BTC skew need separate interpretation. The time clock is different, the market microstructure is different, and the volatility risk premium is shaped by different participants.</p>
 <div id="project18-37" class="cell" data-execution_count="38">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -10943,8 +12150,56 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+</section>
+<section id="btc-roughness-and-forecasting" class="level3">
+<h3 class="anchored" data-anchor-id="btc-roughness-and-forecasting">15.2 BTC Roughness and Forecasting</h3>
+<p>The BTC realized-variance roughness estimates are much higher than the SPX roughness diagnostics. The moment table gives <span class="math inline">\(H\)</span> values declining from about <strong>0.60</strong> at <span class="math inline">\(q=0.5\)</span> to about <strong>0.34</strong> at <span class="math inline">\(q=3.0\)</span>, with a pooled/clipped value used around <strong>0.35</strong> for the realized-variance roughness side. This is already a warning that BTC variance has stronger extreme moves and stronger scale dependence than SPX.</p>
+<p>The rough-kernel forecast performs very well against HAR in QLIKE across all shown BTC horizons. At 1 day, rough-kernel QLIKE is around <strong>-5.72</strong> versus HAR around <strong>3.89</strong>. At 5, 10, 21, 42, and 63 days, rough-kernel also stays better by QLIKE, though HAR is competitive in MAE and correlation. This says the rough kernel is useful for variance scaling in BTC, especially under QLIKE, but HAR can still track average volatility levels better under some simpler losses.</p>
+<p>The forecast plot shows exactly why both statements can be true. BTC realized volatility has violent spikes. A model can handle the variance scale well under QLIKE while still having imperfect timing and low volatility correlation. Crypto volatility is less stable than SPX volatility, so a strong variance-loss result doesn’t mean the forecast path is visually perfect.</p>
+</section>
+<section id="btc-option-skew-and-rough-models" class="level3">
+<h3 class="anchored" data-anchor-id="btc-option-skew-and-rough-models">15.3 BTC Option Skew and Rough Models</h3>
+<p>The BTC surface has a much larger option panel after cleaning: about <strong>121k clean option rows</strong> and <strong>120k surface-ready rows</strong>. The selected main date is <strong>2024-01-13</strong>, chosen by a high-quality short-skew rule. The short-skew fit gives:</p>
+<p><span class="math display">\[
+H_{\text{skew}} \approx 0.121
+\]</span></p>
+<p>with <span class="math inline">\(R^2\)</span> close to <strong>0.999</strong>, which is a very clean power-law fit for the selected date.</p>
+<p>This is interesting because the realized-variance roughness side uses a clipped <span class="math inline">\(H\)</span> around <strong>0.35</strong>, while the option-skew side says the short-end implied skew behaves much rougher, around <strong>0.12</strong>. For BTC, the option market’s short-end smile can be extremely steep even when historical realized variance scaling is less rough. That difference likely comes from jump risk, liquidity, crash-up/crash-down asymmetry, and the way crypto options price weekend and liquidation risk.</p>
+<p>The BTC Heston versus rough-Heston comparison is more favorable to rough Heston than the SPX aggregate table. Rough Heston has lower weighted price RMSE (<strong>1.745</strong> vs <strong>1.783</strong>), lower weighted IV RMSE (<strong>0.0498</strong> vs <strong>0.0544</strong>), lower OTM put RMSE, lower short-maturity RMSE, and a slightly better bid-ask hit rate. Runtime is much worse: about <strong>333 seconds</strong> versus <strong>29 seconds</strong>. So the improvement is real but computationally expensive.</p>
+<p>The rBergomi calibration for BTC picks <span class="math inline">\(H \approx 0.121\)</span>, <span class="math inline">\(\nu \approx 0.8\)</span>, and <span class="math inline">\(\rho \approx -0.3\)</span>, with a high IV RMSE around <strong>0.222</strong>. That is not surprising. BTC smiles are noisy, jumpy, and difficult to fit with a small three-parameter rBergomi layer on top of a forward variance curve. The model is still useful as a rough-smile generator, but the calibration quality is not as clean as an ideal textbook case.</p>
+<p>The BTC skew-history table also shows extreme instability. Some dates produce impossible or economically weird <span class="math inline">\(H\)</span> estimates, including negative values or values above 1, even with high <span class="math inline">\(R^2\)</span> inside a narrow window. That can happen because a power law can fit a small number of maturity points very well while the fitted exponent is not economically plausible.</p>
+<p>This is why the implementation filters and clips:</p>
+<p><span class="math display">\[
+H \in [0.04, 0.45]
+\]</span></p>
+<p>for rough-Heston use. The filter is not hiding the data. It is preventing noisy option-surface dates from turning the roughness parameter into nonsense. For SPX, high-quality skew dates are more stable. For BTC, quote quality and surface shape vary more, so robust selection is more important.</p>
+<p>This is also why the selected BTC main date is chosen with a quality rule: high short-skew <span class="math inline">\(R^2\)</span> and surface RMSE tie-breaks. The selected date is a teaching date where the rough-volatility signature is clean enough to inspect.</p>
+</section>
+<section id="btc-delta-and-secondary-results" class="level3">
+<h3 class="anchored" data-anchor-id="btc-delta-and-secondary-results">15.4 BTC Delta and Secondary Results</h3>
+<p>The BTC delta table shows smaller rough-model delta gaps around ATM than the SPX table, but the pattern is still visible. At 30 days near ATM, flat BSM delta is around <strong>0.532</strong>, surface-BSM delta around <strong>0.529</strong>, Heston delta around <strong>0.517</strong>, and rough-Heston delta around <strong>0.537</strong>. On the slightly downside node, rough-Heston delta is higher than both surface-BSM and Heston. On the slightly upside node, the gap is smaller and sometimes changes sign.</p>
+<p>This behavior makes sense. BTC options have very high implied volatilities, so the delta surface is flatter and less binary near ATM than short-dated low-vol equity options. But rough volatility still changes the hedge map, especially where skew and maturity interact.</p>
+<p>The BTC dashboard ties the secondary workflow together: roughness estimation, forecast comparison, surface construction, skew power law, model fit, rBergomi paths, Riccati convergence, and delta gaps. The most important result is that rough-volatility logic transfers to BTC, but the interpretation changes. In SPX, rough volatility is strongly connected to downside index skew and variance risk premium. In BTC, roughness is mixed with crypto-specific jump risk, liquidity effects, and unit/market-structure issues.</p>
+<p>That makes the secondary implementation valuable. It shows that the rough-volatility pipeline is not just an SPX-specific toy, but it also shows that applying the same model to crypto requires more caution. The model can improve some fit metrics and capture rough skew behavior, but the market is noisy enough that diagnostics matter more than any single parameter estimate.</p>
+</section>
+<section id="btc-interpretation-across-the-whole-pipeline" class="level3">
+<h3 class="anchored" data-anchor-id="btc-interpretation-across-the-whole-pipeline">BTC Interpretation Across the Whole Pipeline</h3>
+<p>BTC is a stronger stress test for the workflow than SPX because the same mathematical model meets a very different market structure.</p>
+<p>SPX options are tied to an equity index with deep liquidity, clear macro hedging demand, dealer inventory effects, and a long history of downside crash protection. BTC options are tied to a 24/7 asset with stronger jumps, exchange-specific liquidity, weekend risk, funding and leverage cycles, and a much shorter institutional history. The rough-volatility machinery can still be used, but the interpretation needs more care.</p>
+<p>The BTC realized-variance scaling estimates show relatively high <span class="math inline">\(H\)</span> values for lower moments and lower <span class="math inline">\(H\)</span> values for higher moments. That pattern means the scaling is not perfectly monofractal. Higher moments are more sensitive to extreme moves, and BTC has many more large jumps than SPX. When the <span class="math inline">\(q=3\)</span> estimate is much lower than the <span class="math inline">\(q=0.5\)</span> estimate, the process is telling us that large shocks scale differently from ordinary fluctuations.</p>
+<p>The forecast comparison also has a crypto-specific interpretation. The rough kernel wins QLIKE across the visible horizons, which means it forecasts the variance level in a way that is especially good under a likelihood-style loss. HAR is still competitive in MAE and correlation because it captures slower realized-volatility persistence. So BTC volatility has both ingredients:</p>
+<ul>
+<li>short-memory reaction to shocks, which helps rough kernels,</li>
+<li>slower regime persistence, which helps HAR-style averages.</li>
+</ul>
+<p>The option side is more extreme. The selected BTC skew date gives <span class="math inline">\(H_{\text{skew}}\approx0.121\)</span> with a very high fit quality. That tells us the short-maturity implied skew decays with maturity very quickly. In simple words, the BTC option market prices very sharp near-term asymmetry. This may come from liquidation cascades, weekend gap risk, event risk around ETFs/regulation, and the fact that crypto traders use options as leveraged crash and breakout exposure.</p>
+<p>The model table confirms that rough Heston helps more for BTC than it did globally for SPX. Rough Heston improves weighted price RMSE, weighted IV RMSE, OTM put RMSE, short-maturity RMSE, median absolute price error, and bid-ask hit rate. The cost is runtime: rough Heston is more than ten times slower. This is a real tradeoff. For a research project, the extra runtime is acceptable because we care about understanding the model. For production, this would require caching, parallelization, better parameter warm starts, or a faster compiled engine.</p>
+<p>The BTC delta comparison is also different from SPX. In SPX, negative spot-vol correlation creates a strong downside-skew hedge effect. In BTC, skew can be directionally unstable: sometimes downside protection is expensive, sometimes upside calls become extremely expensive during speculative rallies. So rough-Heston delta gaps are present, but they are less one-directional. The model changes the hedge map most where maturity is short and smile curvature is steep.</p>
+<p>The final interpretation is that rough volatility transfers well as a modeling language, but it doesn’t transfer as a one-size-fits-all explanation. For SPX, rough volatility is mostly about equity-index downside skew, variance risk premium, and short-end implied-vol behavior. For BTC, roughness is mixed with jumps, liquidity, leverage, and quote-unit issues. The model is still useful because it gives a disciplined way to measure those effects through <span class="math inline">\(H\)</span>, skew power laws, forecast losses, pricing residuals, and hedge deltas.</p>
 
 
+</section>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">

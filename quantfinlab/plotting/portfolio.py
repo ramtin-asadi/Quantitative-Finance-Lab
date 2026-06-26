@@ -62,6 +62,15 @@ def _format_date_axis(ax):
     return format_portfolio_time_axis(ax)
 
 
+def _add_inset_colorbar(im, ax, *, label: str | None = None):
+    cax = ax.inset_axes([0.965, 0.12, 0.025, 0.76])
+    cbar = ax.figure.colorbar(im, cax=cax)
+    if label:
+        cbar.set_label(label, fontsize=8)
+    cbar.ax.tick_params(labelsize=7, length=2)
+    return cbar
+
+
 def _labels_for_strategies(strategies: Sequence[str], summary: pd.DataFrame | None = None) -> list[str]:
     labels = []
     for name in strategies:
@@ -356,8 +365,119 @@ def plot_active_weights_heatmap(
     locs = list(range(0, len(W.index), step))
     ax.set_xticks(locs)
     ax.set_xticklabels([pd.Timestamp(W.index[i]).strftime("%Y-%m") for i in locs], rotation=45, ha="right", fontsize=7)
-    ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    _add_inset_colorbar(im, ax)
     return ax
+
+
+def plot_q_tilt_heatmap(
+    view_log: pd.DataFrame,
+    *,
+    last_n: int = 48,
+    ax=None,
+    title: str | None = None,
+    q_col: str | None = None,
+    date_col: str = "date",
+    group_col: str | None = None,
+    cmap: str = "viridis",
+):
+    set_plot_style()
+    ax = _get_ax(ax)
+    if view_log is None or view_log.empty:
+        ax.text(0.5, 0.5, "No view log", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+
+    data = view_log.copy()
+    q_candidates = ["q_tilt_final", "q_tilt", "q", "final_q"]
+    q_col = q_col or next((col for col in q_candidates if col in data.columns), None)
+    if q_col is None or date_col not in data.columns:
+        ax.text(0.5, 0.5, "Missing q tilt data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+
+    group_candidates = ["family_display_name", "view_family", "view_id", "view"]
+    group_col = group_col or next((col for col in group_candidates if col in data.columns), None)
+    if group_col is None:
+        ax.text(0.5, 0.5, "Missing view labels", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+
+    data[date_col] = pd.to_datetime(data[date_col], errors="coerce")
+    data[q_col] = pd.to_numeric(data[q_col], errors="coerce")
+    data = data.dropna(subset=[date_col, group_col, q_col])
+    if data.empty:
+        ax.text(0.5, 0.5, "No q tilt data", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+
+    q_map = data.pivot_table(index=group_col, columns=date_col, values=q_col, aggfunc="mean")
+    q_map = q_map.reindex(q_map.abs().sum(axis=1).sort_values(ascending=False).index)
+    q_map = q_map.iloc[:, -int(last_n):] if int(last_n) > 0 else q_map
+    vals = q_map.to_numpy(dtype=float)
+
+    im = ax.imshow(vals, aspect="auto", cmap=cmap)
+    ax.set_title(title or "View q tilt over time")
+    ax.set_yticks(range(len(q_map.index)))
+    ax.set_yticklabels(q_map.index)
+
+    step = max(1, len(q_map.columns) // 8)
+    locs = list(range(0, len(q_map.columns), step))
+    ax.set_xticks(locs)
+    ax.set_xticklabels(
+        [pd.Timestamp(q_map.columns[i]).strftime("%Y-%m") for i in locs],
+        rotation=45,
+        ha="right",
+        fontsize=7,
+    )
+    _add_inset_colorbar(im, ax, label="q tilt")
+    return ax
+
+
+def plot_view_count_timeline(
+    candidate_log: pd.DataFrame,
+    selected_log: pd.DataFrame | None = None,
+    *,
+    ax=None,
+    title: str | None = None,
+    date_col: str = "date",
+):
+    set_plot_style()
+    ax = _get_ax(ax)
+    if candidate_log is None or candidate_log.empty or date_col not in candidate_log.columns:
+        ax.text(0.5, 0.5, "No view counts", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+
+    candidates = candidate_log.copy()
+    candidates[date_col] = pd.to_datetime(candidates[date_col], errors="coerce")
+    candidate_counts = candidates.dropna(subset=[date_col]).groupby(date_col).size()
+
+    if selected_log is not None and not selected_log.empty and date_col in selected_log.columns:
+        selected = selected_log.copy()
+        selected[date_col] = pd.to_datetime(selected[date_col], errors="coerce")
+        selected_counts = selected.dropna(subset=[date_col]).groupby(date_col).size()
+    elif "kept" in candidates.columns:
+        kept = candidates["kept"].astype(bool)
+        selected_counts = candidates.loc[kept].dropna(subset=[date_col]).groupby(date_col).size()
+    else:
+        selected_counts = pd.Series(dtype=float)
+
+    counts = pd.concat(
+        {
+            "Candidate views": candidate_counts,
+            "Selected views": selected_counts,
+        },
+        axis=1,
+    ).fillna(0.0)
+
+    ax.plot(counts.index, counts["Candidate views"], color=LAB_COLORS[0], lw=1.4, label="Candidate")
+    ax.plot(counts.index, counts["Selected views"], color=LAB_COLORS[1], lw=1.4, label="Selected")
+    ax.set_title(title or "Candidate and selected views")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("View count")
+    ax.legend(loc="best", fontsize=8)
+    ax.grid(True, alpha=0.3)
+    return _format_date_axis(ax)
 
 
 def plot_latest_weights(
@@ -403,7 +523,7 @@ def plot_view_selection_counts(selection_log: pd.DataFrame, *, ax=None, title: s
         ax.set_axis_off()
         return ax
     counts = selection_log[selection_log["kept"].astype(bool)].groupby("view_family").size().sort_values()
-    ax.barh(counts.index, counts.values, color="#009E73")
+    ax.barh(counts.index, counts.values, color=LAB_COLORS[2])
     ax.set_title(title or "Selected views by family")
     ax.set_xlabel("Selections")
     ax.grid(True, axis="x", alpha=0.3)
@@ -424,17 +544,56 @@ def plot_view_q_and_confidence(
         ax.set_axis_off()
         return ax
     q_col = "q_tilt_final" if "q_tilt_final" in view_log.columns else "q_tilt"
-    q = view_log.groupby("view_family")[q_col].agg(lambda x: np.mean(np.abs(pd.to_numeric(x, errors="coerce")))).sort_values()
-    ax.barh(q.index, q.values, color="#0072B2", alpha=0.85, label="Avg abs q")
+    group_col = "family_display_name" if "family_display_name" in view_log.columns else "view_family"
+    q = (
+        view_log.groupby(group_col)[q_col]
+        .agg(lambda x: np.mean(np.abs(pd.to_numeric(x, errors="coerce"))))
+        .sort_values()
+    )
+    ax.barh(q.index, q.values, color=LAB_COLORS[0], alpha=0.85, label="Avg abs q")
     ax.set_xlabel("Average absolute q")
     ax.set_title(title or "View q tilt")
     ax.grid(True, axis="x", alpha=0.3)
-    if confidence_log is not None and not confidence_log.empty and "confidence" in confidence_log.columns:
+    if (
+        confidence_log is not None
+        and not confidence_log.empty
+        and "confidence" in confidence_log.columns
+    ):
+        conf_data = confidence_log.copy()
+        if group_col in conf_data.columns:
+            conf_group_col = group_col
+        elif (
+            group_col == "family_display_name"
+            and "view_family" in conf_data.columns
+            and "view_family" in view_log.columns
+        ):
+            label_map = (
+                view_log[["view_family", "family_display_name"]]
+                .dropna()
+                .drop_duplicates("view_family")
+                .set_index("view_family")["family_display_name"]
+            )
+            conf_data["_display_group"] = conf_data["view_family"].map(label_map).fillna(conf_data["view_family"])
+            conf_group_col = "_display_group"
+        elif "view_family" in conf_data.columns:
+            conf_group_col = "view_family"
+        else:
+            conf_group_col = None
+        if conf_group_col is None:
+            return ax
         ax2 = ax.twiny()
-        conf = confidence_log.groupby("view_family")["confidence"].mean().reindex(q.index)
-        ax2.plot(conf.values, range(len(conf.index)), marker="o", color="#D55E00", lw=1.0, label="Confidence")
-        ax2.set_xlabel("Avg confidence")
+        conf = conf_data.groupby(conf_group_col)["confidence"].mean().reindex(q.index)
+        ax2.plot(conf.values, range(len(conf.index)), marker="o", color=LAB_COLORS[1], lw=1.0, label="Confidence")
         ax2.set_xlim(0, 1)
+        ax2.set_xlabel("")
+        ax2.tick_params(axis="x", top=False, labeltop=False, length=0)
+        ax2.grid(False)
+        ax2.spines["top"].set_visible(False)
+        ax2.spines["right"].set_visible(False)
+
+        handles, labels = ax.get_legend_handles_labels()
+        handles2, labels2 = ax2.get_legend_handles_labels()
+        ax.legend(handles + handles2, labels + labels2, loc="lower right", fontsize=7, frameon=False)
     return ax
 
 
@@ -1621,6 +1780,7 @@ __all__ = [
     "plot_nav",
     "plot_nco_cluster_weights",
     "plot_posterior_shift_heatmap",
+    "plot_q_tilt_heatmap",
     "plot_risk_contribution_bar",
     "plot_risk_return_scatter",
     "plot_rolling_sharpe",
@@ -1633,6 +1793,7 @@ __all__ = [
     "plot_stress_summary",
     "plot_turnover",
     "plot_turnover_bar",
+    "plot_view_count_timeline",
     "plot_view_q_and_confidence",
     "plot_view_selection_counts",
     "plot_wasserstein_radius_path",

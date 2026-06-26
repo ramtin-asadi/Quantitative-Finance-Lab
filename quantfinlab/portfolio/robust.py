@@ -72,6 +72,22 @@ def _inputs(mu_ann, cov_ann):
     return labels, mu, make_psd(cov.to_numpy(dtype=float), eps=1e-10)
 
 
+def _wasserstein_epsilon(cov, *, n_mu_obs, radius, radius_scale="avg_vol"):
+    cov_arr = np.asarray(cov, dtype=float)
+    n = max(int(cov_arr.shape[0]), 1)
+    trace = max(float(np.trace(cov_arr)), 0.0)
+    key = str(radius_scale).lower().replace("-", "_").replace(" ", "_")
+    if key in {"avg", "avg_vol", "average_vol", "per_asset"}:
+        scale = math.sqrt(trace / n)
+    elif key in {"trace", "total", "total_vol"}:
+        scale = math.sqrt(trace)
+    elif key in {"unit", "raw"}:
+        scale = 1.0
+    else:
+        raise ValueError("radius_scale must be 'avg_vol', 'trace', or 'unit'.")
+    return float(radius) * scale / math.sqrt(max(int(n_mu_obs), 1))
+
+
 def box_robust_mv_weights(mu_ann, cov_ann, *, n_mu_obs, radius=0.25, mv_lambda=3.0, w_min=0.0, w_max=0.40):
     labels, mu, cov = _inputs(mu_ann, cov_ann)
     se = np.sqrt(np.maximum(np.diag(cov), 0.0)) / math.sqrt(max(int(n_mu_obs), 1))
@@ -98,21 +114,49 @@ def ellipsoid_robust_mv_weights(mu_ann, cov_ann, *, n_mu_obs, radius=0.25, mv_la
     return _clean_weights(w.value, labels, w_min=w_min, w_max=w_max)
 
 
-def wasserstein_drmv_weights(mu_ann, cov_ann, *, n_mu_obs, radius=0.10, mv_lambda=3.0, w_min=0.0, w_max=0.40):
+def wasserstein_drmv_weights(
+    mu_ann,
+    cov_ann,
+    *,
+    n_mu_obs,
+    radius=1.0,
+    mv_lambda=1.5,
+    radius_scale="avg_vol",
+    worst_case_variance=True,
+    w_min=0.0,
+    w_max=0.40,
+):
     labels, mu, cov = _inputs(mu_ann, cov_ann)
     n = len(labels)
-    sqrt_delta = float(radius) * math.sqrt(float(np.trace(cov)) / n) / math.sqrt(max(int(n_mu_obs), 1))
+    epsilon = _wasserstein_epsilon(cov, n_mu_obs=n_mu_obs, radius=radius, radius_scale=radius_scale)
     caps = _cap_series(labels, w_max).to_numpy(dtype=float)
     w = cp.Variable(n)
-    penalty = sqrt_delta * cp.norm(w, 2)
-    problem = cp.Problem(cp.Maximize(mu.to_numpy(dtype=float) @ w - penalty - 0.5 * float(mv_lambda) * cp.quad_form(w, cp.psd_wrap(cov))), [cp.sum(w) == 1.0, w >= float(w_min), w <= caps])
+    mean_tax = epsilon * cp.norm(w, 2)
+    if worst_case_variance:
+        empirical_vol = cp.norm(psd_sqrt(cov) @ w, 2)
+        risk_penalty = 0.5 * float(mv_lambda) * cp.square(empirical_vol + mean_tax)
+    else:
+        risk_penalty = 0.5 * float(mv_lambda) * cp.quad_form(w, cp.psd_wrap(cov))
+    problem = cp.Problem(cp.Maximize(mu.to_numpy(dtype=float) @ w - mean_tax - risk_penalty), [cp.sum(w) == 1.0, w >= float(w_min), w <= caps])
     status = _solve(problem)
     if w.value is None or status not in {"optimal", "optimal_inaccurate"}:
         return _clean_weights(np.ones(n), labels, w_min=w_min, w_max=w_max)
     return _clean_weights(w.value, labels, w_min=w_min, w_max=w_max)
 
 
-def robust_radius_path(model, mu_ann, cov_ann, *, n_mu_obs, radii, mv_lambda=3.0, w_min=0.0, w_max=0.40):
+def robust_radius_path(
+    model,
+    mu_ann,
+    cov_ann,
+    *,
+    n_mu_obs,
+    radii,
+    mv_lambda=3.0,
+    radius_scale="avg_vol",
+    worst_case_variance=True,
+    w_min=0.0,
+    w_max=0.40,
+):
     labels, mu, cov = _inputs(mu_ann, cov_ann)
     mu_arr = mu.to_numpy(dtype=float)
     omega_sqrt = psd_sqrt(cov / max(int(n_mu_obs), 1))
@@ -125,23 +169,29 @@ def robust_radius_path(model, mu_ann, cov_ann, *, n_mu_obs, radii, mv_lambda=3.0
         elif model_key == "ellipsoid":
             w = ellipsoid_robust_mv_weights(mu_ann, cov_ann, n_mu_obs=n_mu_obs, radius=radius, mv_lambda=mv_lambda, w_min=w_min, w_max=w_max)
         elif model_key == "wasserstein":
-            w = wasserstein_drmv_weights(mu_ann, cov_ann, n_mu_obs=n_mu_obs, radius=radius, mv_lambda=mv_lambda, w_min=w_min, w_max=w_max)
+            w = wasserstein_drmv_weights(mu_ann, cov_ann, n_mu_obs=n_mu_obs, radius=radius, mv_lambda=mv_lambda, radius_scale=radius_scale, worst_case_variance=worst_case_variance, w_min=w_min, w_max=w_max)
         else:
             raise ValueError("model must be 'box', 'ellipsoid', or 'wasserstein'.")
         w_arr = pd.Series(w, dtype=float).reindex(labels).fillna(0.0).to_numpy(dtype=float)
         if model_key == "ellipsoid":
             penalty = float(radius) * float(np.linalg.norm(omega_sqrt @ w_arr))
         elif model_key == "wasserstein":
-            penalty = float(radius) * math.sqrt(float(np.trace(cov)) / len(labels)) / math.sqrt(max(int(n_mu_obs), 1)) * float(np.linalg.norm(w_arr))
+            epsilon = _wasserstein_epsilon(cov, n_mu_obs=n_mu_obs, radius=radius, radius_scale=radius_scale)
+            penalty = epsilon * float(np.linalg.norm(w_arr))
         else:
             penalty = float(radius) * float(se @ w_arr)
         empirical_return = float(mu_arr @ w_arr)
         volatility = float(math.sqrt(max(w_arr @ cov @ w_arr, 0.0)))
+        robust_volatility = volatility + penalty if model_key == "wasserstein" else np.nan
+        risk_penalty = 0.5 * float(mv_lambda) * ((robust_volatility if worst_case_variance and model_key == "wasserstein" else volatility) ** 2)
         row = {
             "empirical_return": empirical_return,
             "penalty": penalty,
             "robust_return": empirical_return - penalty,
             "volatility": volatility,
+            "robust_volatility": robust_volatility,
+            "risk_penalty": risk_penalty,
+            "objective": empirical_return - penalty - risk_penalty,
             "effective_n": float(1.0 / np.square(w_arr).sum()) if np.square(w_arr).sum() > 0 else np.nan,
         }
         row["radius"] = float(radius)
@@ -170,8 +220,66 @@ def ellipsoid_robust_weight_frame(cache, rebalance_dates, *, cov_model, mu_model
     return _frame(cache, rebalance_dates, cov_model=cov_model, mu_model=mu_model, func=ellipsoid_robust_mv_weights, kwargs={"radius": radius, "mv_lambda": mv_lambda, "w_min": w_min, "w_max": w_max})
 
 
-def wasserstein_weight_frame(cache, rebalance_dates, *, cov_model, mu_model, radius=0.10, mv_lambda=3.0, w_min=0.0, w_max=0.40):
-    return _frame(cache, rebalance_dates, cov_model=cov_model, mu_model=mu_model, func=wasserstein_drmv_weights, kwargs={"radius": radius, "mv_lambda": mv_lambda, "w_min": w_min, "w_max": w_max})
+def wasserstein_weight_frame(cache, rebalance_dates, *, cov_model, mu_model, radius=1.0, mv_lambda=1.5, radius_scale="avg_vol", worst_case_variance=True, w_min=0.0, w_max=0.40):
+    return _frame(cache, rebalance_dates, cov_model=cov_model, mu_model=mu_model, func=wasserstein_drmv_weights, kwargs={"radius": radius, "mv_lambda": mv_lambda, "radius_scale": radius_scale, "worst_case_variance": worst_case_variance, "w_min": w_min, "w_max": w_max})
+
+
+def robust_weight_frames(
+    cache,
+    rebalance_dates,
+    *,
+    cov_model="LedoitWolf",
+    mu_model="Momentum",
+    box_radius=0.25,
+    ellipsoid_radius=0.10,
+    wasserstein_radius=1.0,
+    mv_lambda=2.0,
+    wasserstein_cov_model=None,
+    wasserstein_mu_model=None,
+    wasserstein_mv_lambda=1.5,
+    wasserstein_radius_scale="avg_vol",
+    wasserstein_worst_case_variance=True,
+    w_min=0.0,
+    w_max=0.40,
+):
+    """Build the three robust mean-variance weight frames from explicit inputs."""
+    w_cov_model = cov_model if wasserstein_cov_model is None else wasserstein_cov_model
+    w_mu_model = mu_model if wasserstein_mu_model is None else wasserstein_mu_model
+    w_lambda = mv_lambda if wasserstein_mv_lambda is None else wasserstein_mv_lambda
+    return {
+        "Box Robust MV": box_robust_weight_frame(
+            cache,
+            rebalance_dates,
+            cov_model=cov_model,
+            mu_model=mu_model,
+            radius=box_radius,
+            mv_lambda=mv_lambda,
+            w_min=w_min,
+            w_max=w_max,
+        ),
+        "Ellipsoid Robust MV": ellipsoid_robust_weight_frame(
+            cache,
+            rebalance_dates,
+            cov_model=cov_model,
+            mu_model=mu_model,
+            radius=ellipsoid_radius,
+            mv_lambda=mv_lambda,
+            w_min=w_min,
+            w_max=w_max,
+        ),
+        "Wasserstein DRMV": wasserstein_weight_frame(
+            cache,
+            rebalance_dates,
+            cov_model=w_cov_model,
+            mu_model=w_mu_model,
+            radius=wasserstein_radius,
+            mv_lambda=w_lambda,
+            radius_scale=wasserstein_radius_scale,
+            worst_case_variance=wasserstein_worst_case_variance,
+            w_min=w_min,
+            w_max=w_max,
+        ),
+    }
 
 
 __all__ = [
@@ -181,6 +289,7 @@ __all__ = [
     "ellipsoid_robust_weight_frame",
     "psd_sqrt",
     "robust_radius_path",
+    "robust_weight_frames",
     "wasserstein_drmv_weights",
     "wasserstein_weight_frame",
 ]

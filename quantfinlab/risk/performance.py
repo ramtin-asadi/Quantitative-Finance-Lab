@@ -21,6 +21,15 @@ def nav_series(
     r = _to_numeric_series(returns, name="returns").fillna(0.0)
     return float(start_value) * (1.0 + r).cumprod()
 
+
+def total_return(values: pd.Series | Sequence[float] | np.ndarray) -> float:
+    """Total return from a NAV/value series."""
+    s = _to_numeric_series(values, name="values").dropna()
+    if len(s) < 2 or abs(float(s.iloc[0])) <= 1e-12:
+        return float("nan")
+    return float(s.iloc[-1] / s.iloc[0] - 1.0)
+
+
 def sortino_ratio(
     returns: pd.Series | Sequence[float] | np.ndarray,
     *,
@@ -102,4 +111,5 @@ __all__ = [
     "performance_table",
     "rolling_volatility",
     "sortino_ratio",
+    "total_return",
 ]

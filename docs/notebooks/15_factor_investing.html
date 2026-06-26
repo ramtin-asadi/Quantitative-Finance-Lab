@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>15. Factor Investing and Fama French Allocation – Quantitative Finance Lab</title>
+<title>15. Factor Investing and Fama-French Allocation – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/14_fourier_option_pricing.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2641b481724464e61c86985d8c912b6f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -111,6 +109,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -123,7 +150,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../notebooks/15_factor_investing.html"><span class="chapter-title">15. Factor Investing and Fama French Allocation</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../notebooks/15_factor_investing.html"><span class="chapter-title">15. Factor Investing and Fama-French Allocation</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -190,32 +217,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/07_dynamic_hedge_ratios.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">7. Dynamic Hedge Ratio and Residual Trading</span></a>
+  <a href="../notebooks/07_dynamic_hedge_ratios.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">7. Dynamic Hedge Ratios and Residual Trading</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/08_vol_surface_local_vol.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">8. Volatility Surface and Local Volatility model</span></a>
+  <a href="../notebooks/08_vol_surface_local_vol.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">8. Volatility Surface and Local Volatility</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/09_term_structure_models.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">9. Short Rate and Term Structure Models</span></a>
+  <a href="../notebooks/09_term_structure_models.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">9. Term Structure Models, Curve Factors, and Swap-Based Duration Overlays</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/10_portfolio_tail_parity_robust.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">10. Portfolio Optimization: Tail risk, Risk Parity and Robust Models</span></a>
+  <a href="../notebooks/10_portfolio_tail_parity_robust.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">10. Portfolio Optimization: Tail Risk, Risk Parity and Robust Models</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/11_stochastic_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">11. Stochastic Volatility Models</span></a>
+  <a href="../notebooks/11_stochastic_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">11. Stochastic Volatility Models and Model-Risk-Aware Option Relative Value</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/12_financial_conditions_index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">12. Macro Fiancial Conditions Index</span></a>
+  <a href="../notebooks/12_financial_conditions_index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">12. Macro Financial Conditions Index and Macro-Regime Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -225,17 +252,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/14_fourier_option_pricing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">14. Fourier Based Methods for Option Pricing</span></a>
+  <a href="../notebooks/14_fourier_option_pricing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">14. Fourier-Based Methods for Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/15_factor_investing.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">15. Factor Investing and Fama French Allocation</span></a>
+  <a href="../notebooks/15_factor_investing.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">15. Factor Investing and Fama-French Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/16_regime_switching_portfolio.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">16. Regime Switching models for portfolio selection</span></a>
+  <a href="../notebooks/16_regime_switching_portfolio.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">16. Regime Switching Portfolio Selection</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -245,7 +272,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a>
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility for Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -269,7 +296,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">15. Factor Investing and Fama French Allocation</span></h1>
+<h1 class="title"><span class="chapter-title">15. Factor Investing and Fama-French Allocation</span></h1>
 </div>
 
 
@@ -286,6 +313,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<p>In this project we move from <strong>asset-only allocation</strong> to <strong>factor-aware allocation</strong>. Instead of only asking which sector or country ETF has been going up, we ask which economic return premia are currently strong, which assets are exposed to those premia, and whether that exposure has enough evidence to justify active rotation.</p>
+<p>Main pieces in this project:</p>
+<ul>
+<li>build and inspect U.S. Fama-French style factor data and industry/ETF factor exposures,</li>
+<li>estimate full-sample and rolling factor regressions,</li>
+<li>convert factor performance into a real-time factor-state signal,</li>
+<li>map factor states into sector scores using rolling betas,</li>
+<li>add residual strength, trend strength, and risk penalty signals,</li>
+<li>validate the signals using rank IC, top-minus-bottom payoff, and signal decay,</li>
+<li>construct soft active sector weights and compare the strategies,</li>
+<li>repeat the workflow on developed ex-U.S. country ETFs through the library.</li>
+</ul>
+<section id="factor-investing-as-a-language-for-explaining-returns" class="level2">
+<h2 class="anchored" data-anchor-id="factor-investing-as-a-language-for-explaining-returns">1) Factor Investing as a Language for Explaining Returns</h2>
+<p>A sector return can be decomposed into two parts: the part explained by common return drivers, and the part left over after those common drivers are removed. Factor investing starts from the idea that returns aren’t random ticker-by-ticker events. Many assets move together because they share exposure to the same underlying economic forces.</p>
+<p>For example, a technology ETF and a consumer discretionary ETF can both have high exposure to the broad market factor, but they can behave differently when value stocks are strong, when small caps outperform, or when profitability and investment factors change. In this project we treat those shared forces as <strong>factor premia</strong>.</p>
+<p>A factor premium is a portfolio return that represents a systematic style or risk characteristic. The factor can be academic, like the Fama-French size factor, or tradable, like a small-cap ETF spread versus a broad market ETF. The academic factor is cleaner because it’s constructed directly from sorted portfolios. The tradable proxy is less clean but closer to what a portfolio can actually hold.</p>
+<p>The workflow is:</p>
+<ol type="1">
+<li><strong>Measure factor states</strong>: which premia are currently strong or weak.</li>
+<li><strong>Measure asset exposures</strong>: which sectors or countries load on those premia.</li>
+<li><strong>Score assets</strong>: reward assets that have exposure to strong premia and penalize exposure to weak premia.</li>
+<li><strong>Validate signals</strong>: check whether the scores actually predict future cross-sectional returns.</li>
+<li><strong>Allocate softly</strong>: tilt away from equal weight without making extreme concentrated bets.</li>
+</ol>
+<p>This gives the project an analyst-style structure. We aren’t only fitting regressions. We use the regressions to explain sector behavior, build signals, and test whether those signals are useful for portfolio rotation.</p>
 <div id="e547df21" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -303,6 +356,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>set_plot_style()</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>pd.options.display.float_format <span class="op">=</span> <span class="st">"</span><span class="sc">{:.4f}</span><span class="st">"</span>.<span class="bu">format</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+</section>
+<section id="data-sources-and-return-panel" class="level2">
+<h2 class="anchored" data-anchor-id="data-sources-and-return-panel">2) Data Sources and Return Panel</h2>
+<p>The sector and ETF price data has already appeared in earlier portfolio projects, so we don’t need to re-teach the universe from scratch. The important part here is the <strong>factor layer</strong> added on top of the sector returns.</p>
+<p>For reproducibility, the project uses the repo’s data folders rather than linking to individual generated files:</p>
+<ul>
+<li>U.S. sector ETF prices: <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/sector_etfs">data/sector_etfs</a></li>
+<li>broad/cash ETF support such as SPY and SHY: <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/core_cross_asset_etfs">data/core_cross_asset_etfs</a></li>
+<li>U.S. Fama-French factors, momentum, and 12-industry portfolios: <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/fama_french_us">data/fama_french_us</a></li>
+<li>factor proxy ETFs such as MTUM, VLUE, QUAL, USMV, RSP, IWF, IWD, and IWM: <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/factor_proxy_etfs">data/factor_proxy_etfs</a></li>
+<li>developed ex-U.S. country ETFs for the secondary implementation: <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/international_country_etfs">data/international_country_etfs</a></li>
+<li>developed ex-U.S. Fama-French factors and momentum: <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/fama_french_developed_ex_us">data/fama_french_developed_ex_us</a></li>
+</ul>
+<p>The important reproducibility idea is that each folder contains the workflow for rebuilding its generated file. We don’t point to a single CSV path as if it were the source of truth. The folder is the source layer.</p>
 <div id="c7a1386e" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data"</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>etf_path <span class="op">=</span> [data_path <span class="op">/</span> <span class="st">"sector_etfs.csv"</span>, data_path <span class="op">/</span> <span class="st">"core_cross_asset_etfs.csv"</span>]</span>
@@ -318,6 +385,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>cash_ticker <span class="op">=</span> <span class="st">"SHY"</span></span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>benchmark_ticker <span class="op">=</span> <span class="st">"SPY"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<section id="sector-etf-universe" class="level3">
+<h3 class="anchored" data-anchor-id="sector-etf-universe">2.1 Sector ETF Universe</h3>
+<p>We begin with U.S. sector ETFs, SHY as the cash-like defensive asset, and SPY as the broad equity benchmark. The sector universe includes materials, energy, financials, industrials, technology, staples, utilities, health care, discretionary, real estate, and telecom/communication exposure through IYR and IYZ.</p>
 <div id="6a8ebbbc" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>tickers <span class="op">=</span> sector_tickers <span class="op">+</span> [cash_ticker, benchmark_ticker]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>prices <span class="op">=</span> load_yfinance_panel(</span>
@@ -449,6 +519,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The coverage table shows that most sector ETFs begin in 1999 and run through May 2026. IYR and IYZ begin in 2000, and SHY starts in 2002. That matters because later calculations require overlapping observations across sectors, cash, benchmark, and factors. Once we move to monthly returns and align the factor data, the sample becomes February 1999 to February 2026 for the main sector/factor work.</p>
+<p>This is a good sample for factor investing because it contains several distinct regimes:</p>
+<ul>
+<li>the dot-com crash and recovery,</li>
+<li>the 2008 credit crisis,</li>
+<li>the post-GFC low-rate expansion,</li>
+<li>the COVID crash and reopening rally,</li>
+<li>the 2022 inflation/rates shock,</li>
+<li>the 2023-2025 AI/growth-led market.</li>
+</ul>
+<p>A factor model is more interesting across this kind of sample than in a single quiet bull market. The sector exposures have had to survive growth crashes, value rebounds, energy shocks, rate shocks, and defensive rotations.</p>
+</section>
+<section id="monthly-returns-and-timing" class="level3">
+<h3 class="anchored" data-anchor-id="monthly-returns-and-timing">2.2 Monthly Returns and Timing</h3>
+<p>We convert daily adjusted close prices to month-end prices and then compute monthly returns:</p>
+<p><span class="math display">\[
+R_{t,i} = \frac{P_{t,i}}{P_{t-1,i}} - 1
+\]</span></p>
+<p>where <span class="math inline">\(P_{t,i}\)</span> is the month-end price of asset <span class="math inline">\(i\)</span> in month <span class="math inline">\(t\)</span>. Monthly frequency is a good fit for this project because Fama-French factor files are monthly and sector rotation doesn’t need daily rebalancing. It also reduces noise. Daily sector returns are dominated by broad market shocks, while monthly returns give factor relationships more room to show up.</p>
+<p>The timing convention later is important: scores are formed using information available at month end, and portfolio returns are realized after that. This keeps the factor strategy from accidentally using future returns.</p>
 <div id="426a5746" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>monthly_prices <span class="op">=</span> prices.resample(<span class="st">"ME"</span>).last().dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>monthly_returns <span class="op">=</span> monthly_prices.pct_change().dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
@@ -505,6 +595,77 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The first displayed monthly summary confirms 328 monthly rows from February 1999 through May 2026 for sectors, cash, and SPY before factor alignment. After aligning with factor dates, we get 325 rows through February 2026. This is still enough for rolling 60-month regressions and a meaningful out-of-sample-style strategy test.</p>
+</section>
+</section>
+<section id="fama-french-factors-and-long-run-premia" class="level2">
+<h2 class="anchored" data-anchor-id="fama-french-factors-and-long-run-premia">3) Fama-French Factors and Long-Run Premia</h2>
+<p>The core factor set is the U.S. Fama-French five-factor model plus momentum:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Factor</th>
+<th>Meaning</th>
+<th>Economic interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(Mkt-RF\)</span></td>
+<td>market excess return</td>
+<td>compensation for broad equity market risk</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(SMB\)</span></td>
+<td>small minus big</td>
+<td>small-cap stocks outperforming large-cap stocks</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(HML\)</span></td>
+<td>high minus low</td>
+<td>value stocks outperforming growth stocks</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(RMW\)</span></td>
+<td>robust minus weak</td>
+<td>profitable firms outperforming weak-profitability firms</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(CMA\)</span></td>
+<td>conservative minus aggressive</td>
+<td>conservative-investment firms outperforming aggressive-investment firms</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(MOM\)</span></td>
+<td>winners minus losers</td>
+<td>recent winners outperforming recent losers</td>
+</tr>
+</tbody>
+</table>
+<p>The factor return vector for month <span class="math inline">\(t\)</span> is:</p>
+<p><span class="math display">\[
+f_t = \begin{bmatrix} MKT_t &amp; SMB_t &amp; HML_t &amp; RMW_t &amp; CMA_t &amp; MOM_t \end{bmatrix}^\top
+\]</span></p>
+<p>The risk-free rate is kept separately as <span class="math inline">\(RF_t\)</span>. For any sector return <span class="math inline">\(R_{t,i}\)</span>, we use the excess return:</p>
+<p><span class="math display">\[
+r_{t,i}^{excess} = R_{t,i} - RF_t
+\]</span></p>
+<p>This matters because the factor model explains returns above the cash rate. If the risk-free rate changes a lot, especially after 2022, using raw returns would mix equity premia with cash-rate shifts. Excess returns keep the focus on compensation beyond the safe rate.</p>
+<section id="economic-reading-of-the-six-factors" class="level3">
+<h3 class="anchored" data-anchor-id="economic-reading-of-the-six-factors">3.1 Economic Reading of the Six Factors</h3>
+<p>The six factors have different economic meanings, so their states shouldn’t be interpreted the same way.</p>
+<p><strong>Market excess return</strong> is the broad risk appetite factor. When <span class="math inline">\(Mkt-RF\)</span> is strong, equity risk is being rewarded relative to cash. Sectors with high market beta usually benefit, but this factor alone doesn’t tell us which sector is best. It mostly tells us whether equity exposure itself has been favorable.</p>
+<p><strong>SMB</strong> captures the small-cap premium. A positive <span class="math inline">\(SMB\)</span> state often means smaller or less mega-cap-dominated stocks are participating. In sector terms, this can favor more cyclical or equal-weight-like exposures and penalize mega-cap-heavy sectors if the market is being led by broad participation rather than only the largest firms.</p>
+<p><strong>HML</strong> captures value versus growth. A positive <span class="math inline">\(HML\)</span> state means value-like firms are outperforming growth-like firms. This often favors energy, financials, materials, and some industrials, while it can penalize technology and other long-duration growth sectors.</p>
+<p><strong>RMW</strong> captures profitability. A positive profitability state rewards firms with robust operating profitability. This can support quality-like sectors, but it doesn’t always line up with momentum or value. A negative <span class="math inline">\(RMW\)</span> state means the market is not rewarding the profitability style at that moment.</p>
+<p><strong>CMA</strong> captures conservative investment. A positive <span class="math inline">\(CMA\)</span> state means firms that invest conservatively are outperforming aggressive-investment firms. This can be related to quality, balance-sheet discipline, and lower capital intensity. It can also behave defensively in some regimes.</p>
+<p><strong>MOM</strong> captures continuation in recent winners. Momentum often works across assets, but it is vulnerable to sharp reversals. A strong <span class="math inline">\(MOM\)</span> state can support sectors that have been leading, but if the market suddenly rotates, momentum can lose quickly.</p>
+<p>This factor interpretation is the bridge from regression coefficients to sector allocation. A beta has no active meaning by itself. It becomes actionable only when the corresponding factor state is strong or weak.</p>
 <div id="81ad005e" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> io <span class="im">import</span> StringIO</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -759,6 +920,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+</section>
+<section id="industry-portfolios-as-a-factor-exposure-test-bed" class="level3">
+<h3 class="anchored" data-anchor-id="industry-portfolios-as-a-factor-exposure-test-bed">3.2 Industry Portfolios as a Factor Exposure Test Bed</h3>
+<p>Before applying factor scores to sector ETFs, we first use long-history Fama-French 12-industry portfolios. These industry portfolios go back to 1963, much earlier than the ETF data. They act like a diagnostic laboratory: if factor regressions can’t explain broad industry portfolios over a long sample, we shouldn’t expect them to explain sector ETFs reliably.</p>
 <div id="1396554b" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>industry_returns <span class="op">=</span> read_ff_table(industry_file)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>industry_dates <span class="op">=</span> industry_returns.index.intersection(factors.dropna(subset<span class="op">=</span>factor_cols).index).intersection(rf.index)</span>
@@ -883,6 +1048,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The industry table shows annualized means and volatilities across industries. Durable goods and business equipment have high volatility, while utilities and non-durables are much more defensive. Energy has high volatility and a very different cycle from technology or health care. These differences are exactly what make sector factor analysis useful.</p>
+<p>A sector isn’t only an economic label. It has a factor signature. Business equipment usually has strong market and growth exposure. Utilities tend to have lower market beta and more defensive behavior. Energy is tied to commodity cycles and often has lower explanatory power from standard equity factors. Financials connect to value, credit, rates, and market beta. The factor regression turns these qualitative descriptions into estimated numbers.</p>
 <div id="db4972ac" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>factor_summary <span class="op">=</span> pd.DataFrame(</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    {</span>
@@ -964,6 +1131,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The factor summary table gives the basic historical behavior of each premium. Annualized market excess return is about 7.1% with volatility around 15.4%, giving the strongest intuitive anchor: equity risk has been rewarded but with large drawdowns. Momentum has a similar annualized mean around 7.2% and volatility around 14.5%, with the highest Sharpe-like ratio in the table.</p>
+<p>Several factors have smaller but still positive long-run means:</p>
+<ul>
+<li><span class="math inline">\(SMB\)</span> has the weakest long-run Sharpe-like value among the listed factors.</li>
+<li><span class="math inline">\(HML\)</span> has positive average return but large regime dependence.</li>
+<li><span class="math inline">\(RMW\)</span> and <span class="math inline">\(CMA\)</span> have lower volatility and relatively attractive Sharpe-like ratios.</li>
+<li><span class="math inline">\(MOM\)</span> has strong long-run performance but very deep crash risk, visible later in the drawdown plot.</li>
+</ul>
+<p>The minimum and maximum monthly values also show the tail behavior. Momentum has a minimum around -34%, which is much larger in magnitude than the other factor losses. That kind of loss often happens during violent reversals, when previous losers rebound quickly and previous winners lag. This is the main risk of momentum as a portfolio signal: it can work for long stretches and still suffer sharp reversal months.</p>
+</section>
+<section id="factor-premia-across-regimes" class="level3">
+<h3 class="anchored" data-anchor-id="factor-premia-across-regimes">3.3 Factor Premia Across Regimes</h3>
+<p>Factor investing becomes much more intuitive when we connect the premia to market regimes.</p>
+<p>During <strong>growth-led disinflationary regimes</strong>, technology and growth sectors often benefit. In those periods, value can lag, small-cap participation can be weak, and momentum may concentrate in a narrow group of large winners. The sector model can underweight technology if value and size states are strong but growth still dominates. This is one of the central risks in this project.</p>
+<p>During <strong>reflationary or inflationary regimes</strong>, value, energy, financials, and materials often become more attractive. Higher nominal growth, commodity strength, and rising rates can hurt long-duration growth assets while supporting real-economy sectors. This kind of regime was visible in 2021-2022.</p>
+<p>During <strong>stress regimes</strong>, market beta explains a lot because correlations rise. But factor exposure doesn’t disappear. Defensive sectors, profitability, quality, low volatility, and residual sector strength can all matter. The model doesn’t have a dedicated macro stress factor here, so the risk penalty and SHY allocation help control this part.</p>
+<p>During <strong>broad recovery regimes</strong>, small-cap and cyclical exposure can rebound strongly. <span class="math inline">\(SMB\)</span> and <span class="math inline">\(HML\)</span> often improve together when the market moves from narrow defensive/growth leadership into broader risk appetite.</p>
+<p>This is why we don’t simply rank factors by long-run mean. The current state of each factor tells us which regime is being rewarded now, and rolling sector betas tell us which sectors are positioned for that regime.</p>
 <div id="296dc136" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">18</span>, <span class="fl">4.2</span>))</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -998,6 +1183,63 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The factor growth plot shows cumulative growth of $1 invested in each factor portfolio. It makes clear that factor premia don’t compound smoothly. Market and momentum create strong long-term growth, but both experience painful drawdowns. Value has long flat or weak stretches, especially during growth-dominated regimes. Profitability and conservative investment are steadier than the headline market and momentum premia, but they still aren’t risk-free.</p>
+<p>The drawdown panel is more informative than the cumulative growth panel for portfolio design. A factor can have attractive long-run performance and still be hard to use if its drawdowns are deep, persistent, or clustered exactly when the portfolio is already under pressure. Momentum is the obvious example: it has a strong long-run average, but its crash risk means we shouldn’t simply maximize exposure to it.</p>
+<p>The correlation matrix helps explain diversification among factors. Factors aren’t independent. Value and conservative investment often have a meaningful relationship because value firms and conservative-investment firms can overlap. Market is connected to many factors because almost every equity-style factor carries some market beta unless constructed very carefully. Low or moderate factor correlations are useful because they create the possibility of factor rotation: one premium can be weak while another is strong.</p>
+</section>
+</section>
+<section id="full-sample-factor-regressions" class="level2">
+<h2 class="anchored" data-anchor-id="full-sample-factor-regressions">4) Full-Sample Factor Regressions</h2>
+<p>The core regression is:</p>
+<p><span class="math display">\[
+r_{t,i}^{excess} = \alpha_i + \beta_{i,MKT}(Mkt-RF)_t + \beta_{i,SMB}SMB_t + \beta_{i,HML}HML_t + \beta_{i,RMW}RMW_t + \beta_{i,CMA}CMA_t + \beta_{i,MOM}MOM_t + \varepsilon_{t,i}
+\]</span></p>
+<p>For each asset or industry <span class="math inline">\(i\)</span>:</p>
+<ul>
+<li><span class="math inline">\(r_{t,i}^{excess}\)</span> is the asset’s return above the risk-free rate,</li>
+<li><span class="math inline">\(\alpha_i\)</span> is the return not explained by the factor model,</li>
+<li><span class="math inline">\(\beta_{i,k}\)</span> is sensitivity to factor <span class="math inline">\(k\)</span>,</li>
+<li><span class="math inline">\(\varepsilon_{t,i}\)</span> is the residual, the part left unexplained in month <span class="math inline">\(t\)</span>.</li>
+</ul>
+<p>In matrix form, for one asset:</p>
+<p><span class="math display">\[
+\mathbf{y}_i = X\theta_i + \varepsilon_i
+\]</span></p>
+<p>where:</p>
+<p><span class="math display">\[
+\theta_i = \begin{bmatrix}\alpha_i &amp; \beta_{i,1} &amp; \cdots &amp; \beta_{i,K}\end{bmatrix}^\top
+\]</span></p>
+<p>and <span class="math inline">\(X\)</span> contains a column of ones plus the factor returns. Ordinary least squares estimates:</p>
+<p><span class="math display">\[
+\hat{\theta}_i = (X^\top X)^{-1}X^\top \mathbf{y}_i
+\]</span></p>
+<p>This formula chooses coefficients that minimize squared residuals:</p>
+<p><span class="math display">\[
+\min_{\theta_i} \sum_t \left(r_{t,i}^{excess} - \alpha_i - \beta_i^\top f_t\right)^2
+\]</span></p>
+<p>Financially, <span class="math inline">\(\beta_i^\top f_t\)</span> is the explained return from common factors. <span class="math inline">\(\alpha_i\)</span> is the average return left after controlling for those factors. A positive alpha doesn’t automatically mean skill. It can also mean the factor model is missing an important sector-specific driver.</p>
+<section id="statistical-details-behind-the-regression-output" class="level3">
+<h3 class="anchored" data-anchor-id="statistical-details-behind-the-regression-output">4.1 Statistical Details Behind the Regression Output</h3>
+<p>The factor regression is simple, but several statistical details matter.</p>
+<p>The fitted value is:</p>
+<p><span class="math display">\[
+\hat{r}_{t,i}^{excess} = \hat{\alpha}_i + \hat{\beta}_i^\top f_t
+\]</span></p>
+<p>The residual is:</p>
+<p><span class="math display">\[
+\hat{\varepsilon}_{t,i} = r_{t,i}^{excess} - \hat{r}_{t,i}^{excess}
+\]</span></p>
+<p>The model’s explanatory power is measured by:</p>
+<p><span class="math display">\[
+R_i^2 = 1 - \frac{\sum_t \hat{\varepsilon}_{t,i}^2}{\sum_t (r_{t,i}^{excess} - \bar{r}_i^{excess})^2}
+\]</span></p>
+<p><span class="math inline">\(R^2\)</span> close to 1 means the factor model explains most of the return variation. <span class="math inline">\(R^2\)</span> close to 0 means the factor model doesn’t explain much beyond the mean.</p>
+<p>Alpha is annualized as:</p>
+<p><span class="math display">\[
+\alpha_i^{ann} = 12\hat{\alpha}_i
+\]</span></p>
+<p>because the regression is monthly. A monthly alpha of 0.004 becomes about 4.8% annualized before compounding. We still have to be careful with alpha interpretation. If a sector has positive alpha, it can mean genuine unexplained outperformance, but it can also mean omitted factors, nonlinear behavior, sector-specific macro exposure, or sample-specific luck.</p>
+<p>The regression also assumes a linear relationship between sector returns and factor returns. That is a simplification. Energy doesn’t respond linearly to oil shocks through the Fama-French factor set, and utilities can respond to rates in a way that isn’t fully captured by equity factors. That is why residual diagnostics are part of the strategy rather than a secondary afterthought.</p>
 <div id="7a3ee8cc" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> full_sample_factor_regression(y, x):</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> pd.DataFrame(y).astype(<span class="bu">float</span>)</span>
@@ -1160,6 +1402,62 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The industry factor beta heatmap gives a compact map of how industries connect to the factor set. Business equipment is the clearest positive-alpha industry in the full sample, with annualized alpha around 5.2% after controlling for the six factors. That likely reflects the long-run technology/software-related premium that isn’t fully captured by the traditional factor set.</p>
+<p>Energy has a much lower <span class="math inline">\(R^2\)</span> than many other industries, around 0.48. That makes sense. Energy returns are heavily tied to oil, gas, geopolitics, supply shocks, and inflation cycles. A U.S. equity factor set can capture broad equity beta and some value exposure, but it can’t fully explain commodity-linked sector behavior.</p>
+<p>Utilities also have low explanatory power compared with industries like manufacturing, money/financials, or shops. Utilities are rate-sensitive and defensive, so their returns respond to yield changes, regulated cash-flow expectations, and dividend discounting. Those forces aren’t directly in the factor set.</p>
+<p>Several industries show negative annualized alpha after factor adjustment, such as chemicals, other, energy, manufacturing, and money. This doesn’t mean those industries were bad investments. It means their realized returns were less than what their factor exposures would predict over the full sample. The regression separates performance into <strong>rewarded style exposure</strong> and <strong>residual sector-specific performance</strong>.</p>
+</section>
+<section id="tradable-factor-etf-proxies" class="level3">
+<h3 class="anchored" data-anchor-id="tradable-factor-etf-proxies">4.2 Tradable Factor ETF Proxies</h3>
+<p>Academic factors are clean but not directly tradable in a simple ETF portfolio. We add factor proxy ETFs to bridge this gap:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Proxy</th>
+<th>Intended exposure</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>MTUM</td>
+<td>momentum tilt</td>
+</tr>
+<tr class="even">
+<td>VLUE</td>
+<td>value tilt</td>
+</tr>
+<tr class="odd">
+<td>QUAL</td>
+<td>quality/profitability tilt</td>
+</tr>
+<tr class="even">
+<td>USMV</td>
+<td>minimum volatility/defensive tilt</td>
+</tr>
+<tr class="odd">
+<td>RSP</td>
+<td>equal-weight market, often more mid/small-cap than cap-weighted SPY</td>
+</tr>
+<tr class="even">
+<td>IWF</td>
+<td>growth</td>
+</tr>
+<tr class="odd">
+<td>IWD</td>
+<td>value</td>
+</tr>
+<tr class="even">
+<td>IWM</td>
+<td>small caps</td>
+</tr>
+</tbody>
+</table>
+<p>These aren’t perfect replicas of academic factors. For example, MTUM isn’t the same as the Fama-French momentum factor. It has sector constraints, holdings turnover rules, and a live ETF construction process. VLUE isn’t exactly <span class="math inline">\(HML\)</span>, and QUAL isn’t exactly <span class="math inline">\(RMW\)</span>. But they help us check whether the academic factor state is also visible in tradable instruments.</p>
+<p>This distinction matters for implementation. An academic factor can show strong performance, but if the tradable proxy disagrees, the model should be less confident. That is why we later blend academic factor states with tradable proxy states and shrink the signal when they disagree.</p>
 <div id="d57df06e" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>factor_etfs <span class="op">=</span> [<span class="st">"MTUM"</span>, <span class="st">"VLUE"</span>, <span class="st">"QUAL"</span>, <span class="st">"USMV"</span>, <span class="st">"RSP"</span>, <span class="st">"IWF"</span>, <span class="st">"IWD"</span>, <span class="st">"IWM"</span>]</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>proxy_prices <span class="op">=</span> load_yfinance_panel(</span>
@@ -1322,6 +1620,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The factor ETF proxy regression behaves as expected in one important way: the <span class="math inline">\(R^2\)</span> values are very high for most proxies. IWM has <span class="math inline">\(R^2\)</span> around 0.986, IWF around 0.978, QUAL and RSP around 0.967, and IWD around 0.962. This means the factor model explains most of the variation in these ETFs.</p>
+<p>USMV has the lowest <span class="math inline">\(R^2\)</span> among the proxy ETFs, around 0.80. That makes sense because minimum-volatility strategies are partly driven by optimization rules, sector constraints, and low-beta defensive selection. A simple linear factor model captures some of that, but not all of it.</p>
+<p>The proxy alpha table is also useful. Most proxy ETFs have slightly negative annualized alpha after controlling for the factor set. This is normal for factor ETFs because ETF expense ratios, turnover, implementation constraints, and imperfect factor construction can reduce realized performance relative to academic factors. IWF is the only listed proxy with small positive alpha. That fits the sample, where large-cap growth performed very strongly.</p>
+</section>
+</section>
+<section id="rolling-exposures-and-factor-states" class="level2">
+<h2 class="anchored" data-anchor-id="rolling-exposures-and-factor-states">5) Rolling Exposures and Factor States</h2>
+<p>This alignment step is simple, but it matters statistically. If factor returns and sector returns have different missing dates, regressions can accidentally use inconsistent rows. A factor model is only valid when all variables in the regression refer to the same month.</p>
+<p>For month <span class="math inline">\(t\)</span>, the regression uses:</p>
+<p><span class="math display">\[
+\left(r_{t,i}^{excess}, f_t\right)
+\]</span></p>
+<p>for each sector <span class="math inline">\(i\)</span>. The sector return and factor returns are simultaneous monthly observations. Later, when we validate signals, we shift future returns forward:</p>
+<p><span class="math display">\[
+R_{t+1,i}
+\]</span></p>
+<p>so the score at time <span class="math inline">\(t\)</span> is tested against the next month’s sector return. That separation between estimation period and future payoff is what makes the signal validation meaningful.</p>
 <div id="ca713921" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>valid_factor_dates <span class="op">=</span> factors.dropna(subset<span class="op">=</span>factor_cols).index</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>common_dates <span class="op">=</span> sector_returns.index</span>
@@ -1396,6 +1711,38 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>After aligning sector returns, cash returns, SPY, the factor matrix, and the risk-free rate, the main sample runs from February 1999 to February 2026 with 325 monthly observations.</p>
+<section id="rolling-factor-regression" class="level3">
+<h3 class="anchored" data-anchor-id="rolling-factor-regression">5.1 Rolling Factor Regression</h3>
+<p>Full-sample betas are useful for broad interpretation, but factor exposures change through time. Technology in 2002 isn’t technology in 2025. Energy in 2014 isn’t energy in 2022. Financials after the GFC don’t behave like financials before the GFC. So we estimate rolling 60-month factor regressions.</p>
+<p>For each date <span class="math inline">\(t\)</span>, we use the last 60 months:</p>
+<p><span class="math display">\[
+\mathcal{W}_t = \{t-59,\ldots,t\}
+\]</span></p>
+<p>and estimate:</p>
+<p><span class="math display">\[
+r_{\tau,i}^{excess} = \alpha_{t,i} + \beta_{t,i}^\top f_\tau + \varepsilon_{\tau,i}, \qquad \tau \in \mathcal{W}_t
+\]</span></p>
+<p>The time index on <span class="math inline">\(\beta_{t,i}\)</span> is important. It means each month has its own estimated factor exposure vector. The rolling estimate answers: based on the last five years, how has this sector been behaving relative to the factor set?</p>
+<p>The 60-month window is a compromise:</p>
+<ul>
+<li>long enough to estimate six factor loadings plus an intercept,</li>
+<li>short enough to let exposures adapt,</li>
+<li>slow enough to avoid treating every short-term shock as a permanent beta change.</li>
+</ul>
+<p>Rolling regressions are noisy, especially when factors are correlated. But for sector-level analysis, the rolling beta path is often more informative than one full-sample number.</p>
+</section>
+<section id="rolling-regression-stability-and-estimation-risk" class="level3">
+<h3 class="anchored" data-anchor-id="rolling-regression-stability-and-estimation-risk">5.2 Rolling Regression Stability and Estimation Risk</h3>
+<p>Rolling regressions give time-varying betas, but they also introduce estimation noise. With a 60-month window and six factors plus an intercept, each regression estimates seven coefficients from 60 observations. That is workable, but not huge.</p>
+<p>The estimated beta vector is:</p>
+<p><span class="math display">\[
+\hat{\beta}_{t,i} = \left(X_t^\top X_t\right)^{-1}X_t^\top y_{t,i}
+\]</span></p>
+<p>where <span class="math inline">\(X_t\)</span> is the rolling factor matrix for the 60-month window. If two factors are highly correlated inside that window, <span class="math inline">\(X_t^\top X_t\)</span> becomes less stable. Then the beta estimates can move for statistical reasons, not only economic reasons.</p>
+<p>This is especially relevant for style factors. Value, profitability, conservative investment, and size can overlap in some regimes. A sector’s exposure might look like “value” in one rolling window and “conservative investment” in another because the factors themselves are moving together.</p>
+<p>That is why we use rolling betas as <strong>signals</strong>, not as perfect structural truths. The factor score doesn’t say the sector permanently belongs to a specific style. It says that based on the recent relationship between sector returns and factors, this sector currently behaves as if it has certain exposures.</p>
+<p>A strong strategy shouldn’t require every beta estimate to be exact. It should still work if the broad exposure ranking is approximately right.</p>
 <div id="8ebc79ae" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rolling_factor_fit(y, x, window<span class="op">=</span><span class="dv">60</span>):</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> pd.DataFrame(y).astype(<span class="bu">float</span>)</span>
@@ -1470,6 +1817,45 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The latest sector beta heatmap shows the current factor signature of each sector. The rolling average <span class="math inline">\(R^2\)</span> stays fairly high, which means the Fama-French factor set explains a meaningful portion of sector excess returns. But it doesn’t explain everything, and the unexplained residual later becomes part of the signal design.</p>
+<p>The rolling market beta panel is especially useful. Sectors like XLK and XLF tend to have strong market exposure, while defensive sectors such as utilities can have lower or more unstable market beta. Energy can move through very different regimes because oil and inflation shocks sometimes dominate broad equity beta.</p>
+<p>The rolling average <span class="math inline">\(R^2\)</span> also tells us when factor explanation becomes stronger or weaker. During broad market crises, correlations rise and common factors explain more of the cross-section. During idiosyncratic sector shocks, residuals become larger and <span class="math inline">\(R^2\)</span> can fall. That is one reason we don’t rely only on factor betas. We later add residual strength, trend strength, and risk penalties.</p>
+</section>
+<section id="factor-state-construction" class="level3">
+<h3 class="anchored" data-anchor-id="factor-state-construction">5.3 Factor State Construction</h3>
+<p>A factor exposure is only useful if we also know whether the factor itself is currently attractive. A sector can have high value beta, but that only helps if value is in a strong state. So we build a factor-state score for each factor.</p>
+<p>The raw state combines recent factor performance over two horizons:</p>
+<p><span class="math display">\[
+S_{t,k}^{raw} = \frac{0.45 \cdot R_{t,k}^{short} + 0.55 \cdot R_{t,k}^{long}}{\sigma_{t,k}}
+\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(R_{t,k}^{short}\)</span> is the recent short-horizon factor return,</li>
+<li><span class="math inline">\(R_{t,k}^{long}\)</span> is the longer momentum return with a one-month skip,</li>
+<li><span class="math inline">\(\sigma_{t,k}\)</span> is factor volatility over the volatility window.</li>
+</ul>
+<p>The denominator matters because a 5% move in a low-volatility factor is more significant than a 5% move in a very volatile factor. This is similar to a Sharpe-like normalization.</p>
+<p>Then we standardize the raw factor state through a rolling z-score:</p>
+<p><span class="math display">\[
+z_{t,k} = \frac{S_{t,k}^{raw} - \bar{S}_{t,k}}{s_{t,k}}
+\]</span></p>
+<p>where <span class="math inline">\(\bar{S}_{t,k}\)</span> and <span class="math inline">\(s_{t,k}\)</span> are the rolling mean and standard deviation of the raw state. Finally, we clip the result to <span class="math inline">\([-2,2]\)</span> to prevent one extreme observation from dominating all sector scores.</p>
+<p>A positive <span class="math inline">\(z_{t,k}\)</span> means factor <span class="math inline">\(k\)</span> is strong relative to its own recent history. A negative value means the factor is weak.</p>
+</section>
+<section id="interpreting-a-factor-state-numerically" class="level3">
+<h3 class="anchored" data-anchor-id="interpreting-a-factor-state-numerically">5.4 Interpreting a Factor State Numerically</h3>
+<p>A factor state is easier to understand with a small numerical intuition. Suppose value has strong recent returns and moderate volatility, so its raw state is high. If the raw state is also high relative to its own last 36 months, the z-score becomes positive. If it is unusually high, it can hit the clip value of <span class="math inline">\(+2\)</span>.</p>
+<p>A clipped value of <span class="math inline">\(+2\)</span> doesn’t mean the factor will definitely keep working. It means the factor is in the strongest state we allow the model to express. The cap prevents the score from exploding.</p>
+<p>If a sector has value beta <span class="math inline">\(\beta_{HML}=0.6\)</span> and the current <span class="math inline">\(HML\)</span> state is <span class="math inline">\(z_{HML}=1.7\)</span>, the value component of the sector score is:</p>
+<p><span class="math display">\[
+0.6 \times 1.7 = 1.02
+\]</span></p>
+<p>If another sector has value beta <span class="math inline">\(-0.4\)</span>, its value component is:</p>
+<p><span class="math display">\[
+-0.4 \times 1.7 = -0.68
+\]</span></p>
+<p>So the same factor state rewards one sector and penalizes the other. This is the whole idea of factor rotation: we don’t directly buy the factor, we tilt toward assets whose exposures match the current factor environment.</p>
+<p>The same logic applies to every factor, and the final factor score sums all components. A sector can be helped by value but hurt by profitability or momentum at the same time.</p>
 <div id="5dcb6ca9" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> factor_state(factors, short_window<span class="op">=</span><span class="dv">6</span>, long_window<span class="op">=</span><span class="dv">12</span>, vol_window<span class="op">=</span><span class="dv">36</span>, skip<span class="op">=</span><span class="dv">1</span>, clip<span class="op">=</span><span class="fl">2.0</span>):</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    f <span class="op">=</span> pd.DataFrame(factors).astype(<span class="bu">float</span>)</span>
@@ -1520,6 +1906,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a>    out.loc[idx, cols] <span class="op">=</span> blended.where(agree, blended <span class="op">*</span> disagreement_scale)</span>
 <span id="cb19-48"><a href="#cb19-48" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+</section>
+<section id="academic-and-tradable-factor-state-blending" class="level3">
+<h3 class="anchored" data-anchor-id="academic-and-tradable-factor-state-blending">5.5 Academic and Tradable Factor-State Blending</h3>
+<p>We compute factor states in two ways:</p>
+<ol type="1">
+<li><strong>Academic state</strong> from the Fama-French factor returns.</li>
+<li><strong>Tradable state</strong> from ETF proxy spreads such as IWM vs SPY, IWD vs IWF, MTUM vs SPY, and QUAL vs SPY.</li>
+</ol>
+<p>The blend is:</p>
+<p><span class="math display">\[
+z_{t,k}^{blend} = w_a z_{t,k}^{academic} + (1-w_a)z_{t,k}^{tradable}
+\]</span></p>
+<p>with <span class="math inline">\(w_a = 0.70\)</span>. Academic factors get more weight because they are cleaner and longer-established. Tradable proxies get 30% because they tell us whether the academic premium is showing up in live ETF behavior.</p>
+<p>When academic and tradable states disagree in sign, the blended signal is cut by a disagreement scale:</p>
+<p><span class="math display">\[
+z_{t,k}^{final} = d \cdot z_{t,k}^{blend}, \qquad d = 0.50
+\]</span></p>
+<p>This is a useful risk control. If the academic value factor is strong but value ETFs aren’t confirming it, the model still listens to the academic signal, but with less conviction.</p>
 <div id="4fe94db5" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>z_academic <span class="op">=</span> factor_state(factors, short_window<span class="op">=</span><span class="dv">6</span>, long_window<span class="op">=</span><span class="dv">12</span>, vol_window<span class="op">=</span><span class="dv">36</span>, skip<span class="op">=</span><span class="dv">1</span>, clip<span class="op">=</span><span class="fl">2.0</span>)</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>tradable_spreads <span class="op">=</span> factor_proxy_spreads(proxy_monthly_returns, benchmark_ticker<span class="op">=</span>benchmark_ticker, cash_ticker<span class="op">=</span>cash_ticker)</span>
@@ -1619,6 +2023,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The latest factor-state table shows very strong <span class="math inline">\(SMB\)</span> at the cap of 2.000, strong <span class="math inline">\(HML\)</span> at 1.695, mildly positive market, conservative investment, and momentum states, and a negative profitability state around -0.936. This says the current style environment is tilted toward small-cap and value-like behavior, with weaker support for profitability/quality.</p>
+</section>
+</section>
+<section id="sector-scores-and-signal-components" class="level2">
+<h2 class="anchored" data-anchor-id="sector-scores-and-signal-components">6) Sector Scores and Signal Components</h2>
+<p>Once we have rolling betas and current factor states, the factor score is a dot product:</p>
+<p><span class="math display">\[
+s_{t,i}^{factor} = \beta_{t,i}^\top z_t
+\]</span></p>
+<p>Expanded:</p>
+<p><span class="math display">\[
+s_{t,i}^{factor} = \beta_{t,i,MKT}z_{t,MKT} + \beta_{t,i,SMB}z_{t,SMB} + \beta_{t,i,HML}z_{t,HML} + \beta_{t,i,RMW}z_{t,RMW} + \beta_{t,i,CMA}z_{t,CMA} + \beta_{t,i,MOM}z_{t,MOM}
+\]</span></p>
+<p>This formula is the key link between macro-style conditions and sector rotation. If <span class="math inline">\(SMB\)</span> and <span class="math inline">\(HML\)</span> are strong, sectors with positive small/value exposure get rewarded. If <span class="math inline">\(RMW\)</span> is weak, sectors with strong profitability exposure get penalized.</p>
+<p>After computing the raw score, we cross-sectionally standardize it across sectors:</p>
+<p><span class="math display">\[
+\tilde{s}_{t,i}^{factor} = \frac{s_{t,i}^{factor} - \bar{s}_{t}^{factor}}{\sigma_t(s^{factor})}
+\]</span></p>
+<p>This makes scores comparable across dates. A score of 1.5 means the sector is high relative to other sectors at that month, not necessarily high in absolute return terms.</p>
 <div id="17862140" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cross_section_z(values):</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    v <span class="op">=</span> pd.DataFrame(values).astype(<span class="bu">float</span>)</span>
@@ -1736,6 +2159,41 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The latest factor-score table ranks XLE highest at 1.893, followed by XLF at 1.195, XLI at 0.579, and XLB at 0.479. XLK is the lowest at -2.014, with utilities and staples also negative.</p>
+<p>This ranking is economically coherent given the latest factor states. Strong <span class="math inline">\(SMB\)</span> and <span class="math inline">\(HML\)</span> favor sectors that behave more cyclically and value-like. Energy, financials, industrials, and materials fit that environment better than technology. XLK gets penalized because it is more growth-like and less aligned with a value/small-cap style state.</p>
+<p>The result doesn’t say energy has the highest expected return unconditionally. It says <strong>given the current factor environment and the sector’s estimated factor loadings</strong>, energy is the most aligned sector. The distinction is important because the score is conditional. If the factor states change, the ranking can change quickly.</p>
+<p>The heatmap history also shows that factor scores rotate across time. A factor model that always likes the same sectors would be suspicious. We expect sector scores to shift because factor premia shift through regimes.</p>
+<section id="residual-strength-trend-strength-and-risk-penalty" class="level3">
+<h3 class="anchored" data-anchor-id="residual-strength-trend-strength-and-risk-penalty">6.1 Residual Strength, Trend Strength, and Risk Penalty</h3>
+<p>The factor score explains sectors through common premia, but factor models always leave residuals. We use three extra components:</p>
+</section>
+<section id="residual-strength" class="level3">
+<h3 class="anchored" data-anchor-id="residual-strength">Residual strength</h3>
+<p>The residual from the rolling factor regression is:</p>
+<p><span class="math display">\[
+\varepsilon_{t,i} = r_{t,i}^{excess} - \hat{\alpha}_{t,i} - \hat{\beta}_{t,i}^\top f_t
+\]</span></p>
+<p>Residual strength sums recent residuals:</p>
+<p><span class="math display">\[
+s_{t,i}^{resid} = \sum_{j=0}^{5} \varepsilon_{t-j,i}
+\]</span></p>
+<p>Positive residual strength means the sector has been outperforming what its factor exposure predicts. That can capture sector-specific news, earnings revisions, commodity shocks, regulatory changes, or investor flows that aren’t captured by the factor set.</p>
+</section>
+<section id="trend-strength" class="level3">
+<h3 class="anchored" data-anchor-id="trend-strength">Trend strength</h3>
+<p>Trend strength is a 12-month return signal with a one-month skip:</p>
+<p><span class="math display">\[
+s_{t,i}^{trend} = \prod_{j=1}^{11}(1+R_{t-j,i}) - 1
+\]</span></p>
+<p>The skip avoids overreacting to the most recent month, where reversal effects can be stronger.</p>
+</section>
+<section id="risk-penalty" class="level3">
+<h3 class="anchored" data-anchor-id="risk-penalty">Risk penalty</h3>
+<p>The risk penalty combines volatility and recent drawdown:</p>
+<p><span class="math display">\[
+s_{t,i}^{risk} = \sigma_{t,i}^{36m} + |DD_{t,i}^{12m}|
+\]</span></p>
+<p>Higher values mean the sector is riskier. Later, risk enters as a negative component in the dynamic score.</p>
 <div id="8be7e3cc" class="cell" data-execution_count="22">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> residual_strength(eps, window<span class="op">=</span><span class="dv">6</span>):</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(eps).astype(<span class="bu">float</span>).rolling(window).<span class="bu">sum</span>()</span>
@@ -1789,6 +2247,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The residual-strength heatmap adds information that factor scores alone miss. For example, a sector can have mediocre factor alignment but strong positive residuals, meaning it has been outperforming its expected factor return. IYZ is a good example in the latest table: factor score is near neutral, but residual and trend are strong, so its final dynamic score becomes high.</p>
+<p>The latest trend score rewards sectors with stronger recent price persistence. IYZ and XLK show strong trend readings, while IYR, XLP, XLF, and XLV are weaker. This helps separate style alignment from actual price behavior. XLK has very poor factor score, but its trend is still positive. The final dynamic score has to decide how much to trust each component.</p>
+<p>The risk penalty panel shows which sectors carry elevated volatility/drawdown risk. XLK, XLF, and XLY have high risk penalty values in the latest snapshot. Risk penalty isn’t always active in the final validation weights, but it still matters as a cash trigger inside the portfolio construction. If broad sector risk is elevated, the strategy can allocate part of the portfolio to SHY.</p>
+</section>
+<section id="validation-weighted-dynamic-score" class="level3">
+<h3 class="anchored" data-anchor-id="validation-weighted-dynamic-score">6.2 Validation-Weighted Dynamic Score</h3>
+<p>We don’t fix the signal weights forever. We let recent validation evidence decide how much weight to give to factor, residual, and trend components.</p>
+<p>The raw combined score has the form:</p>
+<p><span class="math display">\[
+s_{t,i}^{total} = w_t^{factor}s_{t,i}^{factor} + w_t^{resid}s_{t,i}^{resid} + w_t^{trend}s_{t,i}^{trend} - w_t^{risk}s_{t,i}^{risk}
+\]</span></p>
+<p>The weights <span class="math inline">\(w_t\)</span> are based on recent predictive evidence. The validation window looks back over prior months and checks whether each signal actually ranked future returns well. The main metric is rank information coefficient:</p>
+<p><span class="math display">\[
+IC_t = Corr\left(rank(s_{t,i}), rank(R_{t+1,i})\right)
+\]</span></p>
+<p>A positive <span class="math inline">\(IC_t\)</span> means the signal’s ranking agrees with next month’s realized return ranking. We also calculate top-minus-bottom payoff:</p>
+<p><span class="math display">\[
+Spread_{t+1} = \frac{1}{N_{top}}\sum_{i\in Top}R_{t+1,i} - \frac{1}{N_{bottom}}\sum_{i\in Bottom}R_{t+1,i}
+\]</span></p>
+<p>The validation weight rewards signals that have positive rank IC and positive active payoff. It also has caps so one noisy component can’t dominate.</p>
 <div id="621262aa" class="cell" data-execution_count="24">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rank_ic_series(score, future_returns):</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    vals <span class="op">=</span> []</span>
@@ -2137,6 +2615,38 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>In the latest months, the factor component carries the largest weight, residual gets a meaningful secondary weight, trend receives smaller weight, and risk is zero.</p>
+<p>The latest dynamic score ranks XLE first at 1.079, IYZ second at 0.762, XLI third at 0.534, and XLB fourth at 0.421. XLK is last at -0.993 even though its trend score is strong.</p>
+<p>This is a useful example of a multi-component score working as intended:</p>
+<ul>
+<li><strong>XLE</strong> has a very strong factor score and acceptable trend, so it becomes the top sector.</li>
+<li><strong>IYZ</strong> has near-neutral factor score but very strong residual and trend strength, so it rises to second.</li>
+<li><strong>XLI</strong> has positive factor alignment, strong trend, and low risk penalty.</li>
+<li><strong>XLK</strong> has strong trend but extremely poor factor alignment and high risk penalty, so it is pushed down.</li>
+<li><strong>XLF</strong> has strong factor alignment but very weak residual and trend values plus high risk, so it ends up near neutral.</li>
+</ul>
+<p>The validation-weight table shows factor at 0.576, residual at 0.248, trend at 0.176, and risk at 0.000 in the latest month. That says the recent validation evidence trusts factor alignment most, but still keeps residual and trend in the model.</p>
+</section>
+</section>
+<section id="signal-validation" class="level2">
+<h2 class="anchored" data-anchor-id="signal-validation">7) Signal Validation</h2>
+<p>The validation metrics measure different things.</p>
+<p><strong>Rank IC</strong> measures whether the ordering of scores matches the ordering of future returns. It ignores magnitude and focuses only on rank. This is useful because sector rotation is mostly a ranking problem: we want high-score sectors to do better than low-score sectors.</p>
+<p><span class="math display">\[
+IC_t = Corr(rank(s_t), rank(R_{t+1}))
+\]</span></p>
+<p>If <span class="math inline">\(IC_t &gt; 0\)</span>, the score is directionally useful that month. If <span class="math inline">\(IC_t &lt; 0\)</span>, the ranking is backward.</p>
+<p><strong>Top-minus-bottom payoff</strong> tests a simple long-short spread. It asks whether the top-ranked sectors beat the bottom-ranked sectors:</p>
+<p><span class="math display">\[
+TMB_{t+1} = R_{t+1}^{top} - R_{t+1}^{bottom}
+\]</span></p>
+<p>This is closer to a factor-style payoff.</p>
+<p><strong>Top versus average</strong> is closer to a long-only allocator’s experience:</p>
+<p><span class="math display">\[
+Active_{t+1} = R_{t+1}^{top} - \bar{R}_{t+1}
+\]</span></p>
+<p>A signal can have positive top-minus-bottom but weak top-versus-average if it mainly identifies losers rather than winners. For a long-only sector strategy, top-versus-average matters a lot.</p>
+<p><strong>Hit rate</strong> measures the fraction of periods where the spread is positive. A signal with 50% hit rate can still be useful if its winning months are larger than its losing months. So we don’t judge the signal only by hit rate.</p>
 <div id="7c6a0b68" class="cell" data-execution_count="25">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rank_ic_series(score, future_returns):</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    vals <span class="op">=</span> []</span>
@@ -2258,6 +2768,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The signal validation table is one of the most important outputs because it checks whether the scores have predictive content.</p>
+<p>The dynamic score has the highest rank IC at 0.0610, compared with 0.0381 for factor score, -0.0082 for residual, and 0.0181 for trend. A rank IC around 0.06 isn’t huge, but in monthly cross-sectional sector data it is meaningful. We only have around 11 sectors, so signal measurement is noisy.</p>
+<p>The top-minus-bottom payoff is strongest for the dynamic score at 0.0062 per month. Factor score is also positive at 0.0051. Residual is positive but small at 0.0008, and trend is almost flat at 0.0001. The dynamic score also has the best top-4 vs average active return at 0.0040 per month.</p>
+<p>The hit rates are close to 50%. That means the signal doesn’t win every month. Its value comes from average payoff magnitude, not consistent monthly wins. This is realistic for factor rotation. Sector factor signals can be right over a cycle and still fail in many individual months.</p>
+<section id="signal-decay-across-horizons" class="level3">
+<h3 class="anchored" data-anchor-id="signal-decay-across-horizons">7.1 Signal Decay Across Horizons</h3>
+<p>The signal decay table checks whether a score is only a one-month effect or whether it survives over longer holding periods.</p>
 <div id="5162650e" class="cell" data-execution_count="27">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> signal_decay(scores, returns, horizons<span class="op">=</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">6</span>), top_n<span class="op">=</span><span class="dv">4</span>):</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
@@ -2445,6 +2962,53 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>For the dynamic score:</p>
+<ul>
+<li>1-month active return is about 0.0040,</li>
+<li>3-month active return is about 0.0071,</li>
+<li>6-month active return is about 0.0108.</li>
+</ul>
+<p>The hit rate is 0.55 at one month, 0.5897 at three months, and 0.5733 at six months. This is encouraging because the signal isn’t disappearing immediately. It has some persistence.</p>
+<p>The factor score also improves over longer horizons, with 6-month active return around 0.0099 and a 0.60 hit rate. This matches the economic nature of factor premia. Factor rotations usually don’t work like overnight news. They tend to persist over several months when style leadership changes.</p>
+<p>Residual strength is less stable. It has mild 1-month value but weak or inconsistent longer-horizon hit rates. That fits the interpretation: residual strength captures sector-specific outperformance, which can be shorter-lived than factor alignment.</p>
+<p>The plot confirms the same pattern visually. Dynamic and factor signals are the main useful components; trend and residual help, but shouldn’t dominate.</p>
+</section>
+</section>
+<section id="portfolio-construction" class="level2">
+<h2 class="anchored" data-anchor-id="portfolio-construction">8) Portfolio Construction</h2>
+<p>We translate scores into portfolio weights through a soft active allocation rule. The starting point is equal weight across sectors:</p>
+<p><span class="math display">\[
+w_i^{base} = \frac{1}{N}
+\]</span></p>
+<p>Scores are demeaned so they represent relative active preference:</p>
+<p><span class="math display">\[
+\tilde{s}_{t,i} = s_{t,i} - \bar{s}_t
+\]</span></p>
+<p>Then active weights are scaled by an active budget:</p>
+<p><span class="math display">\[
+w_{t,i}^{target} = w_i^{base} + B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
+\]</span></p>
+<p>where <span class="math inline">\(B = 0.35\)</span> is the active budget. This means the portfolio can tilt meaningfully but not recklessly. A sector with high score gets more than equal weight; a low-score sector gets less.</p>
+<p>We also impose:</p>
+<ul>
+<li>minimum sector weight of 2%,</li>
+<li>maximum sector weight of 25%,</li>
+<li>monthly turnover limit of 25%,</li>
+<li>optional SHY allocation when broad risk is high,</li>
+<li>next-close timing and 10 bps transaction cost in the backtest.</li>
+</ul>
+<p>This is intentionally different from a hard top-N strategy. We don’t simply buy the four highest sectors and ignore the rest. Soft weights preserve diversification and reduce turnover.</p>
+<section id="portfolio-controls-and-signal-translation" class="level3">
+<h3 class="anchored" data-anchor-id="portfolio-controls-and-signal-translation">8.1 Portfolio Controls and Signal Translation</h3>
+<p>The portfolio construction step intentionally weakens the raw signal. That sounds strange at first, but it is necessary.</p>
+<p>Raw scores can be unstable because factor states, rolling betas, residuals, and trends all contain estimation noise. If we translated scores directly into unconstrained weights, the portfolio could jump into extreme sector bets every month. The soft active rule prevents that.</p>
+<p>The active part is normalized by the total absolute score deviation:</p>
+<p><span class="math display">\[
+a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
+\]</span></p>
+<p>This means the total active budget is controlled. If all scores are small, the portfolio doesn’t suddenly become extremely active. If one score is huge, caps still limit the sector weight.</p>
+<p>The min/max constraints also matter. A 2% minimum keeps every sector represented, which reduces the chance of completely missing a sudden reversal. A 25% maximum prevents one sector from dominating. The turnover limit makes the strategy more realistic because it doesn’t let weights instantly jump from one month to the next.</p>
+<p>The SHY risk overlay is conservative. It doesn’t try to time the entire equity market. It only allows cash-like exposure when broad sector risk is elevated relative to its own history.</p>
 <div id="bf09a03f" class="cell" data-execution_count="29">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> soft_active_weights(</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    scores,</span>
@@ -2687,6 +3251,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The latest weights show how the different strategies allocate across sectors. The final dynamic strategy overweights the top-ranked sectors but stays diversified.</p>
+<p>The final strategy puts the largest weights in XLE, IYZ, XLI, and XLB, matching the latest dynamic score. XLK receives a very small weight around 2.9%, which is a large underweight versus equal weight. That underweight comes from weak factor alignment and high risk despite positive trend.</p>
+<p>The weight heatmap for the last 60 months shows the portfolio rotating through sectors rather than locking into one permanent allocation. Energy and financials receive larger weights during value/cyclical regimes. Technology exposure changes depending on whether growth/momentum is supported by the factor environment. Defensive sectors like staples, utilities, and health care rise during periods where risk or residual conditions favor them.</p>
+<p>This is exactly the behavior we want from a factor-rotation model: it shouldn’t act like a static sector benchmark, but it also shouldn’t jump into extreme all-in positions.</p>
+</section>
+</section>
+<section id="backtest-results-and-portfolio-evaluation" class="level2">
+<h2 class="anchored" data-anchor-id="backtest-results-and-portfolio-evaluation">9) Backtest Results and Portfolio Evaluation</h2>
+<p>The backtest tables and plots evaluate whether the factor scores survive transaction costs, turnover limits, next-close timing, and realistic diversification controls.</p>
 <div id="8382baa0" class="cell" data-execution_count="32">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>w_max <span class="op">=</span> pd.Series(<span class="fl">0.25</span>, index<span class="op">=</span>backtest_cols)</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>w_max[cash_ticker] <span class="op">=</span> <span class="fl">1.0</span></span>
@@ -2933,6 +3506,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The strategy comparison table gives a very clear result. SPY has the highest CAGR at 15.26%, but the final dynamic strategy has the highest Sharpe ratio among the sector rotation strategies at 0.9550, with volatility only 13.24% and max drawdown around -16.19%.</p>
+<p>Compared with sector equal weight:</p>
+<ul>
+<li>sector equal weight CAGR: 12.52%,</li>
+<li>final dynamic CAGR: 12.62%,</li>
+<li>sector equal weight volatility: 16.10%,</li>
+<li>final dynamic volatility: 13.24%,</li>
+<li>sector equal weight max drawdown: -23.00%,</li>
+<li>final dynamic max drawdown: -16.19%.</li>
+</ul>
+<p>So the final strategy doesn’t beat SPY on raw return, but it improves the sector portfolio’s risk profile substantially. It produces similar CAGR to equal-weight sectors with much lower volatility and much lower drawdown. That is the main contribution of the model.</p>
+<p>Among active sector models, adding residual strength improves performance, and the full factor + residual + trend - risk version is the best on Sharpe, Sortino, Calmar, and drawdown. The improvement is not dramatic but it is consistent.</p>
+<p>The trade summary shows the cost of making the model dynamic. Sector equal weight has average turnover around 0.019 per month, while active models are around 0.10 to 0.11. The final strategy has average turnover around 0.103 and total turnover around 8.24 over the sample.</p>
+<p>At 10 bps cost, the cost drag is about 0.0053 annualized for the final strategy. That is small enough for the signal to survive, but it isn’t free. If trading costs were much higher, the advantage would shrink.</p>
+<p>Effective N is around 9.0 for the active sector models, compared with 11 for equal weight and 1 for SPY. This tells us the strategy remains diversified. It isn’t simply making one or two large sector bets. That matters because sector rotation can easily overfit if it concentrates too aggressively in recent winners.</p>
+<p>The combination of lower volatility, lower drawdown, and effective N around 9 suggests the model is acting like a controlled tilt engine rather than a high-conviction timing system.</p>
 <div id="24fe911e" class="cell" data-execution_count="33">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>nav <span class="op">=</span> pd.DataFrame({name: result.net_values <span class="cf">for</span> name, result <span class="kw">in</span> results.items()})</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>net_returns <span class="op">=</span> pd.DataFrame({name: result.net_returns <span class="cf">for</span> name, result <span class="kw">in</span> results.items()})</span>
@@ -2976,6 +3565,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The NAV plot shows SPY compounding the most strongly, especially during the technology-led post-2020 and 2023-2025 periods. The sector strategies grow more slowly but with smoother drawdowns. This is consistent with the table: the sector rotation models are better risk-adjusted than sector equal weight, but they don’t fully capture the cap-weighted growth dominance embedded in SPY.</p>
+<p>The drawdown plot is one of the strongest visual arguments for the factor strategy. Active sector models have shallower drawdowns than equal weight and SPY during several stress windows. The final dynamic strategy avoids some of the deepest sector equal-weight pain.</p>
+<p>The rolling 12-month return plot shows that SPY dominates during strong growth-led markets. The rolling active return versus SPY is often negative during those periods, especially when the model underweights technology. That is a real limitation. A factor rotation model that penalizes growth-style exposure can lag badly when mega-cap growth leads the entire market.</p>
+<p>The turnover panel confirms that active strategies trade regularly but not explosively. Turnover spikes around regime shifts, which is expected because factor states and sector ranks change fastest during stress and recovery periods.</p>
 <div id="bc1fe137" class="cell" data-execution_count="34">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>stress_windows <span class="op">=</span> {</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2018 Q4"</span>: (<span class="st">"2018-10-01"</span>, <span class="st">"2018-12-31"</span>),</span>
@@ -3264,6 +3857,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<section id="portfolio-factor-exposure" class="level3">
+<h3 class="anchored" data-anchor-id="portfolio-factor-exposure">9.1 Portfolio Factor Exposure</h3>
+<p>The portfolio-level factor exposure is computed as the weighted average of sector betas:</p>
+<p><span class="math display">\[
+\beta_{t,p,k} = \sum_i w_{t,i}\beta_{t,i,k}
+\]</span></p>
+<p>In vector form:</p>
+<p><span class="math display">\[
+\beta_{t,p} = W_t^\top B_t
+\]</span></p>
+<p>where <span class="math inline">\(W_t\)</span> is the portfolio weight vector and <span class="math inline">\(B_t\)</span> is the matrix of sector betas. This tells us what kind of factor portfolio the final strategy has become after selecting sector weights.</p>
 <div id="3824cf97" class="cell" data-execution_count="36">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> portfolio_factor_exposure(weights, beta):</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    W <span class="op">=</span> pd.DataFrame(weights).astype(<span class="bu">float</span>)</span>
@@ -3658,6 +4262,92 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+</section>
+<section id="sector-level-analyst-reading-of-the-final-model" class="level3">
+<h3 class="anchored" data-anchor-id="sector-level-analyst-reading-of-the-final-model">Sector-Level Analyst Reading of the Final Model</h3>
+<p>The final strategy can be read as a sector analyst’s dashboard.</p>
+<p>When <strong>factor score</strong> dominates, the model is saying style premia are the most useful explanation of future sector leadership. In the latest snapshot, this is exactly the case: factor score receives more than half of the validation weight.</p>
+<p>When <strong>residual strength</strong> matters, the model is saying some sector-specific behavior isn’t fully captured by the common factor set. This can be earnings revisions, commodity shocks, regulation, AI-related narratives, banking stress, or sector-level flows.</p>
+<p>When <strong>trend strength</strong> matters, the model is saying price persistence itself has had useful predictive power. Trend can capture investor herding and slow information diffusion, but it can also lag at regime turning points.</p>
+<p>When <strong>risk penalty</strong> matters, the model is saying elevated volatility and drawdown are informative enough to penalize risky sectors or trigger SHY. In the latest month, validation gives risk zero explicit component weight, but risk still enters the cash overlay logic.</p>
+<p>This decomposition is one of the strongest parts of the project. We can explain why a sector is overweight. It isn’t a black-box ranking. We can say whether the active weight came from factor alignment, residual outperformance, trend, or risk control.</p>
+</section>
+<section id="stress-window-interpretation" class="level3">
+<h3 class="anchored" data-anchor-id="stress-window-interpretation">Stress Window Interpretation</h3>
+<p>The stress table gives a clean regime view.</p>
+<p>During the COVID crash, SPY loses about -19.42% and sector equal weight loses -22.16%. The final dynamic strategy loses -16.19%, which is materially better. The model likely benefits from diversified sector weights and some defensive/cash behavior.</p>
+<p>During the 2022 rates shock, SPY loses -17.74%, sector equal weight loses -10.39%, and the final dynamic strategy loses only -5.05%. This is where factor rotation is most useful. 2022 was a regime where value, energy, commodities, and some defensive/cyclical exposures outperformed long-duration growth. A cap-weighted SPY portfolio was heavily exposed to technology and rate-sensitive growth stocks, while the factor strategy rotated away from that pressure.</p>
+<p>The trade-off appears in 2023 and 2024-2025. SPY strongly outperforms during the growth rebound, returning 26.18% in 2023 and 47.02% in 2024-2025. The final strategy returns 7.94% and 28.53% in those windows. The model protected in stress but lagged when mega-cap growth dominated.</p>
+<p>This is an honest result: the model improves risk-adjusted sector allocation, not market-cap growth chasing.</p>
+</section>
+<section id="average-exposure-contribution-and-bestworst-months" class="level3">
+<h3 class="anchored" data-anchor-id="average-exposure-contribution-and-bestworst-months">Average Exposure, Contribution, and Best/Worst Months</h3>
+<p>The average exposure table shows the final strategy stays close to diversified sector allocation. Average weights range from about 7.65% to 9.35%, with SHY around 7.88%. That means most of the performance difference comes from moderate rotations through time, not huge average tilts.</p>
+<p>The contribution table is more revealing. XLE contributes the most at 0.1609, slightly above XLK at 0.1558. This is important because the model’s current underweight to XLK doesn’t mean technology wasn’t historically valuable. XLK still contributes strongly over the whole backtest. XLE becomes the highest contributor because the strategy successfully captured energy exposure during the inflation/rates regime.</p>
+<p>Financials, discretionary, industrials, and materials also contribute meaningfully. SHY contributes very little to return, as expected, but it can still help reduce risk during high-risk periods.</p>
+<p>The best months include April 2020, November 2020, October 2022, November 2024, and November 2023. The worst months are February/March 2020, June/September 2022, and September 2023. The worst-month list confirms that the strategy still carries equity-sector risk. It reduces drawdowns, but it doesn’t remove crash exposure.</p>
+<p>The latest portfolio beta table shows:</p>
+<ul>
+<li>market beta around 0.903,</li>
+<li>positive <span class="math inline">\(CMA\)</span> exposure around 0.258,</li>
+<li>positive <span class="math inline">\(HML\)</span> exposure around 0.248,</li>
+<li>positive <span class="math inline">\(RMW\)</span> exposure around 0.131,</li>
+<li>small positive <span class="math inline">\(SMB\)</span> exposure around 0.091,</li>
+<li>slightly negative <span class="math inline">\(MOM\)</span> exposure around -0.020.</li>
+</ul>
+<p>This is economically consistent with the current weights. The portfolio is less than full market beta because it isn’t SPY and includes sector diversification. It has clear value/conservative-investment tilt, matching the strong latest <span class="math inline">\(HML\)</span> and positive <span class="math inline">\(CMA\)</span> states. Momentum exposure is near zero, which means the latest allocation isn’t simply chasing recent winners.</p>
+</section>
+<section id="latest-final-diagnostics" class="level3">
+<h3 class="anchored" data-anchor-id="latest-final-diagnostics">Latest Final Diagnostics</h3>
+<p>The final latest diagnostic block ties the whole workflow together.</p>
+<p>The factor states show strong <span class="math inline">\(SMB\)</span> and <span class="math inline">\(HML\)</span>, moderate positive market, <span class="math inline">\(CMA\)</span>, and <span class="math inline">\(MOM\)</span>, and weak <span class="math inline">\(RMW\)</span>. Sector scores then translate those states into energy, telecom, industrials, and materials preference. The validation weights give factor score 57.6% of the decision, residual 24.8%, trend 17.6%, and risk 0%.</p>
+<p>The final weights are:</p>
+<ul>
+<li>overweight XLE, IYZ, XLI, and XLB,</li>
+<li>near-neutral XLF,</li>
+<li>underweight XLK, XLP, XLY, XLU, IYR, and XLV relative to equal weight.</li>
+</ul>
+<p>Active weight versus equal weight is strongest in XLE (+6.8%) and weakest in XLK (-6.2%). This is a clear style view: the current allocation favors value/cyclical/real-economy sectors and avoids mega-cap growth exposure.</p>
+<p>The result is internally coherent. The latest factor environment says small/value-style premia are strong; sector betas say energy and financial/cyclical sectors benefit; validation says factor score has had the best recent evidence; the final portfolio tilts accordingly.</p>
+</section>
+</section>
+<section id="developed-ex-u.s.-country-etf-extension" class="level2">
+<h2 class="anchored" data-anchor-id="developed-ex-u.s.-country-etf-extension">10) Developed ex-U.S. Country ETF Extension</h2>
+<p>The secondary implementation repeats the same workflow on developed ex-U.S. country ETFs using the library. The tradable universe includes country ETFs such as Japan, UK, Germany, France, Switzerland, Australia, Canada, Netherlands, Sweden, Italy, Spain, Hong Kong, and Singapore. EFA is the benchmark.</p>
+<p>The data links used here are:</p>
+<ul>
+<li>developed ex-U.S. country ETF prices: <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/international_country_etfs">data/international_country_etfs</a></li>
+<li>factor proxy ETF support: <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/factor_proxy_etfs">data/factor_proxy_etfs</a></li>
+<li>developed ex-U.S. factor and momentum files: <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/fama_french_developed_ex_us">data/fama_french_developed_ex_us</a></li>
+</ul>
+<p>This secondary application is economically different from sector rotation. In the U.S. sector case, every ETF is inside the same country and currency regime. In the country ETF case, each country has local equity-market structure, sector composition, currency exposure, and regional macro sensitivity. Japan, Switzerland, Australia, Hong Kong, and Germany don’t just differ by style factor beta; they also differ by currency, export exposure, financial structure, commodities, and domestic policy.</p>
+<section id="developed-ex-u.s.-factor-architecture" class="level3">
+<h3 class="anchored" data-anchor-id="developed-ex-u.s.-factor-architecture">10.1 Developed ex-U.S. Factor Architecture</h3>
+<p>For the country universe, we use developed ex-U.S. Fama-French factors rather than U.S. factors. That matters because country equity returns outside the U.S. don’t map perfectly onto U.S. style premia.</p>
+<p>The model is still:</p>
+<p><span class="math display">\[
+r_{t,i}^{excess} = \alpha_{t,i} + \beta_{t,i}^\top f_t + \varepsilon_{t,i}
+\]</span></p>
+<p>but now <span class="math inline">\(i\)</span> is a country ETF and <span class="math inline">\(f_t\)</span> is the developed ex-U.S. factor vector. A country can have high value exposure because its market is dominated by banks, insurers, energy, or old-economy exporters. Another country can have lower value exposure because its index has more defensive health care, consumer staples, or high-quality multinationals.</p>
+<p>Examples:</p>
+<ul>
+<li>Germany often has cyclical/export sensitivity through industrials, autos, and chemicals.</li>
+<li>Switzerland tends to have defensive quality exposure through health care and consumer staples.</li>
+<li>Australia and Canada can carry commodity and financial exposures.</li>
+<li>Hong Kong has strong China/financial/property sensitivity.</li>
+<li>Japan has a mix of exporters, financials, industrials, and currency-sensitive behavior.</li>
+</ul>
+<p>The factor regression gives a common language for comparing these country ETFs, but residual and trend components become even more important because country-specific macro forces can be large.</p>
+</section>
+<section id="economic-differences-across-country-etfs" class="level3">
+<h3 class="anchored" data-anchor-id="economic-differences-across-country-etfs">10.2 Economic Differences Across Country ETFs</h3>
+<p>Country ETF factor investing is harder than sector factor investing because the country ETF return contains several layers:</p>
+<p><span class="math display">\[
+R_{country}^{USD} \approx R_{local\ equity} + R_{currency} + \text{interaction terms}
+\]</span></p>
+<p>Even if the ETF is unhedged, U.S. investors receive returns in dollars. That means local equity performance and currency performance both matter. A Japanese equity rally can be reduced for a U.S. investor if the yen weakens. A European market can look better or worse depending on the euro. Hong Kong, Singapore, Australia, and Canada each have different currency and commodity sensitivities.</p>
+<p>The sector composition also differs. Switzerland has large health care and staples exposure, Australia and Canada have financials and commodities, Germany has cyclicals and exporters, Hong Kong has financial/property/China sensitivity, and Japan has exporters, industrials, financials, and currency-sensitive companies.</p>
+<p>This means a developed ex-U.S. country factor score is not as clean as a U.S. sector factor score. The same <span class="math inline">\(HML\)</span> or <span class="math inline">\(SMB\)</span> state can show up differently across countries because local indices have different sector weights and currency exposures. That is why the residual component performs strongly in the secondary results.</p>
 <div id="dadbf789" class="cell" data-execution_count="38">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -4653,8 +5343,74 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+</section>
+<section id="country-score-interpretation" class="level3">
+<h3 class="anchored" data-anchor-id="country-score-interpretation">Country Score Interpretation</h3>
+<p>The latest country score table ranks EWH highest with dynamic score 1.727, followed by EWP, EWJ, EWA, EWC, EWS, and EWU. Germany, France, and Switzerland rank low, with EWG at the bottom.</p>
+<p>EWH is strong across factor, residual, trend, and even risk. That means it isn’t only a factor-beta call; the country ETF also has strong unexplained recent performance and trend. Spain has high factor and trend readings but weak residual, so it ranks second but with less balanced support. Japan ranks third mostly because residual strength is high and risk penalty is favorable, not because its factor score is strong.</p>
+<p>The validation weights are factor 0.529, residual 0.300, trend 0.171, and risk 0.000. Compared with the U.S. sector application, residual receives more weight. That makes sense for country allocation because country-specific shocks are more important than they are in U.S. sector allocation. Currency, local policy, banking stress, commodity exposure, and regional politics can create returns not fully explained by developed-market style factors.</p>
+<p>The final country weights follow the score: largest weight in EWH, then EWP, EWJ, EWA, EWC, EWS, and EWU. France, Germany, and Switzerland receive low weights.</p>
+</section>
+<section id="country-signal-validation" class="level3">
+<h3 class="anchored" data-anchor-id="country-signal-validation">Country Signal Validation</h3>
+<p>The country signal validation is more mixed than the U.S. sector case. Residual strength has the strongest rank IC at 0.050 and a t-stat around 1.405. Dynamic score has rank IC 0.039. Factor score is weaker at 0.022, and trend is negative at -0.020.</p>
+<p>The top-bottom table confirms the same idea. Factor score has slightly negative top-minus-bottom payoff (-0.0003), country trend is also negative (-0.0018), while residual strength is positive (0.0028). Dynamic score is positive but small (0.0009).</p>
+<p>The signal decay table is more encouraging for residual strength and dynamic score over longer horizons:</p>
+<ul>
+<li>residual strength active return is 0.0060 at 3 months and 0.0111 at 6 months,</li>
+<li>dynamic score active return is 0.0040 at 3 months and 0.0099 at 6 months,</li>
+<li>hit rates for dynamic score rise above 0.58 at 3 months and 0.62 at 6 months.</li>
+</ul>
+<p>This suggests that in international country allocation, residual and dynamic signals are more useful over multi-month horizons than over one-month horizons. Country-level relative performance can take time to unfold because macro, currency, and regional flows don’t reprice instantly.</p>
+</section>
+<section id="country-strategy-comparison" class="level3">
+<h3 class="anchored" data-anchor-id="country-strategy-comparison">Country Strategy Comparison</h3>
+<p>The country strategy summary shows that EFA has CAGR around 10.44%, volatility 16.27%, Sharpe 0.7120, and max drawdown -27.62%. Equal-weight countries have slightly higher CAGR at 10.91% but higher volatility and a deeper drawdown.</p>
+<p>The active country strategies reduce volatility and drawdown:</p>
+<ul>
+<li>Country Momentum Sharpe: 0.7532,</li>
+<li>Factor Score Sharpe: 0.7824,</li>
+<li>Factor + Residual Sharpe: 0.7925,</li>
+<li>Dynamic Factor Rotation Sharpe: 0.7765.</li>
+</ul>
+<p>Factor + Residual is strongest on Sharpe, while Dynamic Factor Rotation has the lowest drawdown at -24.22% and similar volatility around 14.57%. The active models don’t massively raise return, but they improve risk-adjusted behavior and diversification. That is similar to the sector case, but the mechanism differs. For sectors, factor score was the clearest driver. For countries, residual strength matters more.</p>
+<p>The effective N values around 10.4 also show that the strategy remains broadly diversified across countries. It is not turning into a concentrated single-country bet.</p>
+</section>
+<section id="country-allocation-reading" class="level3">
+<h3 class="anchored" data-anchor-id="country-allocation-reading">Country Allocation Reading</h3>
+<p>The country results show a different personality from the U.S. sector results. The sector strategy’s strongest edge comes from factor alignment plus controlled residual/trend overlays. The country strategy’s strongest evidence comes from residual strength and dynamic multi-month scoring.</p>
+<p>This is economically reasonable. Country ETFs are exposed to idiosyncratic regional forces:</p>
+<ul>
+<li>Hong Kong can be driven by China policy, property, and financial conditions.</li>
+<li>Spain and Italy can be driven by European rates, banks, tourism, and domestic cyclicals.</li>
+<li>Japan can be driven by currency, exporters, corporate governance reform, and Bank of Japan policy.</li>
+<li>Australia and Canada can be driven by commodities and financials.</li>
+<li>Switzerland can behave defensively but may lag in reflation/value regimes.</li>
+</ul>
+<p>A standard style factor model can’t fully encode all of that. Residual strength becomes the place where those country-specific forces appear. The validation results confirm this: residual strength has the best country-level rank IC and strongest 3- to 6-month active return.</p>
+<p>So the country application doesn’t simply copy the U.S. sector lesson. It shows that the same framework can adapt when the data structure changes.</p>
+</section>
+<section id="country-plots-and-rolling-factor-exposure" class="level3">
+<h3 class="anchored" data-anchor-id="country-plots-and-rolling-factor-exposure">Country Plots and Rolling Factor Exposure</h3>
+<p>The country diagnostic figure summarizes the secondary implementation in one place: factor growth, factor drawdowns, factor correlation, latest factor state, country betas, rolling <span class="math inline">\(R^2\)</span>, factor-state history, dynamic country score history, latest scores, signal IC, top-bottom payoff, NAV, drawdowns, rolling active return versus EFA, weights, and turnover.</p>
+<p>The rolling factor exposure plot shows the final strategy’s factor profile through time. Market beta stays near one most of the time, which is expected because country ETFs are equity ETFs. Value, investment, profitability, size, and momentum exposures move around this market core as country weights rotate.</p>
+<p>The main economic reading is that country factor rotation is a <strong>relative allocation overlay</strong> on top of global developed equity risk. It can improve drawdown and risk-adjusted performance, but it doesn’t eliminate broad equity-market exposure. When global equities sell off together, country selection helps only at the margin. When regional leadership changes gradually, the factor/residual structure has more room to add value.</p>
+<p>This secondary result is useful because it shows the same framework generalizes beyond U.S. sectors, but the strongest component changes. In sectors, factor alignment had the clearest evidence. In countries, residual strength and multi-month dynamic scoring matter more because country-specific macro and currency effects are harder for style factors to fully capture.</p>
+</section>
+</section>
+<section id="interpretation-discipline-for-factor-scores" class="level2">
+<h2 class="anchored" data-anchor-id="interpretation-discipline-for-factor-scores">11) Interpretation Discipline for Factor Scores</h2>
+<p>A factor score is a conditional ranking, so the interpretation has to stay conditional too. A high score doesn’t mean the sector is permanently superior. It means the sector’s current estimated exposures line up with factor states that have recently been rewarded.</p>
+<p>A useful way to read each sector is:</p>
+<p><span class="math display">\[
+\text{sector score} = \text{style alignment} + \text{sector-specific residual} + \text{trend confirmation} - \text{risk penalty}
+\]</span></p>
+<p>Each term has a different economic story. Style alignment is about exposure to common premia. Residual strength is about sector-specific behavior beyond the factor model. Trend confirmation is about persistence in realized returns. Risk penalty is about not overpaying for unstable or already-damaged sectors.</p>
+<p>This also helps explain disagreements. If a sector has strong factor alignment but weak residual and trend, the model is telling us the broad style environment likes the sector, but recent sector-specific behavior doesn’t confirm it. If a sector has weak factor alignment but strong residual and trend, the model is telling us the sector is moving for reasons outside the factor model.</p>
+<p>These disagreements are where analyst interpretation matters most. The model gives a structured score, but the score components tell us where the evidence is coming from. That is more useful than only reporting final weights.</p>
 
 
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -5059,13 +5815,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../notebooks/14_fourier_option_pricing.html" class="pagination-link" aria-label="14. Fourier Based Methods for Option Pricing">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-title">14. Fourier Based Methods for Option Pricing</span></span>
+      <a href="../notebooks/14_fourier_option_pricing.html" class="pagination-link" aria-label="14. Fourier-Based Methods for Option Pricing">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-title">14. Fourier-Based Methods for Option Pricing</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../notebooks/16_regime_switching_portfolio.html" class="pagination-link" aria-label="16. Regime Switching models for portfolio selection">
-        <span class="nav-page-text"><span class="chapter-title">16. Regime Switching models for portfolio selection</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../notebooks/16_regime_switching_portfolio.html" class="pagination-link" aria-label="16. Regime Switching Portfolio Selection">
+        <span class="nav-page-text"><span class="chapter-title">16. Regime Switching Portfolio Selection</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

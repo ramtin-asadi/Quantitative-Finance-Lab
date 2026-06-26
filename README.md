@@ -3,7 +3,7 @@
 [![Website](https://img.shields.io/badge/Website-QuantFinLab-0A66C2?logo=githubpages&logoColor=white)](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Quantitative Finance Lab** is a research and engineering sequence of end-to-end projects. It can be used a **self-study curriculum** that forces every model to be derived, coded, and tested against real market data, as a **research notebook series** that treats each topic the way a working paper would (motivation, mathematics, implementation, diagnostics, discussion), and as a **reusable Python library**, `quantfinlab`, that turns the parts of each project into tested, documented, importable code instead of just the notebook cells.
+**Quantitative Finance Lab** is a research and engineering sequence of end-to-end projects. It can be used a **self-study curriculum** that codes, and tests every model against real market data, as a **research notebook series** that experiments different topics from the most famous to more recently developing areas with clear flow (motivation, mathematics, implementation, diagnostics, discussion), and as a **reusable Python library**, `quantfinlab`, that turns the parts of each project into tested, documented, importable code instead of just the notebook cells.
 
 In every project, we do the same thing: build the model, run it on real data with realistic frictions (costs, liquidity, look-ahead controls), write the reusable version into the library, and then prove the library version works by re-running the same workflow on a **second, independent dataset** (usually a different market, asset class, or country). A model that only works on the data it was built on hasn't been tested; it's been fit. All projects use only the extracted library code for the second run in notebook's final cell, and repeated parts from earlier notebooks also use library instead of re-implementing something.
 
@@ -41,7 +41,7 @@ The rendered website is the best way to read the work. code, output, and plots a
 
 **05. GARCH Forecasting & Variance Risk Premium.** Forecasts realized volatility with GARCH-family models and compares the forecast to option-implied volatility to study the variance risk premium and its trading implications.
 
-**06. Black–Litterman with Learned Confidence.** Uses uses equilibrium returns, views, confidence mapping, posterior expected returns, and constrained portfolio optimization. Extends classical Black–Litterman by learning the confidence assigned to each view from data rather than fixing it by hand, and evaluates the resulting allocations against a benchmark.
+**06. Black–Litterman with Learned Confidence.** Uses equilibrium returns, views, confidence mapping, posterior expected returns, and constrained portfolio optimization. Extends classical Black–Litterman by learning the confidence assigned to each view from data rather than fixing it by hand, and evaluates the resulting allocations against a benchmark.
 
 **07. Dynamic Hedge Ratios & Residual Trading.** Estimates time-varying hedge ratios between related instruments using static, rolling, and dynamic methods, and builds a residual-based relative-value strategy around the spread that's left over.
 
@@ -63,7 +63,7 @@ The rendered website is the best way to read the work. code, output, and plots a
 
 **16. Regime-Switching Portfolio Allocation.** Detects macro and market regimes with different Econometrics and Machine learning models (Markov-switching, clustering, or classification) and adapts portfolio allocation rules conditional on the detected regime.
 
-**17. Network Portfolio Construction.** Builds dependence networks (Dense, MST and PMFG) from the equity panel correlation and Copula tail dependence, and uses network structure for portfolio construction using centrality measures.
+**17. Network Portfolio Construction.** Builds dependence networks (Dense, MST and PMFG) from the stock market correlation and Copula tail dependence, and uses network structure for portfolio construction using centrality measures.
 
 **18. Rough Volatility.** Implements rough Bergomi and rough Heston-style models, estimates the Hurst roughness parameter from realized variance, and compares rough-volatility dynamics against classical (Markovian) stochastic-volatility models.
 
@@ -75,26 +75,26 @@ The rendered website is the best way to read the work. code, output, and plots a
 
 | # | Project | Primary data | Secondary (library-only repeat) | Link |
 |---|---|---|---|---|
-| 01 | Yield Curve, Bond Pricing & Risk | US Treasury par yields (FRED) | Japan JGB par yields (MOF) | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/01_yield_curve_bond_pricing_and_risk.html) |
-| 02 | Portfolio Optimization (Mean–Variance) | NASDAQ US equities (Stooq) | Hong Kong equities (HKEX) | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/02_portfolio_optimization_MV_models.html) |
-| 03 | Risk Report Engine & CAPM | Portfolios from Project 02 (US equities), NVDA and AAPL | HKEX portfolios from project 2 | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/03_risk_report_engine_and_CAPM.html) |
-| 04 | Black–Scholes, IV, Greeks & Hedging | Equity index options (SPX option chain) | BTC options (Deribit) | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/04_BSM_IV_greeks_hedging.html) |
-| 05 | GARCH Forecasting & Variance Risk Premium | Equity index returns/options (SPX) | BTC returns/options (Deribit) | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/05_GARCH_forecasting_VRP.html) |
-| 06 | Black–Litterman with Learned Confidence | Global cross-asset ETFs | US sector ETFs | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/06_portfolio_black_littreman.html) |
-| 07 | Dynamic Hedge Ratios & Residual Trading | Cross-asset / sector ETF pairs | International hedging ETFs (EW of different countries stock markets) | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/07_dynamic_hedge_ratios.html) |
-| 08 | Volatility Surface & Local Volatility | Equity index options (SPX) | BTC options (Deribit) | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/08_vol_surface_local_vol.html) |
-| 09 | Short-Rate & Term-Structure Models | US Treasury yields + ACM term premia | Japan JGB yields (MOF) | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/09_term_structure_models.html) |
-| 10 | Tail Risk, Risk Parity & Robust Portfolios | Cross-asset ETFs | US sector ETFs | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/10_portfolio_tail_parity_robust.html) |
-| 11 | Stochastic Volatility & Model-Risk RV | Equity index options (SPX) | BTC options (Deribit) | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/11_stochastic_volatility.html) |
-| 12 | Macro Financial Conditions Index | US macro factors and sector ETFs | Canada macro factors and sector ETFs | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/12_financial_conditions_index.html) |
-| 13 | American Options & Numerical Pricing | American SPY options | QQQ options | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/13_american_option_numerics.html) |
-| 14 | Fourier-Based Option Pricing | SPX index options | BTC options (Deribit) | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/14_fourier_option_pricing.html) |
-| 15 | Factor Investing | US factor-proxy ETFs + Fama-French US factors | International country ETFs + Fama-French developed ex-US factors | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/15_factor_investing.html) |
-| 16 | Regime-Switching Portfolio Allocation | US cross-asset and macro factors | Sector ETFs | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/16_regime_switching_portfolio.html) |
-| 17 | Network Portfolio Construction | US equities (Nasdaq) | Hong Kong equities (HKEX) | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/17_network_portfolio.html) |
-| 18 | Rough Volatility (rBergomi / rough Heston) | Equity index options (SPX) | BTC options (Deribit) | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/18_rough_volatility.html) |
-| 19 | ML Forecasting & Kelly Allocation | cross-asset ETFs and macro factors | US Sector ETFs | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/19_forecasting_kelly_allocation.html) |
-| 20 | RL Portfolio Allocation | cross-asset ETFs and macro factors | US Sector ETFs | [Open »](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/20_rl_portfolio_allocation.html) |
+| 01 | Yield Curve, Bond Pricing & Risk | US Treasury par yields (FRED) | Japan JGB par yields (MOF) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/01_yield_curve_bond_pricing_and_risk.html) |
+| 02 | Portfolio Optimization (Mean–Variance) | NASDAQ US equities (Stooq) | Hong Kong equities (HKEX) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/02_portfolio_optimization_MV_models.html) |
+| 03 | Risk Report Engine & CAPM | Portfolios from Project 02 (US equities), NVDA and AAPL | HKEX portfolios from project 2 | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/03_risk_report_engine_and_CAPM.html) |
+| 04 | Black–Scholes, IV, Greeks & Hedging | Equity index options (SPX option chain) | BTC options (Deribit) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/04_BSM_IV_greeks_hedging.html) |
+| 05 | GARCH Forecasting & Variance Risk Premium | Equity index returns/options (SPX) | BTC returns/options (Deribit) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/05_GARCH_forecasting_VRP.html) |
+| 06 | Black–Litterman with Learned Confidence | Global cross-asset ETFs | US sector ETFs | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/06_portfolio_black_littreman.html) |
+| 07 | Dynamic Hedge Ratios & Residual Trading | Cross-asset / sector ETF pairs | International hedging ETFs (EW of different countries stock markets) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/07_dynamic_hedge_ratios.html) |
+| 08 | Volatility Surface & Local Volatility | Equity index options (SPX) | BTC options (Deribit) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/08_vol_surface_local_vol.html) |
+| 09 | Short-Rate & Term-Structure Models | US Treasury yields + ACM term premia | Japan JGB yields (MOF) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/09_term_structure_models.html) |
+| 10 | Tail Risk, Risk Parity & Robust Portfolios | Cross-asset ETFs | US sector ETFs | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/10_portfolio_tail_parity_robust.html) |
+| 11 | Stochastic Volatility & Model-Risk RV | Equity index options (SPX) | BTC options (Deribit) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/11_stochastic_volatility.html) |
+| 12 | Macro Financial Conditions Index | US macro factors and sector ETFs | Canada macro factors and sector ETFs | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/12_financial_conditions_index.html) |
+| 13 | American Options & Numerical Pricing | American SPY options | QQQ options | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/13_american_option_numerics.html) |
+| 14 | Fourier-Based Option Pricing | SPX index options | BTC options (Deribit) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/14_fourier_option_pricing.html) |
+| 15 | Factor Investing | US factor-proxy ETFs + Fama-French US factors | International country ETFs + Fama-French developed ex-US factors | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/15_factor_investing.html) |
+| 16 | Regime-Switching Portfolio Allocation | US cross-asset and macro factors | Sector ETFs | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/16_regime_switching_portfolio.html) |
+| 17 | Network Portfolio Construction | US equities (Nasdaq) | Hong Kong equities (HKEX) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/17_network_portfolio.html) |
+| 18 | Rough Volatility (rBergomi / rough Heston) | Equity index options (SPX) | BTC options (Deribit) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/18_rough_volatility.html) |
+| 19 | ML Forecasting & Kelly Allocation | cross-asset ETFs and macro factors | US Sector ETFs | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/19_forecasting_kelly_allocation.html) |
+| 20 | RL Portfolio Allocation | cross-asset ETFs and macro factors | US Sector ETFs | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/20_rl_portfolio_allocation.html) |
 
 
 ## Data and reproducibility

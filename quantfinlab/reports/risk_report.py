@@ -116,6 +116,7 @@ def risk_report(
         "performance_tables": True,
         "shape_tables": True,
         "drawdowns": True,
+        "rolling_vol": True,
         "drawdown_episodes": True,
         "var_es": True,
         "var_backtest": True,
@@ -310,7 +311,7 @@ def risk_report(
         return width, height
 
     if include_cfg["drawdowns"]:
-        fig, ax = plt.subplots(2, 1, figsize=(10.5, 6.5), sharex=True)
+        fig, ax = plt.subplots(1, 2, figsize=(12.5, 4.0), sharex=False)
         pl.plot_nav_compare(ax[0], obj)
         pl.plot_drawdown_compare_objects(ax[1], obj)
         plt.tight_layout()
@@ -318,7 +319,7 @@ def risk_report(
         if bool(output_cfg["show_figures"]):
             plt.show()
 
-    if include_cfg["drawdowns"]:
+    if include_cfg["drawdowns"] and include_cfg.get("rolling_vol", True):
         fig, axes = pl.auto_grid(
             len(names),
             ncols=ncols,

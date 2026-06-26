@@ -6,7 +6,9 @@ from collections.abc import Sequence
 import numpy as np
 import pandas as pd
 
+from quantfinlab.backtest.hedging import run_spread_backtest
 from quantfinlab.common.errors import InputError
+from quantfinlab.risk import total_return
 
 
 def _statsmodels_tools():
@@ -321,6 +323,66 @@ def resid_gate(
     return tab
 
 
+def residual_backtest_grid(
+    prices: pd.DataFrame,
+    returns: pd.DataFrame,
+    pairs: Sequence[tuple[str, str, str]],
+    beta_sources: dict[str, object],
+    *,
+    ann: float = 252.0,
+    cost_bps: float = 5.0,
+    z_win: int = 126,
+    z_in: float = 2.0,
+    z_out: float = 0.5,
+    z_stop: float = 3.5,
+    z_cool: int = 5,
+    gate_kwargs: dict[str, float] | None = None,
+):
+    """Estimate residual signals, backtest them, and build the gate table."""
+    gate_rows = []
+    backtests = {}
+    signals = {}
+    metadata = {}
+
+    for pair_name, target, hedge in pairs:
+        p = _price_panel(prices, target, hedge)
+        lp = np.log(p[p > 0]).dropna()
+        eg_p = eg_test(lp[target], lp[hedge])
+        for beta_source, fn in beta_sources.items():
+            params = fn(target, hedge)
+            spread = log_spread(prices, target, hedge, params)
+            sig = z_signal(spread, z_win=z_win, z_in=z_in, z_out=z_out, z_stop=z_stop, z_cool=z_cool)
+            key = f"{pair_name} | {beta_source}"
+            res = run_spread_backtest(
+                returns,
+                params,
+                sig["signal"],
+                target=target,
+                hedge=hedge,
+                cost_bps=cost_bps,
+                name=key,
+            )
+
+            sdrop = spread.dropna()
+            split = max(len(sdrop) // 2, 30)
+            first, second = sdrop.iloc[:split], sdrop.iloc[split:]
+            trades = int((sig["signal"].ne(0) & sig["signal"].shift(1).fillna(0).eq(0)).sum())
+            cost_drag = max(total_return(res.gross_values) - total_return(res.net_values), 0.0)
+            gate_rows.append({
+                "pair": pair_name, "beta_source": beta_source, "eg_p": eg_p,
+                "adf_p": adf_test(spread), "half_life": half_life(spread),
+                "spread_vol": spread.diff().std() * np.sqrt(float(ann)), "trades": trades,
+                "cost_drag": cost_drag, "cost_drag_ann": res.cost.mean() * float(ann) if len(res.cost) else 0.0,
+                "break_p": max(adf_test(first), adf_test(second)) if len(second) >= 30 else np.nan,
+                "beta_turnover": params["beta"].dropna().diff().abs().mean(), "key": key})
+            backtests[key] = res
+            signals[key] = sig
+            metadata[key] = {"pair": pair_name, "beta_source": beta_source}
+
+    gate = resid_gate(gate_rows, **dict(gate_kwargs or {}))
+    return gate, backtests, signals, metadata
+
+
 __all__ = [
     "adf_test",
     "eg_test",
@@ -329,6 +391,7 @@ __all__ = [
     "log_spread",
     "price_ols_beta",
     "resid_gate",
+    "residual_backtest_grid",
     "roll_price_beta",
     "spread_w",
     "z_signal",

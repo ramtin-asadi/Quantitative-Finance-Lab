@@ -190,4 +190,67 @@ def run_many_hedge_backtests(
     return out
 
 
-__all__ = ["HedgeBacktestResult", "run_hedge_backtest", "run_many_hedge_backtests"]
+def run_spread_backtest(
+    returns: pd.DataFrame,
+    beta: pd.DataFrame,
+    signal: pd.Series,
+    *,
+    target: str,
+    hedge: str,
+    cost_bps: float = 5.0,
+    beta_lag: int = 1,
+    name: str | None = None,
+) -> HedgeBacktestResult:
+    """Long/short residual spread P&L with target minus beta times hedge."""
+    target = str(target).strip().lower()
+    hedge = str(hedge).strip().lower()
+    r = _clean_returns(returns)
+    missing = [c for c in [target, hedge] if c not in r.columns]
+    if missing:
+        raise InputError(f"Missing return columns: {missing}")
+    if not isinstance(beta, pd.DataFrame) or "beta" not in beta.columns:
+        raise InputError("beta must be a DataFrame with a 'beta' column.")
+
+    panel = r[[target, hedge]].dropna(how="any")
+    b = pd.to_numeric(beta["beta"], errors="coerce")
+    b.index = pd.to_datetime(beta.index)
+    b = b.sort_index().reindex(panel.index).ffill().shift(int(beta_lag))
+    sig = pd.Series(signal, dtype=float)
+    sig.index = pd.to_datetime(sig.index)
+    sig = sig.sort_index().reindex(panel.index).fillna(0.0)
+
+    data = pd.concat([panel, b.rename("beta"), sig.rename("signal")], axis=1).dropna(how="any")
+    if data.empty:
+        raise InputError("No rows remain after aligning residual beta and signal.")
+
+    spread_ret = data[target] - data["beta"] * data[hedge]
+    gross = data["signal"] * spread_ret
+    weights = pd.DataFrame({target: data["signal"], hedge: -data["signal"] * data["beta"]})
+    turnover = weights.diff().abs().sum(axis=1)
+    if len(turnover):
+        turnover.iloc[0] = weights.iloc[0].abs().sum()
+    cost = turnover * (float(cost_bps) / 10000.0)
+    net = gross - cost
+    beta_used = pd.DataFrame({hedge: data["beta"]}, index=data.index)
+
+    return HedgeBacktestResult(
+        target_return=spread_ret.rename("spread_return"),
+        gross_return=gross.rename("gross_return"),
+        net_return=net.rename("net_return"),
+        turnover=turnover.rename("turnover"),
+        cost=cost.rename("cost"),
+        beta=beta_used,
+        gross_values=(1.0 + gross.fillna(0.0)).cumprod().rename("gross_values"),
+        net_values=(1.0 + net.fillna(0.0)).cumprod().rename("net_values"),
+        target_values=(1.0 + spread_ret.fillna(0.0)).cumprod().rename("spread_values"),
+        metadata={
+            "strategy_name": name,
+            "target": target,
+            "hedges": [hedge],
+            "cost_bps": float(cost_bps),
+            "beta_lag": int(beta_lag),
+        },
+    )
+
+
+__all__ = ["HedgeBacktestResult", "run_hedge_backtest", "run_many_hedge_backtests", "run_spread_backtest"]

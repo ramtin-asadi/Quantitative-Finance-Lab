@@ -75,7 +75,6 @@ def rel_table(rels: Sequence[rel], columns: Sequence[str] | None = None) -> pd.D
                 "relationship": r.name,
                 "target": r.target,
                 "hedges": ", ".join(r.hedges),
-                "description": r.desc,
                 "residual_pair": "" if r.pair is None else " / ".join(r.pair),
                 "included": bool(included),
             }

@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>14. Fourier Based Methods for Option Pricing – Quantitative Finance Lab</title>
+<title>14. Fourier-Based Methods for Option Pricing – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/13_american_option_numerics.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2641b481724464e61c86985d8c912b6f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -111,6 +109,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -123,7 +150,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../notebooks/14_fourier_option_pricing.html"><span class="chapter-title">14. Fourier Based Methods for Option Pricing</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../notebooks/14_fourier_option_pricing.html"><span class="chapter-title">14. Fourier-Based Methods for Option Pricing</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -190,32 +217,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/07_dynamic_hedge_ratios.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">7. Dynamic Hedge Ratio and Residual Trading</span></a>
+  <a href="../notebooks/07_dynamic_hedge_ratios.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">7. Dynamic Hedge Ratios and Residual Trading</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/08_vol_surface_local_vol.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">8. Volatility Surface and Local Volatility model</span></a>
+  <a href="../notebooks/08_vol_surface_local_vol.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">8. Volatility Surface and Local Volatility</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/09_term_structure_models.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">9. Short Rate and Term Structure Models</span></a>
+  <a href="../notebooks/09_term_structure_models.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">9. Term Structure Models, Curve Factors, and Swap-Based Duration Overlays</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/10_portfolio_tail_parity_robust.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">10. Portfolio Optimization: Tail risk, Risk Parity and Robust Models</span></a>
+  <a href="../notebooks/10_portfolio_tail_parity_robust.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">10. Portfolio Optimization: Tail Risk, Risk Parity and Robust Models</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/11_stochastic_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">11. Stochastic Volatility Models</span></a>
+  <a href="../notebooks/11_stochastic_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">11. Stochastic Volatility Models and Model-Risk-Aware Option Relative Value</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/12_financial_conditions_index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">12. Macro Fiancial Conditions Index</span></a>
+  <a href="../notebooks/12_financial_conditions_index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">12. Macro Financial Conditions Index and Macro-Regime Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -225,17 +252,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/14_fourier_option_pricing.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">14. Fourier Based Methods for Option Pricing</span></a>
+  <a href="../notebooks/14_fourier_option_pricing.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">14. Fourier-Based Methods for Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/15_factor_investing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">15. Factor Investing and Fama French Allocation</span></a>
+  <a href="../notebooks/15_factor_investing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">15. Factor Investing and Fama-French Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/16_regime_switching_portfolio.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">16. Regime Switching models for portfolio selection</span></a>
+  <a href="../notebooks/16_regime_switching_portfolio.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">16. Regime Switching Portfolio Selection</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -245,7 +272,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a>
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility for Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -269,7 +296,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">14. Fourier Based Methods for Option Pricing</span></h1>
+<h1 class="title"><span class="chapter-title">14. Fourier-Based Methods for Option Pricing</span></h1>
 </div>
 
 
@@ -286,6 +313,103 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<p><strong>Main parts of this project</strong></p>
+<ul>
+<li>Build a reusable SPX option-pricing panel and calibration grid without re-teaching the option-chain cleaning from earlier option projects.</li>
+<li>Move from pricing by closed-form formulas or simulation to pricing by <strong>characteristic functions</strong>.</li>
+<li>Validate direct Fourier integration, Carr-Madan FFT, and the COS method on models where we can measure numerical error clearly.</li>
+<li>Study how BSM, Merton, Variance Gamma, Heston, and Bates behave when the same Fourier engines price them.</li>
+<li>Use grouped COS pricing for daily calibration across real SPX option quotes.</li>
+<li>Diagnose model fit through RMSE, bid/ask hit rate, residual smiles, tail probabilities, and runtime/error tradeoffs.</li>
+<li>Build tail-hedging overlays from model-implied crash probabilities and model disagreement.</li>
+<li>Repeat the production workflow on BTC options and interpret why crypto options change the calibration and hedging story.</li>
+</ul>
+<section id="the-core-idea-pricing-from-a-transform-instead-of-a-path" class="level2">
+<h2 class="anchored" data-anchor-id="the-core-idea-pricing-from-a-transform-instead-of-a-path">1) The Core Idea: Pricing from a Transform Instead of a Path</h2>
+<p>Earlier option projects already covered the basic option-pricing language: market quotes, implied volatility, surfaces, Greeks, local volatility, stochastic volatility, jumps, and American-option numerics. Here the new subject is the <strong>pricing engine itself</strong>. We stop asking for a closed-form option formula model by model, and we ask a more general question: if we know the distribution of the future log-price through its transform, can we recover prices efficiently?</p>
+<p>The object we price is still a discounted risk-neutral expectation:</p>
+<p><span class="math display">\[
+C_0(K,T)=e^{-rT}E^Q[(S_T-K)^+]
+\]</span></p>
+<p>where <span class="math inline">\(C_0(K,T)\)</span> is the call price today, <span class="math inline">\(K\)</span> is the strike, <span class="math inline">\(T\)</span> is time to maturity, <span class="math inline">\(r\)</span> is the risk-free rate, and <span class="math inline">\(Q\)</span> is the risk-neutral measure. This expectation is the same pricing object as in the earlier option notebooks. The change is how we compute it.</p>
+<p>If the terminal log-price is</p>
+<p><span class="math display">\[
+X_T = \log S_T
+\]</span></p>
+<p>then the model is fully described, for pricing purposes, by the risk-neutral distribution of <span class="math inline">\(X_T\)</span>. The density approach would write:</p>
+<p><span class="math display">\[
+C_0(K,T)=e^{-rT}\int_{\log K}^{\infty}(e^x-K)f_{X_T}(x)\,dx
+\]</span></p>
+<p>where <span class="math inline">\(f_{X_T}(x)\)</span> is the density of the terminal log-price. The difficulty is that many useful models don’t give us a simple density. Heston has a characteristic function. Merton has a characteristic function. VG has a characteristic function. Bates has a characteristic function. So Fourier methods start from the object that these models give naturally.</p>
+<p>The <strong>characteristic function</strong> of <span class="math inline">\(X_T\)</span> is:</p>
+<p><span class="math display">\[
+\phi_T(u)=E^Q[e^{iuX_T}]
+\]</span></p>
+<p>Here <span class="math inline">\(u\)</span> is the Fourier frequency and <span class="math inline">\(i=\sqrt{-1}\)</span>. The characteristic function is a compressed description of the whole distribution. It contains information about location, variance, skewness, tails, and jumps, but in the frequency domain.</p>
+<p>For example, <span class="math inline">\(\phi_T(0)=1\)</span> for every valid probability distribution because <span class="math inline">\(e^{i0X_T}=1\)</span>. When <span class="math inline">\(|\phi_T(u)|\)</span> decays quickly as <span class="math inline">\(u\)</span> grows, the distribution is smoother and easier to recover numerically. When <span class="math inline">\(|\phi_T(u)|\)</span> decays slowly, the distribution may have sharper features or heavier tails, and Fourier pricing usually needs more care.</p>
+<blockquote class="blockquote">
+<p>The main idea of this project: if a model gives us <span class="math inline">\(\phi_T(u)\)</span>, we can price options by transforming the payoff, transforming the density, or expanding the payoff on a finite interval. Direct integration, FFT, and COS are three different ways of using this same information.</p>
+</blockquote>
+<section id="the-pricing-story-we-build" class="level3">
+<h3 class="anchored" data-anchor-id="the-pricing-story-we-build">1.1 The Pricing Story We Build</h3>
+<p>The project moves through the Fourier methods in a deliberate order.</p>
+<ol type="1">
+<li><strong>Characteristic functions:</strong> we define the transform for BSM, Merton, VG, Heston, and Bates.</li>
+<li><strong>Density recovery:</strong> we invert the characteristic function to see what kind of distribution each model implies.</li>
+<li><strong>Direct Fourier integration:</strong> we price options by integrating risk-neutral probabilities <span class="math inline">\(P_1\)</span> and <span class="math inline">\(P_2\)</span>.</li>
+<li><strong>Carr-Madan FFT:</strong> we damp the payoff and compute prices on a full log-strike grid using a fast Fourier transform.</li>
+<li><strong>COS pricing:</strong> we expand the density and payoff with cosine basis functions on a finite interval.</li>
+<li><strong>Daily calibration:</strong> we use grouped COS as the production engine because it can price many arbitrary strikes and maturities.</li>
+<li><strong>Model diagnostics:</strong> we compare BSM, jump, stochastic-volatility, and jump-SV models on real SPX quotes.</li>
+<li><strong>Tail overlays:</strong> we convert model-implied tail probabilities into hedging candidates.</li>
+<li><strong>BTC secondary application:</strong> we repeat the same logic on a market where jumps, tails, and quote structure are much more extreme.</li>
+</ol>
+<p>The repeated option-chain and volatility-surface ideas from Projects 4, 8, and 11 stay short here. The real subject is how Fourier pricing turns model distributions into option prices.</p>
+</section>
+<section id="characteristic-functions-as-a-distribution-language" class="level3">
+<h3 class="anchored" data-anchor-id="characteristic-functions-as-a-distribution-language">1.2 Characteristic Functions as a Distribution Language</h3>
+<p>The first thing to make clear is that a characteristic function gives a different language for the distribution, rather than a small numerical trick added after the model is built.</p>
+<p>For a random variable <span class="math inline">\(X\)</span>, the characteristic function is:</p>
+<p><span class="math display">\[
+\phi_X(u)=E[e^{iuX}]
+\]</span></p>
+<p>The complex exponential can be written as:</p>
+<p><span class="math display">\[
+e^{iuX}=\cos(uX)+i\sin(uX)
+\]</span></p>
+<p>So <span class="math inline">\(\phi_X(u)\)</span> is really collecting expected cosines and expected sines at every frequency <span class="math inline">\(u\)</span>:</p>
+<p><span class="math display">\[
+\phi_X(u)=E[\cos(uX)]+iE[\sin(uX)]
+\]</span></p>
+<p>The real part measures symmetric oscillations of the distribution. The imaginary part measures asymmetric behavior. If the distribution is symmetric around zero, the sine component tends to cancel out. If the distribution is skewed, the imaginary part carries that asymmetry.</p>
+<p>Moments can also be recovered from derivatives around zero. If the moments exist, then:</p>
+<p><span class="math display">\[
+E[X]=\frac{1}{i}\phi_X'(0)
+\]</span></p>
+<p><span class="math display">\[
+E[X^2]=\frac{1}{i^2}\phi_X''(0)=-\phi_X''(0)
+\]</span></p>
+<p>A more stable way to describe models is through the log characteristic function:</p>
+<p><span class="math display">\[
+\psi_X(u)=\log \phi_X(u)
+\]</span></p>
+<p>This is the <strong>characteristic exponent</strong>. For Lévy-style models like Merton and VG, independent increments make exponents add through time:</p>
+<p><span class="math display">\[
+\phi_T(u)=e^{T\psi(u)}
+\]</span></p>
+<p>This is why transform methods are so natural for option pricing. Many realistic return models are hard to describe with simple densities but easy to describe with a characteristic exponent. Once we know <span class="math inline">\(\phi_T(u)\)</span>, the remaining work is numerical inversion or expansion.</p>
+<p>For example, BSM has a Gaussian exponent that decays like <span class="math inline">\(u^2\)</span>. VG has a logarithmic/power structure that decays more slowly. That difference already tells us which models will be easy or difficult for Fourier-based numerical methods.</p>
+<p>The setup cell is mostly infrastructure: imports, plotting style, cache folders, and the option-pricing helper functions from the local package. The important implementation point is that this project compares <strong>visible local Numba kernels</strong> with the packaged compiled kernels. The local Numba functions make the numerical method readable inside the notebook. The compiled kernels make the same workflow practical when we price thousands of options many times during calibration.</p>
+<p>The compiled C++ implementation can be inspected in the repo’s <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/cpp">cpp folder</a>. In the main SPX workflow we can see the Numba formulas directly, and when the library calls C++ kernels, the numerical design is the same: arrays of strikes and maturities enter tight pricing loops, and Python object overhead is kept outside the pricing kernel.</p>
+<p>The data used in this project is repeated from earlier option projects, so we don’t need a long data introduction again. For reproduction, check these exact data folders in the repo’s data layer:</p>
+<ul>
+<li><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/spx_options_chain">spx_options_chain</a></li>
+<li><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/spx_index_ohlcv">spx_index_ohlcv</a></li>
+<li><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/us_treasury_yields">us_treasury_yields</a></li>
+<li><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/btc_options_chain">btc_options_chain</a></li>
+<li><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/btc_usd_ohlcv">btc_usd_ohlcv</a></li>
+</ul>
+<p>Each folder contains the script/README-style reproduction logic for the corresponding file used by the notebook.</p>
 <div id="a9f692e6" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
@@ -319,6 +443,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>palette <span class="op">=</span> LAB_COLORS</span>
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>legend_kw <span class="op">=</span> <span class="bu">dict</span>(fontsize<span class="op">=</span><span class="dv">6</span>, frameon<span class="op">=</span><span class="va">True</span>, framealpha<span class="op">=</span><span class="fl">0.88</span>, borderpad<span class="op">=</span><span class="fl">0.25</span>, labelspacing<span class="op">=</span><span class="fl">0.25</span>, handlelength<span class="op">=</span><span class="fl">1.2</span>, handletextpad<span class="op">=</span><span class="fl">0.35</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<p>The small cache helpers are infrastructure around the financial model. They just make the workflow reproducible and faster. The Fourier calibration cells are expensive because the same model may be fitted across hundreds of dates and tens of thousands of quotes. Caching lets us separate the methodological result from repeated compute time.</p>
+<p>The useful rule is simple: a cached artifact is reused only when the saved settings match the current settings. This matters because changing something like the calibration grid, the truncation width, the number of COS terms, or the quote filters changes the experiment. We don’t want old fitted parameters to silently survive after the experiment has changed.</p>
 <div id="e6f8d4a5" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cache_meta(path):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    meta <span class="op">=</span> Path(<span class="bu">str</span>(path).replace(<span class="st">".parquet"</span>, <span class="st">".meta.json"</span>))</span>
@@ -334,6 +460,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    meta <span class="op">=</span> cache_meta(path)</span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> meta.get(<span class="st">"settings"</span>) <span class="op">==</span> settings</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+</section>
+</section>
+<section id="spx-option-panel-and-calibration-grid" class="level2">
+<h2 class="anchored" data-anchor-id="spx-option-panel-and-calibration-grid">2) SPX Option Panel and Calibration Grid</h2>
+<p>The first real step rebuilds the cleaned SPX option panel. Since this data was already used in earlier option notebooks, the only details we need here are the parts that matter specifically for Fourier calibration.</p>
+<p>We keep contracts that satisfy:</p>
+<p><span class="math display">\[
+7 \le DTE \le 180
+\]</span></p>
+<p><span class="math display">\[
+0.70 \le \frac{K}{S} \le 1.35
+\]</span></p>
+<p><span class="math display">\[
+0.03 \le IV \le 1.50
+\]</span></p>
+<p>and we remove quotes with very wide relative spreads. The relative spread is:</p>
+<p><span class="math display">\[
+\text{relative spread}=\frac{ask-bid}{mid}
+\]</span></p>
+<p>The mid price is the calibration target, but the spread controls how much trust we place in that target. In a Fourier project this is especially important because a model can be numerically accurate and still look bad if the quote is noisy. We later scale residuals by a spread-based quantity so deep OTM contracts with noisy prices don’t dominate the objective too aggressively.</p>
+<p>The panel also attaches rates and dividend yields using the same parity/carry workflow from the previous option projects. Fourier pricing needs <span class="math inline">\(r\)</span> and <span class="math inline">\(q\)</span> directly inside the characteristic functions. If <span class="math inline">\(r\)</span> or <span class="math inline">\(q\)</span> is inconsistent with the option quotes, the pricing engine will try to absorb carry errors into volatility, jumps, or stochastic-volatility parameters. That would make the model diagnostics misleading.</p>
+<section id="why-we-still-need-a-clean-surface" class="level3">
+<h3 class="anchored" data-anchor-id="why-we-still-need-a-clean-surface">2.1 Why We Still Need a Clean Surface</h3>
+<p>Fourier pricing can make model prices extremely accurate for a given set of inputs, but it can’t rescue bad inputs. The transform gives a model-implied price for a contract defined by:</p>
+<p><span class="math display">\[
+(S_0,K,T,r,q,\text{type})
+\]</span></p>
+<p>If any of those inputs are inconsistent, the residual becomes a mixture of model error and data error.</p>
+<p>The most delicate input here is carry. Option prices care about the forward:</p>
+<p><span class="math display">\[
+F_{0,T}=S_0e^{(r-q)T}
+\]</span></p>
+<p>and the surface is cleaner when we work with forward log-moneyness:</p>
+<p><span class="math display">\[
+k=\log\left(\frac{K}{F_{0,T}}\right)
+\]</span></p>
+<p>Using <span class="math inline">\(K/S\)</span> would mix strike location with carry. A put with <span class="math inline">\(K/S=0.95\)</span> is not the same economic moneyness at different maturities if rates and dividends change. Using <span class="math inline">\(K/F\)</span> centers each maturity around its own forward level.</p>
+<p>For calibration, this is crucial. A model residual on a downside put should mean the model’s distribution underprices downside risk. It shouldn’t mean the strike was mislocated because the forward was wrong. That is why the notebook attaches rates, infers forwards from put-call parity, clips dividend-yield estimates to plausible values, and stores forward moneyness.</p>
 <div id="179a799c" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>spx_clean_path <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spx_clean_quotes.parquet"</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>clean_settings <span class="op">=</span> {</span>
@@ -515,6 +679,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The cleaning output is large enough for a serious calibration experiment. We start with about <strong>8.20 million</strong> raw rows. After removing invalid quotes, spread outliers, maturity rows outside the window, moneyness extremes, and implausible IVs, we keep about <strong>4.16 million</strong> final rows across <strong>505 quote dates</strong>, <strong>502 expiries</strong>, and more than <strong>160k distinct expiry/type/strike contracts</strong>.</p>
+<p>The largest row reduction comes from the DTE filter, which removes more than <strong>2.21 million</strong> rows. That isn’t a problem; it means we are narrowing the experiment to maturities where the Fourier pricing comparison is meaningful. Extremely short contracts are too microstructure-sensitive, and very long contracts introduce term-structure issues that are not the center of this notebook.</p>
+<p>The final average depth is about <strong>8,247 quotes per date</strong>, so we have enough cross-section to build calibration grids, compare models by moneyness and maturity, and evaluate tail errors rather than relying on a small hand-picked slice.</p>
 <div id="6fc6f589" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>coverage_year <span class="op">=</span> clean_quotes.assign(year<span class="op">=</span>clean_quotes[<span class="st">"date"</span>].dt.year).groupby(<span class="st">"year"</span>).agg(rows<span class="op">=</span>(<span class="st">"mid"</span>, <span class="st">"size"</span>), dates<span class="op">=</span>(<span class="st">"date"</span>, <span class="st">"nunique"</span>), expiries<span class="op">=</span>(<span class="st">"expiry"</span>, <span class="st">"nunique"</span>)).reset_index()</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>clean_quotes[<span class="st">"dte_bucket"</span>] <span class="op">=</span> pd.cut(clean_quotes[<span class="st">"dte_days"</span>], [<span class="dv">0</span>, <span class="dv">14</span>, <span class="dv">30</span>, <span class="dv">60</span>, <span class="dv">90</span>, <span class="dv">120</span>, <span class="dv">180</span>, <span class="dv">365</span>])</span>
@@ -777,6 +944,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The coverage tables show the panel is balanced across the two sample years: about <strong>2.15 million rows in 2022</strong> and <strong>2.02 million rows in 2023</strong>. The DTE buckets also confirm that we have strong quote support from very short maturities through the 120-to-180-day range.</p>
+<p>The spread table is useful because Fourier calibration is sensitive to the quality of the observed price. Around-the-money options usually have the tightest spreads. For example, the 14-to-30-day ATM bucket has a median relative spread around <strong>1.29%</strong>, which is very tradable for index options. Some OTM/short buckets are wider, such as short-dated 0.8-to-0.9 moneyness puts, where the spread reaches several percent or more.</p>
+<p>This matters later because a model error of 50 cents doesn’t mean the same thing everywhere. If the market spread is 5 cents, 50 cents is huge. If the spread is several dollars, the same error is less informative. This is why the calibration objective uses spread-aware scaling.</p>
 <div id="8f00f3a6" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>spot <span class="op">=</span> load_ohlcv(data_dir <span class="op">/</span> <span class="st">"spx_index_ohlcv.csv"</span>, fields<span class="op">=</span>(<span class="st">"close"</span>, <span class="st">"raw_close"</span>))</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>spot <span class="op">=</span> spot.rename(columns<span class="op">=</span>{<span class="st">"raw_close"</span>: <span class="st">"spot_close"</span>})</span>
@@ -822,6 +992,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The spot panel covers <strong>501 SPX trading days</strong> from 2022-01-03 to 2023-12-29, while the option quote panel has <strong>505 quote dates</strong>. That small mismatch is expected because option quote calendars and available underlying rows don’t always align perfectly after holidays and data vendor conventions.</p>
+<p>The date range is also a good stress sample for this project. We are not only fitting a calm bull market. We have:</p>
+<ul>
+<li>the 2022 inflation/rate shock,</li>
+<li>a large SPX drawdown,</li>
+<li>high index volatility,</li>
+<li>changing demand for crash protection,</li>
+<li>and the 2023 recovery with a different volatility regime.</li>
+</ul>
+<p>This is useful for Fourier models because the differences between BSM, jumps, stochastic volatility, and jump-SV are clearest when the tail and skew are stressed.</p>
 <div id="60047dde" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="fl">4.2</span>))</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>ax.bar(monthly_depth.index, monthly_depth[<span class="st">"median"</span>], width<span class="op">=</span><span class="dv">22</span>, color<span class="op">=</span>palette[<span class="dv">0</span>], alpha<span class="op">=</span><span class="fl">0.72</span>)</span>
@@ -839,6 +1019,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The quote-depth plot shows that the calibration universe stays deep through the full sample. Monthly median rows per date usually sit in a stable band around several thousand quotes, with no collapse in market depth during the main stress windows.</p>
+<p>This is important because daily calibration quality depends on cross-sectional support. If one month had only a few hundred usable rows per date, a bad model fit could simply reflect missing quotes. Here the panel is deep enough that poor fit has more economic meaning: if BSM underprices downside puts or if a jump model misses a tail, that is likely a model limitation rather than just a thin-data artifact.</p>
 <div id="118a3159" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="fl">4.2</span>))</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>ax.plot(monthly_spread.index, monthly_spread[<span class="st">"median"</span>], color<span class="op">=</span>palette[<span class="dv">3</span>], lw<span class="op">=</span><span class="fl">1.5</span>, label<span class="op">=</span><span class="st">"median"</span>)</span>
@@ -859,6 +1041,65 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The spread-quality plot tells a more subtle story. The median relative spread stays low through most of the sample, while the 90th percentile is much higher and changes more visibly over time. This means the central option market remains liquid, but the outer parts of the surface carry real microstructure noise.</p>
+<p>For calibration, that creates a tradeoff:</p>
+<ul>
+<li>If we use every quote equally, noisy wings can dominate the loss.</li>
+<li>If we remove too many wing quotes, we lose exactly the contracts that teach the model about skew and crash tails.</li>
+<li>If we use spread-aware weights, we can keep tail information while reducing the influence of unreliable quotes.</li>
+</ul>
+<p>This project takes the third route. We keep a large panel but use quote quality inside the selection and calibration steps.</p>
+</section>
+<section id="representative-otm-quotes-for-model-calibration" class="level3">
+<h3 class="anchored" data-anchor-id="representative-otm-quotes-for-model-calibration">2.2 Representative OTM Quotes for Model Calibration</h3>
+<p>The next step builds an OTM-style calibration subset. The reason is tied to option-market microstructure. For a given strike and expiry, the OTM option is usually the more liquid and more informative quote:</p>
+<ul>
+<li>OTM puts are the natural downside-protection market.</li>
+<li>OTM calls are the natural upside-convexity market.</li>
+<li>Deep ITM options often have wider effective spreads and more parity noise.</li>
+</ul>
+<p>The selection rule chooses one side per strike when possible. In forward log-moneyness terms,</p>
+<p><span class="math display">\[
+k = \log\left(\frac{K}{F}\right)
+\]</span></p>
+<p>negative <span class="math inline">\(k\)</span> means <span class="math inline">\(K&lt;F\)</span>, so puts are usually OTM. Positive <span class="math inline">\(k\)</span> means <span class="math inline">\(K&gt;F\)</span>, so calls are usually OTM. Around ATM, either side can be reasonable, so quote quality decides.</p>
+<p>The row-selection process also buckets maturity and log-moneyness. This prevents the calibration panel from becoming a random collection of the most liquid ATM contracts. We want the model to see the center, the wings, short maturities, and longer maturities.</p>
+</section>
+<section id="daily-calibration-grid" class="level3">
+<h3 class="anchored" data-anchor-id="daily-calibration-grid">2.3 Daily Calibration Grid</h3>
+<p>The calibration grid is built around target maturities and target log-moneyness points:</p>
+<p><span class="math display">\[
+DTE^* \in \{14,21,30,45,60,75,90,105,120,150\}
+\]</span></p>
+<p><span class="math display">\[
+k^* \in \{-0.30,-0.25,-0.20,\ldots,0,\ldots,0.25,0.30\}
+\]</span></p>
+<p>Each trading day is reduced to a representative grid, with roughly the same number of quotes per date. The goal is to create a stable calibration design where every date has a comparable cross-section, while avoiding a random information loss.</p>
+<p>A useful way to think about it is that each date becomes a small surface-fitting problem. We are not asking the model to explain 8,000 quotes per day; many of those quotes are redundant. We ask it to explain a dense but controlled grid across maturity and moneyness.</p>
+<p>The selection score has three main ingredients:</p>
+<p><span class="math display">\[
+\text{selection score}=0.003|DTE-DTE^*|+|k-k^*|+0.10\times \text{relative spread}
+\]</span></p>
+<p>The <span class="math inline">\(|k-k^*|\)</span> term keeps strikes near the target moneyness grid. The DTE term keeps expiries near the target maturities. The spread term favors cleaner quotes when two candidates are otherwise similar.</p>
+</section>
+<section id="why-the-grid-uses-maturity-and-moneyness-targets" class="level3">
+<h3 class="anchored" data-anchor-id="why-the-grid-uses-maturity-and-moneyness-targets">2.4 Why the Grid Uses Maturity and Moneyness Targets</h3>
+<p>A model can look better than it really is if the calibration sample is too concentrated near the most liquid region. ATM options are abundant and tight, so a naive sample could be dominated by the center of the surface. But the main differences among BSM, Merton, VG, Heston, and Bates live in the wings and term structure.</p>
+<p>The daily grid is designed to force each model to answer three questions at the same time:</p>
+<ol type="1">
+<li><strong>Can it fit the center?</strong> ATM and near-ATM options measure the main volatility level.</li>
+<li><strong>Can it fit skew?</strong> Negative log-moneyness puts measure downside crash premium.</li>
+<li><strong>Can it fit term structure?</strong> Multiple DTE targets measure how the distribution changes with horizon.</li>
+</ol>
+<p>In matrix language, each date has a calibration design like:</p>
+<p><span class="math display">\[
+\mathcal{D}_t=\{(K_j,T_j,V_j^{mkt},s_j,w_j)\}_{j=1}^{170}
+\]</span></p>
+<p>The model maps a parameter vector to a price vector:</p>
+<p><span class="math display">\[
+\theta_t \mapsto \hat{\mathbf{V}}_t(\theta_t)=\left(\hat{V}_1(\theta_t),\ldots,\hat{V}_{170}(\theta_t)\right)
+\]</span></p>
+<p>The calibration problem compares this full vector against the market vector. This makes the later model tournament meaningful because each model sees the same shape challenge.</p>
 <div id="661c41a7" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_otm_quotes(q, min_dte<span class="op">=</span><span class="fl">14.0</span>, max_dte<span class="op">=</span><span class="fl">150.0</span>, min_vega<span class="op">=</span><span class="fl">0.0</span>, max_relative_spread<span class="op">=</span><span class="fl">0.45</span>, max_abs_log_moneyness<span class="op">=</span><span class="fl">0.32</span>, min_quotes_per_expiry<span class="op">=</span><span class="dv">8</span>, min_expiries_per_date<span class="op">=</span><span class="dv">5</span>):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> q.copy()</span>
@@ -1177,6 +1418,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The final SPX calibration panel has <strong>85,850 rows</strong>, exactly <strong>170 quotes per date</strong> across <strong>505 dates</strong>. The median cell-row count is <strong>17</strong>, which means the selected quote often represents a local bucket with meaningful quote support behind it.</p>
+<p>This is a strong design for model comparison. Every daily fit sees the same quote count, so runtime and error comparisons are not distorted by one model fitting more rows than another. The model is also forced to face the whole shape of the surface: short maturity, medium maturity, downside puts, ATM options, and upside calls.</p>
+<p>The selection steps show the largest reduction when we choose the OTM side by strike. That is expected because the raw panel contains both calls and puts at many strikes. Keeping the most informative side makes the daily grid cleaner and reduces parity duplication.</p>
 <div id="2e4827c9" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>date_counts <span class="op">=</span> calibration_quotes.groupby(<span class="st">"date"</span>).size()</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>daily_dates <span class="op">=</span> date_counts[date_counts <span class="op">&gt;=</span> <span class="dv">120</span>].index</span>
@@ -1215,6 +1459,215 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The rebalance/calibration date summary defines three date sets:</p>
+<ul>
+<li><strong>daily dates:</strong> dates with enough calibration quotes,</li>
+<li><strong>weekly dates:</strong> every fifth daily date,</li>
+<li><strong>monthly dates:</strong> month-end quote dates,</li>
+<li><strong>stress dates:</strong> dates with high realized volatility and drawdown pressure.</li>
+</ul>
+<p>The main model calibration uses daily data for BSM and jump models. Stochastic-volatility models can be heavier, but here the design still fits them broadly enough for a serious comparison. The stress dates are useful because tail models should earn their complexity in bad markets, not only in average periods.</p>
+</section>
+</section>
+<section id="characteristic-functions-for-pricing-models" class="level2">
+<h2 class="anchored" data-anchor-id="characteristic-functions-for-pricing-models">3) Characteristic Functions for Pricing Models</h2>
+<p>The characteristic function is the central object of the project. For a terminal log-price <span class="math inline">\(X_T=\log S_T\)</span>, it is:</p>
+<p><span class="math display">\[
+\phi_T(u)=E^Q[e^{iuX_T}]
+\]</span></p>
+<p>The variable <span class="math inline">\(u\)</span> is not a market input like strike or maturity. It is a frequency. Low frequencies describe broad distribution shape. High frequencies describe fine details: sharp peaks, payoff kinks, and tail behavior.</p>
+<p>For option pricing, the characteristic function is powerful because many models have difficult densities but simple transforms. A density answers: “how much probability mass sits near this log-price?” A characteristic function answers the same question indirectly by decomposing the distribution into complex waves.</p>
+<p>There are three properties worth keeping in mind:</p>
+<ol type="1">
+<li><span class="math inline">\(\phi_T(0)=1\)</span> for every valid distribution.</li>
+<li>Derivatives of <span class="math inline">\(\phi_T(u)\)</span> around <span class="math inline">\(u=0\)</span> encode moments of <span class="math inline">\(X_T\)</span>.</li>
+<li>The rate at which <span class="math inline">\(|\phi_T(u)|\)</span> decays affects numerical convergence.</li>
+</ol>
+<p>For example, a Gaussian log-price has a very fast-decaying characteristic function because its density is smooth. A jump model can have slower decay because the distribution has fatter tails or sharper central structure.</p>
+<section id="the-levy-view-behind-the-jump-models" class="level3">
+<h3 class="anchored" data-anchor-id="the-levy-view-behind-the-jump-models">3.1 The Levy View Behind the Jump Models</h3>
+<p>The jump models in this notebook are easiest to understand through independent increments. If a log-return process has independent increments, the characteristic function over horizon <span class="math inline">\(T\)</span> often has the form:</p>
+<p><span class="math display">\[
+\phi_T(u)=\exp\left(T\psi(u)\right)
+\]</span></p>
+<p>where <span class="math inline">\(\psi(u)\)</span> is the characteristic exponent. This exponential-in-time structure is powerful because maturity changes become clean. Moving from 30 days to 60 days is not a new model; it is the same exponent multiplied by a longer time.</p>
+<p>For BSM, the exponent is quadratic in <span class="math inline">\(u\)</span>:</p>
+<p><span class="math display">\[
+\psi_{BSM}(u)=iu\left(r-q-\frac{1}{2}\sigma^2\right)-\frac{1}{2}\sigma^2u^2
+\]</span></p>
+<p>For Merton, the exponent adds a jump term:</p>
+<p><span class="math display">\[
+\psi_{Merton}(u)=iu\left(r-q+\omega-\frac{1}{2}\sigma^2\right)-\frac{1}{2}\sigma^2u^2+\lambda\left(e^{iu\mu_J-\frac{1}{2}\sigma_J^2u^2}-1\right)
+\]</span></p>
+<p>For VG, the exponent comes from the logarithm of the Gamma-time transform:</p>
+<p><span class="math display">\[
+\psi_{VG}(u)=iu(r-q+\omega)-\frac{1}{\nu}\log\left(1-i\theta\nu u+\frac{1}{2}\sigma^2\nu u^2\right)
+\]</span></p>
+<p>This exponent view explains why Fourier methods scale so well across models. The pricing code doesn’t need to simulate paths or discretize a PDE for each new distribution. It only needs a function that returns <span class="math inline">\(\phi_T(u)\)</span> for complex <span class="math inline">\(u\)</span>. Once the transform is available, direct integration, FFT, and COS all use the same numerical language.</p>
+</section>
+<section id="bsm-characteristic-function" class="level3">
+<h3 class="anchored" data-anchor-id="bsm-characteristic-function">3.2 BSM Characteristic Function</h3>
+<p>Under BSM, the risk-neutral log-price is normal:</p>
+<p><span class="math display">\[
+X_T=\log S_0+\left(r-q-\frac{1}{2}\sigma^2\right)T+\sigma\sqrt{T}Z
+\]</span></p>
+<p>where <span class="math inline">\(Z\sim N(0,1)\)</span>. Its characteristic function is:</p>
+<p><span class="math display">\[
+\phi_{BSM}(u)=\exp\left(iu\left[\log S_0+\left(r-q-\frac{1}{2}\sigma^2\right)T\right]-\frac{1}{2}\sigma^2u^2T\right)
+\]</span></p>
+<p>Every term has a role:</p>
+<ul>
+<li><span class="math inline">\(\log S_0\)</span> anchors the distribution at today’s log spot.</li>
+<li><span class="math inline">\((r-q-\frac{1}{2}\sigma^2)T\)</span> is the risk-neutral log drift.</li>
+<li><span class="math inline">\(-\frac{1}{2}\sigma^2u^2T\)</span> controls how quickly the transform decays as frequency rises.</li>
+</ul>
+<p>The last term is why BSM is numerically easy in Fourier space. The magnitude decays roughly like <span class="math inline">\(e^{-cu^2}\)</span>, which kills high-frequency oscillations quickly. That makes BSM a good reference model for checking whether the integration and FFT code are correct.</p>
+</section>
+<section id="merton-jump-diffusion-characteristic-function" class="level3">
+<h3 class="anchored" data-anchor-id="merton-jump-diffusion-characteristic-function">3.3 Merton Jump-Diffusion Characteristic Function</h3>
+<p>Merton adds compound Poisson jumps to the continuous diffusion. In log-return form, the model can be written as:</p>
+<p><span class="math display">\[
+X_T = \log S_0 + \left(r-q+\omega-\frac{1}{2}\sigma^2\right)T + \sigma W_T + \sum_{j=1}^{N_T}Y_j
+\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(N_T\sim \text{Poisson}(\lambda T)\)</span> is the number of jumps,</li>
+<li><span class="math inline">\(Y_j\sim N(\mu_J,\sigma_J^2)\)</span> is the jump size,</li>
+<li><span class="math inline">\(\lambda\)</span> is jump intensity,</li>
+<li><span class="math inline">\(\omega\)</span> is the martingale correction.</li>
+</ul>
+<p>The martingale correction keeps the discounted stock price arbitrage-free:</p>
+<p><span class="math display">\[
+\omega=-\lambda\left(e^{\mu_J+\frac{1}{2}\sigma_J^2}-1\right)
+\]</span></p>
+<p>The characteristic function is:</p>
+<p><span class="math display">\[
+\phi_{Merton}(u)=\exp\left(iu\left[\log S_0+\left(r-q+\omega-\frac{1}{2}\sigma^2\right)T\right]-\frac{1}{2}\sigma^2u^2T+\lambda T\left(e^{iu\mu_J-\frac{1}{2}\sigma_J^2u^2}-1\right)\right)
+\]</span></p>
+<p>The first two pieces look like BSM. The extra jump term is:</p>
+<p><span class="math display">\[
+\lambda T\left(e^{iu\mu_J-\frac{1}{2}\sigma_J^2u^2}-1\right)
+\]</span></p>
+<p>This term changes the tails. If <span class="math inline">\(\mu_J&lt;0\)</span>, the average jump is downward, so OTM put prices rise. If <span class="math inline">\(\sigma_J\)</span> is large, jumps are more dispersed, so both tails become fatter. If <span class="math inline">\(\lambda\)</span> rises, jumps happen more frequently.</p>
+<p>This gives a clear economic interpretation: Merton is useful when the market prices discrete crash risk that a smooth diffusion can’t capture.</p>
+</section>
+<section id="variance-gamma-characteristic-function" class="level3">
+<h3 class="anchored" data-anchor-id="variance-gamma-characteristic-function">3.4 Variance Gamma Characteristic Function</h3>
+<p>Variance Gamma is one of the most important new models in this project because it represents a different way to create non-Gaussian returns. Instead of adding a finite number of normally distributed jumps to a diffusion, VG creates a <strong>time-changed Brownian motion</strong>.</p>
+<p>A common representation is:</p>
+<p><span class="math display">\[
+X_T = \log S_0 + (r-q+\omega)T + \theta G_T + \sigma W_{G_T}
+\]</span></p>
+<p>where <span class="math inline">\(G_T\)</span> is a Gamma process. The random clock <span class="math inline">\(G_T\)</span> replaces calendar time with business time. When <span class="math inline">\(G_T\)</span> runs faster, returns move more. When it runs slower, returns move less. This creates heavy tails and excess kurtosis without needing a separate stochastic-volatility process.</p>
+<p>The three parameters in the implementation are:</p>
+<ul>
+<li><span class="math inline">\(\sigma\)</span>: diffusion scale under the Gamma clock,</li>
+<li><span class="math inline">\(\theta\)</span>: skew/drift under the Gamma clock,</li>
+<li><span class="math inline">\(\nu\)</span>: variance of the Gamma clock, often interpreted as the activity or randomness of business time.</li>
+</ul>
+<p>The characteristic function used here is:</p>
+<p><span class="math display">\[
+\phi_{VG}(u)=\exp\left(iu[\log S_0+(r-q+\omega)T]\right)\left(1-i\theta\nu u+\frac{1}{2}\sigma^2\nu u^2\right)^{-T/\nu}
+\]</span></p>
+<p>The martingale correction is:</p>
+<p><span class="math display">\[
+\omega=\frac{1}{\nu}\log\left(1-\theta\nu-\frac{1}{2}\sigma^2\nu\right)
+\]</span></p>
+<p>The correction is valid only if:</p>
+<p><span class="math display">\[
+1-\theta\nu-\frac{1}{2}\sigma^2\nu&gt;0
+\]</span></p>
+<p>That inequality matters in calibration. If the optimizer proposes invalid parameters, the characteristic function stops being a valid risk-neutral stock-price transform. The code therefore rejects invalid VG parameter sets.</p>
+<p>For example, if <span class="math inline">\(\nu\)</span> becomes too large while <span class="math inline">\(\sigma\)</span> and <span class="math inline">\(\theta\)</span> are also large, the martingale term can fail. That isn’t a minor numerical issue; it means the model no longer defines a valid discounted stock price under the chosen parameterization.</p>
+</section>
+<section id="why-vg-is-economically-different-from-merton" class="level3">
+<h3 class="anchored" data-anchor-id="why-vg-is-economically-different-from-merton">3.5 Why VG Is Economically Different from Merton</h3>
+<p>Merton says jumps arrive as isolated events. VG says the market clock itself is random. That difference changes how we interpret tails.</p>
+<p>In Merton, the number of jumps over <span class="math inline">\(T\)</span> is discrete:</p>
+<p><span class="math display">\[
+N_T\in\{0,1,2,\ldots\}
+\]</span></p>
+<p>and most short intervals may have no jump at all if <span class="math inline">\(\lambda T\)</span> is small. The distribution is a mixture of normal distributions conditional on jump count.</p>
+<p>In VG, the Gamma clock <span class="math inline">\(G_T\)</span> is continuous and random:</p>
+<p><span class="math display">\[
+G_T\sim \Gamma\left(\frac{T}{\nu},\nu\right)
+\]</span></p>
+<p>with:</p>
+<p><span class="math display">\[
+E[G_T]=T
+\]</span></p>
+<p><span class="math display">\[
+Var(G_T)=\nu T
+\]</span></p>
+<p>So <span class="math inline">\(\nu\)</span> controls how unstable business time is. If <span class="math inline">\(\nu\)</span> is small, <span class="math inline">\(G_T\)</span> is close to calendar time and the process is closer to a diffusion. If <span class="math inline">\(\nu\)</span> is large, the clock can run much faster or slower than calendar time, creating fat tails.</p>
+<p>The conditional return given <span class="math inline">\(G_T=g\)</span> is normal:</p>
+<p><span class="math display">\[
+X_T\mid G_T=g \sim N(\theta g,\sigma^2 g)
+\]</span></p>
+<p>Unconditionally, we average over many possible values of <span class="math inline">\(g\)</span>. That mixture produces skewness and kurtosis. Negative <span class="math inline">\(\theta\)</span> shifts large-business-time outcomes to the left, which is useful for equity-index downside skew.</p>
+<p>This is why VG is a meaningful model in a Fourier project. It has no simple Black-Scholes-style option formula, but its characteristic function is compact. Fourier methods make it almost as operational as BSM once the transform is implemented.</p>
+</section>
+<section id="heston-and-bates-in-fourier-form" class="level3">
+<h3 class="anchored" data-anchor-id="heston-and-bates-in-fourier-form">3.6 Heston and Bates in Fourier Form</h3>
+<p>Project 11 explained Heston and Bates as volatility models, so here we focus on the transform side. Heston gives a closed-form characteristic function even though the option price itself doesn’t have a simple elementary closed form.</p>
+<p>The Heston variance process is:</p>
+<p><span class="math display">\[
+dv_t=\kappa(\theta-v_t)dt+\xi\sqrt{v_t}\,dW_t^v
+\]</span></p>
+<p>and the stock process has correlated shocks:</p>
+<p><span class="math display">\[
+dS_t=(r-q)S_tdt+\sqrt{v_t}S_t\,dW_t^S
+\]</span></p>
+<p><span class="math display">\[
+dW_t^S dW_t^v = \rho dt
+\]</span></p>
+<p>The characteristic function has exponential-affine form:</p>
+<p><span class="math display">\[
+\phi_{Heston}(u)=\exp\left(C(u,T)+D(u,T)v_0+iu\log S_0\right)
+\]</span></p>
+<p>The implementation computes the <span class="math inline">\(C\)</span> and <span class="math inline">\(D\)</span> terms through complex-valued expressions involving <span class="math inline">\(\kappa\)</span>, <span class="math inline">\(\theta\)</span>, <span class="math inline">\(\xi\)</span>, <span class="math inline">\(\rho\)</span>, and <span class="math inline">\(v_0\)</span>. The important financial meaning is:</p>
+<ul>
+<li><span class="math inline">\(v_0\)</span> controls today’s variance level.</li>
+<li><span class="math inline">\(\theta\)</span> controls long-run variance.</li>
+<li><span class="math inline">\(\kappa\)</span> controls the speed of mean reversion.</li>
+<li><span class="math inline">\(\xi\)</span> controls volatility of volatility.</li>
+<li><span class="math inline">\(\rho\)</span> controls skew through the leverage effect.</li>
+</ul>
+<p>Bates multiplies the Heston transform by a Merton jump transform. That means Bates has stochastic variance and finite-activity jumps in the same risk-neutral distribution:</p>
+<p><span class="math display">\[
+\phi_{Bates}(u)=\phi_{Heston}(u; r+\omega,q)\times \exp\left(\lambda T\left(e^{iu\mu_J-\frac{1}{2}\sigma_J^2u^2}-1\right)\right)
+\]</span></p>
+<p>In calibration, Bates is flexible but expensive and easier to overfit. That is why this project compares it against simpler models using residuals, tail errors, and runtime, not only headline RMSE.</p>
+</section>
+<section id="risk-neutral-drift-corrections-across-models" class="level3">
+<h3 class="anchored" data-anchor-id="risk-neutral-drift-corrections-across-models">3.7 Risk-Neutral Drift Corrections Across Models</h3>
+<p>Every model in this project must satisfy the risk-neutral martingale condition:</p>
+<p><span class="math display">\[
+E^Q[S_T]=S_0e^{(r-q)T}
+\]</span></p>
+<p>Equivalently, the discounted ex-dividend stock price must have no arbitrage drift. Since most models are written for log-price, this condition usually appears as a drift correction.</p>
+<p>For an exponential return model,</p>
+<p><span class="math display">\[
+S_T=S_0\exp(X_T)
+\]</span></p>
+<p>we need:</p>
+<p><span class="math display">\[
+E^Q[e^{X_T}]=e^{(r-q)T}
+\]</span></p>
+<p>In characteristic-function language, this is connected to evaluating the transform at <span class="math inline">\(u=-i\)</span> because:</p>
+<p><span class="math display">\[
+\phi_X(-i)=E[e^{i(-i)X_T}]=E[e^{X_T}]
+\]</span></p>
+<p>That is why terms like <span class="math inline">\(\phi(-i)\)</span> appear in direct Fourier pricing. The transform at a complex argument is not a random accident; it is exactly the moment needed to price the stock-weighted part of the payoff.</p>
+<p>Merton and VG need explicit drift corrections because jumps or random time changes change the expected exponential growth of the stock. Without the correction, the model might fit option shapes but violate the forward price. In calibration, this would be dangerous because the optimizer could use jumps to explain carry errors.</p>
+<p>The practical design is:</p>
+<ol type="1">
+<li>infer or attach <span class="math inline">\(r\)</span> and <span class="math inline">\(q\)</span> consistently,</li>
+<li>build a risk-neutral characteristic function with the right martingale correction,</li>
+<li>price options from that transform,</li>
+<li>attribute residual errors to model shape, not to a broken forward relation.</li>
+</ol>
+<p>This is also why forward log-moneyness is used in the cleaned SPX panel. We want the surface to be centered around the forward, because the forward is the risk-neutral anchor.</p>
 <div id="9ba5e3e2" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bsm_cf(u, s, r, q, tau, sigma):</span>
@@ -1344,6 +1797,52 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The characteristic-function fingerprint table gives a quick numerical sanity check. Every model has maximum magnitude equal to <strong>1</strong>, because <span class="math inline">\(|\phi(0)|=1\)</span>. The models differ in how quickly the magnitude decays.</p>
+<p>BSM and Merton reach values very close to zero at high frequencies. VG has a much larger minimum magnitude, about <strong>0.099</strong>, and a median magnitude around <strong>0.232</strong>. This tells us VG keeps more high-frequency content alive over the same <span class="math inline">\(u\)</span> range. That is one reason VG can be more delicate for COS truncation and integration width choices.</p>
+<p>Heston and Bates sit between these extremes. Their transforms decay more slowly than BSM but not as slowly as VG in this test. This is consistent with their richer skew and tail structure.</p>
+</section>
+</section>
+<section id="recovering-a-density-from-the-characteristic-function" class="level2">
+<h2 class="anchored" data-anchor-id="recovering-a-density-from-the-characteristic-function">4) Recovering a Density from the Characteristic Function</h2>
+<p>Fourier inversion lets us recover the density from the characteristic function. If <span class="math inline">\(X_T\)</span> has density <span class="math inline">\(f(x)\)</span> and characteristic function <span class="math inline">\(\phi(u)\)</span>, then:</p>
+<p><span class="math display">\[
+f(x)=\frac{1}{2\pi}\int_{-\infty}^{\infty}e^{-iux}\phi(u)\,du
+\]</span></p>
+<p>Because valid densities are real-valued, we can use symmetry and compute:</p>
+<p><span class="math display">\[
+f(x)=\frac{1}{\pi}\int_0^{\infty}\operatorname{Re}\left(e^{-iux}\phi(u)\right)du
+\]</span></p>
+<p>The code approximates this integral on a finite grid:</p>
+<p><span class="math display">\[
+f(x_j)\approx \sum_{m=1}^{N}\operatorname{Re}\left(e^{-iu_mx_j}\phi(u_m)\right)\frac{\Delta u}{\pi}
+\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(x_j\)</span> is a log-price grid point,</li>
+<li><span class="math inline">\(u_m\)</span> is a Fourier frequency,</li>
+<li><span class="math inline">\(\Delta u\)</span> is the spacing between frequency nodes,</li>
+<li><span class="math inline">\(N\)</span> is the number of integration nodes,</li>
+<li><span class="math inline">\(u_{max}=N\Delta u\)</span> is the integration cutoff.</li>
+</ul>
+<p>The density is then normalized numerically so the area under it is close to one. This step is mainly diagnostic. We don’t need to recover the full density to price options, but plotting the implied density makes the models much easier to understand.</p>
+<section id="oscillatory-integrals-and-numerical-choices" class="level3">
+<h3 class="anchored" data-anchor-id="oscillatory-integrals-and-numerical-choices">4.1 Oscillatory Integrals and Numerical Choices</h3>
+<p>Fourier inversion integrals are oscillatory. The factor</p>
+<p><span class="math display">\[
+e^{-iux}=\cos(ux)-i\sin(ux)
+\]</span></p>
+<p>keeps changing sign as <span class="math inline">\(u\)</span> grows. The integral can converge because positive and negative oscillations cancel out. Numerically, that cancellation is both useful and dangerous.</p>
+<p>If the grid is too coarse, we miss oscillations and the cancellation is wrong. If the cutoff is too low, we truncate meaningful high-frequency information. If the transform decays slowly, a large region of the frequency domain can still contribute to the price.</p>
+<p>This is why the code uses midpoint-style frequency nodes in direct integration:</p>
+<p><span class="math display">\[
+u_j=(j-0.5)\Delta u
+\]</span></p>
+<p>rather than only endpoint nodes. Midpoint integration is often more stable for oscillatory integrals because it avoids evaluating exactly at problematic boundaries and samples the interior of each frequency bin.</p>
+<p>The numerical error has two main parts:</p>
+<p><span class="math display">\[
+\text{total error}=\text{truncation error}+\text{discretization error}
+\]</span></p>
+<p>Truncation error comes from cutting the integral at <span class="math inline">\(u_{max}\)</span>. Discretization error comes from using a finite grid between <span class="math inline">\(0\)</span> and <span class="math inline">\(u_{max}\)</span>. Direct integration is accurate when both are small, but making both small is expensive.</p>
 <div id="e70c330f" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> density_from_cf(model_id, params, x_grid, s, r, q, tau, u_max, n):</span>
@@ -1396,6 +1895,58 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The density plots show why the models price wings differently.</p>
+<p>In the jump-distribution panel, BSM has the sharpest central peak and thinnest tails. Merton spreads probability mass away from the center because jumps create large moves that the Gaussian model assigns too little probability to. VG also fattens the distribution but in a different way. It changes the shape continuously through random business time rather than through a finite jump count.</p>
+<p>In the volatility-distribution panel, Heston and Bates shift mass and change the tail shape relative to BSM. Bates combines the stochastic-volatility skew with jump risk, so its density can allocate more probability to left-tail outcomes while still keeping a realistic center.</p>
+<p>This density view is not a calibration result yet; it uses illustrative parameters. But it explains the later calibration behavior. BSM will struggle with OTM puts because its tail is too thin. Jump and SV models have more ways to put probability into the crash region.</p>
+</section>
+</section>
+<section id="direct-fourier-integration" class="level2">
+<h2 class="anchored" data-anchor-id="direct-fourier-integration">5) Direct Fourier Integration</h2>
+<p>Direct Fourier pricing is the slowest of the three main methods, but it is the cleanest benchmark. The call price can be written using two risk-neutral probabilities:</p>
+<p><span class="math display">\[
+C_0=S_0e^{-qT}P_1-Ke^{-rT}P_2
+\]</span></p>
+<p>Here:</p>
+<ul>
+<li><span class="math inline">\(P_2\)</span> is the risk-neutral probability that the option finishes ITM, adjusted through the log-price distribution.</li>
+<li><span class="math inline">\(P_1\)</span> is a stock-measure probability, meaning it weights states by the stock payoff contribution.</li>
+</ul>
+<p>Both probabilities can be computed from the characteristic function:</p>
+<p><span class="math display">\[
+P_1=\frac{1}{2}+\frac{1}{\pi}\int_0^{\infty}\operatorname{Re}\left(\frac{e^{-iu\log K}\phi(u-i)}{iu\phi(-i)}\right)du
+\]</span></p>
+<p><span class="math display">\[
+P_2=\frac{1}{2}+\frac{1}{\pi}\int_0^{\infty}\operatorname{Re}\left(\frac{e^{-iu\log K}\phi(u)}{iu}\right)du
+\]</span></p>
+<p>The term <span class="math inline">\(\phi(u-i)\)</span> appears because the payoff contains <span class="math inline">\(S_T=e^{X_T}\)</span>, so pricing the stock-weighted part requires shifting the transform into the complex plane. The denominator <span class="math inline">\(\phi(-i)\)</span> normalizes that stock-weighted transform.</p>
+<p>Numerically, direct integration approximates these integrals as sums over <span class="math inline">\(u_1,\ldots,u_N\)</span>:</p>
+<p><span class="math display">\[
+P_2\approx \frac{1}{2}+\sum_{m=1}^{N}\frac{\Delta u}{\pi}\operatorname{Re}\left(\frac{e^{-iu_m\log K}\phi(u_m)}{iu_m}\right)
+\]</span></p>
+<p>and similarly for <span class="math inline">\(P_1\)</span>. The result is accurate when <span class="math inline">\(u_{max}\)</span> is high enough and <span class="math inline">\(N\)</span> is large enough. It is slow because we repeat the full integral for every strike.</p>
+<p>For example, pricing 1,000 strikes means 1,000 separate oscillatory integrations. That is fine for validation, but too expensive for daily calibration across thousands of quotes and several models.</p>
+<section id="deriving-the-p1-and-p2-logic" class="level3">
+<h3 class="anchored" data-anchor-id="deriving-the-p1-and-p2-logic">5.1 Deriving the P1 and P2 Logic</h3>
+<p>The direct formula can look mysterious if we only write the final <span class="math inline">\(P_1\)</span> and <span class="math inline">\(P_2\)</span> equations. The clean way to see it is to split the call payoff into two pieces:</p>
+<p><span class="math display">\[
+(S_T-K)^+=S_T\mathbf{1}_{\{S_T&gt;K\}}-K\mathbf{1}_{\{S_T&gt;K\}}
+\]</span></p>
+<p>Discounting gives:</p>
+<p><span class="math display">\[
+C_0=e^{-rT}E^Q[S_T\mathbf{1}_{\{S_T&gt;K\}}]-Ke^{-rT}Q(S_T&gt;K)
+\]</span></p>
+<p>The second probability is the easier one:</p>
+<p><span class="math display">\[
+P_2=Q(S_T&gt;K)=Q(X_T&gt;\log K)
+\]</span></p>
+<p>The first term is a stock-weighted probability. We can rewrite it as:</p>
+<p><span class="math display">\[
+e^{-rT}E^Q[S_T\mathbf{1}_{\{S_T&gt;K\}}]=S_0e^{-qT}P_1
+\]</span></p>
+<p>where <span class="math inline">\(P_1\)</span> is a probability under a measure that weights states by <span class="math inline">\(S_T\)</span>. That is why <span class="math inline">\(P_1\)</span> is not the same as <span class="math inline">\(P_2\)</span>. <span class="math inline">\(P_2\)</span> asks how likely the option finishes ITM. <span class="math inline">\(P_1\)</span> asks how much the stock-value-weighted distribution contributes in those ITM states.</p>
+<p>For example, suppose two outcomes are both ITM. One outcome has <span class="math inline">\(S_T\)</span> barely above <span class="math inline">\(K\)</span>, and another has <span class="math inline">\(S_T\)</span> far above <span class="math inline">\(K\)</span>. <span class="math inline">\(P_2\)</span> treats both as ITM events. <span class="math inline">\(P_1\)</span> gives more weight to the second because the stock payoff part is larger. This is exactly why the call formula needs two terms.</p>
+<p>Fourier inversion gives both probabilities from the same characteristic function. <span class="math inline">\(P_2\)</span> uses <span class="math inline">\(\phi(u)\)</span> directly. <span class="math inline">\(P_1\)</span> uses <span class="math inline">\(\phi(u-i)\)</span> because multiplying by <span class="math inline">\(S_T=e^{X_T}\)</span> shifts the transform.</p>
 <div id="255ef09b" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> direct_call(model_id, params, s, k, r, q, tau, n, u_max):</span>
@@ -1489,6 +2040,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The BSM direct-integration validation is perfect to displayed precision. The maximum and median absolute errors are shown as <strong>0.0000000000</strong> across the 30-day, 60-day, and 120-day maturities.</p>
+<p>This matters because BSM has a closed-form price. If the direct Fourier formula failed here, every later model comparison would be suspect. The zero error tells us that the <span class="math inline">\(P_1/P_2\)</span> integrals, transform shift <span class="math inline">\(u-i\)</span>, discounting, and strike handling are consistent with the standard BSM formula.</p>
 <div id="1321da84" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>cut_rows <span class="op">=</span> []</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> cutoff <span class="kw">in</span> [<span class="fl">60.0</span>, <span class="fl">90.0</span>, <span class="fl">120.0</span>, <span class="fl">160.0</span>, <span class="fl">220.0</span>]:</span>
@@ -1603,6 +2156,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The cutoff and node tests show that direct integration is very stable in this BSM check. With <span class="math inline">\(u_{max}=60\)</span>, the maximum absolute error is only about <strong>0.000017</strong>. Once the cutoff reaches 90 or more, the reported error falls to zero at table precision. Increasing nodes from 256 to 4096 also gives zero displayed error in this setup.</p>
+<p>This result is model-dependent. BSM is smooth and easy. VG and some jump-SV parameter sets can need a larger cutoff because the transform decays more slowly and the density/payoff interaction contains sharper features. So the direct integration test should be read as a sanity check, not as proof that every model will be equally easy.</p>
 <div id="9c11cda7" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> merton_series_call(s, k, r, q, tau, sigma, lam, muj, sj, n_max<span class="op">=</span><span class="dv">60</span>):</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> math.exp(<span class="op">-</span>r <span class="op">*</span> tau)</span>
@@ -1647,6 +2202,130 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>Merton gives another useful validation because it has an independent series representation. Conditional on <span class="math inline">\(n\)</span> jumps, the terminal log-price is normal with adjusted mean and variance. The call price can be written as a Poisson-weighted mixture of BSM prices:</p>
+<p><span class="math display">\[
+C_{Merton}=\sum_{n=0}^{\infty}e^{-\lambda T}\frac{(\lambda T)^n}{n!}C_{BSM}(F_n,\sigma_n)
+\]</span></p>
+<p>where the conditional forward and volatility are adjusted by the number of jumps:</p>
+<p><span class="math display">\[
+F_n=F\exp\left(-\lambda\kappa_JT+n\mu_J+\frac{1}{2}n\sigma_J^2\right)
+\]</span></p>
+<p><span class="math display">\[
+\sigma_n=\sqrt{\sigma^2+\frac{n\sigma_J^2}{T}}
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\kappa_J=e^{\mu_J+\frac{1}{2}\sigma_J^2}-1
+\]</span></p>
+<p>The direct Fourier Merton prices match the series prices to displayed precision. This is a strong second check because the validation is no longer just against BSM. It verifies that the jump characteristic function, martingale correction, and integration formula work together correctly.</p>
+</section>
+</section>
+<section id="carr-madan-fft" class="level2">
+<h2 class="anchored" data-anchor-id="carr-madan-fft">6) Carr-Madan FFT</h2>
+<p>Direct integration prices one strike at a time. Carr-Madan FFT changes the problem by pricing a whole grid of log-strikes at once. The core difficulty is that the call payoff is not square-integrable in strike space because call prices don’t decay fast enough as log-strike goes to <span class="math inline">\(-\infty\)</span>. The method fixes this by damping the call price.</p>
+<p>Let log-strike be:</p>
+<p><span class="math display">\[
+k=\log K
+\]</span></p>
+<p>and define the damped call:</p>
+<p><span class="math display">\[
+c_{\alpha}(k)=e^{\alpha k}C(k)
+\]</span></p>
+<p>where <span class="math inline">\(\alpha&gt;0\)</span> is the damping parameter. Multiplying by <span class="math inline">\(e^{\alpha k}\)</span> makes the transformed function behave better under Fourier integration. The Fourier transform of the damped call can be written as:</p>
+<p><span class="math display">\[
+\psi(u)=\frac{e^{-rT}\phi(u-i(\alpha+1))}{\alpha^2+\alpha-u^2+i(2\alpha+1)u}
+\]</span></p>
+<p>The denominator comes from transforming the call payoff. The shifted characteristic function <span class="math inline">\(\phi(u-i(\alpha+1))\)</span> appears because damping and payoff growth shift the complex argument.</p>
+<p>Then the price is recovered by inverse transform:</p>
+<p><span class="math display">\[
+C(k)=\frac{e^{-\alpha k}}{\pi}\int_0^{\infty}\operatorname{Re}\left(e^{-iuk}\psi(u)\right)du
+\]</span></p>
+<p>The FFT enters because this integral is evaluated on an evenly spaced frequency grid and an evenly spaced log-strike grid. If:</p>
+<p><span class="math display">\[
+u_j=j\eta,\qquad j=0,1,\ldots,N-1
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+k_m=b+m\lambda,\qquad m=0,1,\ldots,N-1
+\]</span></p>
+<p>then the grids must satisfy:</p>
+<p><span class="math display">\[
+\lambda\eta=\frac{2\pi}{N}
+\]</span></p>
+<p>This relation is the price of speed. FFT gives all strikes at once, but the strikes are fixed by the frequency spacing. If the market strikes don’t fall exactly on the FFT grid, we interpolate.</p>
+<section id="the-discrete-fft-approximation" class="level3">
+<h3 class="anchored" data-anchor-id="the-discrete-fft-approximation">6.1 The Discrete FFT Approximation</h3>
+<p>The continuous Carr-Madan price recovery is:</p>
+<p><span class="math display">\[
+C(k)=\frac{e^{-\alpha k}}{\pi}\int_0^{\infty}\operatorname{Re}\left(e^{-iuk}\psi(u)\right)du
+\]</span></p>
+<p>The implementation replaces the integral with a weighted sum:</p>
+<p><span class="math display">\[
+C(k_m)\approx \frac{e^{-\alpha k_m}}{\pi}\sum_{j=0}^{N-1}\operatorname{Re}\left(e^{-iu_jk_m}\psi(u_j)\right)\eta w_j
+\]</span></p>
+<p>where <span class="math inline">\(u_j=j\eta\)</span> and <span class="math inline">\(w_0=1/2\)</span> is the trapezoid endpoint weight. The log-strike grid is:</p>
+<p><span class="math display">\[
+k_m=b+m\lambda
+\]</span></p>
+<p>Substitute the grid definitions:</p>
+<p><span class="math display">\[
+e^{-iu_jk_m}=e^{-ij\eta(b+m\lambda)}=e^{-ij\eta b}e^{-ijm\eta\lambda}
+\]</span></p>
+<p>If <span class="math inline">\(\eta\lambda=2\pi/N\)</span>, then:</p>
+<p><span class="math display">\[
+e^{-ijm\eta\lambda}=e^{-2\pi ijm/N}
+\]</span></p>
+<p>That last term is exactly the discrete Fourier transform kernel. This is the reason the algorithm becomes fast. We are not changing the pricing formula; we are choosing grids so the sum becomes an FFT.</p>
+<p>The start point <span class="math inline">\(b\)</span> determines where the log-strike grid begins. In the implementation, the grid is centered around <span class="math inline">\(\log S\)</span> so the market strike region sits inside the computed grid. After FFT pricing, the market strike prices are obtained by interpolation.</p>
+</section>
+<section id="fft-grid-tradeoff-in-financial-terms" class="level3">
+<h3 class="anchored" data-anchor-id="fft-grid-tradeoff-in-financial-terms">6.2 FFT Grid Tradeoff in Financial Terms</h3>
+<p>The FFT computes prices on a log-strike grid, not exactly on the market strikes. That means the final market price is usually an interpolation:</p>
+<p><span class="math display">\[
+\hat{C}(K^{mkt})=\text{Interp}\left(\{K_m,C(K_m)\}_{m=0}^{N-1},K^{mkt}\right)
+\]</span></p>
+<p>So the total FFT error contains:</p>
+<p><span class="math display">\[
+\text{FFT error}=\text{transform truncation error}+\text{quadrature error}+\text{strike interpolation error}
+\]</span></p>
+<p>In an idealized pricing library, FFT is excellent when we need a whole smooth grid of strikes for one maturity and one parameter set. It is less convenient when every option quote has a different maturity, rate, dividend yield, and exact strike.</p>
+<p>This is why the notebook uses FFT mainly as a method demonstration and validation tool. It proves that the Carr-Madan transform works and that grid refinement reduces error. But daily calibration uses grouped COS, because grouped COS matches the shape of the market data better: arbitrary strikes grouped by date, expiry, and option type.</p>
+<p>For example, if a market expiry has strikes at 3825, 3830, 3840, 3855, and 3875, an FFT grid may not land exactly on those values. COS can price those exact strikes directly.</p>
+</section>
+<section id="how-to-read-the-fft-parameters" class="level3">
+<h3 class="anchored" data-anchor-id="how-to-read-the-fft-parameters">6.3 How to Read the FFT Parameters</h3>
+<p>The FFT implementation has three important numerical parameters:</p>
+<ul>
+<li><span class="math inline">\(\alpha\)</span>: damping strength,</li>
+<li><span class="math inline">\(N\)</span>: number of FFT nodes,</li>
+<li><span class="math inline">\(\eta\)</span>: spacing in frequency space.</li>
+</ul>
+<p>The log-strike spacing is determined by:</p>
+<p><span class="math display">\[
+\lambda=\frac{2\pi}{N\eta}
+\]</span></p>
+<p>A larger <span class="math inline">\(N\)</span> gives more grid points. A smaller <span class="math inline">\(\lambda\)</span> gives a finer log-strike grid. Since <span class="math inline">\(\lambda\)</span> depends on both <span class="math inline">\(N\)</span> and <span class="math inline">\(\eta\)</span>, the numerical design is a balance:</p>
+<ul>
+<li>Larger <span class="math inline">\(N\)</span> improves resolution but costs more.</li>
+<li>Larger <span class="math inline">\(\eta\)</span> expands frequency spacing but changes strike spacing.</li>
+<li>Too small or too large <span class="math inline">\(\alpha\)</span> can create instability or slow convergence.</li>
+</ul>
+<p>A practical example: if <span class="math inline">\(N\)</span> doubles while <span class="math inline">\(\eta\)</span> stays fixed, <span class="math inline">\(\lambda\)</span> halves. That means the FFT prices are available on a finer log-strike grid, so interpolation error falls. This is exactly what we expect to see in the validation table.</p>
+</section>
+<section id="choosing-the-damping-parameter-alpha" class="level3">
+<h3 class="anchored" data-anchor-id="choosing-the-damping-parameter-alpha">6.4 Choosing the Damping Parameter alpha</h3>
+<p>The damping parameter <span class="math inline">\(\alpha\)</span> controls the transformed payoff. If <span class="math inline">\(\alpha\)</span> is too low, the damped call price still decays too slowly and the Fourier integral becomes unstable. If <span class="math inline">\(\alpha\)</span> is too high, the shifted characteristic function is evaluated farther into the complex plane, which can amplify numerical problems or violate model moment conditions.</p>
+<p>The denominator in the Carr-Madan transform is:</p>
+<p><span class="math display">\[
+\alpha^2+\alpha-u^2+i(2\alpha+1)u
+\]</span></p>
+<p>The shifted characteristic function is:</p>
+<p><span class="math display">\[
+\phi\left(u-i(\alpha+1)\right)
+\]</span></p>
+<p>So <span class="math inline">\(\alpha\)</span> affects both the payoff transform and the model transform. A model must have the required exponential moment for this shifted evaluation to be valid. For heavy-tailed models, this is not automatic.</p>
+<p>In this notebook, <span class="math inline">\(\alpha=1.5\)</span> is a stable practical choice across the tested models. The validation table confirms that <span class="math inline">\(\alpha=0.75\)</span> is weaker for BSM, while <span class="math inline">\(\alpha\ge1.25\)</span> stabilizes the median error at the chosen grid size.</p>
+<p>This is a good example of a numerical parameter with financial-model implications. It looks like a technical FFT choice, but it depends on the existence and stability of model moments.</p>
 <div id="288a8b7a" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fft_inplace(x):</span>
@@ -1857,6 +2536,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The FFT validation confirms the expected behavior. With <span class="math inline">\(N=8192\)</span> and <span class="math inline">\(\eta=0.35\)</span>, the median absolute error is about <strong>0.0024</strong> for <span class="math inline">\(\alpha\ge1.25\)</span>. With <span class="math inline">\(\alpha=0.75\)</span>, the median error is worse, around <strong>0.0093</strong>, which means the damping is too weak for this grid.</p>
+<p>The node test is even clearer:</p>
+<ul>
+<li><span class="math inline">\(N=2048\)</span>: median error around <strong>0.0404</strong>,</li>
+<li><span class="math inline">\(N=4096\)</span>: median error around <strong>0.0103</strong>,</li>
+<li><span class="math inline">\(N=8192\)</span>: median error around <strong>0.0024</strong>,</li>
+<li><span class="math inline">\(N=16384\)</span>: median error around <strong>0.00058</strong>.</li>
+</ul>
+<p>This is the FFT grid-resolution story. The method is extremely fast, but the strike grid matters. If the grid is too coarse, interpolation error remains even when the transform formula is correct.</p>
+<p>The very wide reported strike range is a side effect of the FFT grid. It covers far more strikes than we need. Only a few hundred grid points fall inside the market strike range. FFT is efficient when we want a whole strike grid; it is less natural when we need arbitrary market strikes date by date.</p>
 <div id="67396374" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab <span class="im">import</span> _kernels</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -1964,6 +2653,118 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The C++ FFT validation shows identical prices to the Numba implementation, with zero displayed max and median differences. That is the most important result. Runtime differs by model, and in this notebook’s environment the C++ kernel is not always faster than Numba for these small single-grid calls. For BSM and VG the speeds are close; for Heston and Bates the Numba implementation is faster in this particular benchmark.</p>
+<p>That doesn’t mean C++ is useless. The production advantage of C++ usually appears when we run large, repeated workloads with careful memory layout and less Python overhead. This table is mostly an <strong>implementation certificate</strong>: the compiled and local kernels agree numerically. The C++ source can be inspected in the repo’s <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/cpp">cpp folder</a>.</p>
+</section>
+</section>
+<section id="cos-pricing" class="level2">
+<h2 class="anchored" data-anchor-id="cos-pricing">7) COS Pricing</h2>
+<p>The COS method is the main production engine in this project. It is based on a Fourier-cosine expansion of the density on a finite interval <span class="math inline">\([a,b]\)</span>. Instead of integrating separately for every strike like direct integration, and instead of forcing prices onto an FFT strike grid, COS can price arbitrary strikes efficiently.</p>
+<p>Suppose <span class="math inline">\(X_T\)</span> has density <span class="math inline">\(f(x)\)</span>. On a finite interval <span class="math inline">\([a,b]\)</span>, we approximate:</p>
+<p><span class="math display">\[
+f(x)\approx \sum_{n=0}^{N-1}A_n\cos\left(n\pi\frac{x-a}{b-a}\right)
+\]</span></p>
+<p>The coefficients are related to the characteristic function:</p>
+<p><span class="math display">\[
+A_n\approx \frac{2}{b-a}\operatorname{Re}\left(\phi\left(\frac{n\pi}{b-a}\right)e^{-i n\pi a/(b-a)}\right)
+\]</span></p>
+<p>The option price becomes:</p>
+<p><span class="math display">\[
+V=e^{-rT}\sum_{n=0}^{N-1} A_n V_n
+\]</span></p>
+<p>where <span class="math inline">\(V_n\)</span> is the cosine coefficient of the payoff. The method is fast because <span class="math inline">\(A_n\)</span> comes from the characteristic function and <span class="math inline">\(V_n\)</span> can be computed analytically for calls and puts.</p>
+<p>This is the key difference from brute-force density integration: COS doesn’t first recover the full density and then integrate the payoff numerically. It expands the density and payoff in the same cosine basis, so pricing becomes a finite sum.</p>
+<section id="why-cos-works-especially-well-for-calibration" class="level3">
+<h3 class="anchored" data-anchor-id="why-cos-works-especially-well-for-calibration">7.1 Why COS Works Especially Well for Calibration</h3>
+<p>COS pricing has two advantages that are perfect for calibration.</p>
+<p>First, it uses the characteristic function directly. For each term,</p>
+<p><span class="math display">\[
+u_n=\frac{n\pi}{b-a}
+\]</span></p>
+<p>we evaluate <span class="math inline">\(\phi(\nu_n)\)</span>. This means any model with a characteristic function can be plugged into the same pricing engine.</p>
+<p>Second, it handles arbitrary strikes. Market quotes are not arranged on a perfect FFT grid. Each expiry has its own listed strikes, and those strikes change through time. COS can price the exact strikes that appear in the option chain.</p>
+<p>The price can be written in a compact form:</p>
+<p><span class="math display">\[
+V(K,T)=e^{-rT}\sum_{n=0}^{N-1}\operatorname{Re}\left(\phi(\nu_n)e^{-i\nu_n a}\right)H_n(K)
+\]</span></p>
+<p>where <span class="math inline">\(H_n(K)\)</span> contains the payoff coefficient for strike <span class="math inline">\(K\)</span>. This separation is powerful:</p>
+<ul>
+<li>the transform part depends on the model and maturity,</li>
+<li>the payoff coefficient depends on option type and strike,</li>
+<li>the sum combines both into a price.</li>
+</ul>
+<p>For calibration, this means we can evaluate many model prices quickly and repeatedly. The optimizer changes parameters, the characteristic function changes, and the same COS machinery produces the new price vector.</p>
+</section>
+<section id="the-truncation-interval-ab" class="level3">
+<h3 class="anchored" data-anchor-id="the-truncation-interval-ab">7.2 The Truncation Interval [a,b]</h3>
+<p>The COS method needs a finite interval. In theory, log-price can be anywhere on <span class="math inline">\((-\infty,\infty)\)</span>. In practice, most probability mass sits in a finite range around the forward log-price. We choose:</p>
+<p><span class="math display">\[
+[a,b]=[m-L\sqrt{\text{Var}(X_T)},\;m+L\sqrt{\text{Var}(X_T)}]
+\]</span></p>
+<p>where <span class="math inline">\(m\)</span> is a drift-centered log-price value and <span class="math inline">\(L\)</span> is the truncation width multiplier. The implementation uses a model-implied variance-rate approximation to size this interval.</p>
+<p>If <span class="math inline">\([a,b]\)</span> is too narrow, we cut off tail probability. Deep OTM puts and calls will be mispriced because the payoff lives in the tails. If <span class="math inline">\([a,b]\)</span> is too wide, the cosine basis spends many terms covering regions with tiny probability, and convergence can become slower.</p>
+<p>This is why VG gets special attention later. VG can have heavier tails and sharper center behavior, so its COS truncation width is more delicate than BSM.</p>
+</section>
+<section id="truncation-width-as-a-bias-variance-tradeoff" class="level3">
+<h3 class="anchored" data-anchor-id="truncation-width-as-a-bias-variance-tradeoff">7.3 Truncation Width as a Bias-Variance Tradeoff</h3>
+<p>The truncation interval creates a numerical version of a bias-variance tradeoff. A narrow interval has low approximation burden because the cosine basis only needs to cover a short range. But it can miss tail probability, creating bias for wing options. A wide interval includes the tails but forces the same finite number of terms to approximate a larger domain, which can reduce local resolution.</p>
+<p>If <span class="math inline">\(N\)</span> is the number of COS terms, the frequency spacing inside the cosine expansion is:</p>
+<p><span class="math display">\[
+\Delta \nu = \frac{\pi}{b-a}
+\]</span></p>
+<p>A wider interval means smaller frequency spacing. That can be useful for global coverage, but the basis functions become less concentrated around the center. With a fixed <span class="math inline">\(N\)</span>, we may need more terms to resolve sharp payoff or density features.</p>
+<p>This explains the VG width result. Simply expanding <span class="math inline">\([a,b]\)</span> doesn’t automatically improve the approximation. The model’s density and the payoff kink have to be represented together. If the density has a sharp central peak and heavy tails, a fixed-term cosine expansion has to compromise between center accuracy and tail coverage.</p>
+<p>A more advanced production implementation could use cumulant-based intervals, adaptive widths, or model-specific truncation rules. This notebook keeps one transparent design so we can compare models consistently.</p>
+</section>
+<section id="cos-payoff-coefficients" class="level3">
+<h3 class="anchored" data-anchor-id="cos-payoff-coefficients">7.4 COS Payoff Coefficients</h3>
+<p>For a call, the payoff in log-moneyness form is related to:</p>
+<p><span class="math display">\[
+(e^x-K)^+
+\]</span></p>
+<p>For a put, it is related to:</p>
+<p><span class="math display">\[
+(K-e^x)^+
+\]</span></p>
+<p>The code computes two building blocks, usually called <span class="math inline">\(\chi_n\)</span> and <span class="math inline">\(\psi_n\)</span>, over the payoff-active interval <span class="math inline">\([c,d]\)</span>:</p>
+<p><span class="math display">\[
+\chi_n(c,d)=\int_c^d e^x\cos\left(n\pi\frac{x-a}{b-a}\right)dx
+\]</span></p>
+<p><span class="math display">\[
+\psi_n(c,d)=\int_c^d \cos\left(n\pi\frac{x-a}{b-a}\right)dx
+\]</span></p>
+<p>For calls, the payoff coefficient is proportional to <span class="math inline">\(\chi_n-\psi_n\)</span>. For puts, it is proportional to <span class="math inline">\(\psi_n-\chi_n\)</span>, with the integration interval chosen where the payoff is positive.</p>
+<p>The point is that the payoff kink is handled analytically. We are not approximating the kink by a rough grid of payoff values. This is one reason COS can converge very fast when the truncation interval is well chosen.</p>
+</section>
+<section id="call-and-put-exercise-intervals-inside-cos" class="level3">
+<h3 class="anchored" data-anchor-id="call-and-put-exercise-intervals-inside-cos">7.5 Call and Put Exercise Intervals Inside COS</h3>
+<p>The COS payoff coefficients depend on where the payoff is positive. In log coordinates relative to strike, the call payoff is active when:</p>
+<p><span class="math display">\[
+x&gt;0
+\]</span></p>
+<p>and the put payoff is active when:</p>
+<p><span class="math display">\[
+x&lt;0
+\]</span></p>
+<p>Inside the truncation interval <span class="math inline">\([a,b]\)</span>, the call integration interval is:</p>
+<p><span class="math display">\[
+[c,d]=[\max(0,a),b]
+\]</span></p>
+<p>and the put interval is:</p>
+<p><span class="math display">\[
+[c,d]=[a,\min(0,b)]
+\]</span></p>
+<p>This is why the code branches by option type. It is not doing a different model; it is integrating the correct payoff region.</p>
+<p>For calls, the coefficient uses:</p>
+<p><span class="math display">\[
+K(\chi_n-\psi_n)
+\]</span></p>
+<p>because the payoff is <span class="math inline">\(K(e^x-1)\)</span> in log-moneyness form. For puts, it uses:</p>
+<p><span class="math display">\[
+K(\psi_n-\chi_n)
+\]</span></p>
+<p>because the payoff is <span class="math inline">\(K(1-e^x)\)</span>.</p>
+<p>The <span class="math inline">\(n=0\)</span> term receives a half weight. This is standard in cosine series expansions and matches the same half-endpoint logic we saw in Fourier integration.</p>
 <div id="82354910" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> variance_rate(model_id, params, tau):</span>
@@ -2089,6 +2890,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The COS validation is strong for BSM, Merton, Heston, and Bates. The best median errors are close to zero for all four. VG is the exception: its best median error is around <strong>0.0228</strong> and max error around <strong>0.0486</strong> in the displayed summary.</p>
+<p>This doesn’t mean VG is unusable. It means the COS setup is more sensitive for VG under this truncation scheme and reference grid. VG has a different transform decay and tail shape because of the Gamma time change. The density can be less friendly for a finite cosine expansion, especially when the interval and term count are not tuned specifically for VG.</p>
+<p>This is an important numerical lesson: the pricing model and the pricing method interact. A method can be excellent for Heston and Bates while needing more care for VG.</p>
 <div id="f5af711a" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>width_rows <span class="op">=</span> []</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> width <span class="kw">in</span> [<span class="fl">8.0</span>, <span class="fl">10.0</span>, <span class="fl">12.0</span>, <span class="fl">14.0</span>, <span class="fl">18.0</span>, <span class="fl">24.0</span>, <span class="fl">30.0</span>]:</span>
@@ -2167,6 +2971,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The VG width table shows that changing the COS width from 8 to 30 barely moves the median error, which stays around <strong>0.022</strong>. The max error is lowest around widths 12 to 18 and worsens at width 30.</p>
+<p>This tells us the VG issue here is not solved simply by making the interval wider. A wider interval reduces tail truncation error but can increase approximation error because the same number of cosine terms must cover a larger domain. If the density has a sharp center and fat tails, a single global cosine interval has to compromise.</p>
+<p>For calibration, this means VG can still be compared, but its numerical error floor must be remembered. If VG loses by a tiny margin, we need to ask whether the loss is model error or pricing-engine/truncation error. If it loses by a large margin, the result is more robust.</p>
 <div id="6c43b465" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>cos_cpp_rows <span class="op">=</span> []</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>strike_grid_cpp <span class="op">=</span> np.linspace(<span class="fl">0.70</span>, <span class="fl">1.30</span>, <span class="dv">1000</span>) <span class="op">*</span> s0</span>
@@ -2255,6 +3062,37 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The COS C++/Numba comparison again shows zero displayed price differences. Runtime varies by model. Merton is slightly faster in C++ in this benchmark, while BSM, VG, Heston, and Bates are faster in Numba for the specific 1,000-quote test shown.</p>
+<p>The right interpretation is that the implementation is consistent across engines. We shouldn’t overinterpret small runtime differences from one environment. Pricing speed depends on compiler flags, memory layout, CPU vectorization, how arrays are passed, and whether the benchmark is large enough to overcome call overhead.</p>
+<p>For the research notebook, the useful result is numerical agreement. For production, the C++ folder matters because it gives a compiled path for scaling the same Fourier logic beyond local notebook experiments.</p>
+</section>
+</section>
+<section id="grouped-cos-and-production-calibration" class="level2">
+<h2 class="anchored" data-anchor-id="grouped-cos-and-production-calibration">8) Grouped COS and Production Calibration</h2>
+<p>Real option quotes are not one smooth strike grid at one maturity. They are grouped by date, expiry, and option type. The grouped COS engine prices each group with shared values of:</p>
+<ul>
+<li>date,</li>
+<li>expiry,</li>
+<li>option type,</li>
+<li>spot,</li>
+<li>rate,</li>
+<li>dividend yield,</li>
+<li>maturity.</li>
+</ul>
+<p>Inside one group, strikes vary but the other inputs are mostly common. This is exactly where COS is useful. We can price arbitrary strikes without forcing them onto an FFT grid, while reusing the same maturity-level parameters.</p>
+<p>Mathematically, each quote <span class="math inline">\(j\)</span> has model price:</p>
+<p><span class="math display">\[
+\hat{V}_j(\theta)=COS(S_j,K_j,T_j,r_j,q_j,\text{type}_j;\theta)
+\]</span></p>
+<p>where <span class="math inline">\(\theta\)</span> is the parameter vector for the chosen model. Daily calibration solves a weighted nonlinear least-squares problem:</p>
+<p><span class="math display">\[
+\hat{\theta}_t=\arg\min_{\theta\in\Theta}\sum_{j\in\mathcal{D}_t}\left(\frac{\hat{V}_j(\theta)-V_j^{mkt}}{s_j}\right)^2+\text{regularization}(\theta)
+\]</span></p>
+<p>The scale term <span class="math inline">\(s_j\)</span> is:</p>
+<p><span class="math display">\[
+s_j=\frac{\text{calibration half-spread}_j}{\sqrt{w_j}}
+\]</span></p>
+<p>A tighter spread and higher observation weight make <span class="math inline">\(s_j\)</span> smaller, which means an error on that quote is penalized more. A wider quote gets less influence.</p>
 <div id="735fd231" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cos_groups(q):</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    work <span class="op">=</span> q.reset_index(drop<span class="op">=</span><span class="va">True</span>).copy()</span>
@@ -2545,6 +3383,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The engine-use table gives a clean division of labor:</p>
+<ul>
+<li><strong>Direct integration</strong> is the reference oracle for selected validation grids.</li>
+<li><strong>FFT</strong> prices full log-strike grids quickly.</li>
+<li><strong>COS</strong> prices arbitrary strikes and becomes the main calibration method.</li>
+<li><strong>Grouped COS</strong> is the production version that prices real quote groups efficiently.</li>
+</ul>
+<p>The 10k benchmark shows the same main point as the smaller C++/Numba checks: implementation differences are zero to displayed precision. COS prices per second are in the thousands to tens of thousands depending on model complexity. BSM is fastest, Bates is slowest, and VG/Heston sit in between.</p>
+<p>The throughput plot is useful because calibration isn’t one price. Fitting one day may require many optimizer evaluations. If one evaluation prices 170 quotes, and the optimizer uses dozens of evaluations, a slow model becomes expensive quickly. This is why we need grouped pricing and compiled kernels even when the mathematical formulas are already known.</p>
 <div id="cbeacf63" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="fl">8.8</span>))</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>direct_plot <span class="op">=</span> direct_validation.assign(ks<span class="op">=</span>direct_validation[<span class="st">"strike"</span>] <span class="op">/</span> s0)</span>
@@ -2598,6 +3445,98 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The convergence and throughput panel summarizes the numerical engine hierarchy.</p>
+<p>Direct BSM error is essentially machine-level across moneyness and maturity. FFT error falls as the grid size increases, which confirms that its main error source here is grid/interpolation resolution. COS convergence is excellent for BSM, Merton, Heston, and Bates, while VG has a visible error floor under the chosen truncation design. The throughput chart shows FFT as extremely fast for full grids and COS as practical for arbitrary market quotes.</p>
+<p>This panel is important because calibration errors later shouldn’t be blamed only on model structure. We first verified that the pricing engines are behaving as expected.</p>
+</section>
+<section id="parameter-bounds-and-calibration-objective" class="level2">
+<h2 class="anchored" data-anchor-id="parameter-bounds-and-calibration-objective">9) Parameter Bounds and Calibration Objective</h2>
+<p>Each model has its own parameter vector.</p>
+<p>For BSM:</p>
+<p><span class="math display">\[
+\theta_{BSM}=(\sigma)
+\]</span></p>
+<p>For Merton:</p>
+<p><span class="math display">\[
+\theta_{Merton}=(\sigma,\lambda,\mu_J,\sigma_J)
+\]</span></p>
+<p>For VG:</p>
+<p><span class="math display">\[
+\theta_{VG}=(\sigma,\theta,\nu)
+\]</span></p>
+<p>For Heston:</p>
+<p><span class="math display">\[
+\theta_{Heston}=(v_0,\kappa,\bar{v},\xi,\rho)
+\]</span></p>
+<p>For Bates:</p>
+<p><span class="math display">\[
+\theta_{Bates}=(v_0,\kappa,\bar{v},\xi,\rho,\lambda,\mu_J,\sigma_J)
+\]</span></p>
+<p>The optimizer starts near ATM implied volatility for the volatility scale. Bounds keep the search inside plausible regions. For example, volatilities must be positive, jump intensity can’t be negative, and correlation must stay inside <span class="math inline">\((-1,1)\)</span>.</p>
+<p>VG has the special martingale constraint:</p>
+<p><span class="math display">\[
+1-\theta\nu-\frac{1}{2}\sigma^2\nu&gt;0
+\]</span></p>
+<p>This constraint is not cosmetic. It ensures the risk-neutral drift correction exists and the stock price process is well-defined under the exponential VG model.</p>
+<section id="calibration-as-statistical-estimation" class="level3">
+<h3 class="anchored" data-anchor-id="calibration-as-statistical-estimation">9.1 Calibration as Statistical Estimation</h3>
+<p>The optimizer is estimating risk-neutral model parameters from noisy market prices. The market mid is not a perfect observation of theoretical value. It is the midpoint of a bid/ask interval, and the interval width changes across strikes and maturities.</p>
+<p>A natural observation equation is:</p>
+<p><span class="math display">\[
+V_j^{mkt}=\hat{V}_j(\theta)+\epsilon_j
+\]</span></p>
+<p>where <span class="math inline">\(\epsilon_j\)</span> is pricing noise. If quote noise variance is larger for wide-spread contracts, then the loss should downweight those contracts. Weighted least squares does exactly that:</p>
+<p><span class="math display">\[
+\hat{\theta}=\arg\min_{\theta}\sum_j w_j\left(\hat{V}_j(\theta)-V_j^{mkt}\right)^2
+\]</span></p>
+<p>The implementation expresses this through a scale:</p>
+<p><span class="math display">\[
+\frac{\hat{V}_j(\theta)-V_j^{mkt}}{s_j}
+\]</span></p>
+<p>which is equivalent to using weight <span class="math inline">\(1/s_j^2\)</span>. A smaller <span class="math inline">\(s_j\)</span> means a cleaner quote, so the same dollar error is more important. A larger <span class="math inline">\(s_j\)</span> means a noisier quote, so the optimizer doesn’t chase it too aggressively.</p>
+<p>This is also why median absolute price error and bid/ask hit rate are reported next to weighted RMSE. One metric is too thin for this comparison. Weighted RMSE reflects the calibration objective. Median error is easier to understand in price units. Bid/ask hit rate tells us whether model prices land inside the actual market quote interval.</p>
+</section>
+<section id="parameter-identifiability-and-warm-starts" class="level3">
+<h3 class="anchored" data-anchor-id="parameter-identifiability-and-warm-starts">9.2 Parameter Identifiability and Warm Starts</h3>
+<p>Nonlinear option calibration is not a simple regression with a unique stable answer. The model price function is nonlinear:</p>
+<p><span class="math display">\[
+\hat{V}_j(\theta)=F_j(\theta)
+\]</span></p>
+<p>and the Jacobian</p>
+<p><span class="math display">\[
+J_{j,k}=\frac{\partial \hat{V}_j}{\partial \theta_k}
+\]</span></p>
+<p>can be ill-conditioned. If two parameters change prices in similar ways across the observed quotes, the optimizer can trade them off. In Heston, <span class="math inline">\(v_0\)</span>, <span class="math inline">\(\theta\)</span>, and <span class="math inline">\(\xi\)</span> can interact. In Bates, jump intensity and jump volatility can interact with stochastic-volatility skew. In VG, <span class="math inline">\(\theta\)</span> and <span class="math inline">\(\nu\)</span> both affect downside shape.</p>
+<p>Warm starts reduce this problem by using yesterday’s fit as today’s initial guess:</p>
+<p><span class="math display">\[
+\theta_{t}^{(0)}=\hat{\theta}_{t-1}
+\]</span></p>
+<p>This doesn’t guarantee the global optimum, but it creates smoother parameter paths and reduces random jumps between local minima. It also speeds up calibration because the optimizer begins near a plausible region.</p>
+<p>The multiple-start logic for Heston and Bates is a safety check. A second nearby starting point can escape a bad local basin without turning calibration into an expensive global search.</p>
+<p>The daily calibration loss is spread-scaled and observation-weighted:</p>
+<p><span class="math display">\[
+L_t(\theta)=\frac{1}{n_t}\sum_{j=1}^{n_t}\left(\frac{\hat{V}_j(\theta)-V_j^{mkt}}{s_j}\right)^2
+\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(n_t\)</span> is the number of calibration quotes on date <span class="math inline">\(t\)</span>,</li>
+<li><span class="math inline">\(\hat{V}_j(\theta)\)</span> is the model price,</li>
+<li><span class="math inline">\(V_j^{mkt}\)</span> is the market mid,</li>
+<li><span class="math inline">\(s_j\)</span> is the spread-adjusted scale.</li>
+</ul>
+<p>The reported weighted RMSE is:</p>
+<p><span class="math display">\[
+RMSE_t=\sqrt{L_t(\hat{\theta}_t)}
+\]</span></p>
+<p>This means the RMSE is not in dollars. It is an error measured in quote-quality units. If a model has RMSE 20 and another has RMSE 80, the first model is much closer to market prices relative to the bid/ask and weight structure.</p>
+<p>The calibration also reports:</p>
+<p><span class="math display">\[
+\text{bid/ask hit rate}=\frac{1}{n_t}\sum_{j=1}^{n_t}\mathbf{1}\{bid_j\le\hat{V}_j\le ask_j\}
+\]</span></p>
+<p>and OTM put RMSE, which isolates the downside tail. For tail-hedging applications, OTM put errors are often more important than average fit.</p>
+<p>The fitting loop uses the previous successful parameter vector as the next start. This is a practical calibration trick. Market parameters usually move gradually from one day to the next, so yesterday’s fitted parameter is often a better starting point than a generic constant.</p>
+<p>For Heston and Bates, the code also tries a second nearby start. This helps avoid local minima because the objective surface can be non-convex. Parameters like <span class="math inline">\(\kappa\)</span>, <span class="math inline">\(\theta\)</span>, <span class="math inline">\(\xi\)</span>, and <span class="math inline">\(\rho\)</span> can compensate for each other, so different parameter combinations may produce similar option prices.</p>
+<p>The regularization terms are light. They penalize very high vol-of-vol and very high jump intensity in the most flexible models. This doesn’t force the fit to be simple, but it discourages extreme parameter values that improve one day’s RMSE at the cost of unstable dynamics.</p>
 <div id="a05b82ec" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model_start(model, q, start<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    atm <span class="op">=</span> <span class="bu">float</span>(np.nanmedian(q[<span class="st">"iv_mid"</span>]))</span>
@@ -2711,6 +3650,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb33-25"><a href="#cb33-25" aria-hidden="true" tabindex="-1"></a>    write_meta(cache_path, settings, <span class="bu">len</span>(params))</span>
 <span id="cb33-26"><a href="#cb33-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> params, fit</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+</section>
+</section>
+<section id="bsm-baseline-fourier-calibration" class="level2">
+<h2 class="anchored" data-anchor-id="bsm-baseline-fourier-calibration">10) BSM Baseline Fourier Calibration</h2>
+<p>BSM is repeated from earlier projects conceptually, so here it serves mainly as a calibration benchmark. It has one parameter per date: <span class="math inline">\(\sigma\)</span>. The whole surface must be explained by one volatility number at a time.</p>
+<p>That means BSM has no mechanism for:</p>
+<ul>
+<li>strike skew,</li>
+<li>volatility smile curvature,</li>
+<li>jump tails,</li>
+<li>stochastic volatility term structure,</li>
+<li>separate short-maturity and long-maturity behavior.</li>
+</ul>
+<section id="why-a-one-volatility-fit-fails" class="level3">
+<h3 class="anchored" data-anchor-id="why-a-one-volatility-fit-fails">10.1 Why a One-Volatility Fit Fails</h3>
+<p>BSM’s failure here is not because Fourier pricing breaks it. The BSM Fourier validation was essentially exact. The failure is structural.</p>
+<p>The model-implied variance over maturity <span class="math inline">\(T\)</span> is:</p>
+<p><span class="math display">\[
+Var[X_T]=\sigma^2T
+\]</span></p>
+<p>and the distribution is symmetric in standardized log-return space. That means one parameter controls both the center and the tails. If the optimizer raises <span class="math inline">\(\sigma\)</span> to fit expensive downside puts, it also raises ATM and upside option prices. If it lowers <span class="math inline">\(\sigma\)</span> to fit the center, it underprices the left tail.</p>
+<p>This is the classic surface-fitting problem in a different language. BSM has one transform shape. The SPX option surface needs a transform shape that changes skew and tail thickness separately from ATM variance.</p>
+<p>Fourier methods make this clean to see. The pricing engine is accurate, so the residuals are model residuals. The transform itself is too restrictive.</p>
 <div id="42fb2e4b" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>bsm_cache <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spx_bsm_daily_fits.parquet"</span></span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>bsm_settings <span class="op">=</span> {<span class="st">"models"</span>: [<span class="st">"bsm"</span>], <span class="st">"carry"</span>: clean_settings[<span class="st">"carry"</span>], <span class="st">"pricing_q"</span>: <span class="st">"row dividend_yield v2"</span>, <span class="st">"pricing_engine"</span>: <span class="st">"grouped_cos_numba_v4"</span>, <span class="st">"dates"</span>: <span class="bu">int</span>(<span class="bu">len</span>(daily_dates)), <span class="st">"quotes"</span>: <span class="bu">int</span>(<span class="bu">len</span>(calibration_quotes)), <span class="st">"n_terms"</span>: <span class="dv">128</span>, <span class="st">"width"</span>: <span class="fl">12.0</span>}</span>
@@ -2813,6 +3775,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The calibration table confirms this limitation. BSM has a <strong>100% success rate</strong>, but a weighted price RMSE around <strong>259.5</strong>, median absolute price error around <strong>8.70</strong>, bid/ask hit rate around <strong>3.7%</strong>, and OTM put RMSE around <strong>359.6</strong>. The model can always fit a single volatility, but the single volatility can’t explain the real SPX surface.</p>
+<p>The runtime is low, about <strong>26.8 seconds</strong> for all daily BSM fits, which is expected. One parameter is cheap. The problem is model structure, not numerical speed.</p>
 <div id="a17dea2a" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>bsm_month <span class="op">=</span> bsm_daily_fits.assign(month<span class="op">=</span>bsm_daily_fits[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)).groupby(<span class="st">"month"</span>, observed<span class="op">=</span><span class="va">True</span>).agg(</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    rmse<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="st">"median"</span>),</span>
@@ -2844,6 +3808,42 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The BSM monthly diagnostics show the same message visually. RMSE spikes during stressed parts of the sample, while the single fitted volatility moves through time as the model tries to compress the whole surface into one number.</p>
+<p>The bid/ask hit rate stays very low. This means BSM prices rarely fall inside the observed bid/ask spread across the calibration grid. The fitted volatility is useful as a rough summary, but it is not a serious surface model for 2022-2023 SPX options.</p>
+<p>The fitted volatility declines through much of 2023 as the market moves away from the 2022 stress regime. That trend is economically sensible, but it doesn’t solve the cross-sectional problem. One volatility can move up and down through time, but it can’t bend across strikes and maturities.</p>
+</section>
+</section>
+<section id="jump-models-merton-and-variance-gamma" class="level2">
+<h2 class="anchored" data-anchor-id="jump-models-merton-and-variance-gamma">11) Jump Models: Merton and Variance Gamma</h2>
+<p>The jump-model calibration compares two different ways of generating non-Gaussian returns.</p>
+<p>Merton uses finite-activity jumps:</p>
+<p><span class="math display">\[
+\text{diffusion} + \text{occasional jumps}
+\]</span></p>
+<p>VG uses random business time:</p>
+<p><span class="math display">\[
+\text{Brownian motion evaluated at a Gamma clock}
+\]</span></p>
+<p>Both models can create skew and fat tails. The difference is how they distribute jump risk. Merton says large discrete jumps arrive according to a Poisson clock. VG says return variance itself accumulates in random bursts, creating an infinite-activity jump structure in continuous time.</p>
+<p>For SPX options, the calibration question is practical: which jump representation explains the observed surface better when priced through the same COS engine?</p>
+<section id="comparing-jump-mechanisms-through-cumulants" class="level3">
+<h3 class="anchored" data-anchor-id="comparing-jump-mechanisms-through-cumulants">11.1 Comparing Jump Mechanisms Through Cumulants</h3>
+<p>Jump models change higher moments. A useful summary is to think in cumulants rather than only parameters.</p>
+<p>For Merton, the jump component contributes approximately:</p>
+<p><span class="math display">\[
+E[\text{jump return over }T]=\lambda T\mu_J
+\]</span></p>
+<p><span class="math display">\[
+Var[\text{jump return over }T]=\lambda T(\mu_J^2+\sigma_J^2)
+\]</span></p>
+<p>So increasing <span class="math inline">\(\lambda\)</span> raises jump frequency, while increasing <span class="math inline">\(\sigma_J\)</span> makes jump outcomes more dispersed. Negative <span class="math inline">\(\mu_J\)</span> tilts the distribution left.</p>
+<p>For VG, the cumulant behavior comes from the Gamma clock. The variance rate includes both diffusion scale and clock-skew contribution:</p>
+<p><span class="math display">\[
+\text{variance rate}\approx \sigma^2+\theta^2\nu
+\]</span></p>
+<p>Higher <span class="math inline">\(\nu\)</span> increases excess kurtosis because business time becomes more random. Negative <span class="math inline">\(\theta\)</span> creates skew.</p>
+<p>So Merton and VG can both make tails fatter, but they do it differently. Merton says crash risk comes from identifiable rare jumps. VG says the market’s activity rate itself fluctuates, creating clustered large moves.</p>
+<p>This distinction matters when interpreting calibration. If Merton beats VG on SPX, the market surface in this sample is better captured by finite crash jumps plus diffusion than by the VG business-time mechanism under the selected pricing setup.</p>
 <div id="d9ffc810" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>jump_cache <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spx_jump_daily_fits.parquet"</span></span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>jump_settings <span class="op">=</span> {<span class="st">"models"</span>: [<span class="st">"merton"</span>, <span class="st">"vg"</span>], <span class="st">"carry"</span>: clean_settings[<span class="st">"carry"</span>], <span class="st">"pricing_q"</span>: <span class="st">"row dividend_yield v2"</span>, <span class="st">"pricing_engine"</span>: <span class="st">"grouped_cos_numba_v4"</span>, <span class="st">"dates"</span>: <span class="bu">int</span>(<span class="bu">len</span>(daily_dates)), <span class="st">"quotes"</span>: <span class="bu">int</span>(<span class="bu">len</span>(calibration_quotes)), <span class="st">"n_terms"</span>: <span class="dv">144</span>, <span class="st">"width"</span>: <span class="fl">14.0</span>}</span>
@@ -3150,6 +4150,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The jump-model summary shows Merton beating VG on the main weighted-price objective. Merton has weighted RMSE around <strong>82.25</strong>, while VG is around <strong>94.21</strong>. Both are dramatically better than BSM’s <strong>259.51</strong>, which confirms that adding non-Gaussian tail structure matters.</p>
+<p>Merton also has slightly better OTM put RMSE, around <strong>93.95</strong> versus VG’s <strong>99.63</strong>. The bid/ask hit rates remain low in absolute terms, but Merton is higher than VG: about <strong>8.9%</strong> versus <strong>7.5%</strong>.</p>
+<p>VG is faster than Merton in total runtime here, about <strong>115 seconds</strong> versus <strong>193 seconds</strong>, but the fit is weaker. Because this notebook later uses models for tail overlays, the better tail fit matters more than the runtime saving. The selected jump winner is therefore <strong>Merton</strong>.</p>
 <div id="db8e5dfd" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>merton_month <span class="op">=</span> jump_daily_fits[jump_daily_fits[<span class="st">"model"</span>].eq(<span class="st">"merton"</span>)].assign(month<span class="op">=</span><span class="kw">lambda</span> x: x[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)).groupby(<span class="st">"month"</span>, observed<span class="op">=</span><span class="va">True</span>).agg(</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    rmse<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="st">"median"</span>),</span>
@@ -3251,6 +4254,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+</section>
+<section id="merton-diagnostics" class="level3">
+<h3 class="anchored" data-anchor-id="merton-diagnostics">Merton Diagnostics</h3>
+<p>The Merton diagnostics show four things at once: RMSE through time, jump parameters, residual smile, and OTM put tail error.</p>
+<p>The fitted jump intensity <span class="math inline">\(\lambda\)</span> controls how often jumps occur under the risk-neutral model. The jump mean <span class="math inline">\(\mu_J\)</span> controls average jump direction. In equity index options, negative <span class="math inline">\(\mu_J\)</span> is common because crash protection is expensive. A negative jump mean raises put values more than call values.</p>
+<p>The residual smile is especially useful. A scaled residual is:</p>
+<p><span class="math display">\[
+\text{scaled residual}=\frac{\hat{V}-V^{mkt}}{\text{half-spread scale}}
+\]</span></p>
+<p>Negative residual means the model underprices the market. Positive residual means the model overprices it. In the Merton residual plot, the left wing is much less wrong than BSM, but errors still remain. That means finite jumps help with crash risk but don’t fully explain the observed SPX skew and term structure.</p>
+<p>The OTM put error panel shows that jump risk becomes more important exactly when downside protection is expensive. During stress periods, tail error rises because the surface demands more shape than a simple jump-diffusion can always provide.</p>
+</section>
+<section id="reading-merton-parameters-economically" class="level3">
+<h3 class="anchored" data-anchor-id="reading-merton-parameters-economically">Reading Merton Parameters Economically</h3>
+<p>A fitted Merton model can be interpreted through the compound jump component. Over one year, the expected number of jumps is approximately <span class="math inline">\(\lambda\)</span>. Over a shorter maturity <span class="math inline">\(T\)</span>, it is <span class="math inline">\(\lambda T\)</span>.</p>
+<p>If <span class="math inline">\(\lambda=0.7\)</span> and <span class="math inline">\(T=60/365\)</span>, then:</p>
+<p><span class="math display">\[
+\lambda T\approx 0.7\times 0.164\approx 0.115
+\]</span></p>
+<p>The probability of at least one jump over that horizon is:</p>
+<p><span class="math display">\[
+1-e^{-\lambda T}\approx 1-e^{-0.115}\approx 10.9\%
+\]</span></p>
+<p>That rough calculation gives the fitted jump intensity a concrete meaning. The model is not saying a crash happens every day. It is assigning a risk-neutral probability to discrete jump events over the option’s horizon.</p>
+<p>If the fitted jump mean <span class="math inline">\(\mu_J\)</span> is negative, those jumps are downside-biased. If <span class="math inline">\(\sigma_J\)</span> is high, the jump distribution is wide, so some jumps can be very large. Together, these parameters shape OTM put prices.</p>
+<p>This is why Merton improves strongly over BSM but still loses to Bates. It can add discrete tail mass, but it has only one jump distribution and one diffusion volatility per date. The SPX surface often needs a richer maturity-dependent variance structure too.</p>
 <div id="20797394" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>vg_month <span class="op">=</span> jump_daily_fits[jump_daily_fits[<span class="st">"model"</span>].eq(<span class="st">"vg"</span>)].assign(month<span class="op">=</span><span class="kw">lambda</span> x: x[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)).groupby(<span class="st">"month"</span>, observed<span class="op">=</span><span class="va">True</span>).agg(</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    rmse<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="st">"median"</span>),</span>
@@ -3352,6 +4381,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+</section>
+<section id="variance-gamma-diagnostics" class="level3">
+<h3 class="anchored" data-anchor-id="variance-gamma-diagnostics">Variance Gamma Diagnostics</h3>
+<p>VG’s parameters have different economic meaning.</p>
+<p>The parameter <span class="math inline">\(\theta\)</span> controls skew under the Gamma clock. Negative <span class="math inline">\(\theta\)</span> tilts the distribution left, increasing downside tail prices. The parameter <span class="math inline">\(\nu\)</span> controls the randomness of the clock. Higher <span class="math inline">\(\nu\)</span> means business time is more variable, which creates heavier tails and more kurtosis.</p>
+<p>The VG return increment can be thought of as:</p>
+<p><span class="math display">\[
+\Delta X = \theta\Delta G + \sigma\Delta W_{\Delta G}
+\]</span></p>
+<p>where <span class="math inline">\(\Delta G\)</span> is random. If <span class="math inline">\(\Delta G\)</span> is unusually large, the return has a large move because the Brownian component is evaluated over more business time. This is a very natural way to model markets that have quiet periods interrupted by bursts of activity.</p>
+<p>The VG diagnostics show that it improves heavily over BSM, but it doesn’t beat Merton in this SPX setup. Part of that may be model fit and part may be numerical sensitivity from the COS truncation behavior we saw earlier. The residual curve still shows structured errors across log-moneyness, which means the model is missing some surface features.</p>
 <div id="91c018ee" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>jump_plot <span class="op">=</span> jump_daily_fits.copy()</span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>jump_plot[<span class="st">"month"</span>] <span class="op">=</span> jump_plot[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)</span>
@@ -3390,6 +4430,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The jump comparison plot confirms that Merton and VG both reduce RMSE relative to BSM, but Merton is generally lower through much of the sample. OTM put error is also better for Merton. The bid/ask fit remains modest for both, which shows that jump models are an improvement, not the end of the story.</p>
+<p>The jump-activity panel also tells us that tail pricing is time-varying. In 2022, the market repeatedly repriced downside protection as rates rose and equities sold off. A static jump structure can’t absorb all of that variation. This sets up the next step: stochastic-volatility models with and without jumps.</p>
+</section>
+</section>
+<section id="stochastic-volatility-models-through-cos" class="level2">
+<h2 class="anchored" data-anchor-id="stochastic-volatility-models-through-cos">12) Stochastic-Volatility Models Through COS</h2>
+<p>Heston and Bates were already taught in the stochastic-volatility project, so the focus here is calibration through Fourier/COS pricing.</p>
+<p>Heston explains skew through correlated spot and variance shocks. A negative <span class="math inline">\(\rho\)</span> means stock declines tend to arrive with variance increases, which raises put prices and creates the equity-index skew.</p>
+<p>Bates adds jumps to Heston. Its structure is:</p>
+<p><span class="math display">\[
+\text{stochastic variance} + \text{finite jump risk}
+\]</span></p>
+<p>That extra flexibility is valuable for SPX options because the surface often contains both persistent stochastic-volatility skew and discrete crash-premium behavior.</p>
+<p>The cost is calibration difficulty. Bates has eight parameters and a slower pricing kernel. It can fit better, but it can also fail more often or produce unstable parameter paths. So the comparison must include success rate, residuals, tail error, and runtime.</p>
+<section id="why-stochastic-volatility-beats-pure-jump-models" class="level3">
+<h3 class="anchored" data-anchor-id="why-stochastic-volatility-beats-pure-jump-models">12.1 Why Stochastic Volatility Beats Pure Jump Models</h3>
+<p>Jump models add non-Gaussian tails, but SPX option surfaces also have maturity-dependent skew and time-varying volatility risk. Heston-style stochastic variance gives the model a way to move the whole distribution shape through time.</p>
+<p>The variance process introduces a second state variable. The option price is no longer a function only of <span class="math inline">\(S\)</span>, <span class="math inline">\(K\)</span>, and <span class="math inline">\(T\)</span>; it also depends on current variance and variance dynamics:</p>
+<p><span class="math display">\[
+V=V(S_0,v_0,K,T;r,q,\kappa,\theta,\xi,\rho)
+\]</span></p>
+<p>The parameter <span class="math inline">\(\rho\)</span> changes skew. The parameter <span class="math inline">\(\xi\)</span> changes curvature and vol-of-vol premium. The pair <span class="math inline">\((\kappa,\theta)\)</span> controls how quickly high variance is expected to mean revert.</p>
+<p>In Fourier space, these effects are bundled into the affine coefficients <span class="math inline">\(C(u,T)\)</span> and <span class="math inline">\(D(u,T)\)</span>. Calibration then chooses the parameters that make the transform-generated option prices match the surface.</p>
+<p>The fact that Heston and Bates beat Merton by a large margin tells us that the SPX surface is not only asking for jumps. It is asking for stochastic variance dynamics too.</p>
 <div id="82090519" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>sv_cache <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spx_sv_daily_fits.parquet"</span></span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>sv_settings <span class="op">=</span> {<span class="st">"models"</span>: [<span class="st">"heston"</span>, <span class="st">"bates"</span>], <span class="st">"carry"</span>: clean_settings[<span class="st">"carry"</span>], <span class="st">"pricing_q"</span>: <span class="st">"row dividend_yield v2"</span>, <span class="st">"pricing_engine"</span>: <span class="st">"grouped_cos_numba_v4"</span>, <span class="st">"dates"</span>: <span class="bu">int</span>(<span class="bu">len</span>(sv_dates)), <span class="st">"quotes"</span>: <span class="bu">int</span>(<span class="bu">len</span>(calibration_quotes)), <span class="st">"n_terms"</span>: <span class="dv">128</span>, <span class="st">"width"</span>: <span class="fl">14.0</span>}</span>
@@ -3743,6 +4807,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The stochastic-volatility summary is the first major model-quality jump. Bates has weighted RMSE around <strong>22.25</strong>, while Heston has around <strong>26.77</strong>. Both are far better than Merton’s <strong>82.25</strong> and BSM’s <strong>259.51</strong>.</p>
+<p>Bates also has a stronger OTM put RMSE, about <strong>25.45</strong> versus Heston’s <strong>32.97</strong>. The bid/ask hit rate is also higher for Bates: about <strong>19.9%</strong> versus <strong>17.3%</strong>.</p>
+<p>The caveat is success rate and runtime. Heston succeeds on about <strong>99.4%</strong> of dates and runs in about <strong>327 seconds</strong>. Bates succeeds on about <strong>84.6%</strong> and takes about <strong>1,450 seconds</strong>. So Bates wins on fit but loses on simplicity and stability. The notebook still chooses Bates as the best SV model because it clears the success-rate threshold and has much better error metrics.</p>
 <div id="2bf6f238" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>heston_month <span class="op">=</span> sv_daily_fits[sv_daily_fits[<span class="st">"model"</span>].eq(<span class="st">"heston"</span>)].assign(month<span class="op">=</span><span class="kw">lambda</span> x: x[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)).groupby(<span class="st">"month"</span>, observed<span class="op">=</span><span class="va">True</span>).agg(</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    rmse<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="st">"median"</span>),</span>
@@ -3844,6 +4911,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+</section>
+<section id="heston-diagnostics" class="level3">
+<h3 class="anchored" data-anchor-id="heston-diagnostics">Heston Diagnostics</h3>
+<p>The Heston diagnostics show RMSE, parameter paths, residual smile, and OTM put error. The most important parameters in the plotted diagnostics are <span class="math inline">\(v_0\)</span> and <span class="math inline">\(\rho\)</span>.</p>
+<p>The current variance <span class="math inline">\(v_0\)</span> moves with the market’s volatility regime. When SPX stress rises, <span class="math inline">\(v_0\)</span> rises. The correlation <span class="math inline">\(\rho\)</span> is usually negative, which is the leverage/skew channel. More negative <span class="math inline">\(\rho\)</span> means downside spot moves are more tightly linked to variance increases.</p>
+<p>In Fourier form, this enters the characteristic function through the complex terms <span class="math inline">\(C(u,T)\)</span> and <span class="math inline">\(D(u,T)\)</span>. In market language, it changes the relative price of puts and calls across strikes.</p>
+<p>The residual smile improves enormously compared with BSM and jump-only models. However, Heston still has structured tail errors because it relies on continuous variance shocks. It can create skew, but abrupt crash jumps may still require a jump component.</p>
 <div id="d05960f9" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>bates_month <span class="op">=</span> sv_daily_fits[sv_daily_fits[<span class="st">"model"</span>].eq(<span class="st">"bates"</span>)].assign(month<span class="op">=</span><span class="kw">lambda</span> x: x[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)).groupby(<span class="st">"month"</span>, observed<span class="op">=</span><span class="va">True</span>).agg(</span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>    rmse<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="st">"median"</span>),</span>
@@ -3945,6 +5019,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+</section>
+<section id="bates-diagnostics" class="level3">
+<h3 class="anchored" data-anchor-id="bates-diagnostics">Bates Diagnostics</h3>
+<p>Bates combines Heston’s stochastic variance with Merton’s jump component. The calibration result shows why that combination is useful. Bates produces the lowest average weighted RMSE and tail RMSE among the final SPX models.</p>
+<p>The model has two tail channels:</p>
+<ol type="1">
+<li><strong>Stochastic volatility:</strong> negative <span class="math inline">\(\rho\)</span> raises downside variance when the index falls.</li>
+<li><strong>Jumps:</strong> negative or volatile jump sizes add direct crash probability.</li>
+</ol>
+<p>The fitted Bates residual smile is much closer to zero across most moneyness buckets. It still underprices the far left wing in some places, but the error is much smaller than BSM’s deep negative residuals.</p>
+<p>The price of the improvement is computational. Bates is slowest and has the lowest success rate among the main fitted models. That is exactly the tradeoff a production desk faces: better surface fit versus calibration stability and runtime.</p>
+</section>
+<section id="why-bates-can-win-while-looking-messier" class="level3">
+<h3 class="anchored" data-anchor-id="why-bates-can-win-while-looking-messier">Why Bates Can Win While Looking Messier</h3>
+<p>Bates has more parameters and lower success rate, so its results need careful reading. The model can fit more surface features because it has more channels:</p>
+<p><span class="math display">\[
+\theta_{Bates}=(v_0,\kappa,\bar{v},\xi,\rho,\lambda,\mu_J,\sigma_J)
+\]</span></p>
+<p>The stochastic-volatility block shapes the persistent skew and volatility term structure. The jump block adds discrete crash risk. When both are present, the optimizer can match far more of the SPX surface.</p>
+<p>The downside is that the parameters are less uniquely identified. For example, a short-dated put wing can be made expensive by:</p>
+<ul>
+<li>increasing jump intensity <span class="math inline">\(\lambda\)</span>,</li>
+<li>making jump mean <span class="math inline">\(\mu_J\)</span> more negative,</li>
+<li>raising jump volatility <span class="math inline">\(\sigma_J\)</span>,</li>
+<li>raising vol-of-vol <span class="math inline">\(\xi\)</span>,</li>
+<li>making correlation <span class="math inline">\(\rho\)</span> more negative,</li>
+<li>or raising current variance <span class="math inline">\(v_0\)</span>.</li>
+</ul>
+<p>These choices don’t have identical effects, but they can partially substitute in finite data. That is why the notebook doesn’t rely on a single Bates parameter story. It evaluates Bates by out-of-sample-style diagnostics inside the sample: residual shape, tail RMSE, success rate, and tail probabilities.</p>
 <div id="1c647b14" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>sv_plot <span class="op">=</span> sv_daily_fits.copy()</span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>sv_plot[<span class="st">"month"</span>] <span class="op">=</span> sv_plot[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)</span>
@@ -3984,6 +5087,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The SV comparison plot shows Bates and Heston moving together through time, with Bates usually lower on RMSE and OTM put error. The bid/ask fit is also better for Bates. The parameter panel shows the extra jump component becoming part of the fitted surface behavior.</p>
+<p>This is useful because it separates two kinds of model complexity:</p>
+<ul>
+<li>Heston complexity explains time-varying variance and skew.</li>
+<li>Bates complexity explains both variance dynamics and discrete jump premium.</li>
+</ul>
+<p>For SPX index options in 2022-2023, the market seems to reward the second kind. The surface contains enough tail structure that Bates’ extra jump flexibility improves the fit materially.</p>
+</section>
+</section>
+<section id="final-model-tournament" class="level2">
+<h2 class="anchored" data-anchor-id="final-model-tournament">13) Final Model Tournament</h2>
+<p>The final tournament compares the baseline diffusion model, the winning jump model, and the winning stochastic-volatility model on the same common date set. The goal is to compare model families on fit quality, tail error, runtime, and stability using the same calibration grid.</p>
 <div id="a5d741bd" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>common_dates <span class="op">=</span> <span class="bu">sorted</span>(</span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">set</span>(pd.to_datetime(bsm_daily_fits[<span class="st">"date"</span>]).dt.normalize())</span>
@@ -4086,6 +5201,68 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The final comparison keeps only the common dates where BSM, the best jump model, and the best stochastic-volatility model are all available. That gives <strong>505 common dates</strong> from 2022-01-03 to 2023-12-29.</p>
+<p>The final ranking is clear:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Model family</th>
+<th>Selected model</th>
+<th>Main role</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Diffusion</td>
+<td>BSM</td>
+<td>baseline and sanity check</td>
+</tr>
+<tr class="even">
+<td>Jump</td>
+<td>Merton</td>
+<td>finite crash-risk improvement</td>
+</tr>
+<tr class="odd">
+<td>Stochastic volatility + jumps</td>
+<td>Bates</td>
+<td>best surface fit</td>
+</tr>
+</tbody>
+</table>
+<p>The final weighted RMSE values are approximately:</p>
+<p><span class="math display">\[
+RMSE_{Bates}=22.25
+\]</span></p>
+<p><span class="math display">\[
+RMSE_{Merton}=82.25
+\]</span></p>
+<p><span class="math display">\[
+RMSE_{BSM}=259.51
+\]</span></p>
+<p>The OTM put RMSE tells the same story:</p>
+<p><span class="math display">\[
+\text{OTM put RMSE}_{Bates}=25.45
+\]</span></p>
+<p><span class="math display">\[
+\text{OTM put RMSE}_{Merton}=93.95
+\]</span></p>
+<p><span class="math display">\[
+\text{OTM put RMSE}_{BSM}=359.59
+\]</span></p>
+<p>This is a huge improvement from diffusion to jumps, and another huge improvement from jumps to jump-stochastic volatility.</p>
+<section id="model-risk-in-the-final-ranking" class="level3">
+<h3 class="anchored" data-anchor-id="model-risk-in-the-final-ranking">13.1 Model Risk in the Final Ranking</h3>
+<p>The final ranking is clear, but model comparison still needs caution. Bates wins because it has the best fit, not because it is the true data-generating process. A flexible model can fit the cross-section better while producing less stable parameters.</p>
+<p>The calibration problem is ill-conditioned in some regions. For example, Bates jump intensity and Heston vol-of-vol can both raise short-dated wing prices. Several parameter combinations can reduce RMSE in similar ways. That is why we look at:</p>
+<ul>
+<li>success rate,</li>
+<li>runtime,</li>
+<li>residual shape,</li>
+<li>OTM put RMSE,</li>
+<li>tail probability disagreement,</li>
+<li>and hedge behavior.</li>
+</ul>
+<p>The strongest practical result is that BSM is inadequate, Merton is a big improvement, and Bates is the best surface model in this experiment. The weaker claim would be to say the Bates parameters themselves are all economically stable day by day. The notebook avoids relying only on parameter interpretation; it checks prices, residuals, and tail quantities.</p>
 <div id="1b10044a" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">4</span>, figsize<span class="op">=</span>(<span class="dv">17</span>, <span class="fl">4.5</span>))</span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].bar(final_model_comparison[<span class="st">"model"</span>], final_model_comparison[<span class="st">"weighted_price_rmse"</span>], color<span class="op">=</span>palette[:<span class="bu">len</span>(final_model_comparison)])</span>
@@ -4114,6 +5291,40 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The tournament plot makes the tradeoff visible. Bates dominates on RMSE, bid/ask hit rate, and tail error. Merton sits in the middle. BSM is fastest but weakest. Runtime is on a log scale because Bates is much more expensive than the simple models.</p>
+<p>The important model-comparison point is that speed alone isn’t a good objective. BSM is cheap because it is too simple. Bates is expensive because it is trying to fit the actual shape of the SPX surface. In a calibration pipeline, the right model depends on what we need:</p>
+<ul>
+<li>for a quick volatility proxy, BSM is enough;</li>
+<li>for rough jump-tail pricing, Merton is useful;</li>
+<li>for detailed surface and tail diagnostics, Bates is the strongest here.</li>
+</ul>
+<p>The project then uses this model hierarchy to study residuals, tail probabilities, and hedging overlays.</p>
+</section>
+<section id="residual-smile-and-term-diagnostics" class="level3">
+<h3 class="anchored" data-anchor-id="residual-smile-and-term-diagnostics">Residual Smile and Term Diagnostics</h3>
+<p>Residual diagnostics show where each model fails. The residual is scaled by quote half-spread:</p>
+<p><span class="math display">\[
+z_j=\frac{\hat{V}_j-V_j^{mkt}}{\text{half-spread}_j}
+\]</span></p>
+<p>This makes errors comparable across cheap and expensive options. A residual of <span class="math inline">\(-10\)</span> means the model price is ten half-spreads below the market. That is economically meaningful because the model is outside the market by a large amount relative to quote width.</p>
+<p>The residual smile table already shows the central message. In the deep left-wing bucket <span class="math inline">\((-0.45,-0.30]\)</span>, BSM has a median residual around <strong>-53.66</strong>, while Bates is around <strong>-9.70</strong>. Both underprice far OTM puts, but Bates is much closer.</p>
+<p>Across the middle of the smile, Bates residuals are near zero compared with BSM. That tells us the Bates model is not only lowering average RMSE by fitting ATM options. It genuinely improves the moneyness structure.</p>
+</section>
+<section id="residual-diagnostics-as-model-surgery" class="level3">
+<h3 class="anchored" data-anchor-id="residual-diagnostics-as-model-surgery">Residual Diagnostics as Model Surgery</h3>
+<p>Residuals are more informative than one scalar error because they show which part of the surface the model can’t explain. We can organize residual failures into three directions.</p>
+<p><strong>Moneyness residuals</strong> tell us whether the model fits skew and smile:</p>
+<p><span class="math display">\[
+z(k)=\text{median}\left(\frac{\hat{V}-V^{mkt}}{\text{half-spread}}\mid \log(K/F)\in \text{bucket}(k)\right)
+\]</span></p>
+<p>If <span class="math inline">\(z(k)\)</span> is very negative on the left wing, the model underprices downside protection. If it is positive on the right wing, the model overprices upside calls.</p>
+<p><strong>Term residuals</strong> tell us whether the model fits maturity structure:</p>
+<p><span class="math display">\[
+z(T)=\text{median}\left(\frac{\hat{V}-V^{mkt}}{\text{half-spread}}\mid DTE\in \text{bucket}(T)\right)
+\]</span></p>
+<p>A short-maturity error usually points to jumps, event risk, or near-term variance. A long-maturity error usually points to term-structure limitations.</p>
+<p><strong>Stress residuals</strong> tell us whether the model survives the dates where the market surface is hardest. A model can look acceptable in calm periods and fail exactly when hedging matters. That is why the notebook isolates the worst RMSE dates and plots their residual smiles separately.</p>
+<p>This diagnostic structure is one of the strongest parts of the project. It turns calibration from a single number into a map of model weaknesses.</p>
 <div id="f872620c" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>final_fit_prices <span class="op">=</span> pd.concat([</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>    bsm_fit_prices[bsm_fit_prices[<span class="st">"date"</span>].isin(common_dates)],</span>
@@ -4305,6 +5516,36 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The residual plots show four diagnostic views.</p>
+<p>The residual smile plot confirms that BSM severely underprices downside puts. Merton reduces the left-wing error, and Bates reduces it further. The residual term plot shows whether errors cluster by maturity. If a model fits short expiries but misses longer ones, the term residual will bend. The OTM put residual time series shows when downside-tail mispricing is worst. The stress residual panel isolates the hardest dates.</p>
+<p>These plots are important because a low average RMSE can hide systematic model failure. A model that is always wrong in the deep left wing may look acceptable if most quotes are near ATM. Here the OTM put diagnostics prevent that.</p>
+</section>
+</section>
+<section id="tail-probabilities-from-the-fitted-models" class="level2">
+<h2 class="anchored" data-anchor-id="tail-probabilities-from-the-fitted-models">14) Tail Probabilities from the Fitted Models</h2>
+<p>Once we have fitted models, we can ask distributional questions directly. For a crash level <span class="math inline">\(L\)</span>, the tail probability is:</p>
+<p><span class="math display">\[
+P\left(\frac{S_T}{S_0}\le L\right)=\int_{-\infty}^{\log(LS_0)}f_{X_T}(x)\,dx
+\]</span></p>
+<p>The notebook computes this by recovering the model-implied density from the characteristic function and integrating the left tail.</p>
+<p>Three crash levels are used:</p>
+<p><span class="math display">\[
+L\in\{0.90,0.85,0.80\}
+\]</span></p>
+<p>These correspond to 10%, 15%, and 20% downside moves over the chosen horizon. For tail hedging, the 80% and 85% levels are especially important because they connect to deep OTM put payoff convexity.</p>
+<section id="tail-probability-as-a-model-implied-quantity" class="level3">
+<h3 class="anchored" data-anchor-id="tail-probability-as-a-model-implied-quantity">14.1 Tail Probability as a Model-Implied Quantity</h3>
+<p>A tail probability from an option model is risk-neutral, not physical. It answers:</p>
+<p><span class="math display">\[
+Q(S_T/S_0\le L)
+\]</span></p>
+<p>not:</p>
+<p><span class="math display">\[
+P(S_T/S_0\le L)
+\]</span></p>
+<p>The risk-neutral probability includes risk premia embedded in option prices. If investors are willing to pay a lot for crash protection, the fitted model may imply high crash probability even if the real-world probability is lower. That is not an error. Option prices reflect both probability and compensation for bearing tail risk.</p>
+<p>For hedge selection, this is still useful. We are buying options in the risk-neutral market. If the market is pricing high crash risk, option premiums will be high. If the model thinks crash probability is high relative to the premium paid, some puts may look attractive.</p>
+<p>The model disagreement is also useful. If Bates says the 80% crash probability is high and BSM says it is tiny, the difference tells us the tail estimate depends strongly on distributional assumptions. A model-risk-aware selector can prefer options that look acceptable across models rather than depending on one aggressive tail estimate.</p>
 <div id="c891246f" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> params_from_row(model, row):</span>
 <span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>    count <span class="op">=</span> {<span class="st">"bsm"</span>: <span class="dv">1</span>, <span class="st">"merton"</span>: <span class="dv">4</span>, <span class="st">"vg"</span>: <span class="dv">3</span>, <span class="st">"heston"</span>: <span class="dv">5</span>, <span class="st">"bates"</span>: <span class="dv">8</span>}[model]</span>
@@ -4424,6 +5665,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The fitted average tail probabilities show clear model disagreement. At the 80% level, BSM assigns only about <strong>0.53%</strong> average probability, Bates about <strong>2.62%</strong>, and Merton about <strong>3.43%</strong>. At the 90% level, all models are closer, but still disagree on timing and magnitude.</p>
+<p>This is exactly why tail overlays use model disagreement. Tail probabilities are not directly observable, and different risk-neutral models can imply very different crash risks while fitting the surface with different quality.</p>
 <div id="d3e82216" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>tail80 <span class="op">=</span> tail_diagnostics[tail_diagnostics[<span class="st">"level"</span>].eq(<span class="fl">0.80</span>)].copy()</span>
 <span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>tail_term_date <span class="op">=</span> tail_dates[<span class="bu">min</span>(<span class="bu">len</span>(tail_dates) <span class="op">-</span> <span class="dv">1</span>, <span class="bu">len</span>(tail_dates) <span class="op">//</span> <span class="dv">2</span>)] <span class="cf">if</span> <span class="bu">len</span>(tail_dates) <span class="cf">else</span> main_day</span>
@@ -4459,6 +5702,62 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The tail-density plot shows how the models allocate probability around the crash region. The crash-probability time series shows that tail risk is not constant. It rises during stress and falls as the market calms. The tail-disagreement panel is particularly useful because it measures model uncertainty: when the max-min gap is large, the models don’t agree about crash probability.</p>
+<p>The tail-term panel compares 90%, 85%, and 80% levels on a selected date. Moving from 90% to 80% is not just moving further left. It changes which model assumptions matter most. BSM can sometimes match moderate downside probability by raising volatility, but it often struggles with the far-left tail shape. Jump models can put more mass into deep crash states without raising all volatility equally.</p>
+</section>
+</section>
+<section id="tail-hedging-candidate-logic" class="level2">
+<h2 class="anchored" data-anchor-id="tail-hedging-candidate-logic">15) Tail-Hedging Candidate Logic</h2>
+<p>The hedging section turns model prices and model-implied tail probabilities into option-selection rules. The universe is SPX puts with:</p>
+<p><span class="math display">\[
+21\le DTE\le 120
+\]</span></p>
+<p><span class="math display">\[
+0.75\le \frac{K}{S}\le 0.98
+\]</span></p>
+<p>and relative spread below 30%. These are tail-hedge candidates: not tiny lottery tickets, not pure ATM hedges, but puts with enough convexity to matter in a downside move.</p>
+<p>For each candidate, the project computes payoff at crash levels:</p>
+<p><span class="math display">\[
+\text{payoff}_{90}=\max(K-0.90S,0)
+\]</span></p>
+<p><span class="math display">\[
+\text{payoff}_{85}=\max(K-0.85S,0)
+\]</span></p>
+<p><span class="math display">\[
+\text{payoff}_{80}=\max(K-0.80S,0)
+\]</span></p>
+<p>Then it scales these by premium. A put that pays <span class="math inline">\(50\)</span> in a crash but costs <span class="math inline">\(10\)</span> has payoff-per-premium of 5. A put that pays <span class="math inline">\(50\)</span> but costs <span class="math inline">\(2\)</span> has payoff-per-premium of 25. Tail hedging is heavily about this convexity per dollar spent.</p>
+<section id="expected-crash-efficiency" class="level3">
+<h3 class="anchored" data-anchor-id="expected-crash-efficiency">15.1 Expected Crash Efficiency</h3>
+<p>The expected crash-efficiency score combines crash probabilities and payoffs at several downside levels:</p>
+<p><span class="math display">\[
+ECE= p_{90}\frac{(K-0.90S)^+}{mid}+p_{85}\frac{(K-0.85S)^+}{mid}+p_{80}\frac{(K-0.80S)^+}{mid}
+\]</span></p>
+<p>where <span class="math inline">\(p_{90}\)</span>, <span class="math inline">\(p_{85}\)</span>, and <span class="math inline">\(p_{80}\)</span> are model-implied probabilities of crossing the corresponding downside levels.</p>
+<p>This score rewards puts that deliver a lot of crash payoff per premium dollar. It also uses multiple crash levels instead of one. A put with strike near 0.90 may look good for a 10% drawdown but less convex for a 20% crash. A deeper put may look bad for a 10% drawdown but excellent for a 20% crash. Combining levels gives a smoother view of tail usefulness.</p>
+<p>The score also subtracts premium bleed:</p>
+<p><span class="math display">\[
+\text{premium bleed}=\frac{mid/S}{\sqrt{DTE/365}}
+\]</span></p>
+<p>This penalizes options that are expensive relative to spot and short maturity. Short-dated puts can have high convexity, but they decay quickly. A hedge selector needs to pay attention to both payoff and cost.</p>
+<p>The model-based edge is:</p>
+<p><span class="math display">\[
+\text{model edge}=\hat{V}^{model}-V^{mid}
+\]</span></p>
+<p>and the edge ratio is:</p>
+<p><span class="math display">\[
+\text{edge ratio}=\frac{\hat{V}^{model}-V^{mid}}{V^{mid}}
+\]</span></p>
+<p>A positive edge ratio means the model thinks the option is cheap relative to its fair value. The model-risk selector penalizes disagreement between jump and SV prices:</p>
+<p><span class="math display">\[
+\text{robust edge}=\frac{1}{2}(V^{jump}+V^{SV})-V^{mid}-\frac{1}{2}|V^{jump}-V^{SV}|
+\]</span></p>
+<p>This is a conservative rule. If both models agree the option is cheap, the robust edge is positive. If one model loves it and the other hates it, the disagreement penalty reduces the score.</p>
+<p>The hedge score combines tail efficiency, model edge, convexity, spread cost, premium bleed, and model uncertainty:</p>
+<p><span class="math display">\[
+\text{score}=0.45\times \text{expected crash efficiency}+0.25\times \text{edge ratio}+0.15\times \text{convexity per premium}-0.10\times \text{spread}-0.10\times \text{premium bleed}-0.10\times \text{model uncertainty}+\text{target score}
+\]</span></p>
+<p>This makes the strategy more than a model-price sort. It asks whether the option is cheap, convex, liquid enough, and useful under crash scenarios.</p>
 <div id="d559fad6" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> latest_params(model, d):</span>
 <span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>    source <span class="op">=</span> final_daily[final_daily[<span class="st">"model"</span>].eq(model)]</span>
@@ -4766,6 +6065,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The hedge schedule creates <strong>25 scheduled trades</strong> for each selector. The average candidate table shows the character of each strategy.</p>
+<p>Merton selectors choose lower-moneyness puts on average, around <strong>0.892</strong>, with lower average mid prices around <strong>7.20</strong> and very high average edge ratios around <strong>1.29</strong>. Bates and model-risk selectors choose moneyness around <strong>0.91</strong>, with higher average premiums and lower model edge. Fixed delta sits close to the same region but has zero model edge by construction because it uses the market price as fair value.</p>
+<p>The gated versions raise average budget in some cases. For example, Bates gated averages about <strong>40.4 bps</strong> versus 35 bps fixed, while Merton gated averages about <strong>37 bps</strong>. The gate spends more when tail probabilities are high, spreads are acceptable, and edge is not negative.</p>
 <div id="67f1556a" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.backtest.overlays <span class="im">import</span> run_overlay_backtest, overlay_summary, mark_book_for_schedules</span>
 <span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -5053,6 +6355,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The overlay backtest compares the hedged portfolio to an unhedged SPX holding. Each hedge strategy buys puts periodically using a premium budget. The mark-to-market book tracks option values, rolls, and cashflows.</p>
+<p>The summary is honest: over this sample, the unhedged portfolio ends with the highest final NAV, about <strong>1.434M</strong>, while the hedged strategies end around <strong>1.415M to 1.419M</strong>. The hedges spend premium, and the sample doesn’t contain a crash large enough for the puts to dominate the cost.</p>
+<p>Max drawdowns are also slightly worse for the hedged versions in this run, around <strong>-26.4% to -26.6%</strong>, compared with about <strong>-26.2%</strong> for unhedged. That can happen when hedges are repeatedly bought during volatile markets but expire or are rolled before a sufficiently large payoff occurs.</p>
+<p>This doesn’t invalidate the modeling. It shows that tail hedging is a cost-benefit problem. A model can identify convex protection, but if the realized path doesn’t include the tail event, premium bleed can dominate.</p>
 <div id="7d6f4046" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">4</span>, figsize<span class="op">=</span>(<span class="dv">18</span>, <span class="fl">4.5</span>))</span>
 <span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>hedge_results[<span class="st">"nav"</span>].div(hedge_results[<span class="st">"nav"</span>].iloc[<span class="dv">0</span>]).plot(ax<span class="op">=</span>axes[<span class="dv">0</span>], lw<span class="op">=</span><span class="fl">1.1</span>)</span>
@@ -5083,6 +6389,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The hedge NAV and drawdown plots reinforce the table. The hedged paths stay close to the unhedged path, with small differences driven by option premium, mark-to-market changes, and occasional tail payoff. The hedge cashflow panel shows the repeated cost of protection.</p>
+<p>The key interpretation is that model sophistication doesn’t guarantee better realized performance over a short sample. Tail hedges are insurance. Insurance can be correctly priced and still reduce return when the insured event doesn’t happen. The useful comparison here is across selectors: which ones spend more, pick cheaper convexity, rely more on model edge, or respond more strongly to tail probability regimes.</p>
+</section>
+<section id="why-tail-hedges-can-lose-even-when-the-tail-model-is-better" class="level3">
+<h3 class="anchored" data-anchor-id="why-tail-hedges-can-lose-even-when-the-tail-model-is-better">Why Tail Hedges Can Lose Even When the Tail Model Is Better</h3>
+<p>A tail hedge has negative carry. If we buy puts repeatedly, the expected cashflow over calm periods is usually negative because option sellers demand compensation for convexity and crash risk.</p>
+<p>Let the premium paid at entry be <span class="math inline">\(P_0\)</span> and the future payoff be <span class="math inline">\(H_T\)</span>. The realized hedge P&amp;L is:</p>
+<p><span class="math display">\[
+\Pi=H_T-P_0
+\]</span></p>
+<p>The model may estimate:</p>
+<p><span class="math display">\[
+E^Q[H_T]&gt;P_0
+\]</span></p>
+<p>for some candidates, but realized physical outcomes can still be calm. Also, <span class="math inline">\(Q\)</span> is not the same as the physical measure <span class="math inline">\(P\)</span>. Risk-neutral tail probabilities include risk premium. Buying options at market prices means buying that risk premium too.</p>
+<p>So the overlay result has to be interpreted as an insurance backtest, not a pure alpha backtest. The model can help choose better insurance contracts, but if the insured event doesn’t happen, the strategy can lag unhedged exposure. That is what we see in both SPX and BTC samples.</p>
 <div id="0f211578" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>component_rows <span class="op">=</span> []</span>
 <span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _, row <span class="kw">in</span> hedge_candidates.iloc[:<span class="dv">80</span>].iterrows():</span>
@@ -5194,6 +6516,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The hedge score-component table and plots show what the selectors are actually doing. The model-based selectors have higher edge scores, while fixed-delta selection relies more on simple target exposure. The fair-value scatter checks whether model prices are systematically above or below market premiums. The tail-efficiency histogram shows how much crash payoff per premium each selector tends to buy.</p>
+<p>This is a good diagnostic layer because final NAV alone can be misleading. A hedge may underperform because no crash happened, while still selecting more efficient protection. The score components separate selection quality from realized path luck.</p>
 <div id="33d1a37a" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>project_objects <span class="op">=</span> {</span>
 <span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"clean_quotes"</span>: clean_quotes,</span>
@@ -5324,6 +6648,36 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The object summary confirms the main artifacts created by the project: over <strong>4.16 million</strong> cleaned SPX quotes, <strong>85,850</strong> calibration quotes, direct/FFT/COS validation tables, jump and SV daily fits, residual diagnostics, tail diagnostics, hedge candidates, hedge schedules, hedge trades, and hedge summary.</p>
+<p>This matters because the project isn’t only a pricing demonstration. It builds a full Fourier option-pricing workflow:</p>
+<ol type="1">
+<li>clean real quotes,</li>
+<li>create representative calibration grids,</li>
+<li>validate pricing engines,</li>
+<li>fit models daily,</li>
+<li>diagnose residuals and tails,</li>
+<li>translate model outputs into an overlay strategy.</li>
+</ol>
+</section>
+</section>
+<section id="btc-secondary-application" class="level2">
+<h2 class="anchored" data-anchor-id="btc-secondary-application">16) BTC Secondary Application</h2>
+<p>The BTC section repeats the production workflow through the library. The data comes from the exact BTC folders listed at the start:</p>
+<ul>
+<li><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/btc_options_chain">btc_options_chain</a></li>
+<li><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/btc_usd_ohlcv">btc_usd_ohlcv</a></li>
+</ul>
+<p>This market is structurally different from SPX options. BTC has much higher volatility, more extreme jumps, a 24/7 underlying market, different liquidity patterns, and a quote universe that can be thinner across some expiries/strikes. The project converts quotes to USD-equivalent terms, assigns a simple rate assumption, and builds a calibration grid similar in spirit to the SPX grid.</p>
+<section id="why-fourier-methods-transfer-well-to-btc" class="level3">
+<h3 class="anchored" data-anchor-id="why-fourier-methods-transfer-well-to-btc">16.1 Why Fourier Methods Transfer Well to BTC</h3>
+<p>BTC is a useful secondary application because it stresses the same models differently. The underlying is much more volatile, option prices are much larger in absolute terms, and tails are more important. But the Fourier machinery barely changes.</p>
+<p>The model still supplies:</p>
+<p><span class="math display">\[
+\phi_T(u;\theta)
+\]</span></p>
+<p>The pricing engine still computes prices through FFT or COS. The calibration still minimizes spread-scaled residuals. The tail module still integrates model-implied densities.</p>
+<p>What changes is the economic interpretation of parameters and residuals. A high volatility level in SPX may represent crisis conditions. A high volatility level in BTC can be normal. A 20% downside event in SPX is a major crash. A 20% BTC move can happen in a much shorter window. This means the same tail levels <span class="math inline">\(0.90\)</span>, <span class="math inline">\(0.85\)</span>, and <span class="math inline">\(0.80\)</span> are less extreme for BTC than for SPX.</p>
+<p>That is why BTC hedges can be expensive and still not dominate realized performance. The market already prices high movement probability. Buying puts in a high-volatility market means paying for convexity that many traders already know is valuable.</p>
 <div id="fa369927" class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.options.fourier <span class="im">import</span> direct_price, fft_grid, cos_prices, cos_density, tail_probability, model_cf</span>
 <span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.options.quote_cleaning <span class="im">import</span> convert_quotes_to_usd_equivalent</span>
@@ -6130,8 +7484,86 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The BTC calibration panel has <strong>96,695 clean rows</strong>, <strong>26,958 calibration rows</strong>, and <strong>269 calibration dates</strong>, with about <strong>100 quotes per date</strong>. The selected winners are <strong>Merton</strong> for the jump family and <strong>Heston</strong> for the stochastic-volatility family.</p>
+<p>The BTC model comparison is very different in scale because BTC option prices and spot levels are much larger and more volatile. Heston is the best model in the displayed comparison, with weighted RMSE around <strong>219,722</strong>, while Merton has about <strong>326,548</strong> and BSM about <strong>547,645</strong>.</p>
+<p>The ranking makes economic sense. BTC volatility is highly time-varying, so stochastic volatility matters. Merton jumps improve over BSM, but a finite jump model alone can’t fully capture the continuous repricing of volatility risk in crypto. Heston has the highest bid/ask hit rate among the three, about <strong>31.4%</strong>, which is much higher than the SPX model hit rates shown earlier.</p>
+<p>The success rate is lower for Heston, about <strong>88.9%</strong>, because the model is harder to calibrate and the market is more unstable. This is a useful warning: better fit comes with more calibration fragility.</p>
+<p>The BTC hedge results show the same insurance problem as SPX, but with crypto-sized moves. The unhedged BTC exposure ends with the highest final NAV, about <strong>1.434M</strong>, while hedged strategies end around <strong>1.415M to 1.419M</strong>. Since BTC rallied strongly over this sample, protective puts were a drag.</p>
+<p>The drawdowns are large for every strategy, around <strong>-26%</strong>, and the hedges don’t materially reduce them in this run. The median selected BTC options are expensive, with open prices in the thousands of dollars, and the premium budget is meaningful. When the underlying rallies or avoids a deep crash, that premium bleed lowers final return.</p>
+<p>The interesting part is the model behavior, not the realized outperformance. The Heston and Merton selectors choose different moneyness and maturity profiles. The model-risk selector tends to choose options where jump and SV models agree more, or where disagreement is penalized. In crypto, this disagreement is valuable because model assumptions about tails can diverge dramatically.</p>
+<p>The BTC diagnostic panel gives a compact view of the whole secondary workflow:</p>
+<ul>
+<li>COS convergence and FFT fit validate the pricing engines.</li>
+<li>Throughput shows the cost of pricing high-volatility crypto options.</li>
+<li>Model quality ranks BSM, Merton, and Heston.</li>
+<li>Daily calibration errors show when jump or SV models struggle.</li>
+<li>Residual smiles show whether the model misses calls, puts, or wings.</li>
+<li>Tail density and tail probability panels show how crash risk changes through time.</li>
+<li>Hedge NAV and hedge cashflow show realized overlay performance.</li>
+</ul>
+<p>The most important economic interpretation is that BTC makes volatility modeling more central. SPX already has a rich skew and institutional crash-protection market, but BTC adds larger jumps, faster regime changes, and more expensive convexity. Fourier methods are useful here because once we have characteristic functions and fast kernels, we can compare distributional assumptions quickly across many quotes.</p>
+</section>
+</section>
+<section id="what-this-project-adds-to-the-series" class="level2">
+<h2 class="anchored" data-anchor-id="what-this-project-adds-to-the-series">17) What This Project Adds to the Series</h2>
+<p>This project is the transform-pricing layer of the option sequence. Project 4 focused on implied volatility extraction. Project 8 focused on surfaces and local volatility. Project 11 focused on stochastic-volatility model structure. Project 13 focused on American-option numerics. Here the main contribution is the machinery that lets many models be priced through a common transform framework.</p>
+<p>The strongest results are:</p>
+<ul>
+<li>Direct Fourier integration matches BSM and Merton reference prices almost exactly.</li>
+<li>FFT prices full strike grids extremely fast but introduces grid/interpolation considerations.</li>
+<li>COS is the most useful calibration engine because it handles arbitrary market strikes efficiently.</li>
+<li>VG needs special numerical care because its transform/tail behavior creates a higher COS error floor in this setup.</li>
+<li>Merton strongly improves over BSM on SPX options, especially in the left tail.</li>
+<li>Bates dominates the final SPX model comparison on RMSE, bid/ask hit rate, and OTM put error, but it is slower and less stable than simpler models.</li>
+<li>Tail-hedging overlays show how model-implied crash probabilities can inform protection selection, while realized performance still depends on whether a crash actually occurs.</li>
+<li>BTC confirms that the same Fourier machinery transfers to a more volatile market, but model stability and premium bleed become even more important.</li>
+</ul>
+<p>The project ends with a practical lesson: Fourier methods are not only mathematical pricing tricks. They create a common numerical language for comparing very different risk-neutral distributions under real-market calibration pressure.</p>
+<section id="practical-method-selection" class="level3">
+<h3 class="anchored" data-anchor-id="practical-method-selection">17.1 Practical Method Selection</h3>
+<p>After all the validation and calibration, the methods have clear practical roles.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Method</th>
+<th>Best use</th>
+<th>Main limitation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Direct integration</td>
+<td>reference pricing and formula validation</td>
+<td>too slow for large calibration grids</td>
+</tr>
+<tr class="even">
+<td>Carr-Madan FFT</td>
+<td>fast full log-strike grids for one maturity/model</td>
+<td>market strikes need interpolation and grid design</td>
+</tr>
+<tr class="odd">
+<td>COS</td>
+<td>fast arbitrary-strike pricing</td>
+<td>needs careful truncation interval, especially for heavy-tailed models</td>
+</tr>
+<tr class="even">
+<td>Grouped COS</td>
+<td>production calibration across real option groups</td>
+<td>still nonlinear and model-dependent</td>
+</tr>
+</tbody>
+</table>
+<p>The method selection follows the data shape. If we need a smooth grid of strikes, FFT is attractive. If we need exact market strikes across many expiries, COS is better. If we need a high-confidence benchmark for a selected grid, direct integration is best.</p>
+<p>This is the main numerical lesson of Project 14. Fourier pricing gives a family of transform-based methods, and the right choice depends on whether the problem is validation, grid pricing, calibration, or tail diagnostics.</p>
 
 
+</section>
+</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
@@ -6541,8 +7973,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../notebooks/15_factor_investing.html" class="pagination-link" aria-label="15. Factor Investing and Fama French Allocation">
-        <span class="nav-page-text"><span class="chapter-title">15. Factor Investing and Fama French Allocation</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../notebooks/15_factor_investing.html" class="pagination-link" aria-label="15. Factor Investing and Fama-French Allocation">
+        <span class="nav-page-text"><span class="chapter-title">15. Factor Investing and Fama-French Allocation</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

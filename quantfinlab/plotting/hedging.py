@@ -14,10 +14,10 @@ HEDGE_COLORS = [
     "#00008B",
     "#008080",
     "#CC79A7",
-    "#DC143C",
     "#9614fa",
-    "#0072B2",
+    "#DC143C",
     "#7BC8F6",
+    "#0072B2",
     "#04D8B2",
     "#800080",
     "#FF8072",
@@ -38,6 +38,20 @@ def _bar_colors(n: int, *, offset: int = 0, colors: Sequence[str] | None = None)
     return [palette[(i + offset) % len(palette)] for i in range(max(int(n), 0))]
 
 
+def _model_color_map(models: Sequence[str], colors: Sequence[str] | None = None) -> dict[str, str]:
+    palette = list(colors or HEDGE_COLORS)
+    return {str(model): palette[i % len(palette)] for i, model in enumerate(pd.Index(models).dropna().unique())}
+
+
+def _inset_colorbar(im, ax, *, label: str | None = None):
+    cax = ax.inset_axes([0.965, 0.13, 0.025, 0.74])
+    cbar = ax.figure.colorbar(im, cax=cax)
+    if label:
+        cbar.set_label(label, fontsize=8)
+    cbar.ax.tick_params(labelsize=7, length=2)
+    return cbar
+
+
 def _heatmap(mat: pd.DataFrame, *, ax=None, title: str | None = None, cmap=None, fmt: str = ".2f"):
     set_plot_style()
     ax = _get_ax(ax)
@@ -52,16 +66,18 @@ def _heatmap(mat: pd.DataFrame, *, ax=None, title: str | None = None, cmap=None,
         vmin = -vmax if np.nanmin(finite) < 0 else float(np.nanpercentile(finite, 5))
     else:
         vmin, vmax = 0.0, 1.0
-    im = ax.imshow(values, aspect="auto", cmap=cmap or choose_heatmap_cmap(), vmin=vmin, vmax=vmax)
+    use_cmap = cmap or ("coolwarm" if vmin < 0 else "viridis")
+    im = ax.imshow(values, aspect="auto", cmap=use_cmap, vmin=vmin, vmax=vmax)
     ax.set_xticks(range(mat.shape[1]), mat.columns, rotation=35, ha="right", fontsize=8)
     ax.set_yticks(range(mat.shape[0]), mat.index, fontsize=8)
     ax.set_title(title or "")
-    for i in range(mat.shape[0]):
-        for j in range(mat.shape[1]):
-            val = values[i, j]
-            if np.isfinite(val):
-                ax.text(j, i, format(val, fmt), ha="center", va="center", fontsize=7)
-    ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    if mat.size <= 40:
+        for i in range(mat.shape[0]):
+            for j in range(mat.shape[1]):
+                val = values[i, j]
+                if np.isfinite(val):
+                    ax.text(j, i, format(val, fmt), ha="center", va="center", fontsize=7)
+    _inset_colorbar(im, ax)
     return ax
 
 
@@ -85,6 +101,112 @@ def plot_metric_heatmap(
 
 def plot_score_heatmap(tab: pd.DataFrame, *, ax=None, title: str = "hedge score"):
     return plot_metric_heatmap(tab, "score", ax=ax, title=title)
+
+
+def plot_best_score_bar(
+    best: pd.DataFrame,
+    *,
+    ax=None,
+    title: str = "best hedge score",
+    colors: Sequence[str] | None = None,
+):
+    set_plot_style(colors=list(colors or HEDGE_COLORS))
+    ax = _get_ax(ax)
+    need = {"relationship", "best_model", "score"}
+    if best.empty or not need.issubset(best.columns):
+        ax.text(0.5, 0.5, "No score table", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    data = best[list(need)].copy()
+    data["score"] = pd.to_numeric(data["score"], errors="coerce")
+    data = data.dropna(subset=["score"]).sort_values("score")
+    cmap = _model_color_map(data["best_model"], colors=colors)
+    ax.barh(data["relationship"], data["score"], color=[cmap[str(m)] for m in data["best_model"]], alpha=0.86)
+    ax.set_title(title)
+    ax.set_xlabel("score")
+    ax.grid(True, axis="x", alpha=0.25)
+    handles = [ax.barh([], [], color=color, label=model) for model, color in cmap.items()]
+    ax.legend(handles=handles, loc="lower right", fontsize=7, frameon=False)
+    return ax
+
+
+def plot_risk_reduction_scatter(
+    tab: pd.DataFrame,
+    *,
+    ax=None,
+    title: str = "vol vs ES reduction",
+    colors: Sequence[str] | None = None,
+):
+    set_plot_style(colors=list(colors or HEDGE_COLORS))
+    ax = _get_ax(ax)
+    need = {"model", "vol_red", "es_red"}
+    if tab.empty or not need.issubset(tab.columns):
+        ax.text(0.5, 0.5, "No model table", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    data = tab.copy()
+    cmap = _model_color_map(data["model"], colors=colors)
+    for model, g in data.groupby("model"):
+        size = 40 + 120 * pd.to_numeric(g.get("score", 0.5), errors="coerce").fillna(0.5).clip(0, 1)
+        ax.scatter(g["vol_red"], g["es_red"], s=size, alpha=0.68, label=model, color=cmap[str(model)], edgecolor="white", linewidth=0.6)
+    ax.axhline(0.0, color="black", lw=0.8, alpha=0.45)
+    ax.axvline(0.0, color="black", lw=0.8, alpha=0.45)
+    ax.set_title(title)
+    ax.set_xlabel("vol reduction")
+    ax.set_ylabel("ES reduction")
+    ax.legend(fontsize=7, frameon=False, ncol=2)
+    ax.grid(True, alpha=0.25)
+    return ax
+
+
+def plot_score_cost_scatter(
+    tab: pd.DataFrame,
+    *,
+    ax=None,
+    title: str = "score vs cost drag",
+    colors: Sequence[str] | None = None,
+):
+    set_plot_style(colors=list(colors or HEDGE_COLORS))
+    ax = _get_ax(ax)
+    need = {"model", "score", "cost_drag_ann"}
+    if tab.empty or not need.issubset(tab.columns):
+        ax.text(0.5, 0.5, "No score table", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    cmap = _model_color_map(tab["model"], colors=colors)
+    for model, g in tab.groupby("model"):
+        ax.scatter(g["cost_drag_ann"], g["score"], s=58, alpha=0.72, label=model, color=cmap[str(model)], edgecolor="white", linewidth=0.6)
+    ax.set_title(title)
+    ax.set_xlabel("annual cost drag")
+    ax.set_ylabel("score")
+    ax.legend(fontsize=7, frameon=False, ncol=2)
+    ax.grid(True, alpha=0.25)
+    return ax
+
+
+def plot_turnover_cost_scatter(
+    tab: pd.DataFrame,
+    *,
+    ax=None,
+    title: str = "turnover and cost",
+    colors: Sequence[str] | None = None,
+):
+    set_plot_style(colors=list(colors or HEDGE_COLORS))
+    ax = _get_ax(ax)
+    need = {"model", "turnover_ann", "cost_drag_ann"}
+    if tab.empty or not need.issubset(tab.columns):
+        ax.text(0.5, 0.5, "No cost table", ha="center", va="center", transform=ax.transAxes)
+        ax.set_axis_off()
+        return ax
+    cmap = _model_color_map(tab["model"], colors=colors)
+    for model, g in tab.groupby("model"):
+        ax.scatter(g["turnover_ann"], g["cost_drag_ann"], s=58, alpha=0.72, label=model, color=cmap[str(model)], edgecolor="white", linewidth=0.6)
+    ax.set_title(title)
+    ax.set_xlabel("annual turnover")
+    ax.set_ylabel("annual cost drag")
+    ax.legend(fontsize=7, frameon=False, ncol=2)
+    ax.grid(True, alpha=0.25)
+    return ax
 
 
 def plot_model_counts(
@@ -380,6 +502,7 @@ __all__ = [
     "HEDGE_COLORS",
     "plot_beta_grid",
     "plot_beta_paths",
+    "plot_best_score_bar",
     "plot_diag_heatmap",
     "plot_metric_heatmap",
     "plot_model_counts",
@@ -389,8 +512,11 @@ __all__ = [
     "plot_resid_gate_counts",
     "plot_resid_nav",
     "plot_resid_return_bar",
+    "plot_risk_reduction_scatter",
+    "plot_score_cost_scatter",
     "plot_score_gap",
     "plot_score_heatmap",
     "plot_traded_beta",
+    "plot_turnover_cost_scatter",
     "plot_z_grid",
 ]

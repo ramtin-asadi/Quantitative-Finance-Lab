@@ -88,6 +88,7 @@ from .robust import (
     ellipsoid_robust_weight_frame,
     psd_sqrt,
     robust_radius_path,
+    robust_weight_frames,
     wasserstein_drmv_weights,
     wasserstein_weight_frame,
 )
@@ -218,6 +219,7 @@ __all__ = [
     "rank_signal_weight_frame",
     "robust",
     "robust_radius_path",
+    "robust_weight_frames",
     "run_rebalanced_portfolio_backtest",
     "sample_covariance",
     "scale_mu_to_target_sharpe",

@@ -27,6 +27,7 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Read **[Data](#data)** below before trying to run anything locally — the notebooks are not directly re-runnable on a fresh clone without first preparing data.
 - Then open a project notebook and read it top to bottom; the final section of most notebooks re-runs the same workflow on a second market using only `quantfinlab`.
 - The library itself is documented in [`quantfinlab/README.md`](https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md) on GitHub, with the full module map and code examples.
+
 ---
 
 ## Projects

@@ -80,3 +80,33 @@ def test_robust_allocators_and_radius_path_are_finite() -> None:
     path = robust.robust_radius_path("box", mu, cov_ann, n_mu_obs=120, radii=(0.0, 0.2, 0.4), w_max=0.70)
     assert list(path["radius"]) == [0.0, 0.2, 0.4]
     assert path[["robust_return", "volatility", "effective_n"]].notna().all().all()
+
+    w_path = robust.robust_radius_path("wasserstein", mu, cov_ann, n_mu_obs=120, radii=(0.0, 1.0), mv_lambda=1.5, w_max=0.70)
+    assert list(w_path["radius"]) == [0.0, 1.0]
+    assert w_path[["robust_volatility", "risk_penalty", "objective"]].notna().all().all()
+    assert (w_path["robust_volatility"] >= w_path["volatility"] - 1e-10).all()
+
+
+def test_robust_weight_frames_build_all_three_models_from_cache() -> None:
+    pytest.importorskip("cvxpy")
+    returns, mu, cov_ann = _inputs()
+    rebalance_dates = pd.to_datetime(["2020-01-31", "2020-02-29", "2020-03-31"])
+    cache = {
+        dt: {
+            "tickers": list(mu.index),
+            "R_cov": returns,
+            "R_mu": returns,
+            "cov_ann_map": {"LedoitWolf": cov_ann},
+            "mu_ann_map": {"LedoitWolf": {"Momentum": mu}},
+        }
+        for dt in rebalance_dates
+    }
+
+    frames = robust.robust_weight_frames(cache, rebalance_dates, w_max=0.70)
+
+    assert set(frames) == {"Box Robust MV", "Ellipsoid Robust MV", "Wasserstein DRMV"}
+    for frame in frames.values():
+        assert list(frame.index) == list(rebalance_dates[:-1])
+        assert set(frame.columns) == set(mu.index)
+        for _, weights in frame.iterrows():
+            _assert_weights(weights, cap=0.70)

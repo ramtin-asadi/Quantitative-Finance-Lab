@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>17. Network-Aware Portfolio Construction – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/16_regime_switching_portfolio.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-2641b481724464e61c86985d8c912b6f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -111,6 +109,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -190,32 +217,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/07_dynamic_hedge_ratios.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">7. Dynamic Hedge Ratio and Residual Trading</span></a>
+  <a href="../notebooks/07_dynamic_hedge_ratios.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">7. Dynamic Hedge Ratios and Residual Trading</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/08_vol_surface_local_vol.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">8. Volatility Surface and Local Volatility model</span></a>
+  <a href="../notebooks/08_vol_surface_local_vol.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">8. Volatility Surface and Local Volatility</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/09_term_structure_models.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">9. Short Rate and Term Structure Models</span></a>
+  <a href="../notebooks/09_term_structure_models.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">9. Term Structure Models, Curve Factors, and Swap-Based Duration Overlays</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/10_portfolio_tail_parity_robust.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">10. Portfolio Optimization: Tail risk, Risk Parity and Robust Models</span></a>
+  <a href="../notebooks/10_portfolio_tail_parity_robust.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">10. Portfolio Optimization: Tail Risk, Risk Parity and Robust Models</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/11_stochastic_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">11. Stochastic Volatility Models</span></a>
+  <a href="../notebooks/11_stochastic_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">11. Stochastic Volatility Models and Model-Risk-Aware Option Relative Value</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/12_financial_conditions_index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">12. Macro Fiancial Conditions Index</span></a>
+  <a href="../notebooks/12_financial_conditions_index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">12. Macro Financial Conditions Index and Macro-Regime Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -225,17 +252,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/14_fourier_option_pricing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">14. Fourier Based Methods for Option Pricing</span></a>
+  <a href="../notebooks/14_fourier_option_pricing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">14. Fourier-Based Methods for Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/15_factor_investing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">15. Factor Investing and Fama French Allocation</span></a>
+  <a href="../notebooks/15_factor_investing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">15. Factor Investing and Fama-French Allocation</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/16_regime_switching_portfolio.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">16. Regime Switching models for portfolio selection</span></a>
+  <a href="../notebooks/16_regime_switching_portfolio.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">16. Regime Switching Portfolio Selection</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -245,7 +272,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></a>
+  <a href="../notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility for Option Pricing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
@@ -286,8 +313,91 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="data-and-benchmarks" class="level2">
-<h2 class="anchored" data-anchor-id="data-and-benchmarks">Data And Benchmarks</h2>
+<p>This project turns the stock universe into a <strong>financial network</strong> and then asks whether network position can be used as a portfolio signal. The data and baseline backtests are familiar, so the center of the project is the graph layer: how we turn dependence into edges, how we filter a dense market graph into readable structures, how centrality scores describe the role of each stock, and how those scores become portfolio weights.</p>
+<p>Main parts of this project:</p>
+<ul>
+<li>build correlation and tail-dependence networks from a rolling NASDAQ stock universe,</li>
+<li>compare dense networks with filtered networks, especially <strong>PMFG</strong> and <strong>MST</strong>,</li>
+<li>compute centrality measures that describe different kinds of market connectedness,</li>
+<li>build central, peripheral, and network-diversifier portfolios,</li>
+<li>compare those portfolios against equal weight, MinVar, and HRP without re-teaching the baseline models,</li>
+<li>repeat the same network logic on the HKEX stock universe and interpret the difference.</li>
+</ul>
+<p>The useful mental picture is simple: every stock is a node, and every relationship between two stocks is an edge. A pair of stocks with high dependence gets a strong edge. A stock that is connected to many important stocks becomes central. A stock that sits away from the core becomes peripheral. The portfolio question is whether we want to own the stocks sitting inside the market’s crowded center, the stocks sitting away from it, or a filtered mix that uses network position together with momentum and risk.</p>
+<p>This is one of the places where finance starts to look like network science. We aren’t just ranking stocks one by one. We are asking how each stock sits inside the whole system.</p>
+<section id="a-graph-first-view-of-a-stock-market" class="level3">
+<h3 class="anchored" data-anchor-id="a-graph-first-view-of-a-stock-market">A graph-first view of a stock market</h3>
+<p>The key change in this project is that we stop treating the stock universe as only a list of tickers. A list view says: stock 1 has return <span class="math inline">\(r_1\)</span>, stock 2 has return <span class="math inline">\(r_2\)</span>, and so on. A network view says: stock 1 is connected to stock 2, stock 2 is connected to stock 17, stock 17 is a bridge to another part of the market, and some stocks sit inside the center of the whole system.</p>
+<p>That sounds abstract, but the finance meaning is very practical. If two stocks move together, owning both may add less diversification than their ticker count suggests. If twenty stocks all sit inside one common dependence cluster, a portfolio with twenty names can still behave like one crowded risk exposure. A network tries to expose that hidden structure.</p>
+<p>A graph is written as</p>
+<p><span class="math display">\[
+G=(V,E)
+\]</span></p>
+<p>where <span class="math inline">\(V\)</span> is the set of nodes and <span class="math inline">\(E\)</span> is the set of edges. In this project:</p>
+<ul>
+<li>each node is a stock,</li>
+<li>each edge is a dependence relationship between two stocks,</li>
+<li>each edge has a weight showing dependence strength,</li>
+<li>each edge can also have a distance showing how close the stocks are in dependence space.</li>
+</ul>
+<p>The weighted adjacency matrix is</p>
+<p><span class="math display">\[
+A = \begin{bmatrix}
+0 &amp; A_{12} &amp; \cdots &amp; A_{1N} \\
+A_{21} &amp; 0 &amp; \cdots &amp; A_{2N} \\
+\vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+A_{N1} &amp; A_{N2} &amp; \cdots &amp; 0
+\end{bmatrix}
+\]</span></p>
+<p>The diagonal is zero because we don’t need a stock connected to itself. The off-diagonal elements are the relationships that drive centrality.</p>
+<p>This is also why this project connects nicely to other research fields using network thinking. In a materials, biological, sensor, or chemical network, the important object is often not only the isolated node but its role in the system. Here the same idea is applied to equities. A central stock is like a highly connected component in a complex system. A peripheral stock is a component whose behavior is less tied to the dominant network structure. A bridge stock connects regions of the graph and can transmit shocks between them.</p>
+<p>The portfolio problem becomes:</p>
+<p><span class="math display">\[
+\text{network structure} \rightarrow \text{node role} \rightarrow \text{portfolio weight}
+\]</span></p>
+<p>That is the whole story of Project 17.</p>
+</section>
+<section id="network-matrices-and-diversification-intuition" class="level3">
+<h3 class="anchored" data-anchor-id="network-matrices-and-diversification-intuition">Network matrices and diversification intuition</h3>
+<p>There is another useful matrix behind the graph: the degree matrix. If <span class="math inline">\(s_i\)</span> is the weighted degree of node <span class="math inline">\(i\)</span>, then</p>
+<p><span class="math display">\[
+D = \text{diag}(s_1,s_2,\ldots,s_N)
+\]</span></p>
+<p>The graph Laplacian is</p>
+<p><span class="math display">\[
+L = D - A
+\]</span></p>
+<p>We don’t directly optimize with the Laplacian in thisn’tebook, but it helps explain the intuition. The adjacency matrix <span class="math inline">\(A\)</span> says which stocks are tied together. The degree matrix <span class="math inline">\(D\)</span> says how much total connection each stock has. The Laplacian <span class="math inline">\(L\)</span> summarizes the difference between a node and its connected neighborhood.</p>
+<p>In many network problems, the Laplacian measures smoothness over the graph. A signal <span class="math inline">\(x\)</span> is smooth over the graph if connected nodes have similar values. The quadratic form is</p>
+<p><span class="math display">\[
+x^\top Lx = \frac{1}{2}\sum_{i,j}A_{ij}(x_i-x_j)^2
+\]</span></p>
+<p>If connected stocks have similar scores, this quantity is small. If strongly connected stocks have very different scores, it is large. Even though the notebook doesn’t use this formula in optimization, it gives a useful mental model: a market graph tells us where the system wants stocks to behave similarly.</p>
+<p>From a portfolio perspective, holding many highly connected nodes creates a portfolio that is smooth over the graph in a bad way: it loads heavily on one connected region. Holding less connected nodes can reduce common exposure, but only if those nodes have acceptable return and risk characteristics. That is why the final strategy uses periphery plus momentum and risk filters, rather than pure periphery alone.</p>
+<p>So the network is doing two jobs at once:</p>
+<ol type="1">
+<li><strong>Risk map:</strong> it shows where common shocks can travel.</li>
+<li><strong>Selection map:</strong> it ranks stocks by structural role.</li>
+</ol>
+<p>This is why centrality is more informative than simply looking at a pairwise correlation table. A correlation table is pair-by-pair. Centrality is system-aware.</p>
+</section>
+<section id="setup-data-and-baseline-portfolios" class="level2">
+<h2 class="anchored" data-anchor-id="setup-data-and-baseline-portfolios">1) Setup, data, and baseline portfolios</h2>
+<p>We start by loading the tools needed for panel data, rolling universes, covariance estimation, graph construction, and portfolio backtesting. The new libraries in this project are mostly from <code>networkx</code>, because the object we build later is a graph rather than only a covariance matrix.</p>
+<p>The data is the same broad NASDAQ stock panel that was already used earlier in the equity portfolio projects, so we don’t need to explain the stock universe from scratch again. The important reproducibility link is the folder that builds the data source: <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/stooq_nasdaq">data/stooq_nasdaq</a>. That folder is the right place to check the build script and raw-data instructions. We shouldn’t link to a final parquet file directly, because the repo data layer is organized around source folders and reproducible scripts, not redistributed final datasets.</p>
+<p>For this project, the design choices are:</p>
+<ul>
+<li><strong>Start date:</strong> 2016-01-01.</li>
+<li><strong>Universe size:</strong> top 100 liquid stocks at each network date.</li>
+<li><strong>Network frequency:</strong> quarterly, sampled from monthly candidate rebalance dates.</li>
+<li><strong>Dependence lookback:</strong> 252 trading days, approximately one year.</li>
+<li><strong>Minimum history:</strong> 504 listing days and at least 220 usable observations.</li>
+<li><strong>Position cap:</strong> 10% per stock.</li>
+<li><strong>Trading cost:</strong> 10 bps per trade.</li>
+</ul>
+<p>The quarterly frequency matters. Network construction is more expensive than a normal covariance update, especially when we build dense graphs, PMFGs, and t-copula tail-dependence matrices. Quarterly updates also make economic sense: centrality isn’t a daily trading signal. It describes the stock’s location inside the market structure, which usually moves slower than price momentum.</p>
+<section id="imports-and-plotting-settings" class="level3">
+<h3 class="anchored" data-anchor-id="imports-and-plotting-settings">Imports and plotting settings</h3>
 <div id="2c148977" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:55:19.081894Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:55:19.081894Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:55:22.583206Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:55:22.581033Z&quot;}}" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
@@ -341,6 +451,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    }</span>
 <span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+</section>
+<section id="rolling-universe-design" class="level3">
+<h3 class="anchored" data-anchor-id="rolling-universe-design">Rolling universe design</h3>
+<p>The rolling universe is doing more than making the dataset realistic. It also prevents the network from being built on stale or illiquid names. Network centrality is sensitive to which nodes are included. If a very illiquid stock enters the graph with noisy returns, it can distort distances and create artificial peripheral positions. If a delisted or thinly traded name remains in the universe, its estimated dependence may look low simply because the data are bad. That would make it look diversifying even though the signal isn’t economically meaningful.</p>
+<p>The top-100 liquidity filter gives the network a clean market interpretation. At each quarter we are asking: among the liquid NASDAQ names available at that time, which stocks are central to the dependence structure? That is different from asking the same question over a fixed modern universe. A fixed current universe would quietly introduce survivorship bias.</p>
+<p>The quarterly dates also make the centrality signal less noisy. If we rebuilt the graph daily, many changes would be estimation noise. A stock’s graph position shouldn’t jump just because a few daily returns changed. With a one-year lookback and quarterly update, the network is allowed to move, but not so fast that it becomes a high-frequency ranking exercise.</p>
+<p>The baseline models are included because network portfolios need a fair benchmark. Equal Weight is the simplest diversified allocation. MinVar tests whether ordinary covariance optimization already solves the risk problem. HRP is the closest baseline conceptually because it also uses dependence structure, but its connection is hierarchical allocation rather than centrality-based selection.</p>
+<p>So the project doesn’t ask whether graph theory is interesting in isolation. It asks whether graph centrality adds something beyond equal weighting, variance minimization, and hierarchical dependence-aware allocation.</p>
+</section>
+<section id="liquidity-and-graph-reliability" class="level3">
+<h3 class="anchored" data-anchor-id="liquidity-and-graph-reliability">Liquidity and graph reliability</h3>
+<p>Liquidity matters more in a network project than it may first appear. A return series with stale prices can look artificially uncorrelated with the rest of the market. If a stock doesn’t trade actively, its price may adjust with delay. That delayed adjustment can make it look peripheral even though the stock’s true economic exposure isn’t peripheral.</p>
+<p>The liquidity filter reduces this problem. By selecting the top 100 liquid names at each date, we make the graph more likely to reflect real market dependence rather than microstructure noise. This is especially important for peripheral portfolios. If we didn’t filter for liquidity, the peripheral portfolio could accidentally become a portfolio of stale-price artifacts.</p>
+<p>There is still a tradeoff. A top-100 NASDAQ universe mostly captures the liquid part of the market. It doesn’t fully represent the long tail of small stocks. But that is acceptable here because the project is about a tradable network strategy. A graph that includes every tiny illiquid stock may look richer, but it would be much less useful for a realistic portfolio.</p>
 <div id="52bd2e00" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:55:22.737035Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:55:22.736531Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:55:22.743872Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:55:22.743872Z&quot;}}" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data"</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> (data_path <span class="op">/</span> <span class="st">"nasdaq_close_volume.parquet"</span>).exists():</span>
@@ -605,6 +729,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The coverage table tells us that after cleaning, the NASDAQ panel contains 4,139 stocks and 2,532 trading days. The dynamic liquidity filter then gives exactly 100 stocks at every quarterly network date. That is important because many graph statistics depend mechanically on the number of nodes. If one date had 100 stocks and another date had 60, then changes in edge counts, centrality, and concentration would partly reflect universe-size changes. Here each network has the same number of nodes, so the comparison across dates is cleaner.</p>
+<p>The rebalance-date table runs from January 2018 to January 2026. We lose the first part of the price history because each network date needs enough lookback observations. That is the right tradeoff: for graph estimation, a short or incomplete window would create unstable dependence estimates.</p>
+<p>The baseline portfolios are included only for comparison:</p>
+<ul>
+<li><strong>Equal Weight</strong> gives a broad non-model benchmark across the selected 100 stocks.</li>
+<li><strong>MinVar</strong> uses Ledoit-Wolf covariance to reduce variance.</li>
+<li><strong>HRP</strong> enters because hierarchical risk allocation is naturally connected to dependence geometry, but we don’t re-explain HRP here.</li>
+</ul>
 <div id="6ec1bcf9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:12.578974Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:12.578974Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:18.444835Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:18.443487Z&quot;}}" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> run_walkforward_grid(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>ret_d,</span>
@@ -690,9 +822,94 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The baseline construction table confirms that Equal Weight, MinVar, and HRP are fully invested. Equal Weight has 1% in each of 100 stocks. MinVar can hit the 10% cap, which shows how much a variance optimizer can concentrate when it finds a low-volatility cluster. HRP’s latest maximum weight is around 5.4%, which is more balanced. That fits the usual HRP behavior: it respects hierarchical dependence and tends to avoid the sharp corner solutions that MinVar can produce.</p>
 </section>
-<section id="correlation-dependence" class="level2">
-<h2 class="anchored" data-anchor-id="correlation-dependence">Correlation Dependence</h2>
+</section>
+<section id="from-returns-to-dependence-matrices" class="level2">
+<h2 class="anchored" data-anchor-id="from-returns-to-dependence-matrices">2) From returns to dependence matrices</h2>
+<p>A network needs an edge definition. In this project we build two kinds of edges:</p>
+<ol type="1">
+<li><strong>Correlation dependence</strong>, based on a shrinkage correlation matrix.</li>
+<li><strong>Tail dependence</strong>, based on a Student-t copula approximation.</li>
+</ol>
+<p>The first layer is the standard correlation network. Suppose the cleaned return matrix in one rolling window is</p>
+<p><span class="math display">\[
+R = \begin{bmatrix}
+r_{1,1} &amp; r_{1,2} &amp; \cdots &amp; r_{1,N} \\
+r_{2,1} &amp; r_{2,2} &amp; \cdots &amp; r_{2,N} \\
+\vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+r_{T,1} &amp; r_{T,2} &amp; \cdots &amp; r_{T,N}
+\end{bmatrix}
+\]</span></p>
+<p>where <span class="math inline">\(T\)</span> is the number of daily observations in the lookback window and <span class="math inline">\(N=100\)</span> is the number of selected stocks. The sample covariance would be</p>
+<p><span class="math display">\[
+S = \frac{1}{T-1}(R - \bar{R})^\top(R - \bar{R})
+\]</span></p>
+<p>but raw sample covariance is noisy when <span class="math inline">\(N\)</span> is large relative to <span class="math inline">\(T\)</span>. Here <span class="math inline">\(N=100\)</span> and <span class="math inline">\(T\approx252\)</span>, so a raw covariance matrix can still be unstable. We use Ledoit-Wolf shrinkage:</p>
+<p><span class="math display">\[
+\hat{\Sigma}_{LW} = (1-\delta)S + \delta F
+\]</span></p>
+<p>where <span class="math inline">\(S\)</span> is the sample covariance, <span class="math inline">\(F\)</span> is a structured target, and <span class="math inline">\(\delta\)</span> is the shrinkage intensity. The formula says: don’t fully trust the raw sample covariance; pull it toward a more stable target. In network terms, that matters because a small correlation-estimation error can change whether an edge looks strong or weak.</p>
+<p>After we estimate the covariance, we convert it to correlation:</p>
+<p><span class="math display">\[
+\hat{\rho}_{ij} = \frac{\hat{\Sigma}_{ij}}{\sqrt{\hat{\Sigma}_{ii}}\sqrt{\hat{\Sigma}_{jj}}}
+\]</span></p>
+<p>The diagonal is <span class="math inline">\(\rho_{ii}=1\)</span>, because every stock is perfectly correlated with itself. The off-diagonal entries are the relationships that become edges.</p>
+<p>For graph construction we also need a distance. We use the standard correlation distance:</p>
+<p><span class="math display">\[
+d_{ij}^{corr} = \sqrt{2(1-\rho_{ij})}
+\]</span></p>
+<p>This distance has a clean interpretation:</p>
+<ul>
+<li>if <span class="math inline">\(\rho_{ij}=1\)</span>, then <span class="math inline">\(d_{ij}=0\)</span>, so the stocks are basically on top of each other in correlation space;</li>
+<li>if <span class="math inline">\(\rho_{ij}=0\)</span>, then <span class="math inline">\(d_{ij}=\sqrt{2}\)</span>, so they are unrelated;</li>
+<li>if <span class="math inline">\(\rho_{ij}=-1\)</span>, then <span class="math inline">\(d_{ij}=2\)</span>, so they move in exact opposite directions.</li>
+</ul>
+<p>For stocks in the same equity market, negative correlations are rare. Most distances are driven by how strong the positive correlations are, not by true opposite movement.</p>
+<section id="matrix-geometry-behind-correlation-distance" class="level3">
+<h3 class="anchored" data-anchor-id="matrix-geometry-behind-correlation-distance">Matrix geometry behind correlation distance</h3>
+<p>The correlation distance formula comes from a geometric idea. If two standardized return vectors have correlation <span class="math inline">\(\rho_{ij}\)</span>, we can think of them as vectors on a unit sphere. The squared Euclidean distance between two unit vectors is</p>
+<p><span class="math display">\[
+\lVert \mathbf{x}_i - \mathbf{x}_j \rVert^2 = \lVert \mathbf{x}_i\rVert^2 + \lVert \mathbf{x}_j\rVert^2 - 2\mathbf{x}_i^\top\mathbf{x}_j
+\]</span></p>
+<p>Since both standardized vectors have unit length, this becomes</p>
+<p><span class="math display">\[
+\lVert \mathbf{x}_i - \mathbf{x}_j \rVert^2 = 1 + 1 - 2\rho_{ij}
+\]</span></p>
+<p>so</p>
+<p><span class="math display">\[
+\lVert \mathbf{x}_i - \mathbf{x}_j \rVert = \sqrt{2(1-\rho_{ij})}
+\]</span></p>
+<p>This is why the distance formula is natural. It isn’t just a random transformation. It says that if two standardized return histories point in the same direction, they are close; if they point in unrelated directions, they are farther apart.</p>
+<p>For example, if two software stocks have <span class="math inline">\(\rho=0.70\)</span>, the distance is</p>
+<p><span class="math display">\[
+d=\sqrt{2(1-0.70)}=\sqrt{0.60}\approx0.775
+\]</span></p>
+<p>If a software stock and a biotech stock have <span class="math inline">\(\rho=0.10\)</span>, the distance is</p>
+<p><span class="math display">\[
+d=\sqrt{2(1-0.10)}=\sqrt{1.80}\approx1.342
+\]</span></p>
+<p>The first pair is much closer in network space. A shortest-path algorithm will naturally prefer paths that go through high-correlation pairs because those have smaller distances.</p>
+<p>The distance matrix is useful for MST and closeness/betweenness centrality. The adjacency matrix is useful for degree and eigenvector centrality. The same pair of stocks therefore has two related representations:</p>
+<p><span class="math display">\[
+\text{edge strength} = A_{ij}
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\text{edge length} = d_{ij}
+\]</span></p>
+<p>A strong edge means the stocks are tightly connected. A short edge means the network can travel between them cheaply. Both are used later, but not always in the same centrality measure.</p>
+</section>
+<section id="shrinkage-as-network-noise-control" class="level3">
+<h3 class="anchored" data-anchor-id="shrinkage-as-network-noise-control">Shrinkage as network noise control</h3>
+<p>A noisy covariance matrix doesn’t only damage optimization. It also damages graph structure. If one pairwise correlation is overestimated, a false edge can enter the PMFG. If one important correlation is underestimated, a true connection can be excluded. Because PMFG and MST are based on ranked edge strengths or distances, small estimation errors can change the graph.</p>
+<p>Ledoit-Wolf shrinkage reduces this problem by trading bias for variance reduction. The sample covariance <span class="math inline">\(S\)</span> may be unbiased under ideal conditions, but it can have high estimation variance. The shrinkage estimator accepts a little structural bias toward a target <span class="math inline">\(F\)</span> to lower estimation noise:</p>
+<p><span class="math display">\[
+E\left[\lVert \hat{\Sigma}_{LW}-\Sigma\rVert_F^2\right] &lt; E\left[\lVert S-\Sigma\rVert_F^2\right]
+\]</span></p>
+<p>where <span class="math inline">\(\lVert\cdot\rVert_F\)</span> is the Frobenius norm. The exact inequality depends on the chosen shrinkage intensity and data, but the principle is that shrinkage can reduce matrix estimation error.</p>
+<p>For a graph, this means the centrality scores are less likely to be driven by random sample noise. A stock becomes central because it has stable estimated dependence with other stocks, not because a few daily observations created an extreme sample correlation.</p>
+<p>This is especially important with 100 stocks. There are 4,950 pairwise relationships. Even if each estimate is only slightly noisy, the graph filter has thousands of chances to pick up false edges. Shrinkage is one of the safeguards against that.</p>
 <div id="41ca2390" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:18.675537Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:18.675537Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:18.685748Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:18.685748Z&quot;}}" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> clean_window(returns):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> returns.<span class="bu">apply</span>(pd.to_numeric, errors<span class="op">=</span><span class="st">"coerce"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
@@ -796,9 +1013,104 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The first-window summary shows 252 observations and 100 stocks, with mean pairwise correlation around <strong>0.111</strong> and maximum pairwise correlation around <strong>0.766</strong>. That is a useful starting point: the average NASDAQ stock pair isn’t extremely correlated, but the strongest pairs are very close. The maximum correlation is high enough that some local clusters clearly exist, likely among related technology, semiconductor, software, or similar-growth names.</p>
+<p>The heatmap supports the same message. The correlation matrix has many light orange cells, meaning many pairs have positive but moderate dependence. It doesn’t look like one uniform block where every stock behaves the same. It has local structure. Some rows and columns are brighter, showing stocks that are more connected to many others. Some areas are darker, showing names that sit more independently.</p>
+<p>The distance heatmap flips the interpretation. Strong correlations become short distances, so the darker regions in the distance view are the closest groups. This is the first step toward a network: we can treat each stock as a point in dependence space, where stocks that move together are close and stocks that behave differently are far.</p>
+<p>A matrix view is still hard to read when there are 100 assets. A network gives us a more compressed view: it turns the matrix into nodes and edges, so we can ask which stocks sit in the center, which stocks form bridges, and which stocks sit at the edges of the system.</p>
 </section>
-<section id="student-t-copula-dependence" class="level2">
-<h2 class="anchored" data-anchor-id="student-t-copula-dependence">Student-t Copula Dependence</h2>
+</section>
+<section id="student-t-copula-tail-dependence" class="level2">
+<h2 class="anchored" data-anchor-id="student-t-copula-tail-dependence">3) Student-t copula tail dependence</h2>
+<p>Correlation is useful, but it has a weakness: it measures average co-movement around the whole distribution. Portfolio risk often depends more on what happens in bad states. Two stocks can have moderate average correlation and still crash together. That is why we also build a tail-dependence network.</p>
+<p>The tail-dependence layer starts by converting returns into <strong>pseudo-observations</strong>. For each asset <span class="math inline">\(i\)</span>, we rank its returns inside the rolling window:</p>
+<p><span class="math display">\[
+u_{t,i} = \frac{\text{rank}(r_{t,i})}{T+1}
+\]</span></p>
+<p>The result <span class="math inline">\(u_{t,i}\)</span> is between 0 and 1. A value near 0 means the return is near the low end of that asset’s own historical distribution. A value near 1 means it is near the high end. This rank transformation removes the marginal scale of each asset. A volatile stock and a quiet stock can be compared in distributional space, because both are mapped into their own empirical percentiles.</p>
+<p>Then we use Kendall’s <span class="math inline">\(\tau\)</span> to estimate dependence. Kendall’s <span class="math inline">\(\tau\)</span> is rank-based, so it is less sensitive to outliers than Pearson correlation. The connection between Kendall’s <span class="math inline">\(\tau\)</span> and the elliptical copula correlation parameter is</p>
+<p><span class="math display">\[
+\rho_{ij}^{copula} = \sin\left(\frac{\pi}{2}\tau_{ij}\right)
+\]</span></p>
+<p>Here <span class="math inline">\(\rho_{ij}^{copula}\)</span> isn’t the same object as Pearson correlation of returns. It is the dependence parameter used inside the Student-t copula. A t-copula lets us model joint extremes more directly than a Gaussian copula because the t-distribution has heavier tails.</p>
+<p>The bivariate Student-t copula is built by transforming uniform pseudo-observations into t-quantiles:</p>
+<p><span class="math display">\[
+x_{t,i} = t_\nu^{-1}(u_{t,i})
+\]</span></p>
+<p>where <span class="math inline">\(t_\nu^{-1}\)</span> is the inverse CDF of the univariate Student-t distribution with <span class="math inline">\(\nu\)</span> degrees of freedom. The pair <span class="math inline">\((x_{t,i},x_{t,j})\)</span> is then evaluated under a bivariate Student-t density with correlation <span class="math inline">\(\rho_{ij}^{copula}\)</span>.</p>
+<p>The degrees of freedom parameter <span class="math inline">\(\nu\)</span> controls tail heaviness:</p>
+<ul>
+<li>smaller <span class="math inline">\(\nu\)</span> means heavier tails and more extreme joint events,</li>
+<li>larger <span class="math inline">\(\nu\)</span> moves closer to Gaussian behavior,</li>
+<li><span class="math inline">\(\nu=4\)</span> is very heavy-tailed,</li>
+<li><span class="math inline">\(\nu=15\)</span> is much calmer.</li>
+</ul>
+<p>The code searches over a small grid, <span class="math inline">\(\nu\in\{4,7,15\}\)</span>, and picks the value with the best average pairwise log likelihood. That is a practical compromise. Fitting a full high-dimensional t-copula exactly would be expensive and fragile for a rolling 100-stock universe. The pairwise approximation is lighter but still captures whether the window looks more crisis-like or calm.</p>
+<section id="pairwise-t-copula-likelihood" class="level3">
+<h3 class="anchored" data-anchor-id="pairwise-t-copula-likelihood">Pairwise t-copula likelihood</h3>
+<p>The code doesn’t only set <span class="math inline">\(\nu\)</span> by guessing. It scores candidate degrees of freedom by an approximate pairwise log likelihood. For a pair of assets <span class="math inline">\((i,j)\)</span>, the t-copula density can be written as</p>
+<p><span class="math display">\[
+c_{\nu,\rho}(u_i,u_j) = \frac{f_{\nu,\rho}^{(2)}(x_i,x_j)}{f_\nu(x_i)f_\nu(x_j)}
+\]</span></p>
+<p>where</p>
+<p><span class="math display">\[
+x_i=t_\nu^{-1}(u_i), \qquad x_j=t_\nu^{-1}(u_j)
+\]</span></p>
+<p>and <span class="math inline">\(f_{\nu,\rho}^{(2)}\)</span> is the bivariate Student-t density with correlation <span class="math inline">\(\rho\)</span>, while <span class="math inline">\(f_\nu\)</span> is the univariate Student-t density. The log copula likelihood for one observation is therefore</p>
+<p><span class="math display">\[
+\log c_{\nu,\rho}(u_i,u_j)=\log f_{\nu,\rho}^{(2)}(x_i,x_j)-\log f_\nu(x_i)-\log f_\nu(x_j)
+\]</span></p>
+<p>The subtraction is important. We don’t want the marginal density of each asset to dominate the score. The copula is only about dependence after the marginal distributions have been stripped away.</p>
+<p>For a bivariate t-density, the quadratic form is</p>
+<p><span class="math display">\[
+q_{ij,t}=\frac{x_{t,i}^2 - 2\rho_{ij}x_{t,i}x_{t,j}+x_{t,j}^2}{1-\rho_{ij}^2}
+\]</span></p>
+<p>When both transformed returns are extreme in the same direction and <span class="math inline">\(\rho_{ij}\)</span> is high, this term behaves differently than under weaker dependence. The likelihood comparison across <span class="math inline">\(\nu\)</span> asks whether the observed rank co-movements look better under heavier tails or lighter tails.</p>
+<p>The project uses a sample of pairs instead of every possible pair because a 100-stock universe has 4,950 pairs at each date. Evaluating every pair for every <span class="math inline">\(\nu\)</span> and every rolling date would be heavier. A pair sample keeps the diagnostic practical while still tracking whether the window’s dependence looks crisis-like.</p>
+<p>This makes the selected <span class="math inline">\(\nu\)</span> a market-state diagnostic. It isn’t directly a portfolio weight, but it changes tail-dependence estimates, which changes distances, which changes centrality, which changes selection.</p>
+</section>
+<section id="tail-dependence-as-a-portfolio-object" class="level3">
+<h3 class="anchored" data-anchor-id="tail-dependence-as-a-portfolio-object">Tail dependence as a portfolio object</h3>
+<p>Tail dependence is especially useful because it captures something a variance model can miss. Variance asks how spread out returns are. Correlation asks how they co-move on average. Tail dependence asks how often they become extreme together.</p>
+<p>A portfolio with weights <span class="math inline">\(w\)</span> has variance</p>
+<p><span class="math display">\[
+\sigma_p^2 = w^\top\Sigma w
+\]</span></p>
+<p>That formula depends on covariance. It is sensitive to average co-movement. But in a crash, the relevant question is closer to:</p>
+<p><span class="math display">\[
+P(r_i \le q_i(\alpha),\; r_j \le q_j(\alpha))
+\]</span></p>
+<p>where <span class="math inline">\(q_i(\alpha)\)</span> is a low quantile of asset <span class="math inline">\(i\)</span>’s return distribution. Tail dependence is the limiting version of this idea. It measures whether extreme losses occur together more often than they would under weak dependence.</p>
+<p>In an equity universe, this matters because diversification often fails exactly when the investor needs it most. A portfolio of many stocks can look diversified in calm periods, but if those stocks share a tail cluster, they all fall together in stress. A tail-dependence network tries to identify that crash cluster before portfolio construction.</p>
+<p>The t-copula is symmetric, so it doesn’t separately estimate downside and upside tail dependence. In equity applications, we care more about downside, but symmetric tail dependence is still useful because high co-extremes often reflect common stress channels. It isn’t perfect, but it is much richer than only using Pearson correlation.</p>
+</section>
+<section id="a-simple-tail-dependence-example" class="level3">
+<h3 class="anchored" data-anchor-id="a-simple-tail-dependence-example">A simple tail-dependence example</h3>
+<p>Suppose two stocks have the same ordinary correlation, say <span class="math inline">\(\rho=0.50\)</span>, but the market window is different. In a calm window, the t-copula may select <span class="math inline">\(\nu=15\)</span>. In a stressed window, it may select <span class="math inline">\(\nu=4\)</span>. The tail-dependence formula is</p>
+<p><span class="math display">\[
+\lambda = 2t_{\nu+1}\left(-\sqrt{\frac{(\nu+1)(1-\rho)}{1+\rho}}\right)
+\]</span></p>
+<p>With the same <span class="math inline">\(\rho\)</span>, lower <span class="math inline">\(\nu\)</span> creates heavier joint tails and larger <span class="math inline">\(\lambda\)</span>. That means the same average relation can have different crash-risk meaning depending on the market state.</p>
+<p>This is exactly what happens in real markets. Two stocks may have a normal average relationship during calm periods. But when liquidity dries up, investors sell both together, and the joint tail becomes stronger. A t-copula network can reflect that by changing <span class="math inline">\(\nu\)</span> and tail dependence through time.</p>
+<p>Correlation alone would miss part of that change because it compresses all observations into one linear co-movement number. Tail dependence asks a more stress-focused question: when one stock is in an extreme move, how much does the other stock tend to be extreme too?</p>
+<p>For portfolio construction, this is the difference between ordinary diversification and crash diversification. Ordinary diversification lowers day-to-day volatility. Crash diversification protects when the investor most needs the portfolio not to collapse.</p>
+<p>The key output from the t-copula step is <strong>tail dependence</strong>. For a symmetric Student-t copula, the upper and lower tail-dependence coefficient has the closed form:</p>
+<p><span class="math display">\[
+\lambda_{ij} = 2t_{\nu+1}\left(-\sqrt{\frac{(\nu+1)(1-\rho_{ij})}{1+\rho_{ij}}}\right)
+\]</span></p>
+<p>where:</p>
+<ul>
+<li><span class="math inline">\(\lambda_{ij}\)</span> is the probability-strength of joint extreme movement between assets <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>,</li>
+<li><span class="math inline">\(t_{\nu+1}(\cdot)\)</span> is the Student-t CDF with <span class="math inline">\(\nu+1\)</span> degrees of freedom,</li>
+<li><span class="math inline">\(\rho_{ij}\)</span> is the copula correlation parameter,</li>
+<li><span class="math inline">\(\nu\)</span> controls how heavy the joint tails are.</li>
+</ul>
+<p>This formula is worth reading slowly. If <span class="math inline">\(\rho_{ij}\)</span> is high, then <span class="math inline">\(1-\rho_{ij}\)</span> is small, the square-root term is smaller, and the CDF argument is less negative. That increases <span class="math inline">\(\lambda_{ij}\)</span>. If <span class="math inline">\(\nu\)</span> is low, the t-distribution has fatter tails, which also increases the chance that both assets move into the tail together. So tail dependence rises when assets are strongly linked and when the whole dependence structure looks heavy-tailed.</p>
+<p>For example, two large semiconductor stocks might have high ordinary correlation and high tail dependence, because both are exposed to the same growth, AI, chip-cycle, and liquidity shocks. A biotech stock and a payment processor might have lower average correlation, and their tail dependence might also be low if their bad days are driven by different idiosyncratic catalysts.</p>
+<p>We then turn tail dependence into a distance:</p>
+<p><span class="math display">\[
+d_{ij}^{tail} = \sqrt{2(1-\lambda_{ij})}
+\]</span></p>
+<p>This mirrors the correlation distance. Strong tail dependence gives short distance. Weak tail dependence gives long distance. The resulting graph isn’t asking which stocks move together on average. It is asking which stocks share extreme-state risk.</p>
 <div id="2fe3007d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:19.313847Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:19.313847Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:19.336036Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:19.336036Z&quot;}}" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pseudo_observations(returns):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    window <span class="op">=</span> clean_window(returns)</span>
@@ -956,9 +1268,46 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The first t-copula likelihood table selects <span class="math inline">\(\nu=7\)</span>, with average log likelihood slightly better than <span class="math inline">\(\nu=4\)</span> and <span class="math inline">\(\nu=15\)</span>. This means the first network window is heavy-tailed, but not as extreme as the strongest crisis-like setting. The mean pairwise tail dependence is about <strong>0.054</strong>, while the maximum is about <strong>0.838</strong>. That gap is very informative. Most pairs don’t share much extreme dependence, but a few pairs behave almost like they belong to the same crash cluster.</p>
+<p>The tail-dependence heatmap is much sparser than the ordinary correlation heatmap. That is exactly what we want from this layer. Ordinary correlations spread moderate dependence across many stock pairs. Tail dependence concentrates attention on pairs that are likely to break together during extreme moves. For portfolio construction, this distinction matters. A portfolio can look diversified under average correlation and still be fragile if its holdings are tied together in the tails.</p>
+<p>The tail-distance heatmap is mostly high-distance with a few short-distance pockets. These pockets are the graph’s crash-risk neighborhoods. If the later centrality scores from the copula graph identify semiconductor and mega-cap growth names as central, that doesn’t only mean they are high-correlation names. It means they sit inside the extreme-risk backbone of the NASDAQ universe.</p>
 </section>
-<section id="adjacency-and-dense-networks" class="level2">
-<h2 class="anchored" data-anchor-id="adjacency-and-dense-networks">Adjacency And Dense Networks</h2>
+</section>
+<section id="adjacency-matrices-and-dense-networks" class="level2">
+<h2 class="anchored" data-anchor-id="adjacency-matrices-and-dense-networks">4) Adjacency matrices and dense networks</h2>
+<p>Once we have a dependence matrix, we convert it into an adjacency matrix. In graph notation, an adjacency matrix <span class="math inline">\(A\)</span> stores edge strengths:</p>
+<p><span class="math display">\[
+A_{ij} = \begin{cases}
+\max(D_{ij},0), &amp; i\ne j \\
+0, &amp; i=j
+\end{cases}
+\]</span></p>
+<p>where <span class="math inline">\(D_{ij}\)</span> is the dependence measure, either correlation or tail dependence. The diagonal is set to zero because a self-edge doesn’t help us understand the network. We clip negative correlation to zero for the adjacency layer because a negative dependence would be hard to treat as a positive edge strength. In a long-only portfolio network, the interesting link is usually shared risk exposure, not hedge-like negative relation.</p>
+<p>For <span class="math inline">\(N=100\)</span> stocks, a dense undirected graph has</p>
+<p><span class="math display">\[
+\frac{N(N-1)}{2} = \frac{100\cdot99}{2}=4950
+\]</span></p>
+<p>edges. That means every stock is connected to every other stock. This graph contains all information, but visually and analytically it is too crowded. It is like looking at the whole covariance matrix at once: technically complete, but hard to interpret.</p>
+<p>The dense graph still helps at this stage because it shows the full system before filtering. Nodes with high weighted degree already start to appear more central, and highly connected neighborhoods pull together in the layout. But we need filtered graphs to make the structure readable.</p>
+<section id="edge-weights-edge-distances-and-graph-attributes" class="level3">
+<h3 class="anchored" data-anchor-id="edge-weights-edge-distances-and-graph-attributes">Edge weights, edge distances, and graph attributes</h3>
+<p>The dense network stores both edge weight and edge distance. That design is important because different graph algorithms use different edge meanings.</p>
+<p>For an edge <span class="math inline">\((i,j)\)</span>, the graph stores</p>
+<p><span class="math display">\[
+\text{weight}_{ij}=A_{ij}
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\text{distance}_{ij}=d_{ij}
+\]</span></p>
+<p>Degree and eigenvector centrality use the weight because they ask how strongly a node is connected. Betweenness and closeness use distance because they ask how short the paths are through the graph.</p>
+<p>This distinction prevents a common mistake. If we used correlation as a distance directly, high correlation would look like a long path, which is backwards. If we used distance as strength, weakly related stocks could look important. The project keeps the two concepts separate:</p>
+<ul>
+<li>high dependence means strong edge weight,</li>
+<li>high dependence also means short edge distance.</li>
+</ul>
+<p>For a simple three-stock example, suppose A and B are highly correlated, B and C are moderately correlated, and A and C are weakly correlated. The graph may decide that the shortest path from A to C goes through B. If B lies on many such paths, betweenness centrality rises. That is how bridge stocks appear.</p>
+<p>The dense graph contains all such paths, but because all pairs are connected directly, path-based centrality can become less informative. Filtering with MST or PMFG makes shortest-path structure more meaningful.</p>
 <div id="88a5e32d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:23.328833Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:23.328337Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:23.350775Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:23.349285Z&quot;}}" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dependence_adjacency(dependence):</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    adjacency <span class="op">=</span> dependence.clip(lower<span class="op">=</span><span class="fl">0.0</span>).copy()</span>
@@ -1057,9 +1406,107 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The adjacency heatmaps show the difference between correlation and copula dependence very clearly. The correlation adjacency has broad medium-strength connections. The tail-dependence adjacency is darker and more selective, with only a smaller subset of pairs carrying large edge weights. In market language, average dependence is widespread, but extreme co-crash dependence is concentrated.</p>
+<p>The dense network plots look crowded because each graph has 4,950 edges. Still, the correlation dense graph forms a large cloud with a visible center, while the copula dense graph has a slightly different shape because tail-dependence edges emphasize crash-connected groups. The dense plots aren’t meant to be the final model. They are the raw market map before we filter it down.</p>
+<p>This is similar to experimental network data in other complex systems: if we draw every possible relationship, the plot becomes a hairball. The useful information appears after we keep the relationships that carry the most structure.</p>
 </section>
-<section id="pmfg-and-mst-filters" class="level2">
-<h2 class="anchored" data-anchor-id="pmfg-and-mst-filters">PMFG And MST Filters</h2>
+</section>
+<section id="pmfg-and-mst-filtered-networks" class="level2">
+<h2 class="anchored" data-anchor-id="pmfg-and-mst-filtered-networks">5) PMFG and MST filtered networks</h2>
+<p>The next step is filtering. We keep the same nodes, but we reduce the number of edges. The two filters are <strong>PMFG</strong> and <strong>MST</strong>.</p>
+<p>The <strong>minimum spanning tree</strong> keeps exactly <span class="math inline">\(N-1\)</span> edges and connects all nodes without cycles. It solves:</p>
+<p><span class="math display">\[
+\min_{E_T}\sum_{(i,j)\in E_T} d_{ij}
+\]</span></p>
+<p>subject to the graph being connected and acyclic. Here <span class="math inline">\(d_{ij}\)</span> is the dependence distance. Because short distance means strong dependence, the MST keeps the strongest backbone needed to connect all stocks. For <span class="math inline">\(N=100\)</span>, the MST has exactly 99 edges.</p>
+<p>The MST is very readable, but it is aggressive. It removes almost every edge. That makes it useful for seeing the backbone, but it can throw away meaningful secondary relationships.</p>
+<p>The <strong>planar maximally filtered graph</strong> is less aggressive. It keeps adding the strongest available edges while preserving planarity. A planar graph can be drawn without crossing edges. For <span class="math inline">\(N\)</span> nodes, a maximal planar graph has</p>
+<p><span class="math display">\[
+3(N-2)
+\]</span></p>
+<p>edges, so for <span class="math inline">\(N=100\)</span> the PMFG keeps</p>
+<p><span class="math display">\[
+3(100-2)=294
+\]</span></p>
+<p>edges. That is three times denser than the MST, but still far smaller than the 4,950-edge complete graph.</p>
+<p>The PMFG has a useful middle position:</p>
+<ul>
+<li>it keeps more local structure than the MST,</li>
+<li>it removes most of the noisy weak edges,</li>
+<li>it stays sparse enough for centrality measures to be meaningful,</li>
+<li>it can reveal stocks that are central through multiple routes, not only through one tree path.</li>
+</ul>
+<p>In this project, centrality is computed on both MST and PMFG versions, and on both correlation and copula dependence. That gives us four network representations per date:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Dependence layer</th>
+<th>Network filter</th>
+<th>Main information</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Correlation</td>
+<td>MST</td>
+<td>average co-movement backbone</td>
+</tr>
+<tr class="even">
+<td>Correlation</td>
+<td>PMFG</td>
+<td>richer average co-movement map</td>
+</tr>
+<tr class="odd">
+<td>Copula tail dependence</td>
+<td>MST</td>
+<td>extreme-risk backbone</td>
+</tr>
+<tr class="even">
+<td>Copula tail dependence</td>
+<td>PMFG</td>
+<td>richer extreme-risk map</td>
+</tr>
+</tbody>
+</table>
+<p>The only ranking object used later is centrality. The four network constructions are used only to change the dependence layer and the graph filter behind those centrality scores.</p>
+<section id="filter-strength-and-information-loss" class="level3">
+<h3 class="anchored" data-anchor-id="filter-strength-and-information-loss">Filter strength and information loss</h3>
+<p>The MST and PMFG differ in how much information they retain. With 100 stocks:</p>
+<p><span class="math display">\[
+\text{Complete graph edges}=4950
+\]</span></p>
+<p><span class="math display">\[
+\text{MST edges}=99
+\]</span></p>
+<p><span class="math display">\[
+\text{PMFG edges}=294
+\]</span></p>
+<p>So the MST keeps about</p>
+<p><span class="math display">\[
+\frac{99}{4950}\approx2.0\%
+\]</span></p>
+<p>of all possible edges. The PMFG keeps about</p>
+<p><span class="math display">\[
+\frac{294}{4950}\approx5.9\%
+\]</span></p>
+<p>of all possible edges. Both are sparse, but PMFG is roughly three times richer than MST.</p>
+<p>That has consequences for centrality. In an MST, every edge is part of the unique backbone. Betweenness can become very strong for nodes that sit near the middle of the tree. A stock can look important simply because the tree has routed many paths through it. In a PMFG, there are more alternative routes, so betweenness is less tree-fragile. Degree and eigenvector also have more information because each node can have more meaningful local edges.</p>
+<p>The MST is excellent for seeing the minimum backbone. The PMFG is often better for portfolio signals because it keeps more of the market’s local structure. This is why the central fixed portfolio uses copula PMFG combined centrality rather than a single MST measure.</p>
+<p>Planarity also matters for interpretation. A planar filter doesn’t only keep the top 294 edges blindly. It keeps strong edges subject to a global structural constraint. That makes the graph sparse but still organized. It avoids a fully dense graph where every relationship exists and centrality becomes less informative.</p>
+</section>
+<section id="pmfg-and-mst-effects-on-centrality-rankings" class="level3">
+<h3 class="anchored" data-anchor-id="pmfg-and-mst-effects-on-centrality-rankings">PMFG and MST effects on centrality rankings</h3>
+<p>The same stock can have different centrality depending on the filter. This isn’t an error. It tells us that the stock’s role depends on how much network detail we allow.</p>
+<p>In an MST, a stock can receive high betweenness if it sits near a major branch point. Because the tree has no cycles, many paths are forced through a small number of connectors. This can make bridge roles very sharp. The benefit is clarity. The risk is that one edge choice can strongly change path structure.</p>
+<p>In a PMFG, the graph has more cycles and alternative paths. A node needs broader importance to stay central. Degree and eigenvector centrality are usually more meaningful in PMFG because each node has more local edge information. Betweenness is still useful, but it is less dominated by one forced tree route.</p>
+<p>That is why the candidate grid includes both. MST centrality can identify the minimum backbone of dependence. PMFG centrality can identify richer market structure. The rolling selector then lets performance decide which representation is useful for the current market, rather than assuming one filter always dominates.</p>
+<p>For a portfolio, this matters because MST peripheral stocks can be extremely far from the tree core, while PMFG peripheral stocks are peripheral even after allowing more alternative connections. PMFG periphery can be a stricter and more robust concept.</p>
+</section>
+<section id="reading-filtered-network-plots" class="level3">
+<h3 class="anchored" data-anchor-id="reading-filtered-network-plots">Reading filtered network plots</h3>
+<p>The filtered network plots are also useful visually. In a PMFG plot, a central node usually appears close to several strong neighborhoods, and its color/size reflects high weighted centrality. In an MST plot, long branches often represent stocks or small groups that are only weakly connected to the rest of the system. Those branch-end stocks are candidates for periphery.</p>
+<p>But visual layout is only an aid. Spring layouts aren’t unique; if we rerun the layout with a different seed, the exact picture can rotate or stretch. The reliable information is in the graph object: edge weights, edge distances, and centrality scores. That is why the project doesn’t build portfolios from where the node appears in the drawing. It builds portfolios from numeric centrality.</p>
+<p>The drawings help the reader understand the graph, but the backtest uses the actual matrices and network measures. This separation is important. Good visualizations are teaching tools; the portfolio needs reproducible numeric signals.</p>
 <div id="f8000788" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:26.682792Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:26.682792Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:26.697150Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:26.696148Z&quot;}}" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pmfg_network(adjacency, distance):</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    names <span class="op">=</span> <span class="bu">list</span>(adjacency.index)</span>
@@ -1249,9 +1696,100 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The network-size table confirms that the dense graphs have <strong>4,950</strong> edges, the PMFGs have <strong>294</strong> edges, and the MSTs have <strong>99</strong> edges. Both PMFG and MST are planar in the output. That confirms the filter logic works as intended.</p>
+<p>The filtered network visuals are much more readable than the dense graphs. In the correlation PMFG, the center is fairly visible, with semiconductor and technology-related names forming a dense zone. The MST strips the network down to a single backbone. The branches make it easier to see which stocks are linked through only a few key paths, but some local structure disappears.</p>
+<p>The copula PMFG and copula MST focus on tail-linked stocks. These graphs are especially important for risk. A stock that looks central in the copula PMFG isn’t just highly correlated with many stocks. It is connected to the market’s extreme-loss structure. That distinction is one of the main reasons this project is more interesting than a standard correlation-ranking exercise.</p>
 </section>
-<section id="centrality" class="level2">
-<h2 class="anchored" data-anchor-id="centrality">Centrality</h2>
+</section>
+<section id="centrality-measures" class="level2">
+<h2 class="anchored" data-anchor-id="centrality-measures">6) Centrality measures</h2>
+<p>Centrality is the main signal in the project. It turns a graph into one score per stock. Different centrality measures answer different structural questions.</p>
+<p>Let the graph have adjacency matrix <span class="math inline">\(A\)</span>, where <span class="math inline">\(A_{ij}\)</span> is the edge weight between stock <span class="math inline">\(i\)</span> and stock <span class="math inline">\(j\)</span>. Let <span class="math inline">\(d_{ij}\)</span> be the distance between the two stocks when shortest paths are computed. We use four centrality measures and then combine them.</p>
+<section id="degree-and-weighted-strength" class="level3">
+<h3 class="anchored" data-anchor-id="degree-and-weighted-strength">6.1 Degree and weighted strength</h3>
+<p>For a weighted graph, degree is really <strong>strength</strong>:</p>
+<p><span class="math display">\[
+s_i = \sum_{j\ne i} A_{ij}
+\]</span></p>
+<p>A high-strength stock has many strong connections. In finance, this often means the stock shares broad market or sector risk with many other names. A high-degree semiconductor stock is probably exposed to the same factors as many neighboring technology stocks: growth expectations, rate sensitivity, AI demand, supply-chain cycles, and risk appetite.</p>
+<p>Degree is local. It only asks how strongly a node connects to its immediate neighbors.</p>
+</section>
+<section id="eigenvector-centrality" class="level3">
+<h3 class="anchored" data-anchor-id="eigenvector-centrality">6.2 Eigenvector centrality</h3>
+<p>Eigenvector centrality adds one more layer: being connected to important nodes matters more than being connected to unimportant nodes. It solves</p>
+<p><span class="math display">\[
+A\mathbf{c} = \lambda \mathbf{c}
+\]</span></p>
+<p>or component-wise:</p>
+<p><span class="math display">\[
+c_i = \frac{1}{\lambda}\sum_j A_{ij}c_j
+\]</span></p>
+<p>where <span class="math inline">\(c_i\)</span> is the centrality of stock <span class="math inline">\(i\)</span> and <span class="math inline">\(\lambda\)</span> is the leading eigenvalue. This creates a recursive definition. A stock is important if it is linked to stocks that are themselves important.</p>
+<p>In a market network, eigenvector centrality often highlights the core growth cluster. It can identify stocks that don’t merely have many links, but links to the network’s dominant risk neighborhood.</p>
+</section>
+<section id="betweenness-centrality" class="level3">
+<h3 class="anchored" data-anchor-id="betweenness-centrality">6.3 Betweenness centrality</h3>
+<p>Betweenness centrality measures how often a node lies on shortest paths between other nodes:</p>
+<p><span class="math display">\[
+b_i = \sum_{s\ne i\ne t}\frac{\sigma_{st}(i)}{\sigma_{st}}
+\]</span></p>
+<p>where <span class="math inline">\(\sigma_{st}\)</span> is the number of shortest paths between nodes <span class="math inline">\(s\)</span> and <span class="math inline">\(t\)</span>, and <span class="math inline">\(\sigma_{st}(i)\)</span> is the number of those paths that pass through node <span class="math inline">\(i\)</span>.</p>
+<p>A high-betweenness stock acts like a bridge. It may connect two parts of the graph that otherwise don’t connect strongly. In finance, this can describe a company that links themes, sectors, or factor groups. For example, a stock exposed to both consumer demand and technology may become a path between consumer cyclicals and growth stocks.</p>
+<p>Betweenness is especially interesting because it doesn’t require the stock to have the largest number of edges. A node can have moderate degree but high bridge importance.</p>
+</section>
+<section id="closeness-centrality" class="level3">
+<h3 class="anchored" data-anchor-id="closeness-centrality">6.4 Closeness centrality</h3>
+<p>Closeness centrality measures how near a node is to all other nodes in distance space:</p>
+<p><span class="math display">\[
+\ell_i = \frac{N-1}{\sum_{j\ne i}d(i,j)}
+\]</span></p>
+<p>where <span class="math inline">\(d(i,j)\)</span> is the shortest-path distance from node <span class="math inline">\(i\)</span> to node <span class="math inline">\(j\)</span>. If a stock has high closeness, it can reach the rest of the graph through short paths. It sits near the network’s center in a geometric sense.</p>
+<p>Closeness can behave differently from degree. A stock might not have the highest direct edge strength, but if it sits in the middle of the graph, it can still be close to many other stocks.</p>
+</section>
+<section id="combined-centrality" class="level3">
+<h3 class="anchored" data-anchor-id="combined-centrality">6.5 Combined centrality</h3>
+<p>Each centrality measure sees one part of network position. The combined score scales each centrality to <span class="math inline">\([0,1]\)</span>, ranks them, averages them, and scales again:</p>
+<p><span class="math display">\[
+C_i^{combined} = \text{scale}_{0,1}\left(\frac{1}{4}\sum_{m\in M}\text{rankpct}\left(C_{i,m}\right)\right)
+\]</span></p>
+<p>where <span class="math inline">\(M=\{\text{degree},\text{eigenvector},\text{betweenness},\text{closeness}\}\)</span>. The combined score is useful because it avoids making the whole portfolio depend on a single centrality definition. A stock that is central under several views of the graph gets a high combined score.</p>
+</section>
+<section id="centrality-in-financial-language" class="level3">
+<h3 class="anchored" data-anchor-id="centrality-in-financial-language">Centrality in financial language</h3>
+<p>The four centrality measures can be read as four financial roles.</p>
+<p><strong>Degree or strength</strong> says: this stock is directly connected to many others. In a portfolio, high degree means the stock is likely to share broad shocks. A high-degree stock may be a good expression of a common theme, but it is rarely a pure diversifier.</p>
+<p><strong>Eigenvector centrality</strong> says: this stock is connected to the important part of the market. It can become high even if the stock doesn’t have the absolute largest number of edges, as long as its neighbors are central. This often fits mega-cap or theme-leading stocks.</p>
+<p><strong>Betweenness centrality</strong> says: this stock lies on many shortest paths. It can transmit shocks between clusters. In finance, bridge stocks can be interesting because they may connect themes that otherwise look separate.</p>
+<p><strong>Closeness centrality</strong> says: this stock is near the whole graph. A high-closeness stock sits in the middle of dependence space. It can respond to broad market structure, even if it isn’t the highest-strength stock.</p>
+<p>The combined score isn’t a magic measure. It is a practical average. It says: if a stock is central in several reasonable ways, treat it as structurally central. If a stock is only extreme under one measure, be more cautious.</p>
+<p>For example, a semiconductor equipment company might have high degree, high eigenvector centrality, and high closeness because it is tied to many chip names and the broader AI growth cluster. A stock like a biotech or food company might have low eigenvector and degree because it is driven by different catalysts. A platform company might have moderate degree but high betweenness if it connects several themes.</p>
+<p>These are exactly the kinds of differences we want a network portfolio to detect.</p>
+</section>
+<section id="centrality-scores-as-risk-exposures" class="level3">
+<h3 class="anchored" data-anchor-id="centrality-scores-as-risk-exposures">Centrality scores as risk exposures</h3>
+<p>A centrality score can be read like a network exposure. If <span class="math inline">\(C_i\)</span> is high, the stock is structurally close to the market’s main dependence channels. That can be useful in two opposite ways.</p>
+<p>For a return-seeking strategy, high centrality may identify stocks that participate in the dominant market theme. In a NASDAQ growth rally, central stocks can be the ones investors keep buying together. Centrality then behaves like a theme-strength indicator.</p>
+<p>For a risk-control strategy, high centrality can be a warning. If a stock is central in the copula tail-dependence PMFG, it may be tied to the market’s crash cluster. When stress hits, that stock can fall together with the rest of the core.</p>
+<p>This creates a sign problem:</p>
+<p><span class="math display">\[
+\text{centrality} \rightarrow \text{return leadership in good regimes}
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\text{centrality} \rightarrow \text{systemic drawdown exposure in bad regimes}
+\]</span></p>
+<p>The project handles this by testing both central and peripheral portfolios. It doesn’t assume centrality is always good or bad. It also builds a Network Diversifier that mostly uses periphery, but requires momentum and risk confirmation.</p>
+<p>This is a cleaner design than forcing one interpretation. A central stock like NVDA can be a powerful return engine and a crowded systemic risk at the same time. A network model needs to respect both.</p>
+</section>
+<section id="crowding-and-shock-transmission" class="level3">
+<h3 class="anchored" data-anchor-id="crowding-and-shock-transmission">Crowding and shock transmission</h3>
+<p>Centrality is also a crowding indicator. If many investors hold the same central names for similar reasons, those names can transmit shocks quickly. A disappointing earnings report, a rate surprise, a regulatory headline, or an AI-capex concern can move the central cluster together. In a graph, that appears as high edge strength and short paths among related stocks.</p>
+<p>A shock transmission path can be written informally as</p>
+<p><span class="math display">\[
+\Delta r_i \rightarrow \Delta r_j \rightarrow \Delta r_k
+\]</span></p>
+<p>where the arrows aren’t causal proof, but dependence channels. If stock <span class="math inline">\(j\)</span> lies on many shortest paths, it may be a bridge between groups. If stock <span class="math inline">\(i\)</span> has high eigenvector centrality, it is embedded in an important neighborhood. These graph roles aren’t causal structural models, but they are useful summaries of how shocks are likely to spread through returns.</p>
+<p>This is why the project uses multiple centrality measures. A crowded central stock and a bridge stock are both important, but for different reasons. Degree and eigenvector capture crowding inside the core. Betweenness captures path importance. Closeness captures geometric nearness to the whole graph.</p>
 <div id="f578a1c0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:31.329741Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:31.329741Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:31.351801Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:31.351801Z&quot;}}" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> scale_01(values):</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(values, pd.DataFrame):</span>
@@ -1389,6 +1927,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The first centrality summary shows semiconductor and large technology names at the top across several network constructions. In the first window, names like <strong>AMAT</strong>, <strong>MCHP</strong>, <strong>LRCX</strong>, <strong>GOOG</strong>, <strong>TXN</strong>, <strong>MSFT</strong>, <strong>ADBE</strong>, and <strong>GOOGL</strong> appear among the most central. That is economically intuitive. NASDAQ is structurally dominated by growth and technology exposure, and semiconductor firms tend to share strong common risk drivers.</p>
+<p>The centrality heatmaps show that the centrality measures don’t always agree perfectly. Some names are strong in degree and eigenvector, while others are more visible in betweenness or closeness. That is exactly why the combined score is helpful. Degree alone would mostly reward crowded local clusters. Betweenness alone could overemphasize bridge names. Combined centrality gives a more stable ranking.</p>
+<p>The difference between correlation PMFG and copula PMFG is also important. A name central under correlation is central in average co-movement. A name central under copula PMFG is central in tail co-movement. The second case is more relevant for crash-risk diversification.</p>
+</section>
+</section>
+<section id="rolling-centrality-through-time" class="level2">
+<h2 class="anchored" data-anchor-id="rolling-centrality-through-time">7) Rolling centrality through time</h2>
+<p>A single network date is only a snapshot. The project then repeats the whole construction across all quarterly dates:</p>
+<ol type="1">
+<li>select the 100-stock liquid universe for the date,</li>
+<li>take the trailing 252-day return window,</li>
+<li>estimate shrinkage correlation,</li>
+<li>build correlation distance and adjacency,</li>
+<li>construct PMFG and MST graphs,</li>
+<li>compute degree, eigenvector, betweenness, closeness, and combined centrality,</li>
+<li>repeat the same logic for t-copula tail dependence.</li>
+</ol>
+<p>This gives a time series of network structures. The rolling design is important because the identity of the market center changes. In calm growth markets, mega-cap tech and semiconductors may dominate the centrality rankings. During stress, correlation and tail dependence can rise across the whole universe, and the network can become more compressed.</p>
 <div id="ac8d2720" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:32.128757Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:32.128757Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:57:30.499553Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:57:30.499553Z&quot;}}" data-execution_count="21">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>correlation_store <span class="op">=</span> {}</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> dt <span class="kw">in</span> rebalance_dates:</span>
@@ -2109,9 +2665,106 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The copula diagnostics table is one of the most useful macro-style outputs in thisn’tebook. The selected degrees of freedom <span class="math inline">\(\nu\)</span> and the mean tail dependence tell us whether the rolling dependence structure looks calm or heavy-tailed.</p>
+<p>When <span class="math inline">\(\nu\)</span> drops to 4, the copula is saying the window has very heavy joint tails. In the output, this happens around the COVID period. Mean tail dependence jumps above 0.22 in 2020, compared with values around 0.05–0.11 in calmer windows. That is exactly what we expect. During COVID, many stocks sold off together, and dependence became more extreme.</p>
+<p>Later, in 2024, selected <span class="math inline">\(\nu\)</span> rises to 15 and mean tail dependence falls toward 0.01–0.02. That means the tail network becomes much less connected. The market still has correlations, but joint extreme dependence is lower. This matters for a network portfolio: when tail dependence is low, peripheral stocks may genuinely diversify better; when tail dependence is high, peripheral labels can become less reliable because everything can fall together.</p>
+<section id="network-compression-during-stress" class="level3">
+<h3 class="anchored" data-anchor-id="network-compression-during-stress">Network compression during stress</h3>
+<p>The rolling tail-dependence table is a compact crisis indicator. When mean tail dependence rises, the market network is becoming more compressed. That means many stocks are moving into the same extreme-risk state together.</p>
+<p>In calm periods, the graph can separate stocks by sector, theme, business model, and idiosyncratic drivers. In stress periods, those differences shrink. Investors sell risk, correlations rise, and tail dependence moves up. In the output, the COVID window shows this clearly: selected <span class="math inline">\(\nu\)</span> drops to 4 and mean tail dependence jumps above 0.20. The network is saying that the market has entered a state where diversification is harder.</p>
+<p>This has a direct portfolio implication. Peripheral stocks are most valuable when periphery is stable. If a stock is peripheral only in calm periods but becomes connected in stress, it may fail as a diversifier. The rolling copula network is useful because it allows periphery to be re-estimated under current tail conditions.</p>
+<p>The 2024 period is almost the opposite. Selected <span class="math inline">\(\nu=15\)</span> and mean tail dependence is very low. In that regime, the market has more differentiated behavior. A network diversifier may find more genuine separation because not all stocks are tied into the same crash structure.</p>
+<p>This dynamic part is what makes the project more than one cross-sectional graph. We are watching the market’s dependence geometry breathe through time.</p>
+<p>The latest copula PMFG combined centrality table is very concentrated in semiconductor and AI-linked growth names. <strong>LRCX</strong> is at the top with combined centrality of 1.000. <strong>ADI</strong>, <strong>NVDA</strong>, <strong>ON</strong>, <strong>AMAT</strong>, <strong>NXPI</strong>, <strong>MU</strong>, and <strong>KLAC</strong> are also near the top. This isn’t random. The current NASDAQ network is heavily structured around the semiconductor and AI supply chain. Those names share common shocks: chip demand, data-center capex, rates, growth valuation, export controls, and broad risk appetite.</p>
+<p>The most peripheral list contains names like <strong>EA</strong>, <strong>CME</strong>, <strong>REGN</strong>, <strong>VRTX</strong>, <strong>MDLZ</strong>, <strong>ORLY</strong>, <strong>BKNG</strong>, <strong>SBUX</strong>, <strong>NFLX</strong>, and <strong>AAPL</strong> in the latest output. Peripheral doesn’t mean low-quality. It means these names sit away from the central tail-dependence structure under the selected graph and centrality measure. Some of them are defensive, idiosyncratic, regulated, consumer-facing, or business-model specific. They don’t load on the same semiconductor-centered network core as strongly.</p>
+<p>This distinction is one of the project’s useful economic interpretations:</p>
+<ul>
+<li>central stocks can be strong return engines during the right regime, but they are exposed to crowded common shocks;</li>
+<li>peripheral stocks can diversify the portfolio, but they can also underperform if the central theme is driving the market;</li>
+<li>a pure peripheral portfolio may miss rallies, while a pure central portfolio can suffer deep drawdowns;</li>
+<li>a network diversifier tries to use periphery while also filtering for momentum and risk.</li>
+</ul>
+<p>The concentration of the latest centrality list in semiconductors is also a good reminder that network centrality can reveal thematic crowding. LRCX, AMAT, KLAC, NVDA, ADI, ON, NXPI, and MU aren’t identical businesses, but their investors often trade them as part of the same broad semiconductor and AI infrastructure complex. When market expectations for AI capex, chip margins, export restrictions, or rate-sensitive growth valuations change, these names can move together.</p>
+<p>This is why centrality has a portfolio meaning beyond sector classification. A sector label might tell us that two stocks are in technology. The network tells us whether they actually co-move in the current data. Two stocks can share a sector but not be equally central. A stock can also become central because it connects to several themes at once.</p>
+<p>The low-centrality list is just as useful. A stock like a healthcare name can be peripheral because its return drivers are more company-specific or regulatory. A consumer or gaming name can be peripheral because it is exposed to different demand cycles. That doesn’t automatically make it a buy. It only means the stock may add a different dependence profile.</p>
 </section>
-<section id="network-portfolios" class="level2">
-<h2 class="anchored" data-anchor-id="network-portfolios">Network Portfolios</h2>
+</section>
+<section id="network-portfolio-construction" class="level2">
+<h2 class="anchored" data-anchor-id="network-portfolio-construction">8) Network portfolio construction</h2>
+<p>The portfolio layer takes centrality scores and turns them into weights. We build three network portfolios.</p>
+<section id="most-central-20" class="level3">
+<h3 class="anchored" data-anchor-id="most-central-20">8.1 Most Central 20</h3>
+<p>The central portfolio selects the stocks with the highest centrality score. If <span class="math inline">\(C_i\)</span> is the selected centrality score for stock <span class="math inline">\(i\)</span>, then the set is</p>
+<p><span class="math display">\[
+\mathcal{S}_{central} = \text{Top}_{20}(C_i)
+\]</span></p>
+<p>The raw weight is equal across selected names and zero elsewhere:</p>
+<p><span class="math display">\[
+\tilde{w}_i = \begin{cases}
+1, &amp; i\in \mathcal{S}_{central} \\
+0, &amp; i\notin \mathcal{S}_{central}
+\end{cases}
+\]</span></p>
+<p>Then weights are normalized and capped at 10%:</p>
+<p><span class="math display">\[
+w_i = \frac{\min(\tilde{w}_i,w_{max})}{\sum_j \min(\tilde{w}_j,w_{max})}
+\]</span></p>
+<p>with a small redistribution loop if the cap binds. Since the portfolio selects 20 names and the cap is 10%, the cap usually doesn’t prevent investment, but it protects against more concentrated variants.</p>
+<p>The central portfolio is a market-core strategy. It owns the stocks that sit inside the system’s strongest dependence structure. That can work well when the core theme keeps leading. It can hurt badly when the core unwinds.</p>
+</section>
+<section id="most-peripheral-20" class="level3">
+<h3 class="anchored" data-anchor-id="most-peripheral-20">8.2 Most Peripheral 20</h3>
+<p>The peripheral portfolio flips the signal:</p>
+<p><span class="math display">\[
+P_i = 1 - C_i
+\]</span></p>
+<p>and selects the top 20 peripheral scores:</p>
+<p><span class="math display">\[
+\mathcal{S}_{peripheral} = \text{Top}_{20}(P_i)
+\]</span></p>
+<p>This is a network-diversification idea. The portfolio tries to own stocks farther from the crowded center. In theory, this can reduce average pairwise correlation and tail exposure. In practice, it can also create return problems because the market’s center often contains the dominant growth winners.</p>
+</section>
+<section id="network-diversifier" class="level3">
+<h3 class="anchored" data-anchor-id="network-diversifier">8.3 Network Diversifier</h3>
+<p>The network-diversifier portfolio is the main active construction. It doesn’t use periphery alone. It combines periphery with momentum, volatility, and drawdown:</p>
+<p><span class="math display">\[
+\text{score}_i = 0.35\,\text{periphery}_i + 0.35\,\text{momentum}_i - 0.20\,\text{volatility}_i - 0.10\,\text{drawdown}_i
+\]</span></p>
+<p>Each component is scaled to <span class="math inline">\([0,1]\)</span> before combining. The signs are important:</p>
+<ul>
+<li>high periphery helps because the stock is less central in the dependence network;</li>
+<li>high momentum helps because we still want stocks with positive price behavior;</li>
+<li>high volatility hurts because volatility can turn periphery into idiosyncratic risk;</li>
+<li>high drawdown hurts because a stock far from the center can still be weak for a reason.</li>
+</ul>
+<p>After ranking by this score, the model selects 25 stocks and scales by inverse volatility:</p>
+<p><span class="math display">\[
+\tilde{w}_i \propto \frac{\max(\text{score}_i,0)+\epsilon}{\sigma_i}
+\]</span></p>
+<p>Then weights are capped and normalized. This makes the final portfolio less naive than pure periphery. It searches for stocks that are away from the network center but still have acceptable trend and risk characteristics.</p>
+</section>
+<section id="capped-normalization-in-portfolio-terms" class="level3">
+<h3 class="anchored" data-anchor-id="capped-normalization-in-portfolio-terms">Capped normalization in portfolio terms</h3>
+<p>The capped normalization step deserves some attention because it turns a ranking into a realistic portfolio. A raw score vector can be written as</p>
+<p><span class="math display">\[
+\tilde{w}_i = s_i^+
+\]</span></p>
+<p>where <span class="math inline">\(s_i^+\)</span> is the positive part of the score. Normalization gives</p>
+<p><span class="math display">\[
+w_i^{(0)} = \frac{\tilde{w}_i}{\sum_j \tilde{w}_j}
+\]</span></p>
+<p>Then the cap enforces</p>
+<p><span class="math display">\[
+w_i \le w_{max}
+\]</span></p>
+<p>If some weights exceed <span class="math inline">\(w_{max}\)</span>, the excess mass is redistributed to assets that still have room under the cap. This continues until the portfolio is fully invested and no cap is violated.</p>
+<p>This is a small implementation detail with a big effect. Without caps, a score-based portfolio can become too concentrated in a few names. With caps, the network signal still ranks stocks, but it can’t let one stock dominate.</p>
+<p>The Network Diversifier has one more layer: inverse volatility scaling. If selected stock <span class="math inline">\(i\)</span> has score <span class="math inline">\(s_i\)</span> and recent volatility <span class="math inline">\(\sigma_i\)</span>, the raw weight is proportional to</p>
+<p><span class="math display">\[
+\frac{s_i}{\sigma_i}
+\]</span></p>
+<p>This means two stocks with the same network score don’t receive the same weight if one is much more volatile. The more volatile stock receives less capital. In financial terms, the model isn’t only selecting diversifiers; it is trying to size them with risk awareness.</p>
+<p>The drawdown penalty also matters. A peripheral stock with a deep drawdown might be disconnected because it has idiosyncratic problems, not because it is a clean diversifier. Penalizing drawdown avoids treating every isolated stock as attractive.</p>
 <div id="9b8faff3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:59:59.035474Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:59:59.035013Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:59:59.047985Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:59:59.047985Z&quot;}}" data-execution_count="25">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> capped_normalize(raw, max_weight<span class="op">=</span><span class="fl">0.10</span>):</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> pd.Series(raw, dtype<span class="op">=</span><span class="bu">float</span>).clip(lower<span class="op">=</span><span class="fl">0.0</span>)</span>
@@ -2181,6 +2834,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb25-66"><a href="#cb25-66" aria-hidden="true" tabindex="-1"></a>        rows[dt] <span class="op">=</span> <span class="bu">float</span>(np.nanmean(corr[np.triu_indices_from(corr, k<span class="op">=</span><span class="dv">1</span>)]))</span>
 <span id="cb25-67"><a href="#cb25-67" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.Series(rows)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+</section>
+</section>
+<section id="choosing-the-network-specification" class="level2">
+<h2 class="anchored" data-anchor-id="choosing-the-network-specification">9) Choosing the network specification</h2>
+<p>The project doesn’t assume one centrality design is always best. It builds 40 candidate network strategies:</p>
+<p><span class="math display">\[
+2 \times 2 \times 2 \times 5 = 40
+\]</span></p>
+<p>The four dimensions are:</p>
+<ul>
+<li>direction: central or peripheral,</li>
+<li>dependence layer: correlation or copula,</li>
+<li>graph filter: PMFG or MST,</li>
+<li>centrality measure: degree, eigenvector, betweenness, closeness, or combined.</li>
+</ul>
+<p>Each candidate is backtested. Then a rolling selector chooses the peripheral/network specification using recent performance. The selector uses a past 2-year window and keeps the rolling choice only if trailing Sharpe is at least 0.50. If the rolling evidence is weak, it falls back to a trained fixed choice.</p>
+<p>This stability gate is important. A network method can overfit quickly because there are many ways to define centrality. Without a gate, the selector could chase noisy short-term winners. With the gate, the rolling choice only takes control when recent evidence is strong enough.</p>
+<p>The central portfolio is fixed to <code>central|copula|pmfg|combined</code>. That choice is coherent with the project’s goal: if we want the market’s central names, the copula PMFG combined score gives a broad tail-risk centrality measure with enough edges to be informative.</p>
 <div id="68584321" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:59:59.085606Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:59:59.085606Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T14:00:31.348583Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T14:00:31.347529Z&quot;}}" data-execution_count="26">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>comparison_weight_rows <span class="op">=</span> {}</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -2257,6 +2928,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The output table confirms there are 40 candidate strategies. This is a model-design grid, not a hyperparameter search over thousands of noisy options. The choices are economically interpretable: average dependence vs tail dependence, sparse tree vs richer planar graph, local vs recursive vs bridge vs distance centrality.</p>
+<section id="model-selection-risk-inside-network-portfolios" class="level3">
+<h3 class="anchored" data-anchor-id="model-selection-risk-inside-network-portfolios">Model-selection risk inside network portfolios</h3>
+<p>The 40-candidate grid creates a real model-selection problem. If we always picked the candidate with the best full-sample performance, the result would be biased. The project avoids that by choosing based on past information only.</p>
+<p>At each date <span class="math inline">\(t\)</span>, the rolling choice looks back over a trailing window and computes performance metrics for each candidate. For candidate <span class="math inline">\(m\)</span>, let its net returns over the selection window be <span class="math inline">\(r_{m,s}\)</span>. Its trailing Sharpe is approximately</p>
+<p><span class="math display">\[
+\text{Sharpe}_{m,t}=\frac{\bar{r}_{m,t}-r_f}{\sigma_{m,t}}\sqrt{252}
+\]</span></p>
+<p>where <span class="math inline">\(\bar{r}_{m,t}\)</span> and <span class="math inline">\(\sigma_{m,t}\)</span> are computed only using returns before date <span class="math inline">\(t\)</span>. The candidate with the best Sharpe, then drawdown, then lower turnover is selected, but only if the Sharpe passes the stability threshold.</p>
+<p>The stability gate is:</p>
+<p><span class="math display">\[
+\text{use rolling choice if }\text{Sharpe}_{m,t}\ge0.50
+\]</span></p>
+<p>If the rolling evidence is weaker, the strategy uses a fixed training choice. This is a conservative design. It accepts that network centrality definitions are noisy. A method that wins over a short period but has weak Sharpe doesn’t automatically become the live method.</p>
+<p>This is a good pattern for research notebooks: when we have many plausible model variants, we need some defense against selection noise. The defense doesn’t make the backtest perfect, but it makes the logic more realistic than full-sample winner picking.</p>
 <div id="91136684" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T14:00:31.671428Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T14:00:31.671428Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T14:00:34.368693Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T14:00:34.368693Z&quot;}}" data-execution_count="27">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> parse_choice_name(name):</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    direction, dependence, network_type, measure <span class="op">=</span> name.split(<span class="st">"|"</span>)</span>
@@ -2917,9 +3603,64 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The latest selection and weight outputs show how the construction works in practice. The central choice is fixed at <strong>central copula PMFG combined</strong>. The peripheral and network-diversifier choices move over time. In the latest primary NASDAQ period, the rolling selector chooses <strong>peripheral copula PMFG betweenness</strong>. That is an interesting choice because betweenness favors stocks away from central crash clusters but still important as bridges. The strategy isn’t simply buying the least connected names. It is buying a particular kind of non-core network role.</p>
+<p>The construction check shows that the central and peripheral portfolios hold about 20 names each, while the network diversifier averages around 22 holdings. The maximum weight stays at the 10% cap, so the strategy doesn’t become a single-name bet.</p>
+<p>The latest network-score heatmap separates the components nicely. Some stocks are highly peripheral but don’t receive large weights because momentum, volatility, or drawdown penalizes them. Others receive a meaningful weight because they combine peripheral position with better price behavior and lower risk. That is the whole point of the diversifier score: periphery is useful, but it needs market confirmation.</p>
+<p>The latest weight heatmap also shows the difference between the three portfolios. Most Central 20 owns the current network core. Most Peripheral 20 owns the opposite edge. Network Diversifier overlaps with peripheral names but filters them. It is the portfolio where the network signal becomes a portfolio model rather than only a ranking.</p>
 </section>
-<section id="backtest-results" class="level2">
-<h2 class="anchored" data-anchor-id="backtest-results">Backtest Results</h2>
+</section>
+<section id="backtest-comparison" class="level2">
+<h2 class="anchored" data-anchor-id="backtest-comparison">10) Backtest comparison</h2>
+<p>Now we compare six strategies:</p>
+<ul>
+<li>Equal Weight,</li>
+<li>MinVar,</li>
+<li>HRP,</li>
+<li>Most Central 20,</li>
+<li>Most Peripheral 20,</li>
+<li>Network Diversifier.</li>
+</ul>
+<p>The baseline methods aren’t the teaching focus here. The comparison is about what the network signal adds.</p>
+<p>A useful way to think about the three network portfolios is:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Portfolio</th>
+<th>Network idea</th>
+<th>Expected strength</th>
+<th>Expected risk</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Most Central 20</td>
+<td>own the network core</td>
+<td>captures dominant market leadership</td>
+<td>concentrated systemic exposure</td>
+</tr>
+<tr class="even">
+<td>Most Peripheral 20</td>
+<td>own stocks away from the core</td>
+<td>lower dependence, possible diversification</td>
+<td>can miss market-led rallies</td>
+</tr>
+<tr class="odd">
+<td>Network Diversifier</td>
+<td>periphery plus trend and risk filters</td>
+<td>better balance between diversification and return</td>
+<td>higher turnover and model-selection risk</td>
+</tr>
+</tbody>
+</table>
+<p>One final implementation detail is the use of the same maximum weight across baselines and network portfolios. That keeps the comparison cleaner. If the Network Diversifier had looser caps than MinVar or HRP, stronger performance could come from more concentration rather than from the network signal. Here all models operate under the same 10% single-name cap, so differences in performance are more directly tied to the allocation logic.</p>
+<p>The other clean comparison point is that all strategies are evaluated after trading costs. That matters because network strategies naturally rebalance more often than static or slow-moving baselines. A gross-performance table would make the network methods look better than they are. The costed comparison is more honest, especially because the Network Diversifier has meaningful turnover.</p>
+<p>The interpretation therefore has to stay tied to net returns, not only signal quality. A centrality signal that looks good before costs but disappears after costs wouldn’t be useful in a live portfolio. This is why the model comparison keeps turnover, cost drag, and effective N visible beside return metrics.</p>
 <div id="2d9af7d6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T14:00:34.429080Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T14:00:34.429080Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T14:00:34.446980Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T14:00:34.446980Z&quot;}}" data-execution_count="28">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>common_index <span class="op">=</span> (</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    w_network.index.intersection(w_equal.index).intersection(w_minvar.index).intersection(w_hrp.index)</span>
@@ -3275,6 +4016,71 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The backtest summary is strong for the Network Diversifier. It has CAGR around <strong>13.49%</strong>, volatility around <strong>18.37%</strong>, Sharpe around <strong>0.572</strong>, and max drawdown around <strong>-27.83%</strong>. That is a strong combination relative to the other models.</p>
+<p>Equal Weight earns a similar CAGR, around <strong>13.36%</strong>, but with much higher volatility, about <strong>26.31%</strong>, and deeper drawdown, around <strong>-44.32%</strong>. So Equal Weight captures NASDAQ upside, but it takes a lot of market-core risk to do it.</p>
+<p>Most Central 20 has the highest CAGR at around <strong>17.91%</strong>, and a Sharpe around <strong>0.561</strong>, but its volatility is over <strong>31%</strong> and max drawdown reaches about <strong>-51.64%</strong>. That is exactly the centrality tradeoff. Owning the core captures the winning theme, but the core can collapse together.</p>
+<p>Most Peripheral 20 has weaker performance: CAGR around <strong>10.95%</strong>, Sharpe around <strong>0.388</strong>, and max drawdown around <strong>-46.31%</strong>. This tells us pure periphery isn’t enough. Some peripheral names diversify poorly or lack return strength. The market can reward the core for long periods.</p>
+<p>HRP has lower drawdown around <strong>-28.34%</strong>, but Sharpe around <strong>0.443</strong> and CAGR around <strong>11.35%</strong>. MinVar reduces volatility but underperforms on return. The Network Diversifier sits in the best part of the tradeoff: similar drawdown control to HRP, better Sharpe, and higher return.</p>
+<p>Turnover is the honest caveat. Network Diversifier turnover is around <strong>0.407</strong>, and cost drag is around <strong>0.0084</strong>. That is meaningful. The strategy isn’t free. It needs enough gross edge from network selection to overcome trading cost. In this backtest, it does, but turnover is still one of the first implementation risks to watch.</p>
+<section id="detailed-model-comparison" class="level3">
+<h3 class="anchored" data-anchor-id="detailed-model-comparison">Detailed model comparison</h3>
+<p>The comparison between Most Central 20 and Network Diversifier is the most informative pair. Most Central 20 has higher CAGR, around 17.9%, but it reaches more than 51% max drawdown. Network Diversifier has lower CAGR, around 13.5%, but max drawdown is around 27.8%. The Sharpe ratio is slightly higher for Network Diversifier.</p>
+<p>That means the diversifier doesn’t win by being more aggressive. It wins by producing a cleaner risk-adjusted path. It gives up some central-cluster upside in exchange for much lower volatility and drawdown.</p>
+<p>Against Equal Weight, Network Diversifier has almost the same CAGR but far lower volatility:</p>
+<p><span class="math display">\[
+\text{Vol}_{network}\approx18.4\%, \qquad \text{Vol}_{EW}\approx26.3\%
+\]</span></p>
+<p>The Sharpe difference is therefore meaningful:</p>
+<p><span class="math display">\[
+0.5716 - 0.4618 \approx 0.1098
+\]</span></p>
+<p>That isn’t a tiny difference in a long-only equity universe with trading costs included.</p>
+<p>Against HRP, Network Diversifier has similar drawdown control but higher return:</p>
+<p><span class="math display">\[
+\text{CAGR}_{network}\approx13.5\%, \qquad \text{CAGR}_{HRP}\approx11.4\%
+\]</span></p>
+<p>HRP is dependence-aware, but it doesn’t use centrality as a stock-selection signal. It allocates across a hierarchy. The network diversifier actively selects stocks whose graph role and price behavior look attractive.</p>
+<p>Against MinVar, Network Diversifier takes more volatility but earns far more return. MinVar’s Sharpe is around 0.366, while Network Diversifier is around 0.572. This is a clear example where variance reduction alone isn’t enough. A portfolio can be stable but still not attractive if it gives up too much return.</p>
+</section>
+<section id="effective-number-and-concentration" class="level3">
+<h3 class="anchored" data-anchor-id="effective-number-and-concentration">Effective number and concentration</h3>
+<p>Effective number of holdings is another useful diagnostic. It is usually computed from weights as</p>
+<p><span class="math display">\[
+N_{eff}=\frac{1}{\sum_i w_i^2}
+\]</span></p>
+<p>If a portfolio has 100 equal weights, then</p>
+<p><span class="math display">\[
+N_{eff}=\frac{1}{100(0.01)^2}=100
+\]</span></p>
+<p>If a portfolio has 20 equal weights, then</p>
+<p><span class="math display">\[
+N_{eff}=20
+\]</span></p>
+<p>The Network Diversifier has effective N around 22.3, close to its target holding count. That tells us the portfolio isn’t secretly dominated by only a few names. It is concentrated relative to Equal Weight, but not excessively concentrated.</p>
+<p>This is important because a network strategy could accidentally become a concentrated factor bet. If the top network scores all belonged to one cluster and the cap didn’t work, the portfolio might hold only a few effective exposures. Here the effective N and cap together show that the final portfolio keeps a reasonable number of active positions.</p>
+<p>Effective N doesn’t measure dependence, though. A 20-stock portfolio can still behave like a 5-stock portfolio if all names are highly correlated. That is why we need both effective N and average pairwise correlation. Effective N measures weight concentration. Pairwise correlation measures dependence concentration. Network Diversifier improves the second without collapsing the first.</p>
+</section>
+<section id="return-volatility-drawdown-and-concentration-together" class="level3">
+<h3 class="anchored" data-anchor-id="return-volatility-drawdown-and-concentration-together">Return, volatility, drawdown, and concentration together</h3>
+<p>This project is a good example of why portfolio comparison needs several metrics at once. If we only ranked by CAGR, Most Central 20 would look like the winner. If we only ranked by max drawdown, MinVar or HRP would look very strong. If we rank by Sharpe and Calmar together, Network Diversifier becomes the most balanced model.</p>
+<p>The central portfolio’s behavior is economically clear. It owns the market’s core. In NASDAQ, the core is often the growth and semiconductor complex. That core has been a powerful return engine, especially in AI-driven periods. But the same stocks are crowded, rate-sensitive, and exposed to common shocks. This is why the central portfolio has both high CAGR and severe drawdowns.</p>
+<p>The peripheral portfolio has lower dependence by construction, but the result shows that dependence isn’t the only thing that matters. Some peripheral stocks are peripheral because they are defensive or idiosyncratic. Others are peripheral because they are weak, stale, or disconnected from the market’s winning theme. The portfolio needs momentum and risk filters to separate useful periphery from unattractive isolation.</p>
+<p>The network diversifier combines both sides:</p>
+<p><span class="math display">\[
+\text{use network periphery} + \text{require price support} + \text{penalize unstable risk}
+\]</span></p>
+<p>That is why its volatility is much lower than Equal Weight while its CAGR is similar. The strategy doesn’t maximize raw return, but it improves the return per unit of risk.</p>
+<p>Effective N also helps interpret the portfolios. Equal Weight has effective N of 100 by construction. Most Central and Most Peripheral have effective N of 20. Network Diversifier has effective N around 22.3, so it is concentrated compared with Equal Weight, yet still manages lower volatility. That tells us the selected names aren’t only fewer; they are structurally different in dependence space.</p>
+<p>Cost drag is the main practical issue. Network Diversifier has higher turnover than HRP and MinVar, so implementation quality matters. The edge isn’t purely from holding static diversifiers. It comes from updating network position and price filters over time.</p>
+</section>
+<section id="holdings-correlation-as-a-direct-validation" class="level3">
+<h3 class="anchored" data-anchor-id="holdings-correlation-as-a-direct-validation">Holdings correlation as a direct validation</h3>
+<p>The average pairwise correlation of holdings is one of the cleanest diagnostics in the project. If a network diversifier claims to reduce dependence but its holdings remain highly correlated, then the graph signal isn’t doing its job.</p>
+<p>For a portfolio holding set <span class="math inline">\(\mathcal{H}_t\)</span>, the average pairwise correlation is</p>
+<p><span class="math display">\[
+\bar{\rho}_{\mathcal{H},t} = \frac{2}{m(m-1)}\sum_{i&lt;j,\; i,j\in\mathcal{H}_t}\rho_{ij,t}
+\]</span></p>
+<p>where <span class="math inline">\(m\)</span> is the number of active holdings.</p>
 <div id="c9d73df4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T14:00:41.717174Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T14:00:41.717174Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T14:00:43.844807Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T14:00:43.844807Z&quot;}}" data-execution_count="31">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> comparison_heatmap(ax, frame, value, title):</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    plot_frame <span class="op">=</span> frame.copy()</span>
@@ -3326,9 +4132,29 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The rolling plot shows that Most Central 20 tends to have higher average pairwise correlation, while Network Diversifier is lower. That is exactly consistent with construction.</p>
+<p>This metric is helpful because it checks the portfolio after selection, not just the signal before selection. A strategy can have a good-looking score but still produce a correlated portfolio if many selected names overlap in hidden exposure. The pairwise-correlation diagnostic shows whether the final holdings actually diversify.</p>
+<p>Network Diversifier doesn’t always have the lowest pairwise correlation, because it also cares about momentum and risk. That is fine. The goal isn’t to minimize correlation at all costs. The goal is to improve the return-risk tradeoff by selecting names with better structural and price characteristics.</p>
+<p>The centrality-comparison heatmap adds another layer. Some centrality setups have strong Sharpe but poor drawdown. Others have better drawdown but low return. This is why the project doesn’t pick a centrality measure from theory alone. It builds a candidate set and uses rolling historical evidence with a stability gate.</p>
+<p>The performance plots tell the same story visually. Most Central 20 rises the most during strong NASDAQ regimes, especially when the central technology cluster leads. But its drawdowns are also the deepest. Network Diversifier has a smoother NAV path. It doesn’t catch every upside burst, but it avoids much of the deepest damage.</p>
+<p>The rolling average pairwise correlation of holdings is especially important. Equal Weight naturally holds the whole 100-stock universe, so its average pairwise correlation reflects the universe. Most Central 20 tends to hold names with stronger internal connections, so its holding-correlation line is higher. Network Diversifier keeps a lower correlation profile because periphery is part of the score and high-volatility/drawdown names are penalized.</p>
+<p>The turnover plot shows the cost of active network selection. The network methods move more than Equal Weight and usually more than MinVar. That isn’t automatically bad, but it means the strategy needs to be run with realistic liquidity assumptions. Since the universe is top liquid NASDAQ names and trading cost is set to 10 bps, the test isn’t absurd, but a live version would need slippage monitoring.</p>
+<p>The centrality-comparison heatmaps are useful diagnostics. They show that performance depends on the centrality definition and graph construction. The fact that copula PMFG and betweenness/combined variants appear often in the selected strategies suggests that tail-dependence structure and filtered network richness are more useful than raw dense correlation alone. The exact winner can change over time, so the selector uses rolling performance with a stability gate instead of treating one definition as permanently best.</p>
 </section>
-<section id="risk-report" class="level2">
-<h2 class="anchored" data-anchor-id="risk-report">Risk Report</h2>
+</section>
+<section id="risk-report-and-stress-windows" class="level2">
+<h2 class="anchored" data-anchor-id="risk-report-and-stress-windows">11) Risk report and stress windows</h2>
+<section id="tail-metrics-and-drawdown-duration" class="level3">
+<h3 class="anchored" data-anchor-id="tail-metrics-and-drawdown-duration">Tail metrics and drawdown duration</h3>
+<p>The VaR and ES table gives another view of portfolio quality. Historical VaR at 5% estimates a bad daily loss threshold:</p>
+<p><span class="math display">\[
+VaR_{5\%}=\inf\{x:P(L\le x)\ge0.95\}
+\]</span></p>
+<p>where <span class="math inline">\(L=-r_p\)</span> is portfolio loss. Expected shortfall averages losses beyond that threshold:</p>
+<p><span class="math display">\[
+ES_{5\%}=E[L\mid L\ge VaR_{5\%}]
+\]</span></p>
+<p>Expected shortfall is usually more informative because it tells us how bad losses are once we are already in the tail.</p>
 <div id="dc3b90b9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T14:00:43.888103Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T14:00:43.888103Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T14:00:44.718468Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T14:00:44.717973Z&quot;}}" data-execution_count="32">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>stress_windows <span class="op">=</span> {</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2018_q4"</span>: (<span class="st">"2018-10-01"</span>, <span class="st">"2018-12-31"</span>),</span>
@@ -3724,9 +4550,51 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The risk report gives a more honest view than CAGR alone. The drawdown-episode table shows that Network Diversifier’s worst drawdown is about <strong>-27.83%</strong>, with a much shorter duration than Equal Weight’s long drawdown episode. Equal Weight’s worst drawdown is around <strong>-44.32%</strong> and lasts 752 days. Most Central 20 suffers the deepest drawdown at about <strong>-51.64%</strong>. That fits the interpretation: central stocks can lead the market, but when the market core breaks, the portfolio breaks with it.</p>
+<p>The VaR/ES table also favors Network Diversifier. Its historical 5% VaR is about <strong>0.0169</strong> and historical ES is about <strong>0.0274</strong>, which are close to the better defensive baselines. Most Central 20 has the worst tail values among the listed models. The central strategy earns return, but it carries sharper downside.</p>
+<p>Stress windows add more economic detail:</p>
+<ul>
+<li>In <strong>2018 Q4</strong>, MinVar has the smallest loss, while Network Diversifier and HRP are close. Central stocks fall harder than defensive portfolios.</li>
+<li>In the <strong>COVID crash</strong>, Network Diversifier has the best cumulative return among the group, around <strong>-8.4%</strong>, while Equal Weight and MinVar lose more. This is an important validation point for tail-aware networking: the model avoided part of the crash exposure.</li>
+<li>In the <strong>2022 inflation/rate shock</strong>, MinVar is best because low-volatility defensive positioning matters most. Network Diversifier loses about <strong>-11.3%</strong>, far better than Equal Weight and Most Central 20, but not as defensive as MinVar.</li>
+<li>In the <strong>2023 rebound</strong>, Most Central 20 explodes upward with about <strong>67.5%</strong> cumulative return, while Equal Weight gains about <strong>41.5%</strong>. Network Diversifier gains around <strong>10%</strong>, so it doesn’t fully capture the AI/growth rebound.</li>
+</ul>
+<p>That final point is important. The network diversifier improves the risk-adjusted profile, but it gives up some explosive upside when the central cluster is exactly the right place to be. This is a real portfolio tradeoff, not a defect. Centrality can be a return signal and a risk signal at the same time. The project shows how to separate those two uses.</p>
+</section>
+<section id="stress-behavior-by-market-regime" class="level3">
+<h3 class="anchored" data-anchor-id="stress-behavior-by-market-regime">Stress behavior by market regime</h3>
+<p>The stress windows show how the network idea behaves under different kinds of market pain.</p>
+<p>In <strong>2018 Q4</strong>, the market sold off sharply as growth fears and Fed tightening pressured equities. MinVar performs best because low-volatility selection matters in a broad risk-off move. Network Diversifier is close to HRP and much better than Most Central. That is consistent with the idea that central names carry common risk.</p>
+<p>In <strong>COVID</strong>, the crash was fast and highly systemic. A pure network model could easily fail because almost everything sold off together. The Network Diversifier still performs best on cumulative return in the table. That likely comes from two features together: tail-aware network selection and risk filters. Periphery alone doesn’t fully protect during COVID, but periphery plus volatility and drawdown control helps.</p>
+<p>In <strong>2022</strong>, inflation and rates created a long valuation shock. NASDAQ’s central growth cluster was hit hard. Most Central 20 loses more than 41% in the stress window, while Network Diversifier loses around 11%. MinVar performs best, but Network Diversifier avoids most of the central-growth collapse. This is one of the clearest validations of centrality as a risk signal.</p>
+<p>In <strong>2023</strong>, centrality becomes a return signal. Most Central 20 gains about 67.5% as the AI/growth core rallies. Network Diversifier gains only around 10%. That is the cost of avoiding the core. The model protects well in stress but doesn’t fully participate when the market’s central cluster becomes the winning trade.</p>
+<p>So the strategy’s investor profile is clear. Network Diversifier isn’t built for maximum upside capture in a narrow leadership rally. It is built for a better risk-adjusted path across changing dependence regimes.</p>
+<p>Network Diversifier has historical ES around 0.0274, compared with Equal Weight around 0.0387 and Most Central 20 around 0.0450. That is a large improvement in realized tail severity.</p>
+<p>The drawdown episode table also matters because investors experience drawdowns through time, not only through maximum depth. Equal Weight’s worst drawdown lasts 752 days. Most Peripheral 20’s worst drawdown lasts 980 days. Network Diversifier’s worst drawdown lasts only 68 days in the table. That short duration is important. A strategy can have a similar maximum drawdown but be much easier to hold if it recovers faster.</p>
+<p>Network Diversifier’s shorter drawdown episode suggests that the portfolio doesn’t get stuck in the same damaged market cluster for as long. The rolling network score can shift away from weak names as centrality, momentum, and drawdown information update.</p>
+</section>
+<section id="centrality-through-the-stress-windows" class="level3">
+<h3 class="anchored" data-anchor-id="centrality-through-the-stress-windows">Centrality through the stress windows</h3>
+<p>The stress-window results can be read through the central/peripheral lens.</p>
+<p>During 2018 Q4 and 2022, central growth exposure was punished. That is why Most Central 20 suffers. In those windows, centrality mainly acts as a risk warning. The market’s core is where the valuation pressure is concentrated.</p>
+<p>During 2023, centrality flips into a return engine. The same central-growth structure that hurt in 2022 becomes the source of the rebound. Most Central 20 dominates because the market rewards the core cluster again.</p>
+<p>Network Diversifier avoids the extreme downside of centrality, but it also gives up the full upside when central names rally. This is exactly what a risk-adjusted strategy usually does. It doesn’t try to maximize exposure to the winning cluster. It tries to avoid being trapped in the wrong cluster for too long.</p>
+<p>The risk report therefore validates the model in a balanced way. Network Diversifier isn’t universally best in every window. It is strongest when we care about the full path: tail loss, drawdown depth, drawdown duration, turnover, and return together.</p>
+</section>
 </section>
 <section id="secondary-hkex-implementation" class="level2">
-<h2 class="anchored" data-anchor-id="secondary-hkex-implementation">Secondary HKEX Implementation</h2>
+<h2 class="anchored" data-anchor-id="secondary-hkex-implementation">12) Secondary HKEX implementation</h2>
+<p>The secondary implementation repeats the same network process on Hong Kong stocks. The data source is the HKEX Stooq folder: <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/stooq_hkex">data/stooq_hkex</a>. This is the correct folder-level reproducibility link because the script there builds the HKEX panel and handles security-name mapping.</p>
+<p>The HKEX market is different from NASDAQ in several ways:</p>
+<ul>
+<li>sector composition is more exposed to financials, property, Chinese internet, consumer, and China macro risk;</li>
+<li>liquidity and listing structure are different;</li>
+<li>macro and policy risk can dominate stock-specific fundamentals;</li>
+<li>drawdowns can be longer because China/Hong Kong equity regimes can remain depressed for years;</li>
+<li>a broad equal-weight basket can carry a large common China/Hong Kong risk factor even when it looks diversified by ticker count.</li>
+</ul>
+<p>That makes HKEX a useful second test. If a network model only works in NASDAQ because NASDAQ had a strong central tech rally, it may fail in HKEX. If the network diversifier still improves risk-adjusted performance, the graph idea is more portable.</p>
+<p>The secondary code uses the packaged <code>quantfinlab.portfolio.network</code> implementation for the same logic: shrinkage correlation, t-copula tail dependence, PMFG/MST, centrality tables, central/peripheral selection, network-diversifier scores, and risk reporting.</p>
 <div id="3cc57277" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T15:00:46.639553Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T15:00:46.639553Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T15:05:18.834165Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T15:05:18.834165Z&quot;}}" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
@@ -4902,8 +5770,82 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<section id="hkex-network-interpretation" class="level3">
+<h3 class="anchored" data-anchor-id="hkex-network-interpretation">HKEX network interpretation</h3>
+<p>The HKEX network has a different economic structure from NASDAQ. NASDAQ centrality often points toward technology growth and semiconductors. HKEX centrality can be driven by Chinese policy risk, property cycles, financial conditions, internet regulation, mainland growth expectations, and Hong Kong liquidity.</p>
+<p>This changes how central and peripheral portfolios behave. In NASDAQ, the center can be a strong growth engine. In HKEX, the center may sometimes be a macro-risk cluster. If the whole market is under pressure from China growth concerns or property-sector stress, central names may share that pressure and fail to deliver the same upside premium.</p>
+<p>That is why the HKEX result is important. Network Diversifier does better than Equal Weight and HRP on Sharpe, even though the market background is harder. The strategy’s lower volatility and drawdown show that network selection is useful beyond a US technology rally.</p>
+<p>The pure peripheral HKEX portfolio earns higher CAGR than Equal Weight, but with deep drawdown and high turnover. Network Diversifier improves the profile by filtering peripheral names through momentum and volatility. That is again the core lesson: periphery is a raw structural feature, not a complete investment rule.</p>
+<p>The latest HKEX multi-panel plot supports this. The correlation and copula PMFGs show market structure. The score heatmap shows which names have the best network-diversifier profile. The weight heatmap shows the final allocation. The NAV and drawdown panels show that the final portfolio isn’t just an academic graph statistic; it changes realized performance.</p>
+</section>
+<section id="hkex-comparison-to-the-nasdaq-result" class="level3">
+<h3 class="anchored" data-anchor-id="hkex-comparison-to-the-nasdaq-result">HKEX comparison to the NASDAQ result</h3>
+<p>The HKEX result is weaker in absolute return than NASDAQ, but that is expected given the market environment. What matters is the relative comparison. Network Diversifier still improves Sharpe and Calmar relative to the available alternatives.</p>
+<p>In NASDAQ, centrality often captures a strong growth engine. In HKEX, centrality can capture exposure to China macro, property stress, financial conditions, and policy cycles. That makes central names less attractive as a simple return bet. The HKEX Most Central 20 has CAGR around 4.64% and Sharpe around 0.152, weaker than the Network Diversifier.</p>
+<p>Network Diversifier’s HKEX volatility is around 16.7%, lower than Equal Weight’s 21.9% and Most Central 20’s 25.2%. Its drawdown is around -30.1%, close to HRP and better than Equal Weight, Most Central, and Most Peripheral. This shows that the network score isn’t just a NASDAQ-specific growth signal.</p>
+<p>The HKEX selector also relies more on correlation PMFG closeness in the later period. Closeness can be useful in a market where broad macro pressure dominates. A peripheral closeness strategy selects stocks far from the center of the network’s distance geometry. That can help avoid the main macro cluster.</p>
+<p>The secondary implementation therefore strengthens the project. It shows the network framework adapts to a different market structure without changing the main logic.</p>
+</section>
+<section id="hkex-stress-window-interpretation" class="level3">
+<h3 class="anchored" data-anchor-id="hkex-stress-window-interpretation">HKEX stress-window interpretation</h3>
+<p>The HKEX stress table shows why secondary applications matter. In the 2022 inflation window, many global equity markets struggled, but Hong Kong also carried China-specific weakness. Network Diversifier loses less than Equal Weight and Most Peripheral 20, but it doesn’t eliminate the drawdown. That is realistic. A long-only network model can reduce common exposure, but it can’t fully hedge a broad regional bear market.</p>
+<p>In the 2023 rebound window, Network Diversifier is positive while Equal Weight, HRP, and MinVar are weaker or negative in the HKEX output. This is interesting because 2023 was not a simple broad recovery for Hong Kong equities. The model seems to select a better subset rather than relying on market beta.</p>
+<p>The HKEX result also warns against overusing centrality as a pure return signal. In a market where the central cluster is tied to macro pressure or policy risk, central names may not lead the way NASDAQ central names did. The network framework stays useful because it doesn’t force the same economic interpretation across markets. It measures structure first, then lets the portfolio test decide how to use that structure.</p>
+<p>The HKEX summary shows a clear result. Network Diversifier has CAGR around <strong>8.69%</strong>, volatility around <strong>16.69%</strong>, Sharpe around <strong>0.356</strong>, and max drawdown around <strong>-30.10%</strong>. It beats Equal Weight, MinVar, HRP, Most Central 20, and Most Peripheral 20 on Sharpe. It also has the best Calmar ratio at about <strong>0.289</strong>.</p>
+<p>Equal Weight earns about <strong>5.24%</strong> CAGR with volatility around <strong>21.88%</strong>, Sharpe around <strong>0.168</strong>, and max drawdown around <strong>-37.68%</strong>. MinVar has lower volatility but a negative Sharpe. That is a common problem in depressed equity markets: the lowest-volatility stocks may avoid some drawdown but may also fail to generate enough return.</p>
+<p>Most Peripheral 20 has decent return at about <strong>7.13%</strong>, but its max drawdown is deep at about <strong>-43.61%</strong> and turnover is high. Pure periphery again isn’t enough. Network Diversifier improves on it by adding momentum, volatility, and drawdown filters.</p>
+<p>The HKEX stress table gives a different economic picture than NASDAQ. During 2023 rebound, many HKEX strategies still struggle. The Network Diversifier is positive at about <strong>4.1%</strong>, while several other portfolios are negative. This suggests the model isn’t merely buying beta. It is finding a subset of stocks with better network-adjusted and price-adjusted behavior inside a difficult market.</p>
+<p>The HKEX centrality-selection counts also differ from NASDAQ. Peripheral correlation PMFG closeness is selected often, while copula PMFG combined appears as a fixed/fallback choice in some periods. This makes sense because HKEX may have broader macro-driven dependence where distance-to-market-center matters more than a pure AI/semiconductor-style tail cluster.</p>
+<p>The secondary output supports the main lesson: network structure is useful when it becomes a disciplined portfolio input. The raw central portfolio can be too exposed to the market’s dominant cluster. The raw peripheral portfolio can be too weak or too noisy. The network diversifier works better because it treats network position as one component of allocation, alongside momentum and risk controls.</p>
+</section>
+<section id="full-project-interpretation" class="level3">
+<h3 class="anchored" data-anchor-id="full-project-interpretation">Full project interpretation</h3>
+<p>This project adds a different kind of information to the portfolio series. Earlier portfolio models mostly asked how to allocate given expected returns, covariance, tail risk, or regimes. Here we ask how the stocks are connected to each other as a system.</p>
+<p>The main mathematical path is:</p>
+<p><span class="math display">\[
+R \rightarrow \hat{\Sigma} \rightarrow \hat{\rho} \rightarrow d_{ij} \rightarrow G=(V,E) \rightarrow C_i \rightarrow w_i
+\]</span></p>
+<p>For the copula version, the path is:</p>
+<p><span class="math display">\[
+R \rightarrow u_{t,i} \rightarrow \rho_{ij}^{copula} \rightarrow \lambda_{ij} \rightarrow d_{ij}^{tail} \rightarrow G^{tail} \rightarrow C_i^{tail} \rightarrow w_i
+\]</span></p>
+<p>Each arrow has meaning:</p>
+<ul>
+<li>returns become dependence estimates,</li>
+<li>dependence becomes graph distance,</li>
+<li>graph distance and adjacency become filtered networks,</li>
+<li>filtered networks produce centrality,</li>
+<li>centrality becomes selection and weight signals,</li>
+<li>weights are tested under costs and stress windows.</li>
+</ul>
+<p>The strongest finding is that <strong>centrality is two-sided</strong>. Central stocks can be return leaders because they sit inside the market’s dominant theme. In this sample, central NASDAQ names are often semiconductor and large-growth names, and they perform very strongly in the rebound. But central stocks also share systemic drawdown risk. Peripheral stocks reduce some network crowding, but pure periphery can miss upside or select weak idiosyncratic names. The Network Diversifier is the most practical design because it adds price behavior and risk filters to the network score.</p>
+<p>The project also shows why tail-dependence networks matter. Correlation centrality is about average co-movement. Copula centrality is about extreme co-movement. In portfolio construction, the second can be more important because the investor cares about what happens when diversification breaks.</p>
+<p>The final result isn’t that one centrality measure is universally best. The result is that network position contains usable information, especially when it is filtered, measured through multiple centrality concepts, and combined with ordinary portfolio risk controls.</p>
+</section>
+<section id="practical-limitations-inside-the-same-framework" class="level3">
+<h3 class="anchored" data-anchor-id="practical-limitations-inside-the-same-framework">Practical limitations inside the same framework</h3>
+<p>The project is strong, but the limitations are important.</p>
+<p>First, network estimates are only as good as the rolling window. A 252-day window gives enough data for stable estimation, but it can lag sudden regime shifts. COVID-style shocks can change the network faster than the lookback updates.</p>
+<p>Second, centrality depends on the selected graph filter. PMFG and MST are both defensible, but they don’t give identical rankings. The candidate grid and rolling selector help, but they don’t remove model uncertainty.</p>
+<p>Third, the t-copula tail-dependence layer is an approximation. It uses rank transforms, Kendall-based correlation, a small <span class="math inline">\(\nu\)</span> grid, and pairwise likelihood sampling. That is practical for a rolling 100-stock universe, but it isn’t a full high-dimensional copula calibration.</p>
+<p>Fourth, network portfolios can be turnover-heavy. The strategy must trade when centrality, momentum, or risk scores change. The cost drag is already included, but live implementation would need liquidity checks, borrow constraints if ever extended to long-short, and slippage monitoring.</p>
+<p>Fifth, centrality has no universal sign. In some regimes central stocks are winners. In other regimes central stocks are systemic risk carriers. That is why the project doesn’t end with a simple statement like “buy central” or “buy peripheral.” The better result is the Network Diversifier: combine structural network position with market confirmation and risk control.</p>
+<p>The main contribution is that we now have a portfolio method where dependence structure itself becomes a signal. The graph isn’t a visualization add-on. It becomes part of the allocation rule.</p>
+</section>
+<section id="main-lesson-for-the-series" class="level3">
+<h3 class="anchored" data-anchor-id="main-lesson-for-the-series">Main lesson for the series</h3>
+<p>This project extends the portfolio series by adding a structural layer between raw data and portfolio weights. Instead of going directly from returns to covariance or returns to forecasts, we go through a graph:</p>
+<p><span class="math display">\[
+\text{returns} \rightarrow \text{dependence} \rightarrow \text{network role} \rightarrow \text{allocation}
+\]</span></p>
+<p>That makes Project 17 complementary to the earlier optimization projects. Mean-variance models care about expected return and covariance. Tail-risk models care about downside distribution. Regime models care about changing market states. Network portfolios care about where each asset sits inside the market’s dependence system.</p>
+<p>The most practical version isn’t the pure central or pure peripheral portfolio. It is the network diversifier because it uses centrality information without ignoring ordinary investment evidence. The score combines graph position, momentum, volatility, and drawdown. That is a realistic design: a stock can be structurally diversifying but still unattractive if its price behavior is terrible.</p>
+<p>The result is a method that can be explained visually, mathematically, and economically. The heatmaps show dependence. The graphs show structure. The centrality tables show node roles. The portfolio weights show how those roles become positions. The backtest and risk report show whether the translation worked.</p>
+<p>That is the clean research story of thisn’tebook.</p>
+<p>This also makes the project easy to extend later. The same graph layer could be combined with factor exposure, regime probabilities, or tail-risk objectives, but the current notebook keeps the implementation focused on centrality and long-only portfolio construction.</p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
@@ -5309,13 +6251,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
-      <a href="../notebooks/16_regime_switching_portfolio.html" class="pagination-link" aria-label="16. Regime Switching models for portfolio selection">
-        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-title">16. Regime Switching models for portfolio selection</span></span>
+      <a href="../notebooks/16_regime_switching_portfolio.html" class="pagination-link" aria-label="16. Regime Switching Portfolio Selection">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-title">16. Regime Switching Portfolio Selection</span></span>
       </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="../notebooks/18_rough_volatility.html" class="pagination-link" aria-label="18. Rough Volatility For Option Pricing">
-        <span class="nav-page-text"><span class="chapter-title">18. Rough Volatility For Option Pricing</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../notebooks/18_rough_volatility.html" class="pagination-link" aria-label="18. Rough Volatility for Option Pricing">
+        <span class="nav-page-text"><span class="chapter-title">18. Rough Volatility for Option Pricing</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>
