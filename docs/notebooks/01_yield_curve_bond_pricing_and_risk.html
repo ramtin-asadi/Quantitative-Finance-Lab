@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>1. Fixed Income and Yield Curve Construction – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../overview.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -112,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -143,7 +144,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -292,13 +293,83 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#bonds-coupons-treasuries-and-par-yields" id="toc-bonds-coupons-treasuries-and-par-yields" class="nav-link active" data-scroll-target="#bonds-coupons-treasuries-and-par-yields">1. Bonds, Coupons, Treasuries, and Par Yields</a>
+  <ul class="collapse">
+  <li><a href="#fixed-coupon-bond-cashflows" id="toc-fixed-coupon-bond-cashflows" class="nav-link" data-scroll-target="#fixed-coupon-bond-cashflows">1.1 Fixed-coupon bond cashflows</a></li>
+  <li><a href="#year-fraction-from-dates" id="toc-year-fraction-from-dates" class="nav-link" data-scroll-target="#year-fraction-from-dates">1.2 Year fraction from dates</a></li>
+  <li><a href="#tenor-mapping" id="toc-tenor-mapping" class="nav-link" data-scroll-target="#tenor-mapping">1.3 Tenor mapping</a></li>
+  </ul></li>
+  <li><a href="#imports-and-plotting-style-and-loading-data" id="toc-imports-and-plotting-style-and-loading-data" class="nav-link" data-scroll-target="#imports-and-plotting-style-and-loading-data">Imports and plotting style and loading data</a></li>
+  <li><a href="#discount-factors-zero-rates-and-forward-rates" id="toc-discount-factors-zero-rates-and-forward-rates" class="nav-link" data-scroll-target="#discount-factors-zero-rates-and-forward-rates">2. Discount Factors, Zero Rates, and Forward Rates</a>
+  <ul class="collapse">
+  <li><a href="#discount-factor" id="toc-discount-factor" class="nav-link" data-scroll-target="#discount-factor">2.1) Discount factor</a></li>
+  <li><a href="#zero-rate-continuous-compounding" id="toc-zero-rate-continuous-compounding" class="nav-link" data-scroll-target="#zero-rate-continuous-compounding">2.2) Zero rate (continuous compounding)</a></li>
+  <li><a href="#instantaneous-forward-rate" id="toc-instantaneous-forward-rate" class="nav-link" data-scroll-target="#instantaneous-forward-rate">3.3) Instantaneous forward rate</a></li>
+  <li><a href="#discrete-forward-over-an-interval" id="toc-discrete-forward-over-an-interval" class="nav-link" data-scroll-target="#discrete-forward-over-an-interval">3.4) Discrete forward over an interval</a></li>
+  </ul></li>
+  <li><a href="#par-yield-implied-by-a-curve" id="toc-par-yield-implied-by-a-curve" class="nav-link" data-scroll-target="#par-yield-implied-by-a-curve">3) Par Yield Implied by a Curve</a></li>
+  <li><a href="#bootstrapping-discount-factors-from-par-yields" id="toc-bootstrapping-discount-factors-from-par-yields" class="nav-link" data-scroll-target="#bootstrapping-discount-factors-from-par-yields">4) Bootstrapping Discount Factors from Par Yields</a>
+  <ul class="collapse">
+  <li><a href="#short-end-1y-convention" id="toc-short-end-1y-convention" class="nav-link" data-scroll-target="#short-end-1y-convention">4.1 Short end (&lt;1Y) convention</a></li>
+  <li><a href="#bootstrapping-for-coupon-tenors-t-1" id="toc-bootstrapping-for-coupon-tenors-t-1" class="nav-link" data-scroll-target="#bootstrapping-for-coupon-tenors-t-1">4.2 Bootstrapping for coupon tenors (T ≥ 1)</a></li>
+  </ul></li>
+  <li><a href="#turning-bootstrapped-pillars-into-a-full-curve" id="toc-turning-bootstrapped-pillars-into-a-full-curve" class="nav-link" data-scroll-target="#turning-bootstrapped-pillars-into-a-full-curve">5) Turning Bootstrapped Pillars into a Full Curve</a>
+  <ul class="collapse">
+  <li><a href="#method-a-log-linear-discount-factors" id="toc-method-a-log-linear-discount-factors" class="nav-link" data-scroll-target="#method-a-log-linear-discount-factors">5.1 Method A: Log-linear discount factors</a></li>
+  </ul></li>
+  <li><a href="#curve-models-using-zero-rate-smoothing" id="toc-curve-models-using-zero-rate-smoothing" class="nav-link" data-scroll-target="#curve-models-using-zero-rate-smoothing">7) Curve Models Using Zero-Rate Smoothing</a>
+  <ul class="collapse">
+  <li><a href="#pchip-on-zero-rates-piecewise-cubic-hermite-interpolating-polynomial" id="toc-pchip-on-zero-rates-piecewise-cubic-hermite-interpolating-polynomial" class="nav-link" data-scroll-target="#pchip-on-zero-rates-piecewise-cubic-hermite-interpolating-polynomial">7.1 PCHIP on zero rates (Piecewise Cubic Hermite Interpolating Polynomial)</a></li>
+  </ul></li>
+  <li><a href="#nelsonsiegelsvensson-nss-yield-curve" id="toc-nelsonsiegelsvensson-nss-yield-curve" class="nav-link" data-scroll-target="#nelsonsiegelsvensson-nss-yield-curve">8) Nelson–Siegel–Svensson (NSS) yield curve</a>
+  <ul class="collapse">
+  <li><a href="#nss-zero-rate-function" id="toc-nss-zero-rate-function" class="nav-link" data-scroll-target="#nss-zero-rate-function">8.1 NSS zero-rate function</a></li>
+  <li><a href="#par-yield-implied-by-nss" id="toc-par-yield-implied-by-nss" class="nav-link" data-scroll-target="#par-yield-implied-by-nss">8.2 Par yield implied by NSS</a></li>
+  <li><a href="#discount-factor-and-forward-from-nss" id="toc-discount-factor-and-forward-from-nss" class="nav-link" data-scroll-target="#discount-factor-and-forward-from-nss">8.3 Discount factor and forward from NSS</a></li>
+  <li><a href="#calibrating-nss-to-market-par-yields" id="toc-calibrating-nss-to-market-par-yields" class="nav-link" data-scroll-target="#calibrating-nss-to-market-par-yields">8.4 Calibrating NSS to market par yields</a></li>
+  </ul></li>
+  <li><a href="#qp-curve-smooth-discount-factors-under-exact-par-bond-fit" id="toc-qp-curve-smooth-discount-factors-under-exact-par-bond-fit" class="nav-link" data-scroll-target="#qp-curve-smooth-discount-factors-under-exact-par-bond-fit">9) QP curve: smooth discount factors under exact par-bond fit</a>
+  <ul class="collapse">
+  <li><a href="#variables" id="toc-variables" class="nav-link" data-scroll-target="#variables">9.1 Variables</a></li>
+  <li><a href="#constraints" id="toc-constraints" class="nav-link" data-scroll-target="#constraints">9.2 constraints</a></li>
+  <li><a href="#smoothness-objective-quadratic" id="toc-smoothness-objective-quadratic" class="nav-link" data-scroll-target="#smoothness-objective-quadratic">9.3 Smoothness objective (quadratic)</a></li>
+  <li><a href="#zero-and-forward-curves" id="toc-zero-and-forward-curves" class="nav-link" data-scroll-target="#zero-and-forward-curves">9.4 zero and forward curves</a></li>
+  </ul></li>
+  <li><a href="#curve-fit-comparison-and-rmse-to-observed-par-yields" id="toc-curve-fit-comparison-and-rmse-to-observed-par-yields" class="nav-link" data-scroll-target="#curve-fit-comparison-and-rmse-to-observed-par-yields">10. Curve fit comparison and RMSE to observed par yields</a></li>
+  <li><a href="#synthetic-bond-issuance" id="toc-synthetic-bond-issuance" class="nav-link" data-scroll-target="#synthetic-bond-issuance">11) Synthetic Bond Issuance</a></li>
+  <li><a href="#fixed-income-risk-measures-pv01-duration-convexity-and-key-rate-duration" id="toc-fixed-income-risk-measures-pv01-duration-convexity-and-key-rate-duration" class="nav-link" data-scroll-target="#fixed-income-risk-measures-pv01-duration-convexity-and-key-rate-duration">12) Fixed-Income Risk Measures: PV01, Duration, Convexity, and Key-Rate Duration</a>
+  <ul class="collapse">
+  <li><a href="#pv01-and-duration" id="toc-pv01-and-duration" class="nav-link" data-scroll-target="#pv01-and-duration">12.1 <span class="math inline">\(PV01\)</span> and Duration</a></li>
+  <li><a href="#convexity" id="toc-convexity" class="nav-link" data-scroll-target="#convexity">12.1 Convexity</a></li>
+  <li><a href="#key-rate-duration" id="toc-key-rate-duration" class="nav-link" data-scroll-target="#key-rate-duration">12.3 Key Rate Duration</a></li>
+  </ul></li>
+  <li><a href="#the-ladder-strategy" id="toc-the-ladder-strategy" class="nav-link" data-scroll-target="#the-ladder-strategy">13) The Ladder Strategy</a></li>
+  <li><a href="#return-decomposition" id="toc-return-decomposition" class="nav-link" data-scroll-target="#return-decomposition">14) Return Decomposition</a>
+  <ul class="collapse">
+  <li><a href="#coupon-income-and-cash-carry" id="toc-coupon-income-and-cash-carry" class="nav-link" data-scroll-target="#coupon-income-and-cash-carry">14.1 Coupon Income and Cash Carry</a></li>
+  <li><a href="#rolldown-carry-and-curve-move" id="toc-rolldown-carry-and-curve-move" class="nav-link" data-scroll-target="#rolldown-carry-and-curve-move">14.2 Roll‑Down (Carry) and Curve Move</a></li>
+  </ul></li>
+  <li><a href="#duration-targeting-and-risk-amanagement" id="toc-duration-targeting-and-risk-amanagement" class="nav-link" data-scroll-target="#duration-targeting-and-risk-amanagement">15) Duration Targeting and risk amanagement</a></li>
+  <li><a href="#backtesting-and-metrics" id="toc-backtesting-and-metrics" class="nav-link" data-scroll-target="#backtesting-and-metrics">15) Backtesting and metrics</a>
+  <ul class="collapse">
+  <li><a href="#statistics" id="toc-statistics" class="nav-link" data-scroll-target="#statistics">15.1 Statistics</a></li>
+  <li><a href="#transaction-costs-and-turnover" id="toc-transaction-costs-and-turnover" class="nav-link" data-scroll-target="#transaction-costs-and-turnover">15.2 Transaction Costs and Turnover</a></li>
+  </ul></li>
+  <li><a href="#implementing-the-whole-project-on-japan-data-using-quantfinlab" id="toc-implementing-the-whole-project-on-japan-data-using-quantfinlab" class="nav-link" data-scroll-target="#implementing-the-whole-project-on-japan-data-using-quantfinlab">Implementing the whole project on Japan data using quantfinlab</a></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">1. Fixed Income and Yield Curve Construction</span></h1>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">1. Fixed Income and Yield Curve Construction</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -374,6 +445,8 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 <section id="imports-and-plotting-style-and-loading-data" class="level2">
 <h2 class="anchored" data-anchor-id="imports-and-plotting-style-and-loading-data">Imports and plotting style and loading data</h2>
 <div id="c76fb050" class="cell" data-execution_count="1">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> copy</span>
@@ -412,6 +485,7 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 <span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.dropna(subset<span class="op">=</span>[<span class="st">"Date"</span>], ).set_index(<span class="st">"Date"</span>).sort_index()</span>
 <span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display" data-execution_count="1">
 <div>
 
@@ -636,6 +710,8 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 </div>
 </div>
 <div id="fe483000" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>tenor_cols <span class="op">=</span> [<span class="st">"1M"</span>,<span class="st">"2M"</span>,<span class="st">"3M"</span>,<span class="st">"4M"</span>,<span class="st">"6M"</span>,<span class="st">"1Y"</span>,<span class="st">"2Y"</span>,<span class="st">"3Y"</span>,<span class="st">"5Y"</span>,<span class="st">"7Y"</span>,<span class="st">"10Y"</span>,<span class="st">"20Y"</span>,<span class="st">"30Y"</span>]</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> tenor_cols:</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    df[c] <span class="op">=</span> pd.to_numeric(df[c], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
@@ -667,6 +743,7 @@ Observed market par yields: <span class="math inline">\(\mathbf{y}=(y_1,y_2,\dot
 <span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"First available date per tenor:"</span>)</span>
 <span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>display(availability)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Data shape: (9024, 13)
@@ -842,7 +919,7 @@ Date range: 1990-01-02 to 2026-01-28</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-3-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-3-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-3-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -934,6 +1011,8 @@ Date range: 1990-01-02 to 2026-01-28</code></pre>
 </div>
 </div>
 <div id="96e2f700" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>sample_dates <span class="op">=</span> [</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    df.index[<span class="dv">0</span>],</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    df.index[<span class="bu">len</span>(df)<span class="op">//</span><span class="dv">2</span>],</span>
@@ -957,10 +1036,11 @@ Date range: 1990-01-02 to 2026-01-28</code></pre>
 <span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>plt.legend()</span>
 <span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-4-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-4-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-4-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1052,6 +1132,8 @@ F(t_1,t_2)=\dfrac{\ln D(t_1)-\ln D(t_2)}{t_2-t_1}
 \]</span></p>
 <p>and zero rate is: <span class="math display">\[z(t)=-\dfrac{\ln D(t)}{t}\]</span></p>
 <div id="66bfc6d0" class="cell" data-execution_count="4">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>df_dec <span class="op">=</span> df.copy()</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>df_dec[tenor_cols] <span class="op">=</span> df_dec[tenor_cols] <span class="op">/</span> <span class="fl">100.0</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1223,6 +1305,7 @@ F(t_1,t_2)=\dfrac{\ln D(t_1)-\ln D(t_2)}{t_2-t_1}
 <span id="cb6-169"><a href="#cb6-169" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Maturity T"</span>)</span>
 <span id="cb6-170"><a href="#cb6-170" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Discount Factor D(t)"</span>)</span>
 <span id="cb6-171"><a href="#cb6-171" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Base date: 2026-01-28
 Tenors used: ['1M', '2M', '3M', '4M', '6M', '1Y', '2Y', '3Y', '5Y', '7Y', '10Y', '20Y', '30Y']
@@ -1233,7 +1316,7 @@ First 5 pillar DFs: [0.99687157 0.99383574 0.99084219 0.98774241 0.98201372 0.96
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-5-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-5-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-5-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1242,6 +1325,8 @@ First 5 pillar DFs: [0.99687157 0.99383574 0.99084219 0.98774241 0.98201372 0.96
 <p>This makes ense in time value of money. receiving one dollar farther in the future is worth less today. The very low 30Y discount factor reflects the cumulative effect of discounting over a long horizon. Even if the annual rate is only a few percent, compounding over 30 years produces a large present-value reduction.</p>
 <p>We have transformed market coupon rates into a pricing object: a discount curve.</p>
 <div id="db56b670" class="cell" data-execution_count="5">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> loglinear_curve(T, dfs):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    loglinear_log_dfs <span class="op">=</span> np.log(dfs)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1294,17 +1379,18 @@ First 5 pillar DFs: [0.99687157 0.99383574 0.99084219 0.98774241 0.98201372 0.96
 <span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Maturity (Years)"</span>)</span>
 <span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Forward Rate (%)"</span>)</span>
 <span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-6-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-6-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-6-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-6-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-6-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-6-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1329,6 +1415,8 @@ p_j(t)=a_j(t-x_j)^3+b_j(t-x_j)^2+c_j(t-x_j)+d_j  \quad t\in[x_j,x_{j+1}]
 <p>PCHIP is designed to reduce overshooting. This is useful for yield curves because unrealistic oscillations can create strange discount factors or forward rates.</p>
 <p>Compared with log-linear discount interpolation, PCHIP usually produces a smoother zero curve. The tradeoff is that the curve no longer has the same simple piecewise-forward interpretation and may not exactly reproduce all par-yield relationships after transformation back into coupon-bond pricing.</p>
 <div id="b886b647" class="cell" data-execution_count="6">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.interpolate <span class="im">import</span> PchipInterpolator</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1386,24 +1474,25 @@ p_j(t)=a_j(t-x_j)^3+b_j(t-x_j)^2+c_j(t-x_j)+d_j  \quad t\in[x_j,x_{j+1}]
 <span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Maturity"</span>)</span>
 <span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Forward Rate"</span>)</span>
 <span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-7-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-7-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-7-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-7-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-7-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-7-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-7-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1431,6 +1520,8 @@ z(t)=\beta_0 +\beta_1\left(\frac{1-e^{-t/\tau_1}}{t/\tau_1}\right) +\beta_2\left
 </ul>
 <p>NSS is not just an interpolation method. It is a parametric curve model. This means it can smooth noisy observations and generate a clean curve, but it may not exactly match every quoted maturity. Its usefulness depends on whether the smooth parametric structure captures the actual shape of the market curve.</p>
 <div id="f4f26f9a" class="cell" data-execution_count="7">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> nss_zero(t, b0,b1,b2,b3,tau1,tau2):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> np.array(t, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    x1 <span class="op">=</span> t <span class="op">/</span> tau1</span>
@@ -1439,6 +1530,7 @@ z(t)=\beta_0 +\beta_1\left(\frac{1-e^{-t/\tau_1}}{t/\tau_1}\right) +\beta_2\left
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    C1 <span class="op">=</span> L1 <span class="op">-</span> np.exp(<span class="op">-</span>x1)</span>
 <span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    C2 <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">-</span> np.exp(<span class="op">-</span>x2)) <span class="op">/</span> x2 <span class="op">-</span> np.exp(<span class="op">-</span>x2)</span>
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> b0 <span class="op">+</span> b1<span class="op">*</span>L1 <span class="op">+</span> b2<span class="op">*</span>C1 <span class="op">+</span> b3<span class="op">*</span>C2</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="par-yield-implied-by-nss" class="level3">
@@ -1456,6 +1548,8 @@ c(T)=f\cdot\frac{1-D(T)}{\sum_{i=1}^{n}D(t_i)}
 <p>simple: <span class="math inline">\(y(T)=(1/D(T)-1)/T\)</span></p>
 <p>but first we have to have <span class="math inline">\(D(t)\)</span></p>
 <div id="e4aa8609" class="cell" data-execution_count="8">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> par_from_d(df_func, T_list, f<span class="op">=</span><span class="dv">2</span>):</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    T_arr <span class="op">=</span> np.asarray(T_list, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> np.full_like(T_arr, np.nan, dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -1489,6 +1583,7 @@ c(T)=f\cdot\frac{1-D(T)}{\sum_{i=1}^{n}D(t_i)}
 <span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>        out[k] <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">-</span> dfs[<span class="op">-</span><span class="dv">1</span>]) <span class="op">/</span> denom <span class="cf">if</span> denom <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan</span>
 <span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="discount-factor-and-forward-from-nss" class="level3">
@@ -1528,6 +1623,8 @@ y^{model}(T_j;\theta)-y^{mkt}(T_j)
 <p>This is a nonlinear optimization problem because the NSS parameters affect zero rates, discount factors, and then par yields. The implementation uses L-BFGS-B, a limited-memory quasi-Newton method that is appropriate for smooth optimization problems with a small number of parameters.</p>
 <p>We use the long-end yield level as part of the initial guess because <span class="math inline">\(\beta_0\)</span> behaves like a long-run level parameter. This improves stability and gives the optimizer a reasonable starting point.</p>
 <div id="edfbf229" class="cell" data-execution_count="9">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.optimize <span class="im">import</span> minimize</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1615,6 +1712,7 @@ y^{model}(T_j;\theta)-y^{mkt}(T_j)
 <span id="cb12-85"><a href="#cb12-85" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Maturity"</span>)</span>
 <span id="cb12-86"><a href="#cb12-86" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Forward Rate"</span>)</span>
 <span id="cb12-87"><a href="#cb12-87" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>final MSE: 3.5093289069366877e-07
 theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.500251  5.000021]</code></pre>
@@ -1622,21 +1720,21 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-10-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-10-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-10-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-10-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-10-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-10-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-10-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-10-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-10-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1671,6 +1769,8 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <p>Monotone decreasing: <span class="math display">\[D(t_{k+1})\le D(t_k)\]</span></p>
 <p>These are linear inequalities, so the problem stays convex and QP-solvable.</p>
 <div id="e7a07a0f" class="cell" data-execution_count="10">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1722,6 +1822,7 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a>        constraints <span class="op">+=</span> [cp.<span class="bu">sum</span>((ck <span class="op">/</span> f) <span class="op">*</span> d[coupon_idx]) <span class="op">+</span> d[iT] <span class="op">==</span> <span class="fl">1.0</span>]</span>
 <span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> d, constraints</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="smoothness-objective-quadratic" class="level3">
@@ -1739,6 +1840,8 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <p><span class="math display">\[z(t_k)=-\ln D(t_k)/t_k\]</span></p>
 <p><span class="math display">\[f(t_k)\approx -\dfrac{\ln D(t_{k+1})-\ln D(t_k)}{t_{k+1}-t_k}\]</span></p>
 <div id="102a4fab" class="cell" data-execution_count="11">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> qp_solve(t_grid, d, constraints, par_mkt, f, min_d):</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    lam <span class="op">=</span> <span class="fl">1e4</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    eps <span class="op">=</span> <span class="fl">1e-4</span></span>
@@ -1828,27 +1931,28 @@ theta = [b0,b1,b2,b3,tau1,tau2] = [ 0.053115 -0.014698 -0.031572 -0.007968  1.50
 <span id="cb15-87"><a href="#cb15-87" aria-hidden="true" tabindex="-1"></a>plt.xlabel(<span class="st">"Maturity"</span>)</span>
 <span id="cb15-88"><a href="#cb15-88" aria-hidden="true" tabindex="-1"></a>plt.ylabel(<span class="st">"Forward Rate"</span>)</span>
 <span id="cb15-89"><a href="#cb15-89" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>status: optimal ,  value: 1.2368745747617473</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-12-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-12-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-12-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-12-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-12-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-12-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-12-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-12-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-12-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1867,6 +1971,8 @@ Some tenors are held out during fitting, and the model is evaluated on those hel
 </ol>
 <p>The out-of-sample check is especially important. A method that exactly reproduces fitted tenors is not automatically the best method if it performs poorly between those points.</p>
 <div id="ed42bb6d" class="cell" data-execution_count="12">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_curves_for_date(date):</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    pillars_full <span class="op">=</span> bootstrap_pillars(date)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> pillars_full <span class="kw">is</span> <span class="va">None</span>:</span>
@@ -2024,10 +2130,11 @@ Some tenors are held out during fitting, and the model is evaluated on those hel
 <span id="cb17-155"><a href="#cb17-155" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-156"><a href="#cb17-156" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Primary curve selected for everything below: </span><span class="sc">{</span>primary_curve_method<span class="sc">}</span><span class="ss"> (</span><span class="sc">{</span>primary_curve_name<span class="sc">}</span><span class="ss">)"</span>)</span>
 <span id="cb17-157"><a href="#cb17-157" aria-hidden="true" tabindex="-1"></a>display(rmse_rank)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-13-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-13-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-13-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2156,6 +2263,8 @@ c_t(T) = y_t(T)
 <h4 class="anchored" data-anchor-id="duration-overlay-optional">11.4.2 Duration Overlay (Optional)</h4>
 <p>In addition to the weight‑based rebalancing, we may impose a <strong>duration target</strong>. The effective duration of the portfolio is computed via a parallel shift of the discount curve. If the current duration deviates from the target <span class="math inline">\(D^*\)</span> by more than a band <span class="math inline">\(\Delta_D\)</span>, we trade between the shortest and longest maturities (2Y and 30Y) to bring duration back into line. This overlay is applied <em>after</em> the standard rebalancing.</p>
 <div id="e8091d22" class="cell" data-execution_count="13">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>issue_maturities <span class="op">=</span> [<span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">30</span>]</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>issue_labels <span class="op">=</span> {<span class="dv">2</span>: <span class="st">"2Y"</span>, <span class="dv">5</span>: <span class="st">"5Y"</span>, <span class="dv">10</span>: <span class="st">"10Y"</span>, <span class="dv">30</span>: <span class="st">"30Y"</span>}</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2316,6 +2425,7 @@ c_t(T) = y_t(T)
 <span id="cb19-158"><a href="#cb19-158" aria-hidden="true" tabindex="-1"></a>    t_rem <span class="op">=</span> bond[<span class="st">"times"</span>][mask] <span class="op">-</span> delta</span>
 <span id="cb19-159"><a href="#cb19-159" aria-hidden="true" tabindex="-1"></a>    cf_rem <span class="op">=</span> bond[<span class="st">"cfs"</span>][mask] <span class="op">*</span> bond[<span class="st">"units"</span>]</span>
 <span id="cb19-160"><a href="#cb19-160" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> t_rem, cf_rem</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -2383,6 +2493,8 @@ KPV01_j = P_0 \times KRD_j \times 0.0001.
 \]</span></p>
 <p>This equality is not exacttly the same in every numerical solution because the bump functions, interpolation, maturity grid, and finite difference options can be different and create small differences.</p>
 <div id="92823cf8" class="cell" data-execution_count="14">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bond_position_value(bond, valuation_date, df_func):</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> bond <span class="kw">is</span> <span class="va">None</span> <span class="kw">or</span> bond.get(<span class="st">"units"</span>, <span class="fl">0.0</span>) <span class="op">&lt;=</span> <span class="dv">0</span>:</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fl">0.0</span></span>
@@ -2558,6 +2670,7 @@ KPV01_j = P_0 \times KRD_j \times 0.0001.
 <span id="cb20-173"><a href="#cb20-173" aria-hidden="true" tabindex="-1"></a>            <span class="st">"key_rate_pv01"</span>: <span class="bu">float</span>(key_rate_pv01),</span>
 <span id="cb20-174"><a href="#cb20-174" aria-hidden="true" tabindex="-1"></a>        })</span>
 <span id="cb20-175"><a href="#cb20-175" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(rows)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -2618,6 +2731,8 @@ NAV_{t+1}^{\text{actual}} - NAV_t = \underbrace{\text{CouponIncome} + \text{Cash
 \]</span></p>
 <p>The <strong>roll‑down</strong> shows the fact that a bond’s price increases as it gets closer to maturity (if the yield curve is sloping upward), even if yields remain unchanged.</p>
 <div id="c1214d6e" class="cell" data-execution_count="15">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_trade(positions, cash, date, df_func, maturity, target_value_delta, trade_rows, reason):</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    tc <span class="op">=</span> trade_cost_bp <span class="op">/</span> <span class="fl">10000.0</span></span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> maturity <span class="kw">not</span> <span class="kw">in</span> positions <span class="kw">or</span> positions[maturity] <span class="kw">is</span> <span class="va">None</span>:</span>
@@ -2720,6 +2835,7 @@ NAV_{t+1}^{\text{actual}} - NAV_t = \underbrace{\text{CouponIncome} + \text{Cash
 <span id="cb21-100"><a href="#cb21-100" aria-hidden="true" tabindex="-1"></a>            cash <span class="op">=</span> apply_trade(positions, cash, date, df_func, T, deltas[T], trade_rows, reason)</span>
 <span id="cb21-101"><a href="#cb21-101" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-102"><a href="#cb21-102" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> positions, cash, trade_rows</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -2739,6 +2855,8 @@ w_t^{\text{bond}}
 <p>with the remaining cash we hold or short duration exposure. In a more realistic ladder implementation, the adjustment is done through bond selection and rebalancing rather than a single continuous scaling factor, but the idea is the same. If the ladder duration is above the target, we reduce long duration exposure. If it is below the target, we allow more duration.</p>
 <p>But there is always trade off. Duration targeting usually reduces risk and controls portfolio’s sensitivity to interest rates, but it can also reduce carry and curve exposure. Since longer duration bonds often carry higher yields and stronger roll down potential, cutting duration can lower expected return. Therefore, the right question is not whether targeting increases return. The right question is whether the reduction in risk is worth the reduction in return.</p>
 <div id="0af0d60e" class="cell" data-execution_count="16">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> apply_duration_overlay(positions, cash, date, df_func, target_duration, duration_band):</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> target_duration <span class="kw">is</span> <span class="va">None</span>:</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> positions, cash, [], np.nan</span>
@@ -2773,6 +2891,7 @@ w_t^{\text{bond}}
 <span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>    cash <span class="op">=</span> apply_trade(positions, cash, date, df_func, buy_T, <span class="op">+</span>trade_value, trade_rows, <span class="st">"duration_overlay"</span>)</span>
 <span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>    new_eff_dur <span class="op">=</span> portfolio_parallel_risk(positions, cash, date, df_func)[<span class="st">"effective_duration"</span>]</span>
 <span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> positions, cash, trade_rows, new_eff_dur</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="backtesting-and-metrics" class="level2">
@@ -2811,6 +2930,8 @@ DD_t = \frac{W_t}{\max_{u \leq t} W_u}-1.
 <p>For a sell of notional <span class="math inline">\(V\)</span>, the cash received is <span class="math inline">\(V \cdot (1 - \kappa)\)</span>. For a buy, the cash paid is <span class="math inline">\(V \cdot (1 + \kappa)\)</span>. The difference is lost to the strategy.</p>
 <p><strong>Turnover</strong> for a period is the sum of absolute notional values of all trades during that period, divided by the starting NAV. High turnover may erode returns if the strategy rebalances too aggressively.</p>
 <div id="4605ef85" class="cell" data-execution_count="17">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_ladder_strategy(strategy_name, target_weights, duration_target<span class="op">=</span><span class="va">None</span>, duration_band<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    all_valid_dates <span class="op">=</span> []</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> d <span class="kw">in</span> issue_dates:</span>
@@ -2977,8 +3098,11 @@ DD_t = \frac{W_t}{\max_{u \leq t} W_u}-1.
 <span id="cb23-164"><a href="#cb23-164" aria-hidden="true" tabindex="-1"></a>    carry_df <span class="op">=</span> pd.DataFrame(carry_rows).set_index(<span class="st">"date"</span>).sort_index()</span>
 <span id="cb23-165"><a href="#cb23-165" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-166"><a href="#cb23-166" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> strategy_df, bucket_df, trade_df, carry_df, snapshots</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="f934d23c" class="cell" data-execution_count="18">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> strategy_summary_table(strategy_df):</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    rets <span class="op">=</span> strategy_df[<span class="st">"ret"</span>].dropna()</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(rets) <span class="op">==</span> <span class="dv">0</span>:</span>
@@ -3040,6 +3164,7 @@ DD_t = \frac{W_t}{\max_{u \leq t} W_u}-1.
 <span id="cb24-59"><a href="#cb24-59" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].legend()</span>
 <span id="cb24-60"><a href="#cb24-60" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb24-61"><a href="#cb24-61" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>baseline_ladder: using contiguous block 2006-02-28 -&gt; 2026-01-31 (240 dates)
 Primary curve used below: loglinear
@@ -3247,7 +3372,7 @@ Baseline strategy summary:</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-19-output-5.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-19-output-5.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-19-output-5.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3284,6 +3409,8 @@ Baseline strategy summary:</code></pre>
 <p>This output is expected for a Treasury ladder. The annualized return is positive but not like equity, the volatility is lower than a stock portfolio, and the drawdown is still meaningful because intermediate and long duration bonds can lose lots of their value when rates rise quickly.</p>
 <p>The most important detail is that the ladder is not riskless. A ladder is often described as conservative because coupon income and maturity diversification smooth the path, but the strategy still has duration exposure. When the yield curve shifts upward, the present value of the remaining cash flows falls. Coupon income and carry/roll effects are usually stabilizing, but curve-move P&amp;L can dominate in months where rates move sharply.</p>
 <div id="35b1dafa" class="cell" data-execution_count="19">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> strategy_risk_timeseries(strategy_df, snapshots):</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    risk_rows <span class="op">=</span> []</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    krd_rows <span class="op">=</span> []</span>
@@ -3319,8 +3446,11 @@ Baseline strategy summary:</code></pre>
 <span id="cb27-33"><a href="#cb27-33" aria-hidden="true" tabindex="-1"></a>    risk_df <span class="op">=</span> pd.DataFrame(risk_rows).set_index(<span class="st">"date"</span>).sort_index()</span>
 <span id="cb27-34"><a href="#cb27-34" aria-hidden="true" tabindex="-1"></a>    krd_df <span class="op">=</span> pd.concat(krd_rows, axis<span class="op">=</span><span class="dv">0</span>, ignore_index<span class="op">=</span><span class="va">True</span>) <span class="cf">if</span> <span class="bu">len</span>(krd_rows) <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> pd.DataFrame()</span>
 <span id="cb27-35"><a href="#cb27-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> risk_df, krd_df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="c8c071bf" class="cell" data-execution_count="20">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>baseline_risk_df, baseline_krd_df <span class="op">=</span> strategy_risk_timeseries(baseline_df, baseline_snapshots)</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Baseline risk summary:"</span>)</span>
@@ -3396,6 +3526,7 @@ Baseline strategy summary:</code></pre>
 <span id="cb28-73"><a href="#cb28-73" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>, <span class="dv">2</span>].legend()</span>
 <span id="cb28-74"><a href="#cb28-74" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb28-75"><a href="#cb28-75" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Baseline risk summary:</code></pre>
 </div>
@@ -3510,7 +3641,7 @@ Baseline strategy summary:</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-21-output-5.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-21-output-5.png" class="lightbox" data-gallery="quarto-lightbox-gallery-17"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-21-output-5.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3553,6 +3684,8 @@ Baseline strategy summary:</code></pre>
 <p>As we can see, the <span class="math inline">\(30\)</span>Y key rate duration is the largest, followed by the <span class="math inline">\(10\)</span>Y bucket. Together they explain most of the rate sensitivity. This is exactly why the baseline ladder suffered a meaningful drawdown in the rising rate times. Coupon income helps, but coupon income is not large enough to fully offset a rapid repricing of long duration cash flows.</p>
 <p>This section also gives us a natural reason to test duration targeting. If the baseline strategy has duration around <span class="math inline">\(6.6\)</span> to <span class="math inline">\(6.9\)</span>, and much of that exposure comes from the long end, then we may want to reduce the duration an stabilize it. We now see if a duration-targeted overlay can lower volatility and drawdown, and what return reduction we accept for that risk control.</p>
 <div id="cafe8744" class="cell" data-execution_count="21">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>duration_df, duration_bucket_df, duration_trades_df, duration_carry_df, duration_snapshots <span class="op">=</span> run_ladder_strategy(</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    strategy_name<span class="op">=</span><span class="st">"duration_target_ladder"</span>, target_weights<span class="op">=</span>target_weights,</span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    duration_target<span class="op">=</span>duration_target, duration_band<span class="op">=</span>duration_band)</span>
@@ -3610,6 +3743,7 @@ Baseline strategy summary:</code></pre>
 <span id="cb31-55"><a href="#cb31-55" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].legend()</span>
 <span id="cb31-56"><a href="#cb31-56" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb31-57"><a href="#cb31-57" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>duration_target_ladder: using contiguous block 2006-02-28 -&gt; 2026-01-31 (240 dates)
 Strategy comparison summary:</code></pre>
@@ -3885,7 +4019,7 @@ Strategy comparison summary:</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-22-output-7.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-22-output-7.png" class="lightbox" data-gallery="quarto-lightbox-gallery-18"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-22-output-7.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3935,6 +4069,8 @@ Strategy comparison summary:</code></pre>
 <section id="implementing-the-whole-project-on-japan-data-using-quantfinlab" class="level1">
 <h1>Implementing the whole project on Japan data using quantfinlab</h1>
 <div id="a1824e0d" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -4131,10 +4267,11 @@ Strategy comparison summary:</code></pre>
 <span id="cb35-194"><a href="#cb35-194" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
 <span id="cb35-195"><a href="#cb35-195" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"Secondary dataset not yet committed at"</span>, second_path)</span>
 <span id="cb35-196"><a href="#cb35-196" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"When available, this cell will execute the same workflow on it."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-23-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-23-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-19"><img src="01_yield_curve_bond_pricing_and_risk_files/figure-html/cell-23-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4673,6 +4810,57 @@ Bond price/risk table:</code></pre>
       });
       clipboardModal.on('success', onCopySuccess);
     }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
         var filterRegex = new RegExp('/' + window.location.host + '/');
@@ -5015,6 +5203,38 @@ Bond price/risk table:</code></pre>
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 

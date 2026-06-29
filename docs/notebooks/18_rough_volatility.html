@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>18. Rough Volatility for Option Pricing – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/17_network_portfolio.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -112,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -143,7 +144,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -292,13 +293,92 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#setup-reused-data-and-the-new-object" id="toc-setup-reused-data-and-the-new-object" class="nav-link active" data-scroll-target="#setup-reused-data-and-the-new-object">1) Setup, Reused Data, and the New Object</a>
+  <ul class="collapse">
+  <li><a href="#physical-roughness-and-risk-neutral-roughness" id="toc-physical-roughness-and-risk-neutral-roughness" class="nav-link" data-scroll-target="#physical-roughness-and-risk-neutral-roughness">1.1 Physical Roughness and Risk-Neutral Roughness</a></li>
+  <li><a href="#imports-and-plotting-settings" id="toc-imports-and-plotting-settings" class="nav-link" data-scroll-target="#imports-and-plotting-settings">Imports and plotting settings</a></li>
+  </ul></li>
+  <li><a href="#realized-variance-and-log-variance-proxies" id="toc-realized-variance-and-log-variance-proxies" class="nav-link" data-scroll-target="#realized-variance-and-log-variance-proxies">2) Realized Variance and Log-Variance Proxies</a>
+  <ul class="collapse">
+  <li><a href="#variance-proxy-design" id="toc-variance-proxy-design" class="nav-link" data-scroll-target="#variance-proxy-design">2.1 Variance Proxy Design</a></li>
+  </ul></li>
+  <li><a href="#fractional-brownian-motion-as-the-roughness-benchmark" id="toc-fractional-brownian-motion-as-the-roughness-benchmark" class="nav-link" data-scroll-target="#fractional-brownian-motion-as-the-roughness-benchmark">3) Fractional Brownian Motion as the Roughness Benchmark</a>
+  <ul class="collapse">
+  <li><a href="#path-regularity-by-scale" id="toc-path-regularity-by-scale" class="nav-link" data-scroll-target="#path-regularity-by-scale">3.1 Path Regularity by Scale</a></li>
+  <li><a href="#moment-scaling-on-simulated-paths" id="toc-moment-scaling-on-simulated-paths" class="nav-link" data-scroll-target="#moment-scaling-on-simulated-paths">3.2 Moment Scaling on Simulated Paths</a></li>
+  <li><a href="#the-meaning-of-h-in-volatility-modeling" id="toc-the-meaning-of-h-in-volatility-modeling" class="nav-link" data-scroll-target="#the-meaning-of-h-in-volatility-modeling">3.3 The Meaning of <span class="math inline">\(H\)</span> in Volatility Modeling</a></li>
+  </ul></li>
+  <li><a href="#estimating-roughness-from-spx-realized-variance" id="toc-estimating-roughness-from-spx-realized-variance" class="nav-link" data-scroll-target="#estimating-roughness-from-spx-realized-variance">4) Estimating Roughness from SPX Realized Variance</a>
+  <ul class="collapse">
+  <li><a href="#separate-q-and-pooled-q-estimation" id="toc-separate-q-and-pooled-q-estimation" class="nav-link" data-scroll-target="#separate-q-and-pooled-q-estimation">4.1 Separate-<span class="math inline">\(q\)</span> and Pooled-<span class="math inline">\(q\)</span> Estimation</a></li>
+  </ul></li>
+  <li><a href="#rough-kernel-forecasting" id="toc-rough-kernel-forecasting" class="nav-link" data-scroll-target="#rough-kernel-forecasting">5) Rough-Kernel Forecasting</a>
+  <ul class="collapse">
+  <li><a href="#relation-to-har-and-garch" id="toc-relation-to-har-and-garch" class="nav-link" data-scroll-target="#relation-to-har-and-garch">5.1 Relation to HAR and GARCH</a></li>
+  </ul></li>
+  <li><a href="#option-chain-cleaning-and-implied-volatility-surface-support" id="toc-option-chain-cleaning-and-implied-volatility-surface-support" class="nav-link" data-scroll-target="#option-chain-cleaning-and-implied-volatility-surface-support">6) Option Chain Cleaning and Implied-Volatility Surface Support</a>
+  <ul class="collapse">
+  <li><a href="#from-clean-quotes-to-surface-targets" id="toc-from-clean-quotes-to-surface-targets" class="nav-link" data-scroll-target="#from-clean-quotes-to-surface-targets">6.1 From Clean Quotes to Surface Targets</a></li>
+  </ul></li>
+  <li><a href="#smooth-surface-fit-and-atm-skew-power-law" id="toc-smooth-surface-fit-and-atm-skew-power-law" class="nav-link" data-scroll-target="#smooth-surface-fit-and-atm-skew-power-law">7) Smooth Surface Fit and ATM Skew Power Law</a>
+  <ul class="collapse">
+  <li><a href="#short-maturity-skew-as-a-roughness-fingerprint" id="toc-short-maturity-skew-as-a-roughness-fingerprint" class="nav-link" data-scroll-target="#short-maturity-skew-as-a-roughness-fingerprint">7.1 Short-Maturity Skew as a Roughness Fingerprint</a></li>
+  </ul></li>
+  <li><a href="#heston-as-the-markovian-control-model" id="toc-heston-as-the-markovian-control-model" class="nav-link" data-scroll-target="#heston-as-the-markovian-control-model">8) Heston as the Markovian Control Model</a>
+  <ul class="collapse">
+  <li><a href="#parameter-identifiability-in-heston" id="toc-parameter-identifiability-in-heston" class="nav-link" data-scroll-target="#parameter-identifiability-in-heston">8.1 Parameter Identifiability in Heston</a></li>
+  </ul></li>
+  <li><a href="#forward-variance-curve-and-rough-bergomi" id="toc-forward-variance-curve-and-rough-bergomi" class="nav-link" data-scroll-target="#forward-variance-curve-and-rough-bergomi">9) Forward Variance Curve and Rough Bergomi</a>
+  <ul class="collapse">
+  <li><a href="#forward-variance-extraction" id="toc-forward-variance-extraction" class="nav-link" data-scroll-target="#forward-variance-extraction">9.1 Forward Variance Extraction</a></li>
+  <li><a href="#simulating-rough-bergomi-paths" id="toc-simulating-rough-bergomi-paths" class="nav-link" data-scroll-target="#simulating-rough-bergomi-paths">9.2 Simulating Rough Bergomi Paths</a></li>
+  </ul></li>
+  <li><a href="#rough-heston-and-the-fractional-riccati-equation" id="toc-rough-heston-and-the-fractional-riccati-equation" class="nav-link" data-scroll-target="#rough-heston-and-the-fractional-riccati-equation">10) Rough Heston and the Fractional Riccati Equation</a>
+  <ul class="collapse">
+  <li><a href="#memory-kernel-shape" id="toc-memory-kernel-shape" class="nav-link" data-scroll-target="#memory-kernel-shape">10.1 Memory Kernel Shape</a></li>
+  <li><a href="#fractional-riccati-structure" id="toc-fractional-riccati-structure" class="nav-link" data-scroll-target="#fractional-riccati-structure">10.2 Fractional Riccati Structure</a></li>
+  <li><a href="#from-fractional-riccati-to-option-prices" id="toc-from-fractional-riccati-to-option-prices" class="nav-link" data-scroll-target="#from-fractional-riccati-to-option-prices">10.3 From Fractional Riccati to Option Prices</a></li>
+  </ul></li>
+  <li><a href="#rough-heston-calibration" id="toc-rough-heston-calibration" class="nav-link" data-scroll-target="#rough-heston-calibration">11) Rough-Heston Calibration</a>
+  <ul class="collapse">
+  <li><a href="#skew-penalty-and-fixed-h-design" id="toc-skew-penalty-and-fixed-h-design" class="nav-link" data-scroll-target="#skew-penalty-and-fixed-h-design">11.1 Skew Penalty and Fixed-H Design</a></li>
+  <li><a href="#reading-the-rough-heston-diagnostics" id="toc-reading-the-rough-heston-diagnostics" class="nav-link" data-scroll-target="#reading-the-rough-heston-diagnostics">Reading the Rough-Heston Diagnostics</a></li>
+  </ul></li>
+  <li><a href="#model-implied-atm-skew" id="toc-model-implied-atm-skew" class="nav-link" data-scroll-target="#model-implied-atm-skew">12) Model-Implied ATM Skew</a>
+  <ul class="collapse">
+  <li><a href="#market-skew-model-skew-and-calibration-tension" id="toc-market-skew-model-skew-and-calibration-tension" class="nav-link" data-scroll-target="#market-skew-model-skew-and-calibration-tension">12.1 Market Skew, Model Skew, and Calibration Tension</a></li>
+  </ul></li>
+  <li><a href="#delta-under-rough-volatility" id="toc-delta-under-rough-volatility" class="nav-link" data-scroll-target="#delta-under-rough-volatility">13) Delta Under Rough Volatility</a>
+  <ul class="collapse">
+  <li><a href="#delta-with-smile-feedback" id="toc-delta-with-smile-feedback" class="nav-link" data-scroll-target="#delta-with-smile-feedback">13.1 Delta with Smile Feedback</a></li>
+  </ul></li>
+  <li><a href="#spx-dashboard-and-evidence-summary" id="toc-spx-dashboard-and-evidence-summary" class="nav-link" data-scroll-target="#spx-dashboard-and-evidence-summary">14) SPX Dashboard and Evidence Summary</a>
+  <ul class="collapse">
+  <li><a href="#reading-the-spx-evidence-as-one-workflow" id="toc-reading-the-spx-evidence-as-one-workflow" class="nav-link" data-scroll-target="#reading-the-spx-evidence-as-one-workflow">Reading the SPX Evidence as One Workflow</a></li>
+  <li><a href="#connecting-the-spx-evidence" id="toc-connecting-the-spx-evidence" class="nav-link" data-scroll-target="#connecting-the-spx-evidence">Connecting the SPX Evidence</a></li>
+  </ul></li>
+  <li><a href="#btc-library-implementation" id="toc-btc-library-implementation" class="nav-link" data-scroll-target="#btc-library-implementation">15) BTC Library Implementation</a>
+  <ul class="collapse">
+  <li><a href="#continuous-time-market-structure" id="toc-continuous-time-market-structure" class="nav-link" data-scroll-target="#continuous-time-market-structure">15.1 Continuous-Time Market Structure</a></li>
+  <li><a href="#btc-roughness-and-forecasting" id="toc-btc-roughness-and-forecasting" class="nav-link" data-scroll-target="#btc-roughness-and-forecasting">15.2 BTC Roughness and Forecasting</a></li>
+  <li><a href="#btc-option-skew-and-rough-models" id="toc-btc-option-skew-and-rough-models" class="nav-link" data-scroll-target="#btc-option-skew-and-rough-models">15.3 BTC Option Skew and Rough Models</a></li>
+  <li><a href="#btc-delta-and-secondary-results" id="toc-btc-delta-and-secondary-results" class="nav-link" data-scroll-target="#btc-delta-and-secondary-results">15.4 BTC Delta and Secondary Results</a></li>
+  <li><a href="#btc-interpretation-across-the-whole-pipeline" id="toc-btc-interpretation-across-the-whole-pipeline" class="nav-link" data-scroll-target="#btc-interpretation-across-the-whole-pipeline">BTC Interpretation Across the Whole Pipeline</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">18. Rough Volatility for Option Pricing</span></h1>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">18. Rough Volatility for Option Pricing</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -425,6 +505,8 @@ C_t(K,T) = D(t,T)\mathbb{E}^{\mathbb{Q}}_t[(S_T-K)^+]
 <section id="imports-and-plotting-settings" class="level3">
 <h3 class="anchored" data-anchor-id="imports-and-plotting-settings">Imports and plotting settings</h3>
 <div id="project18-00" class="cell" data-execution_count="1">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
@@ -485,8 +567,11 @@ C_t(K,T) = D(t,T)\mathbb{E}^{\mathbb{Q}}_t[(S_T-K)^+]
 <span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>lags <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">8</span>, <span class="dv">16</span>, <span class="dv">32</span>]</span>
 <span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>horizons <span class="op">=</span> [<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">21</span>, <span class="dv">42</span>, <span class="dv">63</span>]</span>
 <span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(seed)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="project18-01" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>spx_spot <span class="op">=</span> load_ohlcv(</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">/</span> <span class="st">"spx_index_ohlcv.csv"</span>,</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"yfinance_csv"</span>,</span>
@@ -509,6 +594,7 @@ C_t(K,T) = D(t,T)\mathbb{E}^{\mathbb{Q}}_t[(S_T-K)^+]
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    data_dir <span class="op">/</span> <span class="st">"us_treasury_yields.csv"</span>,</span>
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    source<span class="op">=</span><span class="st">"us_treasury"</span>,</span>
 <span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <p>We start by loading the SPX spot series, the SPX option pairs, and the Treasury yield curve. This is a reused data layer, so the main thing to check is that the time coverage is sufficient for two different tasks: long realized-volatility roughness estimation and shorter option-surface calibration.</p>
 <p>The realized-variance side starts in 1990 and gives us thousands of observations. The option calibration side is shorter because it uses the SPX option-chain panel. This split matters. Historical roughness estimation benefits from a long time series, while option-implied roughness depends on surface quality across strikes and maturities.</p>
@@ -578,6 +664,8 @@ RV_t^{(m)} = \frac{1}{m}\sum_{j=0}^{m-1}r_{t-j}^2
 \]</span></p>
 <p>The useful estimate is the one that remains plausible after comparing both sides.</p>
 <div id="project18-02" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>spx_ret <span class="op">=</span> log_returns(spx_spot[<span class="st">"close"</span>]).dropna()</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>spx_var_1d <span class="op">=</span> spx_ret.<span class="bu">pow</span>(<span class="dv">2</span>).rename(<span class="st">"rv_1d"</span>)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>spx_var_5d_sum <span class="op">=</span> spx_var_1d.rolling(<span class="dv">5</span>).<span class="bu">sum</span>().rename(<span class="st">"rv_5d_sum"</span>)</span>
@@ -603,6 +691,7 @@ RV_t^{(m)} = \frac{1}{m}\sum_{j=0}^{m-1}r_{t-j}^2
 <span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"p95_annualized_volatility_10d"</span>: <span class="bu">float</span>(np.sqrt(ann_trading <span class="op">*</span> spx_var).quantile(<span class="fl">0.95</span>)),</span>
 <span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>}])</span>
 <span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>display(rv_summary)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -636,6 +725,8 @@ RV_t^{(m)} = \frac{1}{m}\sum_{j=0}^{m-1}r_{t-j}^2
 </div>
 </div>
 <div id="project18-03" class="cell" data-execution_count="4">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">14</span>, <span class="fl">3.5</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].plot(spx_spot.index, spx_spot[<span class="st">"close"</span>], lw<span class="op">=</span><span class="fl">1.0</span>, color<span class="op">=</span>palette[<span class="dv">0</span>], label<span class="op">=</span><span class="st">"SPX"</span>)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>axes0b <span class="op">=</span> axes[<span class="dv">0</span>].twinx()</span>
@@ -650,10 +741,11 @@ RV_t^{(m)} = \frac{1}{m}\sum_{j=0}^{m-1}r_{t-j}^2
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"log variance"</span>)</span>
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend()</span>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="18_rough_volatility_files/figure-html/cell-5-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="18_rough_volatility_files/figure-html/cell-5-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="18_rough_volatility_files/figure-html/cell-5-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -785,6 +877,8 @@ m_q(\ell) \propto \ell^{qH}
 <p>The <span class="math inline">\(R^2\)</span> of this regression matters. A nice-looking <span class="math inline">\(H\)</span> estimate with poor <span class="math inline">\(R^2\)</span> is not useful. It means the power-law relationship is weak. So we report both <span class="math inline">\(H\)</span> and <span class="math inline">\(R^2\)</span>. We need the estimate and the quality of the scaling relationship.</p>
 <p>For example, if <span class="math inline">\(q=1\)</span> gives <span class="math inline">\(H=0.12\)</span> with <span class="math inline">\(R^2=0.98\)</span>, and <span class="math inline">\(q=2\)</span> gives <span class="math inline">\(H=0.13\)</span> with <span class="math inline">\(R^2=0.97\)</span>, that is strong evidence of stable rough scaling. If <span class="math inline">\(q=1\)</span> gives <span class="math inline">\(H=0.02\)</span> with <span class="math inline">\(R^2=0.10\)</span>, that is just noise.</p>
 <div id="project18-04" class="cell" data-execution_count="5">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fgn_covariance(h, n):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> np.arange(<span class="bu">int</span>(n), dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">0.5</span> <span class="op">*</span> (np.<span class="bu">abs</span>(k <span class="op">+</span> <span class="fl">1.0</span>) <span class="op">**</span> (<span class="fl">2.0</span> <span class="op">*</span> h) <span class="op">-</span> <span class="fl">2.0</span> <span class="op">*</span> np.<span class="bu">abs</span>(k) <span class="op">**</span> (<span class="fl">2.0</span> <span class="op">*</span> h) <span class="op">+</span> np.<span class="bu">abs</span>(k <span class="op">-</span> <span class="fl">1.0</span>) <span class="op">**</span> (<span class="fl">2.0</span> <span class="op">*</span> h))</span>
@@ -812,8 +906,11 @@ m_q(\ell) \propto \ell^{qH}
 <span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>            moment <span class="op">=</span> <span class="bu">float</span>(np.nanmean(np.<span class="bu">abs</span>(inc) <span class="op">**</span> <span class="bu">float</span>(q)))</span>
 <span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>            rows.append({<span class="st">"q"</span>: <span class="bu">float</span>(q), <span class="st">"lag"</span>: lag, <span class="st">"moment"</span>: moment, <span class="st">"log_lag"</span>: np.log(lag), <span class="st">"log_moment"</span>: np.log(moment)})</span>
 <span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(rows)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="project18-05" class="cell" data-execution_count="6">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>fbm_h_values <span class="op">=</span> [<span class="fl">0.05</span>, <span class="fl">0.10</span>, <span class="fl">0.20</span>, <span class="fl">0.50</span>, <span class="fl">0.80</span>]</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>fbm_paths <span class="op">=</span> {}</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>fbm_scaling_rows <span class="op">=</span> []</span>
@@ -834,6 +931,7 @@ m_q(\ell) \propto \ell^{qH}
 <span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>fbm_scaling <span class="op">=</span> pd.concat(fbm_scaling_rows, ignore_index<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>fbm_h_table <span class="op">=</span> pd.DataFrame(fbm_h_rows)</span>
 <span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>display(fbm_h_table.groupby(<span class="st">"h_true"</span>, as_index<span class="op">=</span><span class="va">False</span>).agg(median_h<span class="op">=</span>(<span class="st">"h_estimate"</span>, <span class="st">"median"</span>), mean_r2<span class="op">=</span>(<span class="st">"r2"</span>, <span class="st">"mean"</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -885,6 +983,8 @@ m_q(\ell) \propto \ell^{qH}
 </div>
 </div>
 <div id="project18-06" class="cell" data-execution_count="7">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">7</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, h0 <span class="kw">in</span> <span class="bu">enumerate</span>(fbm_h_values):</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">0</span>, <span class="dv">0</span>].plot(fbm_paths[h0].index, fbm_paths[h0].iloc[:, <span class="dv">0</span>], lw<span class="op">=</span><span class="fl">1.0</span>, color<span class="op">=</span>palette[i], label<span class="op">=</span><span class="ss">f"H=</span><span class="sc">{</span>h0<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
@@ -903,6 +1003,7 @@ m_q(\ell) \propto \ell^{qH}
 <span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> axes.ravel():</span>
 <span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    ax.legend(fontsize<span class="op">=</span><span class="dv">6</span>, ncol<span class="op">=</span><span class="dv">2</span>)</span>
 <span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stderr">
 <pre><code>C:\Users\Lenovo\AppData\Local\Temp\ipykernel_16732\2139515692.py:17: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
   ax.legend(fontsize=6, ncol=2)</code></pre>
@@ -910,7 +1011,7 @@ m_q(\ell) \propto \ell^{qH}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="18_rough_volatility_files/figure-html/cell-8-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="18_rough_volatility_files/figure-html/cell-8-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="18_rough_volatility_files/figure-html/cell-8-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -983,6 +1084,8 @@ X_{i,1}=q_i\log \ell_i
 \]</span></p>
 <p>We also use a robust option when available. The reason is that volatility data has extreme jumps. A Huber-style regression reduces the influence of huge observations without throwing them away entirely. That fits the financial problem: crisis spikes are real, but we don’t want one crash week to determine the roughness exponent alone.</p>
 <div id="project18-07" class="cell" data-execution_count="8">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> power_variation(x, q_values, lags):</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> pd.Series(x).dropna()</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> s.to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -1092,8 +1195,11 @@ X_{i,1}=q_i\log \ell_i
 <span id="cb9-107"><a href="#cb9-107" aria-hidden="true" tabindex="-1"></a>    short_mask <span class="op">=</span> df[<span class="st">"window_days"</span>].le(<span class="dv">10</span>)</span>
 <span id="cb9-108"><a href="#cb9-108" aria-hidden="true" tabindex="-1"></a>    df[<span class="st">"main_H"</span>] <span class="op">=</span> <span class="bu">float</span>(df.loc[short_mask, <span class="st">"H_pooled"</span>].median()) <span class="cf">if</span> short_mask.<span class="bu">any</span>() <span class="cf">else</span> <span class="bu">float</span>(df[<span class="st">"H_pooled"</span>].median())</span>
 <span id="cb9-109"><a href="#cb9-109" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="project18-08" class="cell" data-execution_count="9">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>log_var_proxies <span class="op">=</span> {</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"raw daily squared-return RV"</span>: spx_log_var_1d,</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"rolling Project-5 RV 5d"</span>: spx_log_var_5d,</span>
@@ -1154,6 +1260,7 @@ X_{i,1}=q_i\log \ell_i
 <span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a>display(multi_window_table.<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>display(block_rv_table.<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"h_rv = </span><span class="sc">{</span>h_rv<span class="sc">:.4f}</span><span class="ss">  (pooled 10d: </span><span class="sc">{</span>h_rv_pooled<span class="sc">:.4f}</span><span class="ss">)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1459,6 +1566,8 @@ X_{i,1}=q_i\log \ell_i
 </div>
 </div>
 <div id="project18-09" class="cell" data-execution_count="10">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">7</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, (q, g) <span class="kw">in</span> <span class="bu">enumerate</span>(empirical_scaling_by_proxy[<span class="st">"raw daily squared-return RV"</span>].groupby(<span class="st">"q"</span>, sort<span class="op">=</span><span class="va">True</span>)):</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    axes[<span class="dv">0</span>, <span class="dv">0</span>].plot(g[<span class="st">"log_lag"</span>], g[<span class="st">"log_moment"</span>], marker<span class="op">=</span><span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">2</span>, lw<span class="op">=</span><span class="fl">0.65</span>, alpha<span class="op">=</span><span class="fl">0.28</span>, color<span class="op">=</span>palette[i])</span>
@@ -1480,6 +1589,7 @@ X_{i,1}=q_i\log \ell_i
 <span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> axes.ravel():</span>
 <span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>    ax.legend(fontsize<span class="op">=</span><span class="dv">6</span>)</span>
 <span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stderr">
 <pre><code>C:\Users\Lenovo\AppData\Local\Temp\ipykernel_16732\1299751826.py:20: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
   ax.legend(fontsize=6)</code></pre>
@@ -1487,7 +1597,7 @@ X_{i,1}=q_i\log \ell_i
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="18_rough_volatility_files/figure-html/cell-11-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="18_rough_volatility_files/figure-html/cell-11-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="18_rough_volatility_files/figure-html/cell-11-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1556,6 +1666,8 @@ RV_{t+1} = \beta_0 + \beta_d RV_t^{(d)} + \beta_w RV_t^{(w)} + \beta_m RV_t^{(m)
 \]</span></p>
 <p>If HAR is a three-bucket approximation and GARCH is an exponential-recursion approximation, the rough kernel is a fractional-memory approximation. This makes it a natural forecast model after we estimate <span class="math inline">\(H\)</span>.</p>
 <div id="project18-10" class="cell" data-execution_count="11">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> kernel_weights(h, lookback):</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    j <span class="op">=</span> np.arange(<span class="dv">1</span>, <span class="bu">int</span>(lookback) <span class="op">+</span> <span class="dv">1</span>, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> j <span class="op">**</span> (<span class="bu">float</span>(h) <span class="op">-</span> <span class="fl">0.5</span>)</span>
@@ -1597,8 +1709,11 @@ RV_{t+1} = \beta_0 + \beta_d RV_t^{(d)} + \beta_w RV_t^{(w)} + \beta_m RV_t^{(m)
 <span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>                <span class="st">"realized_vol_ann"</span>: np.sqrt(annualization <span class="op">*</span> realized_sum <span class="op">/</span> horizon) <span class="cf">if</span> realized_sum <span class="op">&gt;=</span> <span class="dv">0</span> <span class="cf">else</span> np.nan,</span>
 <span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>            })</span>
 <span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(records)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="project18-11" class="cell" data-execution_count="12">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>arch_specs <span class="op">=</span> [</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"name"</span>: <span class="st">"garch11_normal"</span>, <span class="st">"vol"</span>: <span class="st">"GARCH"</span>, <span class="st">"p"</span>: <span class="dv">1</span>, <span class="st">"o"</span>: <span class="dv">0</span>, <span class="st">"q"</span>: <span class="dv">1</span>, <span class="st">"dist"</span>: <span class="st">"normal"</span>},</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"name"</span>: <span class="st">"gjr11_student"</span>, <span class="st">"vol"</span>: <span class="st">"GARCH"</span>, <span class="st">"p"</span>: <span class="dv">1</span>, <span class="st">"o"</span>: <span class="dv">1</span>, <span class="st">"q"</span>: <span class="dv">1</span>, <span class="st">"dist"</span>: <span class="st">"t"</span>},</span>
@@ -1624,6 +1739,7 @@ RV_{t+1} = \beta_0 + \beta_d RV_t^{(d)} + \beta_w RV_t^{(w)} + \beta_m RV_t^{(m)
 <span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>display(forecast_scores.sort_values([<span class="st">"horizon"</span>, <span class="st">"qlike_var"</span>]).<span class="bu">round</span>(<span class="dv">6</span>))</span>
 <span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>display(win_counts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2072,6 +2188,8 @@ RV_{t+1} = \beta_0 + \beta_d RV_t^{(d)} + \beta_w RV_t^{(w)} + \beta_m RV_t^{(m)
 </div>
 </div>
 <div id="project18-12" class="cell" data-execution_count="13">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="fl">3.6</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>heat <span class="op">=</span> forecast_scores.pivot_table(index<span class="op">=</span><span class="st">"model"</span>, columns<span class="op">=</span><span class="st">"horizon"</span>, values<span class="op">=</span><span class="st">"qlike_var"</span>, aggfunc<span class="op">=</span><span class="st">"mean"</span>)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>heat_norm <span class="op">=</span> heat.div(heat.<span class="bu">min</span>(axis<span class="op">=</span><span class="dv">0</span>), axis<span class="op">=</span><span class="dv">1</span>)</span>
@@ -2097,10 +2215,11 @@ RV_{t+1} = \beta_0 + \beta_d RV_t^{(d)} + \beta_w RV_t^{(w)} + \beta_m RV_t^{(m)
 <span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_ylabel(<span class="st">"rank"</span>)</span>
 <span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].legend(fontsize<span class="op">=</span><span class="dv">6</span>)</span>
 <span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="18_rough_volatility_files/figure-html/cell-14-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="18_rough_volatility_files/figure-html/cell-14-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="18_rough_volatility_files/figure-html/cell-14-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2165,6 +2284,8 @@ C^{\text{Black76}}(F,K,\tau,\sigma,D) = C^{\text{market}}
 <p>We already solved IV in Project 4, but the rough-volatility use is stricter. A noisy IV quote away from the money may not hurt a broad surface visualization, but it can distort skew derivatives and calibration residuals. That is why the code filters extreme IV values, low weights, and poor quote regions before surface fitting.</p>
 <p>The option-surface section also prepares calibration grids. Instead of calibrating to every raw quote directly, we build a controlled surface target grid across moneyness and maturity. This makes the model comparison more balanced: Heston and rough Heston are evaluated across comparable regions rather than being dominated by whatever strikes happen to have the most raw quotes.</p>
 <div id="project18-13" class="cell" data-execution_count="14">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>option_dates <span class="op">=</span> pd.DatetimeIndex(pd.to_datetime(spx_pairs_raw[<span class="st">"date"</span>].dropna().unique())).sort_values()</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>monthly_dates <span class="op">=</span> pd.Series(option_dates).groupby(pd.Series(option_dates).dt.to_period(<span class="st">"M"</span>)).last().to_list()</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>vol_on_option_dates <span class="op">=</span> np.sqrt(ann_trading <span class="op">*</span> spx_var).reindex(option_dates, method<span class="op">=</span><span class="st">"nearest"</span>)</span>
@@ -2210,6 +2331,7 @@ C^{\text{Black76}}(F,K,\tau,\sigma,D) = C^{\text{market}}
 <span id="cb17-43"><a href="#cb17-43" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-44"><a href="#cb17-44" aria-hidden="true" tabindex="-1"></a>display(clean_steps)</span>
 <span id="cb17-45"><a href="#cb17-45" aria-hidden="true" tabindex="-1"></a>display(clean_quotes[[<span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"option_type"</span>, <span class="st">"spot"</span>, <span class="st">"strike"</span>, <span class="st">"tau"</span>, <span class="st">"mid"</span>, <span class="st">"forward"</span>, <span class="st">"rate"</span>]].head(<span class="dv">10</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2424,6 +2546,8 @@ C^{\text{Black76}}(F,K,\tau,\sigma,D) = C^{\text{market}}
 </div>
 </div>
 <div id="project18-14" class="cell" data-execution_count="15">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>iv_quotes <span class="op">=</span> implied_vol_table(</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    clean_quotes,</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    price_cols<span class="op">=</span>(<span class="st">"bid"</span>, <span class="st">"mid"</span>, <span class="st">"ask"</span>),</span>
@@ -2453,6 +2577,7 @@ C^{\text{Black76}}(F,K,\tau,\sigma,D) = C^{\text{market}}
 <span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>coverage <span class="op">=</span> surface_quotes.groupby(<span class="st">"date"</span>).agg(quotes<span class="op">=</span>(<span class="st">"iv_mid"</span>, <span class="st">"size"</span>), expiries<span class="op">=</span>(<span class="st">"expiry"</span>, <span class="st">"nunique"</span>), median_spread<span class="op">=</span>(<span class="st">"relative_spread"</span>, <span class="st">"median"</span>), median_iv<span class="op">=</span>(<span class="st">"iv_mid"</span>, <span class="st">"median"</span>)).reset_index()</span>
 <span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>display(coverage)</span>
 <span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>display(surface_quotes[[<span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"option_type"</span>, <span class="st">"strike"</span>, <span class="st">"k"</span>, <span class="st">"tau"</span>, <span class="st">"iv_mid"</span>, <span class="st">"surface_weight"</span>]].head(<span class="dv">10</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3066,6 +3191,8 @@ C^{\text{Black76}}(F,K,\tau,\sigma,D) = C^{\text{market}}
 </div>
 </div>
 <div id="project18-15" class="cell" data-execution_count="16">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="fl">3.5</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].bar(coverage[<span class="st">"date"</span>], coverage[<span class="st">"quotes"</span>], width<span class="op">=</span><span class="dv">8</span>, color<span class="op">=</span>palette[<span class="dv">0</span>])</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"Surface Quote Coverage by Date"</span>)</span>
@@ -3076,10 +3203,11 @@ C^{\text{Black76}}(F,K,\tau,\sigma,D) = C^{\text{market}}
 <span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_xlabel(<span class="st">"log moneyness"</span>)</span>
 <span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_ylabel(<span class="st">"implied volatility"</span>)</span>
 <span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="18_rough_volatility_files/figure-html/cell-17-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="18_rough_volatility_files/figure-html/cell-17-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="18_rough_volatility_files/figure-html/cell-17-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3158,6 +3286,8 @@ H = \frac{1}{2} - \alpha
 <p>The skew-window choice is not just a coding detail. Very short maturities can be noisy because of microstructure, pin risk, expiry effects, and low vega. Long maturities can dilute the rough short-time signature because the asymptotic relation is about <span class="math inline">\(\tau \to 0\)</span>.</p>
 <p>So we test several windows, such as 7–45 days, 7–60 days, 14–90 days, and 14–150 days. If the estimated <span class="math inline">\(H\)</span> changes drastically across windows, the power-law evidence is unstable. If the estimate is consistent and the <span class="math inline">\(R^2\)</span> is high, the skew roughness is more trustworthy.</p>
 <div id="project18-16" class="cell" data-execution_count="17">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>surface_fit <span class="op">=</span> fit_surface_panel(</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    surface_quotes,</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    date_col<span class="op">=</span><span class="st">"date"</span>,</span>
@@ -3181,6 +3311,7 @@ H = \frac{1}{2} - \alpha
 <span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>surface_err <span class="op">=</span> surface_residuals(q_main, fits<span class="op">=</span>{<span class="st">"smooth"</span>: fit_visual}, k_col<span class="op">=</span><span class="st">"k"</span>, tau_col<span class="op">=</span><span class="st">"tau"</span>, iv_col<span class="op">=</span><span class="st">"iv_mid"</span>)</span>
 <span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>display(fit_summary.sort_values([<span class="st">"date"</span>, <span class="st">"fit"</span>]).<span class="bu">round</span>(<span class="dv">5</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stderr">
 <pre><code>C:\Users\Lenovo\AppData\Local\Temp\ipykernel_16732\1977237117.py:23: UserWarning: obj.round has no effect with datetime, timedelta, or period dtypes. Use obj.dt.round(...) instead.
   display(fit_summary.sort_values(["date", "fit"]).round(5))</code></pre>
@@ -3429,6 +3560,8 @@ H = \frac{1}{2} - \alpha
 </div>
 </div>
 <div id="project18-17" class="cell" data-execution_count="18">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="fl">3.6</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, d <span class="kw">in</span> <span class="bu">enumerate</span>([<span class="dv">14</span>, <span class="dv">30</span>, <span class="dv">60</span>, <span class="dv">90</span>, <span class="dv">150</span>]):</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    tau <span class="op">=</span> d <span class="op">/</span> ann_days</span>
@@ -3446,15 +3579,18 @@ H = \frac{1}{2} - \alpha
 <span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].axhline(<span class="fl">0.0</span>, color<span class="op">=</span><span class="st">"black"</span>, lw<span class="op">=</span><span class="fl">0.8</span>)</span>
 <span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_title(<span class="st">"Surface Residuals"</span>)</span>
 <span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="18_rough_volatility_files/figure-html/cell-19-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="18_rough_volatility_files/figure-html/cell-19-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="18_rough_volatility_files/figure-html/cell-19-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="project18-18" class="cell" data-execution_count="19">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> atm_skew(q, fit, tau_values, dk<span class="op">=</span><span class="fl">0.01</span>):</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> tau <span class="kw">in</span> tau_values:</span>
@@ -3483,8 +3619,11 @@ H = \frac{1}{2} - \alpha
 <span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a>    ss_tot <span class="op">=</span> <span class="bu">float</span>(np.<span class="bu">sum</span>((y <span class="op">-</span> y.mean()) <span class="op">**</span> <span class="dv">2</span>))</span>
 <span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> <span class="op">-</span><span class="bu">float</span>(beta[<span class="dv">1</span>])</span>
 <span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame([{<span class="st">"window"</span>: window, <span class="st">"c"</span>: <span class="bu">float</span>(np.exp(beta[<span class="dv">0</span>])), <span class="st">"alpha"</span>: alpha, <span class="st">"h_from_skew"</span>: <span class="fl">0.5</span> <span class="op">-</span> alpha, <span class="st">"r2"</span>: <span class="fl">1.0</span> <span class="op">-</span> ss_res <span class="op">/</span> ss_tot, <span class="st">"n"</span>: <span class="bu">int</span>(<span class="bu">len</span>(q))}])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="project18-19" class="cell" data-execution_count="20">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>skew_windows <span class="op">=</span> {</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"short_1_7_45"</span>: (<span class="dv">7</span>, <span class="dv">45</span>),</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"short_2_7_60"</span>: (<span class="dv">7</span>, <span class="dv">60</span>),</span>
@@ -3527,6 +3666,7 @@ H = \frac{1}{2} - \alpha
 <span id="cb24-40"><a href="#cb24-40" aria-hidden="true" tabindex="-1"></a>display(skew_fit_main_by_window[[<span class="st">"window"</span>, <span class="st">"alpha"</span>, <span class="st">"h_from_skew"</span>, <span class="st">"r2"</span>, <span class="st">"n"</span>]].<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb24-41"><a href="#cb24-41" aria-hidden="true" tabindex="-1"></a>display(skew_history[[<span class="st">"date"</span>, <span class="st">"window"</span>, <span class="st">"alpha"</span>, <span class="st">"h_from_skew"</span>, <span class="st">"r2"</span>, <span class="st">"n"</span>]].<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb24-42"><a href="#cb24-42" aria-hidden="true" tabindex="-1"></a>display(skew_quality_summary.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4253,6 +4393,8 @@ H = \frac{1}{2} - \alpha
 </div>
 </div>
 <div id="project18-20" class="cell" data-execution_count="21">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="fl">3.6</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].plot(psi_main[<span class="st">"tau_days"</span>], psi_main[<span class="st">"atm_skew"</span>], marker<span class="op">=</span><span class="st">"o"</span>, lw<span class="op">=</span><span class="fl">1.2</span>, color<span class="op">=</span>palette[<span class="dv">0</span>])</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"ATM Skew Term Structure"</span>)</span>
@@ -4271,10 +4413,11 @@ H = \frac{1}{2} - \alpha
 <span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_title(<span class="st">"Quality-Filtered Skew-Implied H"</span>)</span>
 <span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].legend()</span>
 <span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="18_rough_volatility_files/figure-html/cell-22-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="18_rough_volatility_files/figure-html/cell-22-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="18_rough_volatility_files/figure-html/cell-22-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4339,6 +4482,8 @@ d\langle W^S, W^V\rangle_t = \rho\,dt
 \]</span></p>
 <p>The rough-Heston model adds <span class="math inline">\(H\)</span>, which affects short-time regularity and skew scaling. This can reduce pressure on <span class="math inline">\(\rho\)</span> and <span class="math inline">\(\sigma_v\)</span> in some regions, but it also adds another dimension of calibration risk. So the comparison has to use diagnostics, not just parameter stories.</p>
 <div id="project18-21" class="cell" data-execution_count="22">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> surface_calib_grid(quotes, fits, dte_targets<span class="op">=</span>(<span class="dv">7</span>, <span class="dv">10</span>, <span class="dv">14</span>, <span class="dv">21</span>, <span class="dv">30</span>, <span class="dv">45</span>, <span class="dv">60</span>, <span class="dv">90</span>, <span class="dv">120</span>, <span class="dv">150</span>), min_quotes_per_date<span class="op">=</span><span class="dv">45</span>, ann<span class="op">=</span>ann_days):</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    fit_map <span class="op">=</span> {pd.Timestamp(k).normalize(): v <span class="cf">for</span> k, v <span class="kw">in</span> fits.items()}</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> quotes.copy()</span>
@@ -4457,8 +4602,11 @@ d\langle W^S, W^V\rangle_t = \rho\,dt
 <span id="cb27-116"><a href="#cb27-116" aria-hidden="true" tabindex="-1"></a>rough_fit_dates <span class="op">=</span> rough_fit_dates[rough_fit_dates.isin(eligible_fit_dates)]</span>
 <span id="cb27-117"><a href="#cb27-117" aria-hidden="true" tabindex="-1"></a>heston_cache <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spx_heston_surface_grid_daily.parquet"</span></span>
 <span id="cb27-118"><a href="#cb27-118" aria-hidden="true" tabindex="-1"></a>heston_fit_cache <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spx_heston_surface_grid_fit.parquet"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="project18-22" class="cell" data-execution_count="23">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> heston_cache.exists() <span class="kw">and</span> heston_fit_cache.exists():</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    heston_daily <span class="op">=</span> pd.read_parquet(heston_cache)</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    heston_prices <span class="op">=</span> pd.read_parquet(heston_fit_cache)</span>
@@ -4482,6 +4630,7 @@ d\langle W^S, W^V\rangle_t = \rho\,dt
 <span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>heston_buckets <span class="op">=</span> residual_by_bucket(heston_prices)</span>
 <span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>display(heston_daily.<span class="bu">round</span>(<span class="dv">5</span>))</span>
 <span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a>display(heston_table.<span class="bu">round</span>(<span class="dv">5</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stderr">
 <pre><code>C:\Users\Lenovo\AppData\Local\Temp\ipykernel_16732\3151898688.py:22: UserWarning: obj.round has no effect with datetime, timedelta, or period dtypes. Use obj.dt.round(...) instead.
   display(heston_daily.round(5))</code></pre>
@@ -5487,6 +5636,8 @@ d\langle W^S, W^V\rangle_t = \rho\,dt
 </div>
 </div>
 <div id="project18-23" class="cell" data-execution_count="24">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="fl">6.4</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>axes <span class="op">=</span> axes.ravel()</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>heston_daily[<span class="st">"feller_ratio"</span>] <span class="op">=</span> <span class="fl">2.0</span> <span class="op">*</span> heston_daily[<span class="st">"p1"</span>] <span class="op">*</span> heston_daily[<span class="st">"p2"</span>] <span class="op">/</span> heston_daily[<span class="st">"p3"</span>].<span class="bu">pow</span>(<span class="dv">2</span>).replace(<span class="fl">0.0</span>, np.nan)</span>
@@ -5497,10 +5648,11 @@ d\langle W^S, W^V\rangle_t = \rho\,dt
 <span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>heston_fit_main <span class="op">=</span> heston_prices[heston_prices[<span class="st">"date"</span>].eq(heston_main_date)].copy()</span>
 <span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>heston_fit_main[<span class="st">"k"</span>] <span class="op">=</span> np.log(heston_fit_main[<span class="st">"strike"</span>] <span class="op">/</span> heston_fit_main[<span class="st">"spot"</span>])</span>
 <span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="18_rough_volatility_files/figure-html/cell-25-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="18_rough_volatility_files/figure-html/cell-25-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="18_rough_volatility_files/figure-html/cell-25-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5610,6 +5762,8 @@ C(K,T) = e^{-rT}\mathbb{E}\left[(S_T-K)^+\right]
 <p>The important implementation point is that rBergomi is useful for generating the right kind of rough smile shape, but it is not the fastest daily calibration engine. It is path-based, and every parameter evaluation requires many simulated paths.</p>
 </blockquote>
 <div id="project18-24" class="cell" data-execution_count="25">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> xi_from_surface(fit, tau_values):</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Dense grid for PCHIP interpolation of total variance w(tau) = tau * sigma_ATM(tau)^2</span></span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    tau_arr <span class="op">=</span> np.sort(np.asarray(tau_values, dtype<span class="op">=</span><span class="bu">float</span>))</span>
@@ -5768,8 +5922,11 @@ C(K,T) = e^{-rT}\mathbb{E}\left[(S_T-K)^+\right]
 <span id="cb31-156"><a href="#cb31-156" aria-hidden="true" tabindex="-1"></a>        ivs[i] <span class="op">=</span> <span class="bu">float</span>(iv_arr[<span class="dv">0</span>]) <span class="cf">if</span> <span class="bu">len</span>(iv_arr) <span class="op">&gt;</span> <span class="dv">0</span> <span class="kw">and</span> np.isfinite(iv_arr[<span class="dv">0</span>]) <span class="cf">else</span> np.nan</span>
 <span id="cb31-157"><a href="#cb31-157" aria-hidden="true" tabindex="-1"></a>    k_arr <span class="op">=</span> np.log(strikes <span class="op">/</span> forward)  <span class="co"># forward moneyness, consistent with surface</span></span>
 <span id="cb31-158"><a href="#cb31-158" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame({<span class="st">"tau"</span>: tau, <span class="st">"tau_days"</span>: tau <span class="op">*</span> ann_days, <span class="st">"strike"</span>: strikes, <span class="st">"k"</span>: k_arr, <span class="st">"price"</span>: prices, <span class="st">"price_se"</span>: price_ses, <span class="st">"iv"</span>: ivs})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="project18-25" class="cell" data-execution_count="26">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>xi_curve <span class="op">=</span> xi_from_surface(fit_visual, np.array([<span class="dv">14</span>, <span class="dv">21</span>, <span class="dv">30</span>, <span class="dv">45</span>, <span class="dv">60</span>, <span class="dv">90</span>, <span class="dv">120</span>, <span class="dv">150</span>], dtype<span class="op">=</span><span class="bu">float</span>) <span class="op">/</span> ann_days)</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>spot_main <span class="op">=</span> <span class="bu">float</span>(q_main[<span class="st">"spot"</span>].median())</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>rate_rb <span class="op">=</span> <span class="bu">float</span>(q_main[<span class="st">"rate"</span>].median())</span>
@@ -5908,6 +6065,7 @@ C(K,T) = e^{-rT}\mathbb{E}\left[(S_T-K)^+\right]
 <span id="cb32-136"><a href="#cb32-136" aria-hidden="true" tabindex="-1"></a>display(xi_curve.<span class="bu">round</span>(<span class="dv">5</span>))</span>
 <span id="cb32-137"><a href="#cb32-137" aria-hidden="true" tabindex="-1"></a>display(rbergomi_loss_table.<span class="bu">round</span>(<span class="dv">6</span>))</span>
 <span id="cb32-138"><a href="#cb32-138" aria-hidden="true" tabindex="-1"></a>display(rbergomi_convergence.<span class="bu">round</span>(<span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6191,6 +6349,8 @@ C(K,T) = e^{-rT}\mathbb{E}\left[(S_T-K)^+\right]
 </div>
 </div>
 <div id="project18-26" class="cell" data-execution_count="27">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">16</span>, <span class="dv">7</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>time_grid <span class="op">=</span> np.linspace(<span class="fl">0.0</span>, <span class="dv">90</span> <span class="op">/</span> ann_days, rbergomi_v.shape[<span class="dv">1</span>])</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">20</span>):</span>
@@ -6214,6 +6374,7 @@ C(K,T) = e^{-rT}\mathbb{E}\left[(S_T-K)^+\right]
 <span id="cb33-21"><a href="#cb33-21" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> axes.ravel():</span>
 <span id="cb33-22"><a href="#cb33-22" aria-hidden="true" tabindex="-1"></a>    ax.legend(fontsize<span class="op">=</span><span class="dv">6</span>)</span>
 <span id="cb33-23"><a href="#cb33-23" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stderr">
 <pre><code>C:\Users\Lenovo\AppData\Local\Temp\ipykernel_16732\641628204.py:22: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
   ax.legend(fontsize=6)</code></pre>
@@ -6221,7 +6382,7 @@ C(K,T) = e^{-rT}\mathbb{E}\left[(S_T-K)^+\right]
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="18_rough_volatility_files/figure-html/cell-28-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="18_rough_volatility_files/figure-html/cell-28-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="18_rough_volatility_files/figure-html/cell-28-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -6358,6 +6519,8 @@ D^\alpha\psi=F(u,\psi)
 <p>where the weights <span class="math inline">\(a_{n,j}\)</span> come from the fractional kernel. The exact scheme can vary, but the interpretation is stable: every new Riccati value carries memory.</p>
 <p>This is why convergence checks across 128, 256, 512, and 1024 steps matter. If the fractional Riccati solution changes too much as the grid is refined, the resulting option prices cannot be trusted. The convergence diagnostics are not optional polish; they are part of making rough-Heston pricing credible.</p>
 <div id="project18-27" class="cell" data-execution_count="28">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rough_heston_params_array(params):</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(params, pd.Series):</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>        h <span class="op">=</span> <span class="bu">float</span>(params.get(<span class="st">"h"</span>, h_rv))</span>
@@ -6538,8 +6701,11 @@ D^\alpha\psi=F(u,\psi)
 <span id="cb35-178"><a href="#cb35-178" aria-hidden="true" tabindex="-1"></a>        cf<span class="op">=</span>cf,</span>
 <span id="cb35-179"><a href="#cb35-179" aria-hidden="true" tabindex="-1"></a>        variance_hint<span class="op">=</span><span class="bu">max</span>(v0, theta, <span class="fl">1e-6</span>),</span>
 <span id="cb35-180"><a href="#cb35-180" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="project18-28" class="cell" data-execution_count="29">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>rough_test_row <span class="op">=</span> calibration_quotes.iloc[<span class="dv">0</span>]</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>rough_test_heston <span class="op">=</span> heston_daily[heston_daily[<span class="st">"date"</span>].eq(rough_test_row[<span class="st">"date"</span>])]</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> rough_test_heston.empty:</span>
@@ -6594,6 +6760,7 @@ D^\alpha\psi=F(u,\psi)
 <span id="cb36-52"><a href="#cb36-52" aria-hidden="true" tabindex="-1"></a>display(price_grid_test.<span class="bu">round</span>(<span class="dv">8</span>))</span>
 <span id="cb36-53"><a href="#cb36-53" aria-hidden="true" tabindex="-1"></a>display(heston_limit_test.groupby(<span class="st">"tau_days"</span>).agg(max_abs_diff<span class="op">=</span>(<span class="st">"abs_diff"</span>, <span class="st">"max"</span>), median_abs_diff<span class="op">=</span>(<span class="st">"abs_diff"</span>, <span class="st">"median"</span>)).<span class="bu">round</span>(<span class="dv">8</span>))</span>
 <span id="cb36-54"><a href="#cb36-54" aria-hidden="true" tabindex="-1"></a>display(cf_diagnostics.<span class="bu">round</span>(<span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -7083,6 +7250,8 @@ D^\alpha\psi=F(u,\psi)
 <p>This is a good result for the project because it is honest. Rough Heston is not presented as a magic replacement for Heston. We see exactly where it helps and where it costs. The model improves parts of the surface connected to rough skew behavior, but it is slower and not globally better on this dataset. That is a much more realistic research conclusion than claiming the most advanced model always wins.</p>
 <p>There is another important interpretation. The rough-Heston calibration in we use limited dates, limited iterations, fixed or anchored <span class="math inline">\(H\)</span>, and a teaching-oriented engine. A production calibration desk would tune optimizer restarts, parameter transformations, weighting schemes, time grids, and the Fourier/COS settings much more aggressively. So the result should be read as a controlled research comparison, not as a final claim that one model dominates across all calibration choices.</p>
 <div id="project18-29" class="cell" data-execution_count="30">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_rough_heston_one_date(q, start, h_fixed, max_nfev<span class="op">=</span><span class="dv">18</span>, n_terms<span class="op">=</span><span class="dv">72</span>, riccati_steps<span class="op">=</span><span class="dv">256</span>, surface_fit<span class="op">=</span><span class="va">None</span>, lambda_skew<span class="op">=</span><span class="fl">0.0</span>):</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    t0 <span class="op">=</span> time.perf_counter()</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    day <span class="op">=</span> calibration_weights(q).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
@@ -7193,8 +7362,11 @@ D^\alpha\psi=F(u,\psi)
 <span id="cb37-108"><a href="#cb37-108" aria-hidden="true" tabindex="-1"></a>        <span class="st">"p4"</span>: <span class="bu">float</span>(res_x[<span class="dv">5</span>]),</span>
 <span id="cb37-109"><a href="#cb37-109" aria-hidden="true" tabindex="-1"></a>    }</span>
 <span id="cb37-110"><a href="#cb37-110" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> row, fit, res_x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="project18-30" class="cell" data-execution_count="31">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>rough_cache <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spx_rough_heston_surface_grid_fixed_h_daily.parquet"</span></span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>rough_fit_cache <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spx_rough_heston_surface_grid_fixed_h_fit.parquet"</span></span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>expected_rough_dates <span class="op">=</span> pd.DatetimeIndex([</span>
@@ -7288,6 +7460,7 @@ D^\alpha\psi=F(u,\psi)
 <span id="cb38-91"><a href="#cb38-91" aria-hidden="true" tabindex="-1"></a>display(rough_only_table.<span class="bu">round</span>(<span class="dv">5</span>))</span>
 <span id="cb38-92"><a href="#cb38-92" aria-hidden="true" tabindex="-1"></a>display(model_quality.<span class="bu">round</span>(<span class="dv">5</span>))</span>
 <span id="cb38-93"><a href="#cb38-93" aria-hidden="true" tabindex="-1"></a>display(bucket_improvement.head(<span class="dv">12</span>).<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stderr">
 <pre><code>C:\Users\Lenovo\AppData\Local\Temp\ipykernel_16732\370601643.py:89: UserWarning: obj.round has no effect with datetime, timedelta, or period dtypes. Use obj.dt.round(...) instead.
   display(rough_daily.round(5))</code></pre>
@@ -8044,6 +8217,8 @@ D^\alpha\psi=F(u,\psi)
 </div>
 </div>
 <div id="project18-31" class="cell" data-execution_count="32">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="fl">6.4</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>axes <span class="op">=</span> axes.ravel()</span>
 <span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, (col, label) <span class="kw">in</span> <span class="bu">enumerate</span>([(<span class="st">"h"</span>, <span class="st">"H"</span>), (<span class="st">"p0"</span>, <span class="st">"v0"</span>), (<span class="st">"p1"</span>, <span class="st">"kappa"</span>), (<span class="st">"p2"</span>, <span class="st">"theta"</span>), (<span class="st">"p3"</span>, <span class="st">"vol-of-vol"</span>), (<span class="st">"p4"</span>, <span class="st">"rho"</span>)]):</span>
@@ -8074,17 +8249,18 @@ D^\alpha\psi=F(u,\psi)
 <span id="cb40-28"><a href="#cb40-28" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Rough-Heston Price Convergence"</span>)</span>
 <span id="cb40-29"><a href="#cb40-29" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend(fontsize<span class="op">=</span><span class="dv">6</span>)</span>
 <span id="cb40-30"><a href="#cb40-30" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="18_rough_volatility_files/figure-html/cell-33-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="18_rough_volatility_files/figure-html/cell-33-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="18_rough_volatility_files/figure-html/cell-33-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="18_rough_volatility_files/figure-html/cell-33-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="18_rough_volatility_files/figure-html/cell-33-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="18_rough_volatility_files/figure-html/cell-33-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -8148,6 +8324,8 @@ H_{\text{model}} = \frac{1}{2} - \alpha_{\text{model}}
 <p>This model-to-IV inversion step matters. We don’t compare model variance parameters directly with market skew. We compare the <strong>implied-volatility surface generated by the model</strong> with the market surface. That keeps the diagnostic in the same units as option traders use.</p>
 <p>If rough Heston generates a too-steep short-end skew, the fitted <span class="math inline">\(H_{\text{model}}\)</span> from the power law can become lower or even unstable. If it generates a too-flat skew, <span class="math inline">\(H_{\text{model}}\)</span> becomes too high. The goal isn’t only to make <span class="math inline">\(H\)</span> small; it is to match the observed maturity decay of skew.</p>
 <div id="project18-32" class="cell" data-execution_count="33">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model_atm_skew(model_name, params, spot, rate, dividend_yield, tau_values, dk<span class="op">=</span><span class="fl">0.01</span>):</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> tau <span class="kw">in</span> np.asarray(tau_values, dtype<span class="op">=</span><span class="bu">float</span>):</span>
@@ -8204,6 +8382,7 @@ H_{\text{model}} = \frac{1}{2} - \alpha_{\text{model}}
 <span id="cb41-54"><a href="#cb41-54" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> axes:</span>
 <span id="cb41-55"><a href="#cb41-55" aria-hidden="true" tabindex="-1"></a>    ax.legend()</span>
 <span id="cb41-56"><a href="#cb41-56" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stderr">
 <pre><code>e:\daneshgah\quantitative-finance-lab\.venv\Lib\site-packages\numba\core\typing\typeof.py:268: FutureWarning: future versions will not create a writeable array from broadcast_array. Set the writable flag explicitly to avoid this warning.
   readonly = not val.flags.writeable</code></pre>
@@ -8548,7 +8727,7 @@ H_{\text{model}} = \frac{1}{2} - \alpha_{\text{model}}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="18_rough_volatility_files/figure-html/cell-34-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="18_rough_volatility_files/figure-html/cell-34-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="18_rough_volatility_files/figure-html/cell-34-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -8604,6 +8783,8 @@ H_{\text{model}} = \frac{1}{2} - \alpha_{\text{model}}
 <p>The two bumped prices use the full rough-Heston pricing model, not just a BSM formula with a local IV. This captures the model’s belief about how spot and variance interact.</p>
 <p>For downside equity puts and near-ATM short-dated calls, this can matter a lot. A negative spot shock increases the probability of higher variance in leverage-effect models. That changes the option’s value beyond the direct intrinsic-value effect. Roughness can amplify the short-horizon version of this effect.</p>
 <div id="project18-33" class="cell" data-execution_count="34">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> heston_delta_fd(params, strike, tau, spot, rate, dividend_yield, bump):</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    ds <span class="op">=</span> spot <span class="op">*</span> bump</span>
 <span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    p_up <span class="op">=</span> cos_prices(<span class="st">"heston"</span>, params, strike, tau, spot <span class="op">+</span> ds, rate, dividend_yield, option_type<span class="op">=</span><span class="st">"call"</span>, engine<span class="op">=</span><span class="st">"cpp"</span>, n_terms<span class="op">=</span><span class="dv">128</span>, truncation_width<span class="op">=</span><span class="fl">16.0</span>)</span>
@@ -8616,8 +8797,11 @@ H_{\text{model}} = \frac{1}{2} - \alpha_{\text{model}}
 <span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>    p_up <span class="op">=</span> rough_heston_px(params, strike, tau, spot <span class="op">+</span> ds, rate, dividend_yield, <span class="st">"call"</span>)</span>
 <span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>    p_dn <span class="op">=</span> rough_heston_px(params, strike, tau, spot <span class="op">-</span> ds, rate, dividend_yield, <span class="st">"call"</span>)</span>
 <span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (p_up <span class="op">-</span> p_dn) <span class="op">/</span> (<span class="fl">2.0</span> <span class="op">*</span> ds)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="project18-34" class="cell" data-execution_count="35">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>delta_k <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">0.35</span>, <span class="fl">0.25</span>, <span class="dv">49</span>)</span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>delta_days <span class="op">=</span> np.array([<span class="dv">7</span>, <span class="dv">14</span>, <span class="dv">30</span>, <span class="dv">60</span>, <span class="dv">90</span>], dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>delta_rows <span class="op">=</span> []</span>
@@ -8668,6 +8852,7 @@ H_{\text{model}} = \frac{1}{2} - \alpha_{\text{model}}
 <span id="cb44-48"><a href="#cb44-48" aria-hidden="true" tabindex="-1"></a>delta_map <span class="op">=</span> pd.DataFrame(delta_rows)</span>
 <span id="cb44-49"><a href="#cb44-49" aria-hidden="true" tabindex="-1"></a>atm_delta_table <span class="op">=</span> delta_map[np.isclose(delta_map[<span class="st">"k"</span>], <span class="fl">0.0</span>, atol<span class="op">=</span><span class="fl">0.015</span>)].copy()</span>
 <span id="cb44-50"><a href="#cb44-50" aria-hidden="true" tabindex="-1"></a>display(atm_delta_table.<span class="bu">round</span>(<span class="dv">5</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -8939,6 +9124,8 @@ H_{\text{model}} = \frac{1}{2} - \alpha_{\text{model}}
 </div>
 </div>
 <div id="project18-35" class="cell" data-execution_count="36">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="fl">3.6</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>plot_delta_day <span class="op">=</span> <span class="fl">30.0</span> <span class="cf">if</span> <span class="fl">30.0</span> <span class="kw">in</span> <span class="bu">set</span>(delta_map[<span class="st">"tau_days"</span>]) <span class="cf">else</span> <span class="bu">float</span>(delta_map[<span class="st">"tau_days"</span>].iloc[<span class="dv">0</span>])</span>
 <span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>delta_slice <span class="op">=</span> delta_map[delta_map[<span class="st">"tau_days"</span>].eq(plot_delta_day)].copy()</span>
@@ -8960,10 +9147,11 @@ H_{\text{model}} = \frac{1}{2} - \alpha_{\text{model}}
 <span id="cb45-19"><a href="#cb45-19" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="st">"log moneyness"</span>)</span>
 <span id="cb45-20"><a href="#cb45-20" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend(ncol<span class="op">=</span><span class="dv">2</span>)</span>
 <span id="cb45-21"><a href="#cb45-21" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="18_rough_volatility_files/figure-html/cell-37-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="18_rough_volatility_files/figure-html/cell-37-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="18_rough_volatility_files/figure-html/cell-37-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -9030,6 +9218,8 @@ H_{\text{model}} = \frac{1}{2} - \alpha_{\text{model}}
 <p>The table reports the high-quality ATM skew estimate around <strong>0.365</strong>, the broad ATM skew median around <strong>0.411</strong>, and rough-Heston calibrated median <span class="math inline">\(H\)</span> around <strong>0.383</strong>. The realized-variance diagnostics are lower when we account for proxy construction. That difference is not a contradiction. It shows that historical variance roughness and option-implied roughness are related but not identical objects.</p>
 <p>The model-fit table also gives a balanced view. Heston has better global fit on the common date set, while rough Heston improves some skew-sensitive buckets. This is exactly the kind of result we should expect from an advanced model: it doesn’t remove the need for diagnostics. It gives a richer way to represent short-end skew and variance roughness, but model selection still depends on the objective.</p>
 <div id="project18-36" class="cell" data-execution_count="37">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>spx_tables <span class="op">=</span> {</span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"roughness_evidence"</span>: pd.concat([</span>
 <span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>        roughness_proxy_table,</span>
@@ -9106,6 +9296,7 @@ H_{\text{model}} = \frac{1}{2} - \alpha_{\text{model}}
 <span id="cb46-74"><a href="#cb46-74" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">11</span>].set_title(<span class="st">"Rough-Heston vs Surface-BSM Delta"</span>)</span>
 <span id="cb46-75"><a href="#cb46-75" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">"Project 18 SPX Rough Volatility Dashboard"</span>, fontsize<span class="op">=</span><span class="dv">20</span>, y<span class="op">=</span><span class="fl">1.02</span>)</span>
 <span id="cb46-76"><a href="#cb46-76" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>roughness_evidence</code></pre>
 </div>
@@ -10275,7 +10466,7 @@ H_{\text{model}} = \frac{1}{2} - \alpha_{\text{model}}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="18_rough_volatility_files/figure-html/cell-38-output-16.png" class="img-fluid figure-img"></p>
+<p><a href="18_rough_volatility_files/figure-html/cell-38-output-16.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="18_rough_volatility_files/figure-html/cell-38-output-16.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -10361,6 +10552,8 @@ C_{\text{USD}} = C_{\text{BTC}} \times S_{\text{BTCUSD}}
 <p>This affects realized variance, forecast scaling, and option maturity conversion. A 7-day BTC option really contains 7 calendar days of trading. A 7-calendar-day SPX option contains fewer cash-market trading sessions, though options still price overnight and weekend risk indirectly.</p>
 <p>This is one reason BTC roughness and BTC skew need separate interpretation. The time clock is different, the market microstructure is different, and the volatility risk premium is shaped by different participants.</p>
 <div id="project18-37" class="cell" data-execution_count="38">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -10600,6 +10793,7 @@ C_{\text{USD}} = C_{\text{BTC}} \times S_{\text{BTCUSD}}
 <span id="cb55-237"><a href="#cb55-237" aria-hidden="true" tabindex="-1"></a>delta_gap(axes[<span class="dv">15</span>], delta_map, base_col<span class="op">=</span><span class="st">"surface_bsm_delta"</span>, title<span class="op">=</span><span class="st">"BTC Rough-Model Delta Gap"</span>)</span>
 <span id="cb55-238"><a href="#cb55-238" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="ss">f"Project 18 BTC Library Implementation | </span><span class="sc">{</span>pd<span class="sc">.</span>Timestamp(main_date)<span class="sc">.</span>date()<span class="sc">}</span><span class="ss">"</span>, fontsize<span class="op">=</span><span class="dv">22</span>, y<span class="op">=</span><span class="fl">1.01</span>)</span>
 <span id="cb55-239"><a href="#cb55-239" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stderr">
 <pre><code>e:\daneshgah\quantitative-finance-lab\.venv\Lib\site-packages\numba\core\typing\typeof.py:268: FutureWarning: future versions will not create a writeable array from broadcast_array. Set the writable flag explicitly to avoid this warning.
   readonly = not val.flags.writeable</code></pre>
@@ -12147,7 +12341,7 @@ C_{\text{USD}} = C_{\text{BTC}} \times S_{\text{BTCUSD}}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="18_rough_volatility_files/figure-html/cell-39-output-26.png" class="img-fluid figure-img"></p>
+<p><a href="18_rough_volatility_files/figure-html/cell-39-output-26.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="18_rough_volatility_files/figure-html/cell-39-output-26.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -12274,6 +12468,57 @@ H \in [0.04, 0.45]
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -12617,6 +12862,38 @@ H \in [0.04, 0.45]
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 

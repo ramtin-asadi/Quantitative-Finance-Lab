@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>4. Black-Scholes, Implied Volatility, Greeks and Hedging – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/03_risk_report_engine_and_CAPM.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -112,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -143,7 +144,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -292,13 +293,109 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#imports-and-plotting-style" id="toc-imports-and-plotting-style" class="nav-link active" data-scroll-target="#imports-and-plotting-style">imports and plotting style</a></li>
+  <li><a href="#introduction-to-options" id="toc-introduction-to-options" class="nav-link" data-scroll-target="#introduction-to-options">1. Introduction to Options</a>
+  <ul class="collapse">
+  <li><a href="#call-options-the-right-to-buy" id="toc-call-options-the-right-to-buy" class="nav-link" data-scroll-target="#call-options-the-right-to-buy">1.1) Call Options: The Right to Buy</a></li>
+  <li><a href="#the-other-side-selling-call-options" id="toc-the-other-side-selling-call-options" class="nav-link" data-scroll-target="#the-other-side-selling-call-options">1.2 The Other Side: Selling Call Options</a></li>
+  <li><a href="#put-options-the-right-to-sell" id="toc-put-options-the-right-to-sell" class="nav-link" data-scroll-target="#put-options-the-right-to-sell">1.3 Put Options: The Right to Sell</a></li>
+  <li><a href="#selling-put-options" id="toc-selling-put-options" class="nav-link" data-scroll-target="#selling-put-options">1.4 Selling Put Options</a></li>
+  <li><a href="#european-vs-american-options" id="toc-european-vs-american-options" class="nav-link" data-scroll-target="#european-vs-american-options">1.5 European vs American Options</a></li>
+  <li><a href="#no-arbitrage-principle" id="toc-no-arbitrage-principle" class="nav-link" data-scroll-target="#no-arbitrage-principle">1.6 No-Arbitrage Principle</a></li>
+  <li><a href="#put-call-parity" id="toc-put-call-parity" class="nav-link" data-scroll-target="#put-call-parity">1.7 Put-Call Parity</a></li>
+  </ul></li>
+  <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data">2) Data</a></li>
+  <li><a href="#stochastic-processes" id="toc-stochastic-processes" class="nav-link" data-scroll-target="#stochastic-processes">3. Stochastic Processes</a>
+  <ul class="collapse">
+  <li><a href="#random-walk-the-discrete-time-foundation" id="toc-random-walk-the-discrete-time-foundation" class="nav-link" data-scroll-target="#random-walk-the-discrete-time-foundation">3.1 Random Walk: The Discrete-Time Foundation</a></li>
+  <li><a href="#brownian-motion-wiener-process-continuous-time-random-walk" id="toc-brownian-motion-wiener-process-continuous-time-random-walk" class="nav-link" data-scroll-target="#brownian-motion-wiener-process-continuous-time-random-walk">3.2 Brownian Motion (Wiener Process): Continuous-Time Random Walk</a></li>
+  <li><a href="#geometric-brownian-motion-gbm" id="toc-geometric-brownian-motion-gbm" class="nav-link" data-scroll-target="#geometric-brownian-motion-gbm">3.3 Geometric Brownian Motion (GBM)</a></li>
+  <li><a href="#itôs-lemma" id="toc-itôs-lemma" class="nav-link" data-scroll-target="#itôs-lemma">3.4 Itô’s Lemma</a></li>
+  </ul></li>
+  <li><a href="#the-black-scholes-model" id="toc-the-black-scholes-model" class="nav-link" data-scroll-target="#the-black-scholes-model">4. The Black-Scholes Model</a>
+  <ul class="collapse">
+  <li><a href="#risk-neutral-pricing" id="toc-risk-neutral-pricing" class="nav-link" data-scroll-target="#risk-neutral-pricing">4.1 Risk-Neutral Pricing</a></li>
+  <li><a href="#black-scholes-assumptions" id="toc-black-scholes-assumptions" class="nav-link" data-scroll-target="#black-scholes-assumptions">4.2 Black Scholes Assumptions</a></li>
+  <li><a href="#the-black-scholes-partial-differential-equation" id="toc-the-black-scholes-partial-differential-equation" class="nav-link" data-scroll-target="#the-black-scholes-partial-differential-equation">4.3 The Black-Scholes Partial Differential Equation</a></li>
+  <li><a href="#the-black-scholes-formula" id="toc-the-black-scholes-formula" class="nav-link" data-scroll-target="#the-black-scholes-formula">4.5 The Black-Scholes Formula</a></li>
+  </ul></li>
+  <li><a href="#constructing-the-risk-free-rate-curve" id="toc-constructing-the-risk-free-rate-curve" class="nav-link" data-scroll-target="#constructing-the-risk-free-rate-curve">5) Constructing the Risk-Free Rate Curve</a>
+  <ul class="collapse">
+  <li><a href="#handling-the-short-end" id="toc-handling-the-short-end" class="nav-link" data-scroll-target="#handling-the-short-end">3.1 Handling the Short End</a></li>
+  </ul></li>
+  <li><a href="#forward-price" id="toc-forward-price" class="nav-link" data-scroll-target="#forward-price">6 Forward Price</a>
+  <ul class="collapse">
+  <li><a href="#forward-price-estimation-via-put-call-parity" id="toc-forward-price-estimation-via-put-call-parity" class="nav-link" data-scroll-target="#forward-price-estimation-via-put-call-parity">6.1 Forward Price Estimation via Put-Call Parity</a></li>
+  <li><a href="#pricing-with-the-black-scholes-forward-formula" id="toc-pricing-with-the-black-scholes-forward-formula" class="nav-link" data-scroll-target="#pricing-with-the-black-scholes-forward-formula">6.2 Pricing with the Black-Scholes Forward Formula</a></li>
+  <li><a href="#arbitrage-bounds-on-option-prices" id="toc-arbitrage-bounds-on-option-prices" class="nav-link" data-scroll-target="#arbitrage-bounds-on-option-prices">6.3 Arbitrage Bounds on Option Prices</a></li>
+  </ul></li>
+  <li><a href="#volatility" id="toc-volatility" class="nav-link" data-scroll-target="#volatility">7) Volatility</a>
+  <ul class="collapse">
+  <li><a href="#realized-volatility" id="toc-realized-volatility" class="nav-link" data-scroll-target="#realized-volatility">7.1 Realized Volatility</a></li>
+  </ul></li>
+  <li><a href="#implied-volatility" id="toc-implied-volatility" class="nav-link" data-scroll-target="#implied-volatility">7.2 Implied Volatility</a>
+  <ul class="collapse">
+  <li><a href="#newton-raphson-method" id="toc-newton-raphson-method" class="nav-link" data-scroll-target="#newton-raphson-method">7.2.1 Newton-Raphson Method</a></li>
+  <li><a href="#bisection-method-the-safety-net" id="toc-bisection-method-the-safety-net" class="nav-link" data-scroll-target="#bisection-method-the-safety-net">7.2.2 Bisection Method (The Safety Net)</a></li>
+  <li><a href="#lets-be-rational-inspired-method-halleyhouseholder-refinement" id="toc-lets-be-rational-inspired-method-halleyhouseholder-refinement" class="nav-link" data-scroll-target="#lets-be-rational-inspired-method-halleyhouseholder-refinement">7.2.3 Let’s be rational inspired method (Halley/Householder Refinement)</a></li>
+  <li><a href="#initial-guess" id="toc-initial-guess" class="nav-link" data-scroll-target="#initial-guess">7.2.4 Initial Guess</a></li>
+  <li><a href="#quality-flags" id="toc-quality-flags" class="nav-link" data-scroll-target="#quality-flags">Quality flags</a></li>
+  </ul></li>
+  <li><a href="#computing-rolling-realized-volatility" id="toc-computing-rolling-realized-volatility" class="nav-link" data-scroll-target="#computing-rolling-realized-volatility">8) Computing rolling realized volatility:</a>
+  <ul class="collapse">
+  <li><a href="#vega-scaled-error" id="toc-vega-scaled-error" class="nav-link" data-scroll-target="#vega-scaled-error">vega scaled error</a></li>
+  <li><a href="#iv-models-comparison" id="toc-iv-models-comparison" class="nav-link" data-scroll-target="#iv-models-comparison">IV models comparison</a></li>
+  </ul></li>
+  <li><a href="#greeks-computation-auto-differentiation-and-analytic-approximation" id="toc-greeks-computation-auto-differentiation-and-analytic-approximation" class="nav-link" data-scroll-target="#greeks-computation-auto-differentiation-and-analytic-approximation">9) Greeks computation, Auto Differentiation and analytic approximation</a>
+  <ul class="collapse">
+  <li><a href="#implied-rate-and-dividend-yield" id="toc-implied-rate-and-dividend-yield" class="nav-link" data-scroll-target="#implied-rate-and-dividend-yield">9.1 Implied Rate and Dividend Yield</a></li>
+  <li><a href="#the-greeks" id="toc-the-greeks" class="nav-link" data-scroll-target="#the-greeks">9.2 The Greeks</a></li>
+  <li><a href="#delta-delta" id="toc-delta-delta" class="nav-link" data-scroll-target="#delta-delta">9.2.1 Delta (<span class="math inline">\(\Delta\)</span>)</a></li>
+  <li><a href="#gamma-gamma" id="toc-gamma-gamma" class="nav-link" data-scroll-target="#gamma-gamma">9.2.2 Gamma (<span class="math inline">\(\Gamma\)</span>)</a></li>
+  <li><a href="#vega-mathcalv" id="toc-vega-mathcalv" class="nav-link" data-scroll-target="#vega-mathcalv">9.2.3 Vega (<span class="math inline">\(\mathcal{V}\)</span>)</a></li>
+  <li><a href="#theta-theta" id="toc-theta-theta" class="nav-link" data-scroll-target="#theta-theta">9.2.4 Theta (<span class="math inline">\(\Theta\)</span>)</a></li>
+  <li><a href="#rho-rho" id="toc-rho-rho" class="nav-link" data-scroll-target="#rho-rho">9.2.5 Rho (<span class="math inline">\(\rho\)</span>)</a></li>
+  <li><a href="#volga-vega-convexity" id="toc-volga-vega-convexity" class="nav-link" data-scroll-target="#volga-vega-convexity">9.2.6 Volga (vega convexity)</a></li>
+  <li><a href="#vanna" id="toc-vanna" class="nav-link" data-scroll-target="#vanna">9.2.7 Vanna</a></li>
+  <li><a href="#uncertainty-bands-via-corner-analysis" id="toc-uncertainty-bands-via-corner-analysis" class="nav-link" data-scroll-target="#uncertainty-bands-via-corner-analysis">9.3 Uncertainty Bands via Corner Analysis</a></li>
+  <li><a href="#automatic-differentiation-with-jax" id="toc-automatic-differentiation-with-jax" class="nav-link" data-scroll-target="#automatic-differentiation-with-jax">9.4 Automatic Differentiation with JAX</a></li>
+  </ul></li>
+  <li><a href="#dispersion-over-time" id="toc-dispersion-over-time" class="nav-link" data-scroll-target="#dispersion-over-time">10) Dispersion Over Time</a></li>
+  <li><a href="#no-arbitrage-checks" id="toc-no-arbitrage-checks" class="nav-link" data-scroll-target="#no-arbitrage-checks">11) No-Arbitrage Checks</a>
+  <ul class="collapse">
+  <li><a href="#static-bounds-intrinsic-value-constraints" id="toc-static-bounds-intrinsic-value-constraints" class="nav-link" data-scroll-target="#static-bounds-intrinsic-value-constraints">11.1. Static Bounds (Intrinsic Value Constraints)</a></li>
+  <li><a href="#monotonicity-decreasing-in-strike" id="toc-monotonicity-decreasing-in-strike" class="nav-link" data-scroll-target="#monotonicity-decreasing-in-strike">11.2 Monotonicity (Decreasing in Strike)</a></li>
+  <li><a href="#convexity-butterfly-arbitrage" id="toc-convexity-butterfly-arbitrage" class="nav-link" data-scroll-target="#convexity-butterfly-arbitrage">11.3 Convexity (Butterfly Arbitrage)</a></li>
+  </ul></li>
+  <li><a href="#greeks-hedging" id="toc-greeks-hedging" class="nav-link" data-scroll-target="#greeks-hedging">12) Greeks Hedging</a>
+  <ul class="collapse">
+  <li><a href="#delta-gamma-and-vega-exposure" id="toc-delta-gamma-and-vega-exposure" class="nav-link" data-scroll-target="#delta-gamma-and-vega-exposure">12.1 Delta, gamma, and vega exposure</a></li>
+  <li><a href="#spy-as-a-hedge-for-spx-option-exposure" id="toc-spy-as-a-hedge-for-spx-option-exposure" class="nav-link" data-scroll-target="#spy-as-a-hedge-for-spx-option-exposure">12.2 SPY as a hedge for SPX option exposure</a></li>
+  <li><a href="#contract-selection-algorithms" id="toc-contract-selection-algorithms" class="nav-link" data-scroll-target="#contract-selection-algorithms">12.3 Contract Selection Algorithms</a></li>
+  <li><a href="#delta-hedge-selection" id="toc-delta-hedge-selection" class="nav-link" data-scroll-target="#delta-hedge-selection">Delta Hedge Selection</a></li>
+  <li><a href="#delta-vega-hedge-selection" id="toc-delta-vega-hedge-selection" class="nav-link" data-scroll-target="#delta-vega-hedge-selection">Delta-Vega Hedge Selection</a></li>
+  <li><a href="#hedging-logic-band-based-rebalancing" id="toc-hedging-logic-band-based-rebalancing" class="nav-link" data-scroll-target="#hedging-logic-band-based-rebalancing">12.4 Hedging Logic: Band-Based Rebalancing</a></li>
+  <li><a href="#additional-constraints" id="toc-additional-constraints" class="nav-link" data-scroll-target="#additional-constraints">12.5 Additional Constraints</a></li>
+  <li><a href="#transactions-costs" id="toc-transactions-costs" class="nav-link" data-scroll-target="#transactions-costs">12.6 Transactions costs</a></li>
+  <li><a href="#roll-logic" id="toc-roll-logic" class="nav-link" data-scroll-target="#roll-logic">12.7 Roll Logic</a></li>
+  <li><a href="#running-the-strategy-simulation" id="toc-running-the-strategy-simulation" class="nav-link" data-scroll-target="#running-the-strategy-simulation">12.8 running the strategy simulation</a></li>
+  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">12.9 results</a></li>
+  </ul></li>
+  <li><a href="#implementation-of-the-project-on-btc-deribit-options-using-quantfinlab" id="toc-implementation-of-the-project-on-btc-deribit-options-using-quantfinlab" class="nav-link" data-scroll-target="#implementation-of-the-project-on-btc-deribit-options-using-quantfinlab">Implementation of the project on BTC-Deribit options using QuantFinLab</a></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">4. Black-Scholes, Implied Volatility, Greeks and Hedging</span></h1>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">4. Black-Scholes, Implied Volatility, Greeks and Hedging</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -329,6 +426,8 @@ window.Quarto = {
 <section id="imports-and-plotting-style" class="level3">
 <h3 class="anchored" data-anchor-id="imports-and-plotting-style">imports and plotting style</h3>
 <div id="e8a7848e" class="cell" data-execution_count="1">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
@@ -369,6 +468,7 @@ window.Quarto = {
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>seed <span class="op">=</span> <span class="dv">7</span></span>
 <span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>np.random.seed(seed)</span>
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="introduction-to-options" class="level2">
@@ -673,6 +773,8 @@ window.Quarto = {
 <p>We also build a simple liquidity proxy from volume and spread. This is economically useful because when multiple strikes are available, a practitioner usually prefers the cleaner, tighter, more active quotes. A hedge or pricing result based on illiquid quotes can look mathematically elegant but be practically useless.</p>
 <p>Later sections need a dataset where calls and puts can be compared at the same strike and expiry. That is why the raw chain is cleaned and reshaped so the call and put information can be paired. This pairing is essential for put–call parity and for extracting the forward price from observed option prices.</p>
 <div id="dc6cb601" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>chain_cols <span class="op">=</span> [</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quote_date"</span>,</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quote_readtime"</span>,</span>
@@ -757,6 +859,7 @@ window.Quarto = {
 <span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"df_pairs shape:"</span>, df_pairs.shape)</span>
 <span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"n trade_date:"</span>, df_pairs[<span class="st">"trade_date"</span>].nunique(), <span class="st">" | n (trade_date, expiry):"</span>, df_pairs.groupby([<span class="st">"trade_date"</span>, <span class="st">"expiry_datetime"</span>]).ngroups)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>df_pairs shape: (299214, 29)
 n trade_date: 505  | n (trade_date, expiry): 11969</code></pre>
@@ -873,6 +976,8 @@ n trade_date: 505  | n (trade_date, expiry): 11969</code></pre>
 <p>This is the solution we stated earlier. This is how we model price of an underlying asset for option pricing.</p>
 <p>A key detail in this model is <span class="math inline">\(\sigma\)</span>. It shows us how much volatile we expect the process to be which is one of the most unknown details of option pricing and there are so many ways to model the volatility which we get to them later.</p>
 <div id="1aeb31f4" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>n_steps <span class="op">=</span> <span class="dv">252</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>n_paths <span class="op">=</span> <span class="dv">2000</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>dt <span class="op">=</span> <span class="fl">1.0</span> <span class="op">/</span> n_steps</span>
@@ -924,17 +1029,18 @@ n trade_date: 505  | n (trade_date, expiry): 11969</code></pre>
 <span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-4-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-4-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-4-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-4-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-4-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-4-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1024,6 +1130,8 @@ n trade_date: 505  | n (trade_date, expiry): 11969</code></pre>
 <p><span class="math display">\[C = 100 \times 0.3772 - 105 \times e^{-0.05 \times 0.25} \times 0.3398\]</span> <span class="math display">\[C = 37.72 - 105 \times 0.9876 \times 0.3398\]</span> <span class="math display">\[C = 37.72 - 35.22 = 2.50\]</span></p>
 <p>The call option is worth approximately <span class="math inline">\(\$2.50\)</span>.</p>
 <div id="2609ee9c" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bs_price_spot(cp, spot, strike, tau, rate, vol):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    tau <span class="op">=</span> np.clip(np.asarray(tau, dtype<span class="op">=</span><span class="bu">float</span>), <span class="fl">1e-12</span>, <span class="va">None</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    vol <span class="op">=</span> np.clip(np.asarray(vol, dtype<span class="op">=</span><span class="bu">float</span>), <span class="fl">1e-8</span>, <span class="va">None</span>)</span>
@@ -1070,10 +1178,11 @@ n trade_date: 505  | n (trade_date, expiry): 11969</code></pre>
 <span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"call price"</span>)</span>
 <span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-5-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-5-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-5-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1094,6 +1203,8 @@ n trade_date: 505  | n (trade_date, expiry): 11969</code></pre>
 <p>This ensures we always have a well-defined rate for short-dated options without extrapolating into unstable regions.</p>
 <p>The rest of the code is mostly covered in the first notebook.</p>
 <div id="ca81c9e2" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> weighted_median(values, weights):</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> np.asarray(values, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> np.asarray(weights, dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -1109,8 +1220,11 @@ n trade_date: 505  | n (trade_date, expiry): 11969</code></pre>
 <span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    idx <span class="op">=</span> <span class="bu">int</span>(np.searchsorted(csum, <span class="fl">0.5</span> <span class="op">*</span> weights.<span class="bu">sum</span>()))</span>
 <span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    idx <span class="op">=</span> <span class="bu">int</span>(np.clip(idx, <span class="dv">0</span>, <span class="bu">len</span>(values) <span class="op">-</span> <span class="dv">1</span>))</span>
 <span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(values[idx])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="ac9d7f96" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.fixed_income <span class="im">import</span> bootstrap, smoothers, discounting</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.options <span class="im">import</span> rates_dividends</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1196,10 +1310,11 @@ n trade_date: 505  | n (trade_date, expiry): 11969</code></pre>
 <span id="cb7-83"><a href="#cb7-83" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"metric"</span>: <span class="st">"rate_source"</span>, <span class="st">"value"</span>: <span class="st">"fixed_income.bootstrap.build_zero_curve_panel_from_par_yields"</span>}])</span>
 <span id="cb7-84"><a href="#cb7-84" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-85"><a href="#cb7-85" aria-hidden="true" tabindex="-1"></a>df_curve_diag</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-7-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1393,6 +1508,8 @@ n trade_date: 505  | n (trade_date, expiry): 11969</code></pre>
 <p>Numba is a <strong>just-in-time (JIT) compiler</strong> for Python that translates Python functions into optimized machine code. For numerical algorithms like ours, it provides 10 to 100x faster execution and can run the code on different modes or even running on GPU.</p>
 <p>Also another choice for faster code is precomputing. Instead of recomputing <span class="math inline">\(\sqrt{\tau}\)</span> and <span class="math inline">\(\ln(F/K)\)</span> in every iteration, we compute them once outside the loop and pass them as arguments. This eliminates redundant calculations and improves cache efficiency.</p>
 <div id="809a1c8a" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cp_is_call(cp):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    arr <span class="op">=</span> np.asarray(cp)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> arr.ndim <span class="op">==</span> <span class="dv">0</span>:</span>
@@ -1565,6 +1682,7 @@ n trade_date: 505  | n (trade_date, expiry): 11969</code></pre>
 <span id="cb8-170"><a href="#cb8-170" aria-hidden="true" tabindex="-1"></a>    guess <span class="op">=</span> np.sqrt(<span class="fl">2.0</span> <span class="op">*</span> np.pi <span class="op">/</span> np.maximum(np.asarray(tau, dtype<span class="op">=</span><span class="bu">float</span>), <span class="fl">1e-12</span>)) <span class="op">*</span> (time_val <span class="op">/</span> scale)</span>
 <span id="cb8-171"><a href="#cb8-171" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.clip(guess, <span class="fl">0.03</span>, <span class="fl">2.0</span>)</span>
 <span id="cb8-172"><a href="#cb8-172" aria-hidden="true" tabindex="-1"></a></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="lets-be-rational-inspired-method-halleyhouseholder-refinement" class="level3">
@@ -1637,6 +1755,8 @@ n trade_date: 505  | n (trade_date, expiry): 11969</code></pre>
 </table>
 <p>This ensures the initial guess is always in the right ballpark, regardless of moneyness.</p>
 <div id="ca3b34cf" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> call_equiv_price_numba(is_call, price, df, fwd, strike):</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> is_call:</span>
@@ -1929,17 +2049,18 @@ n trade_date: 505  | n (trade_date, expiry): 11969</code></pre>
 <span id="cb9-290"><a href="#cb9-290" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"implied vol"</span>)</span>
 <span id="cb9-291"><a href="#cb9-291" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb9-292"><a href="#cb9-292" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-9-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-9-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-9-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-9-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-9-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-9-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1960,6 +2081,8 @@ n trade_date: 505  | n (trade_date, expiry): 11969</code></pre>
 <li>Risk-neutral skewness: The skew encodes a negatively skewed risk-neutral distribution — the market assigns more probability to large down-moves than a lognormal model would</li>
 </ul>
 <div id="33f03bc9" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>forward_rows <span class="op">=</span> []</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> key, grp <span class="kw">in</span> df_pairs.groupby([<span class="st">"trade_date"</span>, <span class="st">"expiry_datetime"</span>], sort<span class="op">=</span><span class="va">True</span>):</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    est <span class="op">=</span> estimate_forward_slice(grp, near_band<span class="op">=</span><span class="fl">0.12</span>)</span>
@@ -1992,6 +2115,7 @@ n trade_date: 505  | n (trade_date, expiry): 11969</code></pre>
 <span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"df_forward shape:"</span>, df_forward.shape)</span>
 <span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"df_pairs with forward shape:"</span>, df_pairs.shape)</span>
 <span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>df_forward_quality_summary</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>df_forward shape: (11969, 13)
 df_pairs with forward shape: (299214, 41)</code></pre>
@@ -2061,6 +2185,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <p><span class="math display">\[\text{RV}_{\text{matched}} \approx 18\% + \frac{35 - 21}{42 - 21} \times (16\% - 18\%) = 18\% - 1.33\% \approx 16.67\%\]</span></p>
 <p>We use this as our baseline for estimating volatility which is not accurate at all, but we can compare it to implied volatility and other volatility models later.</p>
 <div id="6f8481c6" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>df_spx <span class="op">=</span> df_spx.sort_values(<span class="st">"trade_date"</span>).drop_duplicates(<span class="st">"trade_date"</span>, keep<span class="op">=</span><span class="st">"last"</span>)</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>df_spx[<span class="st">"ret"</span>] <span class="op">=</span> np.log(df_spx[<span class="st">"close"</span>] <span class="op">/</span> df_spx[<span class="st">"close"</span>].shift(<span class="dv">1</span>))</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>rv_windows <span class="op">=</span> [<span class="dv">10</span>, <span class="dv">21</span>, <span class="dv">42</span>, <span class="dv">63</span>, <span class="dv">84</span>, <span class="dv">126</span>]</span>
@@ -2118,6 +2244,7 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb12-55"><a href="#cb12-55" aria-hidden="true" tabindex="-1"></a>df_options <span class="op">=</span> df_options.dropna(subset<span class="op">=</span>[<span class="st">"realized_vol"</span>]).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb12-56"><a href="#cb12-56" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-57"><a href="#cb12-57" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"df_options shape:"</span>, df_options.shape)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>df_options shape: (585186, 34)</code></pre>
 </div>
@@ -2137,6 +2264,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <p>This shows how large is the pricing miss relative to the contract’s volatility sensitivity</p>
 <p>The small floor <span class="math inline">\(\varepsilon\)</span> is there so that the ratio does not explode when vega is extremely small.</p>
 <div id="8754ea7c" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> binned_summary(x, y, bins<span class="op">=</span><span class="dv">21</span>):</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> np.asarray(x, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> np.asarray(y, dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -2202,10 +2331,11 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a>              <span class="bu">int</span>(<span class="bu">len</span>(df_options))]})</span>
 <span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a>df_realized_summary</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-12-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-12-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-12-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2257,6 +2387,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <p>The hit rate here is the most striking result. If realized vol were a reasonable proxy for the market’s pricing volatility, we would expect the hit rate to be substantially higher (maybe 40–60%). A hit rate of 3.5% means the realized-vol model is outside the bid-ask spread for 96.5% of all options. The model is not even in the right neighborhood for most contracts.</p>
 <p>This proves even more that <strong>implied volatility carries information that realized volatility does not</strong></p>
 <div id="16b9f904" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>t_compile0 <span class="op">=</span> time.time()</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="bu">len</span>(df_options)</span>
@@ -2380,6 +2512,7 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb15-121"><a href="#cb15-121" aria-hidden="true" tabindex="-1"></a>df_options[<span class="st">"iv_ask_fill"</span>] <span class="op">=</span> np.maximum(iv_ask_fill, df_options[<span class="st">"iv_mid"</span>])</span>
 <span id="cb15-122"><a href="#cb15-122" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-123"><a href="#cb15-123" aria-hidden="true" tabindex="-1"></a>df_iv_solver_compare</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display" data-execution_count="12">
 <div>
 
@@ -2504,6 +2637,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <p>Both solvers fail on ~0.0015% of mid-price extractions (~9 options out of 585K). These are deep OTM options where the market mid sits at or very near the arbitrage bound, making the IV either undefined or astronomically large. The bid success rate is slightly lower (99.9752%) because bid prices are more likely to sit at or below the intrinsic value floor, especially for illiquid deep OTM contracts.</p>
 <p>Also if we didn’t use numba JIT compiler, this process of root finding for around 1.75 million quotes could take hours, but we see that it turned it into less than 1 second. (I tested it. it took forever to run)</p>
 <div id="a70d55c3" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>tmp <span class="op">=</span> df_options.copy()</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>tmp[<span class="st">"lm_bin"</span>] <span class="op">=</span> pd.cut(tmp[<span class="st">"lm_f"</span>], bins<span class="op">=</span>np.linspace(<span class="op">-</span><span class="fl">0.25</span>, <span class="fl">0.25</span>, <span class="dv">17</span>), include_lowest<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2551,16 +2686,19 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-46"><a href="#cb16-46" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb16-47"><a href="#cb16-47" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-14-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-14-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-14-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <p>The plot also shows that for the most moneyness, newton/bisection method almost stayed consistent but LBR-lite model had problems converging and even took maximum of 30 iterations in some cases. but overall for the most part, LBR-lite required less iterations to converge.</p>
 <div id="b687e930" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>iv_calls_ok <span class="op">=</span> df_options[(df_options[<span class="st">"cp"</span>] <span class="op">==</span> <span class="st">"call"</span>) <span class="op">&amp;</span> df_options[<span class="st">"iv_ok"</span>]].copy()</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>iv_calls_raw <span class="op">=</span> df_options[df_options[<span class="st">"cp"</span>] <span class="op">==</span> <span class="st">"call"</span>].copy()</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2647,10 +2785,11 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb17-84"><a href="#cb17-84" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"secondary_solver"</span>: secondary_prefix,</span>
 <span id="cb17-85"><a href="#cb17-85" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"secondary_label"</span>: solver_label_map[secondary_prefix]}])</span>
 <span id="cb17-86"><a href="#cb17-86" aria-hidden="true" tabindex="-1"></a>selection_note</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-15-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-15-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-15-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2686,6 +2825,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <h4 class="anchored" data-anchor-id="solver-selection-and-output">Solver Selection and Output</h4>
 <p>The comparison table is sorted by success rate (descending), then solve time, then iterations, then pricing error. The LBR-lite solver wins on speed and is selected as the primary solver and we are going to keep up with it for the rest of the notebook. but the difference is so small that both models can perform great in all cases.</p>
 <div id="bf8861af" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>df_options[<span class="st">"price_iv"</span>] <span class="op">=</span> bsm_forward_price(</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    df_options[<span class="st">"cp"</span>].values, df_options[<span class="st">"df"</span>].values,</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    df_options[<span class="st">"f_hat"</span>].values, df_options[<span class="st">"strike"</span>].values,</span>
@@ -2736,10 +2877,11 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb18-48"><a href="#cb18-48" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inside_spread_hit_rate"</span>: <span class="bu">float</span>(np.nanmean(df_options[<span class="st">"hit_iv"</span>]))}])</span>
 <span id="cb18-49"><a href="#cb18-49" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-50"><a href="#cb18-50" aria-hidden="true" tabindex="-1"></a>df_model_compare</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-16-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2983,6 +3125,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <p><span class="math display">\[\text{band} = G_{\text{high}} - G_{\text{low}}\]</span></p>
 <p>This tells us given the uncertainty in vol and forward, the true delta could be anywhere in this range. A wide band means the Greek is poorly determined and hedging would be dificault and not trustworthy because we don’t know the Greek precisely.</p>
 <div id="a730dc15" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> implied_rate_dividend(spot, df, fwd, tau):</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    tau <span class="op">=</span> np.clip(np.asarray(tau, dtype<span class="op">=</span><span class="bu">float</span>), <span class="fl">1e-12</span>, <span class="va">None</span>)</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    spot <span class="op">=</span> np.clip(np.asarray(spot, dtype<span class="op">=</span><span class="bu">float</span>), <span class="fl">1e-12</span>, <span class="va">None</span>)</span>
@@ -3110,6 +3254,7 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb19-125"><a href="#cb19-125" aria-hidden="true" tabindex="-1"></a>    df_options[<span class="ss">f"</span><span class="sc">{</span>gname<span class="sc">}</span><span class="ss">_low"</span>] <span class="op">=</span> np.nanmin(stack, axis<span class="op">=</span><span class="dv">0</span>)</span>
 <span id="cb19-126"><a href="#cb19-126" aria-hidden="true" tabindex="-1"></a>    df_options[<span class="ss">f"</span><span class="sc">{</span>gname<span class="sc">}</span><span class="ss">_high"</span>] <span class="op">=</span> np.nanmax(stack, axis<span class="op">=</span><span class="dv">0</span>)</span>
 <span id="cb19-127"><a href="#cb19-127" aria-hidden="true" tabindex="-1"></a>    df_options[<span class="ss">f"</span><span class="sc">{</span>gname<span class="sc">}</span><span class="ss">_band"</span>] <span class="op">=</span> df_options[<span class="ss">f"</span><span class="sc">{</span>gname<span class="sc">}</span><span class="ss">_high"</span>] <span class="op">-</span> df_options[<span class="ss">f"</span><span class="sc">{</span>gname<span class="sc">}</span><span class="ss">_low"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="automatic-differentiation-with-jax" class="level3">
@@ -3133,6 +3278,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <p>Also for second derivatives like gamma or vanna, you simply differentiate the first derivative function.</p>
 <p>The autodiff Greeks are computed through a completely independent code path. They don’t use any of the manually derived formulas. If your analytic delta formula has a bug, the autodiff delta will be correct, and the discrepancy will show up immediately when you compare them. Also with more factors that we have and more exposures we want to calculate for a model, autodiff is much faster. it calcuulates sensitivities to all the parameters at the same time.</p>
 <div id="71ca8923" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting <span class="im">import</span> diagrams</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">20</span>, <span class="dv">10</span>))</span>
@@ -3140,6 +3287,7 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Black-Scholes-Merton: Forward Computation DAG"</span>,</span>
 <span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>ax,</span>
 <span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display" data-execution_count="17">
 <pre><code>(&lt;Figure size 4000x2000 with 1 Axes&gt;,
  &lt;Axes: title={'center': 'Black-Scholes-Merton: Forward Computation DAG'}&gt;)</code></pre>
@@ -3147,12 +3295,14 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-18-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-18-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-18-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="571e1aa6" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>fan_slice <span class="op">=</span> df_options[</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    (df_options[<span class="st">"trade_date"</span>] <span class="op">==</span> walk_trade_date)</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span> (df_options[<span class="st">"expiry_datetime"</span>] <span class="op">==</span> walk_expiry)</span>
@@ -3259,10 +3409,11 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb22-104"><a href="#cb22-104" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-105"><a href="#cb22-105" aria-hidden="true" tabindex="-1"></a>df_greek_band_summary <span class="op">=</span> pd.DataFrame(band_rows)</span>
 <span id="cb22-106"><a href="#cb22-106" aria-hidden="true" tabindex="-1"></a>df_greek_band_summary</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-19-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-19-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-19-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3349,6 +3500,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <p>For Vanna The cross sensitivity between spot and vol has around 4% uncertainty. This matters for skew trading strategies where you’re exposed to the correlation between spot moves and vol moves.</p>
 <p>Volga has around 8% uncertainty. This is the least precise Greek in the table. Volga matters for volatility of volatility exposure. if we’re trading variance swaps or vol of vol products, this uncertainty is significant. For vanilla option hedging, it’s less critical.</p>
 <div id="b8e50f44" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>greek_map <span class="op">=</span> [</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"delta_spot_mid"</span>, <span class="st">"delta_spot_jax"</span>, <span class="vs">r"delta"</span>),</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"gamma_spot_mid"</span>, <span class="st">"gamma_spot_jax"</span>, <span class="vs">r"gamma"</span>),</span>
@@ -3384,6 +3537,7 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a>mae_df <span class="op">=</span> pd.DataFrame(mae_rows)</span>
 <span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a>mae_df</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display" data-execution_count="19">
 <div>
 
@@ -3468,6 +3622,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <h2 class="anchored" data-anchor-id="dispersion-over-time">10) Dispersion Over Time</h2>
 <p>We computed and talked about dispersion earlier in this notebook. Now we analyze it through time</p>
 <div id="d3c4c605" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>parity_diag <span class="op">=</span> df_forward.copy()</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>parity_diag[<span class="st">"dte_days"</span>] <span class="op">=</span> parity_diag[<span class="st">"tau"</span>] <span class="op">*</span> <span class="fl">365.25</span></span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>bucket <span class="op">=</span> parity_diag[(parity_diag[<span class="st">"dte_days"</span>] <span class="op">&gt;=</span> <span class="dv">25</span>) <span class="op">&amp;</span> (parity_diag[<span class="st">"dte_days"</span>] <span class="op">&lt;=</span> <span class="dv">40</span>)].copy()</span>
@@ -3496,17 +3652,18 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a>df_parity_worst <span class="op">=</span> parity_diag.sort_values(<span class="st">"dispersion"</span>, ascending<span class="op">=</span><span class="va">False</span>).head(<span class="dv">10</span>)[</span>
 <span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"trade_date"</span>, <span class="st">"expiry_datetime"</span>, <span class="st">"dte_days"</span>, <span class="st">"dispersion"</span>, <span class="st">"feasibility"</span>, <span class="st">"n_obs"</span>, <span class="st">"n_core"</span>]]</span>
 <span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a>df_parity_worst</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-21-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-21-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-21-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-21-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-21-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-21-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3670,6 +3827,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <li>Illiquid strikes in the wings can have erratic prices</li>
 </ul>
 <div id="a534ac94" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>df_arb <span class="op">=</span> df_pairs.copy()</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>tol_call <span class="op">=</span> <span class="fl">0.25</span> <span class="op">*</span> np.clip(df_arb[<span class="st">"c_spread"</span>], <span class="fl">0.0</span>, <span class="va">None</span>)</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>tol_put <span class="op">=</span> <span class="fl">0.25</span> <span class="op">*</span> np.clip(df_arb[<span class="st">"p_spread"</span>], <span class="fl">0.0</span>, <span class="va">None</span>)</span>
@@ -3762,10 +3921,11 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb25-90"><a href="#cb25-90" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb25-91"><a href="#cb25-91" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-92"><a href="#cb25-92" aria-hidden="true" tabindex="-1"></a>df_noarb_summary</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-22-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-22-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-22-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3907,6 +4067,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <p>The lowest scoring contract is selected (this is a cost function, not a reward).</p>
 <p>Longer-dated options have higher vega per unit of delta. By using a longer dated contract, you can neutralize vega with minimal delta contamination. Tht’s why we use longer dates for vega.</p>
 <div id="585523e1" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>option_multiplier <span class="op">=</span> <span class="fl">100.0</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>beta_window <span class="op">=</span> <span class="dv">60</span></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>entry_dte_lo <span class="op">=</span> <span class="fl">28.0</span></span>
@@ -4102,6 +4264,7 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb26-193"><a href="#cb26-193" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-194"><a href="#cb26-194" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-195"><a href="#cb26-195" aria-hidden="true" tabindex="-1"></a>strategy_catalog <span class="op">=</span> {<span class="st">"demo_long_call"</span>: {<span class="st">"side"</span>: <span class="fl">1.0</span>, <span class="st">"cp"</span>: <span class="st">"call"</span>, <span class="st">"target_abs_delta"</span>: <span class="fl">0.50</span>}}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="hedging-logic-band-based-rebalancing" class="level3">
@@ -4180,6 +4343,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <li>Reset all rebalancing timers and counters</li>
 </ol>
 <div id="db113078" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> simulate_strategy(name, mode<span class="op">=</span><span class="st">"none"</span>, strategy_key<span class="op">=</span><span class="st">"demo_long_call"</span>):</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    cfg <span class="op">=</span> strategy_catalog[strategy_key]</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    side <span class="op">=</span> <span class="bu">float</span>(cfg[<span class="st">"side"</span>])</span>
@@ -4423,6 +4588,7 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb27-241"><a href="#cb27-241" aria-hidden="true" tabindex="-1"></a>     {<span class="st">"metric"</span>: <span class="st">"max_vega_contracts"</span>, <span class="st">"value"</span>: <span class="bu">float</span>(max_vega_contracts)}])</span>
 <span id="cb27-242"><a href="#cb27-242" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb27-243"><a href="#cb27-243" aria-hidden="true" tabindex="-1"></a>display(df_hedge_market_summary)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4521,6 +4687,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <section id="running-the-strategy-simulation" class="level3">
 <h3 class="anchored" data-anchor-id="running-the-strategy-simulation">12.8 running the strategy simulation</h3>
 <div id="d9d12acc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;jupyter&quot;,&quot;value&quot;:{&quot;outputs_hidden&quot;:true}}" data-scrolled="true">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>strategy_runs <span class="op">=</span> {}</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>strategy_runs[<span class="st">"unhedged"</span>] <span class="op">=</span> simulate_strategy(<span class="st">"unhedged"</span>, mode<span class="op">=</span><span class="st">"none"</span>)</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>strategy_runs[<span class="st">"delta"</span>] <span class="op">=</span> simulate_strategy(<span class="st">"delta"</span>, mode<span class="op">=</span><span class="st">"delta"</span>)</span>
@@ -4563,29 +4731,32 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb28-40"><a href="#cb28-40" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"date"</span>)</span>
 <span id="cb28-41"><a href="#cb28-41" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb28-42"><a href="#cb28-42" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-25-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-25-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-25-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-25-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-25-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-17"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-25-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-25-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-25-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-18"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-25-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="8ab84c09" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">8.4</span>, <span class="fl">4.5</span>), sharex<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> [<span class="st">"unhedged"</span>, <span class="st">"delta"</span>, <span class="st">"delta_vega"</span>]:</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    run <span class="op">=</span> strategy_runs[k]</span>
@@ -4618,24 +4789,25 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb29-30"><a href="#cb29-30" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"date"</span>)</span>
 <span id="cb29-31"><a href="#cb29-31" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb29-32"><a href="#cb29-32" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-26-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-26-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-19"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-26-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-26-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-26-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-20"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-26-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-26-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-26-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-21"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-26-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4645,6 +4817,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <h3 class="anchored" data-anchor-id="results">12.9 results</h3>
 <p>Seems like the strategies were able to control Delta and vega very efficiently and at the same time performed better than unhedged strategy in terms of equity. We didn’t aim to make Delta and Vega neutral, but we tried to reduce them in an efficient way and at the same time tried to control over trading and turnover so we don’t end up with high volatility and low returns. Delta vega is the best strategy. Even though both of our models didn’t end up with positive return, we proved the point of reducing risk exposures for options and this was a simple starting point. In later projects we get more into how we can model and calibrate Volatility and greeks better (estimation has huge effect on hedging) and we show different models and get more into <strong>options strategies</strong>. Maybe they weren’t profitable in this window and regime, but they reduced risk and exposures which is what is more important to us.</p>
 <div id="eff2cb23" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> max_drawdown(series):</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    arr <span class="op">=</span> np.asarray(series, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(arr) <span class="op">==</span> <span class="dv">0</span>:</span>
@@ -4700,6 +4874,7 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb30-53"><a href="#cb30-53" aria-hidden="true" tabindex="-1"></a>    .reset_index(drop<span class="op">=</span><span class="va">True</span>))</span>
 <span id="cb30-54"><a href="#cb30-54" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-55"><a href="#cb30-55" aria-hidden="true" tabindex="-1"></a>display(df_hedge_summary)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4799,6 +4974,8 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <section id="implementation-of-the-project-on-btc-deribit-options-using-quantfinlab" class="level1">
 <h1>Implementation of the project on BTC-Deribit options using QuantFinLab</h1>
 <div id="82251e6e" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -5079,6 +5256,7 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <span id="cb31-278"><a href="#cb31-278" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">"BTC Deribit USD-equivalent forward-BSM, IV, Greeks, and hedging"</span>, fontsize<span class="op">=</span><span class="dv">14</span>, y<span class="op">=</span><span class="fl">0.995</span>)</span>
 <span id="cb31-279"><a href="#cb31-279" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(rect<span class="op">=</span>(<span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">0.985</span>), h_pad<span class="op">=</span><span class="fl">2.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb31-280"><a href="#cb31-280" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5742,7 +5920,7 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-28-output-11.png" class="img-fluid figure-img"></p>
+<p><a href="04_BSM_IV_greeks_hedging_files/figure-html/cell-28-output-11.png" class="lightbox" data-gallery="quarto-lightbox-gallery-22"><img src="04_BSM_IV_greeks_hedging_files/figure-html/cell-28-output-11.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5949,6 +6127,57 @@ df_pairs with forward shape: (299214, 41)</code></pre>
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -6292,6 +6521,38 @@ df_pairs with forward shape: (299214, 41)</code></pre>
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 

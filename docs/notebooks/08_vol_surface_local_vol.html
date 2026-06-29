@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>8. Volatility Surface and Local Volatility – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/07_dynamic_hedge_ratios.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -112,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -143,7 +144,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -292,13 +293,125 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#a-better-starting-intuition-iv-is-an-average-local-vol-is-a-map" id="toc-a-better-starting-intuition-iv-is-an-average-local-vol-is-a-map" class="nav-link active" data-scroll-target="#a-better-starting-intuition-iv-is-an-average-local-vol-is-a-map">A better starting intuition: IV is an average, local vol is a map</a></li>
+  <li><a href="#setup-and-model-objects" id="toc-setup-and-model-objects" class="nav-link" data-scroll-target="#setup-and-model-objects">1) Setup and Model Objects</a></li>
+  <li><a href="#spx-option-data-and-paired-call-put-quotes" id="toc-spx-option-data-and-paired-call-put-quotes" class="nav-link" data-scroll-target="#spx-option-data-and-paired-call-put-quotes">2) SPX Option Data and Paired Call-Put Quotes</a>
+  <ul class="collapse">
+  <li><a href="#why-paired-quotes-are-the-right-starting-point" id="toc-why-paired-quotes-are-the-right-starting-point" class="nav-link" data-scroll-target="#why-paired-quotes-are-the-right-starting-point">2.1 Why paired quotes are the right starting point</a></li>
+  </ul></li>
+  <li><a href="#rates-discounting-and-forward-extraction" id="toc-rates-discounting-and-forward-extraction" class="nav-link" data-scroll-target="#rates-discounting-and-forward-extraction">3) Rates, Discounting, and Forward Extraction</a>
+  <ul class="collapse">
+  <li><a href="#why-rate-and-carry-curves-are-functions-of-maturity" id="toc-why-rate-and-carry-curves-are-functions-of-maturity" class="nav-link" data-scroll-target="#why-rate-and-carry-curves-are-functions-of-maturity">3.1 Why rate and carry curves are functions of maturity</a></li>
+  </ul></li>
+  <li><a href="#from-paired-quotes-to-an-option-market-table" id="toc-from-paired-quotes-to-an-option-market-table" class="nav-link" data-scroll-target="#from-paired-quotes-to-an-option-market-table">4) From Paired Quotes to an Option Market Table</a></li>
+  <li><a href="#black-76-implied-volatility-in-forward-space" id="toc-black-76-implied-volatility-in-forward-space" class="nav-link" data-scroll-target="#black-76-implied-volatility-in-forward-space">5) Black-76 Implied Volatility in Forward Space</a>
+  <ul class="collapse">
+  <li><a href="#iv-existence-bounds-and-why-failures-are-meaningful" id="toc-iv-existence-bounds-and-why-failures-are-meaningful" class="nav-link" data-scroll-target="#iv-existence-bounds-and-why-failures-are-meaningful">5.1 IV existence, bounds, and why failures are meaningful</a></li>
+  <li><a href="#why-we-still-keep-bid-mid-and-ask-ivs" id="toc-why-we-still-keep-bid-mid-and-ask-ivs" class="nav-link" data-scroll-target="#why-we-still-keep-bid-mid-and-ask-ivs">5.2 Why we still keep bid, mid, and ask IVs</a></li>
+  </ul></li>
+  <li><a href="#surface-ready-quotes-and-observation-weights" id="toc-surface-ready-quotes-and-observation-weights" class="nav-link" data-scroll-target="#surface-ready-quotes-and-observation-weights">6) Surface-Ready Quotes and Observation Weights</a>
+  <ul class="collapse">
+  <li><a href="#bid-ask-quality" id="toc-bid-ask-quality" class="nav-link" data-scroll-target="#bid-ask-quality">6.1 Bid-ask quality</a></li>
+  <li><a href="#vega-information" id="toc-vega-information" class="nav-link" data-scroll-target="#vega-information">6.2 Vega information</a></li>
+  <li><a href="#wing-penalty" id="toc-wing-penalty" class="nav-link" data-scroll-target="#wing-penalty">6.3 Wing penalty</a></li>
+  <li><a href="#iv-uncertainty" id="toc-iv-uncertainty" class="nav-link" data-scroll-target="#iv-uncertainty">6.4 IV uncertainty</a></li>
+  <li><a href="#what-the-observation-weight-is-trying-to-approximate" id="toc-what-the-observation-weight-is-trying-to-approximate" class="nav-link" data-scroll-target="#what-the-observation-weight-is-trying-to-approximate">6.5 What the observation weight is trying to approximate</a></li>
+  </ul></li>
+  <li><a href="#main-date-high-iv-date-and-low-iv-date" id="toc-main-date-high-iv-date-and-low-iv-date" class="nav-link" data-scroll-target="#main-date-high-iv-date-and-low-iv-date">7) Main Date, High-IV Date, and Low-IV Date</a></li>
+  <li><a href="#raw-pchip-smile-and-surface-benchmark" id="toc-raw-pchip-smile-and-surface-benchmark" class="nav-link" data-scroll-target="#raw-pchip-smile-and-surface-benchmark">8) Raw PCHIP Smile and Surface Benchmark</a>
+  <ul class="collapse">
+  <li><a href="#pchip-as-a-diagnostic-not-a-derivative-engine" id="toc-pchip-as-a-diagnostic-not-a-derivative-engine" class="nav-link" data-scroll-target="#pchip-as-a-diagnostic-not-a-derivative-engine">8.1 PCHIP as a diagnostic, not a derivative engine</a></li>
+  </ul></li>
+  <li><a href="#fitting-the-surface-on-log-total-variance" id="toc-fitting-the-surface-on-log-total-variance" class="nav-link" data-scroll-target="#fitting-the-surface-on-log-total-variance">9) Fitting the Surface on Log Total Variance</a>
+  <ul class="collapse">
+  <li><a href="#positivity" id="toc-positivity" class="nav-link" data-scroll-target="#positivity">Positivity</a></li>
+  <li><a href="#better-maturity-behavior" id="toc-better-maturity-behavior" class="nav-link" data-scroll-target="#better-maturity-behavior">Better maturity behavior</a></li>
+  <li><a href="#total-variance-and-calendar-arbitrage-intuition" id="toc-total-variance-and-calendar-arbitrage-intuition" class="nav-link" data-scroll-target="#total-variance-and-calendar-arbitrage-intuition">9.1 Total variance and calendar-arbitrage intuition</a></li>
+  </ul></li>
+  <li><a href="#tensor-product-cubic-b-splines" id="toc-tensor-product-cubic-b-splines" class="nav-link" data-scroll-target="#tensor-product-cubic-b-splines">10) Tensor-Product Cubic B-Splines</a>
+  <ul class="collapse">
+  <li><a href="#why-tensor-product-splines-are-a-good-compromise" id="toc-why-tensor-product-splines-are-a-good-compromise" class="nav-link" data-scroll-target="#why-tensor-product-splines-are-a-good-compromise">10.1 Why tensor-product splines are a good compromise</a></li>
+  </ul></li>
+  <li><a href="#penalized-weighted-least-squares" id="toc-penalized-weighted-least-squares" class="nav-link" data-scroll-target="#penalized-weighted-least-squares">11) Penalized Weighted Least Squares</a>
+  <ul class="collapse">
+  <li><a href="#the-normal-equations-behind-the-fit" id="toc-the-normal-equations-behind-the-fit" class="nav-link" data-scroll-target="#the-normal-equations-behind-the-fit">11.1 The normal equations behind the fit</a></li>
+  <li><a href="#how-the-two-penalties-change-the-financial-surface" id="toc-how-the-two-penalties-change-the-financial-surface" class="nav-link" data-scroll-target="#how-the-two-penalties-change-the-financial-surface">11.2 How the two penalties change the financial surface</a></li>
+  </ul></li>
+  <li><a href="#choosing-the-dupire-smoothing-level" id="toc-choosing-the-dupire-smoothing-level" class="nav-link" data-scroll-target="#choosing-the-dupire-smoothing-level">12) Choosing the Dupire Smoothing Level</a>
+  <ul class="collapse">
+  <li><a href="#why-visual-fit-and-dupire-fit-are-both-needed" id="toc-why-visual-fit-and-dupire-fit-are-both-needed" class="nav-link" data-scroll-target="#why-visual-fit-and-dupire-fit-are-both-needed">12.1 Why visual fit and Dupire fit are both needed</a></li>
+  </ul></li>
+  <li><a href="#residual-diagnostics" id="toc-residual-diagnostics" class="nav-link" data-scroll-target="#residual-diagnostics">13) Residual Diagnostics</a></li>
+  <li><a href="#surface-shape-features-atm-level-skew-curvature-and-term-slope" id="toc-surface-shape-features-atm-level-skew-curvature-and-term-slope" class="nav-link" data-scroll-target="#surface-shape-features-atm-level-skew-curvature-and-term-slope">14) Surface Shape Features: ATM Level, Skew, Curvature, and Term Slope</a></li>
+  <li><a href="#surface-derivatives-from-log-total-variance" id="toc-surface-derivatives-from-log-total-variance" class="nav-link" data-scroll-target="#surface-derivatives-from-log-total-variance">15) Surface Derivatives from Log Total Variance</a>
+  <ul class="collapse">
+  <li><a href="#interpreting-derivative-units-with-a-concrete-move" id="toc-interpreting-derivative-units-with-a-concrete-move" class="nav-link" data-scroll-target="#interpreting-derivative-units-with-a-concrete-move">15.1 Interpreting derivative units with a concrete move</a></li>
+  </ul></li>
+  <li><a href="#dupire-local-volatility-theory" id="toc-dupire-local-volatility-theory" class="nav-link" data-scroll-target="#dupire-local-volatility-theory">16) Dupire Local Volatility Theory</a>
+  <ul class="collapse">
+  <li><a href="#numerator" id="toc-numerator" class="nav-link" data-scroll-target="#numerator">Numerator</a></li>
+  <li><a href="#denominator" id="toc-denominator" class="nav-link" data-scroll-target="#denominator">Denominator</a></li>
+  <li><a href="#deriving-the-intuition-from-the-pricing-pde" id="toc-deriving-the-intuition-from-the-pricing-pde" class="nav-link" data-scroll-target="#deriving-the-intuition-from-the-pricing-pde">16.1 Deriving the intuition from the pricing PDE</a></li>
+  <li><a href="#local-volatility-and-path-dependence-of-the-calibration" id="toc-local-volatility-and-path-dependence-of-the-calibration" class="nav-link" data-scroll-target="#local-volatility-and-path-dependence-of-the-calibration">16.2 Local volatility and path dependence of the calibration</a></li>
+  <li><a href="#reading-dupire-through-total-variance-intuition" id="toc-reading-dupire-through-total-variance-intuition" class="nav-link" data-scroll-target="#reading-dupire-through-total-variance-intuition">16.3 Reading Dupire through total variance intuition</a></li>
+  </ul></li>
+  <li><a href="#no-arbitrage-diagnostics-for-local-volatility" id="toc-no-arbitrage-diagnostics-for-local-volatility" class="nav-link" data-scroll-target="#no-arbitrage-diagnostics-for-local-volatility">17) No-Arbitrage Diagnostics for Local Volatility</a>
+  <ul class="collapse">
+  <li><a href="#total-variance-shouldnt-decrease-with-maturity" id="toc-total-variance-shouldnt-decrease-with-maturity" class="nav-link" data-scroll-target="#total-variance-shouldnt-decrease-with-maturity">17.1 Total variance shouldn’t decrease with maturity</a></li>
+  <li><a href="#call-prices-should-decrease-with-strike" id="toc-call-prices-should-decrease-with-strike" class="nav-link" data-scroll-target="#call-prices-should-decrease-with-strike">17.2 Call prices should decrease with strike</a></li>
+  <li><a href="#call-prices-should-be-convex-in-strike" id="toc-call-prices-should-be-convex-in-strike" class="nav-link" data-scroll-target="#call-prices-should-be-convex-in-strike">17.3 Call prices should be convex in strike</a></li>
+  <li><a href="#why-local-volatility-can-fail-even-when-iv-looks-smooth" id="toc-why-local-volatility-can-fail-even-when-iv-looks-smooth" class="nav-link" data-scroll-target="#why-local-volatility-can-fail-even-when-iv-looks-smooth">17.4 Why local volatility can fail even when IV looks smooth</a></li>
+  </ul></li>
+  <li><a href="#local-volatility-surface-interpretation" id="toc-local-volatility-surface-interpretation" class="nav-link" data-scroll-target="#local-volatility-surface-interpretation">18) Local Volatility Surface Interpretation</a>
+  <ul class="collapse">
+  <li><a href="#local-vol-is-most-useful-when-compared-not-read-alone" id="toc-local-vol-is-most-useful-when-compared-not-read-alone" class="nav-link" data-scroll-target="#local-vol-is-most-useful-when-compared-not-read-alone">18.1 Local vol is most useful when compared, not read alone</a></li>
+  </ul></li>
+  <li><a href="#historical-surface-fitting-across-all-dates" id="toc-historical-surface-fitting-across-all-dates" class="nav-link" data-scroll-target="#historical-surface-fitting-across-all-dates">19) Historical Surface Fitting Across All Dates</a>
+  <ul class="collapse">
+  <li><a href="#what-we-gain-from-a-historical-surface-panel" id="toc-what-we-gain-from-a-historical-surface-panel" class="nav-link" data-scroll-target="#what-we-gain-from-a-historical-surface-panel">19.1 What we gain from a historical surface panel</a></li>
+  </ul></li>
+  <li><a href="#common-grid-and-surface-variability" id="toc-common-grid-and-surface-variability" class="nav-link" data-scroll-target="#common-grid-and-surface-variability">20) Common Grid and Surface Variability</a></li>
+  <li><a href="#historical-surface-features" id="toc-historical-surface-features" class="nav-link" data-scroll-target="#historical-surface-features">21) Historical Surface Features</a>
+  <ul class="collapse">
+  <li><a href="#economic-meaning-of-the-four-main-shape-features" id="toc-economic-meaning-of-the-four-main-shape-features" class="nav-link" data-scroll-target="#economic-meaning-of-the-four-main-shape-features">21.1 Economic meaning of the four main shape features</a></li>
+  </ul></li>
+  <li><a href="#surface-state-phase-plot" id="toc-surface-state-phase-plot" class="nav-link" data-scroll-target="#surface-state-phase-plot">22) Surface State Phase Plot</a></li>
+  <li><a href="#pca-of-volatility-surface-changes" id="toc-pca-of-volatility-surface-changes" class="nav-link" data-scroll-target="#pca-of-volatility-surface-changes">23) PCA of Volatility Surface Changes</a>
+  <ul class="collapse">
+  <li><a href="#why-we-apply-pca-to-changes-instead-of-levels" id="toc-why-we-apply-pca-to-changes-instead-of-levels" class="nav-link" data-scroll-target="#why-we-apply-pca-to-changes-instead-of-levels">23.1 Why we apply PCA to changes instead of levels</a></li>
+  </ul></li>
+  <li><a href="#surface-aware-greeks" id="toc-surface-aware-greeks" class="nav-link" data-scroll-target="#surface-aware-greeks">24) Surface-Aware Greeks</a>
+  <ul class="collapse">
+  <li><a href="#connecting-surface-aware-greeks-to-vanna-and-volga" id="toc-connecting-surface-aware-greeks-to-vanna-and-volga" class="nav-link" data-scroll-target="#connecting-surface-aware-greeks-to-vanna-and-volga">24.1 Connecting surface-aware Greeks to vanna and volga</a></li>
+  </ul></li>
+  <li><a href="#full-sample-surface-greek-risk" id="toc-full-sample-surface-greek-risk" class="nav-link" data-scroll-target="#full-sample-surface-greek-risk">25) Full-Sample Surface-Greek Risk</a>
+  <ul class="collapse">
+  <li><a href="#how-the-greek-risk-pnl-scaling-works" id="toc-how-the-greek-risk-pnl-scaling-works" class="nav-link" data-scroll-target="#how-the-greek-risk-pnl-scaling-works">25.1 How the Greek-risk PnL scaling works</a></li>
+  </ul></li>
+  <li><a href="#secondary-application-btc-option-surface-through-the-library" id="toc-secondary-application-btc-option-surface-through-the-library" class="nav-link" data-scroll-target="#secondary-application-btc-option-surface-through-the-library">26) Secondary Application: BTC Option Surface Through the Library</a>
+  <ul class="collapse">
+  <li><a href="#why-btc-is-a-hard-but-useful-secondary-test" id="toc-why-btc-is-a-hard-but-useful-secondary-test" class="nav-link" data-scroll-target="#why-btc-is-a-hard-but-useful-secondary-test">26.1 Why BTC is a hard but useful secondary test</a></li>
+  <li><a href="#carry-and-rates-in-btc-options" id="toc-carry-and-rates-in-btc-options" class="nav-link" data-scroll-target="#carry-and-rates-in-btc-options">26.2 Carry and rates in BTC options</a></li>
+  </ul></li>
+  <li><a href="#btc-local-volatility-pca-and-surface-aware-greeks" id="toc-btc-local-volatility-pca-and-surface-aware-greeks" class="nav-link" data-scroll-target="#btc-local-volatility-pca-and-surface-aware-greeks">27) BTC Local Volatility, PCA, and Surface-Aware Greeks</a>
+  <ul class="collapse">
+  <li><a href="#reading-btc-results-without-forcing-spx-intuition-onto-them" id="toc-reading-btc-results-without-forcing-spx-intuition-onto-them" class="nav-link" data-scroll-target="#reading-btc-results-without-forcing-spx-intuition-onto-them">27.1 Reading BTC results without forcing SPX intuition onto them</a></li>
+  <li><a href="#spx-versus-btc-same-machinery-different-market-story" id="toc-spx-versus-btc-same-machinery-different-market-story" class="nav-link" data-scroll-target="#spx-versus-btc-same-machinery-different-market-story">27.2 SPX versus BTC: same machinery, different market story</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">8. Volatility Surface and Local Volatility</span></h1>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">8. Volatility Surface and Local Volatility</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -409,6 +522,8 @@ k = \log\left(\frac{K}{F_T}\right)
 <p>We use <span class="math inline">\(365.25\)</span> days for annualization in the SPX part. That’s a practical calendar-time convention for options, especially when maturities are counted in calendar days. The BTC secondary part uses <span class="math inline">\(365\)</span> because crypto trades every day and the code explicitly treats the BTC chain with a 365-day year.</p>
 <p>The first cell doesn’t need much interpretation. It just prepares the tools and fixes plotting style. The real theory starts when we turn raw option quotes into forward-consistent implied volatility observations.</p>
 <div id="7addda74" class="cell" data-execution_count="1">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
@@ -449,6 +564,7 @@ k = \log\left(\frac{K}{F_T}\right)
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({<span class="st">"figure.figsize"</span>: (<span class="fl">7.4</span>, <span class="fl">4.2</span>), <span class="st">"figure.dpi"</span>: <span class="dv">180</span>, <span class="st">"savefig.dpi"</span>: <span class="dv">300</span>})</span>
 <span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>seed <span class="op">=</span> <span class="dv">7</span></span>
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(seed)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="spx-option-data-and-paired-call-put-quotes" class="level2">
@@ -490,6 +606,8 @@ k=\log\left(\frac{4500}{4800}\right)\approx -0.0645
 <p>That difference looks small, but when we take derivatives of the surface, small horizontal shifts can matter. A local-volatility calculation differentiates the call price surface. If the strike coordinate is slightly misaligned across maturities, the derivative field can become contaminated by carry/forward error.</p>
 <p>Put-call parity is the most direct way to estimate the forward from the option chain itself. We aren’t forcing an external dividend estimate into the surface. We let calls and puts reveal the maturity-specific forward, then we use treasury rates for discounting. This is more internally consistent for an options-based surface.</p>
 <div id="6543f5b1" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>ann_days <span class="op">=</span> <span class="fl">365.25</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>spx_chain_path <span class="op">=</span> <span class="st">"../data/spx_options_chain.parquet"</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -505,6 +623,7 @@ k=\log\left(\frac{4500}{4800}\right)\approx -0.0645
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>q_pair[<span class="st">"dte_days"</span>] <span class="op">=</span> q_pair[<span class="st">"tau"</span>] <span class="op">*</span> ann_days</span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>q_pair[<span class="st">"moneyness"</span>] <span class="op">=</span> q_pair[<span class="st">"strike"</span>] <span class="op">/</span> q_pair[<span class="st">"spot"</span>]</span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>display(q_pair[[<span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"spot"</span>, <span class="st">"strike"</span>, <span class="st">"dte_days"</span>, <span class="st">"c_mid"</span>, <span class="st">"p_mid"</span>, <span class="st">"c_rel_spread"</span>, <span class="st">"p_rel_spread"</span>]].head(<span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -677,6 +796,8 @@ b(T)=r(T)-q(T)
 <p>The code later needs <span class="math inline">\(r(T)\)</span> and <span class="math inline">\(b(T)\)</span> at arbitrary grid maturities, not only at quoted expiries. That is why helper routines interpolate these curves over <span class="math inline">\(T\)</span>. When local volatility is computed, the call price derivative with respect to maturity uses the rate and carry at each maturity node. If those curves were discontinuous, the Dupire numerator could jump for no real market reason.</p>
 <p>So this is not just data preparation. It is part of the mathematical consistency of the surface. Smooth rates and smooth carry help prevent artificial discontinuities in model prices.</p>
 <div id="5026e76c" class="cell" data-execution_count="4">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> curve_on_tau(q, value_col, tau_values, fallback<span class="op">=</span>np.nan):</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    tau_values <span class="op">=</span> np.asarray(tau_values, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> np.full(tau_values.shape, <span class="bu">float</span>(fallback), dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -791,8 +912,11 @@ b(T)=r(T)-q(T)
 <span id="cb3-112"><a href="#cb3-112" aria-hidden="true" tabindex="-1"></a>    lim <span class="op">=</span> xlim_from_mask(x_values, mask<span class="op">=</span>mask, pad<span class="op">=</span>pad)</span>
 <span id="cb3-113"><a href="#cb3-113" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> lim <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
 <span id="cb3-114"><a href="#cb3-114" aria-hidden="true" tabindex="-1"></a>        ax.set_xlim(<span class="op">*</span>lim)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="66c0b821" class="cell" data-execution_count="5">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>rates_path <span class="op">=</span> <span class="st">"../data/us_treasury_yields.csv"</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>par_yields <span class="op">=</span> load_par_yield_curve(rates_path, source<span class="op">=</span><span class="st">"us_treasury"</span>)</span>
@@ -820,6 +944,7 @@ b(T)=r(T)-q(T)
 <span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>].copy()</span>
 <span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>q_pair[<span class="st">"k_pair"</span>] <span class="op">=</span> np.log(q_pair[<span class="st">"strike"</span>] <span class="op">/</span> q_pair[<span class="st">"forward"</span>])</span>
 <span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>display(carry_curve[[<span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"tau"</span>, <span class="st">"spot"</span>, <span class="st">"rate"</span>, <span class="st">"forward"</span>, <span class="st">"implied_carry"</span>, <span class="st">"fwd_pairs"</span>, <span class="st">"parity_error_iqr"</span>]].head(<span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -943,6 +1068,8 @@ b(T)=r(T)-q(T)
 </div>
 </div>
 <div id="c950fa02" class="cell" data-execution_count="6">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="fl">12.5</span>, <span class="fl">4.2</span>))</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>plot_forward_vs_spot(carry_curve[carry_curve[<span class="st">"fwd_ok"</span>].fillna(<span class="va">False</span>)], ax<span class="op">=</span>axes[<span class="dv">0</span>], title<span class="op">=</span><span class="st">"parity-implied forward levels"</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>last_rate_date <span class="op">=</span> q_pair[<span class="st">"date"</span>].<span class="bu">max</span>()</span>
@@ -960,10 +1087,11 @@ b(T)=r(T)-q(T)
 <span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend(loc<span class="op">=</span><span class="st">"best"</span>)</span>
 <span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-6-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-6-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="08_vol_surface_local_vol_files/figure-html/cell-6-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1005,6 +1133,8 @@ b(T)=r(T)-q(T)
 </ul>
 <p>This is a large surface dataset. The size matters because local-volatility estimation is derivative-sensitive. A few thousand quotes on one day are helpful, but the historical part becomes much stronger when we can fit surfaces across 505 trading dates.</p>
 <div id="46248ecb" class="cell" data-execution_count="7">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>base_cols <span class="op">=</span> [</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"date"</span>, <span class="st">"timestamp"</span>, <span class="st">"expiry"</span>, <span class="st">"underlying"</span>, <span class="st">"spot"</span>, <span class="st">"strike"</span>, <span class="st">"tau"</span>, <span class="st">"dte_days"</span>,</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"rate"</span>, <span class="st">"rate_source_date"</span>, <span class="st">"discount_factor"</span>, <span class="st">"forward"</span>, <span class="st">"implied_carry"</span>,</span>
@@ -1036,6 +1166,7 @@ b(T)=r(T)-q(T)
 <span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">"min_dte"</span>: q_mkt[<span class="st">"dte_days"</span>].<span class="bu">min</span>(),</span>
 <span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"max_dte"</span>: q_mkt[<span class="st">"dte_days"</span>].<span class="bu">max</span>(),</span>
 <span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>}]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1315,6 +1446,8 @@ P \le D(T)K
 <p>This is also why deep wing quotes can be tricky. They sometimes carry important information about tail pricing, but their bid-ask bands can be huge. We don’t want to delete all of them because then the surface loses tail information. We also don’t want to let them dominate. The weighting system is the compromise.</p>
 <p>The root-finding process itself also gives information. If bid IV fails but mid and ask succeed, that often means the bid is near the no-arbitrage floor. If ask IV is extremely high, it can mean the market maker is quoting a protective ask rather than a true fair value. These details are exactly why we carry quality fields into the surface-ready table instead of only saving the final IV column.</p>
 <div id="9847e5b6" class="cell" data-execution_count="8">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>tic <span class="op">=</span> time.perf_counter()</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>iv_quotes <span class="op">=</span> compute_iv_table(q_mkt, price_cols<span class="op">=</span>(<span class="st">"bid"</span>, <span class="st">"mid"</span>, <span class="st">"ask"</span>), solver<span class="op">=</span><span class="st">"lbr_lite"</span>, engine<span class="op">=</span><span class="st">"auto"</span>)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>iv_quotes[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(iv_quotes[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>).dt.normalize()</span>
@@ -1325,6 +1458,7 @@ P \le D(T)K
 <span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>iv_quotes[<span class="st">"iv_ok"</span>] <span class="op">=</span> iv_quotes.get(<span class="st">"iv_mid_success"</span>, pd.Series(<span class="va">False</span>, index<span class="op">=</span>iv_quotes.index)).astype(<span class="bu">bool</span>)</span>
 <span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"lbr-lite iv rows: </span><span class="sc">{</span><span class="bu">len</span>(iv_quotes)<span class="sc">:,}</span><span class="ss">; engine=</span><span class="sc">{</span>iv_quotes<span class="sc">.</span>attrs<span class="sc">.</span>get(<span class="st">'engine_used'</span>, <span class="st">'unknown'</span>)<span class="sc">}</span><span class="ss">; seconds=</span><span class="sc">{</span>time<span class="sc">.</span>perf_counter() <span class="op">-</span> tic<span class="sc">:,.1f}</span><span class="ss">"</span>)</span>
 <span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>display(iv_quotes[[<span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"option_type"</span>, <span class="st">"spot"</span>, <span class="st">"forward"</span>, <span class="st">"strike"</span>, <span class="st">"dte_days"</span>, <span class="st">"mid"</span>, <span class="st">"rate"</span>, <span class="st">"discount_factor"</span>, <span class="st">"implied_carry"</span>, <span class="st">"k"</span>, <span class="st">"iv_mid"</span>, <span class="st">"iv_bid"</span>, <span class="st">"iv_ask"</span>, <span class="st">"iv_ok"</span>]].head(<span class="dv">10</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>lbr-lite iv rows: 2,407,888; engine=numba; seconds=24.4</code></pre>
 </div>
@@ -1552,6 +1686,8 @@ P \le D(T)K
 </div>
 </div>
 <div id="d25edcc2" class="cell" data-execution_count="9">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>iv_summary <span class="op">=</span> pd.DataFrame([{</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"rows"</span>: <span class="bu">int</span>(<span class="bu">len</span>(iv_quotes)),</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"number_of_dates"</span>: <span class="bu">int</span>(iv_quotes[<span class="st">"date"</span>].nunique()),</span>
@@ -1581,6 +1717,7 @@ P \le D(T)K
 <span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>fig.colorbar(h1, ax<span class="op">=</span>axes[<span class="dv">1</span>], pad<span class="op">=</span><span class="fl">0.01</span>, label<span class="op">=</span><span class="st">"median iv"</span>)</span>
 <span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1625,7 +1762,7 @@ P \le D(T)K
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-9-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-9-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="08_vol_surface_local_vol_files/figure-html/cell-9-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1708,6 +1845,8 @@ w_i=\frac{1}{\operatorname{Var}(\epsilon_i)}
 </ul>
 <p>This is also why the median weight is normalized to 1. The scale of the weights matters less than their relative values. Weighted least squares only needs the fit to know which observations are more reliable.</p>
 <div id="5107f3d2" class="cell" data-execution_count="10">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>surface <span class="op">=</span> iv_quotes.copy()</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>surface[<span class="st">"relative_spread"</span>] <span class="op">=</span> pd.to_numeric(surface.get(<span class="st">"rel_spread"</span>), errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> surface[<span class="st">"relative_spread"</span>].notna().<span class="bu">sum</span>() <span class="op">==</span> <span class="dv">0</span> <span class="kw">and</span> {<span class="st">"bid"</span>, <span class="st">"ask"</span>, <span class="st">"mid"</span>}.issubset(surface.columns):</span>
@@ -1791,6 +1930,7 @@ w_i=\frac{1}{\operatorname{Var}(\epsilon_i)}
 <span id="cb10-81"><a href="#cb10-81" aria-hidden="true" tabindex="-1"></a>display(surface[[<span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"option_type"</span>, <span class="st">"strike"</span>, <span class="st">"forward"</span>, <span class="st">"k"</span>, <span class="st">"dte_days"</span>, <span class="st">"mid"</span>, <span class="st">"iv_mid"</span>, <span class="st">"iv_uncertainty"</span>, <span class="st">"obs_weight"</span>]].head(<span class="dv">10</span>))</span>
 <span id="cb10-82"><a href="#cb10-82" aria-hidden="true" tabindex="-1"></a>display(by_date.tail(<span class="dv">10</span>))</span>
 <span id="cb10-83"><a href="#cb10-83" aria-hidden="true" tabindex="-1"></a>display(weight_check[[<span class="st">"mean"</span>, <span class="st">"std"</span>, <span class="st">"5%"</span>, <span class="st">"25%"</span>, <span class="st">"50%"</span>, <span class="st">"75%"</span>, <span class="st">"95%"</span>]])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2217,6 +2357,8 @@ w_i=\frac{1}{\operatorname{Var}(\epsilon_i)}
 <p>The low-IV date, 2023-12-14, has near-ATM IV around <strong>10.39%</strong>, even lower than the main date. This is the calm end-of-2023 regime after the market had largely priced a more favorable soft-landing/rate-cut path.</p>
 <p>We mainly fit and visualize the latest date first, then fit every valid date historically. This order is useful: one date lets us understand the mechanics carefully, while the historical panel lets us ask whether the same features and risks persist through time.</p>
 <div id="2b37331e" class="cell" data-execution_count="11">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>valid_dates <span class="op">=</span> by_date[(by_date[<span class="st">"quotes"</span>] <span class="op">&gt;=</span> <span class="dv">160</span>) <span class="op">&amp;</span> (by_date[<span class="st">"expiries"</span>] <span class="op">&gt;=</span> <span class="dv">5</span>) <span class="op">&amp;</span> (by_date[<span class="st">"near_atm_quotes"</span>] <span class="op">&gt;=</span> <span class="dv">20</span>)].copy()</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> valid_dates.empty:</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    valid_dates <span class="op">=</span> by_date[(by_date[<span class="st">"quotes"</span>] <span class="op">&gt;=</span> <span class="dv">90</span>) <span class="op">&amp;</span> (by_date[<span class="st">"expiries"</span>] <span class="op">&gt;=</span> <span class="dv">4</span>)].copy()</span>
@@ -2243,6 +2385,7 @@ w_i=\frac{1}{\operatorname{Var}(\epsilon_i)}
 <span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>chosen_dates <span class="op">=</span> pd.DataFrame(chosen_rows)</span>
 <span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>q_main <span class="op">=</span> surface[surface[<span class="st">"date"</span>].eq(main_date)].copy()</span>
 <span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>display(chosen_dates)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2329,6 +2472,8 @@ w_i=\frac{1}{\operatorname{Var}(\epsilon_i)}
 <p>This is good for drawing smiles because it doesn’t create wild oscillations between strikes. But local volatility needs more than a nice curve. It needs stable derivatives of call prices across strike and maturity. PCHIP is only piecewise smooth. Its first derivative is continuous, but higher derivatives can behave less smoothly around knots. Also, when we interpolate maturity slice by slice, the two-dimensional smoothness is not globally controlled.</p>
 <p>That is why the raw PCHIP surface is a benchmark. It answers: “what does the quote cloud roughly say?” The B-spline fit answers: “what smooth differentiable surface can we responsibly use for local volatility and Greeks?”</p>
 <div id="f19effdc" class="cell" data-execution_count="12">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>k_raw_grid <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">0.38</span>, <span class="fl">0.38</span>, <span class="dv">61</span>)</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>tau_raw_grid <span class="op">=</span> np.linspace(<span class="fl">7.0</span> <span class="op">/</span> ann_days, <span class="fl">180.0</span> <span class="op">/</span> ann_days, <span class="dv">17</span>)</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2393,6 +2538,7 @@ w_i=\frac{1}{\operatorname{Var}(\epsilon_i)}
 <span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a>raw_iv_grid, raw_slices <span class="op">=</span> raw_pchip_grid(q_main, k_raw_grid, tau_raw_grid)</span>
 <span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a>display(raw_slices.head())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2462,6 +2608,8 @@ w_i=\frac{1}{\operatorname{Var}(\epsilon_i)}
 </div>
 </div>
 <div id="75840674" class="cell" data-execution_count="13">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>target_days <span class="op">=</span> np.array([<span class="dv">14</span>, <span class="dv">30</span>, <span class="dv">60</span>, <span class="dv">90</span>, <span class="dv">150</span>], dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>slice_ids <span class="op">=</span> [<span class="bu">int</span>(np.argmin(np.<span class="bu">abs</span>(raw_slices[<span class="st">"dte_days"</span>] <span class="op">-</span> d))) <span class="cf">for</span> d <span class="kw">in</span> target_days <span class="cf">if</span> <span class="bu">len</span>(raw_slices)]</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>slice_ids <span class="op">=</span> <span class="bu">list</span>(<span class="bu">dict</span>.fromkeys(slice_ids))[:<span class="dv">5</span>]</span>
@@ -2488,15 +2636,18 @@ w_i=\frac{1}{\operatorname{Var}(\epsilon_i)}
 <span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>ax.legend(title<span class="op">=</span><span class="st">"maturity"</span>)</span>
 <span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-13-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-13-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="08_vol_surface_local_vol_files/figure-html/cell-13-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="270ab6ba" class="cell" data-execution_count="14">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>k_mesh_raw, tau_mesh_raw <span class="op">=</span> np.meshgrid(k_raw_grid, tau_raw_grid <span class="op">*</span> ann_days)</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>raw_k_mask <span class="op">=</span> np.isfinite(raw_iv_grid).<span class="bu">any</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>(<span class="fl">13.0</span>, <span class="fl">5.3</span>))</span>
@@ -2526,10 +2677,11 @@ w_i=\frac{1}{\operatorname{Var}(\epsilon_i)}
 <span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>fig.colorbar(surf3, ax<span class="op">=</span>ax1, shrink<span class="op">=</span><span class="fl">0.70</span>, pad<span class="op">=</span><span class="fl">0.06</span>, label<span class="op">=</span><span class="st">"iv"</span>)</span>
 <span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-14-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-14-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="08_vol_surface_local_vol_files/figure-html/cell-14-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2698,6 +2850,8 @@ P=\lambda_kP_k+\lambda_TP_T
 \]</span></p>
 <p>That is why the Dupire candidate selection includes invalid local-vol nodes, extreme ratios, and density problems. We choose smoothing based on the downstream task, not only the in-sample fit error.</p>
 <div id="62482c51" class="cell" data-execution_count="15">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_knots(n_basis, degree<span class="op">=</span><span class="dv">3</span>):</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    n_inner <span class="op">=</span> <span class="bu">int</span>(n_basis) <span class="op">-</span> <span class="bu">int</span>(degree) <span class="op">-</span> <span class="dv">1</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    inner <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">1.0</span>, <span class="fl">1.0</span>, n_inner <span class="op">+</span> <span class="dv">2</span>)[<span class="dv">1</span>:<span class="op">-</span><span class="dv">1</span>] <span class="cf">if</span> n_inner <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.array([])</span>
@@ -2823,6 +2977,7 @@ P=\lambda_kP_k+\lambda_TP_T
 <span id="cb15-123"><a href="#cb15-123" aria-hidden="true" tabindex="-1"></a>        <span class="st">"min_dte"</span>: <span class="bu">float</span>(np.nanmin(q[<span class="st">"dte_days"</span>])),</span>
 <span id="cb15-124"><a href="#cb15-124" aria-hidden="true" tabindex="-1"></a>        <span class="st">"max_dte"</span>: <span class="bu">float</span>(np.nanmax(q[<span class="st">"dte_days"</span>])),</span>
 <span id="cb15-125"><a href="#cb15-125" aria-hidden="true" tabindex="-1"></a>    })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -2860,6 +3015,8 @@ P=\lambda_kP_k+\lambda_TP_T
 <p>This is a common pattern in quantitative finance. The estimator used for visualization isn’t always the estimator used for risk. A visually detailed surface can overfit microstructure noise. A risk surface needs to be more regularized.</p>
 <p>The output confirms this tradeoff. The visual fit has lower weighted RMSE, but the Dupire fit is only slightly worse and is selected for lower derivative stress. That is the right kind of compromise.</p>
 <div id="a5ef0914" class="cell" data-execution_count="16">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>k_fit_grid <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">0.38</span>, <span class="fl">0.38</span>, <span class="dv">65</span>)</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>tau_fit_grid <span class="op">=</span> np.linspace(<span class="fl">7.0</span> <span class="op">/</span> ann_days, <span class="fl">180.0</span> <span class="op">/</span> ann_days, <span class="dv">33</span>)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>k_lv_grid <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">0.25</span>, <span class="fl">0.10</span>, <span class="dv">49</span>)</span>
@@ -3146,6 +3303,7 @@ P=\lambda_kP_k+\lambda_TP_T
 <span id="cb16-284"><a href="#cb16-284" aria-hidden="true" tabindex="-1"></a>display(fit_table)</span>
 <span id="cb16-285"><a href="#cb16-285" aria-hidden="true" tabindex="-1"></a>display(grid_check)</span>
 <span id="cb16-286"><a href="#cb16-286" aria-hidden="true" tabindex="-1"></a>display(spline_eval_check)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3348,6 +3506,8 @@ P=\lambda_kP_k+\lambda_TP_T
 </div>
 </div>
 <div id="fe2c9e56" class="cell" data-execution_count="17">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">8.9</span>, <span class="fl">5.0</span>))</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>limits_main <span class="op">=</span> quote_support(q_main)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n, day <span class="kw">in</span> <span class="bu">enumerate</span>([<span class="dv">14</span>, <span class="dv">30</span>, <span class="dv">60</span>, <span class="dv">90</span>, <span class="dv">150</span>]):</span>
@@ -3367,10 +3527,11 @@ P=\lambda_kP_k+\lambda_TP_T
 <span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>ax.legend(title<span class="op">=</span><span class="st">"maturity"</span>)</span>
 <span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-17-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-17-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="08_vol_surface_local_vol_files/figure-html/cell-17-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3396,6 +3557,8 @@ e_m=\sigma_{mkt,m}-\hat{\sigma}(k_m,T_m)
 <p>The largest residual table makes this very clear. Many of the worst residuals are around strike 3,400 on 2023-12-29, with <span class="math inline">\(k\approx -0.343\)</span> and maturities around 26 to 44 days. Market IV is around 38% to 45%, while the fitted surface is above 50% or 60%. These are deep downside strikes. The model is smoothing the wing upward relative to some individual quotes.</p>
 <p>This shouldn’t be interpreted as the whole fit failing. It means the far-left wing contains difficult points: some puts and calls disagree, spreads can be large, and smoothness constraints pull the wing into a coherent shape. For local vol, we’d rather have a slightly biased wing than a jagged wing that creates negative densities.</p>
 <div id="87fe15a1" class="cell" data-execution_count="18">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>q_fit <span class="op">=</span> q_main.copy()</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>q_fit[<span class="st">"fit_iv_visual"</span>] <span class="op">=</span> iv_points(fit_visual, q_fit[<span class="st">"k"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>), q_fit[<span class="st">"tau"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>))</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>q_fit[<span class="st">"fit_iv_dupire"</span>] <span class="op">=</span> iv_points(fit_dupire, q_fit[<span class="st">"k"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>), q_fit[<span class="st">"tau"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>))</span>
@@ -3425,15 +3588,18 @@ e_m=\sigma_{mkt,m}-\hat{\sigma}(k_m,T_m)
 <span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>fig.colorbar(surf3, ax<span class="op">=</span>ax1, shrink<span class="op">=</span><span class="fl">0.7</span>, pad<span class="op">=</span><span class="fl">0.06</span>, label<span class="op">=</span><span class="st">"iv"</span>)</span>
 <span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-18-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-18-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="08_vol_surface_local_vol_files/figure-html/cell-18-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="6a56102a" class="cell" data-execution_count="19">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame([fit_metrics(fit_visual, q_main, <span class="st">"visual"</span>), fit_metrics(fit_dupire, q_main, <span class="st">"dupire"</span>)]))</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>q_fit[<span class="st">"maturity_bucket"</span>] <span class="op">=</span> pd.cut(q_fit[<span class="st">"dte_days"</span>], bins<span class="op">=</span>[<span class="dv">7</span>, <span class="dv">21</span>, <span class="dv">45</span>, <span class="dv">90</span>, <span class="dv">180</span>], labels<span class="op">=</span>[<span class="st">"7-21d"</span>, <span class="st">"21-45d"</span>, <span class="st">"45-90d"</span>, <span class="st">"90-180d"</span>], include_lowest<span class="op">=</span><span class="va">True</span>)</span>
@@ -3464,6 +3630,7 @@ e_m=\sigma_{mkt,m}-\hat{\sigma}(k_m,T_m)
 <span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>display(q_fit.assign(abs_residual<span class="op">=</span><span class="kw">lambda</span> x: x[<span class="st">"residual_visual"</span>].<span class="bu">abs</span>()).sort_values(<span class="st">"abs_residual"</span>, ascending<span class="op">=</span><span class="va">False</span>)[[<span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"option_type"</span>, <span class="st">"strike"</span>, <span class="st">"k"</span>, <span class="st">"dte_days"</span>, <span class="st">"iv_mid"</span>, <span class="st">"fit_iv_visual"</span>, <span class="st">"fit_iv_dupire"</span>, <span class="st">"residual_visual"</span>, <span class="st">"residual_dupire"</span>, <span class="st">"iv_uncertainty"</span>]].head(<span class="dv">12</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3534,7 +3701,7 @@ e_m=\sigma_{mkt,m}-\hat{\sigma}(k_m,T_m)
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-19-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-19-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="08_vol_surface_local_vol_files/figure-html/cell-19-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3789,6 +3956,8 @@ e_m=\sigma_{mkt,m}-\hat{\sigma}(k_m,T_m)
 \]</span></p>
 <p>These features translate the surface into financial language. ATM IV measures general uncertainty. Downside skew measures crash-protection premium. Curvature measures how smile-shaped the distribution is. Term slope measures whether near-term or longer-term uncertainty is more expensive.</p>
 <div id="a323ddd2" class="cell" data-execution_count="20">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> shape_table(fit, tau_values):</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    tau_values <span class="op">=</span> np.asarray(tau_values, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    atm <span class="op">=</span> iv_points(fit, np.full_like(tau_values, shape_k_atm), tau_values)</span>
@@ -3823,6 +3992,7 @@ e_m=\sigma_{mkt,m}-\hat{\sigma}(k_m,T_m)
 <span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend(ncol<span class="op">=</span><span class="dv">3</span>)</span>
 <span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3939,7 +4109,7 @@ e_m=\sigma_{mkt,m}-\hat{\sigma}(k_m,T_m)
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-20-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-20-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="08_vol_surface_local_vol_files/figure-html/cell-20-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4012,6 +4182,8 @@ e_m=\sigma_{mkt,m}-\hat{\sigma}(k_m,T_m)
 \]</span></p>
 <p>means “approximate IV change from extending maturity by 30 calendar days.” This is much easier to interpret than raw annualized derivative units.</p>
 <div id="b4a1059a" class="cell" data-execution_count="21">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>k_plot_lo <span class="op">=</span> <span class="bu">max</span>(limits_main[<span class="st">"k_lo"</span>], <span class="op">-</span><span class="fl">0.22</span>)</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>k_plot_hi <span class="op">=</span> <span class="bu">min</span>(limits_main[<span class="st">"k_hi"</span>], <span class="fl">0.08</span>)</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>k_shape_plot <span class="op">=</span> np.linspace(k_plot_lo, k_plot_hi, <span class="dv">48</span>)</span>
@@ -4034,15 +4206,18 @@ e_m=\sigma_{mkt,m}-\hat{\sigma}(k_m,T_m)
 <span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>ax.legend(title<span class="op">=</span><span class="st">"maturity"</span>)</span>
 <span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-21-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-21-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="08_vol_surface_local_vol_files/figure-html/cell-21-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="02d82fc2" class="cell" data-execution_count="22">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>logw <span class="op">=</span> logw_grid(fit_dupire, k_fit_grid, tau_fit_grid)</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>logw_k <span class="op">=</span> logw_grid(fit_dupire, k_fit_grid, tau_fit_grid, der_k<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>logw_kk <span class="op">=</span> logw_grid(fit_dupire, k_fit_grid, tau_fit_grid, der_k<span class="op">=</span><span class="dv">2</span>)</span>
@@ -4077,15 +4252,18 @@ e_m=\sigma_{mkt,m}-\hat{\sigma}(k_m,T_m)
 <span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"iv change"</span>)</span>
 <span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb22-34"><a href="#cb22-34" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-22-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-22-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="08_vol_surface_local_vol_files/figure-html/cell-22-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="0017ab09" class="cell" data-execution_count="23">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="fl">14.0</span>, <span class="fl">4.2</span>), sharey<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>items <span class="op">=</span> [</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    (slope_1pct, <span class="st">"iv slope per 1</span><span class="sc">% lo</span><span class="st">g-moneyness"</span>, <span class="st">"iv change"</span>),</span>
@@ -4104,10 +4282,11 @@ e_m=\sigma_{mkt,m}-\hat{\sigma}(k_m,T_m)
 <span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"days to expiry"</span>)</span>
 <span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-23-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-23-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="08_vol_surface_local_vol_files/figure-html/cell-23-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4273,6 +4452,8 @@ C(K,T)=B76(F_T,K,T,D(T),\sigma(k,T))
 </ul>
 <p>The support mask is especially important. A local-vol value outside quote support is mostly an extrapolation artifact. We can plot it for visual continuity, but we shouldn’t interpret it as market information.</p>
 <div id="46f8b72b" class="cell" data-execution_count="24">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>lv_main <span class="op">=</span> dupire_from_fit(fit_dupire, q_main, tau_lv_grid, k_lv_grid)</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>dupire_main <span class="op">=</span> pd.DataFrame([dupire_metrics(lv_main, downside_k<span class="op">=</span>shape_k_down)])</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>region_main <span class="op">=</span> lv_main[<span class="st">"support_mask"</span>] <span class="op">&amp;</span> (<span class="op">~</span>lv_main[<span class="st">"boundary_mask"</span>])</span>
@@ -4288,6 +4469,7 @@ C(K,T)=B76(F_T,K,T,D(T),\sigma(k,T))
 <span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>}])</span>
 <span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>display(quality_rows)</span>
 <span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>display(dupire_main)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4389,6 +4571,8 @@ C(K,T)=B76(F_T,K,T,D(T),\sigma(k,T))
 <p>The local-vol-to-IV ratio plot is a good way to see where the model is doing more than simply restating IV. A ratio near 1 means local vol is close to implied vol.&nbsp;A ratio far above 1 means the local-vol process needs stronger instantaneous volatility than the average IV suggests.</p>
 <p>This is one of the main conceptual payoffs of the project: <strong>the skew isn’t only a static price pattern. Under a local-vol model, it becomes a state-dependent volatility process.</strong></p>
 <div id="33bb3a54" class="cell" data-execution_count="25">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="fl">13.0</span>, <span class="fl">4.8</span>), sharey<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>lv_plot <span class="op">=</span> lv_main[<span class="st">"local_vol"</span>]</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>lv_k_mask <span class="op">=</span> lv_main[<span class="st">"support_mask"</span>].<span class="bu">any</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
@@ -4416,10 +4600,11 @@ C(K,T)=B76(F_T,K,T,D(T),\sigma(k,T))
 <span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend(ncol<span class="op">=</span><span class="dv">2</span>, fontsize<span class="op">=</span><span class="dv">7</span>)</span>
 <span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-25-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-25-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="08_vol_surface_local_vol_files/figure-html/cell-25-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4439,6 +4624,8 @@ C(K,T)=B76(F_T,K,T,D(T),\sigma(k,T))
 <p>For SPX, the downside premium is the cleaner economic statistic. It says the local-vol process needs higher volatility when the index is lower. That is exactly the state-dependent volatility intuition behind equity skew.</p>
 <p>The ratio is more of a stability diagnostic. If the ratio is 1.2 or 1.3 in a structured region, that can be meaningful. If it is 5 or 10 in a sparse region, that is more likely a derivative artifact. So we don’t celebrate extreme local-vol ratios. We flag them.</p>
 <div id="028877ef" class="cell" data-execution_count="26">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>(<span class="fl">13.2</span>, <span class="fl">5.0</span>))</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>ax0 <span class="op">=</span> fig.add_subplot(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>, projection<span class="op">=</span><span class="st">"3d"</span>)</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>k_mesh_lv, tau_mesh_lv <span class="op">=</span> np.meshgrid(lv_main[<span class="st">"k_grid"</span>], lv_main[<span class="st">"tau_grid"</span>] <span class="op">*</span> ann_days)</span>
@@ -4461,15 +4648,18 @@ C(K,T)=B76(F_T,K,T,D(T),\sigma(k,T))
 <span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>fig.colorbar(cf, ax<span class="op">=</span>ax1, pad<span class="op">=</span><span class="fl">0.01</span>, ticks<span class="op">=</span>[<span class="fl">0.2</span>, <span class="fl">0.8</span>], label<span class="op">=</span><span class="st">"0 ok, 1 flagged"</span>)</span>
 <span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-26-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-26-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="08_vol_surface_local_vol_files/figure-html/cell-26-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="c8507688" class="cell" data-execution_count="27">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>region_main <span class="op">=</span> lv_main[<span class="st">"support_mask"</span>] <span class="op">&amp;</span> (<span class="op">~</span>lv_main[<span class="st">"boundary_mask"</span>])</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>invalid_by_tau <span class="op">=</span> []</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, tau <span class="kw">in</span> <span class="bu">enumerate</span>(lv_main[<span class="st">"tau_grid"</span>]):</span>
@@ -4499,10 +4689,11 @@ C(K,T)=B76(F_T,K,T,D(T),\sigma(k,T))
 <span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="ss">f"local vol(</span><span class="sc">{</span>shape_k_down<span class="sc">:+.2f}</span><span class="ss">) - local vol(</span><span class="sc">{</span>shape_k_atm<span class="sc">:+.2f}</span><span class="ss">)"</span>)</span>
 <span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-27-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-27-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="08_vol_surface_local_vol_files/figure-html/cell-27-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4556,6 +4747,8 @@ C(K,T)=B76(F_T,K,T,D(T),\sigma(k,T))
 <p>The historical panel also tells us whether the methodology is robust. If the fitter succeeds only on the main date, we don’t know much. If it succeeds on 505 consecutive SPX dates through 2022 and 2023, that is a stronger test. Those years include very different regimes: high inflation shock, aggressive rate hikes, equity drawdowns, and later the low-vol end-of-2023 rally.</p>
 <p>The zero skipped dates are therefore not a small detail. They show that the filters, weights, basis dimensions, and smoothing settings are stable enough for a real panel study.</p>
 <div id="913e774a" class="cell" data-execution_count="28">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>k_safe_grid <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">0.25</span>, <span class="fl">0.10</span>, <span class="dv">49</span>)</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>tau_safe_grid <span class="op">=</span> np.linspace(<span class="fl">21.0</span> <span class="op">/</span> ann_days, <span class="fl">150.0</span> <span class="op">/</span> ann_days, <span class="dv">25</span>)</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>hist_k_lv <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">0.20</span>, <span class="fl">0.08</span>, <span class="dv">35</span>)</span>
@@ -4632,6 +4825,7 @@ C(K,T)=B76(F_T,K,T,D(T),\sigma(k,T))
 <span id="cb28-74"><a href="#cb28-74" aria-hidden="true" tabindex="-1"></a>skipped <span class="op">=</span> pd.DataFrame(skip_rows)</span>
 <span id="cb28-75"><a href="#cb28-75" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"successful fitted dates: </span><span class="sc">{</span><span class="bu">len</span>(fit_dates)<span class="sc">:,}</span><span class="ss">; skipped dates: </span><span class="sc">{</span><span class="bu">len</span>(skipped)<span class="sc">:,}</span><span class="ss">; seconds: </span><span class="sc">{</span>time<span class="sc">.</span>perf_counter() <span class="op">-</span> hist_tic<span class="sc">:,.1f}</span><span class="ss">"</span>)</span>
 <span id="cb28-76"><a href="#cb28-76" aria-hidden="true" tabindex="-1"></a>display(fit_log.groupby(<span class="st">"fit"</span>).describe().T.loc[(<span class="bu">slice</span>(<span class="va">None</span>), [<span class="st">"mean"</span>, <span class="st">"std"</span>, <span class="st">"min"</span>, <span class="st">"50%"</span>, <span class="st">"max"</span>]), :])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>historical surface fits: 50/505
 historical surface fits: 100/505
@@ -4725,12 +4919,15 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 </div>
 </div>
 <div id="4a5a8136" class="cell" data-execution_count="29">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame([{</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"successful_dates"</span>: <span class="bu">len</span>(fit_dates),</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"skipped_dates"</span>: <span class="bu">len</span>(skipped),</span>
 <span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"first_fit_date"</span>: fit_dates.<span class="bu">min</span>().date() <span class="cf">if</span> <span class="bu">len</span>(fit_dates) <span class="cf">else</span> <span class="va">None</span>,</span>
 <span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"last_fit_date"</span>: fit_dates.<span class="bu">max</span>().date() <span class="cf">if</span> <span class="bu">len</span>(fit_dates) <span class="cf">else</span> <span class="va">None</span>,</span>
 <span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>}]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4760,6 +4957,8 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 </div>
 </div>
 <div id="8b3b2ee0" class="cell" data-execution_count="30">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>node_support_share <span class="op">=</span> support_cube.mean(axis<span class="op">=</span><span class="dv">0</span>) <span class="cf">if</span> <span class="bu">len</span>(support_cube) <span class="cf">else</span> np.zeros((<span class="bu">len</span>(tau_safe_grid), <span class="bu">len</span>(k_safe_grid)), dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>common_node_mask <span class="op">=</span> node_support_share <span class="op">&gt;=</span> <span class="fl">0.85</span></span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> common_node_mask.<span class="bu">sum</span>() <span class="op">&lt;</span> <span class="dv">120</span>:</span>
@@ -4792,6 +4991,7 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 <span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"days to expiry"</span>)</span>
 <span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4826,7 +5026,7 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-30-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-30-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="08_vol_surface_local_vol_files/figure-html/cell-30-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4844,6 +5044,8 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 <p>The average-IV grid shows the usual SPX structure: higher vol on the downside and lower vol near the right side. The surface-volatility grid shows where the surface changes most through time. Variability is not uniform. Some regions of the smile move much more than others, especially the downside and medium maturities.</p>
 <p>This is exactly why PCA is useful later. Surface changes are high-dimensional, but they are structured. Most days don’t produce random independent movement at every grid node. The whole surface tends to move through a few dominant modes.</p>
 <div id="dddffee0" class="cell" data-execution_count="31">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>display(features.head(<span class="dv">8</span>))</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>feature_summary <span class="op">=</span> features.drop(columns<span class="op">=</span>[<span class="st">"date"</span>]).describe(percentiles<span class="op">=</span>[<span class="fl">0.05</span>, <span class="fl">0.50</span>, <span class="fl">0.95</span>]).T</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>display(feature_summary[[<span class="st">"mean"</span>, <span class="st">"std"</span>, <span class="st">"5%"</span>, <span class="st">"50%"</span>, <span class="st">"95%"</span>]])</span>
@@ -4863,6 +5065,7 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 <span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>axes[<span class="op">-</span><span class="dv">1</span>].set_xlabel(<span class="st">"date"</span>)</span>
 <span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5345,7 +5548,7 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-31-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-31-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16"><img src="08_vol_surface_local_vol_files/figure-html/cell-31-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5377,6 +5580,8 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 <p><strong>Term slope</strong> tells us whether risk is front-loaded. A negative term slope means short-dated options are more expensive than longer-dated ones. That usually signals immediate event risk. A positive term slope means uncertainty is priced more gradually across time.</p>
 <p>These four features turn a high-dimensional surface into a small set of interpretable market-state variables.</p>
 <div id="cc26460d" class="cell" data-execution_count="32">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="fl">12.4</span>, <span class="fl">4.7</span>))</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>sc <span class="op">=</span> axes[<span class="dv">0</span>].scatter(features[<span class="st">"medium_atm_iv"</span>], features[<span class="st">"downside_skew"</span>], c<span class="op">=</span>features[<span class="st">"dupire_stress"</span>], s<span class="op">=</span><span class="dv">22</span>, cmap<span class="op">=</span><span class="st">"magma"</span>, alpha<span class="op">=</span><span class="fl">0.82</span>)</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"surface state phase plot"</span>)</span>
@@ -5392,10 +5597,11 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 <span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"45-date rolling correlation"</span>)</span>
 <span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-32-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-32-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-17"><img src="08_vol_surface_local_vol_files/figure-html/cell-32-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5456,6 +5662,8 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 \]</span></p>
 <p>The eigenvectors of this covariance matrix are the surface-shock patterns. A large eigenvalue means that shock direction explains a lot of historical movement.</p>
 <div id="0889abb9" class="cell" data-execution_count="33">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>surface_changes <span class="op">=</span> np.diff(iv_common, axis<span class="op">=</span><span class="dv">0</span>)</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>change_dates <span class="op">=</span> fit_dates[<span class="dv">1</span>:]</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>flat_changes <span class="op">=</span> surface_changes.reshape(surface_changes.shape[<span class="dv">0</span>], <span class="op">-</span><span class="dv">1</span>)</span>
@@ -5506,6 +5714,7 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 <span id="cb34-48"><a href="#cb34-48" aria-hidden="true" tabindex="-1"></a>    top_score_rows.append({<span class="st">"component"</span>: pc, <span class="st">"side"</span>: <span class="st">"negative"</span>, <span class="st">"date"</span>: s.iloc[<span class="dv">0</span>][<span class="st">"date"</span>].date(), <span class="st">"score"</span>: <span class="bu">float</span>(s.iloc[<span class="dv">0</span>][pc])})</span>
 <span id="cb34-49"><a href="#cb34-49" aria-hidden="true" tabindex="-1"></a>    top_score_rows.append({<span class="st">"component"</span>: pc, <span class="st">"side"</span>: <span class="st">"positive"</span>, <span class="st">"date"</span>: s.iloc[<span class="op">-</span><span class="dv">1</span>][<span class="st">"date"</span>].date(), <span class="st">"score"</span>: <span class="bu">float</span>(s.iloc[<span class="op">-</span><span class="dv">1</span>][pc])})</span>
 <span id="cb34-50"><a href="#cb34-50" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame(top_score_rows))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5663,6 +5872,8 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 <p>PC2 is more shape-like. It changes one region of the surface differently from another, often looking like a skew or term-structure rotation. PC3 is smaller and more localized, often closer to a term-structure or curvature adjustment.</p>
 <p>The top-score table also gives a sanity check. PC1 positive extremes occur on dates with elevated short ATM IV, while PC1 negative extremes occur when the surface falls sharply. PCA is capturing real volatility regimes, not numerical noise.</p>
 <div id="5535a950" class="cell" data-execution_count="34">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>fig, ax1 <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">8.2</span>, <span class="fl">4.4</span>))</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>xpos <span class="op">=</span> np.arange(<span class="dv">1</span>, <span class="dv">6</span>)</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>ax1.bar(xpos, pca_var[<span class="st">"explained_variance_ratio"</span>], color<span class="op">=</span>lab_colors[<span class="dv">0</span>], alpha<span class="op">=</span><span class="fl">0.78</span>, label<span class="op">=</span><span class="st">"individual"</span>)</span>
@@ -5694,22 +5905,25 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 <span id="cb35-29"><a href="#cb35-29" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"days to expiry"</span>)</span>
 <span id="cb35-30"><a href="#cb35-30" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb35-31"><a href="#cb35-31" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-34-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-34-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-18"><img src="08_vol_surface_local_vol_files/figure-html/cell-34-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-34-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-34-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-19"><img src="08_vol_surface_local_vol_files/figure-html/cell-34-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="4df261b4" class="cell" data-execution_count="35">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">10.2</span>, <span class="fl">4.4</span>))</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, arr <span class="kw">in</span> <span class="bu">enumerate</span>(pc_shocks[:<span class="dv">3</span>]):</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> day <span class="kw">in</span> [<span class="dv">35</span>, <span class="dv">75</span>, <span class="dv">120</span>]:</span>
@@ -5723,10 +5937,11 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 <span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>ax.legend(ncol<span class="op">=</span><span class="dv">3</span>, fontsize<span class="op">=</span><span class="dv">7</span>)</span>
 <span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-35-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-35-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-20"><img src="08_vol_surface_local_vol_files/figure-html/cell-35-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5742,6 +5957,8 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 <p>The episode comparison uses dates selected from extreme PC1, high downside skew, high curvature, and high Dupire stress. The 60-day smile comparison shows how different episodes reshape the same surface region. The ATM term-structure comparison shows whether stress is concentrated in the front end or spread across maturities.</p>
 <p>This is one of the best practical uses of surface PCA: it turns thousands of surface nodes into a few regime factors that can be monitored over time.</p>
 <div id="9f6631f0" class="cell" data-execution_count="36">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>episode_tables <span class="op">=</span> {</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"top_pc1_positive"</span>: features.nlargest(<span class="dv">5</span>, <span class="st">"pc1"</span>)[[<span class="st">"date"</span>, <span class="st">"pc1"</span>, <span class="st">"short_atm_iv"</span>, <span class="st">"downside_skew"</span>, <span class="st">"dupire_stress"</span>]],</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"top_pc1_negative"</span>: features.nsmallest(<span class="dv">5</span>, <span class="st">"pc1"</span>)[[<span class="st">"date"</span>, <span class="st">"pc1"</span>, <span class="st">"short_atm_iv"</span>, <span class="st">"downside_skew"</span>, <span class="st">"dupire_stress"</span>]],</span>
@@ -5762,6 +5979,7 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 <span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>episode_dates <span class="op">=</span> <span class="bu">list</span>(<span class="bu">dict</span>.fromkeys(pd.to_datetime(episode_dates).normalize()))</span>
 <span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>episode_labels <span class="op">=</span> [pd.Timestamp(x).date().isoformat() <span class="cf">for</span> x <span class="kw">in</span> episode_dates]</span>
 <span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame({<span class="st">"episode_date"</span>: episode_labels}))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>top_pc1_positive</code></pre>
 </div>
@@ -6101,6 +6319,8 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 </div>
 </div>
 <div id="ac4114e5" class="cell" data-execution_count="37">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="fl">13.0</span>, <span class="fl">4.7</span>))</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n, date <span class="kw">in</span> <span class="bu">enumerate</span>(episode_dates):</span>
 <span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    fit <span class="op">=</span> fit_store_visual[pd.Timestamp(date)]</span>
@@ -6119,10 +6339,11 @@ successful fitted dates: 505; skipped dates: 0; seconds: 84.3</code></pre>
 <span id="cb43-16"><a href="#cb43-16" aria-hidden="true" tabindex="-1"></a>    ax.legend(fontsize<span class="op">=</span><span class="dv">8</span>)</span>
 <span id="cb43-17"><a href="#cb43-17" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb43-18"><a href="#cb43-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-37-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-37-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-21"><img src="08_vol_surface_local_vol_files/figure-html/cell-37-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -6220,6 +6441,8 @@ k(S)=\log\left(\frac{K}{F(S,T)}\right)
 <p>A simple example: suppose you hold a downside put. If SPX falls, the put moves deeper in the money, but it also moves into a higher-IV part of the skew. A flat-vol delta only captures the first effect. A surface-aware delta captures both the price movement and the volatility re-marking caused by sliding along the skew.</p>
 <p>That is why surface-aware Greeks are closer to how option desks think about risk. Traders know that spot down often comes with vol up. A flat-vol Greek framework misses that interaction unless vanna/skew adjustments are added separately. Here we get the adjustment directly from the fitted surface.</p>
 <div id="f0e9b6e4" class="cell" data-execution_count="38">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>k_risk_grid <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">0.20</span>, <span class="fl">0.08</span>, <span class="dv">35</span>)</span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>tau_risk_grid <span class="op">=</span> np.array([<span class="fl">21.0</span>, <span class="fl">35.0</span>, <span class="fl">60.0</span>, <span class="fl">90.0</span>, <span class="fl">120.0</span>, <span class="fl">150.0</span>]) <span class="op">/</span> ann_days</span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -6352,8 +6575,11 @@ k(S)=\log\left(\frac{K}{F(S,T)}\right)
 <span id="cb44-130"><a href="#cb44-130" aria-hidden="true" tabindex="-1"></a>    price_ref <span class="op">=</span> np.nanmedian(price[np.isfinite(price) <span class="op">&amp;</span> (price <span class="op">&gt;</span> <span class="dv">0</span>)])</span>
 <span id="cb44-131"><a href="#cb44-131" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"relative_greek_pnl_rms"</span>] <span class="op">=</span> <span class="bu">float</span>(out[<span class="st">"total_greek_pnl_rms"</span>] <span class="op">/</span> price_ref) <span class="cf">if</span> np.isfinite(price_ref) <span class="kw">and</span> price_ref <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> np.nan</span>
 <span id="cb44-132"><a href="#cb44-132" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="56265065" class="cell" data-execution_count="39">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>spot_main <span class="op">=</span> <span class="bu">float</span>(q_main[<span class="st">"spot"</span>].median())</span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>rate_main <span class="op">=</span> jnp.asarray(rate_on_tau(q_main, tau_risk_grid))</span>
 <span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>carry_main <span class="op">=</span> jnp.asarray(carry_on_tau(q_main, tau_risk_grid, spot_main))</span>
@@ -6367,6 +6593,7 @@ k(S)=\log\left(\frac{K}{F(S,T)}\right)
 <span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a>greek_engine_check <span class="op">=</span> pd.DataFrame([{<span class="st">"engine_used"</span>: main_greek_table.attrs[<span class="st">"engine_used"</span>], <span class="st">"fallback_used"</span>: main_greek_table.attrs[<span class="st">"fallback_used"</span>]}])</span>
 <span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a>display(main_greek_table)</span>
 <span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a>display(greek_engine_check)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6440,6 +6667,8 @@ k(S)=\log\left(\frac{K}{F(S,T)}\right)
 <p>The delta correction plot is positive across a large part of the downside region. This means surface-aware delta is higher than flat-vol delta in those regions. The gamma correction changes sign across moneyness and maturity, reflecting the interaction between skew, curvature, and option convexity.</p>
 <p>The correction maps show that model risk is localized. It isn’t uniform across the surface. The largest corrections sit where surface slope and curvature are strongest. This is exactly what the formula predicted.</p>
 <div id="3af9d4d7" class="cell" data-execution_count="40">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="fl">10.8</span>, <span class="fl">4.2</span>), sharex<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, name <span class="kw">in</span> <span class="bu">zip</span>(axes, [<span class="st">"delta"</span>, <span class="st">"gamma"</span>]):</span>
 <span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>    arr <span class="op">=</span> main_greeks[<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">_diff"</span>]</span>
@@ -6467,22 +6696,25 @@ k(S)=\log\left(\frac{K}{F(S,T)}\right)
 <span id="cb46-25"><a href="#cb46-25" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"days to expiry"</span>)</span>
 <span id="cb46-26"><a href="#cb46-26" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb46-27"><a href="#cb46-27" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-40-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-40-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-22"><img src="08_vol_surface_local_vol_files/figure-html/cell-40-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-40-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-40-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-23"><img src="08_vol_surface_local_vol_files/figure-html/cell-40-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="7c5f5c28" class="cell" data-execution_count="41">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>greek_tic <span class="op">=</span> time.perf_counter()</span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>greek_rows <span class="op">=</span> []</span>
 <span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n, date <span class="kw">in</span> <span class="bu">enumerate</span>(fit_dates):</span>
@@ -6510,6 +6742,7 @@ k(S)=\log\left(\frac{K}{F(S,T)}\right)
 <span id="cb47-25"><a href="#cb47-25" aria-hidden="true" tabindex="-1"></a>greek_risk <span class="op">=</span> pd.DataFrame(greek_rows).sort_values(<span class="st">"date"</span>).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb47-26"><a href="#cb47-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"full-sample greek risk dates scored: </span><span class="sc">{</span>greek_risk[<span class="st">'delta_rms_diff'</span>]<span class="sc">.</span>notna()<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(fit_dates)<span class="sc">:,}</span><span class="ss">; seconds: </span><span class="sc">{</span>time<span class="sc">.</span>perf_counter() <span class="op">-</span> greek_tic<span class="sc">:,.1f}</span><span class="ss">"</span>)</span>
 <span id="cb47-27"><a href="#cb47-27" aria-hidden="true" tabindex="-1"></a>display(greek_risk.head())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>greek risk dates: 50/505
 greek risk dates: 100/505
@@ -6658,6 +6891,8 @@ full-sample greek risk dates scored: 505 of 505; seconds: 21.9</code></pre>
 <p>RMS is useful because positive and negative corrections don’t cancel. If some options have positive correction and others have negative correction, the average could look small even though the risk is large. RMS measures typical magnitude.</p>
 <p>The relative Greek PnL RMS divides by a reference option price. That makes the metric comparable across regimes where option prices are very different. A 5-index-point correction is more serious for a cheap option than for an expensive one.</p>
 <div id="a8803cd8" class="cell" data-execution_count="42">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>features <span class="op">=</span> features.merge(greek_risk, on<span class="op">=</span><span class="st">"date"</span>, how<span class="op">=</span><span class="st">"left"</span>)</span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>risk_corr_cols <span class="op">=</span> [</span>
 <span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"short_atm_iv"</span>, <span class="st">"downside_skew"</span>, <span class="st">"curvature"</span>, <span class="st">"dupire_stress"</span>, <span class="st">"pc1"</span>, <span class="st">"pc2"</span>, <span class="st">"pc3"</span>,</span>
@@ -6669,6 +6904,7 @@ full-sample greek risk dates scored: 505 of 505; seconds: 21.9</code></pre>
 <span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>]</span>
 <span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>display(features[[<span class="st">"date"</span>, <span class="st">"delta_rms_diff"</span>, <span class="st">"gamma_rms_diff"</span>, <span class="st">"total_greek_pnl_rms"</span>, <span class="st">"relative_greek_pnl_rms"</span>, <span class="st">"dupire_stress"</span>, <span class="st">"pc1"</span>, <span class="st">"pc2"</span>, <span class="st">"pc3"</span>]].head())</span>
 <span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>display(risk_corr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6809,6 +7045,8 @@ full-sample greek risk dates scored: 505 of 505; seconds: 21.9</code></pre>
 </div>
 </div>
 <div id="3cc8afb2" class="cell" data-execution_count="43">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">3</span>, <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="fl">10.6</span>, <span class="fl">7.4</span>), sharex<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, col <span class="kw">in</span> <span class="bu">zip</span>(axes, [<span class="st">"delta_pnl_rms"</span>, <span class="st">"gamma_pnl_rms"</span>, <span class="st">"total_greek_pnl_rms"</span>]):</span>
 <span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>    ax.plot(features[<span class="st">"date"</span>], features[col], lw<span class="op">=</span><span class="fl">1.35</span>)</span>
@@ -6826,17 +7064,18 @@ full-sample greek risk dates scored: 505 of 505; seconds: 21.9</code></pre>
 <span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>fig.colorbar(sc, ax<span class="op">=</span>ax, pad<span class="op">=</span><span class="fl">0.01</span>, label<span class="op">=</span><span class="st">"dupire stress"</span>)</span>
 <span id="cb50-16"><a href="#cb50-16" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb50-17"><a href="#cb50-17" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-43-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-43-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-24"><img src="08_vol_surface_local_vol_files/figure-html/cell-43-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-43-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-43-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-25"><img src="08_vol_surface_local_vol_files/figure-html/cell-43-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -6889,6 +7128,8 @@ F_T=S_0e^{b(T)T}
 <p>This is why the library pipeline is useful. The mathematical pricing functions can use the same forward/discount framework, while the interpretation is adjusted to the asset class. We don’t need a separate option-pricing universe for crypto, but we do need to avoid importing equity-index intuition blindly.</p>
 <p>The BTC date uses far wider moneyness support than SPX. That makes the surface visually more dramatic, but it also means extrapolation risk is higher. A log-moneyness value near <span class="math inline">\(-0.79\)</span> is an extremely deep downside region. Quotes there can be informative about disaster pricing, but they can also be sparse and noisy.</p>
 <div id="e7ec8fc0" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -7264,6 +7505,7 @@ F_T=S_0e^{b(T)T}
 <span id="cb51-373"><a href="#cb51-373" aria-hidden="true" tabindex="-1"></a>    fontsize<span class="op">=</span><span class="dv">22</span>,</span>
 <span id="cb51-374"><a href="#cb51-374" aria-hidden="true" tabindex="-1"></a>    y<span class="op">=</span><span class="fl">1.01</span>)</span>
 <span id="cb51-375"><a href="#cb51-375" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Main BTC date: 2024-03-22
 Surface quotes: 120,736
@@ -8820,7 +9062,7 @@ Greek engine used: jax | fallback: False</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="08_vol_surface_local_vol_files/figure-html/cell-44-output-9.png" class="img-fluid figure-img"></p>
+<p><a href="08_vol_surface_local_vol_files/figure-html/cell-44-output-9.png" class="lightbox" data-gallery="quarto-lightbox-gallery-26"><img src="08_vol_surface_local_vol_files/figure-html/cell-44-output-9.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -9004,6 +9246,57 @@ Greek engine used: jax | fallback: False</code></pre>
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -9347,6 +9640,38 @@ Greek engine used: jax | fallback: False</code></pre>
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 

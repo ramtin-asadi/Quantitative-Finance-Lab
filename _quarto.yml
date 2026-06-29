@@ -31,8 +31,17 @@ book:
 
 format:
   html:
-    theme: flatly
-    toc: false
+    theme:
+      - cosmo
+      - styles.scss
+    toc: true
+    toc-location: right
+    toc-depth: 3
     number-sections: false
-
-
+    code-fold: true
+    code-summary: "Show code"
+    code-tools: true
+    code-copy: true
+    code-overflow: wrap
+    fig-responsive: true
+    lightbox: true

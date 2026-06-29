@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>6. Black-Litterman with Learned Confidence – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/05_GARCH_forecasting_VRP.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -112,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -143,7 +144,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -292,13 +293,74 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#mathematic-background-bayes-rule" id="toc-mathematic-background-bayes-rule" class="nav-link active" data-scroll-target="#mathematic-background-bayes-rule">1) mathematic background: Bayes Rule</a>
+  <ul class="collapse">
+  <li><a href="#imports-and-pltting-style" id="toc-imports-and-pltting-style" class="nav-link" data-scroll-target="#imports-and-pltting-style">Imports and pltting style</a></li>
+  </ul></li>
+  <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data">2) Data</a>
+  <ul class="collapse">
+  <li><a href="#choosing-the-etfs" id="toc-choosing-the-etfs" class="nav-link" data-scroll-target="#choosing-the-etfs">2.1 Choosing the ETFs</a></li>
+  <li><a href="#behaviour-of-these-etfs" id="toc-behaviour-of-these-etfs" class="nav-link" data-scroll-target="#behaviour-of-these-etfs">2.2 behaviour of these ETFs</a></li>
+  <li><a href="#performance-of-etfs" id="toc-performance-of-etfs" class="nav-link" data-scroll-target="#performance-of-etfs">2.3 Performance of ETFs</a></li>
+  </ul></li>
+  <li><a href="#building-the-strategic-benchmark-and-prior" id="toc-building-the-strategic-benchmark-and-prior" class="nav-link" data-scroll-target="#building-the-strategic-benchmark-and-prior">3) Building the strategic benchmark and Prior</a>
+  <ul class="collapse">
+  <li><a href="#benchmark-portfolio" id="toc-benchmark-portfolio" class="nav-link" data-scroll-target="#benchmark-portfolio">3.1 Benchmark portfolio</a></li>
+  <li><a href="#what-weights-we-used-and-why" id="toc-what-weights-we-used-and-why" class="nav-link" data-scroll-target="#what-weights-we-used-and-why">What weights we used and why</a></li>
+  <li><a href="#building-black-litterman-prior" id="toc-building-black-litterman-prior" class="nav-link" data-scroll-target="#building-black-litterman-prior">3.2 Building Black-Litterman prior</a></li>
+  <li><a href="#estimating-mu-from-equilibrium" id="toc-estimating-mu-from-equilibrium" class="nav-link" data-scroll-target="#estimating-mu-from-equilibrium">3.2.1 Estimating <span class="math inline">\(\mu\)</span> from equilibrium</a></li>
+  <li><a href="#estimating-covariance-sigma-and-risk-aversion-delta" id="toc-estimating-covariance-sigma-and-risk-aversion-delta" class="nav-link" data-scroll-target="#estimating-covariance-sigma-and-risk-aversion-delta">3.2.2 Estimating Covariance <span class="math inline">\(\Sigma\)</span> and Risk Aversion <span class="math inline">\(\delta\)</span></a></li>
+  </ul></li>
+  <li><a href="#building-baseline-strategies" id="toc-building-baseline-strategies" class="nav-link" data-scroll-target="#building-baseline-strategies">4) Building baseline strategies</a></li>
+  <li><a href="#market-signals" id="toc-market-signals" class="nav-link" data-scroll-target="#market-signals">5) market signals</a></li>
+  <li><a href="#black-litterman-views" id="toc-black-litterman-views" class="nav-link" data-scroll-target="#black-litterman-views">6) Black-Litterman views</a>
+  <ul class="collapse">
+  <li><a href="#constructing-the-views" id="toc-constructing-the-views" class="nav-link" data-scroll-target="#constructing-the-views">6.1. constructing the views</a></li>
+  <li><a href="#view-strength-and-the-tilt-cap" id="toc-view-strength-and-the-tilt-cap" class="nav-link" data-scroll-target="#view-strength-and-the-tilt-cap">6.2 View Strength and the Tilt Cap</a></li>
+  <li><a href="#candidate-view-log-through-time" id="toc-candidate-view-log-through-time" class="nav-link" data-scroll-target="#candidate-view-log-through-time">8.3 Candidate view log through time</a></li>
+  </ul></li>
+  <li><a href="#view-payoff-history" id="toc-view-payoff-history" class="nav-link" data-scroll-target="#view-payoff-history">9) View payoff history</a>
+  <ul class="collapse">
+  <li><a href="#hit-rate-payoff-ir-t-stat-and-information-coefficient" id="toc-hit-rate-payoff-ir-t-stat-and-information-coefficient" class="nav-link" data-scroll-target="#hit-rate-payoff-ir-t-stat-and-information-coefficient">9.1 Hit rate, payoff IR, t-stat, and information coefficient</a></li>
+  </ul></li>
+  <li><a href="#learned-confidence" id="toc-learned-confidence" class="nav-link" data-scroll-target="#learned-confidence">10) Learned confidence</a>
+  <ul class="collapse">
+  <li><a href="#view-selection-and-redundancy-control" id="toc-view-selection-and-redundancy-control" class="nav-link" data-scroll-target="#view-selection-and-redundancy-control">10.1 View selection and redundancy control</a></li>
+  </ul></li>
+  <li><a href="#learned-q-scaling-and-the-view-matrix" id="toc-learned-q-scaling-and-the-view-matrix" class="nav-link" data-scroll-target="#learned-q-scaling-and-the-view-matrix">11) Learned <span class="math inline">\(q\)</span> scaling and the view matrix</a></li>
+  <li><a href="#from-confidence-to-omega" id="toc-from-confidence-to-omega" class="nav-link" data-scroll-target="#from-confidence-to-omega">12) From confidence to <span class="math inline">\(\Omega\)</span></a></li>
+  <li><a href="#black-litterman-posterior" id="toc-black-litterman-posterior" class="nav-link" data-scroll-target="#black-litterman-posterior">13) Black-Litterman posterior</a></li>
+  <li><a href="#portfolio-optimization-from-the-posterior" id="toc-portfolio-optimization-from-the-posterior" class="nav-link" data-scroll-target="#portfolio-optimization-from-the-posterior">14) Portfolio optimization from the posterior</a></li>
+  <li><a href="#strategy-comparison" id="toc-strategy-comparison" class="nav-link" data-scroll-target="#strategy-comparison">15) Strategy comparison</a>
+  <ul class="collapse">
+  <li><a href="#benchmark-relative-metrics" id="toc-benchmark-relative-metrics" class="nav-link" data-scroll-target="#benchmark-relative-metrics">15.1 Benchmark-relative metrics</a></li>
+  <li><a href="#tail-risk-and-stress-windows" id="toc-tail-risk-and-stress-windows" class="nav-link" data-scroll-target="#tail-risk-and-stress-windows">15.2 Tail risk and stress windows</a></li>
+  </ul></li>
+  <li><a href="#selected-view-reliability-after-the-full-backtest" id="toc-selected-view-reliability-after-the-full-backtest" class="nav-link" data-scroll-target="#selected-view-reliability-after-the-full-backtest">16) Selected-view reliability after the full backtest</a>
+  <ul class="collapse">
+  <li><a href="#posterior-shift-heatmap-and-latest-posterior-table" id="toc-posterior-shift-heatmap-and-latest-posterior-table" class="nav-link" data-scroll-target="#posterior-shift-heatmap-and-latest-posterior-table">16.1 Posterior shift heatmap and latest posterior table</a></li>
+  <li><a href="#view-reliability-table-and-active-weights" id="toc-view-reliability-table-and-active-weights" class="nav-link" data-scroll-target="#view-reliability-table-and-active-weights">16.2 View reliability table and active weights</a></li>
+  </ul></li>
+  <li><a href="#sector-etf-transfer-with-quantfinlab" id="toc-sector-etf-transfer-with-quantfinlab" class="nav-link" data-scroll-target="#sector-etf-transfer-with-quantfinlab">17) Sector ETF transfer with quantfinlab</a>
+  <ul class="collapse">
+  <li><a href="#sector-view-families" id="toc-sector-view-families" class="nav-link" data-scroll-target="#sector-view-families">17.1 Sector view families</a></li>
+  <li><a href="#sector-baselines-and-bl-backtest" id="toc-sector-baselines-and-bl-backtest" class="nav-link" data-scroll-target="#sector-baselines-and-bl-backtest">17.2 Sector baselines and BL backtest</a></li>
+  <li><a href="#sector-performance-and-reliability" id="toc-sector-performance-and-reliability" class="nav-link" data-scroll-target="#sector-performance-and-reliability">17.3 Sector performance and reliability</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">6. Black-Litterman with Learned Confidence</span></h1>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">6. Black-Litterman with Learned Confidence</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -343,6 +405,8 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 <section id="imports-and-pltting-style" class="level3">
 <h3 class="anchored" data-anchor-id="imports-and-pltting-style">Imports and pltting style</h3>
 <div id="64e3efcd" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:02.483324Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:02.483324Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:05.813906Z&quot;}}" data-execution_count="5">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
@@ -387,6 +451,7 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 <span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.titlesize"</span>: <span class="dv">11</span>,</span>
 <span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="dv">10</span>,</span>
 <span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">8</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -394,6 +459,8 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 <h2 class="anchored" data-anchor-id="data">2) Data</h2>
 <p>For this project, we could’ve used the same nasdaq data from notebook 2, but that wouldn’t be the best choice for Black-Litterman and the economic interpretation and building views wouldn’t be as good. So we use a dataset of famous ETFs (investement funds that are tradable like exchanges) which is collected from yahoo-finance API. A script for reproducing the dataset is available in data folder ([from here]). The dataset contains history of these ETFs from the start of 2010, but we use the data from the start of 2013 cause we don’t want to deal with missing prices of one of the ETFs. [from here]: https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/core_cross_asset_etfs</p>
 <div id="5b24c87f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:05.815489Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:05.976053Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:05.976053Z&quot;}}" data-execution_count="6">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data/core_cross_asset_etfs.csv"</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> pd.read_csv(data_path)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>raw[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(raw[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
@@ -437,6 +504,7 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 <span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>    action_parts.append(splits_part)</span>
 <span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>actions_all <span class="op">=</span> pd.concat(action_parts, axis<span class="op">=</span><span class="dv">1</span>).sort_index(axis<span class="op">=</span><span class="dv">1</span>) <span class="cf">if</span> action_parts <span class="cf">else</span> pd.DataFrame(index<span class="op">=</span>raw.index)</span>
 <span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <p>The loaded data has <span class="math inline">\(4107\)</span> trading days and <span class="math inline">\(63\)</span> adjusted close columns before we select the project’s ETFs. We are not going to use all <span class="math inline">\(63\)</span> ETFs and most of them are for later projects and secondary data for this project like sector ETFs.</p>
 <section id="choosing-the-etfs" class="level3">
@@ -543,6 +611,8 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 <p><strong>GLD, VNQ, and DBC</strong> have real asset and inflation sensitive exposures. <strong>Gold</strong> can behave as a diversifier when confidence in financial assets weakens and the situation is uncertain, although it is not a perfect hedge. <strong>VNQ</strong> is real estate and is sensitive to both growth and rates. <strong>DBC</strong> is broad commodities and can perform well during inflationary commodity cycles, but it can also be very painful in long disinflationary periods.</p>
 <p>This financial interpretation matters because the later views are not arbitrary and we use these relations to build economically reasonable views.</p>
 <div id="86fdb0a5" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.037675Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.037675Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;}}" data-execution_count="7">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>start_date <span class="op">=</span> <span class="st">"2013-01-01"</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>assets <span class="op">=</span> [</span>
@@ -602,6 +672,7 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 <span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>signal_close <span class="op">=</span> close_after_start.loc[first_all_valid:, signal_tickers].ffill(limit<span class="op">=</span><span class="dv">3</span>).reindex(returns.index).ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
 <span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>signal_returns <span class="op">=</span> signal_close.pct_change(fill_method<span class="op">=</span><span class="va">None</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).reindex(returns.index).fillna(<span class="fl">0.0</span>)</span>
 <span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -761,14 +832,19 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 </div>
 </div>
 <div id="a069749b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.071923Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;}}" data-execution_count="8">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>rebal_freq <span class="op">=</span> <span class="st">"ME"</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>cov_lookback <span class="op">=</span> <span class="dv">756</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>mu_lookback <span class="op">=</span> <span class="dv">252</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>rebalance_dates <span class="op">=</span> make_rebalance_dates(returns.index, freq<span class="op">=</span>rebal_freq, min_history_days<span class="op">=</span><span class="bu">max</span>(cov_lookback, mu_lookback, <span class="dv">756</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <p>We made monthly rebalance dates and we can see that even though our data starts from 2013, we need a lookback window for estimating covariance and mean, so the first rebalance date happens at the first month of 2016.</p>
 <div id="e9976116" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.086027Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.110139Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.110139Z&quot;}}" data-execution_count="9">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>annualization <span class="op">=</span> <span class="dv">252</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
@@ -789,6 +865,7 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 <span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>table <span class="op">=</span> pd.DataFrame(rows).sort_values(<span class="st">"ticker"</span>)</span>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>display(table.<span class="bu">round</span>({<span class="st">"ann_return"</span>: <span class="dv">4</span>, <span class="st">"ann_vol"</span>: <span class="dv">4</span>, <span class="st">"max_drawdown"</span>: <span class="dv">4</span>}))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -977,6 +1054,8 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 <p><strong>DBC</strong> has a very large drawdown around <span class="math inline">\(-62.2\%\)</span>, which can be from the long weak cycles. <strong>GLD and VNQ</strong> are somewhere between diversifiers and risk assets. They have meaningful volatility and large drawdowns, but they also bring different economic exposure.</p>
 <p>An efficient active model like Black-Litterman should know when to lean into growth, when to prefer real assets, when to reduce long duration, and when to stay close to the benchmark so it can control risk and gain the high return based on the state and information and the uncertainty of that information given to it each time it’s rabalancing.</p>
 <div id="b73a6bc4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.113543Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.113136Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;}}" data-execution_count="10">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>normalized_prices <span class="op">=</span> close <span class="op">/</span> close.ffill().bfill().iloc[<span class="dv">0</span>]</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> normalized_prices.plot(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="dv">4</span>), lw<span class="op">=</span><span class="fl">1.1</span>)</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"ETF normalized prices"</span>)</span>
@@ -985,15 +1064,18 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>ax.legend(ncol<span class="op">=</span><span class="dv">4</span>, fontsize<span class="op">=</span><span class="dv">7</span>)</span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-7-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="06_portfolio_black_littreman_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="0881c0c7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:06.433746Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:06.769265Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:06.769265Z&quot;}}" data-execution_count="11">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>rolling_vol <span class="op">=</span> rolling_volatility(returns, windows<span class="op">=</span>(<span class="dv">63</span>,), annualization<span class="op">=</span>annualization)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> rolling_vol.plot(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="dv">4</span>), lw<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"rolling annualized volatility, 63 trading days"</span>)</span>
@@ -1009,17 +1091,18 @@ P(A\mid B)=\frac{P(B\mid A)P(A)}{P(B)}
 <span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Correlation Heatmap"</span>)</span>
 <span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-8-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-8-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="06_portfolio_black_littreman_files/figure-html/cell-8-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-8-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-8-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="06_portfolio_black_littreman_files/figure-html/cell-8-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1054,6 +1137,8 @@ w_b=\begin{bmatrix}w_{b,\mathrm{SPY}} &amp; w_{b,\mathrm{QQQ}} &amp; \cdots &amp
 w_{b,i}\geq 0
 \]</span></p>
 <div id="f57f0d31" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.101896Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.101896Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;}}" data-execution_count="12">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>w_min <span class="op">=</span> <span class="fl">0.0</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>w_max <span class="op">=</span> <span class="fl">0.40</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1112,6 +1197,7 @@ w_{b,i}\geq 0
 <span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a>    <span class="st">"asset_cap"</span>: asset_caps.reindex(benchmark_w.index).values,</span>
 <span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a>display(benchmark_table.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1238,6 +1324,8 @@ w_{b,i}\geq 0
 <p>US equity is the largest section at about 34.3%. Duration bonds and international equities are also used enough. Core bonds, real assets, and credit each have visible allocations, while commodities are intentionally small.</p>
 <p>This looks like a reasonable strategic benchmark for a multi asset project. It is growth oriented enough to participate in equity markets, but it is not a pure equity portfolio to end up with too high volatility. It has bonds, gold, real estate, credit, and commodities. That makes it a useful starting point for active allocation.</p>
 <div id="2fd69cad" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.123226Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;}}" data-execution_count="13">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">3.5</span>))</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>benchmark_w.sort_values(ascending<span class="op">=</span><span class="va">False</span>).plot(kind<span class="op">=</span><span class="st">"bar"</span>, ax<span class="op">=</span>ax)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"fixed etf benchmark weights"</span>)</span>
@@ -1247,10 +1335,11 @@ w_{b,i}\geq 0
 <span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>benchmark_sleeve <span class="op">=</span> benchmark_table.groupby(<span class="st">"sleeve"</span>, as_index<span class="op">=</span><span class="va">False</span>)[<span class="st">"benchmark_weight"</span>].<span class="bu">sum</span>().sort_values(<span class="st">"benchmark_weight"</span>, ascending<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>display(benchmark_sleeve.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-10-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-10-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="06_portfolio_black_littreman_files/figure-html/cell-10-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1350,6 +1439,8 @@ w_{b,i}\geq 0
 </blockquote>
 <p>Note: The prior is not static. At each rebalance date we use the current EWMA covariance estimate, so <span class="math inline">\(\boldsymbol{\mu}_{\text{eq}}\)</span> evolves with the market’s volatility and correlation structure.</p>
 <div id="7bdcfd8b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:07.239449Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:07.254413Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:07.254413Z&quot;}}" data-execution_count="14">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ewma_lambda <span class="op">=</span> <span class="fl">0.97</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>delta_fallback <span class="op">=</span> <span class="fl">2.5</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>delta_min <span class="op">=</span> <span class="fl">0.30</span></span>
@@ -1402,8 +1493,11 @@ w_{b,i}\geq 0
 <span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a>    cov_by_date[pd.Timestamp(dt)] <span class="op">=</span> cov_ann</span>
 <span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a>    delta_by_date[pd.Timestamp(dt)] <span class="op">=</span> delta_t</span>
 <span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a>    prior_mu_by_date[pd.Timestamp(dt)] <span class="op">=</span> prior_mu</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="5b27526f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:08.287613Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:08.287613Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:08.699935Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:08.699935Z&quot;}}" data-execution_count="15">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>delta_series <span class="op">=</span> pd.Series(delta_by_date).sort_index()</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> delta_series.plot(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">3</span>), lw<span class="op">=</span><span class="fl">1.4</span>)</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"rolling benchmark-implied risk aversion"</span>)</span>
@@ -1428,10 +1522,11 @@ w_{b,i}\geq 0
 <span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, ax<span class="op">=</span>ax, label<span class="op">=</span><span class="st">"annual return"</span>)</span>
 <span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-12-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-12-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="06_portfolio_black_littreman_files/figure-html/cell-12-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1541,7 +1636,7 @@ w_{b,i}\geq 0
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-12-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-12-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="06_portfolio_black_littreman_files/figure-html/cell-12-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1566,6 +1661,8 @@ w_{b,i}\geq 0
 \]</span></p>
 <p>where <span class="math inline">\(\mu\)</span> is the expected return vector. The problem is that <span class="math inline">\(\hat\mu\)</span> is noisy. A small change in expected returns can create a large change in weights. This is why the baseline uses shrinkage-style inputs such as Ledoit-Wolf covariance and Bayes-Stein means as we implemented and explained in notebook 2, here we don’t repeat the code and use the library’s grid function for producing models.</p>
 <div id="18daab17" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:08.719261Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:08.719261Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;}}" data-execution_count="16">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>cost_bps <span class="op">=</span> <span class="fl">10.0</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>bl_mv_lambda <span class="op">=</span> <span class="fl">4.0</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1630,8 +1727,11 @@ w_{b,i}\geq 0
 <span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a>    best_mv: backtest_result_to_dict(best_mv, walkforward_grid.backtests[best_mv])}</span>
 <span id="cb12-63"><a href="#cb12-63" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-64"><a href="#cb12-64" aria-hidden="true" tabindex="-1"></a>baseline_results <span class="op">=</span> {name: baseline_candidates[name] <span class="cf">for</span> name <span class="kw">in</span> [<span class="st">"Strategic Benchmark"</span>, <span class="st">"Equal Weight"</span>, best_minvar, best_mv]}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="e2b9dc5e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.032232Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;}}" data-execution_count="17">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>candidate_rows <span class="op">=</span> []</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, result <span class="kw">in</span> baseline_candidates.items():</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> selection.performance_metrics(</span>
@@ -1651,6 +1751,7 @@ w_{b,i}\geq 0
 <span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>baseline_candidate_summary <span class="op">=</span> pd.DataFrame(candidate_rows).sort_values(<span class="st">"sharpe"</span>, ascending<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>display(baseline_candidate_summary.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1711,6 +1812,8 @@ w_{b,i}\geq 0
 </div>
 </div>
 <div id="ca0f1313" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.053547Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.408255Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.408255Z&quot;}}" data-execution_count="18">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>avg_turnover_table <span class="op">=</span> pd.DataFrame({name: result[<span class="st">"turnover"</span>].mean() <span class="cf">for</span> name, result <span class="kw">in</span> baseline_results.items()}, index<span class="op">=</span>[<span class="st">"avg_turnover"</span>]).T</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>display(avg_turnover_table.<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>baseline_nav <span class="op">=</span> pd.DataFrame({name: result[<span class="st">"nav"</span>] <span class="cf">for</span> name, result <span class="kw">in</span> baseline_results.items()})</span>
@@ -1725,6 +1828,7 @@ w_{b,i}\geq 0
 <span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xlabel(<span class="st">"date"</span>)</span>
 <span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>plt.tight_layout() </span>
 <span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1761,7 +1865,7 @@ w_{b,i}\geq 0
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-15-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-15-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="06_portfolio_black_littreman_files/figure-html/cell-15-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1797,6 +1901,8 @@ z_{t,i}=\frac{x_{t,i}-\mathrm{median}(x_t)}{\mathrm{scale}(x_t)}
 <p>The point is not to make one perfect signal. The point is to avoid relying on a single noisy indicator and try to cover different sides of behaviour of these assets. Momentum, trend, volatility, and drawdown quality each capture a different part of the market state.</p>
 <p><strong>Market state signals:</strong> besides per-asset signals, we compute a set of <strong>market-wide state variables</strong> that describe the current market environment: - fraction of risky assets (SPY, QQQ, IWM, EEM, HYG, VNQ, DBC) above their 200-day SMA, measures broad market health - current SPY drawdown from its 252-day high detects whether we are in an equity stress environment which can be very important for weighting in this set of assets. - rolling 126-day correlation between SPY and TLT is important for understanding whether diversification is working - relative cumulative returns of one ETF versus another over 63 days is the market’s current relative performance signal that directly feed into views</p>
 <div id="8aa3e497" class="cell" data-execution_count="19">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>risky_asset_names <span class="op">=</span> [<span class="st">"SPY"</span>, <span class="st">"QQQ"</span>, <span class="st">"IWM"</span>, <span class="st">"EFA"</span>, <span class="st">"EEM"</span>, <span class="st">"HYG"</span>, <span class="st">"VNQ"</span>, <span class="st">"DBC"</span>]</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>cyclical_asset_names <span class="op">=</span> [<span class="st">"IWM"</span>, <span class="st">"EEM"</span>, <span class="st">"VNQ"</span>, <span class="st">"HYG"</span>]</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>defensive_asset_names <span class="op">=</span> [<span class="st">"TLT"</span>, <span class="st">"IEF"</span>, <span class="st">"SHY"</span>, <span class="st">"AGG"</span>, <span class="st">"LQD"</span>, <span class="st">"GLD"</span>]</span>
@@ -1872,8 +1978,11 @@ z_{t,i}=\frac{x_{t,i}-\mathrm{median}(x_t)}{\mathrm{scale}(x_t)}
 <span id="cb15-73"><a href="#cb15-73" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> ma <span class="op">&gt;</span> <span class="dv">0</span>:</span>
 <span id="cb15-74"><a href="#cb15-74" aria-hidden="true" tabindex="-1"></a>            vals.append(px.iloc[<span class="op">-</span><span class="dv">1</span>] <span class="op">/</span> ma <span class="op">-</span> <span class="fl">1.0</span>)</span>
 <span id="cb15-75"><a href="#cb15-75" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>((pd.Series(vals) <span class="op">&gt;</span> <span class="dv">0</span>).mean()) <span class="cf">if</span> vals <span class="cf">else</span> np.nan</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="614b0b46" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.408255Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.408255Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.426714Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.426714Z&quot;}}" data-execution_count="20">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> compute_asset_signals(close, returns, date, dividends<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    date <span class="op">=</span> pd.Timestamp(date)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    close_pos <span class="op">=</span> close.index.searchsorted(date, side<span class="op">=</span><span class="st">"right"</span>) <span class="op">-</span> <span class="dv">1</span></span>
@@ -1966,8 +2075,11 @@ z_{t,i}=\frac{x_{t,i}-\mathrm{median}(x_t)}{\mathrm{scale}(x_t)}
 <span id="cb16-90"><a href="#cb16-90" aria-hidden="true" tabindex="-1"></a>        <span class="st">"real_asset_score"</span>: <span class="bu">float</span>(scores.reindex([x <span class="cf">for</span> x <span class="kw">in</span> [<span class="st">"GLD"</span>, <span class="st">"DBC"</span>] <span class="cf">if</span> x <span class="kw">in</span> scores.index]).median()) <span class="cf">if</span> <span class="bu">any</span>(x <span class="kw">in</span> scores.index <span class="cf">for</span> x <span class="kw">in</span> [<span class="st">"GLD"</span>, <span class="st">"DBC"</span>]) <span class="cf">else</span> np.nan,</span>
 <span id="cb16-91"><a href="#cb16-91" aria-hidden="true" tabindex="-1"></a>        <span class="st">"bond_score"</span>: <span class="bu">float</span>(scores.reindex([x <span class="cf">for</span> x <span class="kw">in</span> [<span class="st">"TLT"</span>, <span class="st">"IEF"</span>, <span class="st">"AGG"</span>] <span class="cf">if</span> x <span class="kw">in</span> scores.index]).median()) <span class="cf">if</span> <span class="bu">any</span>(x <span class="kw">in</span> scores.index <span class="cf">for</span> x <span class="kw">in</span> [<span class="st">"TLT"</span>, <span class="st">"IEF"</span>, <span class="st">"AGG"</span>]) <span class="cf">else</span> np.nan}</span>
 <span id="cb16-92"><a href="#cb16-92" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> asset_signal_table.sort_values(<span class="st">"score"</span>, ascending<span class="op">=</span><span class="va">False</span>), market_state</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="9d64c902" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-02T23:33:17.431405Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-02T23:33:17.430075Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-02T23:33:17.467301Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-02T23:33:17.467301Z&quot;}}" data-execution_count="21">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>latest_signal_table, latest_market_state <span class="op">=</span> compute_asset_signals(signal_close, signal_returns, latest_rebalance_date, dividends<span class="op">=</span>dividends_all)</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>signal_display_cols <span class="op">=</span> [<span class="st">"sleeve"</span>, <span class="st">"mom_1_0"</span>, <span class="st">"mom_3_0"</span>, <span class="st">"mom_6_1"</span>, <span class="st">"trend_50"</span>, <span class="st">"trend_200"</span>, <span class="st">"vol_63"</span>, <span class="st">"dd_252"</span>, <span class="st">"dividend_yield_252"</span>, <span class="st">"score"</span>]</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>display(latest_signal_table[signal_display_cols].reset_index().<span class="bu">round</span>(<span class="dv">4</span>))</span>
@@ -1975,6 +2087,7 @@ z_{t,i}=\frac{x_{t,i}-\mathrm{median}(x_t)}{\mathrm{scale}(x_t)}
 <span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>latest_market_state_table <span class="op">=</span> pd.DataFrame([latest_market_state], index<span class="op">=</span>[pd.Timestamp(latest_rebalance_date)])</span>
 <span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>latest_market_state_table.index.name <span class="op">=</span> <span class="st">"date"</span></span>
 <span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>display(latest_market_state_table.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2388,6 +2501,8 @@ p_i^{\top}\mu=0.50\mu_{\mathrm{GLD}}+0.50\mu_{\mathrm{DBC}}-0.25\mu_{\mathrm{TLT
 <p><strong>9. International Rotation:</strong> This view tracks the relative performance of emerging markets (EEM) versus developed international (EFA). When EEM is outperforming EFA on momentum, it signals a risk-on, dollar-weak, commodity-supportive environment. The view goes long EEM and short EFA. When the dollar (UUP) is strengthening, we control this view to not get it fired up and avoid false signal.</p>
 <p><strong>10. Duration Quality:</strong> This view monitors the relative performance of long-duration bonds (TLT) versus short-duration (SHY) to determine the slope of the term premium. A positive signal (TLT outperforming SHY) shows the market is pricing in falling rates and suggests an overweight in long duration.</p>
 <div id="cf5ceb19" class="cell" data-execution_count="22">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>view_caps <span class="op">=</span> {</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"liquid_leadership"</span>: <span class="fl">0.08</span>,</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"dual_momentum"</span>: <span class="fl">0.10</span>,</span>
@@ -2559,8 +2674,11 @@ p_i^{\top}\mu=0.50\mu_{\mathrm{GLD}}+0.50\mu_{\mathrm{DBC}}-0.25\mu_{\mathrm{TLT
 <span id="cb18-169"><a href="#cb18-169" aria-hidden="true" tabindex="-1"></a>    cov_ab <span class="op">=</span> <span class="bu">float</span>(cov_ann.loc[asset, basket] <span class="op">@</span> b)</span>
 <span id="cb18-170"><a href="#cb18-170" aria-hidden="true" tabindex="-1"></a>    var_b <span class="op">=</span> <span class="bu">float</span>(b.values <span class="op">@</span> cov_ann.loc[basket, basket].values <span class="op">@</span> b.values)</span>
 <span id="cb18-171"><a href="#cb18-171" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cov_ab <span class="op">/</span> var_b <span class="cf">if</span> np.isfinite(var_b) <span class="kw">and</span> var_b <span class="op">&gt;</span> <span class="fl">1e-12</span> <span class="cf">else</span> np.nan</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="eba8fca1" class="cell" data-execution_count="23">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_high_level_views(signal_table, market_state, cov_ann<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> signal_table.empty:</span>
@@ -2812,6 +2930,7 @@ p_i^{\top}\mu=0.50\mu_{\mathrm{GLD}}+0.50\mu_{\mathrm{DBC}}-0.25\mu_{\mathrm{TLT
 <span id="cb19-249"><a href="#cb19-249" aria-hidden="true" tabindex="-1"></a>    latest_view_columns <span class="op">=</span> [<span class="st">"view"</span>, <span class="st">"view_state"</span>, <span class="st">"long_assets"</span>, <span class="st">"short_assets"</span>, <span class="st">"signal_value"</span>, <span class="st">"q_tilt"</span>,</span>
 <span id="cb19-250"><a href="#cb19-250" aria-hidden="true" tabindex="-1"></a>                           <span class="st">"confluence_score"</span>, <span class="st">"risk_orientation"</span>]</span>
 <span id="cb19-251"><a href="#cb19-251" aria-hidden="true" tabindex="-1"></a>    display(latest_simple_table[latest_view_columns].<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2940,6 +3059,8 @@ q_{\text{tilt}} = \text{cap} \cdot \tanh\!\left(\frac{\text{signal\_strength}}{q
 \]</span></p>
 <p>where <span class="math inline">\(K_t\)</span> changes over time. Black-Litterman can handle a changing number of views because the posterior update only requires the current <span class="math inline">\(P_t\)</span>, <span class="math inline">\(\mathbf{q}_t\)</span>, and <span class="math inline">\(\Omega_t\)</span>.</p>
 <div id="6841a97f" class="cell" data-execution_count="24">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>max_active_views <span class="op">=</span> <span class="bu">len</span>(view_caps)</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> view_signature(row):</span>
@@ -2966,8 +3087,11 @@ q_{\text{tilt}} = \text{cap} \cdot \tanh\!\left(\frac{\text{signal\_strength}}{q
 <span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>                                    <span class="op">+</span> <span class="fl">0.20</span> <span class="op">*</span> row.get(<span class="st">"view_priority"</span>, <span class="fl">0.0</span>))</span>
 <span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>        rows.append(row)</span>
 <span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">sorted</span>(rows, key<span class="op">=</span><span class="kw">lambda</span> item: item[<span class="st">"adjusted_strength"</span>], reverse<span class="op">=</span><span class="va">True</span>)[:max_active_views]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="cc9702ee" class="cell" data-execution_count="25">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>view_cache <span class="op">=</span> {}</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>view_log_rows <span class="op">=</span> []</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> dt <span class="kw">in</span> rebalance_dates:</span>
@@ -3015,10 +3139,11 @@ q_{\text{tilt}} = \text{cap} \cdot \tanh\!\left(\frac{\text{signal\_strength}}{q
 <span id="cb21-45"><a href="#cb21-45" aria-hidden="true" tabindex="-1"></a>    fig.colorbar(im, ax<span class="op">=</span>ax, label<span class="op">=</span><span class="st">"annualized q_tilt"</span>)</span>
 <span id="cb21-46"><a href="#cb21-46" aria-hidden="true" tabindex="-1"></a>    plt.tight_layout()</span>
 <span id="cb21-47"><a href="#cb21-47" aria-hidden="true" tabindex="-1"></a>    plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-22-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-22-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="06_portfolio_black_littreman_files/figure-html/cell-22-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3129,7 +3254,7 @@ q_{\text{tilt}} = \text{cap} \cdot \tanh\!\left(\frac{\text{signal\_strength}}{q
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-22-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-22-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="06_portfolio_black_littreman_files/figure-html/cell-22-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3203,6 +3328,8 @@ IC_k = \text{Corr}(|s_{k,t}|, \text{payoff}_{k,t})
 \]</span></p>
 <p>This is useful because a view can have a decent hit rate, but if larger signal strength doesn’t lead to larger payoff, the magnitude of <span class="math inline">\(q\)</span> is less trustworthy.</p>
 <div id="f65bb49e" class="cell" data-execution_count="26">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>view_horizon_days <span class="op">=</span> <span class="dv">21</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -3275,6 +3402,7 @@ IC_k = \text{Corr}(|s_{k,t}|, \text{payoff}_{k,t})
 <span id="cb22-70"><a href="#cb22-70" aria-hidden="true" tabindex="-1"></a>    payoff_vol <span class="op">=</span> view_payoff_stats[<span class="st">"payoff_vol"</span>].replace(<span class="fl">0.0</span>, np.nan)</span>
 <span id="cb22-71"><a href="#cb22-71" aria-hidden="true" tabindex="-1"></a>    view_payoff_stats[<span class="st">"payoff_ir"</span>] <span class="op">=</span> view_payoff_stats[<span class="st">"avg_payoff_ann"</span>] <span class="op">/</span> payoff_vol</span>
 <span id="cb22-72"><a href="#cb22-72" aria-hidden="true" tabindex="-1"></a>    display(view_payoff_stats.sort_values(<span class="st">"observations"</span>, ascending<span class="op">=</span><span class="va">False</span>).<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3461,6 +3589,8 @@ IC_k = \text{Corr}(|s_{k,t}|, \text{payoff}_{k,t})
 </ul>
 <p>This is a major improvement over manually chosen confidence because the model has to earn trust from actual realized payoffs.</p>
 <div id="c6b086c8" class="cell" data-execution_count="27">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>conf_floor <span class="op">=</span> <span class="fl">0.30</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>conf_cap <span class="op">=</span> <span class="fl">0.90</span></span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>protective_views <span class="op">=</span> {<span class="st">"correlation_stress"</span>}</span>
@@ -3571,6 +3701,7 @@ IC_k = \text{Corr}(|s_{k,t}|, \text{payoff}_{k,t})
 <span id="cb23-108"><a href="#cb23-108" aria-hidden="true" tabindex="-1"></a>latest_confidence_table <span class="op">=</span> pd.DataFrame(latest_confidence_rows)</span>
 <span id="cb23-109"><a href="#cb23-109" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> latest_confidence_table.empty:</span>
 <span id="cb23-110"><a href="#cb23-110" aria-hidden="true" tabindex="-1"></a>    display(latest_confidence_table.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3691,6 +3822,8 @@ q\text{-score}_k = \frac{|q_{tilt,k}|}{c_k}
 <p>If two views have similarity above <strong>0.85</strong>, we keep the stronger one. This matters because dual momentum and risk-adjusted momentum can sometimes point to almost the same long-short basket. Without redundancy control, the posterior would double-count the same bet.</p>
 <p>We also cap selected views at 7 and limit too many same-direction views. That keeps the posterior from becoming a pile of correlated risk-on bets.</p>
 <div id="52f9290c" class="cell" data-execution_count="28">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>max_active_selected_views <span class="op">=</span> <span class="dv">7</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>redundancy_similarity_threshold <span class="op">=</span> <span class="fl">0.85</span></span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>max_same_direction_views <span class="op">=</span> <span class="dv">5</span></span>
@@ -3844,6 +3977,7 @@ q\text{-score}_k = \frac{|q_{tilt,k}|}{c_k}
 <span id="cb24-151"><a href="#cb24-151" aria-hidden="true" tabindex="-1"></a>    selected_cols <span class="op">=</span> [<span class="st">"view"</span>, <span class="st">"view_state"</span>, <span class="st">"long_assets"</span>, <span class="st">"short_assets"</span>, <span class="st">"confidence"</span>, <span class="st">"selected_score"</span>,</span>
 <span id="cb24-152"><a href="#cb24-152" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"q_tilt"</span>, <span class="st">"risk_orientation"</span>]</span>
 <span id="cb24-153"><a href="#cb24-153" aria-hidden="true" tabindex="-1"></a>    display(latest_selected_table[selected_cols].<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4097,6 +4231,8 @@ q_k=\mathbf{p}_k^\top\boldsymbol{\pi}+q_{tilt,k}^{final}
 </table>
 <p>This separation is crucial. If the prior already strongly favors the long side, <span class="math inline">\(q\)</span> can be high even with a modest active tilt. If the prior favors the short side, the active tilt has to overcome that base spread.</p>
 <div id="64881f1b" class="cell" data-execution_count="29">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> q_multiplier_from_stats(stats):</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    n_obs <span class="op">=</span> stats.get(<span class="st">"n_obs"</span>, <span class="dv">0</span>)</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    hit_rate <span class="op">=</span> stats.get(<span class="st">"hit_rate"</span>, np.nan)</span>
@@ -4221,6 +4357,7 @@ q_k=\mathbf{p}_k^\top\boldsymbol{\pi}+q_{tilt,k}^{final}
 <span id="cb25-122"><a href="#cb25-122" aria-hidden="true" tabindex="-1"></a>    display(latest_clean_view_table[q_cols].<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb25-123"><a href="#cb25-123" aria-hidden="true" tabindex="-1"></a>    latest_p_table <span class="op">=</span> pd.DataFrame(latest_view_p, columns<span class="op">=</span>assets, index<span class="op">=</span>latest_clean_view_table[<span class="st">"view"</span>])</span>
 <span id="cb25-124"><a href="#cb25-124" aria-hidden="true" tabindex="-1"></a>    display(latest_p_table.<span class="bu">round</span>(<span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4495,6 +4632,8 @@ s_k=\sqrt{\frac{1-\omega_k}{\omega_k}}
 </ol>
 <p>A high-volatility long-short view naturally has more uncertainty. A low-confidence view gets even more uncertainty.</p>
 <div id="5ea20bf8" class="cell" data-execution_count="30">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>tau <span class="op">=</span> <span class="fl">0.05</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>use_empirical_omega_rescale <span class="op">=</span> <span class="va">False</span></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -4561,6 +4700,7 @@ s_k=\sqrt{\frac{1-\omega_k}{\omega_k}}
 <span id="cb26-64"><a href="#cb26-64" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
 <span id="cb26-65"><a href="#cb26-65" aria-hidden="true" tabindex="-1"></a>    learned_conf <span class="op">=</span> []</span>
 <span id="cb26-66"><a href="#cb26-66" aria-hidden="true" tabindex="-1"></a>    latest_omega, latest_view_var <span class="op">=</span> np.empty((<span class="dv">0</span>, <span class="dv">0</span>)), np.array([])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4691,6 +4831,8 @@ K=\tau\Sigma P^\top(P\tau\Sigma P^\top+\Omega)^{-1}
 \]</span></p>
 <p>This equation explains the whole model. Views don’t directly become weights. They first become posterior return shifts, and those shifts depend on prior uncertainty, view covariance, and learned confidence.</p>
 <div id="4b400242" class="cell" data-execution_count="31">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> black_litterman_posterior(prior_mu, cov_ann, view_p, view_q, omega, tau<span class="op">=</span>tau):</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    prior_mu <span class="op">=</span> pd.Series(prior_mu).astype(<span class="bu">float</span>)</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    cov_ann <span class="op">=</span> pd.DataFrame(cov_ann, index<span class="op">=</span>prior_mu.index, columns<span class="op">=</span>prior_mu.index).astype(<span class="bu">float</span>)</span>
@@ -4748,6 +4890,7 @@ K=\tau\Sigma P^\top(P\tau\Sigma P^\top+\Omega)^{-1}
 <span id="cb27-55"><a href="#cb27-55" aria-hidden="true" tabindex="-1"></a>prior_post_table[<span class="st">"shift"</span>] <span class="op">=</span> prior_post_table[<span class="st">"post_mu"</span>] <span class="op">-</span> prior_post_table[<span class="st">"prior_mu"</span>]</span>
 <span id="cb27-56"><a href="#cb27-56" aria-hidden="true" tabindex="-1"></a>prior_post_table <span class="op">=</span> prior_post_table.sort_values(<span class="st">"shift"</span>, ascending<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb27-57"><a href="#cb27-57" aria-hidden="true" tabindex="-1"></a>display(prior_post_table.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4901,6 +5044,8 @@ l_g\leq\sum_{i\in g}w_i\leq u_g
 <p>The active limit is very important. It stops the posterior from becoming an all-in allocation just because one view is strong. If QQQ receives a strong posterior shift, the optimizer can overweight it, but only within the active budget.</p>
 <p>We also include practical fallbacks. If the strict optimizer fails, we relax the active limit, remove sleeve constraints, or fall back to a tracking-error style solution. If all else fails, we keep previous weights. The output later confirms that the final BL backtest has zero fallback count, so the optimization path is stable.</p>
 <div id="1c13692e" class="cell" data-execution_count="32">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>active_weight_limit <span class="op">=</span> <span class="fl">0.15</span></span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>active_weight_relaxed <span class="op">=</span> <span class="fl">0.22</span></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>gamma_te <span class="op">=</span> <span class="fl">3.0</span></span>
@@ -4989,6 +5134,7 @@ l_g\leq\sum_{i\in g}w_i\leq u_g
 <span id="cb28-86"><a href="#cb28-86" aria-hidden="true" tabindex="-1"></a>    previous <span class="op">=</span> w_prev <span class="cf">if</span> w_prev <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="cf">else</span> benchmark_w.reindex(post_mu.index).values</span>
 <span id="cb28-87"><a href="#cb28-87" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (clean_bl_weight_array(previous, post_mu.index, previous<span class="op">=</span>previous), <span class="va">True</span>,</span>
 <span id="cb28-88"><a href="#cb28-88" aria-hidden="true" tabindex="-1"></a>            {<span class="st">"active_limit"</span>: <span class="va">None</span>, <span class="st">"use_sleeves"</span>: <span class="va">False</span>, <span class="st">"te_gamma"</span>: np.nan})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <p>The full walk-forward loop repeats the complete Black-Litterman process at each monthly rebalance:</p>
 <ol type="1">
@@ -5008,6 +5154,8 @@ l_g\leq\sum_{i\in g}w_i\leq u_g
 <p>This prevents the confidence system from using future information. Without this condition, the learned confidence would be a form of leakage and the backtest would be invalid.</p>
 <p>The model stores selected views, confidence logs, posterior shifts, and weights. These logs are what allow us to analyze the model after the backtest instead of just looking at final performance.</p>
 <div id="5465e519" class="cell" data-execution_count="33">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>bl_modes <span class="op">=</span> {</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Learned-Confidence BL"</span>: {<span class="st">"view_set"</span>: <span class="st">"selected"</span>, <span class="st">"confidence_mode"</span>: <span class="st">"learned"</span>},</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>}</span>
@@ -5116,6 +5264,7 @@ l_g\leq\sum_{i\in g}w_i\leq u_g
 <span id="cb29-106"><a href="#cb29-106" aria-hidden="true" tabindex="-1"></a>selection_log <span class="op">=</span> pd.DataFrame(selection_log_rows)</span>
 <span id="cb29-107"><a href="#cb29-107" aria-hidden="true" tabindex="-1"></a>confidence_log <span class="op">=</span> pd.DataFrame(confidence_log_rows)</span>
 <span id="cb29-108"><a href="#cb29-108" aria-hidden="true" tabindex="-1"></a>posterior_log <span class="op">=</span> pd.DataFrame(posterior_log_rows)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="strategy-comparison" class="level2">
@@ -5129,6 +5278,8 @@ l_g\leq\sum_{i\in g}w_i\leq u_g
 <p>The model earns more, but it pays for that through turnover. That tradeoff has to be part of the evaluation.</p>
 </blockquote>
 <div id="718422c0" class="cell" data-execution_count="34">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>combined_results <span class="op">=</span> {}</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>combined_results.update(baseline_results)</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>combined_results.update(bl_results)</span>
@@ -5237,6 +5388,7 @@ l_g\leq\sum_{i\in g}w_i\leq u_g
 <span id="cb30-106"><a href="#cb30-106" aria-hidden="true" tabindex="-1"></a>benchmark_relative_table <span class="op">=</span> pd.DataFrame([benchmark_relative_metrics(name) <span class="cf">for</span> name <span class="kw">in</span> final_strategy_names</span>
 <span id="cb30-107"><a href="#cb30-107" aria-hidden="true" tabindex="-1"></a>                                         <span class="cf">if</span> name <span class="op">!=</span> <span class="st">"Strategic Benchmark"</span>]).set_index(<span class="st">"strategy"</span>)</span>
 <span id="cb30-108"><a href="#cb30-108" aria-hidden="true" tabindex="-1"></a>display(benchmark_relative_table.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5545,6 +5697,8 @@ H_{bench}=\frac{1}{T}\sum_{t=1}^{T}\mathbf{1}\{r_{BL,t}&gt;r_{b,t}\}
 <p>The BL model has annualized active return around <strong>1.69%</strong>, tracking error around <strong>4.02%</strong>, and information ratio around <strong>0.4218</strong>. That is a meaningful active result. The monthly hit rate versus benchmark is <strong>52.95%</strong>, so the model wins slightly more often than it loses.</p>
 <p>The correlation to benchmark is <strong>0.9266</strong> and beta is <strong>0.9746</strong>. This tells us BL is still fundamentally a benchmark-aware multi-asset portfolio. It isn’t becoming a completely different strategy. The alpha comes from active tilts around the benchmark, not from abandoning the benchmark.</p>
 <div id="858d901b" class="cell" data-execution_count="35">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>nav_df <span class="op">=</span> pd.DataFrame(nav_by_strategy)[final_strategy_names]</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>drawdown_df <span class="op">=</span> nav_df <span class="op">/</span> nav_df.cummax() <span class="op">-</span> <span class="fl">1.0</span></span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">7</span>), sharex<span class="op">=</span><span class="va">True</span>)</span>
@@ -5552,10 +5706,11 @@ H_{bench}=\frac{1}{T}\sum_{t=1}^{T}\mathbf{1}\{r_{BL,t}&gt;r_{b,t}\}
 <span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>plot_strategy_drawdowns(nav_df, final_strategy_names, ax<span class="op">=</span>axes[<span class="dv">1</span>], title<span class="op">=</span><span class="st">"strategy drawdown comparison"</span>)</span>
 <span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-32-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-32-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="06_portfolio_black_littreman_files/figure-html/cell-32-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5587,6 +5742,8 @@ ES_{5\%}^{hist}= -E[r_t\mid r_t\leq Q_{0.05}(r_t)]
 </ul>
 <p>BL is designed to adapt to regimes, but it can’t react before a sudden shock appears in the data. Its strength is more visible in slower regime shifts like 2022 inflation and 2023 growth recovery.</p>
 <div id="8fdd90ee" class="cell" data-execution_count="44">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>final_returns_df <span class="op">=</span> pd.DataFrame(returns_by_strategy)[final_strategy_names].dropna(how<span class="op">=</span><span class="st">"all"</span>).fillna(<span class="fl">0.0</span>)</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>stress_windows <span class="op">=</span> {</span>
@@ -5611,6 +5768,7 @@ ES_{5\%}^{hist}= -E[r_t\mid r_t\leq Q_{0.05}(r_t)]
 <span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>stress_result <span class="op">=</span> risk_report_artifacts.series[<span class="st">"stress_full"</span>]</span>
 <span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a>var_es <span class="op">=</span> risk_report_artifacts.tables[<span class="st">"var_es"</span>]</span>
 <span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a>var_backtest_internal <span class="op">=</span> risk_report_artifacts.tables[<span class="st">"var_backtest"</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5676,19 +5834,21 @@ ES_{5\%}^{hist}= -E[r_t\mid r_t\leq Q_{0.05}(r_t)]
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-33-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-33-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="06_portfolio_black_littreman_files/figure-html/cell-33-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-33-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-33-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="06_portfolio_black_littreman_files/figure-html/cell-33-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="cb4faad1" class="cell" data-execution_count="37">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>candidate_active_count <span class="op">=</span> (candidate_view_log.groupby(<span class="st">"date"</span>).size().reindex(rebalance_dates[:<span class="op">-</span><span class="dv">1</span>], fill_value<span class="op">=</span><span class="dv">0</span>)</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>                          <span class="cf">if</span> <span class="kw">not</span> candidate_view_log.empty <span class="cf">else</span> pd.Series(<span class="dv">0</span>, index<span class="op">=</span>rebalance_dates[:<span class="op">-</span><span class="dv">1</span>]))</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>selected_active_count <span class="op">=</span> (selected_view_log.groupby(<span class="st">"date"</span>).size().reindex(rebalance_dates[:<span class="op">-</span><span class="dv">1</span>], fill_value<span class="op">=</span><span class="dv">0</span>)</span>
@@ -5726,10 +5886,11 @@ ES_{5\%}^{hist}= -E[r_t\mid r_t\leq Q_{0.05}(r_t)]
 <span id="cb33-35"><a href="#cb33-35" aria-hidden="true" tabindex="-1"></a>    selected_payoff_summary[<span class="st">"payoff_ir"</span>] <span class="op">=</span> (selected_payoff_summary[<span class="st">"avg_forward_payoff_ann"</span>]</span>
 <span id="cb33-36"><a href="#cb33-36" aria-hidden="true" tabindex="-1"></a>                                            <span class="op">/</span> selected_payoff_summary[<span class="st">"payoff_vol"</span>].replace(<span class="fl">0.0</span>, np.nan))</span>
 <span id="cb33-37"><a href="#cb33-37" aria-hidden="true" tabindex="-1"></a>    display(selected_payoff_summary.sort_values(<span class="st">"realized_count"</span>, ascending<span class="op">=</span><span class="va">False</span>).<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-34-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-34-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="06_portfolio_black_littreman_files/figure-html/cell-34-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -6024,6 +6185,8 @@ ES_{5\%}^{hist}= -E[r_t\mid r_t\leq Q_{0.05}(r_t)]
 <p>Weak selected views include <strong>Duration quality</strong>, <strong>International rotation</strong>, <strong>Inflation rotation</strong>, and <strong>Credit switch: risk-off</strong>. Duration quality has hit rate <strong>35.53%</strong> and negative payoff IR. International rotation has hit rate <strong>44.44%</strong> and negative payoff IR. Credit switch risk-off has very poor realized profile. These weak results explain why the learned-confidence system shrinks or floors these views.</p>
 <p>This output is exactly why learned confidence is necessary. Without it, all selected views could be treated too similarly. With it, historically useful views get more influence, while weak views still exist but have lower posterior impact.</p>
 <div id="380b1ca8" class="cell" data-execution_count="38">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>latest_post_date <span class="op">=</span> posterior_log[<span class="st">"date"</span>].<span class="bu">max</span>() <span class="cf">if</span> <span class="kw">not</span> posterior_log.empty <span class="cf">else</span> pd.Timestamp(rebalance_dates[<span class="op">-</span><span class="dv">2</span>])</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>prior_latest <span class="op">=</span> prior_mu_by_date[pd.Timestamp(latest_post_date)].reindex(assets)</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>posterior_clarity <span class="op">=</span> pd.DataFrame({</span>
@@ -6054,6 +6217,7 @@ ES_{5\%}^{hist}= -E[r_t\mid r_t\leq Q_{0.05}(r_t)]
 <span id="cb34-28"><a href="#cb34-28" aria-hidden="true" tabindex="-1"></a>    fig.colorbar(im, ax<span class="op">=</span>ax, label<span class="op">=</span><span class="st">"post_mu - prior_mu"</span>)</span>
 <span id="cb34-29"><a href="#cb34-29" aria-hidden="true" tabindex="-1"></a>    plt.tight_layout()</span>
 <span id="cb34-30"><a href="#cb34-30" aria-hidden="true" tabindex="-1"></a>    plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6190,7 +6354,7 @@ ES_{5\%}^{hist}= -E[r_t\mid r_t\leq Q_{0.05}(r_t)]
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-35-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-35-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="06_portfolio_black_littreman_files/figure-html/cell-35-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -6207,6 +6371,8 @@ ES_{5\%}^{hist}= -E[r_t\mid r_t\leq Q_{0.05}(r_t)]
 <p>The heatmap has visible regime blocks. Around 2022, real assets and inflation-sensitive exposures receive stronger positive shifts, while duration is penalized. In growth-led periods, QQQ and equity-linked assets receive positive shifts. The shifts are not random noise. They cluster around economic regimes.</p>
 <p>That said, the heatmap is also noisy. Some assets switch sign frequently, especially where momentum views and covariance effects interact. This is a normal feature of monthly tactical allocation.</p>
 <div id="ccc38aae" class="cell" data-execution_count="39">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> candidate_view_log.empty:</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    candidate_counts <span class="op">=</span> candidate_view_log.groupby(<span class="st">"view_id"</span>).size().rename(<span class="st">"candidate_count"</span>)</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    view_display <span class="op">=</span> (candidate_view_log.groupby(<span class="st">"view_id"</span>)[<span class="st">"view"</span>]</span>
@@ -6263,6 +6429,7 @@ ES_{5\%}^{hist}= -E[r_t\mid r_t\leq Q_{0.05}(r_t)]
 <span id="cb35-54"><a href="#cb35-54" aria-hidden="true" tabindex="-1"></a>reliability <span class="op">=</span> reliability.sort_values([<span class="st">"selected_count"</span>, <span class="st">"candidate_count"</span>], ascending<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb35-55"><a href="#cb35-55" aria-hidden="true" tabindex="-1"></a>reliability <span class="op">=</span> reliability.set_index(<span class="st">"view"</span>)</span>
 <span id="cb35-56"><a href="#cb35-56" aria-hidden="true" tabindex="-1"></a>display(reliability.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6506,6 +6673,8 @@ ES_{5\%}^{hist}= -E[r_t\mid r_t\leq Q_{0.05}(r_t)]
 </div>
 </div>
 <div id="38a4efab" class="cell" data-execution_count="40">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>learned_confidence_weights <span class="op">=</span> combined_results[<span class="st">"Learned-Confidence BL"</span>][<span class="st">"weights"</span>].reindex(columns<span class="op">=</span>assets)</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>benchmark_aligned <span class="op">=</span> benchmark_w.reindex(assets).fillna(<span class="fl">0.0</span>)</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>active_w_learned_confidence <span class="op">=</span> learned_confidence_weights.subtract(benchmark_aligned, axis<span class="op">=</span><span class="dv">1</span>)</span>
@@ -6524,6 +6693,7 @@ ES_{5\%}^{hist}= -E[r_t\mid r_t\leq Q_{0.05}(r_t)]
 <span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, ax<span class="op">=</span>ax, label<span class="op">=</span><span class="st">"active weight"</span>)</span>
 <span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6615,12 +6785,14 @@ ES_{5\%}^{hist}= -E[r_t\mid r_t\leq Q_{0.05}(r_t)]
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-37-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-37-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="06_portfolio_black_littreman_files/figure-html/cell-37-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="9e1b3721" class="cell" data-execution_count="41">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> active_risk_series(weights):</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> dt, row <span class="kw">in</span> weights.iterrows():</span>
@@ -6641,6 +6813,7 @@ ES_{5\%}^{hist}= -E[r_t\mid r_t\leq Q_{0.05}(r_t)]
 <span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"avg_turnover"</span>: {<span class="st">"Learned-Confidence BL"</span>: combined_results[<span class="st">"Learned-Confidence BL"</span>][<span class="st">"turnover"</span>].mean()},</span>
 <span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>display(active_summary.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6752,6 +6925,8 @@ w_{b,i}=\frac{1}{11}\approx 0.0909
 \]</span></p>
 <p>This is a natural starting point for sector rotation because the sectors all belong to the same broad equity market. There isn’t an obvious strategic reason to heavily overweight one sector before signals arrive.</p>
 <div id="d13896f2" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -7140,6 +7315,7 @@ w_{b,i}=\frac{1}{11}\approx 0.0909
 <span id="cb38-386"><a href="#cb38-386" aria-hidden="true" tabindex="-1"></a>    ax.set_position([left, box.y0, final_row_width, box.height])</span>
 <span id="cb38-387"><a href="#cb38-387" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-388"><a href="#cb38-388" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>close panel: (6906, 32) 1999-01-04 to 2026-06-17</code></pre>
 </div>
@@ -8681,7 +8857,7 @@ candidate views: 310 selected views: 280</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="06_portfolio_black_littreman_files/figure-html/cell-39-output-18.png" class="img-fluid figure-img"></p>
+<p><a href="06_portfolio_black_littreman_files/figure-html/cell-39-output-18.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16"><img src="06_portfolio_black_littreman_files/figure-html/cell-39-output-18.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -8812,6 +8988,57 @@ candidate views: 310 selected views: 280</code></pre>
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -9155,6 +9382,38 @@ candidate views: 310 selected views: 280</code></pre>
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 

@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>12. Macro Financial Conditions Index and Macro-Regime Allocation – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/11_stochastic_volatility.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -112,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -143,7 +144,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -292,13 +293,142 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-macro-object-we-want-to-build" id="toc-the-macro-object-we-want-to-build" class="nav-link active" data-scroll-target="#the-macro-object-we-want-to-build">1) The Macro Object We Want to Build</a>
+  <ul class="collapse">
+  <li><a href="#macro-transmission-into-asset-prices" id="toc-macro-transmission-into-asset-prices" class="nav-link" data-scroll-target="#macro-transmission-into-asset-prices">Macro Transmission Into Asset Prices</a></li>
+  <li><a href="#stress-orientation" id="toc-stress-orientation" class="nav-link" data-scroll-target="#stress-orientation">Stress Orientation</a></li>
+  <li><a href="#a-small-numerical-example-of-stress-orientation" id="toc-a-small-numerical-example-of-stress-orientation" class="nav-link" data-scroll-target="#a-small-numerical-example-of-stress-orientation">A Small Numerical Example of Stress Orientation</a></li>
+  </ul></li>
+  <li><a href="#setup-and-reused-data-layer" id="toc-setup-and-reused-data-layer" class="nav-link" data-scroll-target="#setup-and-reused-data-layer">2) Setup and Reused Data Layer</a>
+  <ul class="collapse">
+  <li><a href="#timing-revisions-and-real-time-discipline" id="toc-timing-revisions-and-real-time-discipline" class="nav-link" data-scroll-target="#timing-revisions-and-real-time-discipline">Timing, Revisions, and Real-Time Discipline</a></li>
+  </ul></li>
+  <li><a href="#real-time-standardization-functions" id="toc-real-time-standardization-functions" class="nav-link" data-scroll-target="#real-time-standardization-functions">3) Real-Time Standardization Functions</a>
+  <ul class="collapse">
+  <li><a href="#level-impulse-acceleration-and-diffusion" id="toc-level-impulse-acceleration-and-diffusion" class="nav-link" data-scroll-target="#level-impulse-acceleration-and-diffusion">Level, Impulse, Acceleration, and Diffusion</a></li>
+  </ul></li>
+  <li><a href="#macro-factor-groups" id="toc-macro-factor-groups" class="nav-link" data-scroll-target="#macro-factor-groups">4) Macro Factor Groups</a>
+  <ul class="collapse">
+  <li><a href="#the-macro-blocks-as-a-regime-map" id="toc-the-macro-blocks-as-a-regime-map" class="nav-link" data-scroll-target="#the-macro-blocks-as-a-regime-map">The Macro Blocks as a Regime Map</a></li>
+  </ul></li>
+  <li><a href="#inflation-pressure-signals" id="toc-inflation-pressure-signals" class="nav-link" data-scroll-target="#inflation-pressure-signals">5) Inflation Pressure Signals</a>
+  <ul class="collapse">
+  <li><a href="#why-inflation-needs-more-than-one-measure" id="toc-why-inflation-needs-more-than-one-measure" class="nav-link" data-scroll-target="#why-inflation-needs-more-than-one-measure">Why Inflation Needs More Than One Measure</a></li>
+  <li><a href="#inflation-regime-interpretation-for-assets" id="toc-inflation-regime-interpretation-for-assets" class="nav-link" data-scroll-target="#inflation-regime-interpretation-for-assets">Inflation Regime Interpretation for Assets</a></li>
+  </ul></li>
+  <li><a href="#policy-and-rate-pressure" id="toc-policy-and-rate-pressure" class="nav-link" data-scroll-target="#policy-and-rate-pressure">6) Policy and Rate Pressure</a>
+  <ul class="collapse">
+  <li><a href="#policy-catch-up-risk" id="toc-policy-catch-up-risk" class="nav-link" data-scroll-target="#policy-catch-up-risk">Policy Catch-Up Risk</a></li>
+  <li><a href="#real-rates-and-the-policy-transmission-channel" id="toc-real-rates-and-the-policy-transmission-channel" class="nav-link" data-scroll-target="#real-rates-and-the-policy-transmission-channel">Real Rates and the Policy Transmission Channel</a></li>
+  <li><a href="#policy-pressure-and-sector-sensitivity" id="toc-policy-pressure-and-sector-sensitivity" class="nav-link" data-scroll-target="#policy-pressure-and-sector-sensitivity">Policy Pressure and Sector Sensitivity</a></li>
+  </ul></li>
+  <li><a href="#growth-and-recession-signals" id="toc-growth-and-recession-signals" class="nav-link" data-scroll-target="#growth-and-recession-signals">7) Growth and Recession Signals</a>
+  <ul class="collapse">
+  <li><a href="#hard-data-versus-soft-data" id="toc-hard-data-versus-soft-data" class="nav-link" data-scroll-target="#hard-data-versus-soft-data">Hard Data Versus Soft Data</a></li>
+  <li><a href="#growth-stress-and-earnings" id="toc-growth-stress-and-earnings" class="nav-link" data-scroll-target="#growth-stress-and-earnings">Growth Stress and Earnings</a></li>
+  </ul></li>
+  <li><a href="#labor-cooling-and-sahm-pressure" id="toc-labor-cooling-and-sahm-pressure" class="nav-link" data-scroll-target="#labor-cooling-and-sahm-pressure">8) Labor Cooling and Sahm Pressure</a>
+  <ul class="collapse">
+  <li><a href="#labor-as-a-regime-confirmation-variable" id="toc-labor-as-a-regime-confirmation-variable" class="nav-link" data-scroll-target="#labor-as-a-regime-confirmation-variable">Labor as a Regime Confirmation Variable</a></li>
+  </ul></li>
+  <li><a href="#housing-domestic-demand-and-external-trade" id="toc-housing-domestic-demand-and-external-trade" class="nav-link" data-scroll-target="#housing-domestic-demand-and-external-trade">9) Housing, Domestic Demand, and External Trade</a>
+  <ul class="collapse">
+  <li><a href="#housing-and-trade-as-transmission-channels" id="toc-housing-and-trade-as-transmission-channels" class="nav-link" data-scroll-target="#housing-and-trade-as-transmission-channels">Housing and Trade as Transmission Channels</a></li>
+  </ul></li>
+  <li><a href="#breadth-severe-breadth-stagflation-and-goldilocks" id="toc-breadth-severe-breadth-stagflation-and-goldilocks" class="nav-link" data-scroll-target="#breadth-severe-breadth-stagflation-and-goldilocks">10) Breadth, Severe Breadth, Stagflation, and Goldilocks</a></li>
+  <li><a href="#from-signals-to-macro-blocks" id="toc-from-signals-to-macro-blocks" class="nav-link" data-scroll-target="#from-signals-to-macro-blocks">11) From Signals to Macro Blocks</a>
+  <ul class="collapse">
+  <li><a href="#coverage-scores-and-why-we-keep-blocks-stable" id="toc-coverage-scores-and-why-we-keep-blocks-stable" class="nav-link" data-scroll-target="#coverage-scores-and-why-we-keep-blocks-stable">Coverage Scores and Why We Keep Blocks Stable</a></li>
+  </ul></li>
+  <li><a href="#etf-and-nfci-inputs" id="toc-etf-and-nfci-inputs" class="nav-link" data-scroll-target="#etf-and-nfci-inputs">12) ETF and NFCI Inputs</a></li>
+  <li><a href="#block-correlations-and-macro-structure" id="toc-block-correlations-and-macro-structure" class="nav-link" data-scroll-target="#block-correlations-and-macro-structure">13) Block Correlations and Macro Structure</a></li>
+  <li><a href="#recent-macro-blocks-and-historical-conflict-peaks" id="toc-recent-macro-blocks-and-historical-conflict-peaks" class="nav-link" data-scroll-target="#recent-macro-blocks-and-historical-conflict-peaks">14) Recent Macro Blocks and Historical Conflict Peaks</a></li>
+  <li><a href="#crisis-block-contributions" id="toc-crisis-block-contributions" class="nav-link" data-scroll-target="#crisis-block-contributions">15) Crisis Block Contributions</a>
+  <ul class="collapse">
+  <li><a href="#why-we-need-more-than-one-fci" id="toc-why-we-need-more-than-one-fci" class="nav-link" data-scroll-target="#why-we-need-more-than-one-fci">Why We Need More Than One FCI</a></li>
+  </ul></li>
+  <li><a href="#the-fci-modeling-layer" id="toc-the-fci-modeling-layer" class="nav-link" data-scroll-target="#the-fci-modeling-layer">16) The FCI Modeling Layer</a>
+  <ul class="collapse">
+  <li><a href="#rolling-percentiles" id="toc-rolling-percentiles" class="nav-link" data-scroll-target="#rolling-percentiles">Rolling Percentiles</a></li>
+  </ul></li>
+  <li><a href="#economic-weighted-fci" id="toc-economic-weighted-fci" class="nav-link" data-scroll-target="#economic-weighted-fci">17) Economic-Weighted FCI</a></li>
+  <li><a href="#pca-fci" id="toc-pca-fci" class="nav-link" data-scroll-target="#pca-fci">18) PCA FCI</a>
+  <ul class="collapse">
+  <li><a href="#pca-loadings-intuition-without-overcomplicating-it" id="toc-pca-loadings-intuition-without-overcomplicating-it" class="nav-link" data-scroll-target="#pca-loadings-intuition-without-overcomplicating-it">PCA Loadings Intuition Without Overcomplicating It</a></li>
+  </ul></li>
+  <li><a href="#the-future-stress-target" id="toc-the-future-stress-target" class="nav-link" data-scroll-target="#the-future-stress-target">19) The Future Stress Target</a>
+  <ul class="collapse">
+  <li><a href="#why-the-target-combines-return-volatility-and-drawdown" id="toc-why-the-target-combines-return-volatility-and-drawdown" class="nav-link" data-scroll-target="#why-the-target-combines-return-volatility-and-drawdown">Why the Target Combines Return, Volatility, and Drawdown</a></li>
+  <li><a href="#embargo-and-lookahead-control" id="toc-embargo-and-lookahead-control" class="nav-link" data-scroll-target="#embargo-and-lookahead-control">Embargo and Lookahead Control</a></li>
+  <li><a href="#supervision-changes-the-meaning-of-the-index" id="toc-supervision-changes-the-meaning-of-the-index" class="nav-link" data-scroll-target="#supervision-changes-the-meaning-of-the-index">Supervision Changes the Meaning of the Index</a></li>
+  </ul></li>
+  <li><a href="#pls-fci" id="toc-pls-fci" class="nav-link" data-scroll-target="#pls-fci">20) PLS FCI</a></li>
+  <li><a href="#stress-probability-fci" id="toc-stress-probability-fci" class="nav-link" data-scroll-target="#stress-probability-fci">21) Stress-Probability FCI</a></li>
+  <li><a href="#blended-fci" id="toc-blended-fci" class="nav-link" data-scroll-target="#blended-fci">22) Blended FCI</a>
+  <ul class="collapse">
+  <li><a href="#model-agreement-and-disagreement" id="toc-model-agreement-and-disagreement" class="nav-link" data-scroll-target="#model-agreement-and-disagreement">Model Agreement and Disagreement</a></li>
+  </ul></li>
+  <li><a href="#quintile-validation" id="toc-quintile-validation" class="nav-link" data-scroll-target="#quintile-validation">23) Quintile Validation</a>
+  <ul class="collapse">
+  <li><a href="#how-to-read-a-non-monotonic-quintile-table" id="toc-how-to-read-a-non-monotonic-quintile-table" class="nav-link" data-scroll-target="#how-to-read-a-non-monotonic-quintile-table">How to Read a Non-Monotonic Quintile Table</a></li>
+  </ul></li>
+  <li><a href="#model-scoreboard" id="toc-model-scoreboard" class="nav-link" data-scroll-target="#model-scoreboard">24) Model Scoreboard</a></li>
+  <li><a href="#external-nfci-validation" id="toc-external-nfci-validation" class="nav-link" data-scroll-target="#external-nfci-validation">25) External NFCI Validation</a></li>
+  <li><a href="#choosing-the-strategy-fci" id="toc-choosing-the-strategy-fci" class="nav-link" data-scroll-target="#choosing-the-strategy-fci">26) Choosing the Strategy FCI</a></li>
+  <li><a href="#sector-returns-across-fci-regimes" id="toc-sector-returns-across-fci-regimes" class="nav-link" data-scroll-target="#sector-returns-across-fci-regimes">27) Sector Returns Across FCI Regimes</a></li>
+  <li><a href="#defensive-minus-cyclical-spread-and-inflation-assets" id="toc-defensive-minus-cyclical-spread-and-inflation-assets" class="nav-link" data-scroll-target="#defensive-minus-cyclical-spread-and-inflation-assets">28) Defensive Minus Cyclical Spread and Inflation Assets</a>
+  <ul class="collapse">
+  <li><a href="#turning-macro-into-allocation-rules" id="toc-turning-macro-into-allocation-rules" class="nav-link" data-scroll-target="#turning-macro-into-allocation-rules">Turning Macro Into Allocation Rules</a></li>
+  </ul></li>
+  <li><a href="#macro-gated-allocation-risky-weight" id="toc-macro-gated-allocation-risky-weight" class="nav-link" data-scroll-target="#macro-gated-allocation-risky-weight">29) Macro-Gated Allocation: Risky Weight</a></li>
+  <li><a href="#defensive-sleeve-logic" id="toc-defensive-sleeve-logic" class="nav-link" data-scroll-target="#defensive-sleeve-logic">30) Defensive Sleeve Logic</a></li>
+  <li><a href="#sector-momentum-and-macro-fit" id="toc-sector-momentum-and-macro-fit" class="nav-link" data-scroll-target="#sector-momentum-and-macro-fit">31) Sector Momentum and Macro Fit</a>
+  <ul class="collapse">
+  <li><a href="#final-sector-score" id="toc-final-sector-score" class="nav-link" data-scroll-target="#final-sector-score">Final Sector Score</a></li>
+  </ul></li>
+  <li><a href="#weight-heatmap-and-risk-sleeve" id="toc-weight-heatmap-and-risk-sleeve" class="nav-link" data-scroll-target="#weight-heatmap-and-risk-sleeve">32) Weight Heatmap and Risk Sleeve</a>
+  <ul class="collapse">
+  <li><a href="#why-we-compare-four-active-strategies-instead-of-one" id="toc-why-we-compare-four-active-strategies-instead-of-one" class="nav-link" data-scroll-target="#why-we-compare-four-active-strategies-instead-of-one">Why We Compare Four Active Strategies Instead of One</a></li>
+  </ul></li>
+  <li><a href="#strategy-comparison" id="toc-strategy-comparison" class="nav-link" data-scroll-target="#strategy-comparison">33) Strategy Comparison</a></li>
+  <li><a href="#equity-curves-rolling-metrics-and-turnover" id="toc-equity-curves-rolling-metrics-and-turnover" class="nav-link" data-scroll-target="#equity-curves-rolling-metrics-and-turnover">34) Equity Curves, Rolling Metrics, and Turnover</a>
+  <ul class="collapse">
+  <li><a href="#stress-windows-as-economic-tests" id="toc-stress-windows-as-economic-tests" class="nav-link" data-scroll-target="#stress-windows-as-economic-tests">Stress Windows as Economic Tests</a></li>
+  </ul></li>
+  <li><a href="#stress-window-results" id="toc-stress-window-results" class="nav-link" data-scroll-target="#stress-window-results">35) Stress Window Results</a></li>
+  <li><a href="#latest-decision-board" id="toc-latest-decision-board" class="nav-link" data-scroll-target="#latest-decision-board">36) Latest Decision Board</a>
+  <ul class="collapse">
+  <li><a href="#reading-the-us-result-before-moving-to-canada" id="toc-reading-the-us-result-before-moving-to-canada" class="nav-link" data-scroll-target="#reading-the-us-result-before-moving-to-canada">Reading the US Result Before Moving to Canada</a></li>
+  </ul></li>
+  <li><a href="#canada-secondary-application-through-the-library" id="toc-canada-secondary-application-through-the-library" class="nav-link" data-scroll-target="#canada-secondary-application-through-the-library">37) Canada Secondary Application Through the Library</a>
+  <ul class="collapse">
+  <li><a href="#canadian-asset-roles" id="toc-canadian-asset-roles" class="nav-link" data-scroll-target="#canadian-asset-roles">Canadian Asset Roles</a></li>
+  <li><a href="#why-external-trade-matters-more-in-canada" id="toc-why-external-trade-matters-more-in-canada" class="nav-link" data-scroll-target="#why-external-trade-matters-more-in-canada">Why External Trade Matters More in Canada</a></li>
+  </ul></li>
+  <li><a href="#canada-fci-model-scores" id="toc-canada-fci-model-scores" class="nav-link" data-scroll-target="#canada-fci-model-scores">38) Canada FCI Model Scores</a>
+  <ul class="collapse">
+  <li><a href="#why-the-canada-model-can-reward-cyclicals-under-easy-fci" id="toc-why-the-canada-model-can-reward-cyclicals-under-easy-fci" class="nav-link" data-scroll-target="#why-the-canada-model-can-reward-cyclicals-under-easy-fci">Why the Canada Model Can Reward Cyclicals Under Easy FCI</a></li>
+  </ul></li>
+  <li><a href="#canada-strategy-results" id="toc-canada-strategy-results" class="nav-link" data-scroll-target="#canada-strategy-results">39) Canada Strategy Results</a>
+  <ul class="collapse">
+  <li><a href="#canada-macro-interpretation" id="toc-canada-macro-interpretation" class="nav-link" data-scroll-target="#canada-macro-interpretation">Canada Macro Interpretation</a></li>
+  <li><a href="#canada-compared-with-the-us-allocation-problem" id="toc-canada-compared-with-the-us-allocation-problem" class="nav-link" data-scroll-target="#canada-compared-with-the-us-allocation-problem">Canada Compared With the US Allocation Problem</a></li>
+  <li><a href="#ending-the-project-at-the-secondary-analysis" id="toc-ending-the-project-at-the-secondary-analysis" class="nav-link" data-scroll-target="#ending-the-project-at-the-secondary-analysis">Ending the Project at the Secondary Analysis</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">12. Macro Financial Conditions Index and Macro-Regime Allocation</span></h1>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">12. Macro Financial Conditions Index and Macro-Regime Allocation</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -398,6 +528,8 @@ s_t^{growth}=2
 <p>For reproducibility, the data should be understood through the repo’s data-generation folders, not as isolated final files. Check the relevant folders inside the repo’s <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data">data folder</a>. For this project, the important folders are the ones corresponding to the US macro factors, NFCI, sector ETFs, core cross-asset ETFs, Canadian macro factors, Canadian sector ETFs, and international hedging ETFs.</p>
 <p>The sector and cross-asset ETF data has already appeared earlier in the series, so we keep it short here. The new and important part is the macro panel: what each group measures, how it becomes a stress signal, and how those signals are turned into regimes.</p>
 <div id="6f62ac1f" class="cell" data-execution_count="14">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
@@ -439,15 +571,21 @@ s_t^{growth}=2
 <span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="dv">10</span>,</span>
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">8</span>,</span>
 <span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="9238d07e" class="cell" data-execution_count="15">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>factor_path <span class="op">=</span> <span class="st">"../data/us_macro_factors.csv"</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>etf_paths <span class="op">=</span> [<span class="st">"../data/sector_etfs.csv"</span>, <span class="st">"../data/core_cross_asset_etfs.csv"</span>]</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>nfci_path <span class="op">=</span> <span class="st">"../data/nfci.csv"</span></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>rf_annual <span class="op">=</span> <span class="fl">0.04</span></span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>rf_monthly <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> rf_annual) <span class="op">**</span> (<span class="fl">1.0</span> <span class="op">/</span> <span class="fl">12.0</span>) <span class="op">-</span> <span class="fl">1.0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="dbf61d55" class="cell" data-execution_count="16">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>macro_factors <span class="op">=</span> pd.read_csv(factor_path, parse_dates<span class="op">=</span>[<span class="st">"date"</span>]).set_index(<span class="st">"date"</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>macro_factors <span class="op">=</span> macro_factors.sort_index()</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>macro_factors.index <span class="op">=</span> macro_factors.index.to_period(<span class="st">"M"</span>).to_timestamp(<span class="st">"M"</span>)</span>
@@ -462,6 +600,7 @@ s_t^{growth}=2
 <span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>}).sort_values([<span class="st">"first_date"</span>, <span class="st">"observations"</span>])</span>
 <span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame({<span class="st">"start"</span>: [macro_factors.index.<span class="bu">min</span>()], <span class="st">"end"</span>: [macro_factors.index.<span class="bu">max</span>()], <span class="st">"rows"</span>: [<span class="bu">len</span>(macro_factors)], <span class="st">"factors"</span>: [macro_factors.shape[<span class="dv">1</span>]]}))</span>
 <span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>display(factor_availability.head(<span class="dv">20</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -732,6 +871,8 @@ d_t=\frac{1}{N_t}\sum_{i=1}^{N_t}\mathbf{1}\{s_{i,t}&gt;c\}
 \]</span></p>
 <p>where <span class="math inline">\(c\)</span> is the threshold, here around <span class="math inline">\(0.5\)</span>, and <span class="math inline">\(N_t\)</span> is the number of available series at month <span class="math inline">\(t\)</span>. The diffusion share is then standardized through time. High diffusion means stress is not just intense; it is broad.</p>
 <div id="8ebd9d00" class="cell" data-execution_count="17">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> expanding_zscore(series, min_obs<span class="op">=</span><span class="dv">60</span>, clip<span class="op">=</span><span class="fl">5.0</span>):</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    series <span class="op">=</span> pd.Series(series, dtype<span class="op">=</span><span class="bu">float</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    mean <span class="op">=</span> series.expanding(min_periods<span class="op">=</span>min_obs).mean()</span>
@@ -781,6 +922,7 @@ d_t=\frac{1}{N_t}\sum_{i=1}^{N_t}\mathbf{1}\{s_{i,t}&gt;c\}
 <span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>    plt.tight_layout()</span>
 <span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>    plt.show()</span>
 <span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> fig, axes</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -902,6 +1044,8 @@ d_t=\frac{1}{N_t}\sum_{i=1}^{N_t}\mathbf{1}\{s_{i,t}&gt;c\}
 </table>
 <p>This framing is important because the strategy later doesn’t only ask whether conditions are tight. It also asks what kind of tightness we have.</p>
 <div id="5d88f13f" class="cell" data-execution_count="18">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>min_obs <span class="op">=</span> <span class="dv">60</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>inflation_cols <span class="op">=</span> prefix_cols(macro_factors, (<span class="st">"cpi"</span>, <span class="st">"cpc"</span>, <span class="st">"ppi"</span>, <span class="st">"ipp"</span>, <span class="st">"rmp"</span>, <span class="st">"cpu"</span>))</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>policy_cols <span class="op">=</span> prefix_cols(macro_factors, (<span class="st">"inrt"</span>, <span class="st">"fdrh"</span>, <span class="st">"fdph"</span>, <span class="st">"gvbg"</span>))</span>
@@ -913,6 +1057,7 @@ d_t=\frac{1}{N_t}\sum_{i=1}^{N_t}\mathbf{1}\{s_{i,t}&gt;c\}
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>external_demand_cols <span class="op">=</span> prefix_cols(macro_factors, (<span class="st">"exp"</span>, <span class="st">"imp"</span>))</span>
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>external_balance_cols <span class="op">=</span> prefix_cols(macro_factors, (<span class="st">"trbn"</span>, <span class="st">"crab"</span>))</span>
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>survey_cols <span class="op">=</span> prefix_cols(macro_factors, (<span class="st">"cnci"</span>, <span class="st">"cncr"</span>, <span class="st">"cnrm"</span>, <span class="st">"cnry"</span>, <span class="st">"umcc"</span>, <span class="st">"bsi"</span>, <span class="st">"zwi"</span>, <span class="st">"zwe"</span>, <span class="st">"sntx"</span>, <span class="st">"cct"</span>, <span class="st">"cit"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -941,6 +1086,8 @@ I_t^{accel}=\frac{1}{N_t}\sum_{i\in\mathcal{I}_t} z((x_{i,t}-x_{i,t-3})-(x_{i,t-
 <p>A broad inflation block prevents one inflation measure from dominating the story. If oil spikes but core inflation is stable, the diffusion component won’t confirm broad pressure. If CPI, core CPI, PCE, PPI, import prices, and oil all move together, diffusion rises and the FCI treats the inflation regime as more serious.</p>
 <p>For asset allocation, broad inflation is more dangerous than narrow inflation. Narrow inflation can rotate between sectors. Broad inflation can force central bank tightening and change the entire discount-rate environment.</p>
 <div id="cb3d6865" class="cell" data-execution_count="19">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>inflation_signals <span class="op">=</span> pd.DataFrame(index<span class="op">=</span>macro_factors.index)</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>inflation_signals[<span class="st">"inflation_level_pressure"</span>] <span class="op">=</span> mean_z(macro_factors, inflation_cols, min_obs<span class="op">=</span>min_obs)</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>inflation_signals[<span class="st">"inflation_impulse"</span>] <span class="op">=</span> change_z(macro_factors, inflation_cols, periods<span class="op">=</span><span class="dv">3</span>, min_obs<span class="op">=</span>min_obs)</span>
@@ -949,10 +1096,11 @@ I_t^{accel}=\frac{1}{N_t}\sum_{i\in\mathcal{I}_t} z((x_{i,t}-x_{i,t-3})-(x_{i,t-
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>inflation_signals[<span class="st">"inflation_diffusion"</span>] <span class="op">=</span> stress_share(macro_factors, inflation_cols, min_obs<span class="op">=</span>min_obs, threshold<span class="op">=</span><span class="fl">0.5</span>)</span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>plot_signal_group(inflation_signals, <span class="st">"inflation pressure signals"</span>)</span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>display(inflation_signals.tail())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-7-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="12_financial_conditions_index_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1077,6 +1225,8 @@ r_t^{real}\approx i_t-\pi_t^e
 <p>The project doesn’t directly estimate expected inflation. Instead, it uses the relationship between policy tightness and inflation impulse as a practical signal. If policy tightness is high relative to current inflation impulse, the real-rate squeeze becomes positive. If inflation impulse is running ahead of policy, the squeeze becomes lower.</p>
 <p>This is a simplified macro proxy, but it captures a useful idea: the same nominal policy rate can mean different things depending on inflation momentum. A 5% policy rate with collapsing inflation is tight. A 5% policy rate with inflation accelerating can feel less restrictive in real terms until policy catches up.</p>
 <div id="154cb510" class="cell" data-execution_count="20">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>policy_signals <span class="op">=</span> pd.DataFrame(index<span class="op">=</span>macro_factors.index)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>policy_signals[<span class="st">"policy_tightness"</span>] <span class="op">=</span> mean_z(macro_factors, policy_cols, min_obs<span class="op">=</span>min_obs)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>policy_signals[<span class="st">"policy_shock"</span>] <span class="op">=</span> change_z(macro_factors, policy_cols, periods<span class="op">=</span><span class="dv">3</span>, min_obs<span class="op">=</span>min_obs)</span>
@@ -1085,10 +1235,11 @@ r_t^{real}\approx i_t-\pi_t^e
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>policy_signals[<span class="st">"policy_catchup_risk"</span>] <span class="op">=</span> expanding_zscore(policy_gap.clip(lower<span class="op">=</span><span class="fl">0.0</span>), min_obs<span class="op">=</span>min_obs)</span>
 <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>plot_signal_group(policy_signals, <span class="st">"policy and rate pressure signals"</span>)</span>
 <span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>display(policy_signals.tail())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-8-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-8-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="12_financial_conditions_index_files/figure-html/cell-8-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1191,6 +1342,8 @@ G_t^{impulse}=\frac{1}{N_t}\sum_{i\in\mathcal{G}_t}-z(g_{i,t}-g_{i,t-3})
 <p>The project includes both because markets respond to both. Soft data can move valuations and risk appetite quickly. Hard data confirms whether the earnings and labor consequences are actually happening.</p>
 <p>A useful interpretation rule is this: when hard data and soft data agree, the macro signal is stronger. When they disagree, the regime is mixed. In the latest US output, hard growth stress is negative, but survey warning is strongly positive. That is exactly a mixed-growth regime.</p>
 <div id="bbef8d96" class="cell" data-execution_count="21">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>growth_signals <span class="op">=</span> pd.DataFrame(index<span class="op">=</span>macro_factors.index)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>growth_signals[<span class="st">"growth_momentum_stress"</span>] <span class="op">=</span> mean_z(macro_factors, growth_cols, min_obs<span class="op">=</span>min_obs, sign<span class="op">=-</span><span class="fl">1.0</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>growth_signals[<span class="st">"growth_acceleration_stress"</span>] <span class="op">=</span> change_z(macro_factors, growth_cols, periods<span class="op">=</span><span class="dv">3</span>, min_obs<span class="op">=</span>min_obs, sign<span class="op">=-</span><span class="fl">1.0</span>)</span>
@@ -1198,10 +1351,11 @@ G_t^{impulse}=\frac{1}{N_t}\sum_{i\in\mathcal{G}_t}-z(g_{i,t}-g_{i,t-3})
 <span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>growth_signals[<span class="st">"survey_warning"</span>] <span class="op">=</span> mean_z(macro_factors, survey_cols, min_obs<span class="op">=</span>min_obs, sign<span class="op">=-</span><span class="fl">1.0</span>)</span>
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>plot_signal_group(growth_signals, <span class="st">"growth and recession signals"</span>)</span>
 <span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>display(growth_signals.tail())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-9-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-9-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="12_financial_conditions_index_files/figure-html/cell-9-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1302,6 +1456,8 @@ L_t=\frac{1}{3}\left(z(\text{unemployment}_t)+z(\text{claims}_t)-z(\text{jobs/ho
 \]</span></p>
 <p>where <span class="math inline">\(u_t\)</span> is unemployment. The project standardizes this gap rather than using one fixed recession threshold. Rising Sahm pressure means unemployment has moved up enough relative to its recent low to look economically important.</p>
 <div id="2ca22b64" class="cell" data-execution_count="22">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>labor_signals <span class="op">=</span> pd.DataFrame(index<span class="op">=</span>macro_factors.index)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>labor_parts <span class="op">=</span> pd.concat([</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    mean_z(macro_factors, labor_unemployment_cols, min_obs<span class="op">=</span>min_obs),</span>
@@ -1314,10 +1470,11 @@ L_t=\frac{1}{3}\left(z(\text{unemployment}_t)+z(\text{claims}_t)-z(\text{jobs/ho
 <span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>labor_signals[<span class="st">"sahm_pressure"</span>] <span class="op">=</span> expanding_zscore(sahm_gap, min_obs<span class="op">=</span>min_obs)</span>
 <span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>plot_signal_group(labor_signals, <span class="st">"labor cooling signals"</span>)</span>
 <span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>display(labor_signals.tail())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-10-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-10-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="12_financial_conditions_index_files/figure-html/cell-10-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1396,6 +1553,8 @@ H_t^{squeeze}=\frac{1}{2}(H_t^{impulse}+P_t^{tight})
 <p>This catches the situation where housing is weakening while rates are still restrictive. That mix can be especially painful because housing is a large transmission channel for monetary policy.</p>
 <p>External trade is separate. External demand stress captures weakening exports and imports, while external vulnerability captures pressure from trade or current-account balances. For a large domestic economy like the US, external trade may be less dominant than for Canada, but it still matters through global demand, dollar strength, commodities, and multinational earnings.</p>
 <div id="95cc0278" class="cell" data-execution_count="23">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>housing_external_signals <span class="op">=</span> pd.DataFrame(index<span class="op">=</span>macro_factors.index)</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>housing_level <span class="op">=</span> mean_z(macro_factors, housing_cols, min_obs<span class="op">=</span>min_obs, sign<span class="op">=-</span><span class="fl">1.0</span>)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>housing_impulse <span class="op">=</span> change_z(macro_factors, housing_cols, periods<span class="op">=</span><span class="dv">3</span>, min_obs<span class="op">=</span>min_obs, sign<span class="op">=-</span><span class="fl">1.0</span>)</span>
@@ -1406,17 +1565,18 @@ H_t^{squeeze}=\frac{1}{2}(H_t^{impulse}+P_t^{tight})
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>plot_signal_group(housing_external_signals[[<span class="st">"housing_impulse_stress"</span>, <span class="st">"housing_rate_squeeze"</span>]], <span class="st">"housing and domestic demand signals"</span>)</span>
 <span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>plot_signal_group(housing_external_signals[[<span class="st">"external_demand_stress"</span>, <span class="st">"external_vulnerability"</span>]], <span class="st">"external and trade signals"</span>)</span>
 <span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>display(housing_external_signals.tail())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-11-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-11-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="12_financial_conditions_index_files/figure-html/cell-11-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-11-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-11-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="12_financial_conditions_index_files/figure-html/cell-11-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1523,6 +1683,8 @@ G_t^{gold}= -\frac{1}{4}(I_t^{level}+P_t^{tight}+G_t^{stress}+L_t^{cool})
 <p>The latest breadth table shows <strong>stress breadth is negative</strong>, <strong>severe stress breadth is negative</strong>, and <strong>stagflation pressure is only around 0.27</strong>. Goldilocks support is near zero. The interpretation is a mixed but contained macro environment: inflation is still high, but stress is not broad across the whole economy.</p>
 <p>That is exactly the type of state where a macro model can help. Pure momentum might keep buying what has worked. Pure defensive allocation might overreact to inflation. A block-level FCI can say: inflation pressure exists, but broad recession stress is not yet confirmed.</p>
 <div id="1f59cd1b" class="cell" data-execution_count="24">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>first_signals <span class="op">=</span> pd.concat([inflation_signals, policy_signals, growth_signals, labor_signals, housing_external_signals], axis<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>breadth_signals <span class="op">=</span> pd.DataFrame(index<span class="op">=</span>macro_factors.index)</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>breadth_signals[<span class="st">"stress_breadth"</span>] <span class="op">=</span> expanding_zscore((first_signals <span class="op">&gt;</span> <span class="fl">0.5</span>).where(first_signals.notna()).mean(axis<span class="op">=</span><span class="dv">1</span>, skipna<span class="op">=</span><span class="va">True</span>), min_obs<span class="op">=</span>min_obs)</span>
@@ -1532,10 +1694,11 @@ G_t^{gold}= -\frac{1}{4}(I_t^{level}+P_t^{tight}+G_t^{stress}+L_t^{cool})
 <span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>signals <span class="op">=</span> pd.concat([first_signals, breadth_signals], axis<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>plot_signal_group(breadth_signals, <span class="st">"macro breadth and conflict signals"</span>)</span>
 <span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>display(signals.tail())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-12-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-12-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="12_financial_conditions_index_files/figure-html/cell-12-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1747,6 +1910,8 @@ B_{I,t}=\frac{1}{4}\left(I_t^{level}+I_t^{impulse}+I_t^{accel}+I_t^{diffusion}\r
 <li>It becomes statistically more stable. PCA, PLS, and logistic models work better on seven economic blocks than on dozens of noisy raw macro variables.</li>
 </ul>
 <div id="de49329c" class="cell" data-execution_count="25">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>blocks <span class="op">=</span> pd.DataFrame(index<span class="op">=</span>signals.index)</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>blocks[<span class="st">"inflation_pressure_block"</span>] <span class="op">=</span> signals[[<span class="st">"inflation_level_pressure"</span>, <span class="st">"inflation_impulse"</span>, <span class="st">"inflation_acceleration"</span>, <span class="st">"inflation_diffusion"</span>]].mean(axis<span class="op">=</span><span class="dv">1</span>, skipna<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>blocks[<span class="st">"policy_rate_pressure_block"</span>] <span class="op">=</span> signals[[<span class="st">"policy_tightness"</span>, <span class="st">"policy_shock"</span>, <span class="st">"real_rate_squeeze"</span>, <span class="st">"policy_catchup_risk"</span>]].mean(axis<span class="op">=</span><span class="dv">1</span>, skipna<span class="op">=</span><span class="va">True</span>)</span>
@@ -1774,6 +1939,7 @@ B_{I,t}=\frac{1}{4}\left(I_t^{level}+I_t^{impulse}+I_t^{accel}+I_t^{diffusion}\r
 <span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>availability <span class="op">=</span> pd.DataFrame(availability_rows).set_index(<span class="st">"column"</span>)</span>
 <span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame({<span class="st">"warmup_start"</span>: [macro_full.index.<span class="bu">min</span>()], <span class="st">"analysis_start"</span>: [macro.index.<span class="bu">min</span>()], <span class="st">"end"</span>: [macro.index.<span class="bu">max</span>()], <span class="st">"rows"</span>: [<span class="bu">len</span>(macro)]}))</span>
 <span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>display(availability.loc[signal_cols <span class="op">+</span> block_cols].<span class="bu">round</span>(<span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2067,6 +2233,8 @@ C_t=\frac{N_t^{blocks}}{7}
 </ul>
 <p>We also load the external NFCI series. It acts as a benchmark financial-conditions index. Comparing our index with NFCI is useful because it tells us whether our macro-built FCI agrees with an established external stress gauge during major crises.</p>
 <div id="144fdb21" class="cell" data-execution_count="26">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>us_sector_assets <span class="op">=</span> [<span class="st">"xlb"</span>, <span class="st">"xle"</span>, <span class="st">"xlf"</span>, <span class="st">"xli"</span>, <span class="st">"xlk"</span>, <span class="st">"xlp"</span>, <span class="st">"xlu"</span>, <span class="st">"xlv"</span>, <span class="st">"xly"</span>]</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>optional_sector_assets <span class="op">=</span> [<span class="st">"vnq"</span>, <span class="st">"iyr"</span>]</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>required_defensive_assets <span class="op">=</span> [<span class="st">"cash"</span>]</span>
@@ -2096,6 +2264,7 @@ C_t=\frac{N_t^{blocks}}{7}
 <span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>    coverage_rows.append({<span class="st">"ticker"</span>: ticker, <span class="st">"first_price"</span>: prices.index.<span class="bu">min</span>(), <span class="st">"last_price"</span>: prices.index.<span class="bu">max</span>(), <span class="st">"price_observations"</span>: <span class="bu">int</span>(<span class="bu">len</span>(prices))})</span>
 <span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>etf_coverage <span class="op">=</span> pd.DataFrame(coverage_rows).set_index(<span class="st">"ticker"</span>)</span>
 <span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>display(etf_coverage.loc[[x <span class="cf">for</span> x <span class="kw">in</span> all_tickers <span class="cf">if</span> x <span class="kw">in</span> etf_coverage.index]])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2255,6 +2424,8 @@ C_t=\frac{N_t^{blocks}}{7}
 </div>
 </div>
 <div id="40a75482" class="cell" data-execution_count="27">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>nfci_raw <span class="op">=</span> pd.read_csv(nfci_path)</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>nfci_raw.columns <span class="op">=</span> [<span class="bu">str</span>(col).lower() <span class="cf">for</span> col <span class="kw">in</span> nfci_raw.columns]</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>nfci_raw[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(nfci_raw[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
@@ -2263,6 +2434,7 @@ C_t=\frac{N_t^{blocks}}{7}
 <span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>nfci_month <span class="op">=</span> nfci.groupby(nfci.index.to_period(<span class="st">"M"</span>)).last()</span>
 <span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>nfci_month.index <span class="op">=</span> nfci_month.index.to_timestamp(<span class="st">"M"</span>)</span>
 <span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>nfci_month <span class="op">=</span> nfci_month.loc[nfci_month.index <span class="op">&gt;=</span> macro_start]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <p>The ETF coverage table confirms that all US sector ETFs start in 1999 and run through June 2026. Defensive ETFs start later: SHY, IEF, TLT, and LQD begin around 2002, GLD begins in 2004, DBC starts in 2006, and HYG/UUP start in 2007.</p>
 <p>That coverage pattern matters for allocation. The strategy can run sector-only from the late 1990s, but a full defensive sleeve with gold and commodities becomes available later. The project handles this by using available assets at each date and by reporting a separate full-defensive-window performance table.</p>
@@ -2276,6 +2448,8 @@ C_t=\frac{N_t^{blocks}}{7}
 <p>External trade has weaker relationships with most domestic blocks. That is useful because it gives the FCI an external dimension instead of just repeating domestic growth and labor information. Macro breadth/conflict is positively related to several blocks because it measures whether stress is spreading.</p>
 <p>The heatmap supports the block design. The blocks are connected enough to represent one macro system, but different enough to justify separate interpretation.</p>
 <div id="d149c47f" class="cell" data-execution_count="28">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>block_corr <span class="op">=</span> macro[block_cols].corr()</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">6</span>))</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>im <span class="op">=</span> ax.imshow(block_corr, cmap<span class="op">=</span><span class="st">"coolwarm"</span>, vmin<span class="op">=-</span><span class="dv">1</span>, vmax<span class="op">=</span><span class="dv">1</span>)</span>
@@ -2292,17 +2466,21 @@ C_t=\frac{N_t^{blocks}}{7}
 <span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, ax<span class="op">=</span>ax, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
 <span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-16-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="12_financial_conditions_index_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="196f412f" class="cell" data-execution_count="29">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>display(macro[block_cols].tail(<span class="dv">12</span>).<span class="bu">round</span>(<span class="dv">2</span>))</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>display(macro[<span class="st">"macro_breadth_conflict_block"</span>].dropna().sort_values(ascending<span class="op">=</span><span class="va">False</span>).head(<span class="dv">5</span>).to_frame(<span class="st">"macro_breadth_conflict_block"</span>).<span class="bu">round</span>(<span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2505,6 +2683,8 @@ C_t=\frac{N_t^{blocks}}{7}
 <p>The recent picture is therefore not a broad stress regime. Inflation pressure remains the main concern, while the rest of the macro system is not confirming a recessionary shock.</p>
 <p>The historical top macro-breadth/conflict readings are concentrated around <strong>2000–2001</strong> and <strong>2008</strong>. That is exactly what we want from a breadth/conflict block. It becomes high when many macro categories start sending stress information at the same time. A high conflict/breadth reading is usually more important than a single block spike because it tells us the stress has spread across the macro system.</p>
 <div id="c7a92269" class="cell" data-execution_count="30">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>selected_dates <span class="op">=</span> [<span class="st">"2008-10"</span>, <span class="st">"2020-03"</span>, <span class="st">"2022-09"</span>, <span class="bu">str</span>(macro.index.<span class="bu">max</span>().date())[:<span class="dv">7</span>]]</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>contribution_rows <span class="op">=</span> []</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> text <span class="kw">in</span> selected_dates:</span>
@@ -2515,6 +2695,7 @@ C_t=\frac{N_t^{blocks}}{7}
 <span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>        contribution_rows.append({<span class="st">"date"</span>: date, <span class="st">"block"</span>: block, <span class="st">"value"</span>: value})</span>
 <span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>block_contribution_table <span class="op">=</span> pd.DataFrame(contribution_rows).pivot(index<span class="op">=</span><span class="st">"date"</span>, columns<span class="op">=</span><span class="st">"block"</span>, values<span class="op">=</span><span class="st">"value"</span>)</span>
 <span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>display(block_contribution_table.<span class="bu">round</span>(<span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2690,6 +2871,8 @@ F_t^{econ}=z(F_t^{econ,raw})
 <p>The weights are economically motivated. Inflation, policy, and growth receive the largest weights because they are the primary macro drivers of discount rates, earnings, and risk appetite. Labor, housing, external trade, and macro breadth/conflict receive smaller but still meaningful weights.</p>
 <p>The advantage is interpretability. If the economic FCI rises, we know exactly which blocks contributed. The weakness is that the weights are chosen by economic reasoning rather than estimated from data, so it may miss relationships that change across regimes.</p>
 <div id="d652a817" class="cell" data-execution_count="31">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> zscore(series, min_obs<span class="op">=</span><span class="dv">60</span>):</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    series <span class="op">=</span> pd.Series(series, dtype<span class="op">=</span><span class="bu">float</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    mean <span class="op">=</span> series.expanding(min_periods<span class="op">=</span>min_obs).mean()</span>
@@ -2706,14 +2889,18 @@ F_t^{econ}=z(F_t^{econ,raw})
 <span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
 <span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>            values.append(<span class="bu">float</span>((sample <span class="op">&lt;=</span> series.iloc[i]).mean()))</span>
 <span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.Series(values, index<span class="op">=</span>series.index)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="00b0967a" class="cell" data-execution_count="32">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>econ_weights <span class="op">=</span> pd.Series({<span class="st">"inflation_pressure_block"</span>: <span class="fl">0.18</span>, <span class="st">"policy_rate_pressure_block"</span>: <span class="fl">0.18</span>, <span class="st">"growth_recession_block"</span>: <span class="fl">0.18</span>, <span class="st">"labor_cooling_block"</span>: <span class="fl">0.12</span>, <span class="st">"housing_domestic_block"</span>: <span class="fl">0.10</span>, <span class="st">"external_trade_block"</span>: <span class="fl">0.10</span>, <span class="st">"macro_breadth_conflict_block"</span>: <span class="fl">0.14</span>})</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>econ_data <span class="op">=</span> macro_full[econ_weights.index].astype(<span class="bu">float</span>)</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>econ_weighted_sum <span class="op">=</span> econ_data.mul(econ_weights, axis<span class="op">=</span><span class="dv">1</span>).<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>, skipna<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>econ_available_weight <span class="op">=</span> econ_data.notna().mul(econ_weights, axis<span class="op">=</span><span class="dv">1</span>).<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>).replace(<span class="fl">0.0</span>, np.nan)</span>
 <span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>fci_econ_full <span class="op">=</span> zscore(econ_weighted_sum <span class="op">/</span> econ_available_weight, <span class="dv">12</span>).rename(<span class="st">"fci_econ"</span>)</span>
 <span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>fci_econ <span class="op">=</span> fci_econ_full.reindex(macro.index)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="pca-fci" class="level2">
@@ -2744,6 +2931,8 @@ F_t^{pca}=v_{1,I}\tilde{B}_{I,t}+v_{1,P}\tilde{B}_{P,t}+v_{1,G}\tilde{B}_{G,t}+\
 <p>The sign alignment step compares the historical PCA score with average stress. If the correlation is negative, we multiply the score by <span class="math inline">\(-1\)</span>. This doesn’t change the statistical content, but it makes interpretation consistent: higher PCA FCI means tighter conditions.</p>
 <p>This is one of the cleanest uses of PCA in the project series. We are not trying to forecast with dozens of components. We are extracting the first macro stress factor and checking whether it lines up with crises and future risk.</p>
 <div id="b6e0f354" class="cell" data-execution_count="33">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pca_index(blocks, min_obs<span class="op">=</span><span class="dv">60</span>, min_cols<span class="op">=</span><span class="dv">6</span>):</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> pd.Series(np.nan, index<span class="op">=</span>blocks.index, name<span class="op">=</span><span class="st">"fci_pca"</span>)</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    average_stress <span class="op">=</span> blocks.mean(axis<span class="op">=</span><span class="dv">1</span>, skipna<span class="op">=</span><span class="va">True</span>)</span>
@@ -2771,6 +2960,7 @@ F_t^{pca}=v_{1,I}\tilde{B}_{I,t}+v_{1,P}\tilde{B}_{P,t}+v_{1,G}\tilde{B}_{G,t}+\
 <span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> zscore(out, <span class="dv">12</span>).rename(<span class="st">"fci_pca"</span>)</span>
 <span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>fci_pca_full <span class="op">=</span> pca_index(macro_full[block_cols], <span class="dv">36</span>, <span class="dv">6</span>)</span>
 <span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>fci_pca <span class="op">=</span> fci_pca_full.reindex(macro.index)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -2830,6 +3020,8 @@ F_t^{unsup}=g(B_t)
 \]</span></p>
 <p>This distinction explains why the latest PLS and blend readings can be tighter than the economic and PCA readings. The broad macro state is not strongly stressed, but the supervised relationship sees a higher-risk combination.</p>
 <div id="42816204" class="cell" data-execution_count="34">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>spy_return <span class="op">=</span> returns_raw[<span class="st">"spy"</span>]</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>future_1m_return <span class="op">=</span> spy_return.shift(<span class="op">-</span><span class="dv">1</span>)</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>future_3m_return <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> spy_return.shift(<span class="op">-</span><span class="dv">1</span>)).rolling(<span class="dv">3</span>).<span class="bu">apply</span>(np.prod, raw<span class="op">=</span><span class="va">True</span>).shift(<span class="op">-</span><span class="dv">2</span>) <span class="op">-</span> <span class="fl">1.0</span></span>
@@ -2846,6 +3038,7 @@ F_t^{unsup}=g(B_t)
 <span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>target_table <span class="op">=</span> pd.concat([future_1m_return.rename(<span class="st">"future_1m_return"</span>), future_3m_return.rename(<span class="st">"future_3m_return"</span>), future_3m_volatility.rename(<span class="st">"future_3m_volatility"</span>), future_3m_max_drawdown], axis<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>target_table[<span class="st">"future_stress"</span>] <span class="op">=</span> zscore(<span class="op">-</span>target_table[<span class="st">"future_3m_return"</span>], <span class="dv">36</span>) <span class="op">+</span> zscore(target_table[<span class="st">"future_3m_volatility"</span>], <span class="dv">36</span>) <span class="op">+</span> zscore(<span class="op">-</span>target_table[<span class="st">"future_3m_max_drawdown"</span>], <span class="dv">36</span>)</span>
 <span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>target_table <span class="op">=</span> target_table.reindex(macro_full.index.union(target_table.index)).sort_index()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -2868,6 +3061,8 @@ F_t^{pls}=\hat{y}_t=\alpha + B_t^\top\hat{\beta}
 <p>The financial interpretation is direct: PLS tries to learn which combination of macro blocks historically came before worse future SPY stress. It may put more weight on blocks that matter for asset markets, even if those blocks are not the largest source of macro variation.</p>
 <p>The risk is sample dependence. A supervised model can overfit a few crisis patterns, especially when the number of macro cycles is small. That is why we later score the models across full-sample, common-sample, and test windows.</p>
 <div id="a893015a" class="cell" data-execution_count="35">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pls_index(blocks, target, min_obs<span class="op">=</span><span class="dv">60</span>, min_cols<span class="op">=</span><span class="dv">6</span>, embargo_months<span class="op">=</span><span class="dv">3</span>):</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> pd.Series(np.nan, index<span class="op">=</span>blocks.index, name<span class="op">=</span><span class="st">"fci_pls"</span>)</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    target <span class="op">=</span> pd.Series(target, dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -2894,6 +3089,7 @@ F_t^{pls}=\hat{y}_t=\alpha + B_t^\top\hat{\beta}
 <span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> zscore(out, <span class="dv">36</span>).rename(<span class="st">"fci_pls"</span>)</span>
 <span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>fci_pls_full <span class="op">=</span> pls_index(macro_full[block_cols], target_table[<span class="st">"future_stress"</span>], <span class="dv">36</span>, <span class="dv">6</span>, <span class="dv">3</span>)</span>
 <span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>fci_pls <span class="op">=</span> fci_pls_full.reindex(macro.index)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="stress-probability-fci" class="level2">
@@ -2914,6 +3110,8 @@ F_t^{prob}=z(P(Y_t^{bin}=1\mid B_t))
 \]</span></p>
 <p>This model is appealing because it matches how risk managers often think: the question is not only expected return, but whether we are entering a high-stress zone. The weakness is that binary labels discard information. A mildly bad future and an extremely bad future can both become the same class if they are above the threshold.</p>
 <div id="11d3faa6" class="cell" data-execution_count="36">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> prob_index(features, target, min_obs<span class="op">=</span><span class="dv">60</span>, embargo_months<span class="op">=</span><span class="dv">3</span>):</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> features.<span class="bu">apply</span>(pd.to_numeric, errors<span class="op">=</span><span class="st">"coerce"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> pd.Series(target, dtype<span class="op">=</span><span class="bu">float</span>).reindex(x.index)</span>
@@ -2941,6 +3139,7 @@ F_t^{prob}=z(P(Y_t^{bin}=1\mid B_t))
 <span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a>fci_prob_full <span class="op">=</span> prob_index(prob_features, target_table[<span class="st">"future_stress"</span>], <span class="dv">36</span>, <span class="dv">3</span>)</span>
 <span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a>fci_prob_z_full <span class="op">=</span> zscore(fci_prob_full, <span class="dv">12</span>).rename(<span class="st">"fci_prob"</span>)</span>
 <span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a>fci_prob_z <span class="op">=</span> fci_prob_z_full.reindex(macro.index)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="blended-fci" class="level2">
@@ -2953,6 +3152,8 @@ F_t^{blend}=z(0.50F_t^{pls}+0.30F_t^{pca}+0.20F_t^{econ})
 <p>This blend is a compromise between prediction and robustness. Supervised models can be more responsive to market stress, but they can also overfit. Unsupervised models can have better long-history behavior, but they may ignore the exact combination that matters for future equity stress. A blend gives the strategy more than one source of information.</p>
 <p>The model availability table shows the expected pattern. Economic FCI starts earliest, PCA starts after enough block history is available, and the supervised models start later because they need both macro history and target history.</p>
 <div id="e7040f65" class="cell" data-execution_count="37">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>fci_blend_full <span class="op">=</span> zscore(<span class="fl">0.50</span> <span class="op">*</span> fci_pls_full <span class="op">+</span> <span class="fl">0.30</span> <span class="op">*</span> fci_pca_full <span class="op">+</span> <span class="fl">0.20</span> <span class="op">*</span> fci_econ_full, <span class="dv">12</span>).rename(<span class="st">"fci_blend"</span>)</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>fci_blend <span class="op">=</span> fci_blend_full.reindex(macro.index)</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>fci_models <span class="op">=</span> pd.concat([fci_econ, fci_pca, fci_pls, fci_prob_z, fci_blend], axis<span class="op">=</span><span class="dv">1</span>).reindex(macro.index)</span>
@@ -2987,6 +3188,7 @@ F_t^{blend}=z(0.50F_t^{pls}+0.30F_t^{pca}+0.20F_t^{econ})
 <span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, ax<span class="op">=</span>axes[<span class="dv">1</span>], fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
 <span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb24-34"><a href="#cb24-34" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3039,12 +3241,14 @@ F_t^{blend}=z(0.50F_t^{pls}+0.30F_t^{pca}+0.20F_t^{econ})
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-25-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-25-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="12_financial_conditions_index_files/figure-html/cell-25-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="954b62c1" class="cell" data-execution_count="38">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>latest_rows <span class="op">=</span> []</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> col <span class="kw">in</span> fci_models.columns:</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    series <span class="op">=</span> fci_models[col].dropna()</span>
@@ -3066,6 +3270,7 @@ F_t^{blend}=z(0.50F_t^{pls}+0.30F_t^{pca}+0.20F_t^{econ})
 <span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>    ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
 <span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3138,7 +3343,7 @@ F_t^{blend}=z(0.50F_t^{pls}+0.30F_t^{pca}+0.20F_t^{econ})
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-26-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-26-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="12_financial_conditions_index_files/figure-html/cell-26-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3165,10 +3370,16 @@ F_t^{blend}=z(0.50F_t^{pls}+0.30F_t^{pca}+0.20F_t^{econ})
 </ul>
 <p>This project later selects PCA for the main strategy because it has long history and avoids supervised model-selection lookahead. But the latest model table still provides useful diagnostic context. It tells us that the current macro regime has some supervised stress features despite neutral broad stress.</p>
 <div id="01bfcab9" class="cell" data-execution_count="39">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>nfci_validation <span class="op">=</span> pd.concat([nfci_month[<span class="st">"nfci"</span>], fci_models], axis<span class="op">=</span><span class="dv">1</span>).loc[macro_start:].dropna(subset<span class="op">=</span>[<span class="st">"nfci"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="ed0df4fd" class="cell" data-execution_count="40">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>crisis_windows <span class="op">=</span> {<span class="st">"financial_crisis"</span>: (<span class="st">"2008-09"</span>, <span class="st">"2009-03"</span>), <span class="st">"covid_crash"</span>: (<span class="st">"2020-02"</span>, <span class="st">"2020-04"</span>), <span class="st">"inflation_rate_shock"</span>: (<span class="st">"2022-01"</span>, <span class="st">"2022-10"</span>)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -3190,6 +3401,8 @@ q_t \in \{Q1,Q2,Q3,Q4,Q5\}
 </ul>
 <p>This is a practical validation test. It doesn’t require the model to predict every month correctly. It checks whether the distribution of future outcomes worsens when macro conditions are tighter.</p>
 <div id="b7c996bd" class="cell" data-execution_count="41">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> quintile_report(fci, target):</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> pd.concat([fci.rename(<span class="st">"fci"</span>), target], axis<span class="op">=</span><span class="dv">1</span>).dropna(subset<span class="op">=</span>[<span class="st">"fci"</span>, <span class="st">"future_stress"</span>])</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(data) <span class="op">&lt;</span> <span class="dv">30</span>:</span>
@@ -3203,6 +3416,7 @@ q_t \in \{Q1,Q2,Q3,Q4,Q5\}
 <span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, report <span class="kw">in</span> quintile_reports.items():</span>
 <span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(name)</span>
 <span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>    display(report.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>fci_econ</code></pre>
 </div>
@@ -3634,6 +3848,8 @@ IC=\text{Corr}(\text{rank}(F_t),\text{rank}(Y_t))
 \]</span></p>
 <p>The final score combines these pieces with more weight on future stress IC and drawdown spread.</p>
 <div id="5f83f58d" class="cell" data-execution_count="42">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> score_fci_models(models, target):</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name <span class="kw">in</span> models.columns:</span>
@@ -3678,6 +3894,7 @@ IC=\text{Corr}(\text{rank}(F_t),\text{rank}(Y_t))
 <span id="cb34-42"><a href="#cb34-42" aria-hidden="true" tabindex="-1"></a>    ax.grid(<span class="va">True</span>, axis<span class="op">=</span><span class="st">"x"</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
 <span id="cb34-43"><a href="#cb34-43" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb34-44"><a href="#cb34-44" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4109,7 +4326,7 @@ IC=\text{Corr}(\text{rank}(F_t),\text{rank}(Y_t))
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-30-output-5.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-30-output-5.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="12_financial_conditions_index_files/figure-html/cell-30-output-5.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4119,6 +4336,8 @@ IC=\text{Corr}(\text{rank}(F_t),\text{rank}(Y_t))
 <p>The test-sample scoreboard, from February 2020 to January 2026, ranks <strong>fci_prob</strong> first with a final score around <strong>0.89</strong>, followed by <strong>fci_econ</strong> around <strong>0.79</strong>. The supervised probability model works well in the recent high-volatility period, but it has a shorter history.</p>
 <p>For strategy design, the project selects <strong>fci_pca</strong> as the long-history strategy FCI. This is a conservative choice. It avoids choosing a supervised model mainly because it did well in the recent period, and it preserves coverage of the dot-com and 2008 regimes.</p>
 <div id="f0c1262b" class="cell" data-execution_count="43">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>long_history_scoreboard <span class="op">=</span> full_sample_scoreboard.loc[full_sample_scoreboard[<span class="st">"long_history_eligible"</span>]]</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>long_history_fci_name <span class="op">=</span> long_history_scoreboard.index[<span class="dv">0</span>] <span class="cf">if</span> <span class="bu">len</span>(long_history_scoreboard) <span class="cf">else</span> full_sample_scoreboard.index[<span class="dv">0</span>]</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>long_history_fci_series <span class="op">=</span> fci_models[long_history_fci_name].rename(<span class="st">"long_history_fci"</span>)</span>
@@ -4158,17 +4377,18 @@ IC=\text{Corr}(\text{rank}(F_t),\text{rank}(Y_t))
 <span id="cb35-37"><a href="#cb35-37" aria-hidden="true" tabindex="-1"></a>        crisis_rows.append({<span class="st">"window"</span>: name, <span class="st">"mean_selected_fci"</span>: window[<span class="st">"long_history_fci"</span>].mean(), <span class="st">"mean_nfci"</span>: window[<span class="st">"nfci"</span>].mean(), <span class="st">"agreement"</span>: <span class="bu">float</span>((np.sign(window[<span class="st">"long_history_fci"</span>]) <span class="op">==</span> np.sign(window[<span class="st">"nfci"</span>])).mean())})</span>
 <span id="cb35-38"><a href="#cb35-38" aria-hidden="true" tabindex="-1"></a>crisis_agreement_table <span class="op">=</span> pd.DataFrame(crisis_rows).set_index(<span class="st">"window"</span>)</span>
 <span id="cb35-39"><a href="#cb35-39" aria-hidden="true" tabindex="-1"></a>display(crisis_agreement_table.<span class="bu">round</span>(<span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-31-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-31-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="12_financial_conditions_index_files/figure-html/cell-31-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-31-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-31-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="12_financial_conditions_index_files/figure-html/cell-31-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4254,6 +4474,8 @@ IC=\text{Corr}(\text{rank}(F_t),\text{rank}(Y_t))
 </ul>
 <p>The model captures classic credit/liquidity stress well. The inflation/rate shock is different because macro pressure can be high while broad financial stress indexes are not necessarily crisis-high.</p>
 <div id="c3530d5f" class="cell" data-execution_count="44">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>sector_assets <span class="op">=</span> us_sector_assets[:]</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>defensive_sector_assets <span class="op">=</span> [x <span class="cf">for</span> x <span class="kw">in</span> [<span class="st">"xlp"</span>, <span class="st">"xlu"</span>, <span class="st">"xlv"</span>] <span class="cf">if</span> x <span class="kw">in</span> returns.columns]</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>cyclical_sector_assets <span class="op">=</span> [x <span class="cf">for</span> x <span class="kw">in</span> [<span class="st">"xlf"</span>, <span class="st">"xli"</span>, <span class="st">"xly"</span>, <span class="st">"xlb"</span>] <span class="cf">if</span> x <span class="kw">in</span> returns.columns]</span>
@@ -4302,6 +4524,7 @@ IC=\text{Corr}(\text{rank}(F_t),\text{rank}(Y_t))
 <span id="cb36-46"><a href="#cb36-46" aria-hidden="true" tabindex="-1"></a>ax.grid(<span class="va">True</span>, axis<span class="op">=</span><span class="st">"x"</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
 <span id="cb36-47"><a href="#cb36-47" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb36-48"><a href="#cb36-48" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4500,7 +4723,7 @@ IC=\text{Corr}(\text{rank}(F_t),\text{rank}(Y_t))
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-32-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-32-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="12_financial_conditions_index_files/figure-html/cell-32-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4513,6 +4736,8 @@ IC=\text{Corr}(\text{rank}(F_t),\text{rank}(Y_t))
 <p>The strategy sample starts in <strong>July 1999</strong>, and the test split begins around <strong>October 2016</strong>. That gives a long enough live-style history to compare sector rotation, macro gating, and benchmark behavior across several stress periods.</p>
 <p>The selection table is transparent: fci_pca wins the full-sample long-history rule, fci_econ wins the common-sample score, fci_prob wins the test-sample score, and fci_pca is chosen for the actual strategy to avoid supervised model-selection lookahead and keep crisis coverage.</p>
 <div id="496d6aef" class="cell" data-execution_count="45">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>regime_data <span class="op">=</span> pd.concat([best_fci_percentile.rename(<span class="st">"fci_percentile"</span>), returns[sector_assets].shift(<span class="op">-</span><span class="dv">1</span>)], axis<span class="op">=</span><span class="dv">1</span>).dropna(subset<span class="op">=</span>[<span class="st">"fci_percentile"</span>])</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>regime_data[<span class="st">"fci_quintile"</span>] <span class="op">=</span> pd.qcut(regime_data[<span class="st">"fci_percentile"</span>].rank(method<span class="op">=</span><span class="st">"first"</span>), <span class="dv">5</span>, labels<span class="op">=</span>[<span class="st">"q1"</span>, <span class="st">"q2"</span>, <span class="st">"q3"</span>, <span class="st">"q4"</span>, <span class="st">"q5"</span>])</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>sector_return_by_regime <span class="op">=</span> regime_data.groupby(<span class="st">"fci_quintile"</span>, observed<span class="op">=</span><span class="va">False</span>)[sector_assets].mean()</span>
@@ -4534,10 +4759,11 @@ IC=\text{Corr}(\text{rank}(F_t),\text{rank}(Y_t))
 <span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>    fig.colorbar(im, ax<span class="op">=</span>ax, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
 <span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-33-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-33-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="12_financial_conditions_index_files/figure-html/cell-33-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4573,6 +4799,8 @@ NAV_t^{def-cyc}=\prod_{s\leq t}(1+r_s^{def-cyc})-1
 <p>The plot shows that defensives have not simply dominated over the whole sample. The spread spikes in stress episodes and then can give back gains when risk appetite returns. This is why regime timing matters. Holding defensives permanently can underperform in bull markets, but switching to them during stress can reduce drawdown.</p>
 <p>The high-inflation/policy table shows that inflation beneficiaries did well during high inflation-policy periods: XLE has average monthly return around <strong>1.91%</strong>, XLB around <strong>1.05%</strong>, DBC around <strong>2.07%</strong>, and GLD around <strong>1.27%</strong>. That supports the macro intuition that energy, materials, commodities, and gold can help when inflation is the dominant pressure.</p>
 <div id="8110edd4" class="cell" data-execution_count="46">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>def_cyc_ret <span class="op">=</span> returns[defensive_sector_assets].mean(axis<span class="op">=</span><span class="dv">1</span>) <span class="op">-</span> returns[cyclical_sector_assets].mean(axis<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>def_cyc_spread <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> def_cyc_ret.fillna(<span class="fl">0.0</span>)).cumprod() <span class="op">-</span> <span class="fl">1.0</span></span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> def_cyc_spread.plot(figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="fl">3.5</span>), lw<span class="op">=</span><span class="fl">1.2</span>)</span>
@@ -4585,10 +4813,11 @@ NAV_t^{def-cyc}=\prod_{s\leq t}(1+r_s^{def-cyc})-1
 <span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>high_policy <span class="op">=</span> macro[<span class="st">"policy_rate_pressure_block"</span>].reindex(returns.index) <span class="op">&gt;</span> <span class="fl">1.0</span></span>
 <span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>display(returns.loc[high_inflation_policy.fillna(<span class="va">False</span>), inflation_assets].mean().to_frame(<span class="st">"average_monthly_return"</span>).<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>display(returns.loc[high_policy.fillna(<span class="va">False</span>), rate_sensitive_assets].mean().to_frame(<span class="st">"average_monthly_return"</span>).<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-34-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-34-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16"><img src="12_financial_conditions_index_files/figure-html/cell-34-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4673,6 +4902,8 @@ w_t=w_t^{risk}w_t^{sector}+(1-w_t^{risk})w_t^{defensive}
 </ul>
 <p>A single score that mixes everything into one portfolio vector would be harder to interpret. The two-layer design lets us diagnose whether performance came from risk gating, sector selection, or defensive-asset selection.</p>
 <div id="92416a37" class="cell" data-execution_count="47">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cross_z(frame):</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    mean <span class="op">=</span> frame.mean(axis<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    std <span class="op">=</span> frame.std(axis<span class="op">=</span><span class="dv">1</span>, ddof<span class="op">=</span><span class="dv">1</span>).replace(<span class="fl">0.0</span>, np.nan)</span>
@@ -4701,8 +4932,11 @@ w_t=w_t^{risk}w_t^{sector}+(1-w_t^{risk})w_t^{defensive}
 <span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a>    ret_6 <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> data.shift(<span class="dv">1</span>)).rolling(<span class="dv">6</span>).<span class="bu">apply</span>(np.prod, raw<span class="op">=</span><span class="va">True</span>) <span class="op">-</span> <span class="fl">1.0</span></span>
 <span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a>    vol_6 <span class="op">=</span> data.shift(<span class="dv">1</span>).rolling(<span class="dv">6</span>).std(ddof<span class="op">=</span><span class="dv">1</span>) <span class="op">*</span> np.sqrt(<span class="fl">12.0</span>)</span>
 <span id="cb39-28"><a href="#cb39-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">0.60</span> <span class="op">*</span> cross_z(mom_12_1) <span class="op">+</span> <span class="fl">0.40</span> <span class="op">*</span> cross_z(ret_6 <span class="op">/</span> vol_6.replace(<span class="fl">0.0</span>, np.nan))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="a9f011e7" class="cell" data-execution_count="48">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>sector_momentum_score <span class="op">=</span> momentum_score(returns, sector_assets)</span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>sector_vol <span class="op">=</span> returns[sector_assets].rolling(<span class="dv">6</span>).std(ddof<span class="op">=</span><span class="dv">1</span>) <span class="op">*</span> np.sqrt(<span class="fl">12.0</span>)</span>
 <span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>strategy_end <span class="op">=</span> <span class="bu">min</span>(allocation_features.index.<span class="bu">max</span>(), returns_raw.index.<span class="bu">max</span>())</span>
@@ -4719,6 +4953,7 @@ w_t=w_t^{risk}w_t^{sector}+(1-w_t^{risk})w_t^{defensive}
 <span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>risky_weight <span class="op">-=</span> (slope.clip(<span class="fl">0.0</span>, <span class="fl">0.75</span>) <span class="op">/</span> <span class="fl">0.75</span>) <span class="op">*</span> <span class="fl">0.10</span></span>
 <span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a>risky_weight <span class="op">=</span> risky_weight.clip(<span class="fl">0.50</span>, <span class="fl">1.00</span>).rename(<span class="st">"risky_weight"</span>)</span>
 <span id="cb40-16"><a href="#cb40-16" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame({<span class="st">"strategy_start"</span>: [strategy_start], <span class="st">"strategy_end"</span>: [strategy_end], <span class="st">"strategy_months"</span>: [<span class="bu">len</span>(strategy_dates)], <span class="st">"latest_month"</span>: [strategy_dates.<span class="bu">max</span>()], <span class="st">"strategy_fci"</span>: [strategy_fci_name], <span class="st">"minimum_risky_weight"</span>: [risky_weight.<span class="bu">min</span>()]}))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4867,6 +5102,8 @@ B_{G,t}&gt;0.75 \quad \text{and} \quad B_{I,t}\leq 0.75
 <p>Otherwise, the defensive sleeve uses cash, short Treasuries, and intermediate Treasuries. This is the neutral defensive setup.</p>
 <p>This conditional sleeve is one of the strongest ideas in the project. Defensive allocation depends on the source of macro stress. Bonds can be protection in growth shocks, but they can be a source of losses in inflation shocks.</p>
 <div id="83aae68f" class="cell" data-execution_count="49">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> available_assets_at_date(date, candidates, ret):</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [asset <span class="cf">for</span> asset <span class="kw">in</span> candidates <span class="cf">if</span> asset <span class="kw">in</span> ret.columns <span class="kw">and</span> date <span class="kw">in</span> ret.index <span class="kw">and</span> pd.notna(ret.loc[date, asset])]</span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -4905,8 +5142,11 @@ B_{G,t}&gt;0.75 \quad \text{and} \quad B_{I,t}\leq 0.75
 <span id="cb41-36"><a href="#cb41-36" aria-hidden="true" tabindex="-1"></a>                score.loc[asset] <span class="op">-=</span> <span class="fl">0.35</span> <span class="op">*</span> <span class="bu">max</span>(row[<span class="st">"policy_rate_pressure_block"</span>], <span class="fl">0.0</span>) <span class="op">*</span> <span class="bu">max</span>(row[<span class="st">"growth_recession_block"</span>], <span class="fl">0.0</span>)</span>
 <span id="cb41-37"><a href="#cb41-37" aria-hidden="true" tabindex="-1"></a>        rows.append(score.rename(date))</span>
 <span id="cb41-38"><a href="#cb41-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cross_z(pd.concat(rows, axis<span class="op">=</span><span class="dv">1</span>).transpose())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="07c8e85c" class="cell" data-execution_count="50">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>equal_rows <span class="op">=</span> []</span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>momentum_rows <span class="op">=</span> []</span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>gated_rows <span class="op">=</span> []</span>
@@ -4927,6 +5167,7 @@ B_{G,t}&gt;0.75 \quad \text{and} \quad B_{I,t}\leq 0.75
 <span id="cb42-18"><a href="#cb42-18" aria-hidden="true" tabindex="-1"></a>equal_sector_weights <span class="op">=</span> pd.concat(equal_rows, axis<span class="op">=</span><span class="dv">1</span>).transpose().fillna(<span class="fl">0.0</span>)</span>
 <span id="cb42-19"><a href="#cb42-19" aria-hidden="true" tabindex="-1"></a>momentum_weights <span class="op">=</span> pd.concat(momentum_rows, axis<span class="op">=</span><span class="dv">1</span>).transpose().fillna(<span class="fl">0.0</span>)</span>
 <span id="cb42-20"><a href="#cb42-20" aria-hidden="true" tabindex="-1"></a>gated_weights <span class="op">=</span> pd.concat(gated_rows, axis<span class="op">=</span><span class="dv">1</span>).transpose().fillna(<span class="fl">0.0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="sector-momentum-and-macro-fit" class="level2">
@@ -4971,6 +5212,8 @@ w_{i,t}\leq 0.40
 \]</span></p>
 <p>The selected sector sleeve is scaled by the risky weight <span class="math inline">\(w_t^{risk}\)</span>, and the rest goes into the defensive sleeve. This keeps the strategy from becoming a pure top-three momentum portfolio when macro stress is high.</p>
 <div id="9d55422b" class="cell" data-execution_count="51">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>macro_fit_score <span class="op">=</span> macro_fit_scores(allocation_features.reindex(strategy_dates), sector_assets)</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>macro_support_score <span class="op">=</span> cross_z(pd.DataFrame({asset: <span class="fl">0.20</span> <span class="op">*</span> allocation_features[<span class="st">"goldilocks_support"</span>].reindex(strategy_dates) <span class="op">-</span> <span class="fl">0.20</span> <span class="op">*</span> allocation_features[<span class="st">"macro_breadth_conflict_block"</span>].reindex(strategy_dates) <span class="op">+</span> (<span class="fl">0.35</span> <span class="op">*</span> allocation_features[<span class="st">"inflation_pressure_block"</span>].reindex(strategy_dates) <span class="cf">if</span> asset <span class="kw">in</span> inflation_assets <span class="cf">else</span> <span class="fl">0.0</span>) <span class="cf">for</span> asset <span class="kw">in</span> sector_assets}))</span>
 <span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>recent_risk_penalty <span class="op">=</span> cross_z(sector_vol.reindex(strategy_dates).fillna(<span class="fl">0.0</span>)) <span class="op">+</span> cross_z((<span class="op">-</span>returns[sector_assets].rolling(<span class="dv">3</span>).<span class="bu">sum</span>()).reindex(strategy_dates).clip(lower<span class="op">=</span><span class="fl">0.0</span>).fillna(<span class="fl">0.0</span>))</span>
@@ -4990,6 +5233,7 @@ w_{i,t}\leq 0.40
 <span id="cb43-17"><a href="#cb43-17" aria-hidden="true" tabindex="-1"></a>fci_momentum_weights <span class="op">=</span> pd.concat(fci_momentum_rows, axis<span class="op">=</span><span class="dv">1</span>).transpose().fillna(<span class="fl">0.0</span>)</span>
 <span id="cb43-18"><a href="#cb43-18" aria-hidden="true" tabindex="-1"></a>selected_sector_table <span class="op">=</span> pd.DataFrame(selected_sector_rows).set_index(<span class="st">"date"</span>)</span>
 <span id="cb43-19"><a href="#cb43-19" aria-hidden="true" tabindex="-1"></a>display(selected_sector_table.tail(<span class="dv">12</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5064,6 +5308,8 @@ w_{i,t}\leq 0.40
 <p>This matches the latest macro state. The selected FCI percentile is around <strong>0.38</strong>, so conditions are not tight enough to force a large defensive allocation. The dominant macro block is labor cooling, but the actual labor stress is negative, which means labor is not the main risk driver. Inflation is positive, but broad stress is not confirmed.</p>
 <p>The recent selection therefore leans toward cyclical and growth-sensitive sectors rather than cash, bonds, or gold. The strategy is responding to the combination of neutral FCI, strong or acceptable sector momentum, and the absence of broad recession stress.</p>
 <div id="d6119b74" class="cell" data-execution_count="52">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>plot_weights <span class="op">=</span> fci_momentum_weights[sector_assets <span class="op">+</span> defensive_assets].tail(<span class="dv">60</span>)</span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>plot_weights <span class="op">=</span> plot_weights.loc[:, plot_weights.mean().sort_values(ascending<span class="op">=</span><span class="va">False</span>).index]</span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">7</span>), gridspec_kw<span class="op">=</span>{<span class="st">"height_ratios"</span>: [<span class="fl">2.4</span>, <span class="fl">1.0</span>]})</span>
@@ -5084,10 +5330,11 @@ w_{i,t}\leq 0.40
 <span id="cb44-18"><a href="#cb44-18" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.25</span>)</span>
 <span id="cb44-19"><a href="#cb44-19" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb44-20"><a href="#cb44-20" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-40-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-40-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-17"><img src="12_financial_conditions_index_files/figure-html/cell-40-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5107,6 +5354,8 @@ w_{i,t}\leq 0.40
 <p>This decomposition is important. If FCI momentum beats everything, macro plus momentum is strong. If pure momentum beats FCI momentum, the macro overlay may be too defensive or too slow. If FCI-gated beats equal-weight sectors, macro risk gating adds value even without complex sector picking.</p>
 <p>The comparison also separates performance sources. CAGR tells us about compound growth. Volatility and Sortino tell us about risk. Max drawdown and worst 12-month return tell us about pain. Turnover tells us how expensive the strategy is to run. A macro strategy that improves drawdown but destroys CAGR is a hedge, not necessarily a better portfolio.</p>
 <div id="7dd6f3e8" class="cell" data-execution_count="53">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>spy_weights <span class="op">=</span> equal_sector_weights.copy() <span class="op">*</span> <span class="fl">0.0</span></span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>spy_weights[<span class="st">"spy"</span>] <span class="op">=</span> <span class="fl">1.0</span></span>
 <span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>weights_by_strategy <span class="op">=</span> {<span class="st">"equal_weight_sectors"</span>: equal_sector_weights, <span class="st">"momentum_rotation"</span>: momentum_weights, <span class="st">"fci_gated_basket"</span>: gated_weights, <span class="st">"fci_momentum_rotation"</span>: fci_momentum_weights, <span class="st">"spy_buy_hold"</span>: spy_weights}</span>
@@ -5134,6 +5383,7 @@ w_{i,t}\leq 0.40
 <span id="cb45-25"><a href="#cb45-25" aria-hidden="true" tabindex="-1"></a>full_defensive_performance_table.columns <span class="op">=</span> [<span class="bu">str</span>(col).lower().replace(<span class="st">" "</span>, <span class="st">"_"</span>) <span class="cf">for</span> col <span class="kw">in</span> full_defensive_performance_table.columns]</span>
 <span id="cb45-26"><a href="#cb45-26" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame({<span class="st">"full_defensive_start"</span>: [full_defensive_start], <span class="st">"full_defensive_months"</span>: [<span class="bu">len</span>(full_defensive_dates)]}))</span>
 <span id="cb45-27"><a href="#cb45-27" aria-hidden="true" tabindex="-1"></a>display(full_defensive_performance_table.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5513,6 +5763,8 @@ w_{i,t}\leq 0.40
 <p>The FCI momentum rotation again gives strong drawdown control, around <strong>-25.32%</strong>, but lower CAGR around <strong>8.81%</strong>. That confirms the same interpretation from the full strategy window: macro-momentum is defensive and robust in crashes, but it can become too cautious in long risk-on periods.</p>
 <p>This is why the project shouldn’t declare one universal winner. For growth with moderate risk control, FCI-gated is strongest. For maximum drawdown control, FCI momentum is strongest. For simplicity, equal-weight or SPY is easier but riskier.</p>
 <div id="5eb316c2" class="cell" data-execution_count="54">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="dv">7</span>), sharex<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> j, col <span class="kw">in</span> <span class="bu">enumerate</span>(strategy_nav_table.columns):</span>
 <span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>    strategy_nav_table[col].plot(ax<span class="op">=</span>axes[<span class="dv">0</span>], lw<span class="op">=</span><span class="fl">1.2</span>, color<span class="op">=</span>colors[j <span class="op">%</span> <span class="bu">len</span>(colors)], label<span class="op">=</span>col)</span>
@@ -5543,17 +5795,18 @@ w_{i,t}\leq 0.40
 <span id="cb46-28"><a href="#cb46-28" aria-hidden="true" tabindex="-1"></a>    ax.legend(ncol<span class="op">=</span><span class="dv">2</span>, fontsize<span class="op">=</span><span class="dv">7</span>)</span>
 <span id="cb46-29"><a href="#cb46-29" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb46-30"><a href="#cb46-30" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-42-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-42-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-18"><img src="12_financial_conditions_index_files/figure-html/cell-42-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-42-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-42-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-19"><img src="12_financial_conditions_index_files/figure-html/cell-42-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5572,6 +5825,8 @@ w_{i,t}\leq 0.40
 <p>This matters because a strategy can look good on average while failing in the specific regime it is supposed to handle. The stress-window table checks whether the strategy works for the right economic reasons.</p>
 <p>For example, the FCI momentum strategy does especially well in the financial crisis because broad macro stress was visible and persistent. It helps less in COVID because the shock was too sudden. In 2022, sector momentum and inflation beneficiaries play a major role.</p>
 <div id="a5872bb6" class="cell" data-execution_count="55">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>stress_rows <span class="op">=</span> []</span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, dates <span class="kw">in</span> crisis_windows.items():</span>
 <span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>    ret_window <span class="op">=</span> strategy_return_table.loc[dates[<span class="dv">0</span>]:dates[<span class="dv">1</span>]]</span>
@@ -5581,6 +5836,7 @@ w_{i,t}\leq 0.40
 <span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>        stress_rows.append({<span class="st">"window"</span>: name, <span class="st">"strategy"</span>: strategy, <span class="st">"return"</span>: <span class="bu">float</span>((<span class="fl">1.0</span> <span class="op">+</span> ret_window[strategy]).prod() <span class="op">-</span> <span class="fl">1.0</span>), <span class="st">"max_drawdown"</span>: <span class="bu">float</span>(drawdown_series(ret_window[strategy], input_kind<span class="op">=</span><span class="st">"returns"</span>).<span class="bu">min</span>())})</span>
 <span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a>stress_window_table <span class="op">=</span> pd.DataFrame(stress_rows).set_index([<span class="st">"window"</span>, <span class="st">"strategy"</span>])</span>
 <span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>display(stress_window_table.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5694,6 +5950,8 @@ w_{i,t}\leq 0.40
 <p>During the <strong>COVID crash</strong>, the shock was extremely fast. FCI-gated loses about <strong>-11.9%</strong>, similar to equal sectors, while momentum and FCI momentum do better, around <strong>-6.9%</strong> and <strong>-6.7%</strong>. The macro system had less time to react because COVID was a sudden event, so price momentum helped more than slow macro gating in that window.</p>
 <p>During the <strong>2022 inflation/rate shock</strong>, SPY loses about <strong>-17.7%</strong>, while momentum rotation gains about <strong>1.5%</strong>. FCI momentum loses about <strong>-3.9%</strong>, and equal sectors/gated basket lose about <strong>-6.2%</strong>. This shows that sector selection and inflation-aware rotation were more important than just reducing risk.</p>
 <div id="aba10f58" class="cell" data-execution_count="56">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>latest_date <span class="op">=</span> fci_momentum_weights.index.<span class="bu">max</span>()</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>latest_features <span class="op">=</span> allocation_features.loc[latest_date]</span>
 <span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>decision_rows <span class="op">=</span> []</span>
@@ -5719,6 +5977,7 @@ w_{i,t}\leq 0.40
 <span id="cb48-23"><a href="#cb48-23" aria-hidden="true" tabindex="-1"></a>    decision_rows.append({<span class="st">"date"</span>: latest_date, <span class="st">"selected fci model"</span>: strategy_fci_name, <span class="st">"selected fci value"</span>: latest_features[<span class="st">"best_fci_value"</span>], <span class="st">"selected fci percentile"</span>: latest_features[<span class="st">"best_fci_percentile"</span>], <span class="st">"selected fci 3m change"</span>: latest_features[<span class="st">"best_fci_3m_change"</span>], <span class="st">"dominant macro block"</span>: latest_features[<span class="st">"dominant_macro_block"</span>], <span class="st">"sector"</span>: asset, <span class="st">"momentum_score"</span>: momentum_value, <span class="st">"macro_fit_score"</span>: fit_value, <span class="st">"macro_support_score"</span>: support_value, <span class="st">"recent_risk_penalty"</span>: penalty_value, <span class="st">"final_score"</span>: final_value, <span class="st">"portfolio_weight"</span>: weight_value, <span class="st">"short reason category"</span>: reason})</span>
 <span id="cb48-24"><a href="#cb48-24" aria-hidden="true" tabindex="-1"></a>latest_decision_board <span class="op">=</span> pd.DataFrame(decision_rows).sort_values(<span class="st">"portfolio_weight"</span>, ascending<span class="op">=</span><span class="dv">0</span>)</span>
 <span id="cb48-25"><a href="#cb48-25" aria-hidden="true" tabindex="-1"></a>display(latest_decision_board.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6019,6 +6278,8 @@ w_{i,t}\leq 0.40
 <p>The decision board shows why. XLI has strong momentum and positive final score. XLK has very strong momentum but gets a negative macro-fit score and a high risk penalty, so it receives less than the cap. XLY gets the cap despite modest momentum because its macro fit is strong and recent risk penalty is favorable.</p>
 <p>XLF, XLE, XLB, XLP, XLU, and XLV receive zero weights. Some have weak momentum. Some have macro-stress exclusion. The current signal is a concentrated risk-on sector allocation rather than a defensive macro allocation.</p>
 <div id="6d78039a" class="cell" data-execution_count="57">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">17</span>, <span class="fl">4.5</span>))</span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>latest_decision_board.set_index(<span class="st">"sector"</span>)[<span class="st">"final_score"</span>].sort_values().plot(kind<span class="op">=</span><span class="st">"barh"</span>, ax<span class="op">=</span>axes[<span class="dv">0</span>])</span>
 <span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>latest_decision_board.set_index(<span class="st">"sector"</span>)[<span class="st">"portfolio_weight"</span>].sort_values().plot(kind<span class="op">=</span><span class="st">"barh"</span>, ax<span class="op">=</span>axes[<span class="dv">1</span>])</span>
@@ -6028,10 +6289,11 @@ w_{i,t}\leq 0.40
 <span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>    ax.grid(<span class="va">True</span>, axis<span class="op">=</span><span class="st">"x"</span>, alpha<span class="op">=</span><span class="fl">0.3</span>)</span>
 <span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-45-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-45-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-20"><img src="12_financial_conditions_index_files/figure-html/cell-45-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -6112,6 +6374,8 @@ w_{i,t}\leq 0.40
 </table>
 <p>This market is a great secondary test because macro conditions should affect sectors differently than in the US. Energy and materials have much larger macro importance, while financials are deeply connected to domestic credit and housing.</p>
 <div id="106c7d2c" class="cell" data-execution_count="58">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.dataio <span class="im">import</span> load_macro_factors, load_yfinance_panel</span>
 <span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio <span class="im">import</span> prices_to_returns</span>
 <span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.backtest.portfolio <span class="im">import</span> run_many_weights_backtests</span>
@@ -6266,6 +6530,7 @@ w_{i,t}\leq 0.40
 <span id="cb50-152"><a href="#cb50-152" aria-hidden="true" tabindex="-1"></a>plot_latest_scores(decision, ax<span class="op">=</span>ax[<span class="dv">11</span>], title<span class="op">=</span><span class="st">"canada latest scores"</span>)</span>
 <span id="cb50-153"><a href="#cb50-153" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb50-154"><a href="#cb50-154" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6882,7 +7147,7 @@ w_{i,t}\leq 0.40
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="12_financial_conditions_index_files/figure-html/cell-46-output-8.png" class="img-fluid figure-img"></p>
+<p><a href="12_financial_conditions_index_files/figure-html/cell-46-output-8.png" class="lightbox" data-gallery="quarto-lightbox-gallery-21"><img src="12_financial_conditions_index_files/figure-html/cell-46-output-8.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -7030,6 +7295,57 @@ w_{i,t}\leq 0.40
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -7373,6 +7689,38 @@ w_{i,t}\leq 0.40
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 

@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>3. Risk Analysis and CAPM – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/02_portfolio_optimization_MV_models.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -112,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -143,7 +144,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -292,13 +293,100 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#sign-conventions" id="toc-sign-conventions" class="nav-link active" data-scroll-target="#sign-conventions">sign conventions</a>
+  <ul class="collapse">
+  <li><a href="#imports-and-plotting-style" id="toc-imports-and-plotting-style" class="nav-link" data-scroll-target="#imports-and-plotting-style">Imports and plotting style</a></li>
+  </ul></li>
+  <li><a href="#data-and-returns" id="toc-data-and-returns" class="nav-link" data-scroll-target="#data-and-returns">1) data and returns</a>
+  <ul class="collapse">
+  <li><a href="#what-we-need-as-input" id="toc-what-we-need-as-input" class="nav-link" data-scroll-target="#what-we-need-as-input">what we need as input</a></li>
+  </ul></li>
+  <li><a href="#load-data-and-compute-returns" id="toc-load-data-and-compute-returns" class="nav-link" data-scroll-target="#load-data-and-compute-returns">Load data and compute returns</a></li>
+  <li><a href="#rebalancing-universe-selection-and-strategies" id="toc-rebalancing-universe-selection-and-strategies" class="nav-link" data-scroll-target="#rebalancing-universe-selection-and-strategies">2) rebalancing, universe selection, and strategies</a>
+  <ul class="collapse">
+  <li><a href="#rebalancing-logic-no-look-ahead" id="toc-rebalancing-logic-no-look-ahead" class="nav-link" data-scroll-target="#rebalancing-logic-no-look-ahead">rebalancing logic (no look-ahead)</a></li>
+  <li><a href="#strategies-used-here-high-level" id="toc-strategies-used-here-high-level" class="nav-link" data-scroll-target="#strategies-used-here-high-level">strategies used here (high level)</a></li>
+  </ul></li>
+  <li><a href="#core-risk-metrics" id="toc-core-risk-metrics" class="nav-link" data-scroll-target="#core-risk-metrics">3) core risk metrics</a>
+  <ul class="collapse">
+  <li><a href="#nav-cumulative-wealth" id="toc-nav-cumulative-wealth" class="nav-link" data-scroll-target="#nav-cumulative-wealth">3.1 nav (cumulative wealth)</a></li>
+  <li><a href="#annualized-return" id="toc-annualized-return" class="nav-link" data-scroll-target="#annualized-return">3.2 annualized return</a></li>
+  <li><a href="#annualized-volatility" id="toc-annualized-volatility" class="nav-link" data-scroll-target="#annualized-volatility">3.3 annualized volatility</a></li>
+  <li><a href="#sharpe-ratio" id="toc-sharpe-ratio" class="nav-link" data-scroll-target="#sharpe-ratio">3.4 sharpe ratio</a></li>
+  <li><a href="#sortino-ratio-downside-focused" id="toc-sortino-ratio-downside-focused" class="nav-link" data-scroll-target="#sortino-ratio-downside-focused">3.5 sortino ratio (downside-focused)</a></li>
+  </ul></li>
+  <li><a href="#rolling-volatility" id="toc-rolling-volatility" class="nav-link" data-scroll-target="#rolling-volatility">4) rolling volatility</a>
+  <ul class="collapse">
+  <li><a href="#rolling-statistics" id="toc-rolling-statistics" class="nav-link" data-scroll-target="#rolling-statistics">rolling statistics</a></li>
+  </ul></li>
+  <li><a href="#distribution-shape-and-tail-diagnostics" id="toc-distribution-shape-and-tail-diagnostics" class="nav-link" data-scroll-target="#distribution-shape-and-tail-diagnostics">5) distribution shape and tail diagnostics</a>
+  <ul class="collapse">
+  <li><a href="#skewness" id="toc-skewness" class="nav-link" data-scroll-target="#skewness">5.1 skewness</a></li>
+  <li><a href="#excess-kurtosis" id="toc-excess-kurtosis" class="nav-link" data-scroll-target="#excess-kurtosis">5.2 excess kurtosis</a></li>
+  <li><a href="#tail-ratio-quantile-based" id="toc-tail-ratio-quantile-based" class="nav-link" data-scroll-target="#tail-ratio-quantile-based">5.3 tail ratio (quantile-based)</a></li>
+  <li><a href="#worst-day-averages" id="toc-worst-day-averages" class="nav-link" data-scroll-target="#worst-day-averages">5.4 worst-day averages</a></li>
+  </ul></li>
+  <li><a href="#cumulative-performance-and-drawdown" id="toc-cumulative-performance-and-drawdown" class="nav-link" data-scroll-target="#cumulative-performance-and-drawdown">6) cumulative performance and drawdown</a>
+  <ul class="collapse">
+  <li><a href="#drawdown" id="toc-drawdown" class="nav-link" data-scroll-target="#drawdown">6.1 drawdown</a></li>
+  <li><a href="#drawdown-episode" id="toc-drawdown-episode" class="nav-link" data-scroll-target="#drawdown-episode">6.2 drawdown episode</a></li>
+  </ul></li>
+  <li><a href="#value-at-risk-var-and-expected-shortfall-es-or-cvar" id="toc-value-at-risk-var-and-expected-shortfall-es-or-cvar" class="nav-link" data-scroll-target="#value-at-risk-var-and-expected-shortfall-es-or-cvar">7) Value-at-risk (VaR) and expected shortfall (ES or CVaR)</a>
+  <ul class="collapse">
+  <li><a href="#left-tail-quantile" id="toc-left-tail-quantile" class="nav-link" data-scroll-target="#left-tail-quantile">7.1 left-tail quantile</a></li>
+  <li><a href="#value-at-risk-var" id="toc-value-at-risk-var" class="nav-link" data-scroll-target="#value-at-risk-var">7.2 value-at-risk (VaR)</a></li>
+  <li><a href="#expected-shortfall-es-conditional-var" id="toc-expected-shortfall-es-conditional-var" class="nav-link" data-scroll-target="#expected-shortfall-es-conditional-var">7.3 expected shortfall (ES) / conditional VaR</a></li>
+  </ul></li>
+  <li><a href="#estimation-methods-used-in-this-report" id="toc-estimation-methods-used-in-this-report" class="nav-link" data-scroll-target="#estimation-methods-used-in-this-report">7.4 estimation methods used in this report</a>
+  <ul class="collapse">
+  <li><a href="#cornishfisher-cf-non-normal-quantile-correction-using-skewness-and-kurtosis" id="toc-cornishfisher-cf-non-normal-quantile-correction-using-skewness-and-kurtosis" class="nav-link" data-scroll-target="#cornishfisher-cf-non-normal-quantile-correction-using-skewness-and-kurtosis">7.4.1 cornish–fisher (CF): non-normal quantile correction using skewness and kurtosis</a></li>
+  <li><a href="#a-standardize-returns" id="toc-a-standardize-returns" class="nav-link" data-scroll-target="#a-standardize-returns">(a) standardize returns</a></li>
+  <li><a href="#b-adjust-the-normal-quantile" id="toc-b-adjust-the-normal-quantile" class="nav-link" data-scroll-target="#b-adjust-the-normal-quantile">(b) adjust the normal quantile</a></li>
+  <li><a href="#c-cornish-fisher-es" id="toc-c-cornish-fisher-es" class="nav-link" data-scroll-target="#c-cornish-fisher-es">(c) Cornish Fisher ES</a></li>
+  <li><a href="#historical-simulation-hs" id="toc-historical-simulation-hs" class="nav-link" data-scroll-target="#historical-simulation-hs">7.4.2 historical simulation (HS)</a></li>
+  <li><a href="#filtered-historical-simulation-fhs-volatility-adjusted-tail-estimation" id="toc-filtered-historical-simulation-fhs-volatility-adjusted-tail-estimation" class="nav-link" data-scroll-target="#filtered-historical-simulation-fhs-volatility-adjusted-tail-estimation">7.4.3 filtered historical simulation (FHS): volatility-adjusted tail estimation</a></li>
+  <li><a href="#ewma-volatility-filter" id="toc-ewma-volatility-filter" class="nav-link" data-scroll-target="#ewma-volatility-filter">EWMA volatility filter</a></li>
+  <li><a href="#fhs-expected-shortfall" id="toc-fhs-expected-shortfall" class="nav-link" data-scroll-target="#fhs-expected-shortfall">FHS expected shortfall</a></li>
+  </ul></li>
+  <li><a href="#var-backtesting-model-risk" id="toc-var-backtesting-model-risk" class="nav-link" data-scroll-target="#var-backtesting-model-risk">8) VaR backtesting (Model risk)</a>
+  <ul class="collapse">
+  <li><a href="#breach-indicator-what-counts-as-a-var-failure" id="toc-breach-indicator-what-counts-as-a-var-failure" class="nav-link" data-scroll-target="#breach-indicator-what-counts-as-a-var-failure">8.1 breach indicator (what counts as a VaR failure)</a></li>
+  <li><a href="#kupiec-test-unconditional-coverage-frequency" id="toc-kupiec-test-unconditional-coverage-frequency" class="nav-link" data-scroll-target="#kupiec-test-unconditional-coverage-frequency">8.2 Kupiec test: unconditional coverage (frequency)</a></li>
+  <li><a href="#christoffersen-test-independence-clustering" id="toc-christoffersen-test-independence-clustering" class="nav-link" data-scroll-target="#christoffersen-test-independence-clustering">8.3 Christoffersen test: independence / clustering</a></li>
+  </ul></li>
+  <li><a href="#historical-stress-windows-scenario-slices" id="toc-historical-stress-windows-scenario-slices" class="nav-link" data-scroll-target="#historical-stress-windows-scenario-slices">9) historical stress windows (scenario slices)</a></li>
+  <li><a href="#capm-market-factor-decomposition" id="toc-capm-market-factor-decomposition" class="nav-link" data-scroll-target="#capm-market-factor-decomposition">10) CAPM / market factor decomposition</a>
+  <ul class="collapse">
+  <li><a href="#capm-model-daily" id="toc-capm-model-daily" class="nav-link" data-scroll-target="#capm-model-daily">10.1 capm model (daily)</a></li>
+  <li><a href="#estimation-ols-via-sklearn" id="toc-estimation-ols-via-sklearn" class="nav-link" data-scroll-target="#estimation-ols-via-sklearn">estimation (ols via sklearn)</a></li>
+  <li><a href="#active-risk-vs-benchmark-tracking-error-and-information-ratio" id="toc-active-risk-vs-benchmark-tracking-error-and-information-ratio" class="nav-link" data-scroll-target="#active-risk-vs-benchmark-tracking-error-and-information-ratio">10.2 Active risk vs benchmark (tracking error and information ratio)</a></li>
+  <li><a href="#up-capture-and-down-capture" id="toc-up-capture-and-down-capture" class="nav-link" data-scroll-target="#up-capture-and-down-capture">10.3 Up capture and down capture</a></li>
+  <li><a href="#systematic-variance-share" id="toc-systematic-variance-share" class="nav-link" data-scroll-target="#systematic-variance-share">10.4 Systematic variance share</a></li>
+  <li><a href="#the-regression-scatter-plot" id="toc-the-regression-scatter-plot" class="nav-link" data-scroll-target="#the-regression-scatter-plot">the regression scatter plot</a></li>
+  </ul></li>
+  <li><a href="#risk-attribution" id="toc-risk-attribution" class="nav-link" data-scroll-target="#risk-attribution">11) risk attribution</a>
+  <ul class="collapse">
+  <li><a href="#volatility-attribution-covariance-based" id="toc-volatility-attribution-covariance-based" class="nav-link" data-scroll-target="#volatility-attribution-covariance-based">11.1 volatility attribution (covariance-based)</a></li>
+  <li><a href="#es-attribution" id="toc-es-attribution" class="nav-link" data-scroll-target="#es-attribution">11.2 es attribution</a></li>
+  </ul></li>
+  <li><a href="#correlation-and-diversification-object-to-object" id="toc-correlation-and-diversification-object-to-object" class="nav-link" data-scroll-target="#correlation-and-diversification-object-to-object">12) correlation and diversification (object-to-object)</a></li>
+  <li><a href="#implementation-with-quantfinlab" id="toc-implementation-with-quantfinlab" class="nav-link" data-scroll-target="#implementation-with-quantfinlab">Implementation with Quantfinlab</a></li>
+  <li><a href="#using-manual-functions-for-known-us-best-portfolios-functions-for-risk-measures-and-plots" id="toc-using-manual-functions-for-known-us-best-portfolios-functions-for-risk-measures-and-plots" class="nav-link" data-scroll-target="#using-manual-functions-for-known-us-best-portfolios-functions-for-risk-measures-and-plots">1) Using manual functions for known US best portfolios (functions for risk measures and plots)</a></li>
+  <li><a href="#using-the-risk-report-function-for-known-hkex-best-portfolios" id="toc-using-the-risk-report-function-for-known-hkex-best-portfolios" class="nav-link" data-scroll-target="#using-the-risk-report-function-for-known-hkex-best-portfolios">2) Using the risk report function for known HKEX best portfolios</a></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">3. Risk Analysis and CAPM</span></h1>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">3. Risk Analysis and CAPM</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -339,6 +427,8 @@ window.Quarto = {
 <section id="imports-and-plotting-style" class="level3">
 <h3 class="anchored" data-anchor-id="imports-and-plotting-style">Imports and plotting style</h3>
 <div id="77581913" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path <span class="im">as</span> path</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datetime <span class="im">import</span> datetime</span>
@@ -382,6 +472,7 @@ window.Quarto = {
 <span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>ann <span class="op">=</span> <span class="dv">252</span></span>
 <span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>rf_annual <span class="op">=</span> <span class="fl">0.04</span></span>
 <span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>rf_daily <span class="op">=</span> (<span class="dv">1</span> <span class="op">+</span> rf_annual) <span class="op">**</span> (<span class="dv">1</span> <span class="op">/</span> ann) <span class="op">-</span> <span class="dv">1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -405,6 +496,8 @@ r_t = \frac{p_t}{p_{t-1}} - 1
 <h2 class="anchored" data-anchor-id="load-data-and-compute-returns">Load data and compute returns</h2>
 <p>the data used in this project can be downloaded from here (<a href="https://stooq.com/db/h/">Stooq US (nasdaq) daily market data</a>)</p>
 <div id="00833a40" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_parquet(<span class="st">"../data/nasdaq_close_volume.parquet"</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(df[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>dcol <span class="op">=</span> <span class="st">"date"</span></span>
@@ -455,6 +548,7 @@ r_t = \frac{p_t}{p_{t-1}} - 1
 <span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>spy_px <span class="op">=</span> spy_px.loc[spy_px.index <span class="op">&gt;=</span> start]</span>
 <span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>market_ret <span class="op">=</span> spy_px.pct_change().replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="rebalancing-universe-selection-and-strategies" class="level2">
@@ -482,6 +576,8 @@ r_t = \frac{p_t}{p_{t-1}} - 1
 <p>In this notebook we don’t repeat the full grid from the last notebook. for the first implementation we build exactly two portfolio objects from the portfolio library: <strong>MinVar EWMA</strong> and <strong>MS-FG EWMA Mom</strong>. we also use two of the stocks in our dataset for showing different results in different types of objects. We use <strong>NVIDIA</strong> and <strong>Apple</strong>. and for CAPM analysis we use <strong>SPY</strong> as our benchmark. At the end of this notebook we analyze the known Project 2 finalist portfolios on both US and HK data.</p>
 <p>if you later add more objects, the report works as long as: - each object is a daily return series aligned to the same date index - object names are consistent (for labeling)</p>
 <div id="c5eaa2d1" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio <span class="im">import</span> covariance, expected_returns, optimizers, walkforward</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>rebal_dates <span class="op">=</span> pf.make_rebalance_dates(returns.index, freq<span class="op">=</span><span class="st">"ME"</span>, min_history_days<span class="op">=</span><span class="dv">252</span>)</span>
@@ -533,6 +629,7 @@ r_t = \frac{p_t}{p_{t-1}} - 1
 <span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"analysis objects:"</span>, <span class="bu">list</span>(obj.keys()))</span>
 <span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"date range:"</span>, base_idx.<span class="bu">min</span>().date(), <span class="st">"to"</span>, base_idx.<span class="bu">max</span>().date(), <span class="st">", n:"</span>, <span class="bu">len</span>(base_idx))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>analysis objects: ['NVDA', 'AAPL', 'MinVar EWMA', 'MS-FG EWMA Mom']
 date range: 2017-01-31 to 2026-01-28 , n: 2261</code></pre>
@@ -595,6 +692,8 @@ d_t = \min(0, r_t - \tau)
 \text{sortino} = \frac{\bar r - \tau}{\sigma_d}\sqrt{252}
 \]</span></p>
 <div id="9f15048e" class="cell" data-execution_count="4">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> nav_series(r):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> pd.Series(r).fillna(<span class="fl">0.0</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (<span class="dv">1</span> <span class="op">+</span> r).cumprod()</span>
@@ -630,9 +729,13 @@ d_t = \min(0, r_t - \tau)
 <span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>    })</span>
 <span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>perf_tbl <span class="op">=</span> pd.DataFrame(perf_rows).set_index(<span class="st">"object"</span>).sort_index()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="131af53a" class="cell" data-execution_count="5">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>display(perf_tbl.<span class="bu">round</span>(<span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -708,6 +811,8 @@ d_t = \min(0, r_t - \tau)
 \]</span></p>
 <p>we plot multiple windows (e.g., 20/60/252 days) because: - short windows react quickly and are more noisy (good for risk control) - long windows are smoother (good for long-horizon intuition)</p>
 <div id="d62166b9" class="cell" data-execution_count="6">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>windows <span class="op">=</span> [<span class="dv">20</span>, <span class="dv">60</span>, <span class="dv">252</span>]</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="dv">7</span>), sharex<span class="op">=</span><span class="va">True</span>, sharey<span class="op">=</span><span class="va">True</span>)</span>
@@ -726,10 +831,11 @@ d_t = \min(0, r_t - \tau)
 <span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-7-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -779,6 +885,8 @@ d_t = \min(0, r_t - \tau)
 <p>these are easy for users to understand what does a bad week look like without introducing a full scenario model.</p>
 <p>in below we get to more advanced models for these types of risk with VaR.</p>
 <div id="420f0fb6" class="cell" data-execution_count="7">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>shape_rows <span class="op">=</span> []</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, r <span class="kw">in</span> obj.items():</span>
@@ -804,6 +912,7 @@ d_t = \min(0, r_t - \tau)
 <span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>shape_tbl <span class="op">=</span> pd.DataFrame(shape_rows).set_index(<span class="st">"object"</span>).sort_index()</span>
 <span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>display(shape_tbl.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -892,6 +1001,8 @@ d_t = \min(0, r_t - \tau)
 <p>so drawdown is <span class="math inline">\(0\)</span> at peaks and negative otherwise.</p>
 <p>drawdown analysis answers: - how deep are losses during stress? - how long does it take to recover? - are drawdowns frequent but shallow, or rare but huge?</p>
 <div id="2a0b1168" class="cell" data-execution_count="8">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dd_series(r):</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    nav <span class="op">=</span> nav_series(r)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> nav <span class="op">/</span> nav.cummax() <span class="op">-</span> <span class="fl">1.0</span></span>
@@ -918,10 +1029,11 @@ d_t = \min(0, r_t - \tau)
 <span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-9-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-9-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-9-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -933,6 +1045,8 @@ d_t = \min(0, r_t - \tau)
 <p>an episode starts when drawdown becomes negative and ends when nav reaches the last peak (drawdown returns to <span class="math inline">\(0\)</span>).</p>
 <p>for each episode <span class="math inline">\(k\)</span> we record: - start date <span class="math inline">\(t_k^{start}\)</span> - end date <span class="math inline">\(t_k^{end}\)</span> - depth: <span class="math inline">\(\min_{t \in [t_k^{start}, t_k^{end}]} \text{dd}_t\)</span> - duration: number of trading days in the episode</p>
 <div id="bd5188e0" class="cell" data-execution_count="9">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> drawdown_episodes(r):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    dd <span class="op">=</span> dd_series(r)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    in_dd <span class="op">=</span> <span class="va">False</span></span>
@@ -987,6 +1101,7 @@ d_t = \min(0, r_t - \tau)
 <span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a>dd_summary_tbl <span class="op">=</span> pd.DataFrame(dd_rows).set_index(<span class="st">"object"</span>).sort_index()</span>
 <span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a>display(dd_summary_tbl.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1038,6 +1153,8 @@ d_t = \min(0, r_t - \tau)
 </div>
 </div>
 <div id="132327d8" class="cell" data-execution_count="10">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>episodes_rows <span class="op">=</span> []</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, r <span class="kw">in</span> obj.items():</span>
@@ -1048,6 +1165,7 @@ d_t = \min(0, r_t - \tau)
 <span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>episodes_tbl <span class="op">=</span> pd.concat(episodes_rows, axis<span class="op">=</span><span class="dv">0</span>).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>display(episodes_tbl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1293,6 +1411,8 @@ E[\varepsilon \mid \varepsilon \le q_\alpha(\varepsilon)]
 \]</span></p>
 <p>This model adapts to volatility regimes and has better behavior when today’s volatility differs from the historical average of volatility, but it depends what model we use and can be different</p>
 <div id="106e6335" class="cell" data-execution_count="11">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hist_var_es(r, alpha<span class="op">=</span><span class="fl">0.05</span>):</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> pd.Series(r).dropna()</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> x.quantile(alpha)</span>
@@ -1355,6 +1475,7 @@ E[\varepsilon \mid \varepsilon \le q_\alpha(\varepsilon)]
 <span id="cb12-60"><a href="#cb12-60" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-61"><a href="#cb12-61" aria-hidden="true" tabindex="-1"></a>var_tbl <span class="op">=</span> pd.DataFrame(var_rows).set_index(<span class="st">"object"</span>).sort_index()</span>
 <span id="cb12-62"><a href="#cb12-62" aria-hidden="true" tabindex="-1"></a>display(var_tbl.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1424,6 +1545,8 @@ E[\varepsilon \mid \varepsilon \le q_\alpha(\varepsilon)]
 </div>
 </div>
 <div id="121c670f" class="cell" data-execution_count="12">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">6</span>), sharex<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>axes <span class="op">=</span> axes.ravel()</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1440,10 +1563,11 @@ E[\varepsilon \mid \varepsilon \le q_\alpha(\varepsilon)]
 <span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-13-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-13-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-13-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1552,6 +1676,8 @@ L_1 =
 <p>A well-specified VaR model typically has: - coverage p-value not too small (frequency is plausible) - independence p-value not too small (no strong clustering)</p>
 <p>Small p-values suggest misspecification: wrong level of risk, volatility dynamics not captured, or regime changes.</p>
 <div id="b0e4f64e" class="cell" data-execution_count="13">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>alpha <span class="op">=</span> <span class="fl">0.05</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>lookback <span class="op">=</span> <span class="dv">252</span></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>bt_methods <span class="op">=</span> [<span class="st">"hist"</span>, <span class="st">"cf"</span>, <span class="st">"fhs"</span>]</span>
@@ -1768,6 +1894,7 @@ L_1 =
 <span id="cb14-214"><a href="#cb14-214" aria-hidden="true" tabindex="-1"></a>    <span class="st">"kupiec_p"</span>: <span class="st">"kupiec_p"</span>,</span>
 <span id="cb14-215"><a href="#cb14-215" aria-hidden="true" tabindex="-1"></a>    <span class="st">"christoffersen_p"</span>: <span class="st">"christoffersen_p"</span>,</span>
 <span id="cb14-216"><a href="#cb14-216" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1999,6 +2126,8 @@ L_1 =
 </div>
 </div>
 <div id="e9109d03" class="cell" data-execution_count="14">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">10</span>, <span class="dv">6</span>), sharex<span class="op">=</span><span class="va">True</span>, sharey<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>axes <span class="op">=</span> axes.ravel()</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2018,10 +2147,11 @@ L_1 =
 <span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-15-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-15-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-15-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2038,6 +2168,8 @@ L_1 =
 <p>instead of hypothetical shocks, we can look at real historical periods like covid crash and see how did each object behave during that exact window, what was the max drawdown inside the window and how much loss we would take in that period if we held these objects.</p>
 <p>for this project we use three periods: - the 4th quarter of 2018 - the Covid crash in the first months of 2020 - inflation of 2022</p>
 <div id="abe4625f" class="cell" data-execution_count="15">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>stress_windows <span class="op">=</span> {</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2018_q4"</span>: (<span class="st">"2018-10-01"</span>, <span class="st">"2018-12-31"</span>),</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2020_covid"</span>: (<span class="st">"2020-02-20"</span>, <span class="st">"2020-04-30"</span>),</span>
@@ -2065,9 +2197,13 @@ L_1 =
 <span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>        })</span>
 <span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>stress_tbl <span class="op">=</span> pd.DataFrame(stress_rows).sort_values([<span class="st">"window"</span>, <span class="st">"object"</span>]).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="3582f6f2" class="cell" data-execution_count="16">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>display(stress_tbl.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2200,6 +2336,8 @@ L_1 =
 </div>
 </div>
 <div id="b472cd22" class="cell" data-execution_count="17">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.dates <span class="im">as</span> mdates</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="bu">len</span>(stress_windows), figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="fl">3.5</span>), sharey<span class="op">=</span><span class="va">True</span>)</span>
@@ -2232,10 +2370,11 @@ L_1 =
 <span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend(ncol<span class="op">=</span><span class="dv">1</span>, fontsize<span class="op">=</span><span class="dv">8</span>)</span>
 <span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-18-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-18-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-18-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2324,6 +2463,8 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <li>the intercept is <span class="math inline">\(\alpha\)</span></li>
 </ul>
 <div id="8ada809c" class="cell" data-execution_count="18">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>capm_rows <span class="op">=</span> []</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>roll_store <span class="op">=</span> {}</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2411,9 +2552,13 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <span id="cb19-85"><a href="#cb19-85" aria-hidden="true" tabindex="-1"></a>    roll_store[name] <span class="op">=</span> {<span class="st">"beta_126"</span>: b126, <span class="st">"corr_126"</span>: c126, <span class="st">"beta_252"</span>: b252, <span class="st">"corr_252"</span>: c252}</span>
 <span id="cb19-86"><a href="#cb19-86" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-87"><a href="#cb19-87" aria-hidden="true" tabindex="-1"></a>capm_tbl <span class="op">=</span> pd.DataFrame(capm_rows).set_index(<span class="st">"object"</span>).sort_index()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="a63d7010" class="cell" data-execution_count="19">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>display(capm_tbl.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2501,6 +2646,8 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 </div>
 </div>
 <div id="3d63dc7f" class="cell" data-execution_count="20">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="dv">7</span>), sharex<span class="op">=</span><span class="va">True</span>, sharey<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>axes <span class="op">=</span> axes.ravel()</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2539,15 +2686,18 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <span id="cb21-36"><a href="#cb21-36" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-37"><a href="#cb21-37" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb21-38"><a href="#cb21-38" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-21-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-21-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-21-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="2fe7a8a5" class="cell" data-execution_count="21">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">11</span>, <span class="dv">6</span>), sharex<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name <span class="kw">in</span> obj.keys():</span>
@@ -2568,10 +2718,11 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-22-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-22-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-22-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2615,6 +2766,8 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 \]</span></p>
 <p>so the largest contributors are the positions that lose the most on the worst portfolio days.</p>
 <div id="8fe66ede" class="cell" data-execution_count="22">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>port_info <span class="op">=</span> {</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MinVar EWMA"</span>: (res_minvar, <span class="st">"EWMA"</span>),</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MS-FG EWMA Mom"</span>: (res_frontier, <span class="st">"EWMA"</span>),</span>
@@ -2651,9 +2804,13 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a>    overlap_rows.append({<span class="st">"portfolio"</span>: pname, <span class="st">"top10_overlap_count"</span>: ov})</span>
 <span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a>overlap_tbl <span class="op">=</span> pd.DataFrame(overlap_rows).set_index(<span class="st">"portfolio"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="7b1b5583" class="cell" data-execution_count="23">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>display(overlap_tbl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2686,6 +2843,8 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 </div>
 <p>for both strategies, 9 of top 10 contributions seem to be the same in Volatility and ES contributions. but the order might be different.</p>
 <div id="39a415b6" class="cell" data-execution_count="24">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="fl">3.5</span>))</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, pname <span class="kw">in</span> <span class="bu">zip</span>(axes, port_info.keys()):</span>
@@ -2696,15 +2855,18 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-25-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-25-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-25-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="9336e7f2" class="cell" data-execution_count="25">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="fl">3.5</span>))</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, pname <span class="kw">in</span> <span class="bu">zip</span>(axes, port_info.keys()):</span>
@@ -2715,10 +2877,11 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-26-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-26-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-26-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2738,6 +2901,8 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <li><span class="math inline">\(\rho &lt; 0\)</span>: objects move in opposite direction, and we can hedge the other in some regimes (so rare in stock market)</li>
 </ul>
 <div id="428ab690" class="cell" data-execution_count="26">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting.curves <span class="im">import</span> choose_heatmap_cmap</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>corr <span class="op">=</span> pd.DataFrame({k: pd.Series(v) <span class="cf">for</span> k, v <span class="kw">in</span> obj.items()}).dropna().corr()</span>
@@ -2758,10 +2923,11 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, ax<span class="op">=</span>ax, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
 <span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-27-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-27-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-27-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2779,6 +2945,8 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <section id="using-manual-functions-for-known-us-best-portfolios-functions-for-risk-measures-and-plots" class="level2">
 <h2 class="anchored" data-anchor-id="using-manual-functions-for-known-us-best-portfolios-functions-for-risk-measures-and-plots">1) Using manual functions for known US best portfolios (functions for risk measures and plots)</h2>
 <div id="1831ee3e" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -2928,6 +3096,7 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <span id="cb28-147"><a href="#cb28-147" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb28-148"><a href="#cb28-148" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb28-149"><a href="#cb28-149" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"US finalists in risk analysis:"</span>, us_finalists)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4263,7 +4432,7 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-28-output-11.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-28-output-11.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-28-output-11.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4283,6 +4452,8 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <p>The data used in this part can be downloaded from here (<a href="https://stooq.com/db/h/">Stooq HKEX daily market data</a>).</p>
 <p>For the CAPM benchmark we build the EW portfolio as a benchmark when needed, but the reported risk objects are exactly the listed HKEX finalists.</p>
 <div id="01393ddd" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -4448,6 +4619,7 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <span id="cb30-163"><a href="#cb30-163" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-164"><a href="#cb30-164" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"HKEX finalists in report:"</span>, HK_FINALISTS)</span>
 <span id="cb30-165"><a href="#cb30-165" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"HKEX report tables:"</span>, <span class="bu">sorted</span>(report_hk.tables.keys()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5559,63 +5731,63 @@ IR = \sqrt{ann}\;\frac{E[a_t]}{\sigma(a_t)}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-9.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-9.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-9.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-10.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-10.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-10.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-11.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-11.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-11.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-12.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-12.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-12.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-13.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-13.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-13.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-14.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-14.png" class="lightbox" data-gallery="quarto-lightbox-gallery-17"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-14.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-15.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-15.png" class="lightbox" data-gallery="quarto-lightbox-gallery-18"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-15.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-16.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-16.png" class="lightbox" data-gallery="quarto-lightbox-gallery-19"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-16.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-17.png" class="img-fluid figure-img"></p>
+<p><a href="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-17.png" class="lightbox" data-gallery="quarto-lightbox-gallery-20"><img src="03_risk_report_engine_and_CAPM_files/figure-html/cell-29-output-17.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5712,6 +5884,57 @@ HKEX report tables: ['attribution_es', 'attribution_overlap', 'attribution_vol',
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -6055,6 +6278,38 @@ HKEX report tables: ['attribution_es', 'attribution_overlap', 'attribution_vol',
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 

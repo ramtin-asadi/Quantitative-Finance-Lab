@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>10. Portfolio Optimization: Tail Risk, Risk Parity and Robust Models – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/09_term_structure_models.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -112,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -143,7 +144,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -292,13 +293,50 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-portfolio-problem-after-mean-variance" id="toc-the-portfolio-problem-after-mean-variance" class="nav-link active" data-scroll-target="#the-portfolio-problem-after-mean-variance">1) The Portfolio Problem After Mean-Variance</a></li>
+  <li><a href="#universe-rebalancing-and-constraints" id="toc-universe-rebalancing-and-constraints" class="nav-link" data-scroll-target="#universe-rebalancing-and-constraints">2) Universe, Rebalancing, and Constraints</a></li>
+  <li><a href="#learned-confidence-black-litterman-as-a-strong-reference" id="toc-learned-confidence-black-litterman-as-a-strong-reference" class="nav-link" data-scroll-target="#learned-confidence-black-litterman-as-a-strong-reference">3) Learned-Confidence Black-Litterman as a Strong Reference</a></li>
+  <li><a href="#shared-optimization-infrastructure" id="toc-shared-optimization-infrastructure" class="nav-link" data-scroll-target="#shared-optimization-infrastructure">4) Shared Optimization Infrastructure</a></li>
+  <li><a href="#cvar-as-a-tail-risk-objective" id="toc-cvar-as-a-tail-risk-objective" class="nav-link" data-scroll-target="#cvar-as-a-tail-risk-objective">5) CVaR as a Tail-Risk Objective</a>
+  <ul class="collapse">
+  <li><a href="#rockafellar-uryasev-cvar-linear-program" id="toc-rockafellar-uryasev-cvar-linear-program" class="nav-link" data-scroll-target="#rockafellar-uryasev-cvar-linear-program">5.1 Rockafellar-Uryasev CVaR Linear Program</a></li>
+  </ul></li>
+  <li><a href="#mean-cvar-return-maximization-under-a-tail-budget" id="toc-mean-cvar-return-maximization-under-a-tail-budget" class="nav-link" data-scroll-target="#mean-cvar-return-maximization-under-a-tail-budget">6) Mean-CVaR: Return Maximization Under a Tail Budget</a></li>
+  <li><a href="#risk-parity-and-risk-contributions" id="toc-risk-parity-and-risk-contributions" class="nav-link" data-scroll-target="#risk-parity-and-risk-contributions">7) Risk Parity and Risk Contributions</a>
+  <ul class="collapse">
+  <li><a href="#why-risk-parity-often-holds-more-bonds" id="toc-why-risk-parity-often-holds-more-bonds" class="nav-link" data-scroll-target="#why-risk-parity-often-holds-more-bonds">7.1 Why Risk Parity Often Holds More Bonds</a></li>
+  </ul></li>
+  <li><a href="#hierarchical-risk-parity" id="toc-hierarchical-risk-parity" class="nav-link" data-scroll-target="#hierarchical-risk-parity">8) Hierarchical Risk Parity</a></li>
+  <li><a href="#nested-clustered-optimization" id="toc-nested-clustered-optimization" class="nav-link" data-scroll-target="#nested-clustered-optimization">9) Nested Clustered Optimization</a></li>
+  <li><a href="#robust-optimization-estimation-error-as-a-portfolio-risk" id="toc-robust-optimization-estimation-error-as-a-portfolio-risk" class="nav-link" data-scroll-target="#robust-optimization-estimation-error-as-a-portfolio-risk">10) Robust Optimization: Estimation Error as a Portfolio Risk</a>
+  <ul class="collapse">
+  <li><a href="#box-uncertainty" id="toc-box-uncertainty" class="nav-link" data-scroll-target="#box-uncertainty">10.1 Box Uncertainty</a></li>
+  <li><a href="#ellipsoidal-uncertainty" id="toc-ellipsoidal-uncertainty" class="nav-link" data-scroll-target="#ellipsoidal-uncertainty">10.2 Ellipsoidal Uncertainty</a></li>
+  </ul></li>
+  <li><a href="#wasserstein-distributionally-robust-mean-variance" id="toc-wasserstein-distributionally-robust-mean-variance" class="nav-link" data-scroll-target="#wasserstein-distributionally-robust-mean-variance">11) Wasserstein Distributionally Robust Mean-Variance</a>
+  <ul class="collapse">
+  <li><a href="#wasserstein-target-return-diagnostic" id="toc-wasserstein-target-return-diagnostic" class="nav-link" data-scroll-target="#wasserstein-target-return-diagnostic">11.1 Wasserstein Target-Return Diagnostic</a></li>
+  </ul></li>
+  <li><a href="#full-model-table-and-feasibility-checks" id="toc-full-model-table-and-feasibility-checks" class="nav-link" data-scroll-target="#full-model-table-and-feasibility-checks">12) Full Model Table and Feasibility Checks</a></li>
+  <li><a href="#finalist-scoreboard" id="toc-finalist-scoreboard" class="nav-link" data-scroll-target="#finalist-scoreboard">13) Finalist Scoreboard</a></li>
+  <li><a href="#average-weights-and-sleeve-exposures" id="toc-average-weights-and-sleeve-exposures" class="nav-link" data-scroll-target="#average-weights-and-sleeve-exposures">14) Average Weights and Sleeve Exposures</a></li>
+  <li><a href="#risk-report-var-es-stress-and-beta" id="toc-risk-report-var-es-stress-and-beta" class="nav-link" data-scroll-target="#risk-report-var-es-stress-and-beta">15) Risk Report: VaR, ES, Stress, and Beta</a></li>
+  <li><a href="#balanced-ranking" id="toc-balanced-ranking" class="nav-link" data-scroll-target="#balanced-ranking">16) Balanced Ranking</a></li>
+  <li><a href="#sector-etf-repeat-with-the-library" id="toc-sector-etf-repeat-with-the-library" class="nav-link" data-scroll-target="#sector-etf-repeat-with-the-library">17) Sector ETF Repeat with the Library</a></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">10. Portfolio Optimization: Tail Risk, Risk Parity and Robust Models</span></h1>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">10. Portfolio Optimization: Tail Risk, Risk Parity and Robust Models</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -397,6 +435,8 @@ R_t \in \mathbb{R}^{T \times N}
 <li>Wasserstein DRO treats the empirical sample as only one possible distribution inside a neighborhood of plausible distributions.</li>
 </ul>
 <div id="f7ff877c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:44:49.801405Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:44:49.801405Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:44:54.755117Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:44:54.755117Z&quot;}}" data-execution_count="1">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings, math</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -430,12 +470,16 @@ R_t \in \mathbb{R}^{T \times N}
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> (repo_root <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"core_cross_asset_etfs.csv"</span>).exists() <span class="kw">and</span> (repo_root.parent <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"core_cross_asset_etfs.csv"</span>).exists():</span>
 <span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    repo_root <span class="op">=</span> repo_root.parent</span>
 <span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> repo_root <span class="op">/</span> <span class="st">"data"</span> <span class="op">/</span> <span class="st">"core_cross_asset_etfs.csv"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="bb17826a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:44:54.763315Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:44:54.763315Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:44:55.081658Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:44:55.081658Z&quot;}}" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>loaded <span class="op">=</span> load_yfinance_panel(data_path, fields<span class="op">=</span>(<span class="st">"close"</span>,), source<span class="op">=</span><span class="st">"yfinance_export"</span>, lowercase<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>close_all <span class="op">=</span> loaded[<span class="st">"close"</span>].sort_index()</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(project_title)</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"loaded close table:"</span>, close_all.shape, close_all.index.<span class="bu">min</span>().date(), <span class="st">"to"</span>, close_all.index.<span class="bu">max</span>().date())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Portfolio Optimization Models: Tail risk, Risk Parity and Robust Optimization
 loaded close table: (6906, 19) 1999-01-04 to 2026-06-17</code></pre>
@@ -455,6 +499,8 @@ loaded close table: (6906, 19) 1999-01-04 to 2026-06-17</code></pre>
 <p>That means one very bad historical day can directly enter the optimization if it belongs to the worst tail. This is why CVaR is more connected to realized stress scenarios than variance. Variance smooths bad days into a second moment. CVaR identifies the worst days and averages their losses.</p>
 <p>For example, if two portfolios have the same volatility but one has many small losses and the other has rare crash losses, variance can treat them as similar. CVaR will usually prefer the first one because its worst 5% outcomes are less severe. This is exactly the kind of distinction that matters when we compare Mean-CVaR against MV and MaxSharpe later.</p>
 <div id="e7e35832" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:44:55.081658Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:44:55.081658Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:44:55.122682Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:44:55.122682Z&quot;}}" data-execution_count="3">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>start_date <span class="op">=</span> <span class="st">"2013-01-01"</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>assets <span class="op">=</span> [<span class="st">"SPY"</span>, <span class="st">"QQQ"</span>, <span class="st">"IWM"</span>, <span class="st">"EFA"</span>, <span class="st">"EEM"</span>, <span class="st">"TLT"</span>, <span class="st">"IEF"</span>, <span class="st">"SHY"</span>, <span class="st">"AGG"</span>, <span class="st">"LQD"</span>, <span class="st">"HYG"</span>, <span class="st">"GLD"</span>, <span class="st">"VNQ"</span>, <span class="st">"DBC"</span>]</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>signal_only_assets <span class="op">=</span> [<span class="st">"UUP"</span>] <span class="cf">if</span> <span class="st">"UUP"</span> <span class="kw">in</span> close_all.columns <span class="cf">else</span> []</span>
@@ -471,8 +517,11 @@ loaded close table: (6906, 19) 1999-01-04 to 2026-06-17</code></pre>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>signal_tickers <span class="op">=</span> <span class="bu">list</span>(<span class="bu">dict</span>.fromkeys(assets <span class="op">+</span> signal_only_assets))</span>
 <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>signal_close <span class="op">=</span> close_after_start.loc[first_all_valid:, signal_tickers].ffill(limit<span class="op">=</span><span class="dv">3</span>).reindex(returns.index).ffill(limit<span class="op">=</span><span class="dv">3</span>)</span>
 <span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>signal_returns <span class="op">=</span> prices_to_returns(signal_close, kind<span class="op">=</span><span class="st">"simple"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan).reindex(returns.index).fillna(<span class="fl">0.0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="0fdb0905" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:44:55.125981Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:44:55.125981Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:44:55.176486Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:44:55.175810Z&quot;}}" data-execution_count="4">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>coverage_rows <span class="op">=</span> []</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ticker <span class="kw">in</span> assets <span class="op">+</span> signal_only_assets:</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    px <span class="op">=</span> close_after_start[ticker]</span>
@@ -484,6 +533,7 @@ loaded close table: (6906, 19) 1999-01-04 to 2026-06-17</code></pre>
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>display(data_table)</span>
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>display(coverage_table)</span>
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"signal assets:"</span>, <span class="bu">list</span>(signal_returns.columns))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -729,6 +779,8 @@ loaded close table: (6906, 19) 1999-01-04 to 2026-06-17</code></pre>
 \]</span></p>
 <p>where <span class="math inline">\(w_i\)</span> is the weight of asset <span class="math inline">\(i\)</span>, <span class="math inline">\(\mathbf{1}^\top w=1\)</span> means the portfolio is fully invested, and <span class="math inline">\(\bar{w}_i\)</span> is the asset-specific cap. These caps are essential. Without caps, many of the optimizers would collapse into one or two assets because the sample makes some assets look much better or much safer than the others.</p>
 <div id="fba1ace4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:44:55.176486Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:44:55.176486Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:44:55.199303Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:44:55.199303Z&quot;}}" data-execution_count="5">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>rebal_freq <span class="op">=</span> <span class="st">"ME"</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>cov_lookback <span class="op">=</span> <span class="dv">756</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>mu_lookback <span class="op">=</span> <span class="dv">252</span></span>
@@ -747,8 +799,11 @@ loaded close table: (6906, 19) 1999-01-04 to 2026-06-17</code></pre>
 <span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>sleeve_map <span class="op">=</span> {asset: sleeve <span class="cf">for</span> sleeve, names <span class="kw">in</span> sleeve_groups.items() <span class="cf">for</span> asset <span class="kw">in</span> names}</span>
 <span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>asset_cap_map <span class="op">=</span> {<span class="st">"SPY"</span>: <span class="fl">0.40</span>, <span class="st">"QQQ"</span>: <span class="fl">0.40</span>, <span class="st">"IWM"</span>: <span class="fl">0.35</span>, <span class="st">"EFA"</span>: <span class="fl">0.35</span>, <span class="st">"EEM"</span>: <span class="fl">0.35</span>, <span class="st">"TLT"</span>: <span class="fl">0.25</span>, <span class="st">"IEF"</span>: <span class="fl">0.25</span>, <span class="st">"SHY"</span>: <span class="fl">0.15</span>, <span class="st">"AGG"</span>: <span class="fl">0.30</span>, <span class="st">"LQD"</span>: <span class="fl">0.25</span>, <span class="st">"HYG"</span>: <span class="fl">0.15</span>, <span class="st">"GLD"</span>: <span class="fl">0.30</span>, <span class="st">"VNQ"</span>: <span class="fl">0.30</span>, <span class="st">"DBC"</span>: <span class="fl">0.25</span>}</span>
 <span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>asset_caps <span class="op">=</span> pd.Series({asset: asset_cap_map.get(asset, w_max) <span class="cf">for</span> asset <span class="kw">in</span> assets}, index<span class="op">=</span>assets, dtype<span class="op">=</span><span class="bu">float</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="761e6ee1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:44:55.199303Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:44:55.199303Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:44:55.265304Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:44:55.265304Z&quot;}}" data-execution_count="6">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>rebalance_dates <span class="op">=</span> make_rebalance_dates(returns.index, freq<span class="op">=</span>rebal_freq, min_history_days<span class="op">=</span><span class="bu">max</span>(cov_lookback, mu_lookback, <span class="dv">756</span>))</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>fixed_universe_by_date <span class="op">=</span> {pd.Timestamp(dt): {<span class="st">"tickers"</span>: <span class="bu">list</span>(assets), <span class="st">"avg_dollar_volume"</span>: pd.Series(<span class="fl">1.0</span>, index<span class="op">=</span>assets)} <span class="cf">for</span> dt <span class="kw">in</span> rebalance_dates}</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>universe_table <span class="op">=</span> pd.DataFrame({<span class="st">"asset"</span>: assets, <span class="st">"sleeve"</span>: [sleeve_map.get(asset, <span class="st">"other"</span>) <span class="cf">for</span> asset <span class="kw">in</span> assets], <span class="st">"asset_cap"</span>: asset_caps.reindex(assets).values})</span>
@@ -757,6 +812,7 @@ loaded close table: (6906, 19) 1999-01-04 to 2026-06-17</code></pre>
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>display(universe_table)</span>
 <span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>display(benchmark_table.<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>display(rebalance_summary)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1053,12 +1109,17 @@ loaded close table: (6906, 19) 1999-01-04 to 2026-06-17</code></pre>
 </table>
 <p>The point isn’t to teach these again. The point is to keep them in the comparison because the new models need a serious benchmark. If a CVaR or robust model can’t beat a simple MaxSharpe or BL baseline on a useful metric, then the more complex objective needs to justify itself through lower drawdowns, lower tail loss, lower turnover, or better stability.</p>
 <div id="a99cf3b6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:44:55.265304Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:44:55.265304Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:47:57.783966Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:47:57.782737Z&quot;}}" data-execution_count="7">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>cov_models <span class="op">=</span> {<span class="st">"Sample"</span>: covariance.sample_covariance, <span class="st">"LedoitWolf"</span>: covariance.ledoit_wolf_covariance, <span class="st">"OAS"</span>: covariance.oas_covariance, <span class="st">"EWMA"</span>: covariance.ewma_covariance}</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>mu_models <span class="op">=</span> {<span class="st">"Momentum"</span>: expected_returns.momentum_mu, <span class="st">"BayesStein"</span>: expected_returns.bayes_stein_mu, <span class="st">"BayesSteinMomentum"</span>: expected_returns.bayes_stein_momentum_mu}</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>walkforward_grid <span class="op">=</span> run_walkforward_grid(returns<span class="op">=</span>returns[assets], close<span class="op">=</span>close[assets], rebalance_dates<span class="op">=</span>rebalance_dates, universe_by_date<span class="op">=</span>fixed_universe_by_date, cov_models<span class="op">=</span>cov_models, mu_models<span class="op">=</span>mu_models, cov_lookback<span class="op">=</span>cov_lookback, mu_lookback<span class="op">=</span>mu_lookback, min_cov_observations<span class="op">=</span>cov_lookback <span class="op">-</span> <span class="dv">1</span>, min_mu_observations<span class="op">=</span>mu_lookback <span class="op">-</span> <span class="dv">1</span>, max_weight<span class="op">=</span>w_max, min_weight<span class="op">=</span>w_min, long_only<span class="op">=</span><span class="va">True</span>, trading_cost_bps<span class="op">=</span>cost_bps, turnover_penalty_bps<span class="op">=</span>cost_bps, fallback<span class="op">=</span><span class="st">"equal"</span>, rf_daily<span class="op">=</span>risk_free_daily, annualization<span class="op">=</span>annualization, ewma_lambda<span class="op">=</span>ewma_lambda, optimizer_params<span class="op">=</span>{<span class="st">"MV"</span>: {<span class="st">"mv_lambda"</span>: mv_lambda}, <span class="st">"RidgeMV"</span>: {<span class="st">"mv_lambda"</span>: mv_lambda}, <span class="st">"FrontierGrid"</span>: {<span class="st">"grid_n"</span>: <span class="dv">15</span>}})</span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>walkforward_grid <span class="op">=</span> append_frontiergrid_from_best_maxsharpe(walkforward_grid, grid_n<span class="op">=</span><span class="dv">15</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="537f2baf" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:47:57.785342Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:47:57.785342Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:47:57.802088Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:47:57.801332Z&quot;}}" data-execution_count="8">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ordered_strategy_table(table):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    cols <span class="op">=</span> [<span class="st">"Sharpe"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Turnover"</span>, <span class="st">"CAGR"</span>]</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    ascending <span class="op">=</span> [<span class="va">False</span>, <span class="va">False</span>, <span class="va">True</span>, <span class="va">False</span>]</span>
@@ -1067,8 +1128,11 @@ loaded close table: (6906, 19) 1999-01-04 to 2026-06-17</code></pre>
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> table.replace([np.inf, <span class="op">-</span>np.inf], np.nan).sort_values(present, ascending<span class="op">=</span>asc)</span>
 <span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>benchmark_summary <span class="op">=</span> walkforward_grid.results.copy()</span>
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>benchmark_summary_ranked <span class="op">=</span> ordered_strategy_table(benchmark_summary)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="0d49803d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:47:57.803605Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:47:57.803605Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:47:57.849177Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:47:57.849177Z&quot;}}" data-execution_count="9">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pick_best_strategy(summary, optimizer):</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    candidates <span class="op">=</span> summary[summary[<span class="st">"Optimizer"</span>].eq(optimizer)].replace([np.inf, <span class="op">-</span>np.inf], np.nan).dropna(subset<span class="op">=</span>[<span class="st">"Sharpe"</span>])</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> candidates.empty:</span>
@@ -1090,6 +1154,7 @@ loaded close table: (6906, 19) 1999-01-04 to 2026-06-17</code></pre>
 <span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>selected_benchmark_table <span class="op">=</span> benchmark_summary.loc[[grid_equal_weight_name, best_minvar_name, best_mv_name, best_maxsharpe_name]].copy()</span>
 <span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(selected_benchmark_names.to_string())</span>
 <span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>display(selected_benchmark_table.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>equal_weight_name                                          EW
 best_minvar_name                                 MinVar (OAS)
@@ -1235,6 +1300,8 @@ best_maxsharpe_mu                          BayesSteinMomentum</code></pre>
 <p>The reason BL is important here is that the new models are not only competing against classical MV. They’re competing against a model that already tries to solve one of MV’s biggest weaknesses: the instability of raw expected returns. If a robust optimizer beats simple MV but loses to BL, that still tells us something. It means robustness helps relative to naive estimation, but perhaps not relative to a structured Bayesian view process.</p>
 <p>The BL rebuild generates 544 candidate view rows, 538 selected view rows, 538 confidence rows, and 125 posterior rows. That confirms the BL baseline is active through almost the full monthly period.</p>
 <div id="ccf4952d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:47:57.855013Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:47:57.852835Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:47:57.868741Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:47:57.867794Z&quot;}}" data-execution_count="10">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>family_q_caps <span class="op">=</span> {</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"liquid_leadership"</span>: <span class="fl">0.08</span>, <span class="st">"dual_momentum"</span>: <span class="fl">0.10</span>,</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"inflation_rotation"</span>: <span class="fl">0.05</span>, <span class="st">"risk_adj_momentum"</span>: <span class="fl">0.10</span>,</span>
@@ -1260,8 +1327,11 @@ best_maxsharpe_mu                          BayesSteinMomentum</code></pre>
 <span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>view_functions <span class="op">=</span> [bl_views.liquid_leadership, bl_views.dual_momentum, bl_views.inflation_rotation, bl_views.risk_adjusted_momentum, bl_views.credit_switch, bl_views.reflation_breadth, bl_views.growth_duration, bl_views.correlation_stress, bl_views.international_rotation, bl_views.duration_quality]</span>
 <span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>bl_constraints <span class="op">=</span> {<span class="st">"asset_caps"</span>: asset_caps.to_dict()}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="7932e0ed" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:47:57.875583Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:47:57.873372Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:49:23.942472Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:49:23.942472Z&quot;}}" data-execution_count="11">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>learned_bl_run <span class="op">=</span> bl.learned_confidence_bl(returns<span class="op">=</span>returns[assets], signal_returns<span class="op">=</span>signal_returns, </span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>                                          rebalance_dates<span class="op">=</span>rebalance_dates, benchmark_weights<span class="op">=</span>benchmark_w, </span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>                                          roles<span class="op">=</span>roles, view_functions<span class="op">=</span>view_functions, view_settings<span class="op">=</span>view_settings, </span>
@@ -1274,6 +1344,7 @@ best_maxsharpe_mu                          BayesSteinMomentum</code></pre>
 <span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"selected view rows:"</span>, <span class="bu">len</span>(learned_bl_run.selected_view_log))</span>
 <span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"confidence rows:"</span>, <span class="bu">len</span>(learned_bl_run.confidence_log))</span>
 <span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"posterior rows:"</span>, <span class="bu">len</span>(learned_bl_run.posterior_log))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>candidate view rows: 544
 selected view rows: 538
@@ -1282,6 +1353,8 @@ posterior rows: 125</code></pre>
 </div>
 </div>
 <div id="a5403f60" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:49:23.942472Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:49:23.942472Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:49:25.187387Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:49:25.187387Z&quot;}}" data-execution_count="12">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>strategic_weights <span class="op">=</span> pd.DataFrame([benchmark_w.reindex(assets).rename(pd.Timestamp(dt)) <span class="cf">for</span> dt <span class="kw">in</span> rebalance_dates[:<span class="op">-</span><span class="dv">1</span>]])</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>strategic_result <span class="op">=</span> run_many_weights_backtests({<span class="st">"Strategic Benchmark"</span>: strategic_weights}, returns<span class="op">=</span>returns[assets], cost_bps<span class="op">=</span>cost_bps, rf_daily<span class="op">=</span>risk_free_daily, w_min<span class="op">=</span>w_min, w_max<span class="op">=</span>w_max, long_only<span class="op">=</span><span class="va">True</span>, normalize<span class="op">=</span><span class="va">True</span>, weight_timing<span class="op">=</span><span class="st">"next_close"</span>)[<span class="st">"Strategic Benchmark"</span>]</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>bl_metric_table <span class="op">=</span> selection.build_strategy_summary({<span class="st">"Learned-Confidence BL"</span>: learned_bl_result}, rf_daily<span class="op">=</span>risk_free_daily, annualization<span class="op">=</span>annualization)</span>
@@ -1305,6 +1378,7 @@ posterior rows: 125</code></pre>
 <span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> bl_far:</span>
 <span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">"learned-confidence BL is materially away from the project 6 sanity anchors with the current data/settings"</span>)</span>
 <span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>    display(pd.Series(<span class="bu">vars</span>(bl_settings)).to_frame(<span class="st">"setting"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1586,6 +1660,8 @@ posterior rows: 125</code></pre>
 </ul>
 <p>That is the comparison logic we use for the rest of the project.</p>
 <div id="b07b1101" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:49:25.187387Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:49:25.187387Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:49:25.241534Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:49:25.241534Z&quot;}}" data-execution_count="13">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> {}</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>results[<span class="st">"Equal Weight"</span>] <span class="op">=</span> walkforward_grid.backtests[grid_equal_weight_name]</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>results[best_minvar_name] <span class="op">=</span> walkforward_grid.backtests[best_minvar_name]</span>
@@ -1607,6 +1683,7 @@ posterior rows: 125</code></pre>
 <span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out[[c <span class="cf">for</span> c <span class="kw">in</span> cols <span class="cf">if</span> c <span class="kw">in</span> out.columns]]</span>
 <span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>benchmark_table_compact <span class="op">=</span> compact_result_table(results)</span>
 <span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>display(benchmark_table_compact.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1744,6 +1821,8 @@ A^{1/2}(A^{1/2})^\top \approx A
 \]</span></p>
 <p>That norm form is useful in conic optimization, robust optimization, and Wasserstein DRO. Since empirical covariance matrices can have tiny numerical eigenvalue problems, the implementation symmetrizes the matrix and floors small eigenvalues before taking the square root. This doesn’t change the model’s economic idea. It prevents the numerical solver from failing because of floating-point noise.</p>
 <div id="607ade77" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:49:25.241534Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:49:25.241534Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:49:25.259008Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:49:25.259008Z&quot;}}" data-execution_count="14">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> psd_sqrt(mat, eps<span class="op">=</span><span class="fl">1e-10</span>):</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    arr <span class="op">=</span> np.asarray(mat, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    arr <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> (arr <span class="op">+</span> arr.T)</span>
@@ -1787,8 +1866,11 @@ A^{1/2}(A^{1/2})^\top \approx A
 <span id="cb18-41"><a href="#cb18-41" aria-hidden="true" tabindex="-1"></a>        w.loc[room.index] <span class="op">=</span> w.loc[room.index] <span class="op">+</span> extra <span class="op">*</span> room <span class="op">/</span> <span class="bu">float</span>(room.<span class="bu">sum</span>())</span>
 <span id="cb18-42"><a href="#cb18-42" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> np.minimum(w.clip(lower<span class="op">=</span><span class="fl">0.0</span>), caps)</span>
 <span id="cb18-43"><a href="#cb18-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> w <span class="op">/</span> <span class="bu">float</span>(w.<span class="bu">sum</span>()) <span class="cf">if</span> <span class="bu">float</span>(w.<span class="bu">sum</span>()) <span class="op">&gt;</span> <span class="fl">1e-12</span> <span class="cf">else</span> pd.Series(<span class="fl">1.0</span> <span class="op">/</span> <span class="bu">len</span>(idx), index<span class="op">=</span>idx, dtype<span class="op">=</span><span class="bu">float</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="f9449956" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:49:25.259008Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:49:25.259008Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:49:25.280995Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:49:25.280534Z&quot;}}" data-execution_count="15">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> solve_cvx_problem(problem):</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    installed <span class="op">=</span> <span class="bu">set</span>(cp.installed_solvers())</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> solver <span class="kw">in</span> [<span class="st">"CLARABEL"</span>, <span class="st">"ECOS"</span>, <span class="st">"SCS"</span>]:</span>
@@ -1827,6 +1909,7 @@ A^{1/2}(A^{1/2})^\top \approx A
 <span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a>model_rebalance_dates <span class="op">=</span> [pd.Timestamp(dt) <span class="cf">for</span> dt <span class="kw">in</span> walkforward_grid.metadata[<span class="st">"rebalance_dates"</span>] <span class="cf">if</span> pd.Timestamp(dt) <span class="kw">in</span> walkforward_grid.cache][:<span class="op">-</span><span class="dv">1</span>]</span>
 <span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a>first_cache_date <span class="op">=</span> model_rebalance_dates[<span class="dv">0</span>]</span>
 <span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a>display(pd.Series(<span class="bu">list</span>(walkforward_grid.cache[first_cache_date].keys()), name<span class="op">=</span><span class="bu">str</span>(first_cache_date.date())).to_frame(<span class="st">"cache_keys"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1958,6 +2041,8 @@ u_s \ge \ell_s(w) - \eta
 <p>At first, HYG may look surprising because high-yield credit is risky. But the model isn’t reading labels. It reads the empirical tail scenarios inside the rolling training window. If HYG’s recent worst-tail behavior is less damaging than equity or long-duration bonds under that particular window, the optimizer can still include it. This is one reason CVaR models need careful interpretation: they are only as good as the tail scenarios in the estimation window.</p>
 <p>The latest training tail numbers are tiny, with a 95% VaR loss around 0.31% and CVaR loss around 0.44%. That is the in-window optimized tail loss, not a promise about future drawdown.</p>
 <div id="cc0e55cf" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:49:25.280995Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:49:25.280995Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:49:32.416211Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:49:32.416211Z&quot;}}" data-execution_count="16">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>cvar_alpha <span class="op">=</span> <span class="fl">0.95</span></span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>min_cvar_rows <span class="op">=</span> []</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> min_cvar_weight(dt, state, prev_w):</span>
@@ -1988,6 +2073,7 @@ u_s \ge \ell_s(w) - \eta
 <span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>display(min_cvar_weights.iloc[<span class="op">-</span><span class="dv">1</span>].sort_values(ascending<span class="op">=</span><span class="va">False</span>).to_frame(<span class="st">"Min-CVaR 95"</span>).<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>display(compact_result_table({<span class="st">"Min-CVaR 95"</span>: min_cvar_result}).<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>display(min_cvar_diag.tail(<span class="dv">1</span>).<span class="bu">round</span>(<span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2208,6 +2294,8 @@ CVaR_{0.95}(w) \le 0.90 \times CVaR_{0.95}(w_{\text{EW}})
 <p>So the model must produce a portfolio whose in-sample tail loss is at least 10% lower than equal weight. That is much clearer than saying “we use a tail penalty of <span class="math inline">\(\gamma\)</span>” because <span class="math inline">\(\gamma\)</span> is harder to understand economically.</p>
 <p>When the optimized CVaR sits almost exactly at the budget, it means the tail constraint is binding. The model would like to take more expected-return exposure, but the CVaR limit prevents it.</p>
 <div id="f627d66d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:49:32.420776Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:49:32.420776Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:49:40.593156Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:49:40.593156Z&quot;}}" data-execution_count="17">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>mean_cvar_rows <span class="op">=</span> []</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> training_cvar_loss(r, wv):</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    loss_values <span class="op">=</span> <span class="op">-</span>r <span class="op">@</span> wv</span>
@@ -2253,6 +2341,7 @@ CVaR_{0.95}(w) \le 0.90 \times CVaR_{0.95}(w_{\text{EW}})
 <span id="cb21-43"><a href="#cb21-43" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">7</span>, ncol<span class="op">=</span><span class="dv">2</span>, frameon<span class="op">=</span><span class="va">True</span>, framealpha<span class="op">=</span><span class="fl">0.85</span>)</span>
 <span id="cb21-44"><a href="#cb21-44" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb21-45"><a href="#cb21-45" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2394,7 +2483,7 @@ CVaR_{0.95}(w) \le 0.90 \times CVaR_{0.95}(w_{\text{EW}})
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-18-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-18-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-18-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2409,6 +2498,8 @@ CVaR_{0.95}(w) \le 0.90 \times CVaR_{0.95}(w_{\text{EW}})
 \]</span></p>
 <p>Mean-CVaR sacrifices some tail purity, but it becomes a real investment strategy. It earns 9.21% CAGR with 9.55% volatility, historical ES of 1.45%, and max drawdown of -14.61%. This is one of the strongest examples in the project of why risk control needs to be tied to a return objective. A portfolio that only avoids losses can become cash-like. A portfolio that spends a controlled tail budget can still participate in risk premia.</p>
 <div id="541597bf" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:49:40.597387Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:49:40.597387Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:49:40.940256Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:49:40.940256Z&quot;}}" data-execution_count="18">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> latest_mean_cvar_budget(scale):</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    dt <span class="op">=</span> model_rebalance_dates[<span class="op">-</span><span class="dv">1</span>]</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    state <span class="op">=</span> walkforward_grid.cache[dt]</span>
@@ -2432,6 +2523,7 @@ CVaR_{0.95}(w) \le 0.90 \times CVaR_{0.95}(w_{\text{EW}})
 <span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">"budget_scale"</span>: scale, <span class="st">"cvar_budget"</span>: budget, <span class="st">"expected_ann_return"</span>: <span class="bu">float</span>(mu_ann.values <span class="op">@</span> out.reindex(tickers).values), <span class="st">"cvar_95_loss"</span>: training_cvar_loss(r, out.reindex(tickers).values), <span class="st">"effective_n"</span>: <span class="bu">float</span>(<span class="fl">1.0</span> <span class="op">/</span> np.square(out.values).<span class="bu">sum</span>()), <span class="st">"max_weight"</span>: <span class="bu">float</span>(out.<span class="bu">max</span>()), <span class="st">"status"</span>: status}</span>
 <span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>latest_cvar_path <span class="op">=</span> pd.DataFrame([latest_mean_cvar_budget(x) <span class="cf">for</span> x <span class="kw">in</span> [<span class="fl">0.80</span>, <span class="fl">0.90</span>, <span class="fl">1.00</span>, <span class="fl">1.10</span>, <span class="fl">1.25</span>]])</span>
 <span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>display(latest_cvar_path.<span class="bu">round</span>(<span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2585,6 +2677,8 @@ PRC_g = \sum_{i \in g} PRC_i
 \]</span></p>
 <p>This is useful because a portfolio can have equal asset-level contributions but still load too much on one economic sleeve if several correlated assets belong to the same sleeve.</p>
 <div id="01903bc0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:49:40.940256Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:49:40.940256Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:49:49.444842Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:49:49.444842Z&quot;}}" data-execution_count="19">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> erc_vector(cov_arr, upper<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    cov <span class="op">=</span> make_psd(np.asarray(cov_arr, dtype<span class="op">=</span><span class="bu">float</span>), eps<span class="op">=</span><span class="fl">1e-10</span>)</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> cov.shape[<span class="dv">0</span>]</span>
@@ -2650,6 +2744,7 @@ PRC_g = \sum_{i \in g} PRC_i
 <span id="cb23-63"><a href="#cb23-63" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"weight"</span>)</span>
 <span id="cb23-64"><a href="#cb23-64" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb23-65"><a href="#cb23-65" aria-hidden="true" tabindex="-1"></a>display(compact_result_table({<span class="st">"Risk Parity"</span>: rp_result}).<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2759,7 +2854,7 @@ PRC_g = \sum_{i \in g} PRC_i
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-20-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-20-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-20-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2857,6 +2952,8 @@ w_i^{(C)} = \frac{1/\sigma_i^2}{\sum_{j\in C}1/\sigma_j^2}
 \]</span></p>
 <p>If a parent cluster is split into left and right subclusters with variances <span class="math inline">\(\sigma_L^2\)</span> and <span class="math inline">\(\sigma_R^2\)</span>, the lower-variance side receives more capital. The recursive process continues until weights are assigned to individual assets.</p>
 <div id="7996c6dc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:49:49.444842Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:49:49.444842Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:49:52.327355Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:49:52.327355Z&quot;}}" data-execution_count="20">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> corr_distance_link(cov_ann, method<span class="op">=</span><span class="st">"average"</span>):</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    cov <span class="op">=</span> pd.DataFrame(cov_ann).astype(<span class="bu">float</span>)</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    diag <span class="op">=</span> np.sqrt(np.maximum(np.diag(cov.values), <span class="fl">1e-12</span>))</span>
@@ -2928,6 +3025,7 @@ w_i^{(C)} = \frac{1/\sigma_i^2}{\sum_{j\in C}1/\sigma_j^2}
 <span id="cb24-69"><a href="#cb24-69" aria-hidden="true" tabindex="-1"></a>ax.legend(handles, <span class="bu">list</span>(sleeve_groups), fontsize<span class="op">=</span><span class="dv">7</span>, ncol<span class="op">=</span><span class="dv">2</span>, frameon<span class="op">=</span><span class="va">True</span>, framealpha<span class="op">=</span><span class="fl">0.85</span>)</span>
 <span id="cb24-70"><a href="#cb24-70" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb24-71"><a href="#cb24-71" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3004,21 +3102,21 @@ w_i^{(C)} = \frac{1/\sigma_i^2}{\sum_{j\in C}1/\sigma_j^2}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-21-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-21-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-21-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-21-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-21-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-21-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-21-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-21-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-21-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3097,6 +3195,8 @@ w = W_{\text{inner}}a
 \]</span></p>
 <p>Then the outer optimizer solves a smaller portfolio problem over <span class="math inline">\(G\)</span> cluster portfolios instead of <span class="math inline">\(N\)</span> individual assets. This can reduce instability when <span class="math inline">\(N\)</span> is large or when assets are strongly correlated. In this project, <span class="math inline">\(N=14\)</span>, so the dimensionality benefit is modest. The bigger question is whether the clustering creates a better economic structure. In the results, HRP’s simpler structure wins.</p>
 <div id="40d2c584" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:49:52.330508Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:49:52.330508Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:50:05.004495Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:50:05.004495Z&quot;}}" data-execution_count="21">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> solve_mv_vector(mu_arr, cov_arr, cap<span class="op">=</span><span class="fl">0.40</span>, lam<span class="op">=</span><span class="fl">3.0</span>):</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    mu <span class="op">=</span> np.asarray(mu_arr, dtype<span class="op">=</span><span class="bu">float</span>).reshape(<span class="op">-</span><span class="dv">1</span>)</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    cov <span class="op">=</span> make_psd(np.asarray(cov_arr, dtype<span class="op">=</span><span class="bu">float</span>), eps<span class="op">=</span><span class="fl">1e-10</span>)</span>
@@ -3187,6 +3287,7 @@ w = W_{\text{inner}}a
 <span id="cb25-88"><a href="#cb25-88" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"forecast return"</span>)</span>
 <span id="cb25-89"><a href="#cb25-89" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb25-90"><a href="#cb25-90" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3420,7 +3521,7 @@ w = W_{\text{inner}}a
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-22-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-22-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-22-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3475,7 +3576,7 @@ w = W_{\text{inner}}a
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-22-output-6.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-22-output-6.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-22-output-6.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3490,10 +3591,13 @@ w = W_{\text{inner}}a
 <p>The cluster map makes the same point visually. The bond cluster has the lowest standalone volatility but a negative forecast return. The diversifier cluster has a higher forecast return and higher volatility. The risky cluster has medium volatility but also a negative forecast in the latest window. The optimizer therefore places most weight in the low-vol bond cluster and keeps a meaningful diversifier sleeve.</p>
 <p>In the backtest, NCO-MV has the same CAGR as HRP, 5.19%, but higher volatility at 6.36% and lower Sharpe at 0.2128. It also has much higher turnover, 16.45% average monthly turnover versus 1.86% for HRP. That makes HRP the better hierarchical model in this application.</p>
 <div id="137fd9a1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:50:05.004495Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:50:05.004495Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:50:05.036971Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:50:05.036971Z&quot;}}" data-execution_count="22">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>hier_summary <span class="op">=</span> compact_result_table({<span class="st">"HRP"</span>: hrp_result, <span class="st">"NCO-MV"</span>: nco_result})</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>best_hier_name <span class="op">=</span> hier_summary.sort_values([<span class="st">"sharpe"</span>, <span class="st">"max_drawdown"</span>, <span class="st">"avg_turnover"</span>, <span class="st">"cagr"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">True</span>, <span class="va">False</span>]).index[<span class="dv">0</span>]</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"selected hierarchical model:"</span>, best_hier_name)</span>
 <span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>display(hier_summary.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>selected hierarchical model: HRP</code></pre>
 </div>
@@ -3642,6 +3746,8 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <p>Because this project is long-only, the simpler haircut form is enough. This is also why box robustness can be interpreted as <strong>forecast haircutting</strong>. We create a conservative expected-return vector first, then run a standard constrained mean-variance optimizer on that conservative vector.</p>
 <p>The box radius controls how skeptical we are. If <span class="math inline">\(\rho=0\)</span>, the model becomes standard MV. If <span class="math inline">\(\rho\)</span> is large, only assets with very strong forecasts survive the haircut.</p>
 <div id="49e4fb66" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:50:05.036971Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:50:05.036971Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:50:09.328796Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:50:09.326821Z&quot;}}" data-execution_count="23">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>robust_cov_model <span class="op">=</span> <span class="st">"LedoitWolf"</span></span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>robust_mu_model <span class="op">=</span> <span class="st">"Momentum"</span></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>robust_mv_lambda <span class="op">=</span> <span class="fl">2.0</span></span>
@@ -3677,6 +3783,7 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <span id="cb28-33"><a href="#cb28-33" aria-hidden="true" tabindex="-1"></a>latest_box_table <span class="op">=</span> pd.DataFrame({<span class="st">"asset"</span>: latest_tickers, <span class="st">"mu_ann"</span>: latest_mu_ann.values, <span class="st">"se_ann"</span>: latest_se_ann, <span class="st">"robust_mu"</span>: latest_mu_ann.values <span class="op">-</span> box_radius <span class="op">*</span> latest_se_ann, <span class="st">"weight"</span>: box_robust_weights.iloc[<span class="op">-</span><span class="dv">1</span>].reindex(latest_tickers).values})</span>
 <span id="cb28-34"><a href="#cb28-34" aria-hidden="true" tabindex="-1"></a>display(latest_box_table.<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb28-35"><a href="#cb28-35" aria-hidden="true" tabindex="-1"></a>display(compact_result_table({<span class="st">"Box Robust MV"</span>: box_robust_result}).<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3933,6 +4040,8 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <p>This has a different behavior than box robustness. Box uncertainty penalizes each asset independently. Ellipsoid uncertainty penalizes the <strong>portfolio’s exposure to uncertain directions</strong>. If two assets have correlated estimation errors, the ellipsoid penalty sees that. This is one reason ellipsoid robust optimization can be more realistic for portfolios: return-estimation errors are rarely independent across related assets.</p>
 <p>For example, if SPY and QQQ both look attractive because the same growth regime has performed well, a box model may haircut them separately. An ellipsoid model can also recognize that their forecast errors are related. Loading on both doesn’t give two independent forecasts. It creates one larger exposure to a common uncertain direction.</p>
 <div id="a527e0fd" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:50:09.328796Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:50:09.328796Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:50:14.113133Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:50:14.113133Z&quot;}}" data-execution_count="24">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>ellipsoid_radius <span class="op">=</span> <span class="fl">0.10</span></span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>ellipsoid_rows <span class="op">=</span> []</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> solve_ellipsoid_portfolio(state, radius):</span>
@@ -3983,6 +4092,7 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <span id="cb29-48"><a href="#cb29-48" aria-hidden="true" tabindex="-1"></a>box_ellipsoid_latest <span class="op">=</span> pd.DataFrame({<span class="st">"asset"</span>: latest_tickers, <span class="st">"mu_ann"</span>: latest_mu_ann.values, <span class="st">"box_robust_mu"</span>: latest_mu_ann.values <span class="op">-</span> box_radius <span class="op">*</span> latest_se_ann, <span class="st">"box_weight"</span>: box_robust_weights.iloc[<span class="op">-</span><span class="dv">1</span>].reindex(latest_tickers).values, <span class="st">"ellipsoid_weight"</span>: ellipsoid_robust_weights.iloc[<span class="op">-</span><span class="dv">1</span>].reindex(latest_tickers).values})</span>
 <span id="cb29-49"><a href="#cb29-49" aria-hidden="true" tabindex="-1"></a>display(box_ellipsoid_latest.<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb29-50"><a href="#cb29-50" aria-hidden="true" tabindex="-1"></a>display(compact_result_table({<span class="st">"Box Robust MV"</span>: box_robust_result, <span class="st">"Ellipsoid Robust MV"</span>: ellipsoid_robust_result}).<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4109,7 +4219,7 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-25-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-25-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-25-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4328,10 +4438,13 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <p>The ellipsoid model drops SHY to zero and gives a slightly larger weight to IWM and GLD. The difference is not dramatic because the latest forecast environment is very directional: EEM and DBC dominate even after robust penalties. When the top forecasts are that strong, both box and ellipsoid uncertainty still point to a similar constrained solution.</p>
 <p>In the backtest, Ellipsoid Robust MV slightly beats Box Robust MV: CAGR 10.01% versus 9.92%, Sharpe 0.5533 versus 0.5520, and turnover 34.01% versus 34.62%. The difference is small, but enough for the selection rule to choose Ellipsoid Robust MV.</p>
 <div id="d58d64cc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:50:14.113133Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:50:14.113133Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:50:14.157756Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:50:14.157756Z&quot;}}" data-execution_count="25">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>robust_summary <span class="op">=</span> compact_result_table({<span class="st">"Box Robust MV"</span>: box_robust_result, <span class="st">"Ellipsoid Robust MV"</span>: ellipsoid_robust_result})</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>best_robust_name <span class="op">=</span> robust_summary.sort_values([<span class="st">"sharpe"</span>, <span class="st">"max_drawdown"</span>, <span class="st">"avg_turnover"</span>, <span class="st">"cagr"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">False</span>, <span class="va">True</span>, <span class="va">False</span>]).index[<span class="dv">0</span>]</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"selected robust model:"</span>, best_robust_name)</span>
 <span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>display(robust_summary.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>selected robust model: Ellipsoid Robust MV</code></pre>
 </div>
@@ -4480,6 +4593,8 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <p>So the same Wasserstein radius creates a much larger tax for the concentrated portfolio. This is exactly what we want from a distributionally robust model. If we are unsure about the true return distribution, relying on a small number of bets is more dangerous than spreading across many exposures.</p>
 <p>The penalty doesn’t force equal weight at the radius used here, but it changes the economics of concentration. A concentrated portfolio must have enough estimated return advantage to pay the ambiguity tax and still look attractive after robust risk inflation.</p>
 <div id="40392ffc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:50:14.161645Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:50:14.157756Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:50:19.198670Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:50:19.197611Z&quot;}}" data-execution_count="26">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>dro_radius <span class="op">=</span> <span class="fl">1.0</span></span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>wasserstein_mv_lambda <span class="op">=</span> <span class="fl">1.5</span></span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>wasserstein_rows <span class="op">=</span> []</span>
@@ -4552,6 +4667,7 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <span id="cb32-70"><a href="#cb32-70" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, ax<span class="op">=</span>ax, fraction<span class="op">=</span><span class="fl">0.045</span>, pad<span class="op">=</span><span class="fl">0.03</span>)</span>
 <span id="cb32-71"><a href="#cb32-71" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb32-72"><a href="#cb32-72" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4718,7 +4834,7 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-27-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-27-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-27-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4881,7 +4997,7 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-27-output-5.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-27-output-5.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-27-output-5.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4925,6 +5041,8 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <p>where <span class="math inline">\(r^\star\)</span> is the target robust return. The left side of the return constraint is the expected return after the Wasserstein tax. The objective is robust risk, empirical volatility plus the same distributional concentration penalty.</p>
 <p>This diagnostic produces a robust frontier. For each target return, we see how much empirical volatility and robust risk are needed. It is similar in spirit to an efficient frontier, but the risk axis includes distributional uncertainty.</p>
 <div id="debfac66" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:50:19.198670Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:50:19.198670Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:50:19.983194Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:50:19.983194Z&quot;}}" data-execution_count="27">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> solve_wasserstein_target_return(state, radius, target_return):</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    tickers, mu_ann, cov_ann, t_mu <span class="op">=</span> selected_mv_inputs(state)</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    caps <span class="op">=</span> cap_array(tickers).to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -4982,6 +5100,7 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <span id="cb33-55"><a href="#cb33-55" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"Wasserstein penalty"</span>)</span>
 <span id="cb33-56"><a href="#cb33-56" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb33-57"><a href="#cb33-57" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5130,14 +5249,14 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-28-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-28-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-28-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-28-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-28-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-28-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5215,6 +5334,8 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <p>This matters because a model can win one family and lose another. Risk Parity wins tail safety but loses return quality. BL wins return quality but has high turnover and higher ES. Mean-CVaR has a strong middle position: not the highest return, not the lowest tail risk, but a good blend. W-DRO is stronger on return than Mean-CVaR, but weaker on tail risk.</p>
 <p>The comparison is strongest when we keep these families separate. A single rank is useful at the end, but the model personality comes from the full metric profile.</p>
 <div id="3abc48c7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:50:19.983194Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:50:19.983194Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:50:20.308891Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:50:20.308891Z&quot;}}" data-execution_count="28">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> full_result_table(result_dict):</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    table <span class="op">=</span> compact_result_table(result_dict)</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    var_rows <span class="op">=</span> []</span>
@@ -5247,6 +5368,7 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <span id="cb34-30"><a href="#cb34-30" aria-hidden="true" tabindex="-1"></a>    weight_check_rows.append({<span class="st">"model"</span>: name, <span class="st">"max_sum_error"</span>: <span class="bu">float</span>((w.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>) <span class="op">-</span> <span class="fl">1.0</span>).<span class="bu">abs</span>().<span class="bu">max</span>()), <span class="st">"max_cap_excess"</span>: <span class="bu">float</span>((w <span class="op">-</span> w_max).<span class="bu">max</span>(axis<span class="op">=</span><span class="dv">1</span>).clip(lower<span class="op">=</span><span class="fl">0.0</span>).<span class="bu">max</span>()), <span class="st">"fallback_count"</span>: <span class="bu">int</span>(local_fallback_counts.get(name, <span class="dv">0</span>))})</span>
 <span id="cb34-31"><a href="#cb34-31" aria-hidden="true" tabindex="-1"></a>weight_checks <span class="op">=</span> pd.DataFrame(weight_check_rows).set_index(<span class="st">"model"</span>)</span>
 <span id="cb34-32"><a href="#cb34-32" aria-hidden="true" tabindex="-1"></a>display(weight_checks.<span class="bu">round</span>(<span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5654,6 +5776,8 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <p>Learned-Confidence BL remains the top model overall by Sharpe at 0.7458 and CAGR at 12.53%. MaxSharpe is second by Sharpe at 0.6553 and has the best Calmar at 0.7065. Wasserstein DRMV is the best new robust model by Sharpe at 0.5743. Mean-CVaR is close behind at 0.5609 with lower volatility and lower drawdown.</p>
 <p>Risk Parity and HRP have the best tail metrics. Risk Parity has ES of 0.73% and max drawdown of -13.74%, the best among finalists. HRP has ES of 0.75% and very low volatility. Their weakness is return, not risk.</p>
 <div id="8a734895" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:50:20.308891Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:50:20.308891Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:50:20.337055Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:50:20.337055Z&quot;}}" data-execution_count="29">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rank_for_choice(names, table, columns, ascending):</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    available <span class="op">=</span> [name <span class="cf">for</span> name <span class="kw">in</span> names <span class="cf">if</span> name <span class="kw">in</span> table.index]</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> table.loc[available].sort_values(columns, ascending<span class="op">=</span>ascending).index[<span class="dv">0</span>]</span>
@@ -5719,6 +5843,7 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <span id="cb35-63"><a href="#cb35-63" aria-hidden="true" tabindex="-1"></a>display(pd.Series(selected_models, name<span class="op">=</span><span class="st">"model"</span>).to_frame())</span>
 <span id="cb35-64"><a href="#cb35-64" aria-hidden="true" tabindex="-1"></a>display(selected_reason)</span>
 <span id="cb35-65"><a href="#cb35-65" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"selected CVaR model:"</span>, best_cvar_name)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5880,9 +6005,12 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <li>distributional robustness.</li>
 </ul>
 <div id="6d6dd9a0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:50:20.339068Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:50:20.339068Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:50:20.367880Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:50:20.367880Z&quot;}}" data-execution_count="30">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>selected_scoreboard <span class="op">=</span> full_summary.loc[selected_models, [<span class="st">"cagr"</span>, <span class="st">"ann_vol"</span>, <span class="st">"sharpe"</span>, <span class="st">"sortino"</span>, <span class="st">"calmar"</span>, <span class="st">"max_drawdown"</span>, <span class="st">"es_95"</span>, <span class="st">"avg_turnover"</span>, <span class="st">"avg_effective_n"</span>, <span class="st">"avg_max_weight"</span>]]</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>display(selected_scoreboard.sort_values(<span class="st">"sharpe"</span>, ascending<span class="op">=</span><span class="va">False</span>).<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6070,6 +6198,8 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <p>Mean-CVaR 95 is one of the best balanced new models: 9.21% CAGR, 9.55% volatility, Sharpe 0.5609, and max drawdown -14.61%. Its ES is 1.45%, meaning it gives up some return to improve tail behavior.</p>
 <p>Risk Parity wins risk control: ES 0.73% and max drawdown -13.74%. Its Sharpe is only 0.1320 because the portfolio is too defensive relative to the 4% risk-free rate.</p>
 <div id="a3487ab4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:50:20.369899Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:50:20.369899Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:50:20.606246Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:50:20.606246Z&quot;}}" data-execution_count="31">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>selected_nav <span class="op">=</span> pd.DataFrame({name: results[name].net_values <span class="cf">for</span> name <span class="kw">in</span> selected_models}).dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">9.0</span>, <span class="fl">4.4</span>))</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>plot_strategy_nav(selected_nav[selected_models], ax<span class="op">=</span>ax, title<span class="op">=</span><span class="st">"project 10 finalists: net wealth"</span>, labels<span class="op">=</span>short_labels(selected_models))</span>
@@ -6077,10 +6207,11 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>small_legend(ax, loc<span class="op">=</span><span class="st">"upper left"</span>)</span>
 <span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-32-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-32-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-32-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -6096,6 +6227,8 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <li>Equal Weight is a neutral reference that gets outperformed by active/robust models but keeps broad diversification.</li>
 </ul>
 <div id="3b58dbe9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:50:20.607760Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:50:20.607760Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:50:20.896302Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:50:20.896302Z&quot;}}" data-execution_count="32">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>selected_nav <span class="op">=</span> pd.DataFrame({name: results[name].net_values <span class="cf">for</span> name <span class="kw">in</span> selected_models}).dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">9.0</span>, <span class="fl">4.4</span>))</span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>plot_strategy_drawdowns(selected_nav[selected_models], ax<span class="op">=</span>ax, title<span class="op">=</span><span class="st">"project 10 finalists: drawdowns"</span>, labels<span class="op">=</span>short_labels(selected_models))</span>
@@ -6103,15 +6236,18 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>small_legend(ax, loc<span class="op">=</span><span class="st">"lower left"</span>)</span>
 <span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-33-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-33-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-33-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="3ac2354a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:50:20.897847Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:50:20.897847Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:50:21.262081Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:50:21.262081Z&quot;}}" data-execution_count="33">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>scatter_data <span class="op">=</span> selected_scoreboard.copy()</span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">7.2</span>, <span class="fl">4.2</span>))</span>
 <span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>size <span class="op">=</span> <span class="dv">1800</span> <span class="op">*</span> scatter_data[<span class="st">"es_95"</span>].<span class="bu">abs</span>() <span class="op">/</span> scatter_data[<span class="st">"es_95"</span>].<span class="bu">abs</span>().<span class="bu">max</span>()</span>
@@ -6132,17 +6268,18 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <span id="cb40-18"><a href="#cb40-18" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"Sharpe"</span>)</span>
 <span id="cb40-19"><a href="#cb40-19" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb40-20"><a href="#cb40-20" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-34-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-34-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-34-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-34-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-34-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-34-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -6172,6 +6309,8 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 </ul>
 <p>This tells us the models aren’t just changing weights randomly. Their objectives map into clear economic sleeve preferences.</p>
 <div id="57115b25" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:50:21.266264Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:50:21.265106Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:50:21.994391Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:50:21.994391Z&quot;}}" data-execution_count="34">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>average_weights <span class="op">=</span> pd.DataFrame({name: results[name].weights.reindex(columns<span class="op">=</span>assets).mean() <span class="cf">for</span> name <span class="kw">in</span> selected_models}).reindex(assets)</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> average_sleeves(result):</span>
@@ -6210,6 +6349,7 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <span id="cb41-36"><a href="#cb41-36" aria-hidden="true" tabindex="-1"></a>small_legend(ax, loc<span class="op">=</span><span class="st">"upper right"</span>)</span>
 <span id="cb41-37"><a href="#cb41-37" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb41-38"><a href="#cb41-38" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6524,14 +6664,14 @@ SE(\hat{\mu}_i) \approx \frac{\sigma_i}{\sqrt{T}}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-35-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-35-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-17"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-35-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-35-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-35-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-18"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-35-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -6544,6 +6684,8 @@ N_{\text{eff}}=\frac{1}{\sum_{i=1}^{N}w_i^2}
 <p>Equal Weight has <span class="math inline">\(N_{\text{eff}}=14\)</span> because all weights are equal. If a model holds only three or four large positions, effective <span class="math inline">\(N\)</span> falls. MaxSharpe has effective <span class="math inline">\(N\)</span> around 3.20, Mean-CVaR around 3.37, Ellipsoid around 3.14, and W-DRO around 3.71. BL is more diversified at 5.20.</p>
 <p>This is one of the clearest practical differences between BL and robust MV. BL is active and high-turnover, but it keeps more positions alive because the view structure and constraints distribute active bets. Robust MV models are more concentrated because a few assets survive the expected-return penalty and then hit caps.</p>
 <div id="3abd5adf" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:50:21.995893Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:50:21.995893Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:50:22.366661Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:50:22.366661Z&quot;}}" data-execution_count="35">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>selected_returns <span class="op">=</span> pd.DataFrame({name: results[name].net_returns <span class="cf">for</span> name <span class="kw">in</span> selected_models}).dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>rolling_return_252 <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> selected_returns).rolling(<span class="dv">252</span>).<span class="bu">apply</span>(np.prod, raw<span class="op">=</span><span class="va">True</span>) <span class="op">-</span> <span class="fl">1.0</span></span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>rolling_vol_252 <span class="op">=</span> selected_returns.rolling(<span class="dv">252</span>).std() <span class="op">*</span> np.sqrt(annualization)</span>
@@ -6564,10 +6706,11 @@ N_{\text{eff}}=\frac{1}{\sum_{i=1}^{N}w_i^2}
 <span id="cb42-18"><a href="#cb42-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb42-19"><a href="#cb42-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-20"><a href="#cb42-20" aria-hidden="true" tabindex="-1"></a>display(rolling_return_252[rolling_plot_names].tail(<span class="dv">1</span>).T.rename(columns<span class="op">=</span>{rolling_return_252.index[<span class="op">-</span><span class="dv">1</span>]: <span class="st">"latest_12m_return"</span>}).<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-36-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-36-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-19"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-36-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -6622,6 +6765,8 @@ N_{\text{eff}}=\frac{1}{\sum_{i=1}^{N}w_i^2}
 <p>This recent period is clearly favorable to active and robust return-seeking models. The robust models are not simply defensive. In the recent window, they participate strongly because their selected exposures, especially GLD/DBC/QQQ/EEM-type positions, performed well. HRP lags because the duration-heavy defensive allocation doesn’t match the current return environment.</p>
 <p>Rolling Sharpe is useful because it prevents a single full-sample metric from hiding regime changes. A model can have a good full-sample Sharpe but still be very weak in a specific macro regime.</p>
 <div id="3951822e" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:50:22.366661Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:50:22.366661Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:53:55.920277Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:53:55.920277Z&quot;}}" data-execution_count="36">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>risk_returns <span class="op">=</span> selected_returns.dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>stress_windows <span class="op">=</span> {</span>
 <span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2018_q4"</span>: (<span class="st">"2018-10-01"</span>, <span class="st">"2018-12-31"</span>),</span>
@@ -6651,6 +6796,7 @@ N_{\text{eff}}=\frac{1}{\sum_{i=1}^{N}w_i^2}
 <span id="cb43-27"><a href="#cb43-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> fig <span class="kw">in</span> risk_report_artifacts.figures.get(key, []):</span>
 <span id="cb43-28"><a href="#cb43-28" aria-hidden="true" tabindex="-1"></a>        display(fig)</span>
 <span id="cb43-29"><a href="#cb43-29" aria-hidden="true" tabindex="-1"></a>        plt.close(fig)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6775,28 +6921,28 @@ N_{\text{eff}}=\frac{1}{\sum_{i=1}^{N}w_i^2}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-37-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-37-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-20"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-37-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-37-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-37-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-21"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-37-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-37-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-37-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-22"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-37-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-37-output-5.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-37-output-5.png" class="lightbox" data-gallery="quarto-lightbox-gallery-23"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-37-output-5.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -6825,6 +6971,8 @@ N_{\text{eff}}=\frac{1}{\sum_{i=1}^{N}w_i^2}
 <p>BL and MaxSharpe have more upside capture but can lose more in sharp shocks. W-DRO and Ellipsoid Robust MV are meant to reduce input fragility, not eliminate market exposure. So they can still experience large stress losses if the assets they select are hit together.</p>
 <p>The rolling beta plots show the same theme. Defensive models have lower market beta. Active return-seeking models have higher and more variable beta. A model’s Sharpe ratio alone doesn’t show this exposure path.</p>
 <div id="a3429b2d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:53:55.926087Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:53:55.926087Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:53:55.978143Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:53:55.978143Z&quot;}}" data-execution_count="37">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>criterion_rows <span class="op">=</span> []</span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>criteria <span class="op">=</span> [</span>
@@ -6863,6 +7011,7 @@ N_{\text{eff}}=\frac{1}{\sum_{i=1}^{N}w_i^2}
 <span id="cb44-36"><a href="#cb44-36" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-37"><a href="#cb44-37" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame(criterion_rows).set_index(<span class="st">"criterion"</span>).<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb44-38"><a href="#cb44-38" aria-hidden="true" tabindex="-1"></a>display(rank_table.<span class="bu">round</span>(<span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -7083,6 +7232,8 @@ N_{\text{eff}}=\frac{1}{\sum_{i=1}^{N}w_i^2}
 <p>The balanced rank score combines Sharpe, Calmar, ES, drawdown, turnover, and diversification. BL wins because its return quality is strong enough to overcome its weaker tail and turnover ranks. MV comes second in balanced rank because it has excellent drawdown and reasonable turnover even though it doesn’t lead return metrics. Mean-CVaR and MaxSharpe tie closely after that, but for different reasons: Mean-CVaR is better on risk control, MaxSharpe is better on return and Calmar.</p>
 <p>This ranking is useful because there is no universal “best” portfolio. A pension-style allocator might prefer Mean-CVaR or MV because drawdown and ES matter more. A return-seeking ETF strategy might prefer BL or W-DRO. A defensive allocation sleeve might prefer Risk Parity or HRP. The table makes those tradeoffs explicit rather than hiding them behind one metric.</p>
 <div id="fa0985e3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-17T14:53:55.978143Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-17T14:53:55.978143Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-17T14:53:56.005255Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-17T14:53:56.005255Z&quot;}}" data-execution_count="38">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>selected_reason_lookup <span class="op">=</span> selected_reason[<span class="st">"role"</span>].to_dict()</span>
 <span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>selected_from_lookup <span class="op">=</span> selected_reason[<span class="st">"selected_from"</span>].to_dict()</span>
@@ -7092,6 +7243,7 @@ N_{\text{eff}}=\frac{1}{\sum_{i=1}^{N}w_i^2}
 <span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>final_comparison[<span class="st">"selected_reason"</span>] <span class="op">=</span> [selected_from_lookup[name] <span class="cf">for</span> name <span class="kw">in</span> final_comparison[<span class="st">"model"</span>]]</span>
 <span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>final_comparison <span class="op">=</span> final_comparison.reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>display(final_comparison.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -7296,6 +7448,8 @@ N_{\text{eff}}=\frac{1}{\sum_{i=1}^{N}w_i^2}
 <p>At the same time, sector rotation is a better environment for MaxSharpe when the winning sectors have persistent leadership. Technology, Communication Services, Consumer Discretionary, and Energy can dominate certain periods, and a return-seeking optimizer can capture that leadership if the signal is stable enough.</p>
 <p>So the secondary application is not just a replication. It checks whether the model family survives when the diversification mechanism changes from asset-class allocation to intra-equity rotation.</p>
 <div id="20aaee96" class="cell" data-execution_count="1">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -7838,6 +7992,7 @@ N_{\text{eff}}=\frac{1}{\sum_{i=1}^{N}w_i^2}
 <span id="cb46-540"><a href="#cb46-540" aria-hidden="true" tabindex="-1"></a>        display(fig)</span>
 <span id="cb46-541"><a href="#cb46-541" aria-hidden="true" tabindex="-1"></a>        plt.close(fig)</span>
 <span id="cb46-542"><a href="#cb46-542" aria-hidden="true" tabindex="-1"></a></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>sector returns: (2000, 11) 2018-07-03 to 2026-06-17
 rebalance dates: 72 2020-07-31 to 2026-06-17
@@ -8083,7 +8238,7 @@ BL view rows: 310 candidate, 280 selected</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-40-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-40-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-24"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-40-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -8211,28 +8366,28 @@ BL view rows: 310 candidate, 280 selected</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-40-output-6.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-40-output-6.png" class="lightbox" data-gallery="quarto-lightbox-gallery-25"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-40-output-6.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-40-output-7.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-40-output-7.png" class="lightbox" data-gallery="quarto-lightbox-gallery-26"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-40-output-7.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-40-output-8.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-40-output-8.png" class="lightbox" data-gallery="quarto-lightbox-gallery-27"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-40-output-8.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-40-output-9.png" class="img-fluid figure-img"></p>
+<p><a href="10_portfolio_tail_parity_robust_files/figure-html/cell-40-output-9.png" class="lightbox" data-gallery="quarto-lightbox-gallery-28"><img src="10_portfolio_tail_parity_robust_files/figure-html/cell-40-output-9.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -8368,6 +8523,57 @@ BL view rows: 310 candidate, 280 selected</code></pre>
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -8711,6 +8917,38 @@ BL view rows: 310 candidate, 280 selected</code></pre>
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 

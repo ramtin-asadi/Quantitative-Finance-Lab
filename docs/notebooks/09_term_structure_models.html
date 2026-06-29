@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>9. Term Structure Models, Curve Factors, and Swap-Based Duration Overlays – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/08_vol_surface_local_vol.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -112,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -143,7 +144,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -292,13 +293,87 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#setup-and-reused-fixed-income-data" id="toc-setup-and-reused-fixed-income-data" class="nav-link active" data-scroll-target="#setup-and-reused-fixed-income-data">1) Setup and reused fixed-income data</a></li>
+  <li><a href="#monthly-curve-construction-and-zero-rates" id="toc-monthly-curve-construction-and-zero-rates" class="nav-link" data-scroll-target="#monthly-curve-construction-and-zero-rates">2) Monthly curve construction and zero rates</a></li>
+  <li><a href="#curve-snapshots-short-rates-and-slopes" id="toc-curve-snapshots-short-rates-and-slopes" class="nav-link" data-scroll-target="#curve-snapshots-short-rates-and-slopes">3) Curve snapshots, short rates, and slopes</a>
+  <ul class="collapse">
+  <li><a href="#why-curve-shape-matters-more-than-a-single-yield" id="toc-why-curve-shape-matters-more-than-a-single-yield" class="nav-link" data-scroll-target="#why-curve-shape-matters-more-than-a-single-yield">3.1 Why curve shape matters more than a single yield</a></li>
+  </ul></li>
+  <li><a href="#acm-term-premium-and-sofr-cash-return" id="toc-acm-term-premium-and-sofr-cash-return" class="nav-link" data-scroll-target="#acm-term-premium-and-sofr-cash-return">4) ACM term premium and SOFR cash return</a></li>
+  <li><a href="#vasicek-model-one-gaussian-short-rate-state" id="toc-vasicek-model-one-gaussian-short-rate-state" class="nav-link" data-scroll-target="#vasicek-model-one-gaussian-short-rate-state">5) Vasicek model: one Gaussian short-rate state</a>
+  <ul class="collapse">
+  <li><a href="#physical-dynamics-pricing-dynamics-and-why-this-project-keeps-them-practical" id="toc-physical-dynamics-pricing-dynamics-and-why-this-project-keeps-them-practical" class="nav-link" data-scroll-target="#physical-dynamics-pricing-dynamics-and-why-this-project-keeps-them-practical">5.0 Physical dynamics, pricing dynamics, and why this project keeps them practical</a></li>
+  <li><a href="#affine-bond-pricing-and-yield-loadings" id="toc-affine-bond-pricing-and-yield-loadings" class="nav-link" data-scroll-target="#affine-bond-pricing-and-yield-loadings">5.1 Affine bond pricing and yield loadings</a></li>
+  <li><a href="#filtering-a-hidden-short-rate-from-observed-yields" id="toc-filtering-a-hidden-short-rate-from-observed-yields" class="nav-link" data-scroll-target="#filtering-a-hidden-short-rate-from-observed-yields">5.2 Filtering a hidden short rate from observed yields</a></li>
+  <li><a href="#vasicek-estimation-results" id="toc-vasicek-estimation-results" class="nav-link" data-scroll-target="#vasicek-estimation-results">5.3 Vasicek estimation results</a></li>
+  </ul></li>
+  <li><a href="#cir-model-square-root-volatility-and-rate-positivity" id="toc-cir-model-square-root-volatility-and-rate-positivity" class="nav-link" data-scroll-target="#cir-model-square-root-volatility-and-rate-positivity">6) CIR model: square-root volatility and rate positivity</a>
+  <ul class="collapse">
+  <li><a href="#cir-estimation-in-this-project" id="toc-cir-estimation-in-this-project" class="nav-link" data-scroll-target="#cir-estimation-in-this-project">6.1 CIR estimation in this project</a></li>
+  </ul></li>
+  <li><a href="#short-rate-simulation-fan-charts" id="toc-short-rate-simulation-fan-charts" class="nav-link" data-scroll-target="#short-rate-simulation-fan-charts">7) Short-rate simulation fan charts</a></li>
+  <li><a href="#rolling-short-rate-models-and-model-implied-term-premium" id="toc-rolling-short-rate-models-and-model-implied-term-premium" class="nav-link" data-scroll-target="#rolling-short-rate-models-and-model-implied-term-premium">8) Rolling short-rate models and model-implied term premium</a>
+  <ul class="collapse">
+  <li><a href="#why-rolling-parameters-can-look-economically-strange" id="toc-why-rolling-parameters-can-look-economically-strange" class="nav-link" data-scroll-target="#why-rolling-parameters-can-look-economically-strange">8.1 Why rolling parameters can look economically strange</a></li>
+  </ul></li>
+  <li><a href="#hw1f-one-factor-curve-scenarios-with-mean-reversion" id="toc-hw1f-one-factor-curve-scenarios-with-mean-reversion" class="nav-link" data-scroll-target="#hw1f-one-factor-curve-scenarios-with-mean-reversion">9) HW1F: one-factor curve scenarios with mean reversion</a>
+  <ul class="collapse">
+  <li><a href="#why-hw1f-is-more-curve-consistent-than-plain-vasicek" id="toc-why-hw1f-is-more-curve-consistent-than-plain-vasicek" class="nav-link" data-scroll-target="#why-hw1f-is-more-curve-consistent-than-plain-vasicek">9.1 Why HW1F is more curve-consistent than plain Vasicek</a></li>
+  </ul></li>
+  <li><a href="#g2-style-two-factor-curve-model" id="toc-g2-style-two-factor-curve-model" class="nav-link" data-scroll-target="#g2-style-two-factor-curve-model">10) G2-style two-factor curve model</a>
+  <ul class="collapse">
+  <li><a href="#why-two-factors-matter-for-strategy-risk" id="toc-why-two-factors-matter-for-strategy-risk" class="nav-link" data-scroll-target="#why-two-factors-matter-for-strategy-risk">10.1 Why two factors matter for strategy risk</a></li>
+  </ul></li>
+  <li><a href="#pca-level-slope-and-curvature-diagnostics" id="toc-pca-level-slope-and-curvature-diagnostics" class="nav-link" data-scroll-target="#pca-level-slope-and-curvature-diagnostics">11) PCA level, slope, and curvature diagnostics</a>
+  <ul class="collapse">
+  <li><a href="#pca-sign-conventions-and-why-orientation-matters" id="toc-pca-sign-conventions-and-why-orientation-matters" class="nav-link" data-scroll-target="#pca-sign-conventions-and-why-orientation-matters">11.1 PCA sign conventions and why orientation matters</a></li>
+  </ul></li>
+  <li><a href="#duration-ladder-candidates-and-krd-exposure" id="toc-duration-ladder-candidates-and-krd-exposure" class="nav-link" data-scroll-target="#duration-ladder-candidates-and-krd-exposure">12) Duration ladder candidates and KRD exposure</a></li>
+  <li><a href="#turning-model-curve-views-into-duration-decisions" id="toc-turning-model-curve-views-into-duration-decisions" class="nav-link" data-scroll-target="#turning-model-curve-views-into-duration-decisions">13) Turning model curve views into duration decisions</a>
+  <ul class="collapse">
+  <li><a href="#a-concrete-krd-scoring-example" id="toc-a-concrete-krd-scoring-example" class="nav-link" data-scroll-target="#a-concrete-krd-scoring-example">13.1 A concrete KRD scoring example</a></li>
+  <li><a href="#carry-roll-and-curve-return-are-different-pieces" id="toc-carry-roll-and-curve-return-are-different-pieces" class="nav-link" data-scroll-target="#carry-roll-and-curve-return-are-different-pieces">13.2 Carry, roll, and curve return are different pieces</a></li>
+  </ul></li>
+  <li><a href="#model-selection-by-rolling-validation" id="toc-model-selection-by-rolling-validation" class="nav-link" data-scroll-target="#model-selection-by-rolling-validation">14) Model selection by rolling validation</a></li>
+  <li><a href="#fixed-for-floating-swaps-as-a-duration-overlay" id="toc-fixed-for-floating-swaps-as-a-duration-overlay" class="nav-link" data-scroll-target="#fixed-for-floating-swaps-as-a-duration-overlay">15) Fixed-for-floating swaps as a duration overlay</a>
+  <ul class="collapse">
+  <li><a href="#receiver-and-payer-intuition-through-rate-moves" id="toc-receiver-and-payer-intuition-through-rate-moves" class="nav-link" data-scroll-target="#receiver-and-payer-intuition-through-rate-moves">15.1 Receiver and payer intuition through rate moves</a></li>
+  </ul></li>
+  <li><a href="#swap-valuation-functions-and-the-10-year-overlay-instrument" id="toc-swap-valuation-functions-and-the-10-year-overlay-instrument" class="nav-link" data-scroll-target="#swap-valuation-functions-and-the-10-year-overlay-instrument">16) Swap valuation functions and the 10-year overlay instrument</a>
+  <ul class="collapse">
+  <li><a href="#swap-duration-versus-bond-duration" id="toc-swap-duration-versus-bond-duration" class="nav-link" data-scroll-target="#swap-duration-versus-bond-duration">16.1 Swap duration versus bond duration</a></li>
+  </ul></li>
+  <li><a href="#swap-overlay-strategy" id="toc-swap-overlay-strategy" class="nav-link" data-scroll-target="#swap-overlay-strategy">17) Swap overlay strategy</a>
+  <ul class="collapse">
+  <li><a href="#overlay-pnl-and-why-implementation-risk-still-matters" id="toc-overlay-pnl-and-why-implementation-risk-still-matters" class="nav-link" data-scroll-target="#overlay-pnl-and-why-implementation-risk-still-matters">17.1 Overlay PnL and why implementation risk still matters</a></li>
+  </ul></li>
+  <li><a href="#raw-sofr-excess-and-active-performance" id="toc-raw-sofr-excess-and-active-performance" class="nav-link" data-scroll-target="#raw-sofr-excess-and-active-performance">18) Raw, SOFR-excess, and active performance</a>
+  <ul class="collapse">
+  <li><a href="#why-sofr-excess-can-look-harsh" id="toc-why-sofr-excess-can-look-harsh" class="nav-link" data-scroll-target="#why-sofr-excess-can-look-harsh">18.1 Why SOFR-excess can look harsh</a></li>
+  </ul></li>
+  <li><a href="#parallel-rate-scenario-diagnostics" id="toc-parallel-rate-scenario-diagnostics" class="nav-link" data-scroll-target="#parallel-rate-scenario-diagnostics">19) Parallel-rate scenario diagnostics</a></li>
+  <li><a href="#model-stability-and-diagnostic-plots" id="toc-model-stability-and-diagnostic-plots" class="nav-link" data-scroll-target="#model-stability-and-diagnostic-plots">20) Model stability and diagnostic plots</a>
+  <ul class="collapse">
+  <li><a href="#reading-residual-autocorrelation-correctly" id="toc-reading-residual-autocorrelation-correctly" class="nav-link" data-scroll-target="#reading-residual-autocorrelation-correctly">20.1 Reading residual autocorrelation correctly</a></li>
+  </ul></li>
+  <li><a href="#secondary-application-japan-jgb-term-structure-market" id="toc-secondary-application-japan-jgb-term-structure-market" class="nav-link" data-scroll-target="#secondary-application-japan-jgb-term-structure-market">21) Secondary application: Japan JGB term-structure market</a>
+  <ul class="collapse">
+  <li><a href="#why-japan-is-not-just-a-smaller-rate-version-of-the-us" id="toc-why-japan-is-not-just-a-smaller-rate-version-of-the-us" class="nav-link" data-scroll-target="#why-japan-is-not-just-a-smaller-rate-version-of-the-us">21.1 Why Japan is not just a smaller-rate version of the US</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">9. Term Structure Models, Curve Factors, and Swap-Based Duration Overlays</span></h1>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">9. Term Structure Models, Curve Factors, and Swap-Based Duration Overlays</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -343,6 +418,8 @@ window.Quarto = {
 <p>We use the same US Treasury yield data family that was already used in Project 1. For reproducibility, check the corresponding folder inside the repository data directory, where the README and script explain how the file is created: <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/us_treasury_yields">US Treasury yields data folder</a>.</p>
 <p>Later we also use the ACM term premium, SOFR, and Japan MOF yield datasets. The same rule applies there too: we reference the <strong>data folder</strong> and its reproduction script, not an individual raw file link.</p>
 <div id="8aae3f8a" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pathlib</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
@@ -385,11 +462,15 @@ window.Quarto = {
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.labelsize"</span>: <span class="dv">10</span>,</span>
 <span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">8</span>,</span>
 <span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="cell-3" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>par_path <span class="op">=</span> <span class="st">"../data/us_treasury_yields.csv"</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>par_yields_daily <span class="op">=</span> load_par_yield_curve(par_path, source<span class="op">=</span><span class="st">"us_treasury"</span>).sort_index()</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>par_yields_daily.tail()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display" data-execution_count="2">
 <div>
 
@@ -531,6 +612,8 @@ window.Quarto = {
 </ul>
 <p>We keep this explanation short because the curve construction and basic bond pricing ideas were already covered earlier. What changes here is <strong>why</strong> we need the zero curve. A term-structure model doesn’t work directly on a table of par yields as if each tenor were an unrelated series. It needs discount factors, zero rates, and maturity-dependent loadings so model parameters can connect to bond prices and curve moves.</p>
 <div id="cell-6" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>selected_tenors <span class="op">=</span> [<span class="st">"1M"</span>, <span class="st">"3M"</span>, <span class="st">"6M"</span>, <span class="st">"1Y"</span>, <span class="st">"2Y"</span>, <span class="st">"3Y"</span>, <span class="st">"5Y"</span>, <span class="st">"7Y"</span>, <span class="st">"10Y"</span>, <span class="st">"20Y"</span>, <span class="st">"30Y"</span>]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>par_yields_monthly_all <span class="op">=</span> par_yields_daily.resample(<span class="st">"ME"</span>).last()</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>complete_monthly <span class="op">=</span> par_yields_monthly_all[selected_tenors].dropna()</span>
@@ -538,6 +621,7 @@ window.Quarto = {
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>par_yields <span class="op">=</span> complete_monthly.loc[curve_dates].copy()</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>curve_dates <span class="op">=</span> par_yields.index</span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>curve_dates[:<span class="dv">3</span>], curve_dates[<span class="op">-</span><span class="dv">3</span>:]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display" data-execution_count="3">
 <pre><code>(DatetimeIndex(['2006-02-28', '2006-03-31', '2006-04-30'], dtype='datetime64[us]', freq=None),
  DatetimeIndex(['2025-11-30', '2025-12-31', '2026-01-31'], dtype='datetime64[us]', freq=None))</code></pre>
@@ -563,6 +647,8 @@ P(0,T) = e^{-R(0,T)T}
 </ul>
 <p>We use PCHIP interpolation when bootstrapping. The useful property of PCHIP is that it is shape-preserving. It gives a smooth enough curve for interpolation while avoiding the wild oscillations that can appear with high-order splines when the curve has humps, inversions, or sparse long-end tenors.</p>
 <div id="cell-9" class="cell" data-execution_count="4">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>zero_rates <span class="op">=</span> build_zero_curve_panel_from_par_yields(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    par_yields,</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    method<span class="op">=</span><span class="st">"pchip"</span>,</span>
@@ -575,6 +661,7 @@ P(0,T) = e^{-R(0,T)T}
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    discount_factors[maturity] <span class="op">=</span> np.exp(<span class="op">-</span>zero_rates[maturity] <span class="op">*</span> <span class="bu">float</span>(maturity))</span>
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>curve_changes <span class="op">=</span> zero_rates.diff().dropna()</span>
 <span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>zero_rates.tail()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display" data-execution_count="4">
 <div>
 
@@ -676,6 +763,8 @@ P(0,T) = e^{-R(0,T)T}
 <p>The latest zero-rate table has the same economic shape as the par curve: the front end is around 3.6–3.8%, the 10-year zero is around 4.27%, and the 20Y/30Y area is near 4.96%. The curve is not flat. It has a low point around the 1Y–2Y region and then rises into the long end.</p>
 <p>That shape is already giving us a modeling warning. If we try to explain the whole curve only with one short-rate state, the model has to force one hidden variable to explain front-end policy rates, intermediate rates, and long-horizon term premium at the same time. It can do something useful, but it will be limited. This is why we later compare short-rate models with curve-factor models and PCA diagnostics.</p>
 <div id="cell-11" class="cell" data-execution_count="5">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>first_valid <span class="op">=</span> par_yields_daily[selected_tenors].<span class="bu">apply</span>(<span class="kw">lambda</span> s: s.first_valid_index())</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>data_coverage <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"item"</span>: [<span class="st">"daily observations"</span>, <span class="st">"monthly curve dates"</span>, <span class="st">"first monthly date"</span>, <span class="st">"last monthly date"</span>, <span class="st">"selected tenors"</span>],</span>
@@ -684,6 +773,7 @@ P(0,T) = e^{-R(0,T)T}
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>tenor_coverage <span class="op">=</span> pd.DataFrame({<span class="st">"tenor"</span>: selected_tenors, <span class="st">"first valid"</span>: [first_valid[t] <span class="cf">for</span> t <span class="kw">in</span> selected_tenors]})</span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>display(data_coverage)</span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>display(tenor_coverage)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -834,6 +924,8 @@ P(0,T) = e^{-R(0,T)T}
 <p>A parallel shift has all elements moving in the same direction. A steepener has the long end rising relative to the front end. A flattener has the front end rising relative to the long end. A curvature move changes the belly differently from the wings.</p>
 <p>The strategy later uses this vector view of curve changes. That is why PCA, G2, and KRD are central to this project. They let us move beyond a single-rate story and ask how the whole maturity structure affects portfolio risk.</p>
 <div id="cell-15" class="cell" data-execution_count="6">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>curve_years <span class="op">=</span> np.array([<span class="dv">1</span> <span class="op">/</span> <span class="dv">12</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">7</span>, <span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">30</span>], dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>sample_locs <span class="op">=</span> [<span class="dv">0</span>, <span class="bu">len</span>(curve_dates) <span class="op">//</span> <span class="dv">4</span>, <span class="bu">len</span>(curve_dates) <span class="op">//</span> <span class="dv">2</span>, <span class="dv">3</span> <span class="op">*</span> <span class="bu">len</span>(curve_dates) <span class="op">//</span> <span class="dv">4</span>, <span class="bu">len</span>(curve_dates) <span class="op">-</span> <span class="dv">1</span>]</span>
@@ -846,10 +938,11 @@ P(0,T) = e^{-R(0,T)T}
 <span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"par yield percent"</span>)</span>
 <span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>ax.legend(ncol<span class="op">=</span><span class="dv">2</span>)</span>
 <span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="09_term_structure_models_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="09_term_structure_models_files/figure-html/cell-7-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="09_term_structure_models_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -864,6 +957,8 @@ P(0,T) = e^{-R(0,T)T}
 </ul>
 <p>The slope variables are not new fixed-income concepts, so we don’t spend space re-teaching them. Here they are used as <strong>diagnostic summaries</strong> of the curve environment. A positive <span class="math inline">\(10Y - 2Y\)</span> means the 10-year yield is above the 2-year yield. A negative value means inversion. In strategy terms, slope helps explain whether longer bonds are compensating us more than shorter bonds, but it doesn’t fully determine whether extending duration is attractive because expected rate changes and carry also matter.</p>
 <div id="cell-18" class="cell" data-execution_count="7">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>short_tenor <span class="op">=</span> <span class="st">"1M"</span> <span class="cf">if</span> <span class="st">"1M"</span> <span class="kw">in</span> par_yields.columns <span class="cf">else</span> <span class="st">"3M"</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>short_rate <span class="op">=</span> par_yields[short_tenor].rename(<span class="st">"short rate proxy"</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>selected_yields <span class="op">=</span> pd.DataFrame({</span>
@@ -878,6 +973,7 @@ P(0,T) = e^{-R(0,T)T}
 <span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>short_and_slopes <span class="op">=</span> pd.concat([short_rate, selected_yields, slope_series], axis<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>short_and_slopes.tail()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display" data-execution_count="7">
 <div>
 
@@ -965,6 +1061,8 @@ P(0,T) = e^{-R(0,T)T}
 </ul>
 <p>This sequence is exactly why static duration rules are dangerous. The same 10-year yield can mean different things depending on whether the front end is at zero, the Fed is cutting, inflation is rising, or term premium is repricing.</p>
 <div id="cell-21" class="cell" data-execution_count="8">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">4</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].plot(short_rate.index, short_rate <span class="op">*</span> <span class="dv">100</span>, label<span class="op">=</span><span class="ss">f"</span><span class="sc">{</span>short_tenor<span class="sc">.</span>lower()<span class="sc">}</span><span class="ss"> proxy"</span>)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> col <span class="kw">in</span> [<span class="st">"2y"</span>, <span class="st">"10y"</span>, <span class="st">"30y"</span>]:</span>
@@ -979,10 +1077,11 @@ P(0,T) = e^{-R(0,T)T}
 <span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"percentage points"</span>)</span>
 <span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend()</span>
 <span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="09_term_structure_models_files/figure-html/cell-9-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="09_term_structure_models_files/figure-html/cell-9-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="09_term_structure_models_files/figure-html/cell-9-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1001,6 +1100,8 @@ y_t^{(n)} \approx \frac{1}{n}\sum_{j=1}^{n} E_t[r_{t+j}] + TP_t^{(n)}
 <p>The ACM term premium is a well-known model-based estimate of that second component. We use it as an external benchmark for the term-premium proxies produced later by Vasicek and CIR. The point is not to perfectly replicate ACM. The point is to check whether our simpler model-implied proxies move in the same broad direction.</p>
 <p>For reproducibility, use the repository folder for this data source: <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/acm_term_premium">ACM term premium data folder</a>.</p>
 <div id="cell-24" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>acm_csv_path <span class="op">=</span>  <span class="st">"../data/acm_term_premium.csv"</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load_acm_10y(csv_path):</span>
@@ -1021,6 +1122,7 @@ y_t^{(n)} \approx \frac{1}{n}\sum_{j=1}^{n} E_t[r_{t+j}] + TP_t^{(n)}
 <span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>acm_term_premium <span class="op">=</span> load_acm_10y(acm_csv_path)</span>
 <span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>acm_term_premium.tail()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display" data-execution_count="9">
 <div>
 
@@ -1068,6 +1170,8 @@ y_t^{(n)} \approx \frac{1}{n}\sum_{j=1}^{n} E_t[r_{t+j}] + TP_t^{(n)}
 <p>The next step aligns ACM to the monthly curve dates. The alignment is intentionally simple: we resample monthly and forward-fill to the curve date. Since the term premium is not used as an input to the trading model here, small alignment details are less dangerous. We use it mainly as a diagnostic comparison.</p>
 <p>The summary confirms no missing aligned values over the selected curve period. This is useful because the later correlation comparison between ACM and model-implied proxies won’t be distorted by a small overlapping sample.</p>
 <div id="cell-27" class="cell" data-execution_count="10">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>acm_10y <span class="op">=</span> acm_term_premium.resample(<span class="st">"ME"</span>).last().reindex(curve_dates, method<span class="op">=</span><span class="st">"ffill"</span>)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>term_premium_comparison <span class="op">=</span> acm_10y.copy()</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>term_premium_summary <span class="op">=</span> pd.DataFrame({</span>
@@ -1076,6 +1180,7 @@ y_t^{(n)} \approx \frac{1}{n}\sum_{j=1}^{n} E_t[r_{t+j}] + TP_t^{(n)}
 <span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>display(term_premium_summary)</span>
 <span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>term_premium_comparison.tail()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1161,6 +1266,8 @@ R_{cash,t} = \frac{I_t}{I_{t-1}} - 1
 \]</span></p>
 <p>This gives a realistic cash baseline for the post-2020 sample. We don’t use SOFR for the full 2006–2026 backtest because the published SOFR index has a shorter history. For reproducibility, check: <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data/sofr">SOFR data folder</a>.</p>
 <div id="cell-30" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>sofr_path <span class="op">=</span> <span class="st">"../data/sofr.csv"</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>sofr_start_date <span class="op">=</span> pd.Timestamp(<span class="st">"2020-03-02"</span>)</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>sofr_raw <span class="op">=</span> pd.read_csv(sofr_path)</span>
@@ -1184,6 +1291,7 @@ R_{cash,t} = \frac{I_t}{I_{t-1}} - 1
 <span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>display(sofr_summary)</span>
 <span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>sofr_cash_return.tail()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1381,6 +1489,8 @@ P_{t|t} = (1 - K_t\mathbf{b})P_{t|t-1}
 \]</span></p>
 <p>Financially, this is a disciplined way to smooth the short-rate state. If one yield point jumps for a noisy reason, the filter doesn’t automatically treat it as a full policy-rate shock. If the whole curve moves in a way consistent with a short-rate change, the filter reacts more.</p>
 <div id="cell-39" class="cell" data-execution_count="12">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> acf1(values):</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> pd.Series(values).dropna().astype(<span class="bu">float</span>)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(x) <span class="op">&lt;</span> <span class="dv">3</span> <span class="kw">or</span> x.std() <span class="op">==</span> <span class="dv">0</span>:</span>
@@ -1418,8 +1528,11 @@ P_{t|t} = (1 - K_t\mathbf{b})P_{t|t-1}
 <span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>    kappa <span class="op">=</span> <span class="bu">max</span>(<span class="bu">float</span>(params[<span class="st">"kappa"</span>]), <span class="fl">1e-8</span>)</span>
 <span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>    theta <span class="op">=</span> <span class="bu">float</span>(params[<span class="st">"theta"</span>])</span>
 <span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> theta <span class="op">+</span> (<span class="bu">float</span>(r0) <span class="op">-</span> theta) <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> np.exp(<span class="op">-</span>kappa <span class="op">*</span> years)) <span class="op">/</span> (kappa <span class="op">*</span> years)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="cell-40" class="cell" data-execution_count="13">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_vasicek_ar(short_history):</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> pd.Series(short_history).dropna().astype(<span class="bu">float</span>)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(x) <span class="op">&lt;</span> <span class="dv">12</span>:</span>
@@ -1510,6 +1623,7 @@ P_{t|t} = (1 - K_t\mathbf{b})P_{t|t-1}
 <span id="cb15-88"><a href="#cb15-88" aria-hidden="true" tabindex="-1"></a>            mean, var <span class="op">=</span> mean_pred, var_pred</span>
 <span id="cb15-89"><a href="#cb15-89" aria-hidden="true" tabindex="-1"></a>        filtered.append(mean)</span>
 <span id="cb15-90"><a href="#cb15-90" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(nll), np.asarray(filtered)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="vasicek-estimation-results" class="level3">
@@ -1545,6 +1659,8 @@ v = \frac{\sigma^2(1-\phi^2)}{2\kappa}
 <p>This objective rewards parameter sets that predict the next short rate with small residuals, but it also penalizes unrealistically tiny volatility through the <span class="math inline">\(\log(v)\)</span> term. Without that penalty, the optimizer could try to make volatility too small and overfit the mean path.</p>
 <p>The Hessian condition number then tells us how sharply the likelihood identifies the parameters. A very high condition number means the objective is flat or stretched in some direction. That usually means parameters are hard to estimate separately. In rate models, this often happens because <span class="math inline">\(\kappa\)</span>, <span class="math inline">\(\theta\)</span>, and <span class="math inline">\(\sigma\)</span> can compensate for each other over short samples.</p>
 <div id="cell-43" class="cell" data-execution_count="14">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_vasicek(yields, maturities, maxiter<span class="op">=</span><span class="dv">80</span>):</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> pd.DataFrame(yields).dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    y_values <span class="op">=</span> y.to_numpy(<span class="bu">float</span>)</span>
@@ -1599,6 +1715,7 @@ v = \frac{\sigma^2(1-\phi^2)}{2\kappa}
 <span id="cb16-52"><a href="#cb16-52" aria-hidden="true" tabindex="-1"></a>vasicek_fit, vasicek_filtered <span class="op">=</span> fit_vasicek(zero_rates[vasicek_cols], np.array(vasicek_cols))</span>
 <span id="cb16-53"><a href="#cb16-53" aria-hidden="true" tabindex="-1"></a>vasicek_parameter_table <span class="op">=</span> pd.DataFrame([vasicek_fit]).T.rename(columns<span class="op">=</span>{<span class="dv">0</span>: <span class="st">"vasicek"</span>})</span>
 <span id="cb16-54"><a href="#cb16-54" aria-hidden="true" tabindex="-1"></a>display(vasicek_parameter_table)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1653,6 +1770,8 @@ v = \frac{\sigma^2(1-\phi^2)}{2\kappa}
 <p>The low <span class="math inline">\(\theta\)</span> reflects the long zero-rate and low-rate sample from 2008 through 2021. Because the full sample includes many years near zero, the model’s long-run gravity sits much lower than the 2022–2026 rate regime. That is not “wrong” mechanically, but it reveals why rolling estimation is needed later.</p>
 <p>The residual autocorrelation is around <strong>0.27</strong>, which is not ideal. A good transition model would leave less serial dependence in residuals. This tells us the short-rate process has structure the simple OU transition doesn’t fully capture, especially across regime changes and policy cycles.</p>
 <div id="cell-45" class="cell" data-execution_count="15">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots()</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>ax.plot(short_rate.index, short_rate <span class="op">*</span> <span class="dv">100</span>, label<span class="op">=</span><span class="st">"observed short proxy"</span>, alpha<span class="op">=</span><span class="fl">0.8</span>)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>ax.plot(vasicek_filtered.index, vasicek_filtered <span class="op">*</span> <span class="dv">100</span>, label<span class="op">=</span><span class="st">"filtered vasicek short rate"</span>, linewidth<span class="op">=</span><span class="dv">2</span>)</span>
@@ -1660,10 +1779,11 @@ v = \frac{\sigma^2(1-\phi^2)}{2\kappa}
 <span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"percent"</span>)</span>
 <span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>ax.legend()</span>
 <span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="09_term_structure_models_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="09_term_structure_models_files/figure-html/cell-16-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="09_term_structure_models_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1708,6 +1828,8 @@ Var_t(r_{t+\Delta}) \approx \sigma^2 r_t \Delta
 <p>The implementation also penalizes violations of the Feller condition. The optimizer can still end near the boundary, especially when the data includes near-zero rates, but the penalty discourages parameter combinations that make the process numerically unstable.</p>
 <p>This is why CIR needs careful interpretation. It can fit short-rate residuals better than Vasicek, but the parameter estimates can be more fragile. A lower residual autocorrelation doesn’t automatically mean the model is safer for trading. We still need rolling diagnostics and strategy validation.</p>
 <div id="715d9ccc" class="cell" data-execution_count="16">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cir_expected_average(r0, params, years<span class="op">=</span><span class="fl">10.0</span>):</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    kappa <span class="op">=</span> <span class="bu">max</span>(<span class="bu">float</span>(params[<span class="st">"kappa"</span>]), <span class="fl">1e-8</span>)</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    theta <span class="op">=</span> <span class="bu">float</span>(params[<span class="st">"theta"</span>])</span>
@@ -1786,13 +1908,17 @@ Var_t(r_{t+\Delta}) \approx \sigma^2 r_t \Delta
 <span id="cb18-76"><a href="#cb18-76" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-77"><a href="#cb18-77" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-78"><a href="#cb18-78" aria-hidden="true" tabindex="-1"></a>cir_fit_log <span class="op">=</span> []</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="cell-50" class="cell" data-execution_count="17">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>cir_fit <span class="op">=</span> fit_cir(short_rate)</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>cir_parameter_table <span class="op">=</span> pd.DataFrame([cir_fit])</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>cir_parameter_table[<span class="st">"feller margin"</span>] <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> cir_parameter_table[<span class="st">"kappa"</span>] <span class="op">*</span> cir_parameter_table[<span class="st">"theta"</span>] <span class="op">-</span> cir_parameter_table[<span class="st">"sigma"</span>] <span class="op">**</span> <span class="dv">2</span></span>
 <span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>cir_cols <span class="op">=</span> [<span class="st">"kappa"</span>, <span class="st">"theta"</span>, <span class="st">"sigma"</span>, <span class="st">"shift"</span>, <span class="st">"feller margin"</span>, <span class="st">"optimizer success"</span>, <span class="st">"hessian condition"</span>, <span class="st">"residual acf1"</span>, <span class="st">"method"</span>]</span>
 <span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>display(cir_parameter_table[cir_cols].T.rename(columns<span class="op">=</span>{<span class="dv">0</span>: <span class="st">"cir"</span>}))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1870,6 +1996,8 @@ r_{t+\Delta} \approx r_t + \kappa(\theta-r_t)\Delta + \sigma\sqrt{r_t\Delta}Z_t
 <p>Mean reversion controls the median path. If the current short rate is above the estimated long-run mean, the median path drifts lower. Volatility controls the width of the fan. In CIR, the starting rate also controls the width because volatility is scaled by <span class="math inline">\(\sqrt{r_t}\)</span>.</p>
 <p>The fan chart is not a confidence interval around the true future Fed path. It is a distribution under the fitted model. If the model is structurally wrong, the fan can be misleading. For example, a sudden policy pivot, fiscal shock, or inflation surprise can move rates outside the model-implied bands. So we read the fan as a model diagnostic, not as a forecast guarantee.</p>
 <div id="cell-54" class="cell" data-execution_count="18">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> simulate_vasicek_paths(r0, params, years<span class="op">=</span><span class="fl">5.0</span>, steps_per_year<span class="op">=</span><span class="dv">12</span>, n_paths<span class="op">=</span><span class="dv">200</span>, seed<span class="op">=</span><span class="dv">9</span>):</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    local_rng <span class="op">=</span> np.random.default_rng(seed)</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    steps <span class="op">=</span> <span class="bu">int</span>(years <span class="op">*</span> steps_per_year)</span>
@@ -1899,8 +2027,11 @@ r_{t+\Delta} \approx r_t + \kappa(\theta-r_t)\Delta + \sigma\sqrt{r_t\Delta}Z_t
 <span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>        shock <span class="op">=</span> params[<span class="st">"sigma"</span>] <span class="op">*</span> np.sqrt(prev <span class="op">*</span> dt) <span class="op">*</span> local_rng.normal(size<span class="op">=</span>n_paths)</span>
 <span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>        paths[step] <span class="op">=</span> np.maximum(prev <span class="op">+</span> drift <span class="op">+</span> shock, <span class="fl">1e-8</span>)</span>
 <span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(paths <span class="op">-</span> shift, index<span class="op">=</span>np.arange(steps <span class="op">+</span> <span class="dv">1</span>) <span class="op">/</span> steps_per_year)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="cell-55" class="cell" data-execution_count="19">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>vasicek_paths <span class="op">=</span> simulate_vasicek_paths(short_rate.iloc[<span class="op">-</span><span class="dv">1</span>], vasicek_fit, years<span class="op">=</span><span class="dv">5</span>, n_paths<span class="op">=</span><span class="dv">300</span>, seed<span class="op">=</span><span class="dv">11</span>)</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>cir_paths <span class="op">=</span> simulate_cir_paths(short_rate.iloc[<span class="op">-</span><span class="dv">1</span>], cir_fit, years<span class="op">=</span><span class="dv">5</span>, n_paths<span class="op">=</span><span class="dv">300</span>, seed<span class="op">=</span><span class="dv">12</span>)</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">4</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
@@ -1913,15 +2044,18 @@ r_{t+\Delta} \approx r_t + \kappa(\theta-r_t)\Delta + \sigma\sqrt{r_t\Delta}Z_t
 <span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"years"</span>)</span>
 <span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    ax.set_ylabel(<span class="st">"percent"</span>)</span>
 <span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="09_term_structure_models_files/figure-html/cell-20-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="09_term_structure_models_files/figure-html/cell-20-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="09_term_structure_models_files/figure-html/cell-20-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="cell-56" class="cell" data-execution_count="20">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots()</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> paths, label, color <span class="kw">in</span> [(vasicek_paths, <span class="st">"vasicek"</span>, colors[<span class="dv">0</span>]), (cir_paths, <span class="st">"cir"</span>, colors[<span class="dv">1</span>])]:</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> paths.quantile([<span class="fl">0.10</span>, <span class="fl">0.50</span>, <span class="fl">0.90</span>], axis<span class="op">=</span><span class="dv">1</span>).T</span>
@@ -1932,10 +2066,11 @@ r_{t+\Delta} \approx r_t + \kappa(\theta-r_t)\Delta + \sigma\sqrt{r_t\Delta}Z_t
 <span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"percent"</span>)</span>
 <span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>ax.legend()</span>
 <span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="09_term_structure_models_files/figure-html/cell-21-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="09_term_structure_models_files/figure-html/cell-21-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="09_term_structure_models_files/figure-html/cell-21-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1967,6 +2102,8 @@ TP^{model}_{10,t} = y_{10,t} - \bar{r}^{model}_{10,t}
 <p>For example, after several years of high short rates, a rolling Vasicek fit may estimate a high <span class="math inline">\(\theta_t\)</span>. Then the model expects the average future short rate to remain high, so the 10-year yield can look low relative to that expected short-rate path. That creates a negative term-premium proxy. If the high short-rate regime is actually temporary and policy cuts are coming, that proxy may be misleading.</p>
 <p>This is why we compare model-implied proxies with ACM and why we don’t directly trade only on those proxies. We use rolling short-rate models as one part of a broader framework that also includes HW1F, G2, PCA, carry, KRD risk, and validation.</p>
 <div id="cell-60" class="cell" data-execution_count="21">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>rolling_window <span class="op">=</span> <span class="dv">60</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>rolling_rows <span class="op">=</span> []</span>
@@ -2000,6 +2137,7 @@ TP^{model}_{10,t} = y_{10,t} - \bar{r}^{model}_{10,t}
 <span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a>    how<span class="op">=</span><span class="st">"left"</span>)</span>
 <span id="cb23-32"><a href="#cb23-32" aria-hidden="true" tabindex="-1"></a>fit_diagnostics <span class="op">=</span> model_parameters[[<span class="st">"vasicek success"</span>, <span class="st">"vasicek hessian condition"</span>, <span class="st">"vasicek residual acf1"</span>, <span class="st">"cir success"</span>, <span class="st">"cir hessian condition"</span>, <span class="st">"cir residual acf1"</span>, <span class="st">"cir feller margin"</span>]]</span>
 <span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a>display(model_parameters.tail())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2151,6 +2289,8 @@ TP^{model}_{10,t} = y_{10,t} - \bar{r}^{model}_{10,t}
 <p>This is exactly why rolling estimation matters. The recent window is dominated by the post-2022 higher-rate regime. The model’s local long-run mean is no longer around 1%. It rises sharply because recent rates have been high. But the rolling residual diagnostics are still imperfect. Vasicek residual autocorrelation is around <strong>0.64</strong> in the latest window, while CIR residual autocorrelation is closer to <strong>0.29</strong>. CIR is again better on that diagnostic, but neither model is fully capturing the policy-cycle structure.</p>
 <p>The latest model-implied term-premium proxies are negative, around <strong>-82 bps</strong> for Vasicek and <strong>-90 bps</strong> for CIR. That contrasts with the positive ACM estimate. This is a very important limitation: a simple short-rate model can confuse a high expected path of short rates with term premium, especially when the recent estimation window has a high local mean. The proxy is useful, but it is not a substitute for a full no-arbitrage macro-finance decomposition.</p>
 <div id="cell-62" class="cell" data-execution_count="22">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>term_premium_plot <span class="op">=</span> term_premium_comparison.dropna()</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>term_premium_correlation <span class="op">=</span> term_premium_plot.corr().loc[[<span class="st">"acm 10y term premium"</span>], [<span class="st">"vasicek term premium proxy"</span>, <span class="st">"cir term premium proxy"</span>]]</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots()</span>
@@ -2161,10 +2301,11 @@ TP^{model}_{10,t} = y_{10,t} - \bar{r}^{model}_{10,t}
 <span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>ax.legend()</span>
 <span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>display(term_premium_correlation)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="09_term_structure_models_files/figure-html/cell-23-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="09_term_structure_models_files/figure-html/cell-23-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="09_term_structure_models_files/figure-html/cell-23-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2217,6 +2358,8 @@ L(T) = \frac{1-e^{-aT}}{aT}
 <p>In a full HW1F no-arbitrage setup, the drift function is tied to the initial instantaneous forward curve <span class="math inline">\(f(0,t)\)</span> and the volatility structure. The exact formula can get heavy, but the intuition is simple: <span class="math inline">\(\theta(t)\)</span> bends the model’s deterministic path so that model-implied zero-coupon prices match market zero-coupon prices at time zero.</p>
 <p>This is why HW1F is widely used for rate derivatives as a first model. It has only one stochastic factor, so it is simple, but it can fit the initial curve. Its weakness is not curve fitting at time zero. Its weakness is future curve movement: one stochastic factor can’t produce enough independent slope and curvature behavior.</p>
 <div id="cell-66" class="cell" data-execution_count="23">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ar1_expected_score(scores):</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> pd.Series(scores).dropna().astype(<span class="bu">float</span>)</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(x) <span class="op">&lt;</span> <span class="dv">12</span> <span class="kw">or</span> x.std() <span class="op">==</span> <span class="dv">0</span>:</span>
@@ -2271,8 +2414,11 @@ L(T) = \frac{1-e^{-aT}}{aT}
 <span id="cb25-52"><a href="#cb25-52" aria-hidden="true" tabindex="-1"></a>    base <span class="op">=</span> np.asarray(base_curve, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb25-53"><a href="#cb25-53" aria-hidden="true" tabindex="-1"></a>    shocks <span class="op">=</span> local_rng.normal(<span class="dv">0</span>, params[<span class="st">"sigma monthly"</span>], size<span class="op">=</span>n_scenarios)</span>
 <span id="cb25-54"><a href="#cb25-54" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> base <span class="op">+</span> params.get(<span class="st">"expected change"</span>, <span class="dv">0</span>) <span class="op">+</span> shocks[:, <span class="va">None</span>] <span class="op">*</span> params[<span class="st">"loading"</span>][<span class="va">None</span>, :]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="cell-67" class="cell" data-execution_count="24">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>scenario_maturities <span class="op">=</span> np.array([<span class="fl">0.25</span>, <span class="fl">1.0</span>, <span class="fl">2.0</span>, <span class="fl">5.0</span>, <span class="fl">10.0</span>, <span class="fl">30.0</span>], dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>hw1f_fit <span class="op">=</span> estimate_hw1f(zero_rates.tail(rolling_window), scenario_maturities)</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>hw1f_diagnostics <span class="op">=</span> pd.DataFrame({</span>
@@ -2280,6 +2426,7 @@ L(T) = \frac{1-e^{-aT}}{aT}
 <span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"value"</span>: [hw1f_fit[<span class="st">"a"</span>], hw1f_fit[<span class="st">"sigma monthly"</span>], hw1f_fit[<span class="st">"sigma monthly"</span>] <span class="op">*</span> np.sqrt(<span class="dv">12</span>), hw1f_fit[<span class="st">"variance share"</span>]],</span>
 <span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>display(hw1f_diagnostics)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2322,6 +2469,8 @@ L(T) = \frac{1-e^{-aT}}{aT}
 <p>The HW1F diagnostic table reports mean reversion around <strong>0.342</strong>, monthly factor volatility around <strong>30.6 bps</strong>, annualized factor volatility around <strong>106 bps</strong>, and a curve-change variance share of about <strong>54%</strong>.</p>
 <p>That variance share is the main result. One factor explains a little more than half of recent curve-change variance. That is useful, but not enough to describe the whole curve. The remaining variance is slope and curvature movement. If the strategy only used HW1F, it would tend to interpret curve risk as mostly one common rate shock. That can work when the whole curve is moving together, but it will miss environments where the front end and long end move in opposite directions.</p>
 <div id="cell-69" class="cell" data-execution_count="25">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>base_date <span class="op">=</span> curve_dates[<span class="op">-</span><span class="dv">1</span>]</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>base_curve <span class="op">=</span> zero_rates.loc[base_date, scenario_maturities].to_numpy(<span class="bu">float</span>)</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>hw_curves <span class="op">=</span> simulate_hw1f_curves(base_curve, hw1f_fit, n_scenarios<span class="op">=</span><span class="dv">2000</span>, seed<span class="op">=</span><span class="dv">22</span>)</span>
@@ -2330,6 +2479,7 @@ L(T) = \frac{1-e^{-aT}}{aT}
 <span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>[<span class="st">"10%"</span>, <span class="st">"median"</span>, <span class="st">"90%"</span>],</span>
 <span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span>scenario_maturities)</span>
 <span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>display(hw_change_summary)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2425,6 +2575,8 @@ dW_t^{(1)}dW_t^{(2)} = \rho dt
 </ul>
 <p>So G2-style modeling doesn’t just make prettier scenarios. It changes the denominator of the strategy score. A candidate that looks attractive under a one-factor model may become unattractive once slope risk is priced correctly.</p>
 <div id="cell-73" class="cell" data-execution_count="26">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> g2_loadings(a, b, maturities):</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    first <span class="op">=</span> hw1f_loading(a, maturities)</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    second <span class="op">=</span> hw1f_loading(b, maturities)</span>
@@ -2469,8 +2621,11 @@ dW_t^{(1)}dW_t^{(2)} = \rho dt
 <span id="cb28-42"><a href="#cb28-42" aria-hidden="true" tabindex="-1"></a>    base <span class="op">=</span> np.asarray(base_curve, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb28-43"><a href="#cb28-43" aria-hidden="true" tabindex="-1"></a>    factors <span class="op">=</span> local_rng.multivariate_normal(np.zeros(<span class="dv">2</span>), params[<span class="st">"factor covariance"</span>], size<span class="op">=</span>n_scenarios)</span>
 <span id="cb28-44"><a href="#cb28-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> base <span class="op">+</span> params.get(<span class="st">"expected change"</span>, <span class="dv">0</span>) <span class="op">+</span> factors <span class="op">@</span> params[<span class="st">"loadings"</span>].T</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="cell-74" class="cell" data-execution_count="27">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>g2_fit <span class="op">=</span> estimate_g2(zero_rates.tail(rolling_window), scenario_maturities)</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>g2_cov <span class="op">=</span> g2_fit[<span class="st">"factor covariance"</span>]</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>g2_diagnostics <span class="op">=</span> pd.DataFrame({</span>
@@ -2478,6 +2633,7 @@ dW_t^{(1)}dW_t^{(2)} = \rho dt
 <span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"value"</span>: [g2_fit[<span class="st">"a"</span>], g2_fit[<span class="st">"b"</span>], np.sqrt(g2_cov[<span class="dv">0</span>, <span class="dv">0</span>]), np.sqrt(g2_cov[<span class="dv">1</span>, <span class="dv">1</span>]), g2_fit[<span class="st">"factor correlation"</span>], g2_fit[<span class="st">"degenerate"</span>]],</span>
 <span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>})</span>
 <span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>display(g2_diagnostics)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2530,6 +2686,8 @@ dW_t^{(1)}dW_t^{(2)} = \rho dt
 <p>The G2-style diagnostic table shows first-factor mean reversion around <strong>0.342</strong> and second-factor mean reversion around <strong>0.085</strong>. The first monthly factor volatility is about <strong>30.6 bps</strong>, and the second is about <strong>24.5 bps</strong>. The factor correlation is about <strong>0.65</strong>, so the two factors are not independent, but the model is not degenerate.</p>
 <p>The slower second factor is important. It gives the model a way to create longer-horizon curve movement that HW1F can’t capture with one decaying loading. The positive correlation says level and slope-like moves have tended to occur together in the latest 60-month window.</p>
 <div id="cell-76" class="cell" data-execution_count="28">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>g2_curves <span class="op">=</span> simulate_g2_curves(base_curve, g2_fit, n_scenarios<span class="op">=</span><span class="dv">2000</span>, seed<span class="op">=</span><span class="dv">32</span>)</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>hw_many <span class="op">=</span> simulate_hw1f_curves(base_curve, hw1f_fit, n_scenarios<span class="op">=</span><span class="dv">2000</span>, seed<span class="op">=</span><span class="dv">33</span>)</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">4</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
@@ -2552,10 +2710,11 @@ dW_t^{(1)}dW_t^{(2)} = \rho dt
 <span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"yield change bp"</span>)</span>
 <span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend()</span>
 <span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="09_term_structure_models_files/figure-html/cell-29-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="09_term_structure_models_files/figure-html/cell-29-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="09_term_structure_models_files/figure-html/cell-29-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2606,6 +2765,8 @@ f_{t,j} = X_t v_j
 <p>This orientation doesn’t change the model mathematically. It only makes plots and rolling diagnostics readable. Without orientation, a component could appear to jump from positive to negative even though the factor structure didn’t actually change.</p>
 <p>PCA also helps diagnose HW1F and G2. If PC1 explains 95% of curve moves, a one-factor model may be enough. If PC2 and PC3 explain meaningful variance, a one-factor model will miss important risk. In this sample, PC2 and PC3 together are too large to ignore.</p>
 <div id="cell-80" class="cell" data-execution_count="29">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> orient_pca_loadings(loadings, scores):</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    loadings <span class="op">=</span> loadings.copy()</span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    scores <span class="op">=</span> scores.copy()</span>
@@ -2638,8 +2799,11 @@ f_{t,j} = X_t v_j
 <span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>        <span class="st">"explained"</span>: fit.explained_variance_ratio_,</span>
 <span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>        <span class="st">"score rho"</span>: score_rho,</span>
 <span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>    }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="cell-81" class="cell" data-execution_count="30">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>pca_fit <span class="op">=</span> estimate_pca(zero_rates.tail(rolling_window), scenario_maturities, n_components<span class="op">=</span><span class="dv">3</span>)</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>pca_diagnostics <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"pc"</span>: [<span class="st">"pc1 level"</span>, <span class="st">"pc2 slope"</span>, <span class="st">"pc3 curvature"</span>],</span>
@@ -2662,10 +2826,11 @@ f_{t,j} = X_t v_j
 <span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"share"</span>)</span>
 <span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>display(pca_diagnostics)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="09_term_structure_models_files/figure-html/cell-31-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="09_term_structure_models_files/figure-html/cell-31-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="09_term_structure_models_files/figure-html/cell-31-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2735,6 +2900,8 @@ R_p \approx -\sum_{j=1}^{m} KRD_j \Delta y_j
 \]</span></p>
 <p>This active KRD vector is what the term-structure model evaluates. If the model expects rates to fall, positive active duration is attractive. If the model expects rates to rise, lower duration is safer. If the model expects a curve twist, the maturity distribution of KRD matters, not just total duration.</p>
 <div id="cell-84" class="cell" data-execution_count="31">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>ladder_cost_bps <span class="op">=</span> {<span class="dv">2</span>: <span class="fl">2.0</span>, <span class="dv">5</span>: <span class="fl">2.0</span>, <span class="dv">10</span>: <span class="fl">4.0</span>, <span class="dv">30</span>: <span class="fl">6.0</span>}</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>ladder_buckets <span class="op">=</span> [<span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">30</span>]</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>risk_bucket_bounds <span class="op">=</span> {<span class="dv">2</span>: (<span class="fl">0.0</span>, <span class="fl">3.5</span>), <span class="dv">5</span>: (<span class="fl">3.5</span>, <span class="fl">7.5</span>), <span class="dv">10</span>: (<span class="fl">7.5</span>, <span class="fl">20.0</span>), <span class="dv">30</span>: (<span class="fl">20.0</span>, <span class="fl">30.0</span>)}</span>
@@ -2762,8 +2929,11 @@ R_p \approx -\sum_{j=1}^{m} KRD_j \Delta y_j
 <span id="cb33-25"><a href="#cb33-25" aria-hidden="true" tabindex="-1"></a>baseline_ladder <span class="op">=</span> run_duration_ladder(<span class="st">"fixed 5y ladder"</span>, <span class="fl">5.0</span>)</span>
 <span id="cb33-26"><a href="#cb33-26" aria-hidden="true" tabindex="-1"></a>target_reference_ladders <span class="op">=</span> {name: run_duration_ladder(name, target) <span class="cf">for</span> name, target <span class="kw">in</span> duration_targets.items()}</span>
 <span id="cb33-27"><a href="#cb33-27" aria-hidden="true" tabindex="-1"></a>baseline_returns <span class="op">=</span> baseline_ladder.returns.rename(<span class="st">"fixed 5y ladder"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="cell-85" class="cell" data-execution_count="32">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>ladder_rows <span class="op">=</span> []</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, result <span class="kw">in</span> {<span class="st">"fixed 5y ladder"</span>: baseline_ladder, <span class="op">**</span>target_reference_ladders}.items():</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    risk_df <span class="op">=</span> result.diagnostics[<span class="st">"risk"</span>]</span>
@@ -2782,6 +2952,7 @@ R_p \approx -\sum_{j=1}^{m} KRD_j \Delta y_j
 <span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>    ladder_rows.append(row)</span>
 <span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>ladder_comparison <span class="op">=</span> pd.DataFrame(ladder_rows).set_index(<span class="st">"portfolio"</span>)</span>
 <span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>display(ladder_comparison)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2942,6 +3113,8 @@ E[R^{active}] \approx Carry^{active} + Roll^{active} - \Delta KRD^\top E[\Delta 
 <p>In the implementation, carry and roll are computed through the reference ladders rather than manually separated in the markdown. But the economic logic is the same: a higher-duration ladder may have better carry/roll in one environment and worse rate exposure in another.</p>
 <p>This is why a strategy can choose higher duration even if the model doesn’t strongly expect rates to fall. If the carry/roll advantage is positive and active risk is controlled, higher duration can still have a better score. Conversely, if expected curve return is favorable but transition costs and active risk are too high, the strategy can stay neutral.</p>
 <div id="cell-90" class="cell" data-execution_count="33">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model_curve_view(model_name, date, maturities):</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    history <span class="op">=</span> zero_rates.loc[:date].tail(rolling_window)</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    maturities <span class="op">=</span> np.asarray(maturities, dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -2972,8 +3145,11 @@ E[R^{active}] \approx Carry^{active} + Roll^{active} - \Delta KRD^\top E[\Delta 
 <span id="cb35-28"><a href="#cb35-28" aria-hidden="true" tabindex="-1"></a>    drift <span class="op">=</span> loading <span class="op">*</span> params[<span class="st">"kappa"</span>] <span class="op">*</span> (params[<span class="st">"theta"</span>] <span class="op">-</span> short_rate.loc[date]) <span class="op">*</span> dt</span>
 <span id="cb35-29"><a href="#cb35-29" aria-hidden="true" tabindex="-1"></a>    cov <span class="op">=</span> params[<span class="st">"sigma"</span>] <span class="op">**</span> <span class="dv">2</span> <span class="op">*</span> dt <span class="op">*</span> np.outer(loading, loading)</span>
 <span id="cb35-30"><a href="#cb35-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> drift, cov</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="cell-91" class="cell" data-execution_count="34">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>key_maturities <span class="op">=</span> np.array([<span class="fl">2.0</span>, <span class="fl">5.0</span>, <span class="fl">10.0</span>, <span class="fl">30.0</span>], dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> forward_carry_roll_panel(reference_results):</span>
@@ -3055,6 +3231,7 @@ E[R^{active}] \approx Carry^{active} + Roll^{active} - \Delta KRD^\top E[\Delta 
 <span id="cb36-79"><a href="#cb36-79" aria-hidden="true" tabindex="-1"></a>    model_target_logs[model_name] <span class="op">=</span> pd.DataFrame(rows).set_index(<span class="st">"date"</span>)</span>
 <span id="cb36-80"><a href="#cb36-80" aria-hidden="true" tabindex="-1"></a>model_target_by_date <span class="op">=</span> pd.DataFrame({name: log[<span class="st">"target duration"</span>] <span class="cf">for</span> name, log <span class="kw">in</span> model_target_logs.items()})</span>
 <span id="cb36-81"><a href="#cb36-81" aria-hidden="true" tabindex="-1"></a>display(model_target_by_date.tail())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3126,6 +3303,8 @@ Score_m = \frac{\bar{R}^{active}_m}{\sigma(R^{active}_m)}
 <p>computed over the trailing validation window. This is not a full hyperparameter optimization. It is a model-selection layer that asks a simple question: which model has recently converted its duration calls into active return most efficiently?</p>
 <p>The selected model then supplies the target duration for the next decision date. This structure is useful because rate regimes change. A one-factor model can work in level-shift regimes. A two-factor model can work better in twist regimes. CIR can work better when the front-end rate level dominates. Rolling validation lets the strategy adapt instead of forcing one model forever.</p>
 <div id="cell-94" class="cell" data-execution_count="35">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> select_dynamic_duration_targets(model_target_by_date, model_returns, baseline_returns, validation_months<span class="op">=</span><span class="dv">36</span>, neutral_duration<span class="op">=</span><span class="fl">5.0</span>):</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    model_index <span class="op">=</span> model_target_by_date.dropna(how<span class="op">=</span><span class="st">"all"</span>).index</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
@@ -3169,6 +3348,7 @@ Score_m = \frac{\bar{R}^{active}_m}{\sigma(R^{active}_m)}
 <span id="cb37-41"><a href="#cb37-41" aria-hidden="true" tabindex="-1"></a>target_count_table <span class="op">=</span> dynamic_duration_log[<span class="st">"target"</span>].value_counts().rename_axis(<span class="st">"target"</span>).to_frame(<span class="st">"months"</span>)</span>
 <span id="cb37-42"><a href="#cb37-42" aria-hidden="true" tabindex="-1"></a>display(model_selection_table)</span>
 <span id="cb37-43"><a href="#cb37-43" aria-hidden="true" tabindex="-1"></a>display(target_count_table)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3250,6 +3430,8 @@ Score_m = \frac{\bar{R}^{active}_m}{\sigma(R^{active}_m)}
 <p>The target-count table shows <strong>higher duration</strong> selected most often: <strong>100 months</strong>. Neutral duration appears <strong>32 months</strong>, and lower duration only <strong>11 months</strong>. So the strategy has a structural tendency to extend duration over this sample. That makes sense in a long period where falling or low rates rewarded duration, but it also creates vulnerability during rising-rate shocks.</p>
 <p>This is an important honest point: a model-driven strategy can have an economic bias. Here the bias is toward higher duration, and the later stress/risk diagnostics have to tell us whether the extra return compensates for that extra exposure.</p>
 <div id="cell-96" class="cell" data-execution_count="36">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">4</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>nav_series(baseline_returns.reindex(dynamic_duration_returns.index).dropna(), start_value<span class="op">=</span><span class="dv">1</span>).plot(ax<span class="op">=</span>axes[<span class="dv">0</span>], label<span class="op">=</span><span class="st">"fixed 5y ladder"</span>)</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>nav_series(dynamic_duration_returns.dropna(), start_value<span class="op">=</span><span class="dv">1</span>).plot(ax<span class="op">=</span>axes[<span class="dv">0</span>], label<span class="op">=</span><span class="st">"dynamic duration ladder"</span>)</span>
@@ -3261,10 +3443,11 @@ Score_m = \frac{\bar{R}^{active}_m}{\sigma(R^{active}_m)}
 <span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"dynamic ladder active return"</span>)</span>
 <span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="st">"cumulative active return"</span>)</span>
 <span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="09_term_structure_models_files/figure-html/cell-37-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="09_term_structure_models_files/figure-html/cell-37-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="09_term_structure_models_files/figure-html/cell-37-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3272,6 +3455,8 @@ Score_m = \frac{\bar{R}^{active}_m}{\sigma(R^{active}_m)}
 <p>The NAV plot shows the dynamic duration ladder outperforming the fixed 5-year ladder over the evaluation period. The active return plot is mostly positive and trends upward, with setbacks during difficult rate periods.</p>
 <p>This behavior matches the target-count table. Since the model often chose higher duration, it benefited during periods where duration was rewarded. But the active-return line is not smooth. It shows that model-driven duration timing is noisy. The strategy improves long-run performance, but it doesn’t avoid every drawdown.</p>
 <div id="cell-98" class="cell" data-execution_count="37">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> strategy_summary(returns):</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    clean <span class="op">=</span> pd.DataFrame(returns).dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    perf <span class="op">=</span> performance_table(clean, annualization<span class="op">=</span><span class="dv">12</span>)</span>
@@ -3299,6 +3484,7 @@ Score_m = \frac{\bar{R}^{active}_m}{\sigma(R^{active}_m)}
 <span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a>long_active_summary <span class="op">=</span> strategy_summary(long_active_panel)</span>
 <span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a>display(long_raw_summary)</span>
 <span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a>display(long_active_summary)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3469,12 +3655,15 @@ V_{payer} = -V_{receiver}
 <p>A swap overlay is a duration tool. It doesn’t give us free return. It gives us a cheaper and more targeted way to change interest-rate exposure.</p>
 </blockquote>
 <div id="cell-103" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plot_fixed_float_swap_diagram()</span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="09_term_structure_models_files/figure-html/cell-39-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="09_term_structure_models_files/figure-html/cell-39-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="09_term_structure_models_files/figure-html/cell-39-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3519,6 +3708,8 @@ PV01_{receiver} \approx N \times A \times 0.0001
 <p>where <span class="math inline">\(A\)</span> is the swap annuity. This is why the annuity appears everywhere in swap analytics. It is not just a denominator for the par rate. It is also the scale of fixed-leg rate sensitivity.</p>
 <p>For the overlay, this is very convenient. If we know the PV01 we want to add, and we know the PV01 per unit notional, we can solve for notional directly. That makes the overlay more targeted than buying a mix of bonds and hoping the KRD exposure comes out right.</p>
 <div id="cell-107" class="cell" data-execution_count="39">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> zero_rate_at(date, times, shift<span class="op">=</span><span class="fl">0.0</span>):</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>    grid <span class="op">=</span> zero_rates.columns.to_numpy(<span class="bu">float</span>)</span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> zero_rates.loc[pd.Timestamp(date)].to_numpy(<span class="bu">float</span>)</span>
@@ -3565,8 +3756,11 @@ PV01_{receiver} \approx N \times A \times 0.0001
 <span id="cb41-44"><a href="#cb41-44" aria-hidden="true" tabindex="-1"></a>    pv_up <span class="op">=</span> swap_value(date, tenor, fixed_rate, side<span class="op">=</span>side, shift<span class="op">=</span>bump)</span>
 <span id="cb41-45"><a href="#cb41-45" aria-hidden="true" tabindex="-1"></a>    pv_down <span class="op">=</span> swap_value(date, tenor, fixed_rate, side<span class="op">=</span>side, shift<span class="op">=-</span>bump)</span>
 <span id="cb41-46"><a href="#cb41-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>((pv_down <span class="op">-</span> pv_up) <span class="op">/</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="cell-108" class="cell" data-execution_count="40">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>overlay_tenor <span class="op">=</span> <span class="fl">10.0</span></span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>overlay_slippage_bp <span class="op">=</span> <span class="fl">0.5</span></span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>overlay_duration_budget <span class="op">=</span> <span class="fl">1.5</span></span>
@@ -3576,6 +3770,7 @@ PV01_{receiver} \approx N \times A \times 0.0001
 <span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> side <span class="kw">in</span> [<span class="st">"receiver"</span>, <span class="st">"payer"</span>]</span>
 <span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>])</span>
 <span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>display(example_swap)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3646,6 +3841,8 @@ R^{overlay}_{t+1} = \frac{V_{t+1}-Cost_t}{NAV_t}
 <p>The cost term is based on the change in signed notional, not just whether a position exists. If we go from receiver to payer, the signed notional changes a lot, so the trade cost is larger. If we slightly resize an existing receiver, cost is smaller.</p>
 <p>This is one of the reasons swaps are useful but not magic. They reduce the need to rebalance the cash ladder, but they introduce their own implementation choices: tenor, notional cap, slippage assumption, reset frequency, collateral/cash treatment, and whether the synthetic Treasury-implied swap curve is a good proxy for real swap-market pricing.</p>
 <div id="4b927aef" class="cell" data-execution_count="41">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> swap_overlay_signal(target_duration, neutral_duration<span class="op">=</span><span class="fl">5.0</span>, neutral_band<span class="op">=</span><span class="fl">0.5</span>):</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    target <span class="op">=</span> <span class="bu">float</span>(target_duration)</span>
 <span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> target <span class="op">&gt;</span> neutral_duration <span class="op">+</span> neutral_band:</span>
@@ -3735,6 +3932,7 @@ R^{overlay}_{t+1} = \frac{V_{t+1}-Cost_t}{NAV_t}
 <span id="cb43-87"><a href="#cb43-87" aria-hidden="true" tabindex="-1"></a>    diagnostics<span class="op">=</span>{<span class="st">"overlay log"</span>: swap_overlay_log})</span>
 <span id="cb43-88"><a href="#cb43-88" aria-hidden="true" tabindex="-1"></a>swap_overlay_returns <span class="op">=</span> swap_overlay_result.returns</span>
 <span id="cb43-89"><a href="#cb43-89" aria-hidden="true" tabindex="-1"></a>swap_overlay_log.tail()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display" data-execution_count="41">
 <div>
 
@@ -3885,6 +4083,8 @@ R^{overlay}_{t+1} = \frac{V_{t+1}-Cost_t}{NAV_t}
 <p>The latest overlay log shows that the strategy is in a <strong>receiver</strong> position through late 2025 and January 2026. That means it is adding duration on top of the fixed 5-year ladder. The notional is around <strong>0.184–0.186</strong> relative to NAV, and the overlay PV01 is around <strong>0.00015</strong>.</p>
 <p>The overlay contributed positively in September, October, and November 2025, then lost money in December and January as rates moved against the receiver position. This is exactly how receiver swaps behave: they gain when rates fall and lose when rates rise. The core ladder return and overlay return are shown separately, which is useful because we can see whether the overlay is truly adding value or simply increasing total volatility.</p>
 <div id="82b2e41d" class="cell" data-execution_count="42">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>swap_overlay_summary <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"item"</span>: [<span class="st">"first overlay return"</span>, <span class="st">"last overlay return"</span>, <span class="st">"active months"</span>, <span class="st">"average abs notional"</span>, <span class="st">"average cost return"</span>],</span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"value"</span>: [</span>
@@ -3900,10 +4100,11 @@ R^{overlay}_{t+1} = \frac{V_{t+1}-Cost_t}{NAV_t}
 <span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a>swap_overlay_log[[<span class="st">"core return"</span>, <span class="st">"overlay return"</span>, <span class="st">"cost return"</span>]].cumsum().plot(ax<span class="op">=</span>axes[<span class="dv">1</span>], title<span class="op">=</span><span class="st">"swap overlay cumulative return pieces"</span>)</span>
 <span id="cb44-14"><a href="#cb44-14" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb44-15"><a href="#cb44-15" aria-hidden="true" tabindex="-1"></a>display(swap_overlay_summary)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="09_term_structure_models_files/figure-html/cell-43-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="09_term_structure_models_files/figure-html/cell-43-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="09_term_structure_models_files/figure-html/cell-43-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3984,6 +4185,8 @@ R^{active}_{p,t} = R_{p,t} - R_{benchmark,t}
 </ul>
 <p>For model evaluation, the active return is the cleanest measure. For investor opportunity cost, SOFR-excess is the harsher and more realistic measure.</p>
 <div id="ebcc146c" class="cell" data-execution_count="43">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>portfolio_returns <span class="op">=</span> pd.concat([</span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>    baseline_returns.rename(<span class="st">"fixed 5y ladder"</span>),</span>
 <span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>    dynamic_duration_returns,</span>
@@ -3999,6 +4202,7 @@ R^{active}_{p,t} = R_{p,t} - R_{benchmark,t}
 <span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a>display(raw_performance)</span>
 <span id="cb45-14"><a href="#cb45-14" aria-hidden="true" tabindex="-1"></a>display(sofr_excess_performance)</span>
 <span id="cb45-15"><a href="#cb45-15" aria-hidden="true" tabindex="-1"></a>display(active_performance)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4169,6 +4373,8 @@ R^{active}_{p,t} = R_{p,t} - R_{benchmark,t}
 <p>The SOFR-excess table is more severe. All strategies are negative versus SOFR because cash was extremely competitive during the high-rate period. The dynamic ladder has the least negative SOFR-excess annual return, around <strong>-2.24%</strong>, compared with <strong>-2.52%</strong> for fixed. So the active model helps, but it doesn’t overcome the cash hurdle.</p>
 <p>The active table is the cleanest comparison against the fixed ladder. The dynamic ladder has annual active return around <strong>0.29%</strong> with active volatility around <strong>1.04%</strong>, producing an active Sharpe near <strong>0.29</strong>. The swap overlay has smaller active return around <strong>0.12%</strong>, but also slightly lower active volatility. The dynamic cash-ladder implementation is stronger here than the synthetic overlay.</p>
 <div id="0539b41c" class="cell" data-execution_count="44">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="dv">4</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> col <span class="kw">in</span> modern_returns.columns:</span>
 <span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>    nav_series(modern_returns[col].dropna(), start_value<span class="op">=</span><span class="dv">1</span>).plot(ax<span class="op">=</span>axes[<span class="dv">0</span>], label<span class="op">=</span>col)</span>
@@ -4179,10 +4385,11 @@ R^{active}_{p,t} = R_{p,t} - R_{benchmark,t}
 <span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"sofr-excess drawdown"</span>)</span>
 <span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend()</span>
 <span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="09_term_structure_models_files/figure-html/cell-45-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="09_term_structure_models_files/figure-html/cell-45-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="09_term_structure_models_files/figure-html/cell-45-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4190,6 +4397,8 @@ R^{active}_{p,t} = R_{p,t} - R_{benchmark,t}
 <p>The NAV and SOFR-excess drawdown plots make the modern fixed-income pain very visible. Raw NAVs decline heavily during the 2022 rate shock and then recover gradually. The dynamic strategy does somewhat better, but it doesn’t avoid the main drawdown because its duration exposure still suffers when rates reprice upward.</p>
 <p>The SOFR-excess drawdown plot is even more important. It shows that the opportunity cost of holding duration instead of cash was persistent. In a zero-rate world, bond carry looks attractive. In a high-SOFR world, the hurdle rate is high, and a bond strategy has to earn enough price return or carry advantage to beat cash. During much of this sample, that was difficult.</p>
 <div id="b32c75fa" class="cell" data-execution_count="45">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>var_es_raw <span class="op">=</span> var_es_table(modern_returns, alpha<span class="op">=</span><span class="fl">0.05</span>, methods<span class="op">=</span>(<span class="st">"hist"</span>, <span class="st">"cf"</span>))</span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>var_es_excess <span class="op">=</span> var_es_table(modern_excess_returns, alpha<span class="op">=</span><span class="fl">0.05</span>, methods<span class="op">=</span>(<span class="st">"hist"</span>, <span class="st">"cf"</span>))</span>
 <span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>cost_turnover <span class="op">=</span> pd.DataFrame({</span>
@@ -4207,6 +4416,7 @@ R^{active}_{p,t} = R_{p,t} - R_{benchmark,t}
 <span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a>display(var_es_raw)</span>
 <span id="cb47-16"><a href="#cb47-16" aria-hidden="true" tabindex="-1"></a>display(var_es_excess)</span>
 <span id="cb47-17"><a href="#cb47-17" aria-hidden="true" tabindex="-1"></a>display(cost_turnover)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4354,6 +4564,8 @@ R^{active}_{p,t} = R_{p,t} - R_{benchmark,t}
 <p>so the PnL is approximately minus total key-rate duration times 1%. This is not a full repricing with convexity, but it is a clean diagnostic of current rate exposure.</p>
 <p>Scenario diagnostics are useful because backtests tell us what happened historically, while KRD scenarios tell us what the current portfolio would lose or gain under a simple shock. A strategy with higher recent return can still be dangerous if it has too much current duration.</p>
 <div id="0ab9ae26" class="cell" data-execution_count="46">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> parallel_shift_scenarios_local(shock_bps, maturities):</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
 <span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> shock <span class="kw">in</span> shock_bps:</span>
@@ -4397,10 +4609,11 @@ R^{active}_{p,t} = R_{p,t} - R_{benchmark,t}
 <span id="cb48-41"><a href="#cb48-41" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">8</span>)</span>
 <span id="cb48-42"><a href="#cb48-42" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb48-43"><a href="#cb48-43" aria-hidden="true" tabindex="-1"></a>display(scenario_summary)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="09_term_structure_models_files/figure-html/cell-47-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="09_term_structure_models_files/figure-html/cell-47-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="09_term_structure_models_files/figure-html/cell-47-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4484,6 +4697,8 @@ e_{t+1} = r_{t+1} - E_t[r_{t+1}]
 <p>In rate data, some residual autocorrelation is hard to avoid because central-bank policy is persistent. Rate changes are not independent coin flips. Hiking cycles and cutting cycles create serial dependence. So we shouldn’t expect perfect white noise. But comparing residual autocorrelation across models still tells us which model absorbs more structure.</p>
 <p>That is why CIR’s lower median residual autocorrelation matters. It suggests level-dependent volatility and the shifted square-root structure are capturing some dynamics Vasicek leaves behind. But we still treat CIR carefully because numerical conditioning and parameter stability are separate issues.</p>
 <div id="c9d08bc9" class="cell" data-execution_count="47">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>stability_rows <span class="op">=</span> []</span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> date <span class="kw">in</span> model_parameters.index[::<span class="dv">2</span>]:</span>
 <span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>    history <span class="op">=</span> zero_rates.loc[:date].tail(rolling_window)</span>
@@ -4512,10 +4727,11 @@ e_{t+1} = r_{t+1} - E_t[r_{t+1}]
 <span id="cb49-26"><a href="#cb49-26" aria-hidden="true" tabindex="-1"></a>scenario_parameters[[<span class="st">"g2 correlation"</span>, <span class="st">"pca three pc total"</span>]].plot(ax<span class="op">=</span>axes[<span class="dv">1</span>, <span class="dv">1</span>], title<span class="op">=</span><span class="st">"factor diagnostics"</span>)</span>
 <span id="cb49-27"><a href="#cb49-27" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb49-28"><a href="#cb49-28" aria-hidden="true" tabindex="-1"></a>display(fit_diagnostic_summary)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="09_term_structure_models_files/figure-html/cell-48-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="09_term_structure_models_files/figure-html/cell-48-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="09_term_structure_models_files/figure-html/cell-48-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4595,6 +4811,8 @@ e_{t+1} = r_{t+1} - E_t[r_{t+1}]
 </ul>
 <p>So the Japan application is a stress test of the framework. It asks whether the same machinery can adapt to a market where the absolute rate level, volatility scale, and policy regime are completely different.</p>
 <div id="48ad4a98" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> functools <span class="im">import</span> partial</span>
 <span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.backtest.fixed_income <span class="im">import</span> combine_ladder_with_return_overlay, run_bond_ladder_backtest</span>
 <span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.dataio <span class="im">import</span> load_par_yield_curve</span>
@@ -4734,6 +4952,7 @@ e_{t+1} = r_{t+1} - E_t[r_{t+1}]
 <span id="cb50-137"><a href="#cb50-137" aria-hidden="true" tabindex="-1"></a>plot_scenario_pnl_bars(flat_axes[<span class="dv">10</span>], jp_scenario_summary, title<span class="op">=</span><span class="st">"Japan parallel-rate scenarios"</span>)</span>
 <span id="cb50-138"><a href="#cb50-138" aria-hidden="true" tabindex="-1"></a>plot_rolling_active_return(flat_axes[<span class="dv">11</span>], jp_active_returns, window<span class="op">=</span><span class="dv">12</span>, title<span class="op">=</span><span class="st">"Japan 12-month rolling active return"</span>)</span>
 <span id="cb50-139"><a href="#cb50-139" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5063,7 +5282,7 @@ e_{t+1} = r_{t+1} - E_t[r_{t+1}]
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="09_term_structure_models_files/figure-html/cell-49-output-9.png" class="img-fluid figure-img"></p>
+<p><a href="09_term_structure_models_files/figure-html/cell-49-output-9.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="09_term_structure_models_files/figure-html/cell-49-output-9.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5172,6 +5391,57 @@ e_{t+1} = r_{t+1} - E_t[r_{t+1}]
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -5515,6 +5785,38 @@ e_{t+1} = r_{t+1} - E_t[r_{t+1}]
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 

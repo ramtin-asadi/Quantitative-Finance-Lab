@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>13. American Options and Numerical Pricing Methods – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/12_financial_conditions_index.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -112,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -143,7 +144,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -292,13 +293,114 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-core-problem-pricing-a-contract-with-a-decision-inside-it" id="toc-the-core-problem-pricing-a-contract-with-a-decision-inside-it" class="nav-link active" data-scroll-target="#the-core-problem-pricing-a-contract-with-a-decision-inside-it">1) The Core Problem: Pricing a Contract with a Decision Inside It</a>
+  <ul class="collapse">
+  <li><a href="#snell-envelope-view-of-the-american-price" id="toc-snell-envelope-view-of-the-american-price" class="nav-link" data-scroll-target="#snell-envelope-view-of-the-american-price">Snell Envelope View of the American Price</a></li>
+  <li><a href="#risk-neutral-pricing-and-the-exercise-clock" id="toc-risk-neutral-pricing-and-the-exercise-clock" class="nav-link" data-scroll-target="#risk-neutral-pricing-and-the-exercise-clock">Risk-Neutral Pricing and the Exercise Clock</a></li>
+  <li><a href="#what-the-american-premium-measures" id="toc-what-the-american-premium-measures" class="nav-link" data-scroll-target="#what-the-american-premium-measures">What the American Premium Measures</a></li>
+  </ul></li>
+  <li><a href="#data-cleaning-for-american-option-numerics" id="toc-data-cleaning-for-american-option-numerics" class="nav-link" data-scroll-target="#data-cleaning-for-american-option-numerics">2) Data Cleaning for American-Option Numerics</a>
+  <ul class="collapse">
+  <li><a href="#data-variables-as-inputs-to-an-optimal-stopping-problem" id="toc-data-variables-as-inputs-to-an-optimal-stopping-problem" class="nav-link" data-scroll-target="#data-variables-as-inputs-to-an-optimal-stopping-problem">Data Variables as Inputs to an Optimal-Stopping Problem</a></li>
+  <li><a href="#why-the-data-filters-are-numerical-assumptions" id="toc-why-the-data-filters-are-numerical-assumptions" class="nav-link" data-scroll-target="#why-the-data-filters-are-numerical-assumptions">Why the Data Filters Are Numerical Assumptions</a></li>
+  <li><a href="#discrete-dividends-continuous-yield-and-what-we-lose" id="toc-discrete-dividends-continuous-yield-and-what-we-lose" class="nav-link" data-scroll-target="#discrete-dividends-continuous-yield-and-what-we-lose">Discrete Dividends, Continuous Yield, and What We Lose</a></li>
+  </ul></li>
+  <li><a href="#representative-contracts-and-the-first-exercise-problem" id="toc-representative-contracts-and-the-first-exercise-problem" class="nav-link" data-scroll-target="#representative-contracts-and-the-first-exercise-problem">3) Representative Contracts and the First Exercise Problem</a>
+  <ul class="collapse">
+  <li><a href="#representative-contracts-as-numerical-stress-tests" id="toc-representative-contracts-as-numerical-stress-tests" class="nav-link" data-scroll-target="#representative-contracts-as-numerical-stress-tests">Representative Contracts as Numerical Stress Tests</a></li>
+  <li><a href="#the-exercise-boundary-as-a-decision-rule" id="toc-the-exercise-boundary-as-a-decision-rule" class="nav-link" data-scroll-target="#the-exercise-boundary-as-a-decision-rule">The Exercise Boundary as a Decision Rule</a></li>
+  </ul></li>
+  <li><a href="#cox-ross-rubinstein-tree-pricing" id="toc-cox-ross-rubinstein-tree-pricing" class="nav-link" data-scroll-target="#cox-ross-rubinstein-tree-pricing">4) Cox-Ross-Rubinstein Tree Pricing</a>
+  <ul class="collapse">
+  <li><a href="#risk-neutral-probability-is-a-pricing-weight-not-a-forecast" id="toc-risk-neutral-probability-is-a-pricing-weight-not-a-forecast" class="nav-link" data-scroll-target="#risk-neutral-probability-is-a-pricing-weight-not-a-forecast">Risk-Neutral Probability Is a Pricing Weight, Not a Forecast</a></li>
+  <li><a href="#backward-induction-as-a-dynamic-programming-algorithm" id="toc-backward-induction-as-a-dynamic-programming-algorithm" class="nav-link" data-scroll-target="#backward-induction-as-a-dynamic-programming-algorithm">Backward Induction as a Dynamic Programming Algorithm</a></li>
+  <li><a href="#a-small-backward-induction-example" id="toc-a-small-backward-induction-example" class="nav-link" data-scroll-target="#a-small-backward-induction-example">A Small Backward-Induction Example</a></li>
+  <li><a href="#deriving-the-crr-risk-neutral-probability" id="toc-deriving-the-crr-risk-neutral-probability" class="nav-link" data-scroll-target="#deriving-the-crr-risk-neutral-probability">Deriving the CRR Risk-Neutral Probability</a></li>
+  <li><a href="#tree-convergence-is-about-grid-alignment-too" id="toc-tree-convergence-is-about-grid-alignment-too" class="nav-link" data-scroll-target="#tree-convergence-is-about-grid-alignment-too">Tree Convergence Is About Grid Alignment Too</a></li>
+  <li><a href="#reading-the-exercise-region-plot-carefully" id="toc-reading-the-exercise-region-plot-carefully" class="nav-link" data-scroll-target="#reading-the-exercise-region-plot-carefully">Reading the Exercise Region Plot Carefully</a></li>
+  </ul></li>
+  <li><a href="#why-the-c-kernel-matters" id="toc-why-the-c-kernel-matters" class="nav-link" data-scroll-target="#why-the-c-kernel-matters">5) Why the C++ Kernel Matters</a>
+  <ul class="collapse">
+  <li><a href="#complexity-and-the-reason-compiled-code-changes-the-project" id="toc-complexity-and-the-reason-compiled-code-changes-the-project" class="nav-link" data-scroll-target="#complexity-and-the-reason-compiled-code-changes-the-project">Complexity and the Reason Compiled Code Changes the Project</a></li>
+  <li><a href="#implementation-design-why-the-kernels-are-separated" id="toc-implementation-design-why-the-kernels-are-separated" class="nav-link" data-scroll-target="#implementation-design-why-the-kernels-are-separated">Implementation Design: Why the Kernels Are Separated</a></li>
+  <li><a href="#why-full-chain-pricing-uses-chunks-and-cache" id="toc-why-full-chain-pricing-uses-chunks-and-cache" class="nav-link" data-scroll-target="#why-full-chain-pricing-uses-chunks-and-cache">Why Full-Chain Pricing Uses Chunks and Cache</a></li>
+  </ul></li>
+  <li><a href="#finite-difference-pde-pricing" id="toc-finite-difference-pde-pricing" class="nav-link" data-scroll-target="#finite-difference-pde-pricing">6) Finite-Difference PDE Pricing</a>
+  <ul class="collapse">
+  <li><a href="#interpolation-back-to-the-observed-spot" id="toc-interpolation-back-to-the-observed-spot" class="nav-link" data-scroll-target="#interpolation-back-to-the-observed-spot">Interpolation Back to the Observed Spot</a></li>
+  <li><a href="#the-american-pde-in-time-to-expiry-form" id="toc-the-american-pde-in-time-to-expiry-form" class="nav-link" data-scroll-target="#the-american-pde-in-time-to-expiry-form">The American PDE in Time-to-Expiry Form</a></li>
+  <li><a href="#interpreting-bidask-fit-as-a-market-diagnostic" id="toc-interpreting-bidask-fit-as-a-market-diagnostic" class="nav-link" data-scroll-target="#interpreting-bidask-fit-as-a-market-diagnostic">Interpreting Bid/Ask Fit as a Market Diagnostic</a></li>
+  <li><a href="#boundary-conditions-in-the-pde-grid" id="toc-boundary-conditions-in-the-pde-grid" class="nav-link" data-scroll-target="#boundary-conditions-in-the-pde-grid">Boundary Conditions in the PDE Grid</a></li>
+  <li><a href="#explicit-scheme-stability-intuition" id="toc-explicit-scheme-stability-intuition" class="nav-link" data-scroll-target="#explicit-scheme-stability-intuition">Explicit Scheme Stability Intuition</a></li>
+  <li><a href="#the-linear-complementarity-problem-in-matrix-form" id="toc-the-linear-complementarity-problem-in-matrix-form" class="nav-link" data-scroll-target="#the-linear-complementarity-problem-in-matrix-form">The Linear Complementarity Problem in Matrix Form</a></li>
+  <li><a href="#psor-as-projected-linear-solving" id="toc-psor-as-projected-linear-solving" class="nav-link" data-scroll-target="#psor-as-projected-linear-solving">PSOR as Projected Linear Solving</a></li>
+  <li><a href="#theta-scheme-coefficients-and-financial-meaning" id="toc-theta-scheme-coefficients-and-financial-meaning" class="nav-link" data-scroll-target="#theta-scheme-coefficients-and-financial-meaning">Theta Scheme Coefficients and Financial Meaning</a></li>
+  <li><a href="#why-theta-schemes-balance-stability-and-accuracy" id="toc-why-theta-schemes-balance-stability-and-accuracy" class="nav-link" data-scroll-target="#why-theta-schemes-balance-stability-and-accuracy">Why Theta Schemes Balance Stability and Accuracy</a></li>
+  <li><a href="#pde-value-slices-as-time-value-decomposition" id="toc-pde-value-slices-as-time-value-decomposition" class="nav-link" data-scroll-target="#pde-value-slices-as-time-value-decomposition">PDE Value Slices as Time-Value Decomposition</a></li>
+  <li><a href="#greeks-from-numerical-prices" id="toc-greeks-from-numerical-prices" class="nav-link" data-scroll-target="#greeks-from-numerical-prices">Greeks from Numerical Prices</a></li>
+  </ul></li>
+  <li><a href="#regime-grids-and-pde-method-selection" id="toc-regime-grids-and-pde-method-selection" class="nav-link" data-scroll-target="#regime-grids-and-pde-method-selection">7) Regime Grids and PDE Method Selection</a>
+  <ul class="collapse">
+  <li><a href="#why-regime-grids-are-used-instead-of-pricing-every-contract-with-pde-and-lsm" id="toc-why-regime-grids-are-used-instead-of-pricing-every-contract-with-pde-and-lsm" class="nav-link" data-scroll-target="#why-regime-grids-are-used-instead-of-pricing-every-contract-with-pde-and-lsm">Why Regime Grids Are Used Instead of Pricing Every Contract with PDE and LSM</a></li>
+  <li><a href="#psor-residuals-and-iterations-as-solver-diagnostics" id="toc-psor-residuals-and-iterations-as-solver-diagnostics" class="nav-link" data-scroll-target="#psor-residuals-and-iterations-as-solver-diagnostics">PSOR Residuals and Iterations as Solver Diagnostics</a></li>
+  <li><a href="#why-regime-cells-are-a-better-use-of-pde-and-lsm" id="toc-why-regime-cells-are-a-better-use-of-pde-and-lsm" class="nav-link" data-scroll-target="#why-regime-cells-are-a-better-use-of-pde-and-lsm">Why Regime Cells Are a Better Use of PDE and LSM</a></li>
+  <li><a href="#pde-method-selection-is-a-multi-objective-choice" id="toc-pde-method-selection-is-a-multi-objective-choice" class="nav-link" data-scroll-target="#pde-method-selection-is-a-multi-objective-choice">PDE Method Selection Is a Multi-Objective Choice</a></li>
+  <li><a href="#why-pde-tree-disagreement-can-be-positive-or-negative" id="toc-why-pde-tree-disagreement-can-be-positive-or-negative" class="nav-link" data-scroll-target="#why-pde-tree-disagreement-can-be-positive-or-negative">Why PDE-Tree Disagreement Can Be Positive or Negative</a></li>
+  </ul></li>
+  <li><a href="#least-squares-monte-carlo-as-a-policy-estimator" id="toc-least-squares-monte-carlo-as-a-policy-estimator" class="nav-link" data-scroll-target="#least-squares-monte-carlo-as-a-policy-estimator">8) Least-Squares Monte Carlo as a Policy Estimator</a>
+  <ul class="collapse">
+  <li><a href="#reading-the-lsm-policy-plot" id="toc-reading-the-lsm-policy-plot" class="nav-link" data-scroll-target="#reading-the-lsm-policy-plot">Reading the LSM Policy Plot</a></li>
+  <li><a href="#lsm-regression-target-and-the-meaning-of-continuation-learning" id="toc-lsm-regression-target-and-the-meaning-of-continuation-learning" class="nav-link" data-scroll-target="#lsm-regression-target-and-the-meaning-of-continuation-learning">LSM Regression Target and the Meaning of Continuation Learning</a></li>
+  <li><a href="#lsm-as-conditional-expectation-learning" id="toc-lsm-as-conditional-expectation-learning" class="nav-link" data-scroll-target="#lsm-as-conditional-expectation-learning">LSM as Conditional-Expectation Learning</a></li>
+  <li><a href="#basis-functions-and-the-bias-variance-tradeoff" id="toc-basis-functions-and-the-bias-variance-tradeoff" class="nav-link" data-scroll-target="#basis-functions-and-the-bias-variance-tradeoff">Basis Functions and the Bias-Variance Tradeoff</a></li>
+  <li><a href="#backward-training-and-forward-evaluation" id="toc-backward-training-and-forward-evaluation" class="nav-link" data-scroll-target="#backward-training-and-forward-evaluation">Backward Training and Forward Evaluation</a></li>
+  <li><a href="#trainevaluate-separation-in-lsm" id="toc-trainevaluate-separation-in-lsm" class="nav-link" data-scroll-target="#trainevaluate-separation-in-lsm">Train/Evaluate Separation in LSM</a></li>
+  <li><a href="#lsm-confidence-intervals-and-what-they-miss" id="toc-lsm-confidence-intervals-and-what-they-miss" class="nav-link" data-scroll-target="#lsm-confidence-intervals-and-what-they-miss">LSM Confidence Intervals and What They Miss</a></li>
+  <li><a href="#why-high-lsm-standard-error-clusters-in-specific-regimes" id="toc-why-high-lsm-standard-error-clusters-in-specific-regimes" class="nav-link" data-scroll-target="#why-high-lsm-standard-error-clusters-in-specific-regimes">Why High LSM Standard Error Clusters in Specific Regimes</a></li>
+  </ul></li>
+  <li><a href="#comparing-tree-pde-and-lsm-across-regimes" id="toc-comparing-tree-pde-and-lsm-across-regimes" class="nav-link" data-scroll-target="#comparing-tree-pde-and-lsm-across-regimes">9) Comparing Tree, PDE, and LSM Across Regimes</a>
+  <ul class="collapse">
+  <li><a href="#why-disagreement-peaks-near-short-dated-atm-contracts" id="toc-why-disagreement-peaks-near-short-dated-atm-contracts" class="nav-link" data-scroll-target="#why-disagreement-peaks-near-short-dated-atm-contracts">Why Disagreement Peaks Near Short-Dated ATM Contracts</a></li>
+  <li><a href="#model-disagreement-as-a-practical-risk-control" id="toc-model-disagreement-as-a-practical-risk-control" class="nav-link" data-scroll-target="#model-disagreement-as-a-practical-risk-control">Model Disagreement as a Practical Risk Control</a></li>
+  </ul></li>
+  <li><a href="#assignment-risk-for-short-calls" id="toc-assignment-risk-for-short-calls" class="nav-link" data-scroll-target="#assignment-risk-for-short-calls">10) Assignment Risk for Short Calls</a>
+  <ul class="collapse">
+  <li><a href="#assignment-defense-as-a-short-option-risk-decision" id="toc-assignment-defense-as-a-short-option-risk-decision" class="nav-link" data-scroll-target="#assignment-defense-as-a-short-option-risk-decision">Assignment Defense as a Short-Option Risk Decision</a></li>
+  <li><a href="#assignment-risk-as-a-feature-based-exercise-proxy" id="toc-assignment-risk-as-a-feature-based-exercise-proxy" class="nav-link" data-scroll-target="#assignment-risk-as-a-feature-based-exercise-proxy">Assignment Risk as a Feature-Based Exercise Proxy</a></li>
+  <li><a href="#the-dividend-exercise-condition-for-calls" id="toc-the-dividend-exercise-condition-for-calls" class="nav-link" data-scroll-target="#the-dividend-exercise-condition-for-calls">The Dividend Exercise Condition for Calls</a></li>
+  <li><a href="#boundary-distance-and-assignment-risk-geometry" id="toc-boundary-distance-and-assignment-risk-geometry" class="nav-link" data-scroll-target="#boundary-distance-and-assignment-risk-geometry">Boundary Distance and Assignment-Risk Geometry</a></li>
+  </ul></li>
+  <li><a href="#option-overlay-strategies" id="toc-option-overlay-strategies" class="nav-link" data-scroll-target="#option-overlay-strategies">11) Option Overlay Strategies</a>
+  <ul class="collapse">
+  <li><a href="#scheduling-rules-as-a-trading-policy" id="toc-scheduling-rules-as-a-trading-policy" class="nav-link" data-scroll-target="#scheduling-rules-as-a-trading-policy">Scheduling Rules as a Trading Policy</a></li>
+  <li><a href="#strategy-cashflows-and-the-difference-between-premium-income-and-total-return" id="toc-strategy-cashflows-and-the-difference-between-premium-income-and-total-return" class="nav-link" data-scroll-target="#strategy-cashflows-and-the-difference-between-premium-income-and-total-return">Strategy Cashflows and the Difference Between Premium Income and Total Return</a></li>
+  <li><a href="#covered-calls-put-protection-and-collars-with-real-cashflows" id="toc-covered-calls-put-protection-and-collars-with-real-cashflows" class="nav-link" data-scroll-target="#covered-calls-put-protection-and-collars-with-real-cashflows">Covered Calls, Put Protection, and Collars with Real Cashflows</a></li>
+  <li><a href="#why-naive-and-boundary-aware-schedules-choose-different-contracts" id="toc-why-naive-and-boundary-aware-schedules-choose-different-contracts" class="nav-link" data-scroll-target="#why-naive-and-boundary-aware-schedules-choose-different-contracts">Why Naive and Boundary-Aware Schedules Choose Different Contracts</a></li>
+  <li><a href="#reading-the-overlay-results-by-objective" id="toc-reading-the-overlay-results-by-objective" class="nav-link" data-scroll-target="#reading-the-overlay-results-by-objective">Reading the Overlay Results by Objective</a></li>
+  <li><a href="#threshold-sensitivity-as-a-policy-risk-test" id="toc-threshold-sensitivity-as-a-policy-risk-test" class="nav-link" data-scroll-target="#threshold-sensitivity-as-a-policy-risk-test">Threshold Sensitivity as a Policy-Risk Test</a></li>
+  <li><a href="#selected-moneyness-and-cashflow-decomposition" id="toc-selected-moneyness-and-cashflow-decomposition" class="nav-link" data-scroll-target="#selected-moneyness-and-cashflow-decomposition">Selected Moneyness and Cashflow Decomposition</a></li>
+  </ul></li>
+  <li><a href="#secondary-implementation-on-qqq-through-the-library" id="toc-secondary-implementation-on-qqq-through-the-library" class="nav-link" data-scroll-target="#secondary-implementation-on-qqq-through-the-library">12) Secondary Implementation on QQQ Through the Library</a>
+  <ul class="collapse">
+  <li><a href="#moneyness-selection-in-qqq-overlays" id="toc-moneyness-selection-in-qqq-overlays" class="nav-link" data-scroll-target="#moneyness-selection-in-qqq-overlays">Moneyness Selection in QQQ Overlays</a></li>
+  <li><a href="#library-implementation-and-what-it-proves" id="toc-library-implementation-and-what-it-proves" class="nav-link" data-scroll-target="#library-implementation-and-what-it-proves">Library Implementation and What It Proves</a></li>
+  <li><a href="#qqq-as-a-different-overlay-laboratory" id="toc-qqq-as-a-different-overlay-laboratory" class="nav-link" data-scroll-target="#qqq-as-a-different-overlay-laboratory">QQQ as a Different Overlay Laboratory</a></li>
+  <li><a href="#qqq-as-a-different-option-overlay-environment" id="toc-qqq-as-a-different-option-overlay-environment" class="nav-link" data-scroll-target="#qqq-as-a-different-option-overlay-environment">QQQ as a Different Option-Overlay Environment</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">13. American Options and Numerical Pricing Methods</span></h1>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">13. American Options and Numerical Pricing Methods</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -473,6 +575,8 @@ AP = E^Q\left[\sum_{t_j &lt; T} e^{-r t_j}\mathbf{1}_{\{\tau=t_j\}}\left(h(S_{t_
 <p>The repeated option-chain/rate/underlying data comes from the same data layer used in the earlier option projects. For reproduction, check the matching folders inside the repo’s <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data">data directory</a>, where each source has its own README/script workflow. We don’t link to a single local CSV or parquet file because those local filenames are generated artifacts, not the reproducibility entry point.</p>
 </blockquote>
 <div id="57e8b18c" class="cell" data-execution_count="1">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
@@ -520,6 +624,7 @@ AP = E^Q\left[\sum_{t_j &lt; T} e^{-r t_j}\mathbf{1}_{\{\tau=t_j\}}\left(h(S_{t_
 <span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>spy_option_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"spy_options_chain.parquet"</span></span>
 <span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>spy_underlying_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"spy_ohlcv.csv"</span></span>
 <span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>rates_path <span class="op">=</span> data_dir <span class="op">/</span> <span class="st">"us_treasury_yields.csv"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -615,6 +720,8 @@ S-K \gtrsim C_{\text{ex-div adjusted}}(S-D,t^+) + \text{lost financing benefit}
 \]</span></p>
 <p>The project uses the continuous-yield proxy because it allows tree, PDE, and LSM engines to share the same compact input structure. The tradeoff is that the exact calendar timing of dividends is softened. The assignment-risk layer partially brings that calendar information back through features like days to next dividend, dividend in life, and low time value.</p>
 <div id="5e8f550a" class="cell" data-execution_count="19">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>option_columns <span class="op">=</span> [</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quote_date"</span>, <span class="st">"quote_readtime"</span>, <span class="st">"expire_date"</span>, <span class="st">"underlying_last"</span>, <span class="st">"strike"</span>,</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"c_bid"</span>, <span class="st">"c_ask"</span>, <span class="st">"p_bid"</span>, <span class="st">"p_ask"</span>, <span class="st">"c_iv"</span>, <span class="st">"p_iv"</span>,</span>
@@ -654,22 +761,31 @@ S-K \gtrsim C_{\text{ex-div adjusted}}(S-D,t^+) + \text{lost financing benefit}
 <span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>sigma_smooth <span class="op">=</span> quotes.groupby([<span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"m_bucket_for_sigma"</span>], observed<span class="op">=</span><span class="va">True</span>)[<span class="st">"iv_mid"</span>].median().rename(<span class="st">"sigma_smooth"</span>).reset_index()</span>
 <span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>quotes <span class="op">=</span> quotes.merge(sigma_smooth, on<span class="op">=</span>[<span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"m_bucket_for_sigma"</span>], how<span class="op">=</span><span class="st">"left"</span>)</span>
 <span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>quotes[<span class="st">"sigma_used"</span>] <span class="op">=</span> (<span class="fl">0.75</span> <span class="op">*</span> quotes[<span class="st">"iv_mid"</span>] <span class="op">+</span> <span class="fl">0.25</span> <span class="op">*</span> quotes[<span class="st">"sigma_smooth"</span>].fillna(quotes[<span class="st">"iv_mid"</span>])).clip(<span class="fl">0.03</span>, <span class="fl">2.50</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="e522af48" class="cell" data-execution_count="20">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>par_yields <span class="op">=</span> load_par_yield_curve(rates_path, source<span class="op">=</span><span class="st">"us_treasury"</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>zero_curve <span class="op">=</span> build_zero_curve_panel_from_par_yields(par_yields, method<span class="op">=</span><span class="st">"pchip"</span>)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>quotes <span class="op">=</span> attach_rates(quotes, curve_panel<span class="op">=</span>zero_curve)</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>quotes <span class="op">=</span> add_discount_factors(quotes)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="634c7d05" class="cell" data-execution_count="21">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>underlying_raw <span class="op">=</span> pd.read_csv(spy_underlying_path)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>underlying_raw[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(underlying_raw[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>).dt.normalize()</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>underlying_raw <span class="op">=</span> underlying_raw.rename(columns<span class="op">=</span>{<span class="st">"dividends"</span>: <span class="st">"dividend"</span>, <span class="st">"stock_splits"</span>: <span class="st">"split"</span>})</span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>underlying <span class="op">=</span> underlying_raw.set_index(<span class="st">"date"</span>).sort_index()</span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>underlying_2022_2023 <span class="op">=</span> underlying.loc[<span class="st">"2022-01-01"</span>:<span class="st">"2023-12-31"</span>].copy()</span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>dividend_events <span class="op">=</span> underlying_2022_2023.loc[pd.to_numeric(underlying_2022_2023[<span class="st">"dividend"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>).fillna(<span class="fl">0.0</span>) <span class="op">&gt;</span> <span class="fl">0.0</span>, [<span class="st">"dividend"</span>, <span class="st">"close"</span>]].reset_index()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="392ca793" class="cell" data-execution_count="22">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>div_dates <span class="op">=</span> dividend_events[<span class="st">"date"</span>].to_numpy(<span class="st">"datetime64[ns]"</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>div_amt <span class="op">=</span> dividend_events[<span class="st">"dividend"</span>].to_numpy(<span class="bu">float</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>q_dates <span class="op">=</span> quotes[<span class="st">"date"</span>].to_numpy(<span class="st">"datetime64[ns]"</span>)</span>
@@ -696,8 +812,11 @@ S-K \gtrsim C_{\text{ex-div adjusted}}(S-D,t^+) + \text{lost financing benefit}
 <span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>tau <span class="op">=</span> pd.to_numeric(quotes[<span class="st">"tau"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
 <span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>adjusted_spot_ratio <span class="op">=</span> ((spot <span class="op">-</span> quotes[<span class="st">"pv_dividends"</span>]).clip(lower<span class="op">=</span><span class="fl">1e-6</span>) <span class="op">/</span> spot).clip(lower<span class="op">=</span><span class="fl">1e-8</span>, upper<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>quotes[<span class="st">"dividend_yield"</span>] <span class="op">=</span> (<span class="op">-</span>np.log(adjusted_spot_ratio) <span class="op">/</span> tau.replace(<span class="fl">0.0</span>, np.nan)).replace([np.inf, <span class="op">-</span>np.inf], np.nan).fillna(<span class="fl">0.0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="563d0f22" class="cell" data-execution_count="23">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>intrinsic <span class="op">=</span> np.where(quotes[<span class="st">"option_type"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.startswith(<span class="st">"c"</span>), np.maximum(quotes[<span class="st">"spot"</span>] <span class="op">-</span> quotes[<span class="st">"strike"</span>], <span class="fl">0.0</span>), np.maximum(quotes[<span class="st">"strike"</span>] <span class="op">-</span> quotes[<span class="st">"spot"</span>], <span class="fl">0.0</span>))</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>quotes[<span class="st">"time_value"</span>] <span class="op">=</span> quotes[<span class="st">"mid"</span>] <span class="op">-</span> intrinsic</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>spy_quotes <span class="op">=</span> quotes.dropna(subset<span class="op">=</span>[<span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"spot"</span>, <span class="st">"strike"</span>, <span class="st">"tau"</span>, <span class="st">"rate"</span>, <span class="st">"sigma_used"</span>, <span class="st">"mid"</span>]).sort_values([<span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"option_type"</span>, <span class="st">"strike"</span>]).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
@@ -724,6 +843,7 @@ S-K \gtrsim C_{\text{ex-div adjusted}}(S-D,t^+) + \text{lost financing benefit}
 <span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>display(moneyness_counts)</span>
 <span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>display(type_counts)</span>
 <span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>display(dividend_events)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1204,6 +1324,8 @@ S-K \gtrsim C_{\text{ex-div adjusted}}(S-D,t^+) + \text{lost financing benefit}
 </ul>
 <p>The dividend table shows eight SPY ex-dividend events during 2022-2023. Those dates are part of the state of the American call problem.</p>
 <div id="0e7bdbbc" class="cell" data-execution_count="24">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">3</span>, <span class="dv">1</span>, figsize<span class="op">=</span>(<span class="dv">14</span>, <span class="dv">10</span>), sharex<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>date_counts <span class="op">=</span> spy_quotes.groupby(<span class="st">"date"</span>).size()</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>spread_by_date <span class="op">=</span> spy_quotes.groupby(<span class="st">"date"</span>)[<span class="st">"relative_spread"</span>].median()</span>
@@ -1224,10 +1346,11 @@ S-K \gtrsim C_{\text{ex-div adjusted}}(S-D,t^+) + \text{lost financing benefit}
 <span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_ylabel(<span class="st">"relative spread, %"</span>)</span>
 <span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-8-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-8-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="13_american_option_numerics_files/figure-html/cell-8-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1241,6 +1364,8 @@ S-K \gtrsim C_{\text{ex-div adjusted}}(S-D,t^+) + \text{lost financing benefit}
 </ol>
 <p>This is why later diagnostics use both raw absolute pricing errors and spread-scaled errors.</p>
 <div id="f6cad21f" class="cell" data-execution_count="25">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> choose_contracts(q):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> q.copy()</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    div <span class="op">=</span> pd.to_numeric(data[<span class="st">"dividend_in_life"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>).fillna(<span class="fl">0.0</span>)</span>
@@ -1267,6 +1392,7 @@ S-K \gtrsim C_{\text{ex-div adjusted}}(S-D,t^+) + \text{lost financing benefit}
 <span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>representative_contracts <span class="op">=</span> choose_contracts(spy_quotes)</span>
 <span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>display(representative_contracts[[<span class="st">"contract_role"</span>, <span class="st">"date"</span>, <span class="st">"expiry"</span>, <span class="st">"option_type"</span>, <span class="st">"spot"</span>, <span class="st">"strike"</span>, <span class="st">"moneyness"</span>, <span class="st">"dte_days"</span>, <span class="st">"sigma_used"</span>, <span class="st">"mid"</span>, <span class="st">"dividend_in_life"</span>, <span class="st">"days_to_next_dividend"</span>, <span class="st">"time_value"</span>]].<span class="bu">round</span>(<span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stderr">
 <pre><code>C:\Users\Lenovo\AppData\Local\Temp\ipykernel_3660\4035844165.py:26: UserWarning: obj.round has no effect with datetime, timedelta, or period dtypes. Use obj.dt.round(...) instead.
   display(representative_contracts[["contract_role", "date", "expiry", "option_type", "spot", "strike", "moneyness", "dte_days", "sigma_used", "mid", "dividend_in_life", "days_to_next_dividend", "time_value"]].round(6))</code></pre>
@@ -1413,12 +1539,15 @@ TV = V_{\text{market}} - h(S_0)
 \]</span></p>
 <p>When this ratio is large, continuation dominates and early exercise is unlikely. When it is close to zero, exercise becomes plausible. For short option overlays, the low-time-value cases matter much more than the average contract because assignment and exercise happen in the tails of the option universe.</p>
 <div id="d242390a" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>tree_structure()</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-10-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-10-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="13_american_option_numerics_files/figure-html/cell-10-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1457,6 +1586,8 @@ S_t \ge B(t)
 <p>A boundary can be interpreted as a <em>switching curve</em>. On one side, immediate cash is better. On the other side, optionality is better. This makes the American option a hybrid between valuation and classification: we estimate both a price and a binary exercise decision at each state.</p>
 <p>That classification aspect is why we later compare boundaries, exercise regions, LSM policies, and assignment-risk scores. A 10-cent price difference and a wrong exercise classification have very different practical meanings. Near an ex-dividend date, exercise classification can drive a covered-call roll decision even when the price difference looks small.</p>
 <div id="613b3369" class="cell" data-execution_count="27">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>s_demo <span class="op">=</span> np.linspace(<span class="dv">60</span>, <span class="dv">140</span>, <span class="dv">300</span>)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>k_demo <span class="op">=</span> <span class="fl">100.0</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>payoff_demo <span class="op">=</span> np.maximum(k_demo <span class="op">-</span> s_demo, <span class="fl">0.0</span>)</span>
@@ -1472,10 +1603,11 @@ S_t \ge B(t)
 <span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Optimal Stopping"</span>)</span>
 <span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">6</span>, frameon<span class="op">=</span><span class="va">True</span>, framealpha<span class="op">=</span><span class="fl">0.88</span>, borderpad<span class="op">=</span><span class="fl">0.25</span>, labelspacing<span class="op">=</span><span class="fl">0.25</span>, handlelength<span class="op">=</span><span class="fl">1.2</span>, handletextpad<span class="op">=</span><span class="fl">0.35</span>)</span>
 <span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-11-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-11-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="13_american_option_numerics_files/figure-html/cell-11-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1685,6 +1817,8 @@ V(n)=V^*+\frac{a}{n}+\frac{b}{n^2}+\cdots
 \]</span></p>
 <p>If the leading error behaves smoothly, this helps. If the error is dominated by grid alignment or boundary jumps, it may not help. That explains why Richardson is evaluated rather than blindly adopted.</p>
 <div id="cdd7254c" class="cell" data-execution_count="28">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> payoff(s, k, flag):</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> flag <span class="op">&gt;</span> <span class="dv">0</span>:</span>
@@ -1769,8 +1903,11 @@ V(n)=V^*+\frac{a}{n}+\frac{b}{n^2}+\cdots
 <span id="cb12-82"><a href="#cb12-82" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> option_flag(values):</span>
 <span id="cb12-83"><a href="#cb12-83" aria-hidden="true" tabindex="-1"></a>    text <span class="op">=</span> np.asarray(values).astype(<span class="bu">str</span>)</span>
 <span id="cb12-84"><a href="#cb12-84" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.where(np.char.startswith(np.char.lower(text), <span class="st">"c"</span>), <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>).astype(np.int32)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="feda7321" class="cell" data-execution_count="29">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>put_row <span class="op">=</span> representative_contracts.loc[representative_contracts[<span class="st">"contract_role"</span>].eq(<span class="st">"itm_put_30_90"</span>)].iloc[<span class="dv">0</span>]</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>s0 <span class="op">=</span> <span class="bu">float</span>(put_row[<span class="st">"spot"</span>])</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>k0 <span class="op">=</span> <span class="bu">float</span>(put_row[<span class="st">"strike"</span>])</span>
@@ -1812,6 +1949,7 @@ V(n)=V^*+\frac{a}{n}+\frac{b}{n^2}+\cdots
 <span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Tree Convergence"</span>)</span>
 <span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">6</span>, frameon<span class="op">=</span><span class="va">True</span>, framealpha<span class="op">=</span><span class="fl">0.88</span>, borderpad<span class="op">=</span><span class="fl">0.25</span>, labelspacing<span class="op">=</span><span class="fl">0.25</span>, handlelength<span class="op">=</span><span class="fl">1.2</span>, handletextpad<span class="op">=</span><span class="fl">0.35</span>)</span>
 <span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1927,7 +2065,7 @@ V(n)=V^*+\frac{a}{n}+\frac{b}{n^2}+\cdots
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-13-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-13-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="13_american_option_numerics_files/figure-html/cell-13-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1954,16 +2092,19 @@ V_{Richardson}(n) = 2V(n) - V(n/2)
 \]</span></p>
 <p>The idea is to cancel the leading discretization error term if the error behaves smoothly with step size. In this example, it sometimes helps and sometimes doesn’t. That is a useful reminder: acceleration formulas are not magic. They depend on the error structure being regular enough. The raw CRR price is already strong for this representative contract.</p>
 <div id="6306b060" class="cell" data-execution_count="30">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">7.5</span>, <span class="fl">4.5</span>))</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>ax.plot(tree_convergence[<span class="st">"steps"</span>], tree_convergence[<span class="st">"american_premium"</span>], marker<span class="op">=</span><span class="st">"o"</span>)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"steps"</span>)</span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"American tree price - European tree price"</span>)</span>
 <span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Premium Convergence"</span>)</span>
 <span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-14-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-14-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="13_american_option_numerics_files/figure-html/cell-14-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1975,6 +2116,8 @@ V_{Richardson}(n) = 2V(n) - V(n/2)
 <p>The premium falls from about <strong>0.131</strong> at 50 steps to about <strong>0.128</strong> at higher steps. That narrow range tells us the early-exercise value itself is stable. The contract is not an edge case where the American premium changes dramatically because the boundary is poorly resolved.</p>
 <p>This is an important diagnostic because a tree can appear to price the total option well while still producing an unstable exercise boundary. Here the premium behaves consistently, so the boundary logic has a reasonable foundation.</p>
 <div id="d0f87f9f" class="cell" data-execution_count="31">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">7.5</span>, <span class="fl">4.5</span>))</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>ax.loglog(tree_convergence[<span class="st">"runtime_sec"</span>], tree_convergence[<span class="st">"abs_error"</span>], marker<span class="op">=</span><span class="st">"o"</span>, label<span class="op">=</span><span class="st">"CRR"</span>)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>ax.loglog(tree_convergence[<span class="st">"runtime_sec"</span>], tree_convergence[<span class="st">"richardson_abs_error"</span>], marker<span class="op">=</span><span class="st">"s"</span>, label<span class="op">=</span><span class="st">"Richardson"</span>)</span>
@@ -1983,10 +2126,11 @@ V_{Richardson}(n) = 2V(n) - V(n/2)
 <span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Error vs Runtime"</span>)</span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">6</span>, frameon<span class="op">=</span><span class="va">True</span>, framealpha<span class="op">=</span><span class="fl">0.88</span>, borderpad<span class="op">=</span><span class="fl">0.25</span>, labelspacing<span class="op">=</span><span class="fl">0.25</span>, handlelength<span class="op">=</span><span class="fl">1.2</span>, handletextpad<span class="op">=</span><span class="fl">0.35</span>)</span>
 <span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-15-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-15-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="13_american_option_numerics_files/figure-html/cell-15-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1998,6 +2142,8 @@ V_{Richardson}(n) = 2V(n) - V(n/2)
 <p>Going from 100 to 1000 steps is not a 10x increase in work; it is closer to 100x in the inner recursion. For a single contract this is fine. For millions of contracts, it becomes a production problem.</p>
 <p>That is why the project later uses C++ kernels for full-chain pricing. The tree method is transparent and reliable, but production use depends on pushing the recursion into compiled loops.</p>
 <div id="36476063" class="cell" data-execution_count="32">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">4.8</span>))</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>hb <span class="op">=</span> ax.hexbin(tree_exercise_df[<span class="st">"time_to_expiry"</span>], tree_exercise_df[<span class="st">"s_over_k"</span>], C<span class="op">=</span>tree_exercise_df[<span class="st">"exercise"</span>], reduce_C_function<span class="op">=</span>np.mean, gridsize<span class="op">=</span><span class="dv">80</span>, mincnt<span class="op">=</span><span class="dv">1</span>, cmap<span class="op">=</span><span class="st">"magma"</span>, vmin<span class="op">=</span><span class="dv">0</span>, vmax<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"time to expiry"</span>)</span>
@@ -2005,15 +2151,18 @@ V_{Richardson}(n) = 2V(n) - V(n/2)
 <span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Tree Exercise Region"</span>)</span>
 <span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>fig.colorbar(hb, ax<span class="op">=</span>ax, label<span class="op">=</span><span class="st">"exercise probability across nodes"</span>)</span>
 <span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-16-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="13_american_option_numerics_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="ae6bcc8d" class="cell" data-execution_count="33">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">4.8</span>))</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>ax.plot(tree_boundary_df[<span class="st">"time_to_expiry"</span>], tree_boundary_df[<span class="st">"boundary_over_k"</span>], lw<span class="op">=</span><span class="fl">1.6</span>)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>ax.axhline(<span class="fl">1.0</span>, color<span class="op">=</span><span class="st">"black"</span>, lw<span class="op">=</span><span class="fl">0.8</span>)</span>
@@ -2021,10 +2170,11 @@ V_{Richardson}(n) = 2V(n) - V(n/2)
 <span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"exercise boundary / K"</span>)</span>
 <span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Tree Boundary"</span>)</span>
 <span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-17-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-17-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="13_american_option_numerics_files/figure-html/cell-17-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2043,6 +2193,8 @@ V_{Richardson}(n) = 2V(n) - V(n/2)
 \]</span></p>
 <p>The boundary is where those two sides balance. A smooth boundary means the numerical policy is stable. A jagged or noisy boundary can signal too few tree steps, bad volatility inputs, or a contract where the exercise/continue difference is tiny and hard to classify.</p>
 <div id="1e2412c7" class="cell" data-execution_count="34">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab <span class="im">import</span> _kernels</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>tree_arrays <span class="op">=</span> (</span>
@@ -2092,6 +2244,7 @@ V_{Richardson}(n) = 2V(n) - V(n/2)
 <span id="cb18-47"><a href="#cb18-47" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Numerical Agreement"</span>)</span>
 <span id="cb18-48"><a href="#cb18-48" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb18-49"><a href="#cb18-49" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2177,7 +2330,7 @@ V_{Richardson}(n) = 2V(n) - V(n/2)
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-18-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-18-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="13_american_option_numerics_files/figure-html/cell-18-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2216,6 +2369,8 @@ V_{Richardson}(n) = 2V(n) - V(n/2)
 </ul>
 <p>The design also reduces model ambiguity. If local and C++ versions disagree, the project has a bug or an input mismatch. If they agree exactly, then performance differences can be interpreted as implementation speed rather than model difference.</p>
 <div id="d376296e" class="cell" data-execution_count="35">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>tree_cache <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spy_tree_full_chain.parquet"</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>tree_meta <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spy_tree_full_chain.meta.json"</span></span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>tree_settings <span class="op">=</span> {</span>
@@ -2273,6 +2428,7 @@ V_{Richardson}(n) = 2V(n) - V(n/2)
 <span id="cb19-55"><a href="#cb19-55" aria-hidden="true" tabindex="-1"></a>}])</span>
 <span id="cb19-56"><a href="#cb19-56" aria-hidden="true" tabindex="-1"></a>display(tree_scan_summary.<span class="bu">round</span>(<span class="dv">6</span>))</span>
 <span id="cb19-57"><a href="#cb19-57" aria-hidden="true" tabindex="-1"></a>display(tree_full_chain.groupby(<span class="st">"option_type"</span>)[[<span class="st">"american_premium"</span>, <span class="st">"pricing_error"</span>, <span class="st">"abs_pricing_error"</span>]].agg([<span class="st">"count"</span>, <span class="st">"median"</span>, <span class="st">"mean"</span>]).<span class="bu">round</span>(<span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2390,6 +2546,8 @@ V_{Richardson}(n) = 2V(n) - V(n/2)
 <p>The C++ tree kernel works well because the contract-level task has fixed scalar inputs and a predictable loop structure. Memory allocation is kept local and small. The batch interface passes arrays of <span class="math inline">\(S,K,r,q,\sigma,T,\)</span> and flags, then prices each contract independently. This is exactly the type of numerical problem where compiled code gives a large advantage.</p>
 <p>The zero-difference agreement between Numba and C++ in the speed test is important. Performance is only useful after correctness is established. The first question is whether both engines implement the same recursion. The second question is speed.</p>
 <div id="85a8a0e5" class="cell" data-execution_count="36">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> premium_term_plot(ax, data, opt):</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    subset <span class="op">=</span> data[data[<span class="st">"option_type"</span>].eq(opt)].copy()</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    subset[<span class="st">"dte_bucket"</span>] <span class="op">=</span> pd.cut(subset[<span class="st">"dte_days"</span>], [<span class="dv">0</span>, <span class="dv">14</span>, <span class="dv">30</span>, <span class="dv">60</span>, <span class="dv">90</span>, <span class="dv">120</span>, <span class="dv">180</span>, <span class="dv">365</span>], include_lowest<span class="op">=</span><span class="va">True</span>)</span>
@@ -2417,10 +2575,11 @@ V_{Richardson}(n) = 2V(n) - V(n/2)
 <span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>put_premium_terms <span class="op">=</span> premium_term_plot(axes[<span class="dv">1</span>], tree_full_chain, <span class="st">"put"</span>)</span>
 <span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-20-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-20-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="13_american_option_numerics_files/figure-html/cell-20-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2445,6 +2604,8 @@ V_{Richardson}(n) = 2V(n) - V(n/2)
 \]</span></p>
 <p>where <span class="math inline">\(\mathcal{B}_b\)</span> is one chunk. Chunking changes runtime behavior, not pricing logic.</p>
 <div id="11f9f076" class="cell" data-execution_count="37">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">5</span>))</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> opt, group <span class="kw">in</span> tree_full_chain.groupby(<span class="st">"option_type"</span>):</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> group[<span class="st">"american_premium"</span>].clip(lower<span class="op">=</span><span class="fl">0.0</span>).sort_values(ascending<span class="op">=</span><span class="va">False</span>)</span>
@@ -2478,10 +2639,11 @@ V_{Richardson}(n) = 2V(n) - V(n/2)
 <span id="cb21-31"><a href="#cb21-31" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].legend(fontsize<span class="op">=</span><span class="dv">6</span>, frameon<span class="op">=</span><span class="va">True</span>, framealpha<span class="op">=</span><span class="fl">0.88</span>, borderpad<span class="op">=</span><span class="fl">0.25</span>, labelspacing<span class="op">=</span><span class="fl">0.25</span>, handlelength<span class="op">=</span><span class="fl">1.2</span>, handletextpad<span class="op">=</span><span class="fl">0.35</span>)</span>
 <span id="cb21-32"><a href="#cb21-32" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb21-33"><a href="#cb21-33" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-21-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-21-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="13_american_option_numerics_files/figure-html/cell-21-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2590,6 +2752,8 @@ I_i = \mathbf{1}\{bid_i \le V_i^{model}\le ask_i\}
 <p>This is a different diagnostic from mean absolute error. A model with slightly biased prices can still be useful if it stays inside spreads. A model with small average error can be weak if errors cluster outside spreads in the contracts we trade.</p>
 <p>For strategy construction, spread-scaled errors are especially important because all option trades enter at bid or ask, not at theoretical fair value.</p>
 <div id="04835850" class="cell" data-execution_count="38">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>s_grid_demo <span class="op">=</span> np.linspace(<span class="fl">0.4</span>, <span class="fl">1.6</span>, <span class="dv">41</span>)</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>t_grid_demo <span class="op">=</span> np.linspace(<span class="fl">1.0</span>, <span class="fl">0.0</span>, <span class="dv">31</span>)</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>stencil <span class="op">=</span> np.zeros((<span class="bu">len</span>(t_grid_demo), <span class="bu">len</span>(s_grid_demo)))</span>
@@ -2615,10 +2779,11 @@ I_i = \mathbf{1}\{bid_i \le V_i^{model}\le ask_i\}
 <span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend(fontsize<span class="op">=</span><span class="dv">6</span>, frameon<span class="op">=</span><span class="va">True</span>, framealpha<span class="op">=</span><span class="fl">0.88</span>, borderpad<span class="op">=</span><span class="fl">0.25</span>, labelspacing<span class="op">=</span><span class="fl">0.25</span>, handlelength<span class="op">=</span><span class="fl">1.2</span>, handletextpad<span class="op">=</span><span class="fl">0.35</span>)</span>
 <span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-22-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-22-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="13_american_option_numerics_files/figure-html/cell-22-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2712,6 +2877,8 @@ V_i^n = \max(h_i,\widetilde{V}_i^n)
 <p>The exact condition depends on the discretization and drift terms, but the message is enough: explicit methods need small time steps when volatility or grid range is large.</p>
 <p>This is why explicit projected pricing uses many time steps in the demonstration. It is transparent but not efficient. Implicit methods solve a system at each time step, which costs more per step but is much more stable.</p>
 <div id="19642035" class="cell" data-execution_count="39">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pde_payoff_grid(s_grid, k, flag):</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> np.empty(s_grid.size)</span>
@@ -2747,6 +2914,7 @@ V_i^n = \max(h_i,\widetilde{V}_i^n)
 <span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a>    j <span class="op">=</span> <span class="bu">min</span>(<span class="bu">max</span>(<span class="bu">int</span>(s <span class="op">/</span> ds), <span class="dv">0</span>), m <span class="op">-</span> <span class="dv">1</span>)</span>
 <span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> (s <span class="op">-</span> grid[j]) <span class="op">/</span> ds</span>
 <span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> value[j] <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> w) <span class="op">+</span> value[j <span class="op">+</span> <span class="dv">1</span>] <span class="op">*</span> w, grid, value</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <p>The implicit PSOR method is more serious. Instead of computing the next grid values directly, it solves a linear system at each time step:</p>
 <p><span class="math display">\[
@@ -2817,6 +2985,8 @@ V_i^{new}=\max(h_i,V_i^{new})
 <p>The iteration count is economically meaningful too. A high PSOR iteration count often appears near boundaries or difficult regimes because the solver is trying to settle the exact point where continuation turns into exercise. If the whole grid is far from exercise, the constraint barely binds and convergence can be easier. If many nodes are near indifference, the projection interacts strongly with the PDE and the solver needs more iterations.</p>
 <p>This is why the residual/iteration plots are more than numerical housekeeping. They tell us where the American option is computationally difficult. A clean price with a poor residual is dangerous because it can look plausible while the underlying complementarity problem has not actually been solved.</p>
 <div id="fbc8e5fc" class="cell" data-execution_count="40">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> implicit_psor_pde(s, k, r, q, sigma, tau, flag, s_steps, t_steps, s_max_mult, omega, tol, max_iter):</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> <span class="bu">max</span>(<span class="dv">20</span>, s_steps)</span>
@@ -2894,6 +3064,7 @@ V_i^{new}=\max(h_i,V_i^{new})
 <span id="cb24-75"><a href="#cb24-75" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> (s <span class="op">-</span> grid[j]) <span class="op">/</span> ds</span>
 <span id="cb24-76"><a href="#cb24-76" aria-hidden="true" tabindex="-1"></a>    price <span class="op">=</span> oldv[j] <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> w) <span class="op">+</span> oldv[j <span class="op">+</span> <span class="dv">1</span>] <span class="op">*</span> w</span>
 <span id="cb24-77"><a href="#cb24-77" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> price, grid, values, boundary, residuals, iterations, payoff_vec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <p>The theta scheme generalizes explicit, implicit, and Crank-Nicolson methods. We write the spatial PDE operator as <span class="math inline">\(A\)</span>. A generic theta step is:</p>
 <p><span class="math display">\[
@@ -2967,6 +3138,8 @@ u_i = \frac{1}{2}(\sigma^2 i^2 + (r-q)i)
 <p>American options are not fully smooth because the payoff has a kink and the exercise boundary creates another non-smooth region. This is why Rannacher smoothing can help: start with a few implicit half-steps to damp the payoff kink, then switch to Crank-Nicolson-style stepping. The idea is not cosmetic. The first few steps after the payoff are where the discontinuity in gamma is strongest, and Crank-Nicolson can produce oscillations near the kink.</p>
 <p>In this project, implicit, Crank-Nicolson, and Rannacher versions are compared by disagreement with the tree, residual quality, iteration count, and runtime. The selected method is not selected only because it has the lowest mathematical error in an ideal PDE test. It is selected because it behaves best in the regime-grid workflow that represents the full option chain.</p>
 <div id="395d5b2f" class="cell" data-execution_count="41">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> theta_psor_pde(s, k, r, q, sigma, tau, flag, s_steps, t_steps, s_max_mult, theta_base, rannacher, omega, tol, max_iter):</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> <span class="bu">max</span>(<span class="dv">20</span>, s_steps)</span>
@@ -3049,8 +3222,11 @@ u_i = \frac{1}{2}(\sigma^2 i^2 + (r-q)i)
 <span id="cb25-80"><a href="#cb25-80" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> (s <span class="op">-</span> grid[j]) <span class="op">/</span> ds</span>
 <span id="cb25-81"><a href="#cb25-81" aria-hidden="true" tabindex="-1"></a>    price <span class="op">=</span> oldv[j] <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> w) <span class="op">+</span> oldv[j <span class="op">+</span> <span class="dv">1</span>] <span class="op">*</span> w</span>
 <span id="cb25-82"><a href="#cb25-82" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> price, grid, values, boundary, residuals, iterations, payoff_vec</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="d58759d8" class="cell" data-execution_count="42">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>pde_row <span class="op">=</span> put_row</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>t0 <span class="op">=</span> time.perf_counter()</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>explicit_price, explicit_grid, explicit_values <span class="op">=</span> explicit_projected(s0, k0, r0, q0, sigma0, tau0, flag0, <span class="dv">120</span>, <span class="dv">1800</span>, <span class="fl">3.0</span>)</span>
@@ -3088,6 +3264,7 @@ u_i = \frac{1}{2}(\sigma^2 i^2 + (r-q)i)
 <span id="cb26-35"><a href="#cb26-35" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"PDE Value Slices"</span>)</span>
 <span id="cb26-36"><a href="#cb26-36" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">6</span>, frameon<span class="op">=</span><span class="va">True</span>, framealpha<span class="op">=</span><span class="fl">0.88</span>, borderpad<span class="op">=</span><span class="fl">0.25</span>, labelspacing<span class="op">=</span><span class="fl">0.25</span>, handlelength<span class="op">=</span><span class="fl">1.2</span>, handletextpad<span class="op">=</span><span class="fl">0.35</span>)</span>
 <span id="cb26-37"><a href="#cb26-37" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3149,12 +3326,14 @@ u_i = \frac{1}{2}(\sigma^2 i^2 + (r-q)i)
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-26-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-26-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="13_american_option_numerics_files/figure-html/cell-26-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="3d299da8" class="cell" data-execution_count="43">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">4.8</span>))</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>extent <span class="op">=</span> [pde_s_grid[<span class="dv">0</span>] <span class="op">/</span> k0, pde_s_grid[<span class="op">-</span><span class="dv">1</span>] <span class="op">/</span> k0, time_to_expiry_pde[<span class="op">-</span><span class="dv">1</span>], time_to_expiry_pde[<span class="dv">0</span>]]</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>im <span class="op">=</span> ax.imshow(pde_values <span class="op">/</span> k0, aspect<span class="op">=</span><span class="st">"auto"</span>, origin<span class="op">=</span><span class="st">"lower"</span>, extent<span class="op">=</span>extent, cmap<span class="op">=</span><span class="st">"viridis"</span>)</span>
@@ -3163,15 +3342,18 @@ u_i = \frac{1}{2}(\sigma^2 i^2 + (r-q)i)
 <span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"PDE Value Surface"</span>)</span>
 <span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, ax<span class="op">=</span>ax, label<span class="op">=</span><span class="st">"value / K"</span>)</span>
 <span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-27-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-27-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="13_american_option_numerics_files/figure-html/cell-27-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="b77fd17a" class="cell" data-execution_count="44">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">4.8</span>))</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>extent <span class="op">=</span> [pde_s_grid[<span class="dv">0</span>] <span class="op">/</span> k0, pde_s_grid[<span class="op">-</span><span class="dv">1</span>] <span class="op">/</span> k0, time_to_expiry_pde[<span class="op">-</span><span class="dv">1</span>], time_to_expiry_pde[<span class="dv">0</span>]]</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>im <span class="op">=</span> ax.imshow(exercise_region.astype(<span class="bu">float</span>), aspect<span class="op">=</span><span class="st">"auto"</span>, origin<span class="op">=</span><span class="st">"lower"</span>, extent<span class="op">=</span>extent, cmap<span class="op">=</span><span class="st">"magma"</span>, vmin<span class="op">=</span><span class="dv">0</span>, vmax<span class="op">=</span><span class="dv">1</span>)</span>
@@ -3181,10 +3363,11 @@ u_i = \frac{1}{2}(\sigma^2 i^2 + (r-q)i)
 <span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"PDE Exercise Region"</span>)</span>
 <span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, ax<span class="op">=</span>ax, label<span class="op">=</span><span class="st">"exercise"</span>)</span>
 <span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-28-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-28-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="13_american_option_numerics_files/figure-html/cell-28-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3222,6 +3405,8 @@ V(S)=K-S
 <p>so the delta is approximately <span class="math inline">\(-1\)</span> and gamma is approximately <span class="math inline">\(0\)</span>. Just outside the boundary, continuation value still has convexity, so gamma can jump. This is why American Greeks should be interpreted with more caution than BSM Greeks from Project 4.</p>
 <p>The project focuses more on prices, premiums, boundaries, and strategy decisions than on reporting a full Greek surface. That is a good choice here. For American overlays, the key decision is often whether the contract is close enough to the exercise boundary to change assignment, roll, or hedge behavior.</p>
 <div id="6a29da5f" class="cell" data-execution_count="45">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">4.8</span>))</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>ax.plot(np.linspace(tau0, <span class="fl">0.0</span>, <span class="bu">len</span>(pde_boundary_values)), pde_boundary_values <span class="op">/</span> k0, lw<span class="op">=</span><span class="fl">1.5</span>, label<span class="op">=</span><span class="st">"PDE"</span>)</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>ax.plot(tree_boundary_df[<span class="st">"time_to_expiry"</span>], tree_boundary_df[<span class="st">"boundary_over_k"</span>], lw<span class="op">=</span><span class="fl">1.2</span>, label<span class="op">=</span><span class="st">"tree"</span>)</span>
@@ -3231,15 +3416,18 @@ V(S)=K-S
 <span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"PDE vs Tree Boundary"</span>)</span>
 <span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">6</span>, frameon<span class="op">=</span><span class="va">True</span>, framealpha<span class="op">=</span><span class="fl">0.88</span>, borderpad<span class="op">=</span><span class="fl">0.25</span>, labelspacing<span class="op">=</span><span class="fl">0.25</span>, handlelength<span class="op">=</span><span class="fl">1.2</span>, handletextpad<span class="op">=</span><span class="fl">0.35</span>)</span>
 <span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-29-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-29-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16"><img src="13_american_option_numerics_files/figure-html/cell-29-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="2dbad11f" class="cell" data-execution_count="46">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="fl">4.5</span>))</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].semilogy(np.maximum(pde_residuals, <span class="fl">1e-16</span>))</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xlabel(<span class="st">"backward time step"</span>)</span>
@@ -3251,10 +3439,11 @@ V(S)=K-S
 <span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"PSOR Iterations"</span>)</span>
 <span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-30-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-30-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-17"><img src="13_american_option_numerics_files/figure-html/cell-30-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3296,6 +3485,8 @@ E[V \mid \text{type bucket}, \text{DTE bucket}, \text{moneyness bucket}, \sigma 
 <p>The regime grid is useful because it gives full coverage of the row universe while keeping the expensive methods feasible. The output shows 1,095 PDE regime cells covering all 1.84 million rows. This is a strong design result: the cells are detailed enough to represent the option surface and broad enough to avoid leaving gaps.</p>
 <p>The coverage table also tells us where the option universe is concentrated. Dividend buckets contain many rows because SPY options frequently span quarterly dividend dates. Calls and puts both have large dividend-exposed groups. That matters for assignment and early exercise, because dividend timing is one of the main reasons American calls differ from European calls.</p>
 <div id="d7f7a397" class="cell" data-execution_count="48">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab <span class="im">import</span> _kernels</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> regime_grid(q):</span>
@@ -3334,6 +3525,7 @@ E[V \mid \text{type bucket}, \text{DTE bucket}, \text{moneyness bucket}, \sigma 
 <span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a>    validation_records.append({<span class="st">"date"</span>: row[<span class="st">"date"</span>], <span class="st">"option_type"</span>: row[<span class="st">"option_type"</span>], <span class="st">"dte_days"</span>: row[<span class="st">"dte_days"</span>], <span class="st">"moneyness"</span>: row[<span class="st">"moneyness"</span>], <span class="st">"numba_price"</span>: nb[<span class="dv">0</span>], <span class="st">"cpp_price"</span>: cpp[<span class="st">"price"</span>], <span class="st">"abs_price_diff"</span>: <span class="bu">abs</span>(nb[<span class="dv">0</span>] <span class="op">-</span> cpp[<span class="st">"price"</span>]), <span class="st">"boundary_diff"</span>: boundary_diff, <span class="st">"numba_max_residual"</span>: np.nanmax(nb[<span class="dv">4</span>]), <span class="st">"cpp_max_residual"</span>: np.nanmax(cpp[<span class="st">"residuals"</span>]), <span class="st">"numba_sec"</span>: nb_time, <span class="st">"cpp_sec"</span>: cpp_time})</span>
 <span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a>pde_validation <span class="op">=</span> pd.DataFrame(validation_records)</span>
 <span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a>display(pde_validation[[<span class="st">"abs_price_diff"</span>, <span class="st">"boundary_diff"</span>, <span class="st">"numba_max_residual"</span>, <span class="st">"cpp_max_residual"</span>, <span class="st">"numba_sec"</span>, <span class="st">"cpp_sec"</span>]].agg([<span class="st">"count"</span>, <span class="st">"mean"</span>, <span class="st">"max"</span>, <span class="st">"median"</span>]).<span class="bu">round</span>(<span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3474,6 +3666,8 @@ E[V \mid \text{type bucket}, \text{DTE bucket}, \text{moneyness bucket}, \sigma 
 </div>
 </div>
 <div id="de57a928" class="cell" data-execution_count="49">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>pde_variant_cache <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spy_pde_regime_method_comparison.parquet"</span></span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>pde_variant_meta <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spy_pde_regime_method_comparison.meta.json"</span></span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>pde_variant_settings <span class="op">=</span> {<span class="st">"dataset"</span>: <span class="st">"SPY OptionsDX 2022-2023"</span>, <span class="st">"cells"</span>: <span class="bu">int</span>(<span class="bu">len</span>(pde_regime)), <span class="st">"s_steps"</span>: <span class="dv">80</span>, <span class="st">"t_steps"</span>: <span class="dv">60</span>, <span class="st">"methods"</span>: [<span class="st">"implicit_psor"</span>, <span class="st">"crank_nicolson_psor"</span>, <span class="st">"rannacher_cn_psor"</span>], <span class="st">"engine"</span>: <span class="st">"numba"</span>}</span>
@@ -3504,6 +3698,7 @@ E[V \mid \text{type bucket}, \text{DTE bucket}, \text{moneyness bucket}, \sigma 
 <span id="cb32-28"><a href="#cb32-28" aria-hidden="true" tabindex="-1"></a>selected_pde_method <span class="op">=</span> <span class="bu">str</span>(pde_method_summary.sort_values(<span class="st">"score"</span>).iloc[<span class="dv">0</span>][<span class="st">"method"</span>])</span>
 <span id="cb32-29"><a href="#cb32-29" aria-hidden="true" tabindex="-1"></a>display(pde_method_summary.<span class="bu">round</span>(<span class="dv">8</span>))</span>
 <span id="cb32-30"><a href="#cb32-30" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame([{<span class="st">"selected_pde_method"</span>: selected_pde_method, <span class="st">"regime_cells"</span>: <span class="bu">len</span>(pde_regime), <span class="st">"rows_represented"</span>: <span class="bu">int</span>(pde_method_regime.loc[pde_method_regime[<span class="st">"method"</span>].eq(selected_pde_method), <span class="st">"coverage_rows"</span>].<span class="bu">sum</span>())}]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3596,6 +3791,8 @@ E[V \mid \text{type bucket}, \text{DTE bucket}, \text{moneyness bucket}, \sigma 
 </div>
 </div>
 <div id="58e52c4e" class="cell" data-execution_count="50">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">17</span>, <span class="fl">4.8</span>))</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> method, group <span class="kw">in</span> pde_method_regime.groupby(<span class="st">"method"</span>):</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    ordered <span class="op">=</span> group.sort_values(<span class="st">"dte_days"</span>)</span>
@@ -3626,10 +3823,11 @@ E[V \mid \text{type bucket}, \text{DTE bucket}, \text{moneyness bucket}, \sigma 
 <span id="cb33-28"><a href="#cb33-28" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].legend(fontsize<span class="op">=</span><span class="dv">6</span>, frameon<span class="op">=</span><span class="va">True</span>, framealpha<span class="op">=</span><span class="fl">0.88</span>, borderpad<span class="op">=</span><span class="fl">0.25</span>, labelspacing<span class="op">=</span><span class="fl">0.25</span>, handlelength<span class="op">=</span><span class="fl">1.2</span>, handletextpad<span class="op">=</span><span class="fl">0.35</span>)</span>
 <span id="cb33-29"><a href="#cb33-29" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb33-30"><a href="#cb33-30" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-33-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-33-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-18"><img src="13_american_option_numerics_files/figure-html/cell-33-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3646,6 +3844,8 @@ E[V \mid \text{type bucket}, \text{DTE bucket}, \text{moneyness bucket}, \sigma 
 <p>where <span class="math inline">\(n_c\)</span> is the number of real contracts represented by cell <span class="math inline">\(c\)</span>.</p>
 <p>The rolling DTE accuracy plot shows that PDE-tree gaps are not uniform across the chain. Short maturity and near-ATM regions tend to be harder because the exercise boundary, payoff kink, and bid/ask microstructure interact more strongly. Deep ITM and far OTM contracts can also be difficult, but for different reasons: intrinsic dominance on one side and tiny option values on the other.</p>
 <div id="60297f36" class="cell" data-execution_count="51">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>pde_cache <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spy_pde_full_or_regime.parquet"</span></span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>pde_meta <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spy_pde_full_or_regime.meta.json"</span></span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>pde_settings <span class="op">=</span> {<span class="st">"dataset"</span>: <span class="st">"SPY OptionsDX 2022-2023"</span>, <span class="st">"method"</span>: <span class="st">"systematic_pde_regime_grid"</span>, <span class="st">"cells"</span>: <span class="bu">int</span>(<span class="bu">len</span>(pde_regime)), <span class="st">"s_steps"</span>: <span class="dv">120</span>, <span class="st">"t_steps"</span>: <span class="dv">90</span>, <span class="st">"scheme"</span>: selected_pde_method, <span class="st">"engine"</span>: <span class="st">"cpp"</span> <span class="cf">if</span> selected_pde_method <span class="op">==</span> <span class="st">"implicit_psor"</span> <span class="cf">else</span> <span class="st">"numba"</span>}</span>
@@ -3697,6 +3897,7 @@ E[V \mid \text{type bucket}, \text{DTE bucket}, \text{moneyness bucket}, \sigma 
 <span id="cb34-49"><a href="#cb34-49" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_xlabel(<span class="st">"PDE - tree"</span>)</span>
 <span id="cb34-50"><a href="#cb34-50" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb34-51"><a href="#cb34-51" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3785,7 +3986,7 @@ E[V \mid \text{type bucket}, \text{DTE bucket}, \text{moneyness bucket}, \sigma 
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-34-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-34-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-19"><img src="13_american_option_numerics_files/figure-html/cell-34-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3879,6 +4080,8 @@ X_t = \log\left(\frac{S_t}{K}\right)
 \]</span></p>
 <p>The LSM continuation plot makes this visual. The scatter points are noisy realized future cashflows. The fitted curve is the estimated continuation value. The payoff curve is immediate exercise. Where the payoff curve rises above the fitted continuation curve, the policy exercises.</p>
 <div id="db6e6646" class="cell" data-execution_count="52">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>np.random.seed(<span class="dv">7</span>)</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>x_demo <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">0.35</span>, <span class="fl">0.25</span>, <span class="dv">600</span>)</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>payoff_demo <span class="op">=</span> np.maximum(<span class="fl">1.0</span> <span class="op">-</span> np.exp(x_demo), <span class="fl">0.0</span>)</span>
@@ -3899,10 +4102,11 @@ X_t = \log\left(\frac{S_t}{K}\right)
 <span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"LSM Continuation Target"</span>)</span>
 <span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>ax.legend(fontsize<span class="op">=</span><span class="dv">6</span>, frameon<span class="op">=</span><span class="va">True</span>, framealpha<span class="op">=</span><span class="fl">0.88</span>, borderpad<span class="op">=</span><span class="fl">0.25</span>, labelspacing<span class="op">=</span><span class="fl">0.25</span>, handlelength<span class="op">=</span><span class="fl">1.2</span>, handletextpad<span class="op">=</span><span class="fl">0.35</span>)</span>
 <span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-35-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-35-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-20"><img src="13_american_option_numerics_files/figure-html/cell-35-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3986,6 +4190,8 @@ S_{t+\Delta t}=S_t\exp\left((r-q-\tfrac{1}{2}\sigma^2)\Delta t + \sigma\sqrt{\De
 \]</span></p>
 <p>where <span class="math inline">\(\tau_i\)</span> is the exercise time chosen by the learned policy on path <span class="math inline">\(i\)</span>.</p>
 <div id="a0aa2cd0" class="cell" data-execution_count="53">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_paths(s0, r, q, sigma, tau, normals):</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>    paths, steps <span class="op">=</span> normals.shape</span>
@@ -3998,8 +4204,11 @@ S_{t+\Delta t}=S_t\exp\left((r-q-\tfrac{1}{2}\sigma^2)\Delta t + \sigma\sqrt{\De
 <span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> t <span class="kw">in</span> <span class="bu">range</span>(steps):</span>
 <span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>            out[i, t <span class="op">+</span> <span class="dv">1</span>] <span class="op">=</span> out[i, t] <span class="op">*</span> math.exp(drift <span class="op">+</span> vol <span class="op">*</span> normals[i, t])</span>
 <span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="11477e58" class="cell" data-execution_count="54">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> basis(x, degree):</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> np.empty(degree <span class="op">+</span> <span class="dv">1</span>)</span>
@@ -4007,8 +4216,11 @@ S_{t+\Delta t}=S_t\exp\left((r-q-\tfrac{1}{2}\sigma^2)\Delta t + \sigma\sqrt{\De
 <span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, degree <span class="op">+</span> <span class="dv">1</span>):</span>
 <span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>        out[j] <span class="op">=</span> out[j <span class="op">-</span> <span class="dv">1</span>] <span class="op">*</span> x</span>
 <span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="7f0a2df8" class="cell" data-execution_count="55">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> solve_linear(a, b):</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> b.size</span>
@@ -4044,8 +4256,11 @@ S_{t+\Delta t}=S_t\exp\left((r-q-\tfrac{1}{2}\sigma^2)\Delta t + \sigma\sqrt{\De
 <span id="cb38-33"><a href="#cb38-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
 <span id="cb38-34"><a href="#cb38-34" aria-hidden="true" tabindex="-1"></a>        x[i] <span class="op">=</span> aug[i, n]</span>
 <span id="cb38-35"><a href="#cb38-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="b92697f8" class="cell" data-execution_count="56">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lsm_train(paths, strike, r, tau, flag, degree):</span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    n_paths, cols <span class="op">=</span> paths.shape</span>
@@ -4092,8 +4307,11 @@ S_{t+\Delta t}=S_t\exp\left((r-q-\tfrac{1}{2}\sigma^2)\Delta t + \sigma\sqrt{\De
 <span id="cb39-44"><a href="#cb39-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n_paths):</span>
 <span id="cb39-45"><a href="#cb39-45" aria-hidden="true" tabindex="-1"></a>        price <span class="op">+=</span> cash[i] <span class="op">*</span> math.exp(<span class="op">-</span>r <span class="op">*</span> dt <span class="op">*</span> ex_time[i])</span>
 <span id="cb39-46"><a href="#cb39-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> price <span class="op">/</span> n_paths, ex_time, coeffs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="665abd8b" class="cell" data-execution_count="57">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lsm_value(paths, strike, r, tau, flag, coeffs):</span>
 <span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>    n_paths, cols <span class="op">=</span> paths.shape</span>
@@ -4121,8 +4339,11 @@ S_{t+\Delta t}=S_t\exp\left((r-q-\tfrac{1}{2}\sigma^2)\Delta t + \sigma\sqrt{\De
 <span id="cb40-25"><a href="#cb40-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n_paths):</span>
 <span id="cb40-26"><a href="#cb40-26" aria-hidden="true" tabindex="-1"></a>        price <span class="op">+=</span> cash[i] <span class="op">*</span> math.exp(<span class="op">-</span>r <span class="op">*</span> dt <span class="op">*</span> ex_time[i])</span>
 <span id="cb40-27"><a href="#cb40-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> price <span class="op">/</span> n_paths, ex_time</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="c7d17a3b" class="cell" data-execution_count="58">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> lsm_cashflow_target(paths, strike, r, tau, flag, coeffs, t0):</span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    n_paths, cols <span class="op">=</span> paths.shape</span>
@@ -4157,16 +4378,22 @@ S_{t+\Delta t}=S_t\exp\left((r-q-\tfrac{1}{2}\sigma^2)\Delta t + \sigma\sqrt{\De
 <span id="cb41-32"><a href="#cb41-32" aria-hidden="true" tabindex="-1"></a>            decision[i] <span class="op">=</span> <span class="fl">1.0</span></span>
 <span id="cb41-33"><a href="#cb41-33" aria-hidden="true" tabindex="-1"></a>        target[i] <span class="op">=</span> cash <span class="op">*</span> math.exp(<span class="op">-</span>r <span class="op">*</span> dt <span class="op">*</span> (ex_time <span class="op">-</span> t0))</span>
 <span id="cb41-34"><a href="#cb41-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> target, immediate, decision</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="c909fc4d" class="cell" data-execution_count="59">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> antithetic_normals(paths, steps, seed):</span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>    rng <span class="op">=</span> np.random.default_rng(seed)</span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>    half <span class="op">=</span> <span class="bu">int</span>(math.ceil(paths <span class="op">/</span> <span class="dv">2</span>))</span>
 <span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> rng.standard_normal((half, steps))</span>
 <span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> np.vstack([z, <span class="op">-</span>z])[:paths]</span>
 <span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> z</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="f89441d1" class="cell" data-execution_count="60">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>lsm_row <span class="op">=</span> put_row</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>lsm_steps <span class="op">=</span> <span class="dv">40</span></span>
 <span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>z_train <span class="op">=</span> antithetic_normals(<span class="dv">16000</span>, lsm_steps, <span class="dv">13</span>)</span>
@@ -4255,6 +4482,7 @@ S_{t+\Delta t}=S_t\exp\left((r-q-\tfrac{1}{2}\sigma^2)\Delta t + \sigma\sqrt{\De
 <span id="cb43-86"><a href="#cb43-86" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">3</span>].set_ylabel(<span class="st">"paths"</span>)</span>
 <span id="cb43-87"><a href="#cb43-87" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb43-88"><a href="#cb43-88" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4604,7 +4832,7 @@ S_{t+\Delta t}=S_t\exp\left((r-q-\tfrac{1}{2}\sigma^2)\Delta t + \sigma\sqrt{\De
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-43-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-43-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-21"><img src="13_american_option_numerics_files/figure-html/cell-43-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4625,6 +4853,8 @@ SE(\widehat{V}) \propto \frac{1}{\sqrt{N}}
 <p>The exercise probability panel is also informative. For the representative ITM put, exercise probabilities are high because the contract is deeply in the money. But the exact probability changes with the fitted policy. A small continuation-value difference near the boundary can change exercise timing for many paths.</p>
 <p>The LSM residual/target panels should be read as policy diagnostics, also price diagnostics. In American pricing, a method can produce a close price but still have a weak policy in the boundary region.</p>
 <div id="40b8a180" class="cell" data-execution_count="61">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab <span class="im">import</span> _kernels</span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>lsm_cache <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spy_lsm_regime.parquet"</span></span>
@@ -4677,6 +4907,7 @@ SE(\widehat{V}) \propto \frac{1}{\sqrt{N}}
 <span id="cb44-50"><a href="#cb44-50" aria-hidden="true" tabindex="-1"></a>lsm_policy_curves <span class="op">=</span> pd.concat(lsm_policy_curves, ignore_index<span class="op">=</span><span class="va">True</span>) <span class="cf">if</span> lsm_policy_curves <span class="cf">else</span> pd.DataFrame()</span>
 <span id="cb44-51"><a href="#cb44-51" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb44-52"><a href="#cb44-52" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4762,14 +4993,17 @@ SE(\widehat{V}) \propto \frac{1}{\sqrt{N}}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-44-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-44-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-22"><img src="13_american_option_numerics_files/figure-html/cell-44-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="6df10f5a" class="cell" data-execution_count="62">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>lsm_uncertainty_table <span class="op">=</span> lsm_regime_results.sort_values(<span class="st">"lsm_price_se"</span>, ascending<span class="op">=</span><span class="va">False</span>).head(<span class="dv">20</span>).copy()</span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>display(lsm_uncertainty_table[[<span class="st">"option_type"</span>, <span class="st">"dte_bucket"</span>, <span class="st">"moneyness_bucket"</span>, <span class="st">"sigma_bucket"</span>, <span class="st">"dividend_bucket"</span>, <span class="st">"ex_div_bucket"</span>, <span class="st">"coverage_rows"</span>, <span class="st">"lsm_price"</span>, <span class="st">"lsm_price_se"</span>, <span class="st">"exercise_probability"</span>]].<span class="bu">round</span>(<span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5058,8 +5292,11 @@ SE(\widehat{V}) \propto \frac{1}{\sqrt{N}}
 </div>
 </div>
 <div id="7a82d2b3" class="cell" data-execution_count="63">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>lsm_gap_table <span class="op">=</span> lsm_regime_results.assign(train_eval_gap<span class="op">=</span>lsm_regime_results[<span class="st">"lsm_price"</span>] <span class="op">-</span> lsm_regime_results[<span class="st">"lsm_train_price"</span>]).sort_values(<span class="st">"train_eval_gap"</span>, key<span class="op">=</span><span class="kw">lambda</span> x: x.<span class="bu">abs</span>(), ascending<span class="op">=</span><span class="va">False</span>).head(<span class="dv">20</span>)</span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>display(lsm_gap_table[[<span class="st">"option_type"</span>, <span class="st">"dte_bucket"</span>, <span class="st">"moneyness_bucket"</span>, <span class="st">"sigma_bucket"</span>, <span class="st">"dividend_bucket"</span>, <span class="st">"ex_div_bucket"</span>, <span class="st">"coverage_rows"</span>, <span class="st">"lsm_train_price"</span>, <span class="st">"lsm_price"</span>, <span class="st">"train_eval_gap"</span>, <span class="st">"lsm_price_se"</span>]].<span class="bu">round</span>(<span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5474,6 +5711,8 @@ CI_{95\%}=\bar{V}_{eval}\pm 1.96SE
 <p>Wider paths produce more dispersed future cashflows. Deep ITM options have large payoff levels, so even small relative policy differences become large dollar differences. Long maturities create more exercise opportunities, which means more chances for the fitted policy to diverge. Low-coverage cells may be represented by a contract that is not very typical of a large market region.</p>
 <p>The output correctly highlights these cells. They are the regions where we should trust a single LSM price less and lean more on cross-method comparison.</p>
 <div id="0887aed3" class="cell" data-execution_count="64">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>method_keys <span class="op">=</span> [<span class="st">"option_type"</span>, <span class="st">"dte_bucket"</span>, <span class="st">"moneyness_bucket"</span>, <span class="st">"sigma_bucket"</span>, <span class="st">"dividend_bucket"</span>, <span class="st">"ex_div_bucket"</span>]</span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name <span class="kw">in</span> method_keys:</span>
 <span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>    pde_tree[name] <span class="op">=</span> pde_tree[name].astype(<span class="bu">str</span>)</span>
@@ -5528,6 +5767,7 @@ CI_{95\%}=\bar{V}_{eval}\pm 1.96SE
 <span id="cb47-52"><a href="#cb47-52" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_title(<span class="st">"Runtime Frontier"</span>)</span>
 <span id="cb47-53"><a href="#cb47-53" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb47-54"><a href="#cb47-54" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6565,7 +6805,7 @@ CI_{95\%}=\bar{V}_{eval}\pm 1.96SE
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-47-output-7.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-47-output-7.png" class="lightbox" data-gallery="quarto-lightbox-gallery-23"><img src="13_american_option_numerics_files/figure-html/cell-47-output-7.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -6699,6 +6939,8 @@ R = \sum_j w_j z_j
 <p>The top assignment-risk calls in the output are intuitive. They are deep ITM calls near the December 2023 dividend, with very low time value and large upcoming dividends. For a short covered-call writer, this is the situation where rolling the call before ex-dividend may be rational. The call premium has already been mostly earned, upside is already capped, and the dividend creates assignment pressure.</p>
 <p>The score is not a perfect probability. It is a decision feature. The purpose is to rank contracts by assignment danger so the overlay strategy can decide when to defend a short call position.</p>
 <div id="42e4a4ef" class="cell" data-execution_count="65">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>regime_keys <span class="op">=</span> [<span class="st">"option_type"</span>, <span class="st">"dte_bucket"</span>, <span class="st">"moneyness_bucket"</span>, <span class="st">"sigma_bucket"</span>, <span class="st">"dividend_bucket"</span>, <span class="st">"ex_div_bucket"</span>]</span>
 <span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>assignment_scores <span class="op">=</span> tree_full_chain.copy()</span>
 <span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>assignment_scores[<span class="st">"dte_bucket"</span>] <span class="op">=</span> pd.cut(assignment_scores[<span class="st">"dte_days"</span>], [<span class="dv">7</span>, <span class="dv">14</span>, <span class="dv">30</span>, <span class="dv">60</span>, <span class="dv">90</span>, <span class="dv">120</span>, <span class="dv">180</span>], include_lowest<span class="op">=</span><span class="va">True</span>)</span>
@@ -6754,6 +6996,7 @@ R = \sum_j w_j z_j
 <span id="cb50-53"><a href="#cb50-53" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_title(<span class="st">"Roll Signals"</span>)</span>
 <span id="cb50-54"><a href="#cb50-54" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb50-55"><a href="#cb50-55" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -7234,7 +7477,7 @@ R = \sum_j w_j z_j
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-48-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-48-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-24"><img src="13_american_option_numerics_files/figure-html/cell-48-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -7244,6 +7487,8 @@ R = \sum_j w_j z_j
 <p>Boundary proximity also confirms the same story. Several flagged calls are close to the PDE boundary, meaning the numerical exercise policy says they are near the exercise region. The assignment-risk score is therefore richer than a simple moneyness rule. It combines market price, dividend economics, and model boundary information.</p>
 <p>The roll timeline plot shows these signals cluster around ex-dividend periods, especially late 2023. That is exactly when a covered-call overlay needs defensive logic.</p>
 <div id="f5719e53" class="cell" data-execution_count="66">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>component_cols <span class="op">=</span> [<span class="st">"itm_score"</span>, <span class="st">"boundary_proximity"</span>, <span class="st">"dividend_gap_score"</span>, <span class="st">"low_time_value_score"</span>, <span class="st">"ex_div_proximity"</span>, <span class="st">"model_uncertainty_score"</span>]</span>
 <span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>top_calls <span class="op">=</span> short_call_scores.sort_values(<span class="st">"assignment_risk"</span>, ascending<span class="op">=</span><span class="va">False</span>).head(<span class="dv">20</span>).copy()</span>
 <span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>component_weights <span class="op">=</span> np.array([<span class="fl">0.20</span>, <span class="fl">0.25</span>, <span class="fl">0.25</span>, <span class="fl">0.15</span>, <span class="fl">0.10</span>, <span class="fl">0.05</span>])</span>
@@ -7272,10 +7517,11 @@ R = \sum_j w_j z_j
 <span id="cb52-26"><a href="#cb52-26" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_title(<span class="st">"Roll Timeline"</span>)</span>
 <span id="cb52-27"><a href="#cb52-27" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb52-28"><a href="#cb52-28" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-49-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-49-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-25"><img src="13_american_option_numerics_files/figure-html/cell-49-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -7327,12 +7573,15 @@ BD = \frac{B(t)-S_t}{S_t}
 <p>The score doesn’t use boundary distance alone because boundaries can be noisy near dividend dates and because market exercise is not perfectly rational. Instead, boundary proximity is one component alongside dividend gap, time value, and ex-dividend proximity.</p>
 <p>This is good engineering. A single rule can fail. A composite score is more robust because it asks whether several economically related warnings are firing at the same time.</p>
 <div id="36d43c03" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>overlay_payoffs()</span>
 <span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-50-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-50-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-26"><img src="13_american_option_numerics_files/figure-html/cell-50-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -7437,16 +7686,24 @@ NAV_t = Cash_t + N_{shares}S_t + \sum_{j\in active} q_j M_{j,t} \cdot 100
 </ul>
 <p>This is important because the backtest is also comparing theoretical payoff diagrams. It includes rolls, marks, bid/ask spread costs, dividends, and early-assignment defense.</p>
 <div id="18e57246" class="cell" data-execution_count="68">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> contract_key(frame):</span>
 <span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> frame[<span class="st">"option_type"</span>].astype(<span class="bu">str</span>) <span class="op">+</span> <span class="st">"_"</span> <span class="op">+</span> pd.to_datetime(frame[<span class="st">"expiry"</span>]).dt.strftime(<span class="st">"%Y-%m-</span><span class="sc">%d</span><span class="st">"</span>) <span class="op">+</span> <span class="st">"_"</span> <span class="op">+</span> frame[<span class="st">"strike"</span>].<span class="bu">round</span>(<span class="dv">6</span>).astype(<span class="bu">str</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="a64c48ef" class="cell" data-execution_count="69">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> choose_one(candidates, score_col, ascending<span class="op">=</span><span class="va">False</span>):</span>
 <span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> candidates.empty:</span>
 <span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span>
 <span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> candidates.sort_values([score_col, <span class="st">"relative_spread"</span>, <span class="st">"dte_days"</span>], ascending<span class="op">=</span>[ascending, <span class="va">True</span>, <span class="va">True</span>]).iloc[<span class="dv">0</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="6401fa3d" class="cell" data-execution_count="70">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_schedules(q, dates):</span>
 <span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> q.copy()</span>
 <span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>    data[<span class="st">"contract_key"</span>] <span class="op">=</span> contract_key(data)</span>
@@ -7478,8 +7735,11 @@ NAV_t = Cash_t + N_{shares}S_t + \sum_{j\in active} q_j M_{j,t} \cdot 100
 <span id="cb56-29"><a href="#cb56-29" aria-hidden="true" tabindex="-1"></a>                rows[<span class="st">"boundary_aware_collar"</span>].append({<span class="st">"entry_date"</span>: d, <span class="st">"contract_key"</span>: fair_put[<span class="st">"contract_key"</span>], <span class="st">"quantity"</span>: <span class="fl">10.0</span>, <span class="st">"label"</span>: <span class="st">"long_put"</span>})</span>
 <span id="cb56-30"><a href="#cb56-30" aria-hidden="true" tabindex="-1"></a>                rows[<span class="st">"boundary_aware_collar"</span>].append({<span class="st">"entry_date"</span>: d, <span class="st">"contract_key"</span>: aware_call[<span class="st">"contract_key"</span>], <span class="st">"quantity"</span>: <span class="op">-</span><span class="fl">10.0</span>, <span class="st">"label"</span>: <span class="st">"short_call"</span>})</span>
 <span id="cb56-31"><a href="#cb56-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {name: pd.DataFrame(vals) <span class="cf">for</span> name, vals <span class="kw">in</span> rows.items()}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="7eb517d2" class="cell" data-execution_count="71">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_overlay(schedules, quotes, price_series, dividend_series, initial_nav<span class="op">=</span><span class="fl">1_000_000.0</span>, shares<span class="op">=</span><span class="fl">1000.0</span>, assignment_threshold<span class="op">=</span><span class="fl">0.25</span>, defense_strategies<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> defense_strategies <span class="kw">is</span> <span class="va">None</span>:</span>
 <span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>        defense_strategies <span class="op">=</span> {<span class="st">"boundary_covered_call"</span>, <span class="st">"boundary_aware_collar"</span>}</span>
@@ -7575,8 +7835,11 @@ NAV_t = Cash_t + N_{shares}S_t + \sum_{j\in active} q_j M_{j,t} \cdot 100
 <span id="cb57-93"><a href="#cb57-93" aria-hidden="true" tabindex="-1"></a>    overlay_marks <span class="op">=</span> pd.DataFrame(mark_table)</span>
 <span id="cb57-94"><a href="#cb57-94" aria-hidden="true" tabindex="-1"></a>    overlay_holdings <span class="op">=</span> pd.DataFrame(holdings_table)</span>
 <span id="cb57-95"><a href="#cb57-95" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> overlay_nav, overlay_drawdowns, overlay_trades, overlay_cash, overlay_marks, overlay_holdings</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="f55dfb40" class="cell" data-execution_count="72">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>spot_history <span class="op">=</span> underlying_2022_2023[<span class="st">"close"</span>]</span>
 <span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>dividend_series <span class="op">=</span> underlying_2022_2023[<span class="st">"dividend"</span>]</span>
 <span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>rebalance_dates <span class="op">=</span> pd.Index(<span class="bu">sorted</span>(assignment_scores[<span class="st">"date"</span>].drop_duplicates()))</span>
@@ -7594,6 +7857,7 @@ NAV_t = Cash_t + N_{shares}S_t + \sum_{j\in active} q_j M_{j,t} \cdot 100
 <span id="cb58-15"><a href="#cb58-15" aria-hidden="true" tabindex="-1"></a>overlay_trades.to_parquet(cache_dir <span class="op">/</span> <span class="st">"spy_overlay_trades.parquet"</span>, index<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb58-16"><a href="#cb58-16" aria-hidden="true" tabindex="-1"></a>display(overlay_summary.<span class="bu">round</span>(<span class="dv">6</span>))</span>
 <span id="cb58-17"><a href="#cb58-17" aria-hidden="true" tabindex="-1"></a>display(overlay_trades.iloc[:<span class="dv">30</span>].<span class="bu">round</span>(<span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -8189,6 +8453,8 @@ NAV_t = Cash_t + N_{shares}S_t + \sum_{j\in active} q_j M_{j,t} \cdot 100
 <p>The boundary covered call receives much more gross premium income, around <strong>$298,540</strong>, because it selects different calls, but it also has more roll activity and defensive closes. The total performance ends up far lower than the gross premium number suggests. This is exactly why option overlays need full cashflow accounting. Premium received is not profit. It is only the first cashflow.</p>
 <p>Protective-put strategies show the opposite pattern. The protection cost is explicit and large. If the underlying doesn’t fall enough after the put is bought, the put expires or is rolled with poor realized benefit. Fair-value selection reduces the cost from about <strong>$127,000</strong> to <strong>$34,400</strong>, which is a major improvement, but it still doesn’t make the strategy profitable over this specific period.</p>
 <div id="ae9ff13d" class="cell" data-execution_count="73">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb60"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>threshold_rows <span class="op">=</span> []</span>
 <span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a>aware_schedules <span class="op">=</span> {k: v <span class="cf">for</span> k, v <span class="kw">in</span> overlay_schedules.items() <span class="cf">if</span> k <span class="kw">in</span> {<span class="st">"boundary_covered_call"</span>, <span class="st">"boundary_aware_collar"</span>, <span class="st">"buy_hold_spy"</span>}}</span>
 <span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> threshold <span class="kw">in</span> [<span class="fl">0.15</span>, <span class="fl">0.25</span>, <span class="fl">0.35</span>, <span class="fl">0.45</span>, <span class="fl">0.55</span>]:</span>
@@ -8218,6 +8484,7 @@ NAV_t = Cash_t + N_{shares}S_t + \sum_{j\in active} q_j M_{j,t} \cdot 100
 <span id="cb60-27"><a href="#cb60-27" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend(fontsize<span class="op">=</span><span class="dv">6</span>, frameon<span class="op">=</span><span class="va">True</span>, framealpha<span class="op">=</span><span class="fl">0.88</span>, borderpad<span class="op">=</span><span class="fl">0.25</span>, labelspacing<span class="op">=</span><span class="fl">0.25</span>, handlelength<span class="op">=</span><span class="fl">1.2</span>, handletextpad<span class="op">=</span><span class="fl">0.35</span>)</span>
 <span id="cb60-28"><a href="#cb60-28" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb60-29"><a href="#cb60-29" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -8344,7 +8611,7 @@ NAV_t = Cash_t + N_{shares}S_t + \sum_{j\in active} q_j M_{j,t} \cdot 100
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-56-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-56-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-27"><img src="13_american_option_numerics_files/figure-html/cell-56-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -8357,6 +8624,8 @@ NAV_t = Cash_t + N_{shares}S_t + \sum_{j\in active} q_j M_{j,t} \cdot 100
 <p>The return and drawdown curves show a practical tradeoff. Lower thresholds are more cautious but can improve or hurt return depending on whether the closed calls would actually have caused assignment or losses. For SPY, the lowest threshold improves total return for the boundary-aware variants because it avoids some costly exposures, but it also increases close cost.</p>
 <p>This is a good example of a model rule becoming a portfolio-control parameter. The assignment-risk model gives the score; the threshold determines how aggressively we act on it.</p>
 <div id="d0de3e94" class="cell" data-execution_count="74">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb61"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="st">"contract_key"</span> <span class="kw">not</span> <span class="kw">in</span> assignment_scores.columns:</span>
 <span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>    assignment_scores[<span class="st">"contract_key"</span>] <span class="op">=</span> contract_key(assignment_scores)</span>
 <span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>mark_lookup <span class="op">=</span> assignment_scores[[<span class="st">"date"</span>, <span class="st">"contract_key"</span>, <span class="st">"spot"</span>, <span class="st">"moneyness"</span>, <span class="st">"assignment_risk"</span>]].drop_duplicates([<span class="st">"date"</span>, <span class="st">"contract_key"</span>])</span>
@@ -8378,10 +8647,11 @@ NAV_t = Cash_t + N_{shares}S_t + \sum_{j\in active} q_j M_{j,t} \cdot 100
 <span id="cb61-19"><a href="#cb61-19" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_title(<span class="st">"Return vs Drawdown"</span>)</span>
 <span id="cb61-20"><a href="#cb61-20" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb61-21"><a href="#cb61-21" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-57-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-57-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-28"><img src="13_american_option_numerics_files/figure-html/cell-57-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -8397,6 +8667,8 @@ NAV_t = Cash_t + N_{shares}S_t + \sum_{j\in active} q_j M_{j,t} \cdot 100
 <p>The selected-moneyness plot shows that naive and boundary-aware methods choose different contracts. Boundary-aware calls tend to avoid the most dangerous deep ITM dividend-sensitive short calls. The cashflow bar chart separates premium received, protection paid, roll/close cost, and spread cost. This is useful because final NAV can hide the internal mechanics.</p>
 <p>The active-legs plot confirms the overlays are real dynamic strategies, not one-shot expiry payoff diagrams. Positions are opened, held, rolled, and closed across the whole sample.</p>
 <div id="d2dbec3d" class="cell" data-execution_count="75">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb62"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">5</span>))</span>
 <span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>short_calls <span class="op">=</span> trade_marks[(trade_marks[<span class="st">"event"</span>].eq(<span class="st">"open"</span>)) <span class="op">&amp;</span> (trade_marks[<span class="st">"option_type"</span>].eq(<span class="st">"call"</span>))].copy()</span>
 <span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>long_puts <span class="op">=</span> trade_marks[(trade_marks[<span class="st">"event"</span>].eq(<span class="st">"open"</span>)) <span class="op">&amp;</span> (trade_marks[<span class="st">"option_type"</span>].eq(<span class="st">"put"</span>))].copy()</span>
@@ -8426,15 +8698,18 @@ NAV_t = Cash_t + N_{shares}S_t + \sum_{j\in active} q_j M_{j,t} \cdot 100
 <span id="cb62-27"><a href="#cb62-27" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].set_title(<span class="st">"Active Legs"</span>)</span>
 <span id="cb62-28"><a href="#cb62-28" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb62-29"><a href="#cb62-29" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-58-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-58-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-29"><img src="13_american_option_numerics_files/figure-html/cell-58-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 </div>
 <div id="9f418c7b" class="cell" data-execution_count="76">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb63"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>project13_objects <span class="op">=</span> {</span>
 <span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cleaning_steps"</span>: cleaning_steps,</span>
 <span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"spy_quotes"</span>: spy_quotes,</span>
@@ -8460,6 +8735,7 @@ NAV_t = Cash_t + N_{shares}S_t + \sum_{j\in active} q_j M_{j,t} \cdot 100
 <span id="cb63-23"><a href="#cb63-23" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb63-24"><a href="#cb63-24" aria-hidden="true" tabindex="-1"></a>object_summary <span class="op">=</span> pd.DataFrame([{<span class="st">"name"</span>: name, <span class="st">"type"</span>: <span class="bu">type</span>(obj).<span class="va">__name__</span>, <span class="st">"rows"</span>: <span class="bu">len</span>(obj) <span class="cf">if</span> <span class="bu">hasattr</span>(obj, <span class="st">"__len__"</span>) <span class="cf">else</span> np.nan, <span class="st">"columns"</span>: <span class="bu">len</span>(obj.columns) <span class="cf">if</span> <span class="bu">isinstance</span>(obj, pd.DataFrame) <span class="cf">else</span> np.nan} <span class="cf">for</span> name, obj <span class="kw">in</span> project13_objects.items()])</span>
 <span id="cb63-25"><a href="#cb63-25" aria-hidden="true" tabindex="-1"></a>display(object_summary)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -8749,6 +9025,8 @@ R_{assign}\ge\theta
 \]</span></p>
 <p>This decomposition prevents a common mistake: treating premium received as return. A sold call can generate premium and still lose money if it must be bought back at a higher price or if it truncates large upside.</p>
 <div id="2e6240fa" class="cell" data-execution_count="77">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb64"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -8898,6 +9176,7 @@ R_{assign}\ge\theta
 <span id="cb64-147"><a href="#cb64-147" aria-hidden="true" tabindex="-1"></a>strategy_mechanics_bars(axes[<span class="dv">11</span>], mechanics, <span class="st">"Strategy Mechanics"</span>)</span>
 <span id="cb64-148"><a href="#cb64-148" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb64-149"><a href="#cb64-149" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -9427,7 +9706,7 @@ R_{assign}\ge\theta
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="13_american_option_numerics_files/figure-html/cell-60-output-7.png" class="img-fluid figure-img"></p>
+<p><a href="13_american_option_numerics_files/figure-html/cell-60-output-7.png" class="lightbox" data-gallery="quarto-lightbox-gallery-30"><img src="13_american_option_numerics_files/figure-html/cell-60-output-7.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -9580,6 +9859,57 @@ S_T&gt;K_c
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -9923,6 +10253,38 @@ S_T&gt;K_c
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 

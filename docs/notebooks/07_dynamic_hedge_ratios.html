@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>7. Dynamic Hedge Ratios and Residual Trading – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/06_portfolio_black_littreman.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -112,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -143,7 +144,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -292,13 +293,77 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#dynamic-hedging-as-a-moving-economic-relationship" id="toc-dynamic-hedging-as-a-moving-economic-relationship" class="nav-link active" data-scroll-target="#dynamic-hedging-as-a-moving-economic-relationship">Dynamic hedging as a moving economic relationship</a></li>
+  <li><a href="#setup-and-project-constants" id="toc-setup-and-project-constants" class="nav-link" data-scroll-target="#setup-and-project-constants">1) Setup and project constants</a>
+  <ul class="collapse">
+  <li><a href="#hedge-ratio-as-a-minimum-variance-problem" id="toc-hedge-ratio-as-a-minimum-variance-problem" class="nav-link" data-scroll-target="#hedge-ratio-as-a-minimum-variance-problem">1.1 Hedge ratio as a minimum-variance problem</a></li>
+  <li><a href="#what-a-good-hedge-ratio-is-allowed-to-do" id="toc-what-a-good-hedge-ratio-is-allowed-to-do" class="nav-link" data-scroll-target="#what-a-good-hedge-ratio-is-allowed-to-do">1.2 What a good hedge ratio is allowed to do</a></li>
+  </ul></li>
+  <li><a href="#data-construction" id="toc-data-construction" class="nav-link" data-scroll-target="#data-construction">2) Data construction</a>
+  <ul class="collapse">
+  <li><a href="#why-this-universe-is-useful-for-econometrics" id="toc-why-this-universe-is-useful-for-econometrics" class="nav-link" data-scroll-target="#why-this-universe-is-useful-for-econometrics">2.1 Why this universe is useful for econometrics</a></li>
+  </ul></li>
+  <li><a href="#target-and-hedge-relationships" id="toc-target-and-hedge-relationships" class="nav-link" data-scroll-target="#target-and-hedge-relationships">3) Target and hedge relationships</a></li>
+  <li><a href="#coverage-and-first-diagnostics" id="toc-coverage-and-first-diagnostics" class="nav-link" data-scroll-target="#coverage-and-first-diagnostics">4) Coverage and first diagnostics</a>
+  <ul class="collapse">
+  <li><a href="#rolling-beta-and-normalized-price-behavior" id="toc-rolling-beta-and-normalized-price-behavior" class="nav-link" data-scroll-target="#rolling-beta-and-normalized-price-behavior">4.1 Rolling beta and normalized price behavior</a></li>
+  <li><a href="#residual-variance-and-r2-intuition" id="toc-residual-variance-and-r2-intuition" class="nav-link" data-scroll-target="#residual-variance-and-r2-intuition">4.2 Residual variance and <span class="math inline">\(R^2\)</span> intuition</a></li>
+  </ul></li>
+  <li><a href="#hedge-book-mechanics-and-static-ols" id="toc-hedge-book-mechanics-and-static-ols" class="nav-link" data-scroll-target="#hedge-book-mechanics-and-static-ols">5) Hedge-book mechanics and static OLS</a>
+  <ul class="collapse">
+  <li><a href="#reading-the-hedge-metrics" id="toc-reading-the-hedge-metrics" class="nav-link" data-scroll-target="#reading-the-hedge-metrics">5.1 Reading the hedge metrics</a></li>
+  </ul></li>
+  <li><a href="#rolling-ols-hedge-ratios" id="toc-rolling-ols-hedge-ratios" class="nav-link" data-scroll-target="#rolling-ols-hedge-ratios">6) Rolling OLS hedge ratios</a></li>
+  <li><a href="#ridge-regression-for-hedge-ratios" id="toc-ridge-regression-for-hedge-ratios" class="nav-link" data-scroll-target="#ridge-regression-for-hedge-ratios">7) Ridge regression for hedge ratios</a>
+  <ul class="collapse">
+  <li><a href="#bias-variance-tradeoff-in-hedge-estimation" id="toc-bias-variance-tradeoff-in-hedge-estimation" class="nav-link" data-scroll-target="#bias-variance-tradeoff-in-hedge-estimation">7.1 Bias-variance tradeoff in hedge estimation</a></li>
+  </ul></li>
+  <li><a href="#kalman-filter-hedge-ratios" id="toc-kalman-filter-hedge-ratios" class="nav-link" data-scroll-target="#kalman-filter-hedge-ratios">8) Kalman filter hedge ratios</a>
+  <ul class="collapse">
+  <li><a href="#the-state-space-model" id="toc-the-state-space-model" class="nav-link" data-scroll-target="#the-state-space-model">8.1 The state-space model</a></li>
+  <li><a href="#prediction-step-belief-before-seeing-todays-return" id="toc-prediction-step-belief-before-seeing-todays-return" class="nav-link" data-scroll-target="#prediction-step-belief-before-seeing-todays-return">8.2 Prediction step: belief before seeing today’s return</a></li>
+  <li><a href="#measurement-step-prediction-error-and-its-uncertainty" id="toc-measurement-step-prediction-error-and-its-uncertainty" class="nav-link" data-scroll-target="#measurement-step-prediction-error-and-its-uncertainty">8.3 Measurement step: prediction error and its uncertainty</a></li>
+  <li><a href="#kalman-gain-and-state-update" id="toc-kalman-gain-and-state-update" class="nav-link" data-scroll-target="#kalman-gain-and-state-update">8.4 Kalman gain and state update</a></li>
+  <li><a href="#likelihood-selection-for-q-and-r" id="toc-likelihood-selection-for-q-and-r" class="nav-link" data-scroll-target="#likelihood-selection-for-q-and-r">8.5 Likelihood selection for <span class="math inline">\(Q\)</span> and <span class="math inline">\(R\)</span></a></li>
+  <li><a href="#kalman-filter-versus-rolling-windows" id="toc-kalman-filter-versus-rolling-windows" class="nav-link" data-scroll-target="#kalman-filter-versus-rolling-windows">8.6 Kalman filter versus rolling windows</a></li>
+  </ul></li>
+  <li><a href="#no-trade-band-sensitivity" id="toc-no-trade-band-sensitivity" class="nav-link" data-scroll-target="#no-trade-band-sensitivity">9) No-trade band sensitivity</a></li>
+  <li><a href="#model-scoring-and-best-hedge-selection" id="toc-model-scoring-and-best-hedge-selection" class="nav-link" data-scroll-target="#model-scoring-and-best-hedge-selection">10) Model scoring and best hedge selection</a>
+  <ul class="collapse">
+  <li><a href="#why-the-best-model-can-differ-by-relationship" id="toc-why-the-best-model-can-differ-by-relationship" class="nav-link" data-scroll-target="#why-the-best-model-can-differ-by-relationship">10.1 Why the best model can differ by relationship</a></li>
+  </ul></li>
+  <li><a href="#residual-spreads-and-econometric-testing" id="toc-residual-spreads-and-econometric-testing" class="nav-link" data-scroll-target="#residual-spreads-and-econometric-testing">11) Residual spreads and econometric testing</a>
+  <ul class="collapse">
+  <li><a href="#adf-engle-granger-and-half-life" id="toc-adf-engle-granger-and-half-life" class="nav-link" data-scroll-target="#adf-engle-granger-and-half-life">11.1 ADF, Engle-Granger, and half-life</a></li>
+  <li><a href="#z-score-trading-rule" id="toc-z-score-trading-rule" class="nav-link" data-scroll-target="#z-score-trading-rule">11.2 Z-score trading rule</a></li>
+  <li><a href="#dynamic-residuals-and-a-subtle-econometric-caveat" id="toc-dynamic-residuals-and-a-subtle-econometric-caveat" class="nav-link" data-scroll-target="#dynamic-residuals-and-a-subtle-econometric-caveat">11.3 Dynamic residuals and a subtle econometric caveat</a></li>
+  </ul></li>
+  <li><a href="#residual-trading-results" id="toc-residual-trading-results" class="nav-link" data-scroll-target="#residual-trading-results">12) Residual trading results</a></li>
+  <li><a href="#final-applied-output-for-the-main-universe" id="toc-final-applied-output-for-the-main-universe" class="nav-link" data-scroll-target="#final-applied-output-for-the-main-universe">13) Final applied output for the main universe</a></li>
+  <li><a href="#international-etf-transfer-with-the-library" id="toc-international-etf-transfer-with-the-library" class="nav-link" data-scroll-target="#international-etf-transfer-with-the-library">14) International ETF transfer with the library</a>
+  <ul class="collapse">
+  <li><a href="#international-hedging-as-economic-decomposition" id="toc-international-hedging-as-economic-decomposition" class="nav-link" data-scroll-target="#international-hedging-as-economic-decomposition">14.0 International hedging as economic decomposition</a></li>
+  <li><a href="#international-relationships-and-economic-design" id="toc-international-relationships-and-economic-design" class="nav-link" data-scroll-target="#international-relationships-and-economic-design">14.1 International relationships and economic design</a></li>
+  <li><a href="#currency-hedged-etfs-as-natural-controls" id="toc-currency-hedged-etfs-as-natural-controls" class="nav-link" data-scroll-target="#currency-hedged-etfs-as-natural-controls">14.5 Currency-hedged ETFs as natural controls</a></li>
+  <li><a href="#international-hedge-model-results" id="toc-international-hedge-model-results" class="nav-link" data-scroll-target="#international-hedge-model-results">14.2 International hedge model results</a></li>
+  <li><a href="#country-residuals-as-economic-signals" id="toc-country-residuals-as-economic-signals" class="nav-link" data-scroll-target="#country-residuals-as-economic-signals">14.6 Country residuals as economic signals</a></li>
+  <li><a href="#international-residual-gates" id="toc-international-residual-gates" class="nav-link" data-scroll-target="#international-residual-gates">14.3 International residual gates</a></li>
+  <li><a href="#international-residual-trading-and-final-plot" id="toc-international-residual-trading-and-final-plot" class="nav-link" data-scroll-target="#international-residual-trading-and-final-plot">14.4 International residual trading and final plot</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">7. Dynamic Hedge Ratios and Residual Trading</span></h1>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">7. Dynamic Hedge Ratios and Residual Trading</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -377,6 +442,8 @@ b = 0.05
 \]</span></p>
 <p>So if the desired hedge ratio changes by less than 5 percentage points, we don’t update the traded hedge. This small detail becomes important later: it turns a smooth statistical beta path into a more realistic trading path.</p>
 <div id="a88938f7" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dataclasses <span class="im">import</span> dataclass</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
@@ -417,8 +484,11 @@ b = 0.05
 <span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"xtick.labelsize"</span>: <span class="dv">9</span>,</span>
 <span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"ytick.labelsize"</span>: <span class="dv">9</span>,</span>
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"legend.fontsize"</span>: <span class="dv">7</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="0ff724ea" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>start <span class="op">=</span> <span class="st">"2015-01-01"</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>end <span class="op">=</span> <span class="st">"2026-01-01"</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>ann <span class="op">=</span> <span class="dv">252</span></span>
@@ -433,6 +503,7 @@ b = 0.05
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>z_out <span class="op">=</span> <span class="fl">0.5</span></span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>z_stop <span class="op">=</span> <span class="fl">3.5</span></span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>z_cool <span class="op">=</span> <span class="dv">5</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <p>The constants create a clean out-of-sample setup. We don’t estimate a hedge ratio on the full sample and then pretend it was available historically. We require an initial two-year training window, then we let the hedge evolve using only information available up to each date.</p>
 <p>The cost assumption is also explicit:</p>
@@ -535,6 +606,8 @@ r^{simple}_t = \frac{P_t}{P_{t-1}} - 1
 <p>Here <span class="math inline">\(P_t\)</span> is the adjusted close price at time <span class="math inline">\(t\)</span>. Log returns are convenient for regression and statistical testing because they add cleanly across time. Simple returns are more natural for portfolio simulation because the hedged book’s profit and loss is calculated from actual percentage returns.</p>
 <p>So the workflow isn’t random: we estimate relationships in a statistically cleaner return space, then evaluate the hedge in the same return space an investor would actually experience.</p>
 <div id="c47d4d16" class="cell" data-execution_count="4">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>etf_path <span class="op">=</span> [Path(<span class="st">"../data/core_cross_asset_etfs.csv"</span>), Path(<span class="st">"../data/sector_etfs.csv"</span>)]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>nasdaq_path <span class="op">=</span> Path(<span class="st">"../data/nasdaq_close_volume.parquet"</span>)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -551,6 +624,7 @@ r^{simple}_t = \frac{P_t}{P_{t-1}} - 1
 <span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"etf close panel: </span><span class="sc">{</span>etf_px<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"stock close panel: </span><span class="sc">{</span>stock_px<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"combined price panel from </span><span class="sc">{</span>start<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>end<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>px<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>etf close panel: (2766, 32)
 stock close panel: (2766, 4382)
@@ -603,6 +677,8 @@ r^{hedged}_t = y_t - \sum_{j=1}^{K}\beta_{j,t-1}x_{j,t}
 <li><strong>Single-stock relationships</strong> hedge mega-cap or high-beta stocks with sector ETFs and QQQ, trying to remove market/sector beta and leave idiosyncratic residual behavior.</li>
 </ul>
 <div id="71f2824b" class="cell" data-execution_count="5">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span>(frozen<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> rel:</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    name: <span class="bu">str</span></span>
@@ -655,8 +731,11 @@ r^{hedged}_t = y_t - \sum_{j=1}^{K}\beta_{j,t-1}x_{j,t}
 <span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"residual_pair"</span>: <span class="st">""</span> <span class="cf">if</span> r.pair <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> <span class="st">" / "</span>.join(r.pair),</span>
 <span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"included"</span>: <span class="bu">all</span>(t <span class="kw">in</span> available <span class="cf">for</span> t <span class="kw">in</span> r.assets)})</span>
 <span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(rows)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="739e5c52" class="cell" data-execution_count="6">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>rel_main <span class="op">=</span> [</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"qqq_spy"</span>, <span class="st">"qqq"</span>, [<span class="st">"spy"</span>], pair<span class="op">=</span>(<span class="st">"qqq"</span>, <span class="st">"spy"</span>)),</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    rel(<span class="st">"tlt_ief"</span>, <span class="st">"tlt"</span>, [<span class="st">"ief"</span>], pair<span class="op">=</span>(<span class="st">"tlt"</span>, <span class="st">"ief"</span>)),</span>
@@ -685,6 +764,7 @@ r^{hedged}_t = y_t - \sum_{j=1}^{K}\beta_{j,t-1}x_{j,t}
 <span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>px_main <span class="op">=</span> px[tickers_main]</span>
 <span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>ret_m_main <span class="op">=</span> ret_m[tickers_main]</span>
 <span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>ret_b_main <span class="op">=</span> ret_b[tickers_main]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>missing main relationship tickers: none</code></pre>
 </div>
@@ -832,6 +912,8 @@ R^2 = 1 - \frac{\sum_t \hat{\varepsilon}_t^2}{\sum_t (y_t - \bar{y})^2}
 \]</span></p>
 <p>This is a compact way to measure beta instability. A high correlation with a high beta IQR means the relationship is real, but the hedge ratio changes a lot over time. That’s exactly where dynamic hedge models can add value.</p>
 <div id="bd583ee7" class="cell" data-execution_count="7">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hedge_proxy_ret(ret, r):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ret[r.hedges].mean(axis<span class="op">=</span><span class="dv">1</span>).rename(<span class="ss">f"</span><span class="sc">{</span>r<span class="sc">.</span>name<span class="sc">}</span><span class="ss">_proxy"</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -917,6 +999,7 @@ R^2 = 1 - \frac{\sum_t \hat{\varepsilon}_t^2}{\sum_t (y_t - \bar{y})^2}
 <span id="cb8-83"><a href="#cb8-83" aria-hidden="true" tabindex="-1"></a>    ax.axis(<span class="st">"off"</span>)</span>
 <span id="cb8-84"><a href="#cb8-84" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb8-85"><a href="#cb8-85" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1219,21 +1302,21 @@ R^2 = 1 - \frac{\sum_t \hat{\varepsilon}_t^2}{\sum_t (y_t - \bar{y})^2}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-7-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-7-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-7-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-7-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-7-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-7-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-7-output-5.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-7-output-5.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-7-output-5.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1303,6 +1386,8 @@ c_t = \frac{\text{cost bps}}{10000}\sum_{j=1}^{K}|\beta_{j,t}-\beta_{j,t-1}|
 \]</span></p>
 <p>Then we hold that hedge ratio through the rest of the sample, with weekly book evaluation. Static OLS is simple and low-turnover, but it assumes the relationship is stable after the training period.</p>
 <div id="616abac1" class="cell" data-execution_count="8">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ols_fit(y, x):</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> np.asarray(x, dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> x.ndim <span class="op">==</span> <span class="dv">1</span>:</span>
@@ -1405,6 +1490,7 @@ c_t = \frac{\text{cost bps}}{10000}\sum_{j=1}^{K}|\beta_{j,t}-\beta_{j,t-1}|
 <span id="cb9-100"><a href="#cb9-100" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"beta_stability"</span>: <span class="dv">1</span> <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> b_iqr <span class="op">+</span> <span class="dv">5</span> <span class="op">*</span> b_jump) <span class="cf">if</span> np.isfinite(b_iqr) <span class="kw">and</span> np.isfinite(b_jump) <span class="cf">else</span> np.nan,</span>
 <span id="cb9-101"><a href="#cb9-101" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"rebalance_count"</span>: <span class="bu">int</span>((res.turnover.<span class="bu">abs</span>() <span class="op">&gt;</span> <span class="fl">1e-12</span>).<span class="bu">sum</span>()) <span class="cf">if</span> <span class="bu">len</span>(res.turnover) <span class="cf">else</span> <span class="dv">0</span>})</span>
 <span id="cb9-102"><a href="#cb9-102" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(rows)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <section id="reading-the-hedge-metrics" class="level3">
 <h3 class="anchored" data-anchor-id="reading-the-hedge-metrics">5.1 Reading the hedge metrics</h3>
@@ -1428,6 +1514,8 @@ c_t = \frac{\text{cost bps}}{10000}\sum_{j=1}^{K}|\beta_{j,t}-\beta_{j,t-1}|
 \]</span></p>
 <p>This asks whether the residual book really removed exposure to the hedge proxy. If beta reduction is high but drawdown improvement is bad, the hedge removed the intended factor but introduced or exposed another source of risk.</p>
 <div id="74c75f96" class="cell" data-execution_count="9">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>books_target <span class="op">=</span> {<span class="ss">f"</span><span class="sc">{</span>r<span class="sc">.</span>name<span class="sc">}</span><span class="ss"> | target"</span>: book_result(hedge_book(ret_b_main, r, zero_beta(ret_b_main.index, r))) <span class="cf">for</span> r <span class="kw">in</span> rel_main}</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>books_static, blog, beta_daily <span class="op">=</span> {}, {}, {}</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1455,6 +1543,7 @@ c_t = \frac{\text{cost bps}}{10000}\sum_{j=1}^{K}|\beta_{j,t}-\beta_{j,t-1}|
 <span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>        axes[<span class="dv">1</span>].grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.25</span>)</span>
 <span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>        plt.tight_layout()</span>
 <span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1601,14 +1690,14 @@ c_t = \frac{\text{cost bps}}{10000}\sum_{j=1}^{K}|\beta_{j,t}-\beta_{j,t-1}|
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-9-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-9-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-9-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-9-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-9-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-9-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1650,6 +1739,8 @@ c_t = \frac{\text{cost bps}}{10000}\sum_{j=1}^{K}|\beta_{j,t}-\beta_{j,t-1}|
 \]</span></p>
 <p>The band turns a noisy desired beta into a tradable beta path.</p>
 <div id="e531ae8d" class="cell" data-execution_count="10">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> roll_beta(ret, r):</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> ret[r.assets].dropna()</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> pd.DataFrame(np.nan, index<span class="op">=</span>ret.index, columns<span class="op">=</span>r.hedges)</span>
@@ -1712,6 +1803,7 @@ c_t = \frac{\text{cost bps}}{10000}\sum_{j=1}^{K}|\beta_{j,t}-\beta_{j,t-1}|
 <span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a>        ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.25</span>)</span>
 <span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a>        plt.tight_layout()</span>
 <span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1858,21 +1950,21 @@ c_t = \frac{\text{cost bps}}{10000}\sum_{j=1}^{K}|\beta_{j,t}-\beta_{j,t-1}|
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-10-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-10-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-10-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-10-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-10-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-10-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-10-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-10-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-10-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1901,6 +1993,8 @@ c_t = \frac{\text{cost bps}}{10000}\sum_{j=1}^{K}|\beta_{j,t}-\beta_{j,t-1}|
 <p>Ridge is especially useful in multi-hedge relationships where hedge assets are correlated with each other. For example, SMH and QQQ both contain growth/technology exposure. XLY and QQQ both contain mega-cap growth components. LQD, TLT, and SPY can all explain parts of HYG during different regimes. In those settings, pure OLS can assign extreme coefficients because it tries to separate correlated explanatory variables too aggressively.</p>
 <p>Ridge shrinks the solution toward smaller coefficients. It accepts a little bias in exchange for lower variance and better stability.</p>
 <div id="935cab1a" class="cell" data-execution_count="11">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ridge_beta(ret, r):</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> ret[r.assets].dropna()</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> pd.DataFrame(np.nan, index<span class="op">=</span>ret.index, columns<span class="op">=</span>r.hedges)</span>
@@ -1950,6 +2044,7 @@ c_t = \frac{\text{cost bps}}{10000}\sum_{j=1}^{K}|\beta_{j,t}-\beta_{j,t-1}|
 <span id="cb12-47"><a href="#cb12-47" aria-hidden="true" tabindex="-1"></a>ax.grid(<span class="va">True</span>, axis<span class="op">=</span><span class="st">"y"</span>, alpha<span class="op">=</span><span class="fl">0.25</span>)</span>
 <span id="cb12-48"><a href="#cb12-48" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb12-49"><a href="#cb12-49" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2096,14 +2191,14 @@ c_t = \frac{\text{cost bps}}{10000}\sum_{j=1}^{K}|\beta_{j,t}-\beta_{j,t-1}|
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-11-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-11-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-11-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-11-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-11-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-11-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2296,6 +2391,8 @@ P_{t|t} = (I - K_t\mathbf{h}_t^\top)P_{t|t-1}
 <p>The Kalman filter has soft memory. Past data affects the current state through the previous posterior estimate and its uncertainty. If the filter is confident, one new observation doesn’t move beta much. If the filter is uncertain, the same observation can move beta more.</p>
 <p>So rolling OLS adapts by deleting history. Kalman adapts by updating beliefs. That’s why Kalman is usually smoother and lower-turnover. But smoothness can become a weakness if the true beta changes abruptly. In that case, rolling OLS may react faster.</p>
 <div id="9fe80c17" class="cell" data-execution_count="12">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> kf_run(y, x, state0, pcov0, qdiag, obs_var):</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    state <span class="op">=</span> state0.copy()</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    pcov <span class="op">=</span> pcov0.copy()</span>
@@ -2375,6 +2472,7 @@ P_{t|t} = (I - K_t\mathbf{h}_t^\top)P_{t|t-1}
 <span id="cb13-77"><a href="#cb13-77" aria-hidden="true" tabindex="-1"></a>        ax.axis(<span class="st">"off"</span>)</span>
 <span id="cb13-78"><a href="#cb13-78" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb13-79"><a href="#cb13-79" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2521,7 +2619,7 @@ P_{t|t} = (I - K_t\mathbf{h}_t^\top)P_{t|t-1}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-12-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-12-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-12-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2562,6 +2660,8 @@ b \in \{0.00, 0.025, 0.05, 0.075, 0.10\}
 </ul>
 <p>A pure volatility score would be too narrow. A hedge model can reduce variance by taking an unstable residual exposure that creates drawdown or trading costs. The score tries to avoid that.</p>
 <div id="8049a1e0" class="cell" data-execution_count="13">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> band_norm(s, lower<span class="op">=</span><span class="va">False</span>):</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> pd.to_numeric(s, errors<span class="op">=</span><span class="st">"coerce"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> x.notna().<span class="bu">sum</span>() <span class="op">&lt;=</span> <span class="dv">1</span>:</span>
@@ -2627,6 +2727,7 @@ b \in \{0.00, 0.025, 0.05, 0.075, 0.10\}
 <span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].legend(fontsize<span class="op">=</span><span class="dv">8</span>)</span>
 <span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2803,7 +2904,7 @@ b \in \{0.00, 0.025, 0.05, 0.075, 0.10\}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-13-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-13-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-13-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2839,6 +2940,8 @@ b \in \{0.00, 0.025, 0.05, 0.075, 0.10\}
 \]</span></p>
 <p>A large score gap means one model clearly dominates for that relationship. A small score gap means the choice is less certain.</p>
 <div id="443abc06" class="cell" data-execution_count="14">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> norm_group(s, lower<span class="op">=</span><span class="va">False</span>):</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> pd.to_numeric(s, errors<span class="op">=</span><span class="st">"coerce"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> x.notna().<span class="bu">sum</span>() <span class="op">==</span> <span class="dv">0</span>:</span>
@@ -2886,8 +2989,11 @@ b \in \{0.00, 0.025, 0.05, 0.075, 0.10\}
 <span id="cb15-45"><a href="#cb15-45" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"median_cost_drag_ann"</span>: g[<span class="st">"cost_drag_ann"</span>].median(), <span class="st">"win_count"</span>: <span class="bu">int</span>(wins.get(m, <span class="dv">0</span>)),</span>
 <span id="cb15-46"><a href="#cb15-46" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"failure_count"</span>: <span class="bu">int</span>(((g[<span class="st">"vol_red"</span>] <span class="op">&lt;=</span> <span class="dv">0</span>) <span class="op">|</span> (g[<span class="st">"score"</span>] <span class="op">&lt;=</span> <span class="dv">0</span>)).<span class="bu">sum</span>())})</span>
 <span id="cb15-47"><a href="#cb15-47" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(rows).sort_values([<span class="st">"median_score"</span>, <span class="st">"win_count"</span>], ascending<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="70110a35" class="cell" data-execution_count="15">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>books_all <span class="op">=</span> {}</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>books_all.update(books_target)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>books_all.update(books_static)</span>
@@ -2939,6 +3045,7 @@ b \in \{0.00, 0.025, 0.05, 0.075, 0.10\}
 <span id="cb16-49"><a href="#cb16-49" aria-hidden="true" tabindex="-1"></a>display(tab_best.<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb16-50"><a href="#cb16-50" aria-hidden="true" tabindex="-1"></a>display(tab_robust.<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb16-51"><a href="#cb16-51" aria-hidden="true" tabindex="-1"></a>display(tab_quality.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3228,7 +3335,7 @@ b \in \{0.00, 0.025, 0.05, 0.075, 0.10\}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-15-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-15-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-15-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3648,6 +3755,8 @@ y_t = \alpha + \beta x_t + s_t
 <p>If the half-life is 10 trading days, a spread shock is expected to decay by about half in roughly two weeks. If the half-life is 60 trading days, the same trade may require three months of patience. If the half-life is infinite or negative in the wrong way, the spread isn’t mean-reverting enough for this setup.</p>
 <p>Here we require a half-life between <strong>2 and 63 trading days</strong>. Very fast spreads are hard to trade after costs. Very slow spreads can trap capital and generate painful drawdowns before the expected reversion happens.</p>
 <div id="96a6980f" class="cell" data-execution_count="16">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> statsmodels_tools():</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="im">from</span> statsmodels.tsa.stattools <span class="im">import</span> adfuller, coint</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> adfuller, coint</span>
@@ -3726,6 +3835,7 @@ y_t = \alpha + \beta x_t + s_t
 <span id="cb17-76"><a href="#cb17-76" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> np.nan</span>
 <span id="cb17-77"><a href="#cb17-77" aria-hidden="true" tabindex="-1"></a>    _, b <span class="op">=</span> ols_fit(z.iloc[:, <span class="dv">0</span>], z.iloc[:, [<span class="dv">1</span>]])</span>
 <span id="cb17-78"><a href="#cb17-78" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span>np.log(<span class="dv">2</span>) <span class="op">/</span> b[<span class="dv">0</span>] <span class="cf">if</span> b[<span class="dv">0</span>] <span class="op">&lt;</span> <span class="dv">0</span> <span class="cf">else</span> np.inf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="z-score-trading-rule" class="level3">
@@ -3752,6 +3862,8 @@ r^{strat}_t = q_{t-1}\left(r^y_t - \beta_{t-1}r^x_t\right) - \text{cost}_t
 <p>The term inside parentheses is the hedged residual return. The lagged <span class="math inline">\(q_{t-1}\)</span> means the position was decided before today’s return was known. The cost term subtracts trading costs from position changes.</p>
 <p>This is a residual mean-reversion trade, not a directional investment in the target. We’re betting on the relative relationship returning toward its recent equilibrium.</p>
 <div id="3fe260e7" class="cell" data-execution_count="17">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> z_signal(spread):</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> (spread <span class="op">-</span> spread.rolling(z_win).mean()) <span class="op">/</span> spread.rolling(z_win).std()</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    pos, cool, state <span class="op">=</span> <span class="fl">0.0</span>, <span class="dv">0</span>, []</span>
@@ -3804,6 +3916,7 @@ r^{strat}_t = q_{t-1}\left(r^y_t - \beta_{t-1}r^x_t\right) - \text{cost}_t
 <span id="cb18-50"><a href="#cb18-50" aria-hidden="true" tabindex="-1"></a>        <span class="st">"net_values"</span>: (<span class="dv">1</span> <span class="op">+</span> net).cumprod(),</span>
 <span id="cb18-51"><a href="#cb18-51" aria-hidden="true" tabindex="-1"></a>        <span class="st">"target_values"</span>: (<span class="dv">1</span> <span class="op">+</span> spread_ret).cumprod(),</span>
 <span id="cb18-52"><a href="#cb18-52" aria-hidden="true" tabindex="-1"></a>    }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="dynamic-residuals-and-a-subtle-econometric-caveat" class="level3">
@@ -3817,6 +3930,8 @@ r^{strat}_t = q_{t-1}\left(r^y_t - \beta_{t-1}r^x_t\right) - \text{cost}_t
 \]</span></p>
 <p>Without this filter, a hyperactive beta could force almost any spread to look stationary by chasing the target too closely. We want adaptive residuals, not overfit residuals.</p>
 <div id="194442a9" class="cell" data-execution_count="18">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>pairs <span class="op">=</span> [</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"agg_bnd"</span>, <span class="st">"agg"</span>, <span class="st">"bnd"</span>),</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"gdx_gld"</span>, <span class="st">"gdx"</span>, <span class="st">"gld"</span>),</span>
@@ -3870,6 +3985,7 @@ r^{strat}_t = q_{t-1}\left(r^y_t - \beta_{t-1}r^x_t\right) - \text{cost}_t
 <span id="cb19-51"><a href="#cb19-51" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span> (tab_gate[<span class="st">"beta_turnover"</span>].fillna(<span class="fl">0.0</span>) <span class="op">&lt;=</span> <span class="fl">0.25</span>)</span>
 <span id="cb19-52"><a href="#cb19-52" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb19-53"><a href="#cb19-53" aria-hidden="true" tabindex="-1"></a>display(tab_gate[[<span class="st">"pair"</span>, <span class="st">"beta_source"</span>, <span class="st">"eg_p"</span>, <span class="st">"adf_p"</span>, <span class="st">"half_life"</span>, <span class="st">"spread_vol"</span>, <span class="st">"trades"</span>, <span class="st">"cost_drag_ann"</span>, <span class="st">"beta_turnover"</span>, <span class="st">"eligible"</span>]].<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4142,6 +4258,8 @@ r^{strat}_t = q_{t-1}\left(r^y_t - \beta_{t-1}r^x_t\right) - \text{cost}_t
 </ul>
 <p>The Kalman log spreads often have very small half-lives, sometimes near 1 day. That sounds attractive at first, but it can be a warning. A very adaptive beta can absorb too much of the spread movement, leaving a residual that looks statistically stationary but has too little economically tradable structure. This is why the gate includes half-life, spread volatility, trades, cost, and beta turnover, not just ADF p-values.</p>
 <div id="503cf1e9" class="cell" data-execution_count="19">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>tab_resid <span class="op">=</span> residual_trade_table(resid_bt, resid_z, resid_meta, ann<span class="op">=</span>ann)</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>pick_gate <span class="op">=</span> tab_gate[tab_gate[<span class="st">"eligible"</span>] <span class="op">&amp;</span> <span class="op">~</span>tab_gate[<span class="st">"beta_source"</span>].eq(<span class="st">"kalman_log"</span>)]</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>rolling_keys <span class="op">=</span> pick_gate.loc[pick_gate[<span class="st">"beta_source"</span>].eq(<span class="st">"rolling_log_ols"</span>), <span class="st">"key"</span>].tolist()</span>
@@ -4172,6 +4290,7 @@ r^{strat}_t = q_{t-1}\left(r^y_t - \beta_{t-1}r^x_t\right) - \text{cost}_t
 <span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.25</span>)</span>
 <span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4253,14 +4372,14 @@ r^{strat}_t = q_{t-1}\left(r^y_t - \beta_{t-1}r^x_t\right) - \text{cost}_t
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-19-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-19-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-19-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-19-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-19-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-19-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4278,6 +4397,8 @@ r^{strat}_t = q_{t-1}\left(r^y_t - \beta_{t-1}r^x_t\right) - \text{cost}_t
 <p>The residual NAV plot is even more informative. GDX/GLD dominates the selected residual strategies. It has step-like gains, which means the strategy earns most of its return during specific episodes rather than smoothly every month. HYG/LQD and XLK/QQQ grow slowly. TLT/IEF drifts below 1 and stays weak.</p>
 <p>That pattern is realistic. Residual trading isn’t a stable coupon. It depends on episodic mispricing or temporary dislocation. The econometric tests help avoid terrible candidates, but they don’t guarantee positive P&amp;L. The final test is still the backtested trade path after costs.</p>
 <div id="8f2a243b" class="cell" data-execution_count="20">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>display(tab_best.<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>display(tab_resid[tab_resid[<span class="st">"key"</span>].isin(keep_keys)].drop(columns<span class="op">=</span><span class="st">"key"</span>).<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -4297,6 +4418,7 @@ r^{strat}_t = q_{t-1}\left(r^y_t - \beta_{t-1}r^x_t\right) - \text{cost}_t
 <span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.25</span>)</span>
 <span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4521,7 +4643,7 @@ r^{strat}_t = q_{t-1}\left(r^y_t - \beta_{t-1}r^x_t\right) - \text{cost}_t
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-20-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-20-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-20-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4659,6 +4781,8 @@ r^{country}_t \approx \beta_1 r^{local\ equity}_t + \beta_2 r^{FX}_t + \beta_3 r
 </table>
 <p>The important point isn’t just whether <span class="math inline">\(R^2\)</span> is high. The important point is whether the residual that remains after hedging has a meaningful interpretation. If a country ETF remains hard to hedge after using sensible macro proxies, that residual may represent local political risk, local earnings composition, sector weights, index construction, or market-specific investor flows.</p>
 <div id="fe83df73" class="cell" data-execution_count="21">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -4813,6 +4937,7 @@ r^{country}_t \approx \beta_1 r^{local\ equity}_t + \beta_2 r^{FX}_t + \beta_3 r
 <span id="cb22-152"><a href="#cb22-152" aria-hidden="true" tabindex="-1"></a>plot_resid_nav(resid_sec, keep_sec[:<span class="dv">5</span>], ax<span class="op">=</span>axes[<span class="dv">8</span>], title<span class="op">=</span><span class="st">"selected residual nav"</span>)</span>
 <span id="cb22-153"><a href="#cb22-153" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb22-154"><a href="#cb22-154" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>available secondary tickers: 30
 missing secondary tickers: {}</code></pre>
@@ -5923,7 +6048,7 @@ missing secondary tickers: {}</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="07_dynamic_hedge_ratios_files/figure-html/cell-21-output-10.png" class="img-fluid figure-img"></p>
+<p><a href="07_dynamic_hedge_ratios_files/figure-html/cell-21-output-10.png" class="lightbox" data-gallery="quarto-lightbox-gallery-17"><img src="07_dynamic_hedge_ratios_files/figure-html/cell-21-output-10.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -6105,6 +6230,57 @@ r^{USD}_{country} - r^{hedged}_{country} \approx r^{FX}
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -6448,6 +6624,38 @@ r^{USD}_{country} - r^{hedged}_{country} \approx r^{FX}
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 

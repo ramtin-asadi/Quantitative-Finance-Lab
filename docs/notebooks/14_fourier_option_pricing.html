@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>14. Fourier-Based Methods for Option Pricing – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/13_american_option_numerics.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -112,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -143,7 +144,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -292,13 +293,112 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-core-idea-pricing-from-a-transform-instead-of-a-path" id="toc-the-core-idea-pricing-from-a-transform-instead-of-a-path" class="nav-link active" data-scroll-target="#the-core-idea-pricing-from-a-transform-instead-of-a-path">1) The Core Idea: Pricing from a Transform Instead of a Path</a>
+  <ul class="collapse">
+  <li><a href="#the-pricing-story-we-build" id="toc-the-pricing-story-we-build" class="nav-link" data-scroll-target="#the-pricing-story-we-build">1.1 The Pricing Story We Build</a></li>
+  <li><a href="#characteristic-functions-as-a-distribution-language" id="toc-characteristic-functions-as-a-distribution-language" class="nav-link" data-scroll-target="#characteristic-functions-as-a-distribution-language">1.2 Characteristic Functions as a Distribution Language</a></li>
+  </ul></li>
+  <li><a href="#spx-option-panel-and-calibration-grid" id="toc-spx-option-panel-and-calibration-grid" class="nav-link" data-scroll-target="#spx-option-panel-and-calibration-grid">2) SPX Option Panel and Calibration Grid</a>
+  <ul class="collapse">
+  <li><a href="#why-we-still-need-a-clean-surface" id="toc-why-we-still-need-a-clean-surface" class="nav-link" data-scroll-target="#why-we-still-need-a-clean-surface">2.1 Why We Still Need a Clean Surface</a></li>
+  <li><a href="#representative-otm-quotes-for-model-calibration" id="toc-representative-otm-quotes-for-model-calibration" class="nav-link" data-scroll-target="#representative-otm-quotes-for-model-calibration">2.2 Representative OTM Quotes for Model Calibration</a></li>
+  <li><a href="#daily-calibration-grid" id="toc-daily-calibration-grid" class="nav-link" data-scroll-target="#daily-calibration-grid">2.3 Daily Calibration Grid</a></li>
+  <li><a href="#why-the-grid-uses-maturity-and-moneyness-targets" id="toc-why-the-grid-uses-maturity-and-moneyness-targets" class="nav-link" data-scroll-target="#why-the-grid-uses-maturity-and-moneyness-targets">2.4 Why the Grid Uses Maturity and Moneyness Targets</a></li>
+  </ul></li>
+  <li><a href="#characteristic-functions-for-pricing-models" id="toc-characteristic-functions-for-pricing-models" class="nav-link" data-scroll-target="#characteristic-functions-for-pricing-models">3) Characteristic Functions for Pricing Models</a>
+  <ul class="collapse">
+  <li><a href="#the-levy-view-behind-the-jump-models" id="toc-the-levy-view-behind-the-jump-models" class="nav-link" data-scroll-target="#the-levy-view-behind-the-jump-models">3.1 The Levy View Behind the Jump Models</a></li>
+  <li><a href="#bsm-characteristic-function" id="toc-bsm-characteristic-function" class="nav-link" data-scroll-target="#bsm-characteristic-function">3.2 BSM Characteristic Function</a></li>
+  <li><a href="#merton-jump-diffusion-characteristic-function" id="toc-merton-jump-diffusion-characteristic-function" class="nav-link" data-scroll-target="#merton-jump-diffusion-characteristic-function">3.3 Merton Jump-Diffusion Characteristic Function</a></li>
+  <li><a href="#variance-gamma-characteristic-function" id="toc-variance-gamma-characteristic-function" class="nav-link" data-scroll-target="#variance-gamma-characteristic-function">3.4 Variance Gamma Characteristic Function</a></li>
+  <li><a href="#why-vg-is-economically-different-from-merton" id="toc-why-vg-is-economically-different-from-merton" class="nav-link" data-scroll-target="#why-vg-is-economically-different-from-merton">3.5 Why VG Is Economically Different from Merton</a></li>
+  <li><a href="#heston-and-bates-in-fourier-form" id="toc-heston-and-bates-in-fourier-form" class="nav-link" data-scroll-target="#heston-and-bates-in-fourier-form">3.6 Heston and Bates in Fourier Form</a></li>
+  <li><a href="#risk-neutral-drift-corrections-across-models" id="toc-risk-neutral-drift-corrections-across-models" class="nav-link" data-scroll-target="#risk-neutral-drift-corrections-across-models">3.7 Risk-Neutral Drift Corrections Across Models</a></li>
+  </ul></li>
+  <li><a href="#recovering-a-density-from-the-characteristic-function" id="toc-recovering-a-density-from-the-characteristic-function" class="nav-link" data-scroll-target="#recovering-a-density-from-the-characteristic-function">4) Recovering a Density from the Characteristic Function</a>
+  <ul class="collapse">
+  <li><a href="#oscillatory-integrals-and-numerical-choices" id="toc-oscillatory-integrals-and-numerical-choices" class="nav-link" data-scroll-target="#oscillatory-integrals-and-numerical-choices">4.1 Oscillatory Integrals and Numerical Choices</a></li>
+  </ul></li>
+  <li><a href="#direct-fourier-integration" id="toc-direct-fourier-integration" class="nav-link" data-scroll-target="#direct-fourier-integration">5) Direct Fourier Integration</a>
+  <ul class="collapse">
+  <li><a href="#deriving-the-p1-and-p2-logic" id="toc-deriving-the-p1-and-p2-logic" class="nav-link" data-scroll-target="#deriving-the-p1-and-p2-logic">5.1 Deriving the P1 and P2 Logic</a></li>
+  </ul></li>
+  <li><a href="#carr-madan-fft" id="toc-carr-madan-fft" class="nav-link" data-scroll-target="#carr-madan-fft">6) Carr-Madan FFT</a>
+  <ul class="collapse">
+  <li><a href="#the-discrete-fft-approximation" id="toc-the-discrete-fft-approximation" class="nav-link" data-scroll-target="#the-discrete-fft-approximation">6.1 The Discrete FFT Approximation</a></li>
+  <li><a href="#fft-grid-tradeoff-in-financial-terms" id="toc-fft-grid-tradeoff-in-financial-terms" class="nav-link" data-scroll-target="#fft-grid-tradeoff-in-financial-terms">6.2 FFT Grid Tradeoff in Financial Terms</a></li>
+  <li><a href="#how-to-read-the-fft-parameters" id="toc-how-to-read-the-fft-parameters" class="nav-link" data-scroll-target="#how-to-read-the-fft-parameters">6.3 How to Read the FFT Parameters</a></li>
+  <li><a href="#choosing-the-damping-parameter-alpha" id="toc-choosing-the-damping-parameter-alpha" class="nav-link" data-scroll-target="#choosing-the-damping-parameter-alpha">6.4 Choosing the Damping Parameter alpha</a></li>
+  </ul></li>
+  <li><a href="#cos-pricing" id="toc-cos-pricing" class="nav-link" data-scroll-target="#cos-pricing">7) COS Pricing</a>
+  <ul class="collapse">
+  <li><a href="#why-cos-works-especially-well-for-calibration" id="toc-why-cos-works-especially-well-for-calibration" class="nav-link" data-scroll-target="#why-cos-works-especially-well-for-calibration">7.1 Why COS Works Especially Well for Calibration</a></li>
+  <li><a href="#the-truncation-interval-ab" id="toc-the-truncation-interval-ab" class="nav-link" data-scroll-target="#the-truncation-interval-ab">7.2 The Truncation Interval [a,b]</a></li>
+  <li><a href="#truncation-width-as-a-bias-variance-tradeoff" id="toc-truncation-width-as-a-bias-variance-tradeoff" class="nav-link" data-scroll-target="#truncation-width-as-a-bias-variance-tradeoff">7.3 Truncation Width as a Bias-Variance Tradeoff</a></li>
+  <li><a href="#cos-payoff-coefficients" id="toc-cos-payoff-coefficients" class="nav-link" data-scroll-target="#cos-payoff-coefficients">7.4 COS Payoff Coefficients</a></li>
+  <li><a href="#call-and-put-exercise-intervals-inside-cos" id="toc-call-and-put-exercise-intervals-inside-cos" class="nav-link" data-scroll-target="#call-and-put-exercise-intervals-inside-cos">7.5 Call and Put Exercise Intervals Inside COS</a></li>
+  </ul></li>
+  <li><a href="#grouped-cos-and-production-calibration" id="toc-grouped-cos-and-production-calibration" class="nav-link" data-scroll-target="#grouped-cos-and-production-calibration">8) Grouped COS and Production Calibration</a></li>
+  <li><a href="#parameter-bounds-and-calibration-objective" id="toc-parameter-bounds-and-calibration-objective" class="nav-link" data-scroll-target="#parameter-bounds-and-calibration-objective">9) Parameter Bounds and Calibration Objective</a>
+  <ul class="collapse">
+  <li><a href="#calibration-as-statistical-estimation" id="toc-calibration-as-statistical-estimation" class="nav-link" data-scroll-target="#calibration-as-statistical-estimation">9.1 Calibration as Statistical Estimation</a></li>
+  <li><a href="#parameter-identifiability-and-warm-starts" id="toc-parameter-identifiability-and-warm-starts" class="nav-link" data-scroll-target="#parameter-identifiability-and-warm-starts">9.2 Parameter Identifiability and Warm Starts</a></li>
+  </ul></li>
+  <li><a href="#bsm-baseline-fourier-calibration" id="toc-bsm-baseline-fourier-calibration" class="nav-link" data-scroll-target="#bsm-baseline-fourier-calibration">10) BSM Baseline Fourier Calibration</a>
+  <ul class="collapse">
+  <li><a href="#why-a-one-volatility-fit-fails" id="toc-why-a-one-volatility-fit-fails" class="nav-link" data-scroll-target="#why-a-one-volatility-fit-fails">10.1 Why a One-Volatility Fit Fails</a></li>
+  </ul></li>
+  <li><a href="#jump-models-merton-and-variance-gamma" id="toc-jump-models-merton-and-variance-gamma" class="nav-link" data-scroll-target="#jump-models-merton-and-variance-gamma">11) Jump Models: Merton and Variance Gamma</a>
+  <ul class="collapse">
+  <li><a href="#comparing-jump-mechanisms-through-cumulants" id="toc-comparing-jump-mechanisms-through-cumulants" class="nav-link" data-scroll-target="#comparing-jump-mechanisms-through-cumulants">11.1 Comparing Jump Mechanisms Through Cumulants</a></li>
+  <li><a href="#merton-diagnostics" id="toc-merton-diagnostics" class="nav-link" data-scroll-target="#merton-diagnostics">Merton Diagnostics</a></li>
+  <li><a href="#reading-merton-parameters-economically" id="toc-reading-merton-parameters-economically" class="nav-link" data-scroll-target="#reading-merton-parameters-economically">Reading Merton Parameters Economically</a></li>
+  <li><a href="#variance-gamma-diagnostics" id="toc-variance-gamma-diagnostics" class="nav-link" data-scroll-target="#variance-gamma-diagnostics">Variance Gamma Diagnostics</a></li>
+  </ul></li>
+  <li><a href="#stochastic-volatility-models-through-cos" id="toc-stochastic-volatility-models-through-cos" class="nav-link" data-scroll-target="#stochastic-volatility-models-through-cos">12) Stochastic-Volatility Models Through COS</a>
+  <ul class="collapse">
+  <li><a href="#why-stochastic-volatility-beats-pure-jump-models" id="toc-why-stochastic-volatility-beats-pure-jump-models" class="nav-link" data-scroll-target="#why-stochastic-volatility-beats-pure-jump-models">12.1 Why Stochastic Volatility Beats Pure Jump Models</a></li>
+  <li><a href="#heston-diagnostics" id="toc-heston-diagnostics" class="nav-link" data-scroll-target="#heston-diagnostics">Heston Diagnostics</a></li>
+  <li><a href="#bates-diagnostics" id="toc-bates-diagnostics" class="nav-link" data-scroll-target="#bates-diagnostics">Bates Diagnostics</a></li>
+  <li><a href="#why-bates-can-win-while-looking-messier" id="toc-why-bates-can-win-while-looking-messier" class="nav-link" data-scroll-target="#why-bates-can-win-while-looking-messier">Why Bates Can Win While Looking Messier</a></li>
+  </ul></li>
+  <li><a href="#final-model-tournament" id="toc-final-model-tournament" class="nav-link" data-scroll-target="#final-model-tournament">13) Final Model Tournament</a>
+  <ul class="collapse">
+  <li><a href="#model-risk-in-the-final-ranking" id="toc-model-risk-in-the-final-ranking" class="nav-link" data-scroll-target="#model-risk-in-the-final-ranking">13.1 Model Risk in the Final Ranking</a></li>
+  <li><a href="#residual-smile-and-term-diagnostics" id="toc-residual-smile-and-term-diagnostics" class="nav-link" data-scroll-target="#residual-smile-and-term-diagnostics">Residual Smile and Term Diagnostics</a></li>
+  <li><a href="#residual-diagnostics-as-model-surgery" id="toc-residual-diagnostics-as-model-surgery" class="nav-link" data-scroll-target="#residual-diagnostics-as-model-surgery">Residual Diagnostics as Model Surgery</a></li>
+  </ul></li>
+  <li><a href="#tail-probabilities-from-the-fitted-models" id="toc-tail-probabilities-from-the-fitted-models" class="nav-link" data-scroll-target="#tail-probabilities-from-the-fitted-models">14) Tail Probabilities from the Fitted Models</a>
+  <ul class="collapse">
+  <li><a href="#tail-probability-as-a-model-implied-quantity" id="toc-tail-probability-as-a-model-implied-quantity" class="nav-link" data-scroll-target="#tail-probability-as-a-model-implied-quantity">14.1 Tail Probability as a Model-Implied Quantity</a></li>
+  </ul></li>
+  <li><a href="#tail-hedging-candidate-logic" id="toc-tail-hedging-candidate-logic" class="nav-link" data-scroll-target="#tail-hedging-candidate-logic">15) Tail-Hedging Candidate Logic</a>
+  <ul class="collapse">
+  <li><a href="#expected-crash-efficiency" id="toc-expected-crash-efficiency" class="nav-link" data-scroll-target="#expected-crash-efficiency">15.1 Expected Crash Efficiency</a></li>
+  <li><a href="#why-tail-hedges-can-lose-even-when-the-tail-model-is-better" id="toc-why-tail-hedges-can-lose-even-when-the-tail-model-is-better" class="nav-link" data-scroll-target="#why-tail-hedges-can-lose-even-when-the-tail-model-is-better">Why Tail Hedges Can Lose Even When the Tail Model Is Better</a></li>
+  </ul></li>
+  <li><a href="#btc-secondary-application" id="toc-btc-secondary-application" class="nav-link" data-scroll-target="#btc-secondary-application">16) BTC Secondary Application</a>
+  <ul class="collapse">
+  <li><a href="#why-fourier-methods-transfer-well-to-btc" id="toc-why-fourier-methods-transfer-well-to-btc" class="nav-link" data-scroll-target="#why-fourier-methods-transfer-well-to-btc">16.1 Why Fourier Methods Transfer Well to BTC</a></li>
+  </ul></li>
+  <li><a href="#what-this-project-adds-to-the-series" id="toc-what-this-project-adds-to-the-series" class="nav-link" data-scroll-target="#what-this-project-adds-to-the-series">17) What This Project Adds to the Series</a>
+  <ul class="collapse">
+  <li><a href="#practical-method-selection" id="toc-practical-method-selection" class="nav-link" data-scroll-target="#practical-method-selection">17.1 Practical Method Selection</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">14. Fourier-Based Methods for Option Pricing</span></h1>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">14. Fourier-Based Methods for Option Pricing</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -413,6 +513,8 @@ E[X^2]=\frac{1}{i^2}\phi_X''(0)=-\phi_X''(0)
 </ul>
 <p>Each folder contains the script/README-style reproduction logic for the corresponding file used by the notebook.</p>
 <div id="a9f692e6" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
@@ -444,10 +546,13 @@ E[X^2]=\frac{1}{i^2}\phi_X''(0)=-\phi_X''(0)
 <span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>ann_days <span class="op">=</span> <span class="fl">365.25</span></span>
 <span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>palette <span class="op">=</span> LAB_COLORS</span>
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>legend_kw <span class="op">=</span> <span class="bu">dict</span>(fontsize<span class="op">=</span><span class="dv">6</span>, frameon<span class="op">=</span><span class="va">True</span>, framealpha<span class="op">=</span><span class="fl">0.88</span>, borderpad<span class="op">=</span><span class="fl">0.25</span>, labelspacing<span class="op">=</span><span class="fl">0.25</span>, handlelength<span class="op">=</span><span class="fl">1.2</span>, handletextpad<span class="op">=</span><span class="fl">0.35</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <p>The small cache helpers are infrastructure around the financial model. They just make the workflow reproducible and faster. The Fourier calibration cells are expensive because the same model may be fitted across hundreds of dates and tens of thousands of quotes. Caching lets us separate the methodological result from repeated compute time.</p>
 <p>The useful rule is simple: a cached artifact is reused only when the saved settings match the current settings. This matters because changing something like the calibration grid, the truncation width, the number of COS terms, or the quote filters changes the experiment. We don’t want old fitted parameters to silently survive after the experiment has changed.</p>
 <div id="e6f8d4a5" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cache_meta(path):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    meta <span class="op">=</span> Path(<span class="bu">str</span>(path).replace(<span class="st">".parquet"</span>, <span class="st">".meta.json"</span>))</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> meta.exists():</span>
@@ -461,6 +566,7 @@ E[X^2]=\frac{1}{i^2}\phi_X''(0)=-\phi_X''(0)
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> same_settings(path, settings):</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    meta <span class="op">=</span> cache_meta(path)</span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> meta.get(<span class="st">"settings"</span>) <span class="op">==</span> settings</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -501,6 +607,8 @@ k=\log\left(\frac{K}{F_{0,T}}\right)
 <p>Using <span class="math inline">\(K/S\)</span> would mix strike location with carry. A put with <span class="math inline">\(K/S=0.95\)</span> is not the same economic moneyness at different maturities if rates and dividends change. Using <span class="math inline">\(K/F\)</span> centers each maturity around its own forward level.</p>
 <p>For calibration, this is crucial. A model residual on a downside put should mean the model’s distribution underprices downside risk. It shouldn’t mean the strike was mislocated because the forward was wrong. That is why the notebook attaches rates, infers forwards from put-call parity, clips dividend-yield estimates to plausible values, and stores forward moneyness.</p>
 <div id="179a799c" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>spx_clean_path <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spx_clean_quotes.parquet"</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>clean_settings <span class="op">=</span> {</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"dataset"</span>: <span class="st">"SPX OptionsDX 2022-2023"</span>,</span>
@@ -584,6 +692,7 @@ k=\log\left(\frac{K}{F_{0,T}}\right)
 <span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>    write_meta(spx_clean_path, clean_settings, <span class="bu">len</span>(clean_quotes))</span>
 <span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>display(cleaning_steps)</span>
 <span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame([{<span class="st">"rows"</span>: <span class="bu">len</span>(clean_quotes), <span class="st">"dates"</span>: clean_quotes[<span class="st">"date"</span>].nunique(), <span class="st">"expiries"</span>: clean_quotes[<span class="st">"expiry"</span>].nunique(), <span class="st">"contracts"</span>: clean_quotes[[<span class="st">"expiry"</span>, <span class="st">"option_type"</span>, <span class="st">"strike"</span>]].drop_duplicates().shape[<span class="dv">0</span>], <span class="st">"avg_rows_per_date"</span>: clean_quotes.groupby(<span class="st">"date"</span>).size().mean()}]).<span class="bu">round</span>(<span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -685,6 +794,8 @@ k=\log\left(\frac{K}{F_{0,T}}\right)
 <p>The largest row reduction comes from the DTE filter, which removes more than <strong>2.21 million</strong> rows. That isn’t a problem; it means we are narrowing the experiment to maturities where the Fourier pricing comparison is meaningful. Extremely short contracts are too microstructure-sensitive, and very long contracts introduce term-structure issues that are not the center of this notebook.</p>
 <p>The final average depth is about <strong>8,247 quotes per date</strong>, so we have enough cross-section to build calibration grids, compare models by moneyness and maturity, and evaluate tail errors rather than relying on a small hand-picked slice.</p>
 <div id="6fc6f589" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>coverage_year <span class="op">=</span> clean_quotes.assign(year<span class="op">=</span>clean_quotes[<span class="st">"date"</span>].dt.year).groupby(<span class="st">"year"</span>).agg(rows<span class="op">=</span>(<span class="st">"mid"</span>, <span class="st">"size"</span>), dates<span class="op">=</span>(<span class="st">"date"</span>, <span class="st">"nunique"</span>), expiries<span class="op">=</span>(<span class="st">"expiry"</span>, <span class="st">"nunique"</span>)).reset_index()</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>clean_quotes[<span class="st">"dte_bucket"</span>] <span class="op">=</span> pd.cut(clean_quotes[<span class="st">"dte_days"</span>], [<span class="dv">0</span>, <span class="dv">14</span>, <span class="dv">30</span>, <span class="dv">60</span>, <span class="dv">90</span>, <span class="dv">120</span>, <span class="dv">180</span>, <span class="dv">365</span>])</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>clean_quotes[<span class="st">"moneyness_bucket"</span>] <span class="op">=</span> pd.cut(clean_quotes[<span class="st">"moneyness"</span>], [<span class="fl">0.70</span>, <span class="fl">0.80</span>, <span class="fl">0.90</span>, <span class="fl">0.97</span>, <span class="fl">1.03</span>, <span class="fl">1.10</span>, <span class="fl">1.20</span>, <span class="fl">1.35</span>])</span>
@@ -693,6 +804,7 @@ k=\log\left(\frac{K}{F_{0,T}}\right)
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>display(coverage_year)</span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>display(coverage_dte)</span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>display(spread_table.iloc[:<span class="dv">18</span>].<span class="bu">round</span>(<span class="dv">5</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -950,6 +1062,8 @@ k=\log\left(\frac{K}{F_{0,T}}\right)
 <p>The spread table is useful because Fourier calibration is sensitive to the quality of the observed price. Around-the-money options usually have the tightest spreads. For example, the 14-to-30-day ATM bucket has a median relative spread around <strong>1.29%</strong>, which is very tradable for index options. Some OTM/short buckets are wider, such as short-dated 0.8-to-0.9 moneyness puts, where the spread reaches several percent or more.</p>
 <p>This matters later because a model error of 50 cents doesn’t mean the same thing everywhere. If the market spread is 5 cents, 50 cents is huge. If the spread is several dollars, the same error is less informative. This is why the calibration objective uses spread-aware scaling.</p>
 <div id="8f00f3a6" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>spot <span class="op">=</span> load_ohlcv(data_dir <span class="op">/</span> <span class="st">"spx_index_ohlcv.csv"</span>, fields<span class="op">=</span>(<span class="st">"close"</span>, <span class="st">"raw_close"</span>))</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>spot <span class="op">=</span> spot.rename(columns<span class="op">=</span>{<span class="st">"raw_close"</span>: <span class="st">"spot_close"</span>})</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>start_date <span class="op">=</span> pd.Timestamp(<span class="st">"2022-01-01"</span>)</span>
@@ -964,6 +1078,7 @@ k=\log\left(\frac{K}{F_{0,T}}\right)
 <span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>spot[<span class="st">"drawdown"</span>] <span class="op">=</span> spot[<span class="st">"close"</span>] <span class="op">/</span> spot[<span class="st">"close"</span>].cummax() <span class="op">-</span> <span class="fl">1.0</span></span>
 <span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>spot[<span class="st">"rv20"</span>] <span class="op">=</span> ret.rolling(<span class="dv">20</span>).std() <span class="op">*</span> np.sqrt(<span class="fl">252.0</span>)</span>
 <span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame([{<span class="st">"start"</span>: spot.index.<span class="bu">min</span>(), <span class="st">"end"</span>: spot.index.<span class="bu">max</span>(), <span class="st">"spot_rows"</span>: <span class="bu">len</span>(spot), <span class="st">"quote_dates"</span>: rows_by_date.index.nunique(), <span class="st">"valid_quote_rows"</span>: <span class="bu">int</span>(rows_by_date.<span class="bu">sum</span>())}]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1005,6 +1120,8 @@ k=\log\left(\frac{K}{F_{0,T}}\right)
 </ul>
 <p>This is useful for Fourier models because the differences between BSM, jumps, stochastic volatility, and jump-SV are clearest when the tail and skew are stressed.</p>
 <div id="60047dde" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="fl">4.2</span>))</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>ax.bar(monthly_depth.index, monthly_depth[<span class="st">"median"</span>], width<span class="op">=</span><span class="dv">22</span>, color<span class="op">=</span>palette[<span class="dv">0</span>], alpha<span class="op">=</span><span class="fl">0.72</span>)</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"median rows per date"</span>)</span>
@@ -1013,10 +1130,11 @@ k=\log\left(\frac{K}{F_{0,T}}\right)
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>ax.grid(<span class="va">True</span>, axis<span class="op">=</span><span class="st">"y"</span>, alpha<span class="op">=</span><span class="fl">0.20</span>)</span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>)</span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-7-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="14_fourier_option_pricing_files/figure-html/cell-7-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1024,6 +1142,8 @@ k=\log\left(\frac{K}{F_{0,T}}\right)
 <p>The quote-depth plot shows that the calibration universe stays deep through the full sample. Monthly median rows per date usually sit in a stable band around several thousand quotes, with no collapse in market depth during the main stress windows.</p>
 <p>This is important because daily calibration quality depends on cross-sectional support. If one month had only a few hundred usable rows per date, a bad model fit could simply reflect missing quotes. Here the panel is deep enough that poor fit has more economic meaning: if BSM underprices downside puts or if a jump model misses a tail, that is likely a model limitation rather than just a thin-data artifact.</p>
 <div id="118a3159" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="fl">4.2</span>))</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>ax.plot(monthly_spread.index, monthly_spread[<span class="st">"median"</span>], color<span class="op">=</span>palette[<span class="dv">3</span>], lw<span class="op">=</span><span class="fl">1.5</span>, label<span class="op">=</span><span class="st">"median"</span>)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>ax.plot(monthly_spread.index, monthly_spread[<span class="st">"p90"</span>], color<span class="op">=</span>palette[<span class="dv">6</span>], lw<span class="op">=</span><span class="fl">1.2</span>, label<span class="op">=</span><span class="st">"p90"</span>)</span>
@@ -1035,10 +1155,11 @@ k=\log\left(\frac{K}{F_{0,T}}\right)
 <span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.20</span>)</span>
 <span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>)</span>
 <span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-8-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-8-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="14_fourier_option_pricing_files/figure-html/cell-8-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1103,6 +1224,8 @@ k^* \in \{-0.30,-0.25,-0.20,\ldots,0,\ldots,0.25,0.30\}
 \]</span></p>
 <p>The calibration problem compares this full vector against the market vector. This makes the later model tournament meaningful because each model sees the same shape challenge.</p>
 <div id="661c41a7" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_otm_quotes(q, min_dte<span class="op">=</span><span class="fl">14.0</span>, max_dte<span class="op">=</span><span class="fl">150.0</span>, min_vega<span class="op">=</span><span class="fl">0.0</span>, max_relative_spread<span class="op">=</span><span class="fl">0.45</span>, max_abs_log_moneyness<span class="op">=</span><span class="fl">0.32</span>, min_quotes_per_expiry<span class="op">=</span><span class="dv">8</span>, min_expiries_per_date<span class="op">=</span><span class="dv">5</span>):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> q.copy()</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> [{<span class="st">"step"</span>: <span class="st">"clean quotes"</span>, <span class="st">"rows"</span>: <span class="bu">len</span>(x), <span class="st">"removed"</span>: <span class="dv">0</span>}]</span>
@@ -1141,8 +1264,11 @@ k^* \in \{-0.30,-0.25,-0.20,\ldots,0,\ldots,0.25,0.30\}
 <span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> x[x[<span class="st">"date"</span>].isin(good_dates)].copy()</span>
 <span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>    rows.append({<span class="st">"step"</span>: <span class="st">"date support"</span>, <span class="st">"rows"</span>: <span class="bu">len</span>(x), <span class="st">"removed"</span>: before <span class="op">-</span> <span class="bu">len</span>(x)})</span>
 <span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x, pd.DataFrame(rows)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="3e63d748" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> calibration_grid_quotes(q, dte_targets, k_targets, min_quotes_per_date<span class="op">=</span><span class="dv">120</span>, max_quotes_per_date<span class="op">=</span><span class="dv">200</span>):</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    pieces <span class="op">=</span> []</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    dte_targets <span class="op">=</span> np.asarray(dte_targets, dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -1202,8 +1328,11 @@ k^* \in \{-0.30,-0.25,-0.20,\ldots,0,\ldots,0.25,0.30\}
 <span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> dtype_name <span class="op">==</span> <span class="st">"category"</span> <span class="kw">or</span> <span class="st">"interval"</span> <span class="kw">in</span> dtype_name:</span>
 <span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>            out[name] <span class="op">=</span> out[name].astype(<span class="bu">str</span>)</span>
 <span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out.reset_index(drop<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="559d859b" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>target_dtes <span class="op">=</span> np.array([<span class="fl">14.0</span>, <span class="fl">21.0</span>, <span class="fl">30.0</span>, <span class="fl">45.0</span>, <span class="fl">60.0</span>, <span class="fl">75.0</span>, <span class="fl">90.0</span>, <span class="fl">105.0</span>, <span class="fl">120.0</span>, <span class="fl">150.0</span>])</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>k_targets <span class="op">=</span> np.array([<span class="op">-</span><span class="fl">0.30</span>, <span class="op">-</span><span class="fl">0.25</span>, <span class="op">-</span><span class="fl">0.20</span>, <span class="op">-</span><span class="fl">0.16</span>, <span class="op">-</span><span class="fl">0.12</span>, <span class="op">-</span><span class="fl">0.08</span>, <span class="op">-</span><span class="fl">0.04</span>, <span class="op">-</span><span class="fl">0.015</span>, <span class="fl">0.0</span>, <span class="fl">0.015</span>, <span class="fl">0.04</span>, <span class="fl">0.08</span>, <span class="fl">0.12</span>, <span class="fl">0.16</span>, <span class="fl">0.20</span>, <span class="fl">0.25</span>, <span class="fl">0.30</span>])</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>calib_path <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spx_calibration_quotes.parquet"</span></span>
@@ -1222,6 +1351,7 @@ k^* \in \{-0.30,-0.25,-0.20,\ldots,0,\ldots,0.25,0.30\}
 <span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame([{<span class="st">"clean_rows"</span>: <span class="bu">len</span>(clean_quotes), <span class="st">"calibration_rows"</span>: <span class="bu">len</span>(calibration_quotes), <span class="st">"dates"</span>: calibration_quotes[<span class="st">"date"</span>].nunique(), <span class="st">"avg_quotes_per_date"</span>: daily_selection.mean(), <span class="st">"median_quotes_per_date"</span>: daily_selection.median(), <span class="st">"min_quotes_per_date"</span>: daily_selection.<span class="bu">min</span>(), <span class="st">"max_quotes_per_date"</span>: daily_selection.<span class="bu">max</span>(), <span class="st">"median_cell_rows"</span>: calibration_quotes[<span class="st">"cell_rows"</span>].median()}]).<span class="bu">round</span>(<span class="dv">2</span>))</span>
 <span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>display(selection_steps)</span>
 <span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>display(calibration_quotes.groupby([<span class="st">"dte_bucket"</span>, <span class="st">"option_type"</span>], observed<span class="op">=</span><span class="va">True</span>)[<span class="st">"cell_rows"</span>].agg([<span class="st">"size"</span>, <span class="st">"sum"</span>, <span class="st">"median"</span>]).reset_index().iloc[:<span class="dv">24</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1424,6 +1554,8 @@ k^* \in \{-0.30,-0.25,-0.20,\ldots,0,\ldots,0.25,0.30\}
 <p>This is a strong design for model comparison. Every daily fit sees the same quote count, so runtime and error comparisons are not distorted by one model fitting more rows than another. The model is also forced to face the whole shape of the surface: short maturity, medium maturity, downside puts, ATM options, and upside calls.</p>
 <p>The selection steps show the largest reduction when we choose the OTM side by strike. That is expected because the raw panel contains both calls and puts at many strikes. Keeping the most informative side makes the daily grid cleaner and reduces parity duplication.</p>
 <div id="2e4827c9" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>date_counts <span class="op">=</span> calibration_quotes.groupby(<span class="st">"date"</span>).size()</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>daily_dates <span class="op">=</span> date_counts[date_counts <span class="op">&gt;=</span> <span class="dv">120</span>].index</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>weekly_dates <span class="op">=</span> daily_dates[::<span class="dv">5</span>]</span>
@@ -1433,6 +1565,7 @@ k^* \in \{-0.30,-0.25,-0.20,\ldots,0,\ldots,0.25,0.30\}
 <span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>main_day <span class="op">=</span> date_counts.loc[daily_dates].sort_values(ascending<span class="op">=</span><span class="va">False</span>).index[<span class="dv">0</span>]</span>
 <span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>day_quotes <span class="op">=</span> calibration_quotes[calibration_quotes[<span class="st">"date"</span>].eq(main_day)].copy()</span>
 <span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame([{<span class="st">"daily_calibration_dates"</span>: <span class="bu">len</span>(daily_dates), <span class="st">"sv_calibration_dates"</span>: <span class="bu">len</span>(sv_dates), <span class="st">"main_day"</span>: main_day, <span class="st">"main_day_quotes"</span>: <span class="bu">len</span>(day_quotes)}]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1671,6 +1804,8 @@ E^Q[e^{X_T}]=e^{(r-q)T}
 </ol>
 <p>This is also why forward log-moneyness is used in the cleaned SPX panel. We want the surface to be centered around the forward, because the forward is the risk-neutral anchor.</p>
 <div id="9ba5e3e2" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bsm_cf(u, s, r, q, tau, sigma):</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.exp(<span class="ot">1j</span> <span class="op">*</span> u <span class="op">*</span> (np.log(s) <span class="op">+</span> (r <span class="op">-</span> q <span class="op">-</span> <span class="fl">0.5</span> <span class="op">*</span> sigma <span class="op">*</span> sigma) <span class="op">*</span> tau) <span class="op">-</span> <span class="fl">0.5</span> <span class="op">*</span> sigma <span class="op">*</span> sigma <span class="op">*</span> u <span class="op">*</span> u <span class="op">*</span> tau)</span>
@@ -1703,8 +1838,11 @@ E^Q[e^{X_T}]=e^{(r-q)T}
 <span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>    omega <span class="op">=</span> <span class="op">-</span>lam <span class="op">*</span> (np.exp(muj <span class="op">+</span> <span class="fl">0.5</span> <span class="op">*</span> sj <span class="op">*</span> sj) <span class="op">-</span> <span class="fl">1.0</span>)</span>
 <span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>    jump <span class="op">=</span> np.exp(lam <span class="op">*</span> tau <span class="op">*</span> (np.exp(<span class="ot">1j</span> <span class="op">*</span> u <span class="op">*</span> muj <span class="op">-</span> <span class="fl">0.5</span> <span class="op">*</span> sj <span class="op">*</span> sj <span class="op">*</span> u <span class="op">*</span> u) <span class="op">-</span> <span class="fl">1.0</span>))</span>
 <span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> heston_cf(u, s, r <span class="op">+</span> omega, q, tau, v0, kappa, theta, sigv, rho) <span class="op">*</span> jump</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="29b41721" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> params_for_model(name):</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> {</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"BSM"</span>: np.array([<span class="fl">0.20</span>]),</span>
@@ -1726,8 +1864,11 @@ E^Q[e^{X_T}]=e^{(r-q)T}
 <span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> model_id <span class="op">==</span> <span class="dv">4</span>:</span>
 <span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> bates_cf(u, s, r, q, tau, params[<span class="dv">0</span>], params[<span class="dv">1</span>], params[<span class="dv">2</span>], params[<span class="dv">3</span>], params[<span class="dv">4</span>], params[<span class="dv">5</span>], params[<span class="dv">6</span>], params[<span class="dv">7</span>])</span>
 <span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> bsm_cf(u, s, r, q, tau, params[<span class="dv">0</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="59177061" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>u_grid <span class="op">=</span> np.linspace(<span class="fl">0.0</span>, <span class="fl">90.0</span>, <span class="dv">361</span>)</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>s0 <span class="op">=</span> <span class="bu">float</span>(day_quotes[<span class="st">"spot"</span>].median())</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>r0 <span class="op">=</span> <span class="bu">float</span>(day_quotes[<span class="st">"rate"</span>].median())</span>
@@ -1743,6 +1884,7 @@ E^Q[e^{X_T}]=e^{(r-q)T}
 <span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>        cf_rows.append({<span class="st">"model"</span>: name, <span class="st">"u"</span>: u, <span class="st">"magnitude"</span>: <span class="bu">abs</span>(phi)})</span>
 <span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>cf_fingerprint <span class="op">=</span> pd.DataFrame(cf_rows)</span>
 <span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>display(cf_fingerprint.groupby(<span class="st">"model"</span>)[<span class="st">"magnitude"</span>].agg([<span class="st">"min"</span>, <span class="st">"median"</span>, <span class="st">"max"</span>]).reset_index().<span class="bu">round</span>(<span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1846,6 +1988,8 @@ u_j=(j-0.5)\Delta u
 \]</span></p>
 <p>Truncation error comes from cutting the integral at <span class="math inline">\(u_{max}\)</span>. Discretization error comes from using a finite grid between <span class="math inline">\(0\)</span> and <span class="math inline">\(u_{max}\)</span>. Direct integration is accurate when both are small, but making both small is expensive.</p>
 <div id="e70c330f" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> density_from_cf(model_id, params, x_grid, s, r, q, tau, u_max, n):</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> np.empty(x_grid.size)</span>
@@ -1870,8 +2014,11 @@ u_j=(j-0.5)\Delta u
 <span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> x, y <span class="kw">in</span> <span class="bu">zip</span>(x_grid, d):</span>
 <span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>        density_rows.append({<span class="st">"model"</span>: name, <span class="st">"x"</span>: x, <span class="st">"density"</span>: y})</span>
 <span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>cf_density <span class="op">=</span> pd.DataFrame(density_rows)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="9583a731" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">13</span>, <span class="fl">4.5</span>))</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, name <span class="kw">in</span> <span class="bu">enumerate</span>([<span class="st">"BSM"</span>, <span class="st">"Merton"</span>, <span class="st">"VG"</span>]):</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    g <span class="op">=</span> cf_density[cf_density[<span class="st">"model"</span>].eq(name)]</span>
@@ -1889,10 +2036,11 @@ u_j=(j-0.5)\Delta u
 <span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].legend(ncol<span class="op">=</span><span class="dv">3</span>, <span class="op">**</span>legend_kw)</span>
 <span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-17-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-17-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="14_fourier_option_pricing_files/figure-html/cell-17-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1950,6 +2098,8 @@ e^{-rT}E^Q[S_T\mathbf{1}_{\{S_T&gt;K\}}]=S_0e^{-qT}P_1
 <p>For example, suppose two outcomes are both ITM. One outcome has <span class="math inline">\(S_T\)</span> barely above <span class="math inline">\(K\)</span>, and another has <span class="math inline">\(S_T\)</span> far above <span class="math inline">\(K\)</span>. <span class="math inline">\(P_2\)</span> treats both as ITM events. <span class="math inline">\(P_1\)</span> gives more weight to the second because the stock payoff part is larger. This is exactly why the call formula needs two terms.</p>
 <p>Fourier inversion gives both probabilities from the same characteristic function. <span class="math inline">\(P_2\)</span> uses <span class="math inline">\(\phi(u)\)</span> directly. <span class="math inline">\(P_1\)</span> uses <span class="math inline">\(\phi(u-i)\)</span> because multiplying by <span class="math inline">\(S_T=e^{X_T}\)</span> shifts the transform.</p>
 <div id="255ef09b" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> direct_call(model_id, params, s, k, r, q, tau, n, u_max):</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    du <span class="op">=</span> u_max <span class="op">/</span> n</span>
@@ -1991,8 +2141,11 @@ e^{-rT}E^Q[S_T\mathbf{1}_{\{S_T&gt;K\}}]=S_0e^{-qT}P_1
 <span id="cb17-39"><a href="#cb17-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(strikes.size):</span>
 <span id="cb17-40"><a href="#cb17-40" aria-hidden="true" tabindex="-1"></a>        out[i] <span class="op">=</span> <span class="bu">max</span>(stock_disc <span class="op">*</span> p1[i] <span class="op">-</span> strikes[i] <span class="op">*</span> bond_disc <span class="op">*</span> p2[i], <span class="fl">0.0</span>)</span>
 <span id="cb17-41"><a href="#cb17-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="b0f03af6" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>strike_grid <span class="op">=</span> np.linspace(<span class="fl">0.75</span>, <span class="fl">1.25</span>, <span class="dv">1000</span>) <span class="op">*</span> s0</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>tau_grid <span class="op">=</span> np.array([<span class="dv">30</span>, <span class="dv">60</span>, <span class="dv">120</span>]) <span class="op">/</span> ann_days</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>direct_rows <span class="op">=</span> []</span>
@@ -2004,6 +2157,7 @@ e^{-rT}E^Q[S_T\mathbf{1}_{\{S_T&gt;K\}}]=S_0e^{-qT}P_1
 <span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>        direct_rows.append({<span class="st">"tau"</span>: tau, <span class="st">"strike"</span>: k, <span class="st">"direct_price"</span>: a, <span class="st">"closed_price"</span>: b, <span class="st">"price_error"</span>: a <span class="op">-</span> b, <span class="st">"abs_error"</span>: <span class="bu">abs</span>(a <span class="op">-</span> b)})</span>
 <span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>direct_validation <span class="op">=</span> pd.DataFrame(direct_rows)</span>
 <span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>display(direct_validation.groupby(<span class="st">"tau"</span>)[<span class="st">"abs_error"</span>].agg([<span class="st">"max"</span>, <span class="st">"median"</span>]).reset_index().<span class="bu">round</span>(<span class="dv">10</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2045,6 +2199,8 @@ e^{-rT}E^Q[S_T\mathbf{1}_{\{S_T&gt;K\}}]=S_0e^{-qT}P_1
 <p>The BSM direct-integration validation is perfect to displayed precision. The maximum and median absolute errors are shown as <strong>0.0000000000</strong> across the 30-day, 60-day, and 120-day maturities.</p>
 <p>This matters because BSM has a closed-form price. If the direct Fourier formula failed here, every later model comparison would be suspect. The zero error tells us that the <span class="math inline">\(P_1/P_2\)</span> integrals, transform shift <span class="math inline">\(u-i\)</span>, discounting, and strike handling are consistent with the standard BSM formula.</p>
 <div id="1321da84" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>cut_rows <span class="op">=</span> []</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> cutoff <span class="kw">in</span> [<span class="fl">60.0</span>, <span class="fl">90.0</span>, <span class="fl">120.0</span>, <span class="fl">160.0</span>, <span class="fl">220.0</span>]:</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    px <span class="op">=</span> direct_grid(<span class="dv">0</span>, np.array([<span class="fl">0.22</span>]), s0, strike_grid, r0, <span class="fl">0.0</span>, <span class="dv">60</span> <span class="op">/</span> ann_days, <span class="dv">1536</span>, cutoff)</span>
@@ -2059,6 +2215,7 @@ e^{-rT}E^Q[S_T\mathbf{1}_{\{S_T&gt;K\}}]=S_0e^{-qT}P_1
 <span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>direct_nodes <span class="op">=</span> pd.DataFrame(node_rows)</span>
 <span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>display(direct_cutoff.<span class="bu">round</span>(<span class="dv">10</span>))</span>
 <span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>display(direct_nodes.<span class="bu">round</span>(<span class="dv">10</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2161,6 +2318,8 @@ e^{-rT}E^Q[S_T\mathbf{1}_{\{S_T&gt;K\}}]=S_0e^{-qT}P_1
 <p>The cutoff and node tests show that direct integration is very stable in this BSM check. With <span class="math inline">\(u_{max}=60\)</span>, the maximum absolute error is only about <strong>0.000017</strong>. Once the cutoff reaches 90 or more, the reported error falls to zero at table precision. Increasing nodes from 256 to 4096 also gives zero displayed error in this setup.</p>
 <p>This result is model-dependent. BSM is smooth and easy. VG and some jump-SV parameter sets can need a larger cutoff because the transform decays more slowly and the density/payoff interaction contains sharper features. So the direct integration test should be read as a sanity check, not as proof that every model will be equally easy.</p>
 <div id="9c11cda7" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> merton_series_call(s, k, r, q, tau, sigma, lam, muj, sj, n_max<span class="op">=</span><span class="dv">60</span>):</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    df <span class="op">=</span> math.exp(<span class="op">-</span>r <span class="op">*</span> tau)</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    forward <span class="op">=</span> s <span class="op">*</span> math.exp((r <span class="op">-</span> q) <span class="op">*</span> tau)</span>
@@ -2180,6 +2339,7 @@ e^{-rT}E^Q[S_T\mathbf{1}_{\{S_T&gt;K\}}]=S_0e^{-qT}P_1
 <span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>merton_series <span class="op">=</span> np.array([merton_series_call(s0, k, r0, <span class="fl">0.0</span>, <span class="dv">60</span> <span class="op">/</span> ann_days, merton_params[<span class="dv">0</span>], merton_params[<span class="dv">1</span>], merton_params[<span class="dv">2</span>], merton_params[<span class="dv">3</span>], n_max<span class="op">=</span><span class="dv">80</span>) <span class="cf">for</span> k <span class="kw">in</span> strike_grid])</span>
 <span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>merton_validation <span class="op">=</span> pd.DataFrame({<span class="st">"strike"</span>: strike_grid, <span class="st">"direct"</span>: merton_direct, <span class="st">"series"</span>: merton_series, <span class="st">"abs_error"</span>: np.<span class="bu">abs</span>(merton_direct <span class="op">-</span> merton_series)})</span>
 <span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>display(merton_validation[<span class="st">"abs_error"</span>].agg([<span class="st">"max"</span>, <span class="st">"median"</span>]).to_frame(<span class="st">"Merton direct vs series"</span>).T.<span class="bu">round</span>(<span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2329,6 +2489,8 @@ e^{-ijm\eta\lambda}=e^{-2\pi ijm/N}
 <p>In this notebook, <span class="math inline">\(\alpha=1.5\)</span> is a stable practical choice across the tested models. The validation table confirms that <span class="math inline">\(\alpha=0.75\)</span> is weaker for BSM, while <span class="math inline">\(\alpha\ge1.25\)</span> stabilizes the median error at the chosen grid size.</p>
 <p>This is a good example of a numerical parameter with financial-model implications. It looks like a technical FFT choice, but it depends on the existence and stability of model moments.</p>
 <div id="288a8b7a" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fft_inplace(x):</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> x.size</span>
@@ -2378,8 +2540,11 @@ e^{-ijm\eta\lambda}=e^{-2\pi ijm/N}
 <span id="cb21-47"><a href="#cb21-47" aria-hidden="true" tabindex="-1"></a>        strikes[m] <span class="op">=</span> np.exp(log_k)</span>
 <span id="cb21-48"><a href="#cb21-48" aria-hidden="true" tabindex="-1"></a>        prices[m] <span class="op">=</span> <span class="bu">max</span>(np.exp(<span class="op">-</span>alpha <span class="op">*</span> log_k) <span class="op">*</span> np.real(x[m]) <span class="op">/</span> np.pi, <span class="fl">0.0</span>)</span>
 <span id="cb21-49"><a href="#cb21-49" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> strikes, prices</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="73ae016a" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>fft_rows <span class="op">=</span> []</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>closed <span class="op">=</span> np.asarray(bsm_price(<span class="st">"call"</span>, s0, strike_grid, <span class="dv">60</span> <span class="op">/</span> ann_days, <span class="fl">0.22</span>, r0, <span class="fl">0.0</span>), dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> alpha <span class="kw">in</span> [<span class="fl">0.75</span>, <span class="fl">1.0</span>, <span class="fl">1.25</span>, <span class="fl">1.5</span>, <span class="fl">1.75</span>, <span class="fl">2.0</span>]:</span>
@@ -2392,6 +2557,7 @@ e^{-ijm\eta\lambda}=e^{-2\pi ijm/N}
 <span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>    fft_rows.append({<span class="st">"alpha"</span>: <span class="fl">1.5</span>, <span class="st">"n"</span>: n, <span class="st">"eta"</span>: <span class="fl">0.35</span>, <span class="st">"median_abs_error"</span>: <span class="bu">float</span>(np.median(np.<span class="bu">abs</span>(interp <span class="op">-</span> closed))), <span class="st">"max_abs_error"</span>: <span class="bu">float</span>(np.<span class="bu">max</span>(np.<span class="bu">abs</span>(interp <span class="op">-</span> closed))), <span class="st">"negative_prices"</span>: <span class="bu">int</span>((px <span class="op">&lt;</span> <span class="op">-</span><span class="fl">1e-8</span>).<span class="bu">sum</span>()), <span class="st">"grid_min"</span>: st.<span class="bu">min</span>(), <span class="st">"grid_max"</span>: st.<span class="bu">max</span>(), <span class="st">"grid_points_in_market"</span>: <span class="bu">int</span>(((st <span class="op">&gt;=</span> strike_grid.<span class="bu">min</span>()) <span class="op">&amp;</span> (st <span class="op">&lt;=</span> strike_grid.<span class="bu">max</span>())).<span class="bu">sum</span>())})</span>
 <span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>fft_validation_table <span class="op">=</span> pd.DataFrame(fft_rows)</span>
 <span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>display(fft_validation_table.<span class="bu">round</span>(<span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2549,6 +2715,8 @@ e^{-ijm\eta\lambda}=e^{-2\pi ijm/N}
 <p>This is the FFT grid-resolution story. The method is extremely fast, but the strike grid matters. If the grid is too coarse, interpolation error remains even when the transform formula is correct.</p>
 <p>The very wide reported strike range is a side effect of the FFT grid. It covers far more strikes than we need. Only a few hundred grid points fall inside the market strike range. FFT is efficient when we want a whole strike grid; it is less natural when we need arbitrary market strikes date by date.</p>
 <div id="67396374" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab <span class="im">import</span> _kernels</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>fft_cpp_rows <span class="op">=</span> []</span>
@@ -2569,6 +2737,7 @@ e^{-ijm\eta\lambda}=e^{-2\pi ijm/N}
 <span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>    fft_cpp_rows.append(row)</span>
 <span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>fft_cpp_validation <span class="op">=</span> pd.DataFrame(fft_cpp_rows)</span>
 <span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>display(fft_cpp_validation.<span class="bu">round</span>(<span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2768,6 +2937,8 @@ K(\psi_n-\chi_n)
 <p>because the payoff is <span class="math inline">\(K(1-e^x)\)</span>.</p>
 <p>The <span class="math inline">\(n=0\)</span> term receives a half weight. This is standard in cosine series expansions and matches the same half-endpoint logic we saw in Fourier integration.</p>
 <div id="82354910" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> variance_rate(model_id, params, tau):</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> model_id <span class="op">==</span> <span class="dv">1</span>:</span>
@@ -2832,8 +3003,11 @@ K(\psi_n-\chi_n)
 <span id="cb24-62"><a href="#cb24-62" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(strikes.size):</span>
 <span id="cb24-63"><a href="#cb24-63" aria-hidden="true" tabindex="-1"></a>        out[i] <span class="op">=</span> cos_one(model_id, params, s, strikes[i], r, q, tau, flag, n_terms, width_mult)</span>
 <span id="cb24-64"><a href="#cb24-64" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="fb7afc48" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>cos_rows <span class="op">=</span> []</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> model_id, name, params, width <span class="kw">in</span> [(<span class="dv">0</span>, <span class="st">"BSM"</span>, np.array([<span class="fl">0.22</span>]), <span class="fl">12.0</span>), (<span class="dv">1</span>, <span class="st">"Merton"</span>, params_for_model(<span class="st">"Merton"</span>), <span class="fl">14.0</span>), (<span class="dv">2</span>, <span class="st">"VG"</span>, params_for_model(<span class="st">"VG"</span>), <span class="fl">30.0</span>), (<span class="dv">3</span>, <span class="st">"Heston"</span>, params_for_model(<span class="st">"Heston"</span>), <span class="fl">14.0</span>), (<span class="dv">4</span>, <span class="st">"Bates"</span>, params_for_model(<span class="st">"Bates"</span>), <span class="fl">14.0</span>)]:</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    ref <span class="op">=</span> np.asarray(bsm_price(<span class="st">"call"</span>, s0, strike_grid, <span class="dv">60</span> <span class="op">/</span> ann_days, <span class="fl">0.22</span>, r0, <span class="fl">0.0</span>), dtype<span class="op">=</span><span class="bu">float</span>) <span class="cf">if</span> model_id <span class="op">==</span> <span class="dv">0</span> <span class="cf">else</span> direct_grid(model_id, params, s0, strike_grid, r0, <span class="fl">0.0</span>, <span class="dv">60</span> <span class="op">/</span> ann_days, <span class="dv">4096</span>, <span class="fl">500.0</span> <span class="cf">if</span> model_id <span class="op">==</span> <span class="dv">2</span> <span class="cf">else</span> <span class="fl">180.0</span>)</span>
@@ -2842,6 +3016,7 @@ K(\psi_n-\chi_n)
 <span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>        cos_rows.append({<span class="st">"model"</span>: name, <span class="st">"n_terms"</span>: n_terms, <span class="st">"width"</span>: width, <span class="st">"max_abs_error"</span>: <span class="bu">float</span>(np.<span class="bu">max</span>(np.<span class="bu">abs</span>(px <span class="op">-</span> ref))), <span class="st">"median_abs_error"</span>: <span class="bu">float</span>(np.median(np.<span class="bu">abs</span>(px <span class="op">-</span> ref)))})</span>
 <span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>cos_validation_table <span class="op">=</span> pd.DataFrame(cos_rows)</span>
 <span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>display(cos_validation_table.groupby(<span class="st">"model"</span>)[[<span class="st">"max_abs_error"</span>, <span class="st">"median_abs_error"</span>]].<span class="bu">min</span>().reset_index().<span class="bu">round</span>(<span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2896,6 +3071,8 @@ K(\psi_n-\chi_n)
 <p>This doesn’t mean VG is unusable. It means the COS setup is more sensitive for VG under this truncation scheme and reference grid. VG has a different transform decay and tail shape because of the Gamma time change. The density can be less friendly for a finite cosine expansion, especially when the interval and term count are not tuned specifically for VG.</p>
 <p>This is an important numerical lesson: the pricing model and the pricing method interact. A method can be excellent for Heston and Bates while needing more care for VG.</p>
 <div id="f5af711a" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>width_rows <span class="op">=</span> []</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> width <span class="kw">in</span> [<span class="fl">8.0</span>, <span class="fl">10.0</span>, <span class="fl">12.0</span>, <span class="fl">14.0</span>, <span class="fl">18.0</span>, <span class="fl">24.0</span>, <span class="fl">30.0</span>]:</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    px <span class="op">=</span> cos_batch(<span class="dv">2</span>, params_for_model(<span class="st">"VG"</span>), s0, strike_grid, r0, <span class="fl">0.0</span>, <span class="dv">60</span> <span class="op">/</span> ann_days, <span class="dv">1</span>, <span class="dv">512</span>, width)</span>
@@ -2903,6 +3080,7 @@ K(\psi_n-\chi_n)
 <span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    width_rows.append({<span class="st">"model"</span>: <span class="st">"VG"</span>, <span class="st">"width"</span>: width, <span class="st">"max_abs_error"</span>: <span class="bu">float</span>(np.<span class="bu">max</span>(np.<span class="bu">abs</span>(px <span class="op">-</span> ref))), <span class="st">"median_abs_error"</span>: <span class="bu">float</span>(np.median(np.<span class="bu">abs</span>(px <span class="op">-</span> ref)))})</span>
 <span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>cos_width_table <span class="op">=</span> pd.DataFrame(width_rows)</span>
 <span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>display(cos_width_table.<span class="bu">round</span>(<span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2977,6 +3155,8 @@ K(\psi_n-\chi_n)
 <p>This tells us the VG issue here is not solved simply by making the interval wider. A wider interval reduces tail truncation error but can increase approximation error because the same number of cosine terms must cover a larger domain. If the density has a sharp center and fat tails, a single global cosine interval has to compromise.</p>
 <p>For calibration, this means VG can still be compared, but its numerical error floor must be remembered. If VG loses by a tiny margin, we need to ask whether the loss is model error or pricing-engine/truncation error. If it loses by a large margin, the result is more robust.</p>
 <div id="6c43b465" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>cos_cpp_rows <span class="op">=</span> []</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>strike_grid_cpp <span class="op">=</span> np.linspace(<span class="fl">0.70</span>, <span class="fl">1.30</span>, <span class="dv">1000</span>) <span class="op">*</span> s0</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> model_id, name, params, width <span class="kw">in</span> [(<span class="dv">0</span>, <span class="st">"BSM"</span>, np.array([<span class="fl">0.22</span>]), <span class="fl">12.0</span>), (<span class="dv">1</span>, <span class="st">"Merton"</span>, params_for_model(<span class="st">"Merton"</span>), <span class="fl">14.0</span>), (<span class="dv">2</span>, <span class="st">"VG"</span>, params_for_model(<span class="st">"VG"</span>), <span class="fl">30.0</span>), (<span class="dv">3</span>, <span class="st">"Heston"</span>, params_for_model(<span class="st">"Heston"</span>), <span class="fl">14.0</span>), (<span class="dv">4</span>, <span class="st">"Bates"</span>, params_for_model(<span class="st">"Bates"</span>), <span class="fl">14.0</span>)]:</span>
@@ -2990,6 +3170,7 @@ K(\psi_n-\chi_n)
 <span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>    cos_cpp_rows.append({<span class="st">"model"</span>: name, <span class="st">"quotes"</span>: <span class="bu">len</span>(strike_grid_cpp), <span class="st">"numba_runtime"</span>: numba_runtime, <span class="st">"cpp_runtime"</span>: cpp_runtime, <span class="st">"speedup"</span>: numba_runtime <span class="op">/</span> <span class="bu">max</span>(cpp_runtime, <span class="fl">1e-12</span>), <span class="st">"max_abs_diff"</span>: <span class="bu">float</span>(np.<span class="bu">max</span>(np.<span class="bu">abs</span>(px_n <span class="op">-</span> px_c))), <span class="st">"median_abs_diff"</span>: <span class="bu">float</span>(np.median(np.<span class="bu">abs</span>(px_n <span class="op">-</span> px_c)))})</span>
 <span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>cos_cpp_validation <span class="op">=</span> pd.DataFrame(cos_cpp_rows)</span>
 <span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>display(cos_cpp_validation.<span class="bu">round</span>(<span class="dv">10</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3096,6 +3277,8 @@ s_j=\frac{\text{calibration half-spread}_j}{\sqrt{w_j}}
 \]</span></p>
 <p>A tighter spread and higher observation weight make <span class="math inline">\(s_j\)</span> smaller, which means an error on that quote is penalized more. A wider quote gets less influence.</p>
 <div id="735fd231" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cos_groups(q):</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    work <span class="op">=</span> q.reset_index(drop<span class="op">=</span><span class="va">True</span>).copy()</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> []</span>
@@ -3128,8 +3311,11 @@ s_j=\frac{\text{calibration half-spread}_j}{\sqrt{w_j}}
 <span id="cb28-30"><a href="#cb28-30" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cos_group_price(model, p, q, n_terms<span class="op">=</span><span class="dv">256</span>, width<span class="op">=</span><span class="fl">14.0</span>, engine<span class="op">=</span><span class="st">"numba"</span>):</span>
 <span id="cb28-31"><a href="#cb28-31" aria-hidden="true" tabindex="-1"></a>    groups <span class="op">=</span> cos_groups(q)</span>
 <span id="cb28-32"><a href="#cb28-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cos_group_values(model, p, groups, <span class="bu">len</span>(q), n_terms<span class="op">=</span>n_terms, width<span class="op">=</span>width, engine<span class="op">=</span>engine)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="66b522b6" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>engine_use <span class="op">=</span> pd.DataFrame([</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"engine"</span>: <span class="st">"Direct integration"</span>, <span class="st">"role"</span>: <span class="st">"reference oracle"</span>, <span class="st">"used_for"</span>: <span class="st">"selected validation grids"</span>},</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"engine"</span>: <span class="st">"FFT"</span>, <span class="st">"role"</span>: <span class="st">"strike grid"</span>, <span class="st">"used_for"</span>: <span class="st">"full log-strike grids"</span>},</span>
@@ -3196,6 +3382,7 @@ s_j=\frac{\text{calibration half-spread}_j}{\sqrt{w_j}}
 <span id="cb29-64"><a href="#cb29-64" aria-hidden="true" tabindex="-1"></a>    })</span>
 <span id="cb29-65"><a href="#cb29-65" aria-hidden="true" tabindex="-1"></a>model_10k_certificate <span class="op">=</span> pd.DataFrame(model_10k_rows)</span>
 <span id="cb29-66"><a href="#cb29-66" aria-hidden="true" tabindex="-1"></a>display(model_10k_certificate.<span class="bu">round</span>(<span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3395,6 +3582,8 @@ s_j=\frac{\text{calibration half-spread}_j}{\sqrt{w_j}}
 <p>The 10k benchmark shows the same main point as the smaller C++/Numba checks: implementation differences are zero to displayed precision. COS prices per second are in the thousands to tens of thousands depending on model complexity. BSM is fastest, Bates is slowest, and VG/Heston sit in between.</p>
 <p>The throughput plot is useful because calibration isn’t one price. Fitting one day may require many optimizer evaluations. If one evaluation prices 170 quotes, and the optimizer uses dozens of evaluations, a slow model becomes expensive quickly. This is why we need grouped pricing and compiled kernels even when the mathematical formulas are already known.</p>
 <div id="cbeacf63" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="fl">8.8</span>))</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>direct_plot <span class="op">=</span> direct_validation.assign(ks<span class="op">=</span>direct_validation[<span class="st">"strike"</span>] <span class="op">/</span> s0)</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>direct_plot[<span class="st">"bucket"</span>] <span class="op">=</span> pd.cut(direct_plot[<span class="st">"ks"</span>], np.linspace(<span class="fl">0.75</span>, <span class="fl">1.25</span>, <span class="dv">41</span>), include_lowest<span class="op">=</span><span class="va">True</span>)</span>
@@ -3439,10 +3628,11 @@ s_j=\frac{\text{calibration half-spread}_j}{\sqrt{w_j}}
 <span id="cb30-42"><a href="#cb30-42" aria-hidden="true" tabindex="-1"></a>    ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.20</span>)</span>
 <span id="cb30-43"><a href="#cb30-43" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb30-44"><a href="#cb30-44" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-31-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-31-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="14_fourier_option_pricing_files/figure-html/cell-31-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3540,6 +3730,8 @@ RMSE_t=\sqrt{L_t(\hat{\theta}_t)}
 <p>For Heston and Bates, the code also tries a second nearby start. This helps avoid local minima because the objective surface can be non-convex. Parameters like <span class="math inline">\(\kappa\)</span>, <span class="math inline">\(\theta\)</span>, <span class="math inline">\(\xi\)</span>, and <span class="math inline">\(\rho\)</span> can compensate for each other, so different parameter combinations may produce similar option prices.</p>
 <p>The regularization terms are light. They penalize very high vol-of-vol and very high jump intensity in the most flexible models. This doesn’t force the fit to be simple, but it discourages extreme parameter values that improve one day’s RMSE at the cost of unstable dynamics.</p>
 <div id="a05b82ec" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> model_start(model, q, start<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    atm <span class="op">=</span> <span class="bu">float</span>(np.nanmedian(q[<span class="st">"iv_mid"</span>]))</span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> model <span class="op">==</span> <span class="st">"bsm"</span>:</span>
@@ -3575,8 +3767,11 @@ RMSE_t=\sqrt{L_t(\hat{\theta}_t)}
 <span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> model <span class="op">==</span> <span class="st">"vg"</span>:</span>
 <span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">bool</span>(p[<span class="dv">0</span>] <span class="op">&gt;</span> <span class="dv">0</span> <span class="kw">and</span> p[<span class="dv">2</span>] <span class="op">&gt;</span> <span class="dv">0</span> <span class="kw">and</span> <span class="fl">1.0</span> <span class="op">-</span> p[<span class="dv">1</span>] <span class="op">*</span> p[<span class="dv">2</span>] <span class="op">-</span> <span class="fl">0.5</span> <span class="op">*</span> p[<span class="dv">0</span>] <span class="op">*</span> p[<span class="dv">0</span>] <span class="op">*</span> p[<span class="dv">2</span>] <span class="op">&gt;</span> <span class="fl">0.0</span>)</span>
 <span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">bool</span>(np.<span class="bu">all</span>(np.isfinite(p)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="cfa054df" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> price_with_cos(model, p, q, n_terms<span class="op">=</span><span class="dv">144</span>, width<span class="op">=</span><span class="fl">12.0</span>):</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> cos_group_price(model, p, q, n_terms<span class="op">=</span>n_terms, width<span class="op">=</span>width, engine<span class="op">=</span><span class="st">"numba"</span>)</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -3623,8 +3818,11 @@ RMSE_t=\sqrt{L_t(\hat{\theta}_t)}
 <span id="cb32-44"><a href="#cb32-44" aria-hidden="true" tabindex="-1"></a>    fit[<span class="st">"model_price"</span>] <span class="op">=</span> px</span>
 <span id="cb32-45"><a href="#cb32-45" aria-hidden="true" tabindex="-1"></a>    fit[<span class="st">"price_residual"</span>] <span class="op">=</span> raw</span>
 <span id="cb32-46"><a href="#cb32-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> row, fit, res.x</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="8f11e69e" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_dates(quotes, models, dates, cache_path, settings, max_nfev<span class="op">=</span><span class="dv">55</span>, n_terms<span class="op">=</span><span class="dv">144</span>, width<span class="op">=</span><span class="fl">12.0</span>, min_quotes<span class="op">=</span><span class="dv">120</span>):</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> cache_path.exists() <span class="kw">and</span> same_settings(cache_path, settings):</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>        params <span class="op">=</span> pd.read_parquet(cache_path)</span>
@@ -3651,6 +3849,7 @@ RMSE_t=\sqrt{L_t(\hat{\theta}_t)}
 <span id="cb33-24"><a href="#cb33-24" aria-hidden="true" tabindex="-1"></a>    fit.to_parquet(Path(<span class="bu">str</span>(cache_path).replace(<span class="st">"_fits.parquet"</span>, <span class="st">"_fit_prices.parquet"</span>)), index<span class="op">=</span><span class="va">False</span>)</span>
 <span id="cb33-25"><a href="#cb33-25" aria-hidden="true" tabindex="-1"></a>    write_meta(cache_path, settings, <span class="bu">len</span>(params))</span>
 <span id="cb33-26"><a href="#cb33-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> params, fit</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -3676,12 +3875,15 @@ Var[X_T]=\sigma^2T
 <p>This is the classic surface-fitting problem in a different language. BSM has one transform shape. The SPX option surface needs a transform shape that changes skew and tail thickness separately from ATM variance.</p>
 <p>Fourier methods make this clean to see. The pricing engine is accurate, so the residuals are model residuals. The transform itself is too restrictive.</p>
 <div id="42fb2e4b" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>bsm_cache <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spx_bsm_daily_fits.parquet"</span></span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>bsm_settings <span class="op">=</span> {<span class="st">"models"</span>: [<span class="st">"bsm"</span>], <span class="st">"carry"</span>: clean_settings[<span class="st">"carry"</span>], <span class="st">"pricing_q"</span>: <span class="st">"row dividend_yield v2"</span>, <span class="st">"pricing_engine"</span>: <span class="st">"grouped_cos_numba_v4"</span>, <span class="st">"dates"</span>: <span class="bu">int</span>(<span class="bu">len</span>(daily_dates)), <span class="st">"quotes"</span>: <span class="bu">int</span>(<span class="bu">len</span>(calibration_quotes)), <span class="st">"n_terms"</span>: <span class="dv">128</span>, <span class="st">"width"</span>: <span class="fl">12.0</span>}</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>bsm_daily_fits, bsm_fit_prices <span class="op">=</span> fit_dates(calibration_quotes, [<span class="st">"bsm"</span>], daily_dates, bsm_cache, bsm_settings, max_nfev<span class="op">=</span><span class="dv">35</span>, n_terms<span class="op">=</span><span class="dv">128</span>, width<span class="op">=</span><span class="fl">12.0</span>, min_quotes<span class="op">=</span><span class="dv">120</span>)</span>
 <span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>bsm_summary <span class="op">=</span> bsm_daily_fits.groupby(<span class="st">"model"</span>, as_index<span class="op">=</span><span class="va">False</span>).agg(dates<span class="op">=</span>(<span class="st">"date"</span>, <span class="st">"nunique"</span>), quotes<span class="op">=</span>(<span class="st">"quotes"</span>, <span class="st">"sum"</span>), success_rate<span class="op">=</span>(<span class="st">"success"</span>, <span class="st">"mean"</span>), weighted_price_rmse<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="st">"mean"</span>), median_abs_price_error<span class="op">=</span>(<span class="st">"median_abs_price_error"</span>, <span class="st">"median"</span>), bid_ask_hit_rate<span class="op">=</span>(<span class="st">"bid_ask_hit_rate"</span>, <span class="st">"mean"</span>), otm_put_rmse<span class="op">=</span>(<span class="st">"otm_put_rmse"</span>, <span class="st">"mean"</span>), runtime_sec<span class="op">=</span>(<span class="st">"runtime_sec"</span>, <span class="st">"sum"</span>))</span>
 <span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>display(model_10k_certificate[model_10k_certificate[<span class="st">"model"</span>].eq(<span class="st">"BSM"</span>)].<span class="bu">round</span>(<span class="dv">8</span>))</span>
 <span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>display(bsm_summary.<span class="bu">round</span>(<span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3780,6 +3982,8 @@ Var[X_T]=\sigma^2T
 <p>The calibration table confirms this limitation. BSM has a <strong>100% success rate</strong>, but a weighted price RMSE around <strong>259.5</strong>, median absolute price error around <strong>8.70</strong>, bid/ask hit rate around <strong>3.7%</strong>, and OTM put RMSE around <strong>359.6</strong>. The model can always fit a single volatility, but the single volatility can’t explain the real SPX surface.</p>
 <p>The runtime is low, about <strong>26.8 seconds</strong> for all daily BSM fits, which is expected. One parameter is cheap. The problem is model structure, not numerical speed.</p>
 <div id="a17dea2a" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>bsm_month <span class="op">=</span> bsm_daily_fits.assign(month<span class="op">=</span>bsm_daily_fits[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)).groupby(<span class="st">"month"</span>, observed<span class="op">=</span><span class="va">True</span>).agg(</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    rmse<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="st">"median"</span>),</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    rmse_lo<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="kw">lambda</span> v: np.nanquantile(v, <span class="fl">0.25</span>)),</span>
@@ -3802,10 +4006,11 @@ Var[X_T]=\sigma^2T
 <span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>    ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.20</span>)</span>
 <span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb35-22"><a href="#cb35-22" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-36-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-36-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="14_fourier_option_pricing_files/figure-html/cell-36-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3847,6 +4052,8 @@ Var[\text{jump return over }T]=\lambda T(\mu_J^2+\sigma_J^2)
 <p>So Merton and VG can both make tails fatter, but they do it differently. Merton says crash risk comes from identifiable rare jumps. VG says the market’s activity rate itself fluctuates, creating clustered large moves.</p>
 <p>This distinction matters when interpreting calibration. If Merton beats VG on SPX, the market surface in this sample is better captured by finite crash jumps plus diffusion than by the VG business-time mechanism under the selected pricing setup.</p>
 <div id="d9ffc810" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>jump_cache <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spx_jump_daily_fits.parquet"</span></span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>jump_settings <span class="op">=</span> {<span class="st">"models"</span>: [<span class="st">"merton"</span>, <span class="st">"vg"</span>], <span class="st">"carry"</span>: clean_settings[<span class="st">"carry"</span>], <span class="st">"pricing_q"</span>: <span class="st">"row dividend_yield v2"</span>, <span class="st">"pricing_engine"</span>: <span class="st">"grouped_cos_numba_v4"</span>, <span class="st">"dates"</span>: <span class="bu">int</span>(<span class="bu">len</span>(daily_dates)), <span class="st">"quotes"</span>: <span class="bu">int</span>(<span class="bu">len</span>(calibration_quotes)), <span class="st">"n_terms"</span>: <span class="dv">144</span>, <span class="st">"width"</span>: <span class="fl">14.0</span>}</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>jump_daily_fits, jump_fit_prices <span class="op">=</span> fit_dates(calibration_quotes, [<span class="st">"merton"</span>, <span class="st">"vg"</span>], daily_dates, jump_cache, jump_settings, max_nfev<span class="op">=</span><span class="dv">55</span>, n_terms<span class="op">=</span><span class="dv">144</span>, width<span class="op">=</span><span class="fl">14.0</span>, min_quotes<span class="op">=</span><span class="dv">120</span>)</span>
@@ -3855,6 +4062,7 @@ Var[\text{jump return over }T]=\lambda T(\mu_J^2+\sigma_J^2)
 <span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>display(jump_daily_fits.sort_values(<span class="st">"weighted_price_rmse"</span>, ascending<span class="op">=</span><span class="va">False</span>).iloc[:<span class="dv">10</span>].<span class="bu">round</span>(<span class="dv">6</span>))</span>
 <span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>best_jump <span class="op">=</span> <span class="bu">str</span>(jump_summary[jump_summary[<span class="st">"success_rate"</span>].ge(<span class="fl">0.70</span>)].sort_values(<span class="st">"weighted_price_rmse"</span>).iloc[<span class="dv">0</span>][<span class="st">"model"</span>])</span>
 <span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame([{<span class="st">"best_jump_model"</span>: best_jump}]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4156,6 +4364,8 @@ Var[\text{jump return over }T]=\lambda T(\mu_J^2+\sigma_J^2)
 <p>Merton also has slightly better OTM put RMSE, around <strong>93.95</strong> versus VG’s <strong>99.63</strong>. The bid/ask hit rates remain low in absolute terms, but Merton is higher than VG: about <strong>8.9%</strong> versus <strong>7.5%</strong>.</p>
 <p>VG is faster than Merton in total runtime here, about <strong>115 seconds</strong> versus <strong>193 seconds</strong>, but the fit is weaker. Because this notebook later uses models for tail overlays, the better tail fit matters more than the runtime saving. The selected jump winner is therefore <strong>Merton</strong>.</p>
 <div id="db8e5dfd" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>merton_month <span class="op">=</span> jump_daily_fits[jump_daily_fits[<span class="st">"model"</span>].eq(<span class="st">"merton"</span>)].assign(month<span class="op">=</span><span class="kw">lambda</span> x: x[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)).groupby(<span class="st">"month"</span>, observed<span class="op">=</span><span class="va">True</span>).agg(</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    rmse<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="st">"median"</span>),</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    rmse_lo<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="kw">lambda</span> v: np.nanquantile(v, <span class="fl">0.25</span>)),</span>
@@ -4191,6 +4401,7 @@ Var[\text{jump return over }T]=\lambda T(\mu_J^2+\sigma_J^2)
 <span id="cb38-33"><a href="#cb38-33" aria-hidden="true" tabindex="-1"></a>    ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.20</span>)</span>
 <span id="cb38-34"><a href="#cb38-34" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb38-35"><a href="#cb38-35" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4251,7 +4462,7 @@ Var[\text{jump return over }T]=\lambda T(\mu_J^2+\sigma_J^2)
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-38-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-38-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="14_fourier_option_pricing_files/figure-html/cell-38-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4283,6 +4494,8 @@ Var[\text{jump return over }T]=\lambda T(\mu_J^2+\sigma_J^2)
 <p>If the fitted jump mean <span class="math inline">\(\mu_J\)</span> is negative, those jumps are downside-biased. If <span class="math inline">\(\sigma_J\)</span> is high, the jump distribution is wide, so some jumps can be very large. Together, these parameters shape OTM put prices.</p>
 <p>This is why Merton improves strongly over BSM but still loses to Bates. It can add discrete tail mass, but it has only one jump distribution and one diffusion volatility per date. The SPX surface often needs a richer maturity-dependent variance structure too.</p>
 <div id="20797394" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>vg_month <span class="op">=</span> jump_daily_fits[jump_daily_fits[<span class="st">"model"</span>].eq(<span class="st">"vg"</span>)].assign(month<span class="op">=</span><span class="kw">lambda</span> x: x[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)).groupby(<span class="st">"month"</span>, observed<span class="op">=</span><span class="va">True</span>).agg(</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    rmse<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="st">"median"</span>),</span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    rmse_lo<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="kw">lambda</span> v: np.nanquantile(v, <span class="fl">0.25</span>)),</span>
@@ -4318,6 +4531,7 @@ Var[\text{jump return over }T]=\lambda T(\mu_J^2+\sigma_J^2)
 <span id="cb39-33"><a href="#cb39-33" aria-hidden="true" tabindex="-1"></a>    ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.20</span>)</span>
 <span id="cb39-34"><a href="#cb39-34" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb39-35"><a href="#cb39-35" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4378,7 +4592,7 @@ Var[\text{jump return over }T]=\lambda T(\mu_J^2+\sigma_J^2)
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-39-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-39-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="14_fourier_option_pricing_files/figure-html/cell-39-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4395,6 +4609,8 @@ Var[\text{jump return over }T]=\lambda T(\mu_J^2+\sigma_J^2)
 <p>where <span class="math inline">\(\Delta G\)</span> is random. If <span class="math inline">\(\Delta G\)</span> is unusually large, the return has a large move because the Brownian component is evaluated over more business time. This is a very natural way to model markets that have quiet periods interrupted by bursts of activity.</p>
 <p>The VG diagnostics show that it improves heavily over BSM, but it doesn’t beat Merton in this SPX setup. Part of that may be model fit and part may be numerical sensitivity from the COS truncation behavior we saw earlier. The residual curve still shows structured errors across log-moneyness, which means the model is missing some surface features.</p>
 <div id="91c018ee" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>jump_plot <span class="op">=</span> jump_daily_fits.copy()</span>
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>jump_plot[<span class="st">"month"</span>] <span class="op">=</span> jump_plot[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)</span>
 <span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>jump_month <span class="op">=</span> jump_plot.groupby([<span class="st">"model"</span>, <span class="st">"month"</span>], observed<span class="op">=</span><span class="va">True</span>).agg(</span>
@@ -4424,10 +4640,11 @@ Var[\text{jump return over }T]=\lambda T(\mu_J^2+\sigma_J^2)
 <span id="cb40-27"><a href="#cb40-27" aria-hidden="true" tabindex="-1"></a>    ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.20</span>)</span>
 <span id="cb40-28"><a href="#cb40-28" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb40-29"><a href="#cb40-29" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-40-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-40-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="14_fourier_option_pricing_files/figure-html/cell-40-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4457,6 +4674,8 @@ V=V(S_0,v_0,K,T;r,q,\kappa,\theta,\xi,\rho)
 <p>In Fourier space, these effects are bundled into the affine coefficients <span class="math inline">\(C(u,T)\)</span> and <span class="math inline">\(D(u,T)\)</span>. Calibration then chooses the parameters that make the transform-generated option prices match the surface.</p>
 <p>The fact that Heston and Bates beat Merton by a large margin tells us that the SPX surface is not only asking for jumps. It is asking for stochastic variance dynamics too.</p>
 <div id="82090519" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>sv_cache <span class="op">=</span> cache_dir <span class="op">/</span> <span class="st">"spx_sv_daily_fits.parquet"</span></span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>sv_settings <span class="op">=</span> {<span class="st">"models"</span>: [<span class="st">"heston"</span>, <span class="st">"bates"</span>], <span class="st">"carry"</span>: clean_settings[<span class="st">"carry"</span>], <span class="st">"pricing_q"</span>: <span class="st">"row dividend_yield v2"</span>, <span class="st">"pricing_engine"</span>: <span class="st">"grouped_cos_numba_v4"</span>, <span class="st">"dates"</span>: <span class="bu">int</span>(<span class="bu">len</span>(sv_dates)), <span class="st">"quotes"</span>: <span class="bu">int</span>(<span class="bu">len</span>(calibration_quotes)), <span class="st">"n_terms"</span>: <span class="dv">128</span>, <span class="st">"width"</span>: <span class="fl">14.0</span>}</span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>sv_daily_fits, sv_fit_prices <span class="op">=</span> fit_dates(calibration_quotes, [<span class="st">"heston"</span>, <span class="st">"bates"</span>], sv_dates, sv_cache, sv_settings, max_nfev<span class="op">=</span><span class="dv">45</span>, n_terms<span class="op">=</span><span class="dv">128</span>, width<span class="op">=</span><span class="fl">14.0</span>, min_quotes<span class="op">=</span><span class="dv">120</span>)</span>
@@ -4466,6 +4685,7 @@ V=V(S_0,v_0,K,T;r,q,\kappa,\theta,\xi,\rho)
 <span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>eligible_sv <span class="op">=</span> sv_summary[sv_summary[<span class="st">"success_rate"</span>].ge(<span class="fl">0.70</span>)].copy()</span>
 <span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>best_sv <span class="op">=</span> <span class="bu">str</span>(eligible_sv.sort_values(<span class="st">"weighted_price_rmse"</span>).iloc[<span class="dv">0</span>][<span class="st">"model"</span>]) <span class="cf">if</span> <span class="kw">not</span> eligible_sv.empty <span class="cf">else</span> <span class="bu">str</span>(sv_summary.sort_values([<span class="st">"success_rate"</span>, <span class="st">"weighted_price_rmse"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">True</span>]).iloc[<span class="dv">0</span>][<span class="st">"model"</span>])</span>
 <span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame([{<span class="st">"best_sv_model"</span>: best_sv, <span class="st">"eligible_success_rate"</span>: <span class="bu">float</span>(sv_summary.loc[sv_summary[<span class="st">"model"</span>].eq(best_sv), <span class="st">"success_rate"</span>].iloc[<span class="dv">0</span>])}]))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4813,6 +5033,8 @@ V=V(S_0,v_0,K,T;r,q,\kappa,\theta,\xi,\rho)
 <p>Bates also has a stronger OTM put RMSE, about <strong>25.45</strong> versus Heston’s <strong>32.97</strong>. The bid/ask hit rate is also higher for Bates: about <strong>19.9%</strong> versus <strong>17.3%</strong>.</p>
 <p>The caveat is success rate and runtime. Heston succeeds on about <strong>99.4%</strong> of dates and runs in about <strong>327 seconds</strong>. Bates succeeds on about <strong>84.6%</strong> and takes about <strong>1,450 seconds</strong>. So Bates wins on fit but loses on simplicity and stability. The notebook still chooses Bates as the best SV model because it clears the success-rate threshold and has much better error metrics.</p>
 <div id="2bf6f238" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>heston_month <span class="op">=</span> sv_daily_fits[sv_daily_fits[<span class="st">"model"</span>].eq(<span class="st">"heston"</span>)].assign(month<span class="op">=</span><span class="kw">lambda</span> x: x[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)).groupby(<span class="st">"month"</span>, observed<span class="op">=</span><span class="va">True</span>).agg(</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>    rmse<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="st">"median"</span>),</span>
 <span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    rmse_lo<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="kw">lambda</span> v: np.nanquantile(v, <span class="fl">0.25</span>)),</span>
@@ -4848,6 +5070,7 @@ V=V(S_0,v_0,K,T;r,q,\kappa,\theta,\xi,\rho)
 <span id="cb43-33"><a href="#cb43-33" aria-hidden="true" tabindex="-1"></a>    ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.20</span>)</span>
 <span id="cb43-34"><a href="#cb43-34" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb43-35"><a href="#cb43-35" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4908,7 +5131,7 @@ V=V(S_0,v_0,K,T;r,q,\kappa,\theta,\xi,\rho)
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-42-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-42-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="14_fourier_option_pricing_files/figure-html/cell-42-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4921,6 +5144,8 @@ V=V(S_0,v_0,K,T;r,q,\kappa,\theta,\xi,\rho)
 <p>In Fourier form, this enters the characteristic function through the complex terms <span class="math inline">\(C(u,T)\)</span> and <span class="math inline">\(D(u,T)\)</span>. In market language, it changes the relative price of puts and calls across strikes.</p>
 <p>The residual smile improves enormously compared with BSM and jump-only models. However, Heston still has structured tail errors because it relies on continuous variance shocks. It can create skew, but abrupt crash jumps may still require a jump component.</p>
 <div id="d05960f9" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>bates_month <span class="op">=</span> sv_daily_fits[sv_daily_fits[<span class="st">"model"</span>].eq(<span class="st">"bates"</span>)].assign(month<span class="op">=</span><span class="kw">lambda</span> x: x[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)).groupby(<span class="st">"month"</span>, observed<span class="op">=</span><span class="va">True</span>).agg(</span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>    rmse<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="st">"median"</span>),</span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>    rmse_lo<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="kw">lambda</span> v: np.nanquantile(v, <span class="fl">0.25</span>)),</span>
@@ -4956,6 +5181,7 @@ V=V(S_0,v_0,K,T;r,q,\kappa,\theta,\xi,\rho)
 <span id="cb44-33"><a href="#cb44-33" aria-hidden="true" tabindex="-1"></a>    ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.20</span>)</span>
 <span id="cb44-34"><a href="#cb44-34" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb44-35"><a href="#cb44-35" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5016,7 +5242,7 @@ V=V(S_0,v_0,K,T;r,q,\kappa,\theta,\xi,\rho)
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-43-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-43-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="14_fourier_option_pricing_files/figure-html/cell-43-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5051,6 +5277,8 @@ V=V(S_0,v_0,K,T;r,q,\kappa,\theta,\xi,\rho)
 </ul>
 <p>These choices don’t have identical effects, but they can partially substitute in finite data. That is why the notebook doesn’t rely on a single Bates parameter story. It evaluates Bates by out-of-sample-style diagnostics inside the sample: residual shape, tail RMSE, success rate, and tail probabilities.</p>
 <div id="1c647b14" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>sv_plot <span class="op">=</span> sv_daily_fits.copy()</span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>sv_plot[<span class="st">"month"</span>] <span class="op">=</span> sv_plot[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)</span>
 <span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>sv_month <span class="op">=</span> sv_plot.groupby([<span class="st">"model"</span>, <span class="st">"month"</span>], observed<span class="op">=</span><span class="va">True</span>).agg(</span>
@@ -5081,10 +5309,11 @@ V=V(S_0,v_0,K,T;r,q,\kappa,\theta,\xi,\rho)
 <span id="cb45-28"><a href="#cb45-28" aria-hidden="true" tabindex="-1"></a>    ax.grid(<span class="va">True</span>, alpha<span class="op">=</span><span class="fl">0.20</span>)</span>
 <span id="cb45-29"><a href="#cb45-29" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb45-30"><a href="#cb45-30" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-44-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-44-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="14_fourier_option_pricing_files/figure-html/cell-44-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5102,6 +5331,8 @@ V=V(S_0,v_0,K,T;r,q,\kappa,\theta,\xi,\rho)
 <h2 class="anchored" data-anchor-id="final-model-tournament">13) Final Model Tournament</h2>
 <p>The final tournament compares the baseline diffusion model, the winning jump model, and the winning stochastic-volatility model on the same common date set. The goal is to compare model families on fit quality, tail error, runtime, and stability using the same calibration grid.</p>
 <div id="a5d741bd" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>common_dates <span class="op">=</span> <span class="bu">sorted</span>(</span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">set</span>(pd.to_datetime(bsm_daily_fits[<span class="st">"date"</span>]).dt.normalize())</span>
 <span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span> <span class="bu">set</span>(pd.to_datetime(jump_daily_fits[jump_daily_fits[<span class="st">"model"</span>].eq(best_jump)][<span class="st">"date"</span>]).dt.normalize())</span>
@@ -5116,6 +5347,7 @@ V=V(S_0,v_0,K,T;r,q,\kappa,\theta,\xi,\rho)
 <span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a>final_model_comparison <span class="op">=</span> final_daily.groupby(<span class="st">"model"</span>, as_index<span class="op">=</span><span class="va">False</span>).agg(dates<span class="op">=</span>(<span class="st">"date"</span>, <span class="st">"nunique"</span>), quotes<span class="op">=</span>(<span class="st">"quotes"</span>, <span class="st">"sum"</span>), success_rate<span class="op">=</span>(<span class="st">"success"</span>, <span class="st">"mean"</span>), weighted_price_rmse<span class="op">=</span>(<span class="st">"weighted_price_rmse"</span>, <span class="st">"mean"</span>), median_abs_price_error<span class="op">=</span>(<span class="st">"median_abs_price_error"</span>, <span class="st">"median"</span>), bid_ask_hit_rate<span class="op">=</span>(<span class="st">"bid_ask_hit_rate"</span>, <span class="st">"mean"</span>), otm_put_rmse<span class="op">=</span>(<span class="st">"otm_put_rmse"</span>, <span class="st">"mean"</span>), runtime_sec<span class="op">=</span>(<span class="st">"runtime_sec"</span>, <span class="st">"sum"</span>)).sort_values(<span class="st">"weighted_price_rmse"</span>)</span>
 <span id="cb46-13"><a href="#cb46-13" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame([{<span class="st">"common_dates"</span>: <span class="bu">len</span>(common_dates), <span class="st">"start"</span>: <span class="bu">min</span>(common_dates), <span class="st">"end"</span>: <span class="bu">max</span>(common_dates)}]))</span>
 <span id="cb46-14"><a href="#cb46-14" aria-hidden="true" tabindex="-1"></a>display(final_model_comparison.<span class="bu">round</span>(<span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5266,6 +5498,8 @@ RMSE_{BSM}=259.51
 </ul>
 <p>The strongest practical result is that BSM is inadequate, Merton is a big improvement, and Bates is the best surface model in this experiment. The weaker claim would be to say the Bates parameters themselves are all economically stable day by day. The notebook avoids relying only on parameter interpretation; it checks prices, residuals, and tail quantities.</p>
 <div id="1b10044a" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">4</span>, figsize<span class="op">=</span>(<span class="dv">17</span>, <span class="fl">4.5</span>))</span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].bar(final_model_comparison[<span class="st">"model"</span>], final_model_comparison[<span class="st">"weighted_price_rmse"</span>], color<span class="op">=</span>palette[:<span class="bu">len</span>(final_model_comparison)])</span>
 <span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"weighted RMSE"</span>)</span>
@@ -5285,10 +5519,11 @@ RMSE_{BSM}=259.51
 <span id="cb47-17"><a href="#cb47-17" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">3</span>].set_title(<span class="st">"Runtime Error"</span>)</span>
 <span id="cb47-18"><a href="#cb47-18" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb47-19"><a href="#cb47-19" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-46-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-46-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="14_fourier_option_pricing_files/figure-html/cell-46-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5328,6 +5563,8 @@ z(T)=\text{median}\left(\frac{\hat{V}-V^{mkt}}{\text{half-spread}}\mid DTE\in \t
 <p><strong>Stress residuals</strong> tell us whether the model survives the dates where the market surface is hardest. A model can look acceptable in calm periods and fail exactly when hedging matters. That is why the notebook isolates the worst RMSE dates and plots their residual smiles separately.</p>
 <p>This diagnostic structure is one of the strongest parts of the project. It turns calibration from a single number into a map of model weaknesses.</p>
 <div id="f872620c" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>final_fit_prices <span class="op">=</span> pd.concat([</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>    bsm_fit_prices[bsm_fit_prices[<span class="st">"date"</span>].isin(common_dates)],</span>
 <span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>    jump_fit_prices[jump_fit_prices[<span class="st">"model"</span>].eq(best_jump) <span class="op">&amp;</span> jump_fit_prices[<span class="st">"date"</span>].isin(common_dates)],</span>
@@ -5340,6 +5577,7 @@ z(T)=\text{median}\left(\frac{\hat{V}-V^{mkt}}{\text{half-spread}}\mid DTE\in \t
 <span id="cb48-10"><a href="#cb48-10" aria-hidden="true" tabindex="-1"></a>residual_smile <span class="op">=</span> residual_work.groupby([<span class="st">"model"</span>, <span class="st">"log_bucket"</span>], observed<span class="op">=</span><span class="va">True</span>).agg(x<span class="op">=</span>(<span class="st">"log_moneyness"</span>, <span class="st">"median"</span>), med<span class="op">=</span>(<span class="st">"scaled_residual"</span>, <span class="st">"median"</span>), lo<span class="op">=</span>(<span class="st">"scaled_residual"</span>, <span class="kw">lambda</span> v: np.nanquantile(v, <span class="fl">0.25</span>)), hi<span class="op">=</span>(<span class="st">"scaled_residual"</span>, <span class="kw">lambda</span> v: np.nanquantile(v, <span class="fl">0.75</span>)), rows<span class="op">=</span>(<span class="st">"scaled_residual"</span>, <span class="st">"size"</span>)).reset_index()</span>
 <span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a>residual_term <span class="op">=</span> residual_work.groupby([<span class="st">"model"</span>, <span class="st">"dte_bucket"</span>], observed<span class="op">=</span><span class="va">True</span>).agg(x<span class="op">=</span>(<span class="st">"dte_days"</span>, <span class="st">"median"</span>), med<span class="op">=</span>(<span class="st">"scaled_residual"</span>, <span class="st">"median"</span>), lo<span class="op">=</span>(<span class="st">"scaled_residual"</span>, <span class="kw">lambda</span> v: np.nanquantile(v, <span class="fl">0.25</span>)), hi<span class="op">=</span>(<span class="st">"scaled_residual"</span>, <span class="kw">lambda</span> v: np.nanquantile(v, <span class="fl">0.75</span>)), rows<span class="op">=</span>(<span class="st">"scaled_residual"</span>, <span class="st">"size"</span>)).reset_index()</span>
 <span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a>display(residual_smile.iloc[:<span class="dv">12</span>].<span class="bu">round</span>(<span class="dv">5</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5485,6 +5723,8 @@ z(T)=\text{median}\left(\frac{\hat{V}-V^{mkt}}{\text{half-spread}}\mid DTE\in \t
 </div>
 </div>
 <div id="6c7641c5" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>stress_dates <span class="op">=</span> final_daily.sort_values(<span class="st">"weighted_price_rmse"</span>, ascending<span class="op">=</span><span class="va">False</span>)[<span class="st">"date"</span>].drop_duplicates().iloc[:<span class="dv">3</span>].tolist()</span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>otm_put <span class="op">=</span> residual_work[residual_work[<span class="st">"option_type"</span>].astype(<span class="bu">str</span>).<span class="bu">str</span>.lower().<span class="bu">str</span>.startswith(<span class="st">"p"</span>) <span class="op">&amp;</span> residual_work[<span class="st">"moneyness"</span>].le(<span class="fl">0.90</span>)].groupby([<span class="st">"date"</span>, <span class="st">"model"</span>])[<span class="st">"scaled_residual"</span>].median().reset_index()</span>
 <span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>stress_residual <span class="op">=</span> residual_work[residual_work[<span class="st">"date"</span>].isin(stress_dates)].groupby([<span class="st">"date"</span>, <span class="st">"model"</span>, <span class="st">"log_bucket"</span>], observed<span class="op">=</span><span class="va">True</span>).agg(x<span class="op">=</span>(<span class="st">"log_moneyness"</span>, <span class="st">"median"</span>), med<span class="op">=</span>(<span class="st">"scaled_residual"</span>, <span class="st">"median"</span>), lo<span class="op">=</span>(<span class="st">"scaled_residual"</span>, <span class="kw">lambda</span> v: np.nanquantile(v, <span class="fl">0.25</span>)), hi<span class="op">=</span>(<span class="st">"scaled_residual"</span>, <span class="kw">lambda</span> v: np.nanquantile(v, <span class="fl">0.75</span>))).reset_index()</span>
@@ -5510,10 +5750,11 @@ z(T)=\text{median}\left(\frac{\hat{V}-V^{mkt}}{\text{half-spread}}\mid DTE\in \t
 <span id="cb49-23"><a href="#cb49-23" aria-hidden="true" tabindex="-1"></a>    ax.legend(<span class="op">**</span>legend_kw)</span>
 <span id="cb49-24"><a href="#cb49-24" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb49-25"><a href="#cb49-25" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-48-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-48-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="14_fourier_option_pricing_files/figure-html/cell-48-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5549,6 +5790,8 @@ P(S_T/S_0\le L)
 <p>For hedge selection, this is still useful. We are buying options in the risk-neutral market. If the market is pricing high crash risk, option premiums will be high. If the model thinks crash probability is high relative to the premium paid, some puts may look attractive.</p>
 <p>The model disagreement is also useful. If Bates says the 80% crash probability is high and BSM says it is tiny, the difference tells us the tail estimate depends strongly on distributional assumptions. A model-risk-aware selector can prefer options that look acceptable across models rather than depending on one aggressive tail estimate.</p>
 <div id="c891246f" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> params_from_row(model, row):</span>
 <span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>    count <span class="op">=</span> {<span class="st">"bsm"</span>: <span class="dv">1</span>, <span class="st">"merton"</span>: <span class="dv">4</span>, <span class="st">"vg"</span>: <span class="dv">3</span>, <span class="st">"heston"</span>: <span class="dv">5</span>, <span class="st">"bates"</span>: <span class="dv">8</span>}[model]</span>
 <span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> row[[<span class="ss">f"p</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(count)]].to_numpy(<span class="bu">float</span>)</span>
@@ -5583,6 +5826,7 @@ P(S_T/S_0\le L)
 <span id="cb50-32"><a href="#cb50-32" aria-hidden="true" tabindex="-1"></a>tail_diagnostics <span class="op">=</span> pd.DataFrame(tail_rows)</span>
 <span id="cb50-33"><a href="#cb50-33" aria-hidden="true" tabindex="-1"></a>density_summary <span class="op">=</span> pd.DataFrame(density_rows)</span>
 <span id="cb50-34"><a href="#cb50-34" aria-hidden="true" tabindex="-1"></a>display(tail_diagnostics.groupby([<span class="st">"model"</span>, <span class="st">"level"</span>])[<span class="st">"tail_probability"</span>].agg([<span class="st">"mean"</span>, <span class="st">"max"</span>]).reset_index().<span class="bu">round</span>(<span class="dv">6</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5670,6 +5914,8 @@ P(S_T/S_0\le L)
 <p>The fitted average tail probabilities show clear model disagreement. At the 80% level, BSM assigns only about <strong>0.53%</strong> average probability, Bates about <strong>2.62%</strong>, and Merton about <strong>3.43%</strong>. At the 90% level, all models are closer, but still disagree on timing and magnitude.</p>
 <p>This is exactly why tail overlays use model disagreement. Tail probabilities are not directly observable, and different risk-neutral models can imply very different crash risks while fitting the surface with different quality.</p>
 <div id="d3e82216" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>tail80 <span class="op">=</span> tail_diagnostics[tail_diagnostics[<span class="st">"level"</span>].eq(<span class="fl">0.80</span>)].copy()</span>
 <span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>tail_term_date <span class="op">=</span> tail_dates[<span class="bu">min</span>(<span class="bu">len</span>(tail_dates) <span class="op">-</span> <span class="dv">1</span>, <span class="bu">len</span>(tail_dates) <span class="op">//</span> <span class="dv">2</span>)] <span class="cf">if</span> <span class="bu">len</span>(tail_dates) <span class="cf">else</span> main_day</span>
 <span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">2</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">15</span>, <span class="fl">8.5</span>))</span>
@@ -5692,6 +5938,7 @@ P(S_T/S_0\le L)
 <span id="cb51-20"><a href="#cb51-20" aria-hidden="true" tabindex="-1"></a>    ax.legend(<span class="op">**</span>legend_kw)</span>
 <span id="cb51-21"><a href="#cb51-21" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb51-22"><a href="#cb51-22" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stderr">
 <pre><code>C:\Users\Lenovo\AppData\Local\Temp\ipykernel_6324\2226895617.py:20: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
   ax.legend(**legend_kw)</code></pre>
@@ -5699,7 +5946,7 @@ P(S_T/S_0\le L)
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-50-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-50-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14"><img src="14_fourier_option_pricing_files/figure-html/cell-50-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5761,6 +6008,8 @@ ECE= p_{90}\frac{(K-0.90S)^+}{mid}+p_{85}\frac{(K-0.85S)^+}{mid}+p_{80}\frac{(K-
 \]</span></p>
 <p>This makes the strategy more than a model-price sort. It asks whether the option is cheap, convex, liquid enough, and useful under crash scenarios.</p>
 <div id="d559fad6" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> latest_params(model, d):</span>
 <span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>    source <span class="op">=</span> final_daily[final_daily[<span class="st">"model"</span>].eq(model)]</span>
 <span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a>    source <span class="op">=</span> source[source[<span class="st">"date"</span>].le(pd.Timestamp(d).normalize())].sort_values(<span class="st">"date"</span>)</span>
@@ -5878,8 +6127,11 @@ ECE= p_{90}\frac{(K-0.90S)^+}{mid}+p_{85}\frac{(K-0.85S)^+}{mid}+p_{80}\frac{(K-
 <span id="cb53-115"><a href="#cb53-115" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb53-116"><a href="#cb53-116" aria-hidden="true" tabindex="-1"></a>    day[<span class="st">"selector"</span>] <span class="op">=</span> selector</span>
 <span id="cb53-117"><a href="#cb53-117" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> day.sort_values(<span class="st">"hedge_score"</span>, ascending<span class="op">=</span><span class="va">False</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="2386c2b7" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_hedge_schedule(q, selectors, dates, notional<span class="op">=</span><span class="fl">1_000_000.0</span>, budget_bps<span class="op">=</span><span class="fl">35.0</span>, multiplier<span class="op">=</span><span class="fl">100.0</span>, spacing_days<span class="op">=</span><span class="dv">21</span>):</span>
 <span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
 <span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>    candidates <span class="op">=</span> []</span>
@@ -5912,6 +6164,7 @@ ECE= p_{90}\frac{(K-0.90S)^+}{mid}+p_{85}\frac{(K-0.85S)^+}{mid}+p_{80}\frac{(K-
 <span id="cb54-30"><a href="#cb54-30" aria-hidden="true" tabindex="-1"></a>hedge_candidates, hedge_schedule <span class="op">=</span> build_hedge_schedule(hedge_quotes, selectors, rebalance_dates, notional<span class="op">=</span><span class="fl">1_000_000.0</span>, budget_bps<span class="op">=</span><span class="fl">35.0</span>, multiplier<span class="op">=</span><span class="fl">100.0</span>, spacing_days<span class="op">=</span><span class="dv">21</span>)</span>
 <span id="cb54-31"><a href="#cb54-31" aria-hidden="true" tabindex="-1"></a>display(hedge_schedule.groupby(<span class="st">"strategy"</span>).size().rename(<span class="st">"scheduled_trades"</span>).reset_index())</span>
 <span id="cb54-32"><a href="#cb54-32" aria-hidden="true" tabindex="-1"></a>display(hedge_candidates.groupby(<span class="st">"selector"</span>).agg(avg_score<span class="op">=</span>(<span class="st">"hedge_score"</span>, <span class="st">"mean"</span>), avg_moneyness<span class="op">=</span>(<span class="st">"moneyness"</span>, <span class="st">"mean"</span>), avg_dte<span class="op">=</span>(<span class="st">"dte_days"</span>, <span class="st">"mean"</span>), avg_mid<span class="op">=</span>(<span class="st">"mid"</span>, <span class="st">"mean"</span>), avg_budget_bps<span class="op">=</span>(<span class="st">"budget_bps"</span>, <span class="st">"mean"</span>), avg_payoff_per_premium<span class="op">=</span>(<span class="st">"payoff_per_premium"</span>, <span class="st">"mean"</span>), avg_edge_ratio<span class="op">=</span>(<span class="st">"edge_ratio"</span>, <span class="st">"mean"</span>)).reset_index().<span class="bu">round</span>(<span class="dv">5</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6071,6 +6324,8 @@ ECE= p_{90}\frac{(K-0.90S)^+}{mid}+p_{85}\frac{(K-0.85S)^+}{mid}+p_{80}\frac{(K-
 <p>Merton selectors choose lower-moneyness puts on average, around <strong>0.892</strong>, with lower average mid prices around <strong>7.20</strong> and very high average edge ratios around <strong>1.29</strong>. Bates and model-risk selectors choose moneyness around <strong>0.91</strong>, with higher average premiums and lower model edge. Fixed delta sits close to the same region but has zero model edge by construction because it uses the market price as fair value.</p>
 <p>The gated versions raise average budget in some cases. For example, Bates gated averages about <strong>40.4 bps</strong> versus 35 bps fixed, while Merton gated averages about <strong>37 bps</strong>. The gate spends more when tail probabilities are high, spreads are acceptable, and edge is not negative.</p>
 <div id="67f1556a" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb55"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.backtest.overlays <span class="im">import</span> run_overlay_backtest, overlay_summary, mark_book_for_schedules</span>
 <span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>spx_underlying <span class="op">=</span> spot[<span class="st">"close"</span>].reindex(pd.DatetimeIndex(<span class="bu">sorted</span>(clean_quotes[<span class="st">"date"</span>].unique()))).ffill()</span>
@@ -6106,6 +6361,7 @@ ECE= p_{90}\frac{(K-0.90S)^+}{mid}+p_{85}\frac{(K-0.85S)^+}{mid}+p_{80}\frac{(K-
 <span id="cb55-33"><a href="#cb55-33" aria-hidden="true" tabindex="-1"></a>    display(pd.DataFrame(columns<span class="op">=</span>[<span class="st">"strategy"</span>, <span class="st">"open"</span>, <span class="st">"roll_close"</span>, <span class="st">"expiry_settlement"</span>]))</span>
 <span id="cb55-34"><a href="#cb55-34" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
 <span id="cb55-35"><a href="#cb55-35" aria-hidden="true" tabindex="-1"></a>    display(hedge_trades.groupby([<span class="st">"strategy"</span>, <span class="st">"event"</span>]).size().unstack(fill_value<span class="op">=</span><span class="dv">0</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6362,6 +6618,8 @@ ECE= p_{90}\frac{(K-0.90S)^+}{mid}+p_{85}\frac{(K-0.85S)^+}{mid}+p_{80}\frac{(K-
 <p>Max drawdowns are also slightly worse for the hedged versions in this run, around <strong>-26.4% to -26.6%</strong>, compared with about <strong>-26.2%</strong> for unhedged. That can happen when hedges are repeatedly bought during volatile markets but expire or are rolled before a sufficiently large payoff occurs.</p>
 <p>This doesn’t invalidate the modeling. It shows that tail hedging is a cost-benefit problem. A model can identify convex protection, but if the realized path doesn’t include the tail event, premium bleed can dominate.</p>
 <div id="7d6f4046" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb56"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">4</span>, figsize<span class="op">=</span>(<span class="dv">18</span>, <span class="fl">4.5</span>))</span>
 <span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>hedge_results[<span class="st">"nav"</span>].div(hedge_results[<span class="st">"nav"</span>].iloc[<span class="dv">0</span>]).plot(ax<span class="op">=</span>axes[<span class="dv">0</span>], lw<span class="op">=</span><span class="fl">1.1</span>)</span>
 <span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_title(<span class="st">"Hedge NAV"</span>)</span>
@@ -6383,10 +6641,11 @@ ECE= p_{90}\frac{(K-0.90S)^+}{mid}+p_{85}\frac{(K-0.85S)^+}{mid}+p_{80}\frac{(K-
 <span id="cb56-19"><a href="#cb56-19" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">3</span>].legend(<span class="op">**</span>legend_kw)</span>
 <span id="cb56-20"><a href="#cb56-20" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb56-21"><a href="#cb56-21" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-54-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-54-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="14_fourier_option_pricing_files/figure-html/cell-54-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -6408,6 +6667,8 @@ E^Q[H_T]&gt;P_0
 <p>for some candidates, but realized physical outcomes can still be calm. Also, <span class="math inline">\(Q\)</span> is not the same as the physical measure <span class="math inline">\(P\)</span>. Risk-neutral tail probabilities include risk premium. Buying options at market prices means buying that risk premium too.</p>
 <p>So the overlay result has to be interpreted as an insurance backtest, not a pure alpha backtest. The model can help choose better insurance contracts, but if the insured event doesn’t happen, the strategy can lag unhedged exposure. That is what we see in both SPX and BTC samples.</p>
 <div id="0f211578" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb57"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>component_rows <span class="op">=</span> []</span>
 <span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> _, row <span class="kw">in</span> hedge_candidates.iloc[:<span class="dv">80</span>].iterrows():</span>
 <span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>    component_rows.append({<span class="st">"selector"</span>: row[<span class="st">"selector"</span>], <span class="st">"date"</span>: row[<span class="st">"date"</span>], <span class="st">"tail_payoff"</span>: np.log1p(row[<span class="st">"payoff_per_premium"</span>]), <span class="st">"model_edge"</span>: np.tanh(row[<span class="st">"edge_ratio"</span>]), <span class="st">"spread_cost"</span>: row[<span class="st">"relative_spread"</span>], <span class="st">"premium_bleed"</span>: row[<span class="st">"premium_bleed"</span>], <span class="st">"model_uncertainty"</span>: row[<span class="st">"model_uncertainty"</span>]})</span>
@@ -6433,6 +6694,7 @@ E^Q[H_T]&gt;P_0
 <span id="cb57-23"><a href="#cb57-23" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>].legend(<span class="op">**</span>legend_kw)</span>
 <span id="cb57-24"><a href="#cb57-24" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb57-25"><a href="#cb57-25" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6513,7 +6775,7 @@ E^Q[H_T]&gt;P_0
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-55-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-55-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16"><img src="14_fourier_option_pricing_files/figure-html/cell-55-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -6521,6 +6783,8 @@ E^Q[H_T]&gt;P_0
 <p>The hedge score-component table and plots show what the selectors are actually doing. The model-based selectors have higher edge scores, while fixed-delta selection relies more on simple target exposure. The fair-value scatter checks whether model prices are systematically above or below market premiums. The tail-efficiency histogram shows how much crash payoff per premium each selector tends to buy.</p>
 <p>This is a good diagnostic layer because final NAV alone can be misleading. A hedge may underperform because no crash happened, while still selecting more efficient protection. The score components separate selection quality from realized path luck.</p>
 <div id="33d1a37a" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb58"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>project_objects <span class="op">=</span> {</span>
 <span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"clean_quotes"</span>: clean_quotes,</span>
 <span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"calibration_quotes"</span>: calibration_quotes,</span>
@@ -6540,6 +6804,7 @@ E^Q[H_T]&gt;P_0
 <span id="cb58-17"><a href="#cb58-17" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb58-18"><a href="#cb58-18" aria-hidden="true" tabindex="-1"></a>object_summary <span class="op">=</span> pd.DataFrame([{<span class="st">"name"</span>: k, <span class="st">"type"</span>: <span class="bu">type</span>(v).<span class="va">__name__</span>, <span class="st">"rows"</span>: <span class="bu">len</span>(v) <span class="cf">if</span> <span class="bu">hasattr</span>(v, <span class="st">"__len__"</span>) <span class="kw">and</span> <span class="kw">not</span> <span class="bu">isinstance</span>(v, <span class="bu">dict</span>) <span class="cf">else</span> np.nan} <span class="cf">for</span> k, v <span class="kw">in</span> project_objects.items()])</span>
 <span id="cb58-19"><a href="#cb58-19" aria-hidden="true" tabindex="-1"></a>display(object_summary)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -6681,6 +6946,8 @@ E^Q[H_T]&gt;P_0
 <p>What changes is the economic interpretation of parameters and residuals. A high volatility level in SPX may represent crisis conditions. A high volatility level in BTC can be normal. A 20% downside event in SPX is a major crash. A 20% BTC move can happen in a much shorter window. This means the same tail levels <span class="math inline">\(0.90\)</span>, <span class="math inline">\(0.85\)</span>, and <span class="math inline">\(0.80\)</span> are less extreme for BTC than for SPX.</p>
 <p>That is why BTC hedges can be expensive and still not dominate realized performance. The market already prices high movement probability. Buying puts in a high-volatility market means paying for convexity that many traders already know is valuable.</p>
 <div id="fa369927" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb59"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.options.fourier <span class="im">import</span> direct_price, fft_grid, cos_prices, cos_density, tail_probability, model_cf</span>
 <span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.options.quote_cleaning <span class="im">import</span> convert_quotes_to_usd_equivalent</span>
 <span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.options.bsm <span class="im">import</span> bsm_price</span>
@@ -7012,6 +7279,7 @@ E^Q[H_T]&gt;P_0
 <span id="cb59-329"><a href="#cb59-329" aria-hidden="true" tabindex="-1"></a>hedge_cost_payoff(axes[<span class="dv">11</span>], btc_hedge_results[<span class="st">"trades"</span>], <span class="st">"Hedge Cashflow"</span>)</span>
 <span id="cb59-330"><a href="#cb59-330" aria-hidden="true" tabindex="-1"></a>fig.tight_layout(pad<span class="op">=</span><span class="fl">1.25</span>, h_pad<span class="op">=</span><span class="fl">1.0</span>, w_pad<span class="op">=</span><span class="fl">1.0</span>)</span>
 <span id="cb59-331"><a href="#cb59-331" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -7481,7 +7749,7 @@ E^Q[H_T]&gt;P_0
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="14_fourier_option_pricing_files/figure-html/cell-57-output-6.png" class="img-fluid figure-img"></p>
+<p><a href="14_fourier_option_pricing_files/figure-html/cell-57-output-6.png" class="lightbox" data-gallery="quarto-lightbox-gallery-17"><img src="14_fourier_option_pricing_files/figure-html/cell-57-output-6.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -7638,6 +7906,57 @@ E^Q[H_T]&gt;P_0
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -7981,6 +8300,38 @@ E^Q[H_T]&gt;P_0
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 

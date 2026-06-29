@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>2. Portfolio Optimization with Mean-Variance Models – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/01_yield_curve_bond_pricing_and_risk.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -112,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -143,7 +144,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -292,13 +293,93 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">1) Introduction</a>
+  <ul class="collapse">
+  <li><a href="#notation-and-conventions" id="toc-notation-and-conventions" class="nav-link" data-scroll-target="#notation-and-conventions">1.1. Notation and Conventions</a></li>
+  <li><a href="#imports-and-plotting-style" id="toc-imports-and-plotting-style" class="nav-link" data-scroll-target="#imports-and-plotting-style">Imports and plotting style</a></li>
+  <li><a href="#initializing-the-parameters-and-data" id="toc-initializing-the-parameters-and-data" class="nav-link" data-scroll-target="#initializing-the-parameters-and-data">initializing the parameters and data</a></li>
+  </ul></li>
+  <li><a href="#load-data-and-compute-returns" id="toc-load-data-and-compute-returns" class="nav-link" data-scroll-target="#load-data-and-compute-returns">2) Load data and compute returns</a></li>
+  <li><a href="#rebalance-dates" id="toc-rebalance-dates" class="nav-link" data-scroll-target="#rebalance-dates">3) Rebalance dates</a></li>
+  <li><a href="#liquidity-filtered-stock-selection" id="toc-liquidity-filtered-stock-selection" class="nav-link" data-scroll-target="#liquidity-filtered-stock-selection">4) Liquidity-filtered stock selection</a>
+  <ul class="collapse">
+  <li><a href="#minimum-history" id="toc-minimum-history" class="nav-link" data-scroll-target="#minimum-history">4.1 Minimum history</a></li>
+  <li><a href="#average-dollar-volume-adv" id="toc-average-dollar-volume-adv" class="nav-link" data-scroll-target="#average-dollar-volume-adv">4.2 Average Dollar Volume (ADV)</a></li>
+  <li><a href="#selection-rule-top-k-liquidity" id="toc-selection-rule-top-k-liquidity" class="nav-link" data-scroll-target="#selection-rule-top-k-liquidity">4.3 Selection rule (Top-K liquidity)</a></li>
+  </ul></li>
+  <li><a href="#expected-return-models-for-mu_t" id="toc-expected-return-models-for-mu_t" class="nav-link" data-scroll-target="#expected-return-models-for-mu_t">5) Expected return models for <span class="math inline">\(\mu_t\)</span></a>
+  <ul class="collapse">
+  <li><a href="#lookback-cumulative-return" id="toc-lookback-cumulative-return" class="nav-link" data-scroll-target="#lookback-cumulative-return">5.1 Lookback cumulative return</a></li>
+  <li><a href="#cross-sectional-standardization-z-score" id="toc-cross-sectional-standardization-z-score" class="nav-link" data-scroll-target="#cross-sectional-standardization-z-score">5.2 Cross-sectional standardization (z-score)</a></li>
+  <li><a href="#mapping-the-signal-to-expected-returns" id="toc-mapping-the-signal-to-expected-returns" class="nav-link" data-scroll-target="#mapping-the-signal-to-expected-returns">5.3 Mapping the signal to expected returns</a></li>
+  </ul></li>
+  <li><a href="#covariance-estimation-building-sigma_t" id="toc-covariance-estimation-building-sigma_t" class="nav-link" data-scroll-target="#covariance-estimation-building-sigma_t">6) Covariance estimation: building <span class="math inline">\(\Sigma_t\)</span></a>
+  <ul class="collapse">
+  <li><a href="#sample-covariance" id="toc-sample-covariance" class="nav-link" data-scroll-target="#sample-covariance">6.1 Sample covariance</a></li>
+  <li><a href="#diagonal-covariance-no-correlations" id="toc-diagonal-covariance-no-correlations" class="nav-link" data-scroll-target="#diagonal-covariance-no-correlations">6.2 Diagonal covariance (no correlations)</a></li>
+  <li><a href="#shrinkage-estimators-ledoitwolf-oas-intuition" id="toc-shrinkage-estimators-ledoitwolf-oas-intuition" class="nav-link" data-scroll-target="#shrinkage-estimators-ledoitwolf-oas-intuition">6.3 Shrinkage estimators (Ledoit–Wolf / OAS intuition)</a></li>
+  <li><a href="#ewma-covariance-time-decayed-risk" id="toc-ewma-covariance-time-decayed-risk" class="nav-link" data-scroll-target="#ewma-covariance-time-decayed-risk">6.4 EWMA covariance (time-decayed risk)</a></li>
+  </ul></li>
+  <li><a href="#portfolio-return-and-variance" id="toc-portfolio-return-and-variance" class="nav-link" data-scroll-target="#portfolio-return-and-variance">7) Portfolio return and variance</a>
+  <ul class="collapse">
+  <li><a href="#portfolio-weights" id="toc-portfolio-weights" class="nav-link" data-scroll-target="#portfolio-weights">7.1 Portfolio weights</a></li>
+  <li><a href="#portfolio-return" id="toc-portfolio-return" class="nav-link" data-scroll-target="#portfolio-return">7.2 Portfolio return</a></li>
+  <li><a href="#expected-portfolio-return" id="toc-expected-portfolio-return" class="nav-link" data-scroll-target="#expected-portfolio-return">7.3 Expected portfolio return</a></li>
+  <li><a href="#portfolio-variance-risk" id="toc-portfolio-variance-risk" class="nav-link" data-scroll-target="#portfolio-variance-risk">7.4 Portfolio variance (risk)</a></li>
+  <li><a href="#portfolio-volatility" id="toc-portfolio-volatility" class="nav-link" data-scroll-target="#portfolio-volatility">7.5 Portfolio volatility</a></li>
+  </ul></li>
+  <li><a href="#build-estimation-cache-at-rebalance-dates" id="toc-build-estimation-cache-at-rebalance-dates" class="nav-link" data-scroll-target="#build-estimation-cache-at-rebalance-dates">Build estimation cache at rebalance dates</a></li>
+  <li><a href="#portfolio-optimization-methods" id="toc-portfolio-optimization-methods" class="nav-link" data-scroll-target="#portfolio-optimization-methods">8) Portfolio optimization methods</a>
+  <ul class="collapse">
+  <li><a href="#global-parameters" id="toc-global-parameters" class="nav-link" data-scroll-target="#global-parameters">8.1 Global Parameters</a></li>
+  <li><a href="#transaction-and-turnover-costs" id="toc-transaction-and-turnover-costs" class="nav-link" data-scroll-target="#transaction-and-turnover-costs">Transaction and Turnover Costs</a></li>
+  <li><a href="#risk-aversion" id="toc-risk-aversion" class="nav-link" data-scroll-target="#risk-aversion">Risk Aversion</a></li>
+  <li><a href="#ridge-regularization" id="toc-ridge-regularization" class="nav-link" data-scroll-target="#ridge-regularization">Ridge Regularization</a></li>
+  <li><a href="#solver-priority" id="toc-solver-priority" class="nav-link" data-scroll-target="#solver-priority">Solver Priority</a></li>
+  <li><a href="#annualized-transaction-cost-coefficient-kappa" id="toc-annualized-transaction-cost-coefficient-kappa" class="nav-link" data-scroll-target="#annualized-transaction-cost-coefficient-kappa">8.2 Annualized Transaction Cost Coefficient <span class="math inline">\(\kappa\)</span></a></li>
+  <li><a href="#weight-blending-exponential-moving-average" id="toc-weight-blending-exponential-moving-average" class="nav-link" data-scroll-target="#weight-blending-exponential-moving-average">8.3 Weight Blending (Exponential Moving Average)</a></li>
+  <li><a href="#global-minimum-variance-portfolio" id="toc-global-minimum-variance-portfolio" class="nav-link" data-scroll-target="#global-minimum-variance-portfolio">8.4 Global Minimum-Variance Portfolio</a></li>
+  <li><a href="#bayes-stein-mu-estimator" id="toc-bayes-stein-mu-estimator" class="nav-link" data-scroll-target="#bayes-stein-mu-estimator">5.4 Bayes-Stein <span class="math inline">\(\mu\)</span> estimator</a></li>
+  <li><a href="#bayes-stein-momentum-mu-estimator" id="toc-bayes-stein-momentum-mu-estimator" class="nav-link" data-scroll-target="#bayes-stein-momentum-mu-estimator">5.5 Bayes-Stein Momentum <span class="math inline">\(\mu\)</span> estimator</a></li>
+  <li><a href="#mean-variance-markowitz-optimization" id="toc-mean-variance-markowitz-optimization" class="nav-link" data-scroll-target="#mean-variance-markowitz-optimization">8.5 Mean-Variance (Markowitz) Optimization</a></li>
+  <li><a href="#ridge-regularized-mean-variance-optimization" id="toc-ridge-regularized-mean-variance-optimization" class="nav-link" data-scroll-target="#ridge-regularized-mean-variance-optimization">8.6 Ridge Regularized Mean-Variance Optimization</a></li>
+  <li><a href="#maximum-sharpe-ratio-optimization-tangency-portfolio" id="toc-maximum-sharpe-ratio-optimization-tangency-portfolio" class="nav-link" data-scroll-target="#maximum-sharpe-ratio-optimization-tangency-portfolio">8.7 Maximum Sharpe Ratio Optimization (tangency portfolio)</a></li>
+  <li><a href="#efficient-frontier-grid-search-for-maximum-sharpe-ratio" id="toc-efficient-frontier-grid-search-for-maximum-sharpe-ratio" class="nav-link" data-scroll-target="#efficient-frontier-grid-search-for-maximum-sharpe-ratio">8.9 Efficient Frontier Grid Search for Maximum Sharpe Ratio</a></li>
+  <li><a href="#in-sample-efficient-frontier-at-the-last-rebalance" id="toc-in-sample-efficient-frontier-at-the-last-rebalance" class="nav-link" data-scroll-target="#in-sample-efficient-frontier-at-the-last-rebalance">In sample efficient frontier at the last rebalance</a></li>
+  <li><a href="#important-interpretation-note" id="toc-important-interpretation-note" class="nav-link" data-scroll-target="#important-interpretation-note">important interpretation note</a></li>
+  </ul></li>
+  <li><a href="#trading-transaction-costs-and-real-market-simulation" id="toc-trading-transaction-costs-and-real-market-simulation" class="nav-link" data-scroll-target="#trading-transaction-costs-and-real-market-simulation">9) Trading, transaction costs, and real market simulation</a></li>
+  <li><a href="#backtest-engine" id="toc-backtest-engine" class="nav-link" data-scroll-target="#backtest-engine">10) Backtest engine</a></li>
+  <li><a href="#performance-metrics-what-we-report" id="toc-performance-metrics-what-we-report" class="nav-link" data-scroll-target="#performance-metrics-what-we-report">11) Performance metrics (what we report)</a>
+  <ul class="collapse">
+  <li><a href="#cagr" id="toc-cagr" class="nav-link" data-scroll-target="#cagr">9.1 CAGR</a></li>
+  <li><a href="#annualized-volatility" id="toc-annualized-volatility" class="nav-link" data-scroll-target="#annualized-volatility">9.2 Annualized volatility</a></li>
+  <li><a href="#sharpe-ratio" id="toc-sharpe-ratio" class="nav-link" data-scroll-target="#sharpe-ratio">9.3 Sharpe ratio</a></li>
+  <li><a href="#drawdown-and-max-drawdown" id="toc-drawdown-and-max-drawdown" class="nav-link" data-scroll-target="#drawdown-and-max-drawdown">9.4 Drawdown and max drawdown</a></li>
+  <li><a href="#turnover-diagnostics" id="toc-turnover-diagnostics" class="nav-link" data-scroll-target="#turnover-diagnostics">9.5 Turnover diagnostics</a></li>
+  </ul></li>
+  <li><a href="#strategy-dashboards" id="toc-strategy-dashboards" class="nav-link" data-scroll-target="#strategy-dashboards">12) Strategy dashboards</a></li>
+  <li><a href="#running-strategies" id="toc-running-strategies" class="nav-link" data-scroll-target="#running-strategies">13) Running strategies</a></li>
+  <li><a href="#full-grid-results" id="toc-full-grid-results" class="nav-link" data-scroll-target="#full-grid-results">Full grid results</a></li>
+  <li><a href="#grid-heatmaps" id="toc-grid-heatmaps" class="nav-link" data-scroll-target="#grid-heatmaps">Grid heatmaps</a></li>
+  <li><a href="#finalist-strategies" id="toc-finalist-strategies" class="nav-link" data-scroll-target="#finalist-strategies">Finalist strategies</a></li>
+  <li><a href="#fixed-expected-return-and-testing-covariance-sensitivity" id="toc-fixed-expected-return-and-testing-covariance-sensitivity" class="nav-link" data-scroll-target="#fixed-expected-return-and-testing-covariance-sensitivity">Fixed Expected return and testing covariance sensitivity</a></li>
+  <li><a href="#fixed-covariance-and-testing-expected-return-sensitivity" id="toc-fixed-covariance-and-testing-expected-return-sensitivity" class="nav-link" data-scroll-target="#fixed-covariance-and-testing-expected-return-sensitivity">Fixed covariance and testing expected return sensitivity</a></li>
+  <li><a href="#implementation-on-hong-kong-stock-market-with-quantfinlab" id="toc-implementation-on-hong-kong-stock-market-with-quantfinlab" class="nav-link" data-scroll-target="#implementation-on-hong-kong-stock-market-with-quantfinlab">implementation on Hong Kong stock market with quantfinlab</a></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">2. Portfolio Optimization with Mean-Variance Models</span></h1>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">2. Portfolio Optimization with Mean-Variance Models</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -406,6 +487,8 @@ window.Quarto = {
 <section id="imports-and-plotting-style" class="level3">
 <h3 class="anchored" data-anchor-id="imports-and-plotting-style">Imports and plotting style</h3>
 <div id="4521701a" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -439,11 +522,14 @@ window.Quarto = {
 <span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_color_map(names, palette<span class="op">=</span>colors):</span>
 <span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>    names <span class="op">=</span> <span class="bu">list</span>(names)</span>
 <span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {name: palette[i <span class="op">%</span> <span class="bu">len</span>(palette)] <span class="cf">for</span> i, name <span class="kw">in</span> <span class="bu">enumerate</span>(names)}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="initializing-the-parameters-and-data" class="level3">
 <h3 class="anchored" data-anchor-id="initializing-the-parameters-and-data">initializing the parameters and data</h3>
 <div id="aafe44dd" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>rf <span class="op">=</span> <span class="fl">0.04</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>rf_daily <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> rf) <span class="op">**</span> (<span class="fl">1.0</span> <span class="op">/</span> <span class="fl">252.0</span>) <span class="op">-</span> <span class="fl">1.0</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -483,6 +569,7 @@ window.Quarto = {
 <span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_strategy_blend(name):</span>
 <span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(blend.get(strategy_family(name), <span class="fl">0.0</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -490,6 +577,8 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="load-data-and-compute-returns">2) Load data and compute returns</h2>
 <p>the data used in this project can be downloaded from here (<a href="https://stooq.com/db/h/">Stooq US (nasdaq) daily market data</a>)</p>
 <div id="a56c1f01" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_parquet(<span class="vs">r"</span><span class="dv">..\d</span><span class="vs">ata</span><span class="ch">\n</span><span class="vs">asdaq_close_volume</span><span class="dv">.</span><span class="vs">parquet"</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>df[<span class="st">"date"</span>] <span class="op">=</span> pd.to_datetime(df[<span class="st">"date"</span>], errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> df.dropna(subset<span class="op">=</span>[<span class="st">"date"</span>]).sort_values(<span class="st">"date"</span>)</span>
@@ -537,6 +626,7 @@ window.Quarto = {
 <span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"close_prices:"</span>, close_prices.shape, <span class="st">"volumes:"</span>, volumes.shape, <span class="st">"returns:"</span>, returns.shape)</span>
 <span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Date range:"</span>, returns.index.<span class="bu">min</span>().date(), <span class="st">"to"</span>, returns.index.<span class="bu">max</span>().date())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>close_prices: (2532, 4382) volumes: (2532, 4382) returns: (2532, 4382)
 Date range: 2016-01-04 to 2026-01-28</code></pre>
@@ -549,6 +639,8 @@ Date range: 2016-01-04 to 2026-01-28</code></pre>
 <p>In this project we use monthly rebalancing with 1 year lookback window for each month.</p>
 <p>We rebalance at the last available trading day of each period</p>
 <div id="6f679a2c" class="cell" data-execution_count="4">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>rebal_dates_raw <span class="op">=</span> (</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    returns.groupby(pd.Grouper(freq<span class="op">=</span><span class="st">"ME"</span>))</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>           .<span class="bu">apply</span>(<span class="kw">lambda</span> x: x.index[<span class="op">-</span><span class="dv">1</span>])</span>
@@ -560,6 +652,7 @@ Date range: 2016-01-04 to 2026-01-28</code></pre>
 <span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Candidate rebalance dates:"</span>, <span class="bu">len</span>(rebal_dates))</span>
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"First 3:"</span>, [d.date() <span class="cf">for</span> d <span class="kw">in</span> rebal_dates[:<span class="dv">3</span>]])</span>
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Last 3:"</span>, [d.date() <span class="cf">for</span> d <span class="kw">in</span> rebal_dates[<span class="op">-</span><span class="dv">3</span>:]])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Candidate rebalance dates: 121
 First 3: [datetime.date(2016, 1, 29), datetime.date(2016, 2, 29), datetime.date(2016, 3, 31)]
@@ -593,6 +686,8 @@ We select: <span class="math display">\[
 \]</span></p>
 <p>in this way we don’t have survivorship bias and we only use big stocks of that time, not the stocks that we already know are big now but were not back then.</p>
 <div id="49b82947" class="cell" data-execution_count="5">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> select_liquid_universe(dt, close_prices, volumes, top_n, liq_lookback, min_listing_days, min_obs):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    idx <span class="op">=</span> close_prices.index</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> dt <span class="kw">not</span> <span class="kw">in</span> idx:</span>
@@ -627,6 +722,7 @@ We select: <span class="math display">\[
 <span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>    top <span class="op">=</span> adv.nlargest(<span class="bu">min</span>(<span class="bu">int</span>(top_n), <span class="bu">len</span>(adv)))</span>
 <span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> top.index.tolist(), top.astype(np.float32)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -672,6 +768,8 @@ z_{t,i} = \frac{m_{t,i} - \bar{m}_t}{s_t}
 <p>NOTE: after introducing MinVar portfolio, we come back to this and build the next two mean estimators</p>
 </blockquote>
 <div id="6f6b08a3" class="cell" data-execution_count="6">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> momentum_score_from_returns(ret_window, mode<span class="op">=</span><span class="st">"6-1"</span>):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    R <span class="op">=</span> ret_window.replace([np.inf, <span class="op">-</span>np.inf], np.nan).dropna(how<span class="op">=</span><span class="st">"any"</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    T <span class="op">=</span> <span class="bu">len</span>(R)</span>
@@ -748,6 +846,7 @@ z_{t,i} = \frac{m_{t,i} - \bar{m}_t}{s_t}
 <span id="cb8-74"><a href="#cb8-74" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_scaled_mu_from_raw(raw_mu, cov_ann):</span>
 <span id="cb8-75"><a href="#cb8-75" aria-hidden="true" tabindex="-1"></a>    mu_dir <span class="op">=</span> winsorize_and_zscore(raw_mu, mu_winsor_lo, mu_winsor_hi)</span>
 <span id="cb8-76"><a href="#cb8-76" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> scale_mu_to_target_sharpe(mu_dir, cov_ann, mu_target_sharpe_ann, mu_cap_ann)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -819,6 +918,8 @@ Define demeaned return vector <span class="math inline">\(\tilde{r}_{t-1} = r_{t
 \]</span></p>
 <p>EWMA is popular because it reacts faster to regime changes than the sample covariance.</p>
 <div id="6a7def1b" class="cell" data-execution_count="7">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ewma_lambda <span class="op">=</span> <span class="fl">0.94</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>jitter, psd_eps <span class="op">=</span> <span class="fl">1e-10</span>, <span class="fl">1e-10</span></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -860,6 +961,7 @@ Define demeaned return vector <span class="math inline">\(\tilde{r}_{t-1} = r_{t
 <span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>        c <span class="op">+=</span> jitter <span class="op">*</span> np.eye(nn)</span>
 <span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>        out[k] <span class="op">=</span> <span class="fl">252.0</span> <span class="op">*</span> make_psd(c, psd_eps)</span>
 <span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -1009,6 +1111,8 @@ w_N
 <p>For each rebalance date we store: - active tickers (liquidity-selected) - return windows for risk and expected-return estimation - covariance maps - raw expected-return signals used by the unified <span class="math inline">\(\mu\)</span> builder</p>
 <p>This speeds up the backtest.</p>
 <div id="8ad2fa21" class="cell" data-execution_count="8">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>cache <span class="op">=</span> {}</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rebalances_per_year(rebal_dates_index):</span>
@@ -1093,6 +1197,7 @@ w_N
 <span id="cb10-82"><a href="#cb10-82" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-83"><a href="#cb10-83" aria-hidden="true" tabindex="-1"></a>rebal_per_year <span class="op">=</span> rebalances_per_year(rebal_dates)</span>
 <span id="cb10-84"><a href="#cb10-84" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Rebalances per year (estimated):"</span>, <span class="bu">round</span>(rebal_per_year, <span class="dv">2</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Universe size across rebalances: min=100, max=100, mean=100.0
 Rebalances per year (estimated): 12.0</code></pre>
@@ -1172,6 +1277,8 @@ Rebalances per year (estimated): 12.0</code></pre>
 </ul>
 <p>This blending works as an additional layer of turnover control beyond the <span class="math inline">\(\ell_1\)</span> penalty in the objective function and makes sure the weights don’t move too much that results in high costs.</p>
 <div id="cf5b24a9" class="cell" data-execution_count="9">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>cvx_cache <span class="op">=</span> {}</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>ridge_mv_gamma <span class="op">=</span> <span class="fl">12.0</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>cost_bps <span class="op">=</span> <span class="dv">10</span></span>
@@ -1244,6 +1351,7 @@ Rebalances per year (estimated): 12.0</code></pre>
 <span id="cb12-70"><a href="#cb12-70" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> np.isfinite(w_min_eff) <span class="kw">and</span> w_min_eff <span class="op">*</span> nn <span class="op">&gt;</span> <span class="fl">1.0</span> <span class="op">+</span> <span class="fl">1e-9</span>:</span>
 <span id="cb12-71"><a href="#cb12-71" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">False</span></span>
 <span id="cb12-72"><a href="#cb12-72" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">True</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="global-minimum-variance-portfolio" class="level3">
@@ -1271,6 +1379,8 @@ Rebalances per year (estimated): 12.0</code></pre>
 </ul>
 <p>This is a convex optimization problem with <span class="math inline">\(n\)</span> auxiliary variables and <span class="math inline">\(3n\)</span> linear inequality constraints. The resulting problem is a standard QP.</p>
 <div id="75a3c49f" class="cell" data-execution_count="10">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_minvar_solver(nn, ridge, kappa):</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    key <span class="op">=</span> (<span class="st">"minvar"</span>, nn, ridge, kappa, w_min, w_max, long_only)</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> key <span class="kw">in</span> cvx_cache:</span>
@@ -1300,6 +1410,7 @@ Rebalances per year (estimated): 12.0</code></pre>
 <span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>    wprev_p.value <span class="op">=</span> np.asarray(w_prev, dtype<span class="op">=</span>np.float64)</span>
 <span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> solve_cvx(prob, w_var)</span>
 <span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">None</span> <span class="cf">if</span> w <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> safe_normalize_weights(w, w_min, w_max, long_only)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="bayes-stein-mu-estimator" class="level3">
@@ -1324,6 +1435,8 @@ q=(\hat{\mu}-\mu_0)'(\Sigma+\lambda I)^{-1}(\hat{\mu}-\mu_0),
 <p>where <span class="math inline">\(N\)</span> is the number of assets and <span class="math inline">\(T\)</span> is the sample length.</p>
 <p>So if <span class="math inline">\(\hat{\mu}\)</span> is very far from the target which here is the return of GMV portfolio, in risk adjusted distance, <span class="math inline">\(q\)</span> is large and <span class="math inline">\(\phi\)</span> becomes smaller, so we keep more of the raw signal. If <span class="math inline">\(\hat{\mu}\)</span> is not meaningfully different from the target, <span class="math inline">\(q\)</span> is small and <span class="math inline">\(\phi\)</span> becomes larger, so we shrink more aggressively. The optimizer should not be allowed to overreact to a noisy mean vector unless the mean vector contains enough cross-sectional structure to justify the risk.</p>
 <div id="40e87a26" class="cell" data-execution_count="11">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _solve_linear_stable(A, b):</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    A <span class="op">=</span> np.asarray(A, dtype<span class="op">=</span>np.float64)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> np.asarray(b, dtype<span class="op">=</span>np.float64)</span>
@@ -1408,6 +1521,7 @@ q=(\hat{\mu}-\mu_0)'(\Sigma+\lambda I)^{-1}(\hat{\mu}-\mu_0),
 <span id="cb14-82"><a href="#cb14-82" aria-hidden="true" tabindex="-1"></a>    phi <span class="op">=</span> (n <span class="op">+</span> <span class="fl">2.0</span>) <span class="op">/</span> ((n <span class="op">+</span> <span class="fl">2.0</span>) <span class="op">+</span> T <span class="op">*</span> q)</span>
 <span id="cb14-83"><a href="#cb14-83" aria-hidden="true" tabindex="-1"></a>    phi <span class="op">=</span> <span class="bu">float</span>(np.clip(phi, <span class="fl">0.0</span>, <span class="fl">1.0</span>))</span>
 <span id="cb14-84"><a href="#cb14-84" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> _return_mu_with_phi((<span class="fl">1.0</span> <span class="op">-</span> phi) <span class="op">*</span> mu <span class="op">+</span> phi <span class="op">*</span> target, phi, return_phi)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="bayes-stein-momentum-mu-estimator" class="level3">
@@ -1424,6 +1538,8 @@ z_t \longrightarrow \mu_t^{(\text{mom})} \longrightarrow \mu_t^{(\text{BSM})}
 <li><strong>Shrinkage layer:</strong> prevents the optimizer from treating the signal too trustable.</li>
 </ol>
 <div id="808be9d0" class="cell" data-execution_count="12">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_mu_excess_ann(st, mu_model, cov_key, return_info<span class="op">=</span><span class="va">False</span>):</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    cov_ann <span class="op">=</span> np.asarray(st[<span class="st">"cov_ann_map"</span>][cov_key], dtype<span class="op">=</span>np.float64)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    R_mu <span class="op">=</span> st[<span class="st">"R_mu"</span>]</span>
@@ -1454,6 +1570,7 @@ z_t \longrightarrow \mu_t^{(\text{mom})} \longrightarrow \mu_t^{(\text{BSM})}
 <span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> invalid.<span class="bu">any</span>():</span>
 <span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>        mu <span class="op">=</span> np.nan_to_num(mu, nan<span class="op">=</span><span class="fl">0.0</span>, posinf<span class="op">=</span>mu_cap_ann, neginf<span class="op">=-</span>mu_cap_ann)</span>
 <span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (mu.astype(np.float64), info) <span class="cf">if</span> return_info <span class="cf">else</span> mu.astype(np.float64)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="mean-variance-markowitz-optimization" class="level3">
@@ -1471,6 +1588,8 @@ z_t \longrightarrow \mu_t^{(\text{mom})} \longrightarrow \mu_t^{(\text{BSM})}
 <p>This reveals that the combined effect of the risk penalty and ridge regularization is equivalent to using a <strong>shrunk covariance matrix</strong>:</p>
 <p><span class="math display">\[\tilde{\Sigma} = \Sigma + \frac{\delta}{\lambda} \mathbf{I}_n\]</span></p>
 <div id="4befa317" class="cell" data-execution_count="13">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>mv_lambda <span class="op">=</span> <span class="fl">6.0</span></span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_mv_solver(nn, mv_lambda, ridge, kappa):</span>
@@ -1508,6 +1627,7 @@ z_t \longrightarrow \mu_t^{(\text{mom})} \longrightarrow \mu_t^{(\text{BSM})}
 <span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>    wprev_p.value <span class="op">=</span> np.asarray(w_prev, dtype<span class="op">=</span>np.float64)</span>
 <span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> solve_cvx(prob, w_var)</span>
 <span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">None</span> <span class="cf">if</span> w <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> safe_normalize_weights(w, w_min, w_max, long_only)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="ridge-regularized-mean-variance-optimization" class="level3">
@@ -1525,6 +1645,8 @@ z_t \longrightarrow \mu_t^{(\text{mom})} \longrightarrow \mu_t^{(\text{BSM})}
 <li>Guarantees strict convexity (a unique global optimum)</li>
 </ol>
 <div id="45edd13d" class="cell" data-execution_count="14">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_reg_mv_solver(nn, mv_lambda, ridge, kappa, gamma_l2):</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    key <span class="op">=</span> (<span class="st">"ridge_mv"</span>, nn, mv_lambda, ridge, kappa, gamma_l2, w_min, w_max, long_only)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> key <span class="kw">in</span> cvx_cache:</span>
@@ -1558,6 +1680,7 @@ z_t \longrightarrow \mu_t^{(\text{mom})} \longrightarrow \mu_t^{(\text{BSM})}
 <span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a>    wprev_p.value <span class="op">=</span> np.asarray(w_prev, dtype<span class="op">=</span>np.float64)</span>
 <span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> solve_cvx(prob, w_var)</span>
 <span id="cb17-33"><a href="#cb17-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">None</span> <span class="cf">if</span> w <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> safe_normalize_weights(w, w_min, w_max, long_only)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="maximum-sharpe-ratio-optimization-tangency-portfolio" class="level3">
@@ -1583,6 +1706,8 @@ z_t \longrightarrow \mu_t^{(\text{mom})} \longrightarrow \mu_t^{(\text{BSM})}
 <p>Starting from the current portfolio is strategically important: it is already feasible and likely close to the new optimum (since markets evolve slowly between rebalancing dates), which helps SLSQP converge in few iterations.</p>
 <p>Since the Sharpe ratio objective is non-convex, SLSQP may converge to a local optimum that is not globally optimal. We implement another model that reduces the optimization error probability through the <strong>Efficient Frontier Grid Search</strong> which evaluates the Sharpe ratio at multiple points along the efficient frontier to increase the chance of finding the global maximum.</p>
 <div id="be394387" class="cell" data-execution_count="15">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> max_sharpe_weights(mu_excess_ann, cov_ann, w_prev, rpy):</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    nn <span class="op">=</span> <span class="bu">len</span>(mu_excess_ann)</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> constraints_feasible(nn, w_min, w_max, long_only):</span>
@@ -1608,6 +1733,7 @@ z_t \longrightarrow \mu_t^{(\text{mom})} \longrightarrow \mu_t^{(\text{BSM})}
 <span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="kw">not</span> result.success) <span class="kw">or</span> np.<span class="bu">any</span>(<span class="op">~</span>np.isfinite(result.x)):</span>
 <span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span>
 <span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> safe_normalize_weights(result.x, w_min, w_max, long_only)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="efficient-frontier-grid-search-for-maximum-sharpe-ratio" class="level3">
@@ -1639,6 +1765,8 @@ It means we can’t improve return without taking more risk, and we can’t redu
 <p>The typical grid spans several orders of magnitude, e.g., <span class="math inline">\(\lambda \in [0.1, 100]\)</span> with <span class="math inline">\(K = 50\)</span> points. The more points we test, the more we get close we get to global optimum, but the computational cost can be huge and it can take a lot of time, so we set a number of points to get close to optimum but it’s not that complete to say it’s exactly the best point possible.</p>
 <p>Note: In the full arena, MaxSharpe is evaluated across the available covariance and expected-return models. FrontierGrid is then run once using the best MaxSharpe combination, so it is not a separate grid search over all model pairs.</p>
 <div id="e862aa9e" class="cell" data-execution_count="16">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> sharpe_from_w(mu_excess_ann, cov_ann, w):</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> np.asarray(w, dtype<span class="op">=</span>np.float64).flatten()</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> <span class="bu">float</span>(np.dot(mu_excess_ann, w))</span>
@@ -1731,6 +1859,7 @@ It means we can’t improve return without taking more risk, and we can’t redu
 <span id="cb19-90"><a href="#cb19-90" aria-hidden="true" tabindex="-1"></a>            best_s, best_w <span class="op">=</span> s, w</span>
 <span id="cb19-91"><a href="#cb19-91" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-92"><a href="#cb19-92" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> best_w</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -1756,6 +1885,8 @@ r_{hi}=\mu^\top w^{maxr}.
 <h3 class="anchored" data-anchor-id="important-interpretation-note">important interpretation note</h3>
 <p>this figure is a snapshot at a single rebalance date without the regularization and turnover penalties. it is “efficient” only with respect to the estimated <span class="math inline">\((\mu,\Sigma)\)</span> used at <span class="math inline">\(t^*\)</span>. in out-of-sample backtests, estimation error (especially in <span class="math inline">\(\mu\)</span>) can shift the frontier, so the frontier is best used as an interpretability and diagnostics tool rather than a guarantee of future performance.</p>
 <div id="ab5e23dd" class="cell" data-execution_count="17">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>last_dt <span class="op">=</span> pd.Timestamp(rebal_dates[<span class="op">-</span><span class="dv">1</span>])</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>st <span class="op">=</span> cache[last_dt]</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1847,10 +1978,11 @@ r_{hi}=\mu^\top w^{maxr}.
 <span id="cb20-89"><a href="#cb20-89" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb20-90"><a href="#cb20-90" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-91"><a href="#cb20-91" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Frontier points: </span><span class="sc">{</span><span class="bu">len</span>(frontier)<span class="sc">}</span><span class="ss"> | Return range: [</span><span class="sc">{</span>r_lo<span class="sc">:.3%}</span><span class="ss">, </span><span class="sc">{</span>r_hi<span class="sc">:.3%}</span><span class="ss">]"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-18-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="02_portfolio_optimization_MV_models_files/figure-html/cell-18-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-18-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1926,6 +2058,8 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <p><span class="math display">\[\operatorname{TO}_{ann} \approx B\,\overline{\operatorname{TO}}
 \]</span></p>
 <div id="7a16a2f9" class="cell" data-execution_count="18">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>fixed_fee <span class="op">=</span> <span class="fl">0.0</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2044,6 +2178,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <span id="cb22-116"><a href="#cb22-116" aria-hidden="true" tabindex="-1"></a>        <span class="st">"cov_key"</span>: cov_key,</span>
 <span id="cb22-117"><a href="#cb22-117" aria-hidden="true" tabindex="-1"></a>        <span class="st">"mu_model"</span>: mu_model,</span>
 <span id="cb22-118"><a href="#cb22-118" aria-hidden="true" tabindex="-1"></a>    }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -2054,6 +2189,8 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <p>Contribution to volatility:</p>
 <p><span class="math display">\[RC^{vol}_i = RC^{var}_i / \sigma_p\]</span></p>
 <div id="a053626a" class="cell" data-execution_count="19">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> format_date_axis(ax):</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    ax.xaxis.set_major_formatter(DateFormatter(<span class="st">"%Y-%m"</span>))</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    ax.figure.autofmt_xdate()</span>
@@ -2174,11 +2311,14 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <span id="cb23-118"><a href="#cb23-118" aria-hidden="true" tabindex="-1"></a>    plot_strategy_dashboard_on_axes(axes, name, res, cov_key, color_map<span class="op">=</span>color_map)</span>
 <span id="cb23-119"><a href="#cb23-119" aria-hidden="true" tabindex="-1"></a>    plt.tight_layout()</span>
 <span id="cb23-120"><a href="#cb23-120" aria-hidden="true" tabindex="-1"></a>    plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="running-strategies" class="level2">
 <h2 class="anchored" data-anchor-id="running-strategies">13) Running strategies</h2>
 <div id="18fa63e8" class="cell" data-execution_count="20">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>all_results <span class="op">=</span> {}</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>candidate_specs <span class="op">=</span> [(<span class="st">"EW"</span>, <span class="st">"LedoitWolf"</span>, <span class="va">None</span>)]</span>
@@ -2207,6 +2347,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Computed full-grid candidate strategies:"</span>, <span class="bu">len</span>(all_results))</span>
 <span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="bu">list</span>(all_results.keys()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Computed full-grid candidate strategies: 41
 ['EW', 'MinVar (SampleCov)', 'MinVar (LedoitWolf)', 'MinVar (OAS)', 'MinVar (EWMA)', 'MV (SampleCov, Momentum)', 'MV (SampleCov, BayesStein)', 'MV (SampleCov, BayesSteinMomentum)', 'MV (LedoitWolf, Momentum)', 'MV (LedoitWolf, BayesStein)', 'MV (LedoitWolf, BayesSteinMomentum)', 'MV (OAS, Momentum)', 'MV (OAS, BayesStein)', 'MV (OAS, BayesSteinMomentum)', 'MV (EWMA, Momentum)', 'MV (EWMA, BayesStein)', 'MV (EWMA, BayesSteinMomentum)', 'Ridge MV (SampleCov, Momentum)', 'Ridge MV (SampleCov, BayesStein)', 'Ridge MV (SampleCov, BayesSteinMomentum)', 'Ridge MV (LedoitWolf, Momentum)', 'Ridge MV (LedoitWolf, BayesStein)', 'Ridge MV (LedoitWolf, BayesSteinMomentum)', 'Ridge MV (OAS, Momentum)', 'Ridge MV (OAS, BayesStein)', 'Ridge MV (OAS, BayesSteinMomentum)', 'Ridge MV (EWMA, Momentum)', 'Ridge MV (EWMA, BayesStein)', 'Ridge MV (EWMA, BayesSteinMomentum)', 'MaxSharpe (SampleCov, Momentum)', 'MaxSharpe (SampleCov, BayesStein)', 'MaxSharpe (SampleCov, BayesSteinMomentum)', 'MaxSharpe (LedoitWolf, Momentum)', 'MaxSharpe (LedoitWolf, BayesStein)', 'MaxSharpe (LedoitWolf, BayesSteinMomentum)', 'MaxSharpe (OAS, Momentum)', 'MaxSharpe (OAS, BayesStein)', 'MaxSharpe (OAS, BayesSteinMomentum)', 'MaxSharpe (EWMA, Momentum)', 'MaxSharpe (EWMA, BayesStein)', 'MaxSharpe (EWMA, BayesSteinMomentum)']</code></pre>
@@ -2217,6 +2358,8 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <h2 class="anchored" data-anchor-id="full-grid-results">Full grid results</h2>
 <p>Compact tables for the full model arena. FrontierGrid is added after selecting the best MaxSharpe combination from this arena.</p>
 <div id="f4143377" class="cell" data-execution_count="21">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> performance_metrics(net_returns, net_values):</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    years <span class="op">=</span> <span class="bu">len</span>(net_returns) <span class="op">/</span> <span class="fl">252.0</span></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    cagr <span class="op">=</span> (net_values.iloc[<span class="op">-</span><span class="dv">1</span>] <span class="op">**</span> (<span class="fl">1.0</span> <span class="op">/</span> years) <span class="op">-</span> <span class="fl">1.0</span>) <span class="cf">if</span> years <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> <span class="fl">0.0</span></span>
@@ -2348,8 +2491,11 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <span id="cb26-129"><a href="#cb26-129" aria-hidden="true" tabindex="-1"></a>    plt.tight_layout()</span>
 <span id="cb26-130"><a href="#cb26-130" aria-hidden="true" tabindex="-1"></a>    plt.show()</span>
 <span id="cb26-131"><a href="#cb26-131" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> available</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="5c04bb80" class="cell" data-execution_count="22">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>all_grid_results <span class="op">=</span> <span class="bu">dict</span>(all_results)</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>grid_summary_df <span class="op">=</span> build_strategy_summary(all_grid_results)</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2373,6 +2519,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>all_metrics_df <span class="op">=</span> build_metrics_table(all_results)</span>
 <span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>all_trade_df <span class="op">=</span> build_trade_table(all_results)</span>
 <span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>all_summary_df <span class="op">=</span> build_strategy_summary(all_results)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>FrontierGrid uses best MaxSharpe combination: EWMA, Momentum</code></pre>
 </div>
@@ -2381,6 +2528,8 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <section id="grid-heatmaps" class="level2">
 <h2 class="anchored" data-anchor-id="grid-heatmaps">Grid heatmaps</h2>
 <div id="8c3a16c8" class="cell" data-execution_count="23">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting.curves <span class="im">import</span> choose_heatmap_cmap</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> heatmap_matrix(summary_df, optimizer, value_col):</span>
@@ -2432,10 +2581,11 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <span id="cb29-49"><a href="#cb29-49" aria-hidden="true" tabindex="-1"></a>        fig.colorbar(im, ax<span class="op">=</span>ax, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
 <span id="cb29-50"><a href="#cb29-50" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb29-51"><a href="#cb29-51" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-24-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="02_portfolio_optimization_MV_models_files/figure-html/cell-24-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-24-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2444,6 +2594,8 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <section id="finalist-strategies" class="level2">
 <h2 class="anchored" data-anchor-id="finalist-strategies">Finalist strategies</h2>
 <div id="fe416749" class="cell" data-execution_count="24">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>minvar_candidates <span class="op">=</span> [name <span class="cf">for</span> name <span class="kw">in</span> all_results <span class="cf">if</span> strategy_family(name) <span class="op">==</span> <span class="st">"MinVar"</span>]</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>mv_candidates <span class="op">=</span> [name <span class="cf">for</span> name <span class="kw">in</span> all_results <span class="cf">if</span> strategy_family(name) <span class="op">==</span> <span class="st">"MV"</span>]</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>ridge_candidates <span class="op">=</span> [name <span class="cf">for</span> name <span class="kw">in</span> all_results <span class="cf">if</span> strategy_family(name) <span class="op">==</span> <span class="st">"Ridge MV"</span>]</span>
@@ -2510,6 +2662,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <span id="cb30-64"><a href="#cb30-64" aria-hidden="true" tabindex="-1"></a>fig.colorbar(scatter, ax<span class="op">=</span>axes[<span class="dv">1</span>], fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>, label<span class="op">=</span><span class="st">"Sharpe"</span>)</span>
 <span id="cb30-65"><a href="#cb30-65" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-66"><a href="#cb30-66" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Finalist strategy summary</code></pre>
 </div>
@@ -2659,21 +2812,21 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-25-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="02_portfolio_optimization_MV_models_files/figure-html/cell-25-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-25-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-25-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="02_portfolio_optimization_MV_models_files/figure-html/cell-25-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-25-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-25-output-5.png" class="img-fluid figure-img"></p>
+<p><a href="02_portfolio_optimization_MV_models_files/figure-html/cell-25-output-5.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-25-output-5.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2766,16 +2919,19 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <section id="fixed-expected-return-and-testing-covariance-sensitivity" class="level2">
 <h2 class="anchored" data-anchor-id="fixed-expected-return-and-testing-covariance-sensitivity">Fixed Expected return and testing covariance sensitivity</h2>
 <div id="00aefaff" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>fixed_mu_model <span class="op">=</span> <span class="st">"BayesSteinMomentum"</span></span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>controlled_covariance_sources <span class="op">=</span> [<span class="ss">f"MV (</span><span class="sc">{</span>cov_key<span class="sc">}</span><span class="ss">, </span><span class="sc">{</span>fixed_mu_model<span class="sc">}</span><span class="ss">)"</span> <span class="cf">for</span> cov_key <span class="kw">in</span> covariance_keys]</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>plot_result_subset(</span>
 <span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    all_results,</span>
 <span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    controlled_covariance_sources,</span>
 <span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Fixed-mu Covariance Sensitivity: MV + BayesSteinMomentum"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-26-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="02_portfolio_optimization_MV_models_files/figure-html/cell-26-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-26-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2794,6 +2950,8 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <section id="fixed-covariance-and-testing-expected-return-sensitivity" class="level2">
 <h2 class="anchored" data-anchor-id="fixed-covariance-and-testing-expected-return-sensitivity">Fixed covariance and testing expected return sensitivity</h2>
 <div id="f6effc57" class="cell" data-execution_count="26">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>fixed_cov_key <span class="op">=</span> <span class="st">"EWMA"</span></span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>controlled_mu_sources <span class="op">=</span> []</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> optimizer <span class="kw">in</span> [<span class="st">"MV"</span>, <span class="st">"MaxSharpe"</span>]:</span>
@@ -2805,10 +2963,11 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>    controlled_mu_sources,</span>
 <span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Fixed-covariance Mu Sensitivity: EWMA with MV and MaxSharpe"</span>,</span>
 <span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-27-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="02_portfolio_optimization_MV_models_files/figure-html/cell-27-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-27-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2828,6 +2987,8 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <h2 class="anchored" data-anchor-id="implementation-on-hong-kong-stock-market-with-quantfinlab">implementation on Hong Kong stock market with quantfinlab</h2>
 <p>the data used in this part can be downloaded from here (<a href="https://stooq.com/db/h/">Stooq HKEX daily market data</a>)</p>
 <div id="225c0c82" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -3053,6 +3214,7 @@ W_t = W_{t-1}^{(net)}(1 + r_{p,t})
 <span id="cb36-223"><a href="#cb36-223" aria-hidden="true" tabindex="-1"></a>    wspace<span class="op">=</span><span class="fl">0.28</span>,</span>
 <span id="cb36-224"><a href="#cb36-224" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb36-225"><a href="#cb36-225" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>close_prices: (2478, 290) | volumes: (2478, 290)
 Date range: 2016-01-04 to 2026-01-28
@@ -3579,7 +3741,7 @@ Expected-return diagnostics</code></pre>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-28-output-9.png" class="img-fluid figure-img"></p>
+<p><a href="02_portfolio_optimization_MV_models_files/figure-html/cell-28-output-9.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="02_portfolio_optimization_MV_models_files/figure-html/cell-28-output-9.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3791,6 +3953,57 @@ Expected-return diagnostics</code></pre>
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -4134,6 +4347,38 @@ Expected-return diagnostics</code></pre>
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 

@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>15. Factor Investing and Fama-French Allocation – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/14_fourier_option_pricing.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -112,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -143,7 +144,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -292,13 +293,80 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#factor-investing-as-a-language-for-explaining-returns" id="toc-factor-investing-as-a-language-for-explaining-returns" class="nav-link active" data-scroll-target="#factor-investing-as-a-language-for-explaining-returns">1) Factor Investing as a Language for Explaining Returns</a></li>
+  <li><a href="#data-sources-and-return-panel" id="toc-data-sources-and-return-panel" class="nav-link" data-scroll-target="#data-sources-and-return-panel">2) Data Sources and Return Panel</a>
+  <ul class="collapse">
+  <li><a href="#sector-etf-universe" id="toc-sector-etf-universe" class="nav-link" data-scroll-target="#sector-etf-universe">2.1 Sector ETF Universe</a></li>
+  <li><a href="#monthly-returns-and-timing" id="toc-monthly-returns-and-timing" class="nav-link" data-scroll-target="#monthly-returns-and-timing">2.2 Monthly Returns and Timing</a></li>
+  </ul></li>
+  <li><a href="#fama-french-factors-and-long-run-premia" id="toc-fama-french-factors-and-long-run-premia" class="nav-link" data-scroll-target="#fama-french-factors-and-long-run-premia">3) Fama-French Factors and Long-Run Premia</a>
+  <ul class="collapse">
+  <li><a href="#economic-reading-of-the-six-factors" id="toc-economic-reading-of-the-six-factors" class="nav-link" data-scroll-target="#economic-reading-of-the-six-factors">3.1 Economic Reading of the Six Factors</a></li>
+  <li><a href="#industry-portfolios-as-a-factor-exposure-test-bed" id="toc-industry-portfolios-as-a-factor-exposure-test-bed" class="nav-link" data-scroll-target="#industry-portfolios-as-a-factor-exposure-test-bed">3.2 Industry Portfolios as a Factor Exposure Test Bed</a></li>
+  <li><a href="#factor-premia-across-regimes" id="toc-factor-premia-across-regimes" class="nav-link" data-scroll-target="#factor-premia-across-regimes">3.3 Factor Premia Across Regimes</a></li>
+  </ul></li>
+  <li><a href="#full-sample-factor-regressions" id="toc-full-sample-factor-regressions" class="nav-link" data-scroll-target="#full-sample-factor-regressions">4) Full-Sample Factor Regressions</a>
+  <ul class="collapse">
+  <li><a href="#statistical-details-behind-the-regression-output" id="toc-statistical-details-behind-the-regression-output" class="nav-link" data-scroll-target="#statistical-details-behind-the-regression-output">4.1 Statistical Details Behind the Regression Output</a></li>
+  <li><a href="#tradable-factor-etf-proxies" id="toc-tradable-factor-etf-proxies" class="nav-link" data-scroll-target="#tradable-factor-etf-proxies">4.2 Tradable Factor ETF Proxies</a></li>
+  </ul></li>
+  <li><a href="#rolling-exposures-and-factor-states" id="toc-rolling-exposures-and-factor-states" class="nav-link" data-scroll-target="#rolling-exposures-and-factor-states">5) Rolling Exposures and Factor States</a>
+  <ul class="collapse">
+  <li><a href="#rolling-factor-regression" id="toc-rolling-factor-regression" class="nav-link" data-scroll-target="#rolling-factor-regression">5.1 Rolling Factor Regression</a></li>
+  <li><a href="#rolling-regression-stability-and-estimation-risk" id="toc-rolling-regression-stability-and-estimation-risk" class="nav-link" data-scroll-target="#rolling-regression-stability-and-estimation-risk">5.2 Rolling Regression Stability and Estimation Risk</a></li>
+  <li><a href="#factor-state-construction" id="toc-factor-state-construction" class="nav-link" data-scroll-target="#factor-state-construction">5.3 Factor State Construction</a></li>
+  <li><a href="#interpreting-a-factor-state-numerically" id="toc-interpreting-a-factor-state-numerically" class="nav-link" data-scroll-target="#interpreting-a-factor-state-numerically">5.4 Interpreting a Factor State Numerically</a></li>
+  <li><a href="#academic-and-tradable-factor-state-blending" id="toc-academic-and-tradable-factor-state-blending" class="nav-link" data-scroll-target="#academic-and-tradable-factor-state-blending">5.5 Academic and Tradable Factor-State Blending</a></li>
+  </ul></li>
+  <li><a href="#sector-scores-and-signal-components" id="toc-sector-scores-and-signal-components" class="nav-link" data-scroll-target="#sector-scores-and-signal-components">6) Sector Scores and Signal Components</a>
+  <ul class="collapse">
+  <li><a href="#residual-strength-trend-strength-and-risk-penalty" id="toc-residual-strength-trend-strength-and-risk-penalty" class="nav-link" data-scroll-target="#residual-strength-trend-strength-and-risk-penalty">6.1 Residual Strength, Trend Strength, and Risk Penalty</a></li>
+  <li><a href="#residual-strength" id="toc-residual-strength" class="nav-link" data-scroll-target="#residual-strength">Residual strength</a></li>
+  <li><a href="#trend-strength" id="toc-trend-strength" class="nav-link" data-scroll-target="#trend-strength">Trend strength</a></li>
+  <li><a href="#risk-penalty" id="toc-risk-penalty" class="nav-link" data-scroll-target="#risk-penalty">Risk penalty</a></li>
+  <li><a href="#validation-weighted-dynamic-score" id="toc-validation-weighted-dynamic-score" class="nav-link" data-scroll-target="#validation-weighted-dynamic-score">6.2 Validation-Weighted Dynamic Score</a></li>
+  </ul></li>
+  <li><a href="#signal-validation" id="toc-signal-validation" class="nav-link" data-scroll-target="#signal-validation">7) Signal Validation</a>
+  <ul class="collapse">
+  <li><a href="#signal-decay-across-horizons" id="toc-signal-decay-across-horizons" class="nav-link" data-scroll-target="#signal-decay-across-horizons">7.1 Signal Decay Across Horizons</a></li>
+  </ul></li>
+  <li><a href="#portfolio-construction" id="toc-portfolio-construction" class="nav-link" data-scroll-target="#portfolio-construction">8) Portfolio Construction</a>
+  <ul class="collapse">
+  <li><a href="#portfolio-controls-and-signal-translation" id="toc-portfolio-controls-and-signal-translation" class="nav-link" data-scroll-target="#portfolio-controls-and-signal-translation">8.1 Portfolio Controls and Signal Translation</a></li>
+  </ul></li>
+  <li><a href="#backtest-results-and-portfolio-evaluation" id="toc-backtest-results-and-portfolio-evaluation" class="nav-link" data-scroll-target="#backtest-results-and-portfolio-evaluation">9) Backtest Results and Portfolio Evaluation</a>
+  <ul class="collapse">
+  <li><a href="#portfolio-factor-exposure" id="toc-portfolio-factor-exposure" class="nav-link" data-scroll-target="#portfolio-factor-exposure">9.1 Portfolio Factor Exposure</a></li>
+  <li><a href="#sector-level-analyst-reading-of-the-final-model" id="toc-sector-level-analyst-reading-of-the-final-model" class="nav-link" data-scroll-target="#sector-level-analyst-reading-of-the-final-model">Sector-Level Analyst Reading of the Final Model</a></li>
+  <li><a href="#stress-window-interpretation" id="toc-stress-window-interpretation" class="nav-link" data-scroll-target="#stress-window-interpretation">Stress Window Interpretation</a></li>
+  <li><a href="#average-exposure-contribution-and-bestworst-months" id="toc-average-exposure-contribution-and-bestworst-months" class="nav-link" data-scroll-target="#average-exposure-contribution-and-bestworst-months">Average Exposure, Contribution, and Best/Worst Months</a></li>
+  <li><a href="#latest-final-diagnostics" id="toc-latest-final-diagnostics" class="nav-link" data-scroll-target="#latest-final-diagnostics">Latest Final Diagnostics</a></li>
+  </ul></li>
+  <li><a href="#developed-ex-u.s.-country-etf-extension" id="toc-developed-ex-u.s.-country-etf-extension" class="nav-link" data-scroll-target="#developed-ex-u.s.-country-etf-extension">10) Developed ex-U.S. Country ETF Extension</a>
+  <ul class="collapse">
+  <li><a href="#developed-ex-u.s.-factor-architecture" id="toc-developed-ex-u.s.-factor-architecture" class="nav-link" data-scroll-target="#developed-ex-u.s.-factor-architecture">10.1 Developed ex-U.S. Factor Architecture</a></li>
+  <li><a href="#economic-differences-across-country-etfs" id="toc-economic-differences-across-country-etfs" class="nav-link" data-scroll-target="#economic-differences-across-country-etfs">10.2 Economic Differences Across Country ETFs</a></li>
+  <li><a href="#country-score-interpretation" id="toc-country-score-interpretation" class="nav-link" data-scroll-target="#country-score-interpretation">Country Score Interpretation</a></li>
+  <li><a href="#country-signal-validation" id="toc-country-signal-validation" class="nav-link" data-scroll-target="#country-signal-validation">Country Signal Validation</a></li>
+  <li><a href="#country-strategy-comparison" id="toc-country-strategy-comparison" class="nav-link" data-scroll-target="#country-strategy-comparison">Country Strategy Comparison</a></li>
+  <li><a href="#country-allocation-reading" id="toc-country-allocation-reading" class="nav-link" data-scroll-target="#country-allocation-reading">Country Allocation Reading</a></li>
+  <li><a href="#country-plots-and-rolling-factor-exposure" id="toc-country-plots-and-rolling-factor-exposure" class="nav-link" data-scroll-target="#country-plots-and-rolling-factor-exposure">Country Plots and Rolling Factor Exposure</a></li>
+  </ul></li>
+  <li><a href="#interpretation-discipline-for-factor-scores" id="toc-interpretation-discipline-for-factor-scores" class="nav-link" data-scroll-target="#interpretation-discipline-for-factor-scores">11) Interpretation Discipline for Factor Scores</a></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">15. Factor Investing and Fama-French Allocation</span></h1>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">15. Factor Investing and Fama-French Allocation</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -342,6 +410,8 @@ window.Quarto = {
 </ol>
 <p>This gives the project an analyst-style structure. We aren’t only fitting regressions. We use the regressions to explain sector behavior, build signals, and test whether those signals are useful for portfolio rotation.</p>
 <div id="e547df21" class="cell">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -357,6 +427,7 @@ window.Quarto = {
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>warnings.filterwarnings(<span class="st">"ignore"</span>)</span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>set_plot_style()</span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>pd.options.display.float_format <span class="op">=</span> <span class="st">"</span><span class="sc">{:.4f}</span><span class="st">"</span>.<span class="bu">format</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="data-sources-and-return-panel" class="level2">
@@ -373,6 +444,8 @@ window.Quarto = {
 </ul>
 <p>The important reproducibility idea is that each folder contains the workflow for rebuilding its generated file. We don’t point to a single CSV path as if it were the source of truth. The folder is the source layer.</p>
 <div id="c7a1386e" class="cell" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data"</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>etf_path <span class="op">=</span> [data_path <span class="op">/</span> <span class="st">"sector_etfs.csv"</span>, data_path <span class="op">/</span> <span class="st">"core_cross_asset_etfs.csv"</span>]</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>factor_file <span class="op">=</span> data_path <span class="op">/</span> <span class="st">"fama_french_us_5_factors.csv"</span></span>
@@ -386,11 +459,14 @@ window.Quarto = {
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>cash_ticker <span class="op">=</span> <span class="st">"SHY"</span></span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>benchmark_ticker <span class="op">=</span> <span class="st">"SPY"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <section id="sector-etf-universe" class="level3">
 <h3 class="anchored" data-anchor-id="sector-etf-universe">2.1 Sector ETF Universe</h3>
 <p>We begin with U.S. sector ETFs, SHY as the cash-like defensive asset, and SPY as the broad equity benchmark. The sector universe includes materials, energy, financials, industrials, technology, staples, utilities, health care, discretionary, real estate, and telecom/communication exposure through IYR and IYZ.</p>
 <div id="6a8ebbbc" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>tickers <span class="op">=</span> sector_tickers <span class="op">+</span> [cash_ticker, benchmark_ticker]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>prices <span class="op">=</span> load_yfinance_panel(</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    etf_path,</span>
@@ -409,6 +485,7 @@ window.Quarto = {
 <span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    }</span>
 <span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>display(coverage)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -542,6 +619,8 @@ R_{t,i} = \frac{P_{t,i}}{P_{t-1,i}} - 1
 <p>where <span class="math inline">\(P_{t,i}\)</span> is the month-end price of asset <span class="math inline">\(i\)</span> in month <span class="math inline">\(t\)</span>. Monthly frequency is a good fit for this project because Fama-French factor files are monthly and sector rotation doesn’t need daily rebalancing. It also reduces noise. Daily sector returns are dominated by broad market shocks, while monthly returns give factor relationships more room to show up.</p>
 <p>The timing convention later is important: scores are formed using information available at month end, and portfolio returns are realized after that. This keeps the factor strategy from accidentally using future returns.</p>
 <div id="426a5746" class="cell" data-execution_count="4">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>monthly_prices <span class="op">=</span> prices.resample(<span class="st">"ME"</span>).last().dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>monthly_returns <span class="op">=</span> monthly_prices.pct_change().dropna(how<span class="op">=</span><span class="st">"all"</span>)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -559,6 +638,7 @@ R_{t,i} = \frac{P_{t,i}}{P_{t-1,i}} - 1
 <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>        index<span class="op">=</span>[<span class="st">"sectors"</span>, <span class="st">"cash"</span>, <span class="st">"benchmark"</span>],</span>
 <span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -669,6 +749,8 @@ r_{t,i}^{excess} = R_{t,i} - RF_t
 <p><strong>MOM</strong> captures continuation in recent winners. Momentum often works across assets, but it is vulnerable to sharp reversals. A strong <span class="math inline">\(MOM\)</span> state can support sectors that have been leading, but if the market suddenly rotates, momentum can lose quickly.</p>
 <p>This factor interpretation is the bridge from regression coefficients to sector allocation. A beta has no active meaning by itself. It becomes actionable only when the corresponding factor state is strong or weak.</p>
 <div id="81ad005e" class="cell" data-execution_count="5">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> io <span class="im">import</span> StringIO</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -705,8 +787,11 @@ r_{t,i}^{excess} = R_{t,i} - RF_t
 <span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> out.<span class="bu">apply</span>(pd.to_numeric, errors<span class="op">=</span><span class="st">"coerce"</span>)</span>
 <span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> out.replace([<span class="op">-</span><span class="fl">99.99</span>, <span class="op">-</span><span class="fl">999.0</span>, <span class="op">-</span><span class="fl">999.99</span>], np.nan)</span>
 <span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out <span class="op">/</span> <span class="fl">100.0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="eae86b3b" class="cell" data-execution_count="6">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>ff5 <span class="op">=</span> read_ff_table(factor_file)</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>ff5 <span class="op">=</span> ff5[[c <span class="cf">for</span> c <span class="kw">in</span> [<span class="st">"Mkt-RF"</span>, <span class="st">"SMB"</span>, <span class="st">"HML"</span>, <span class="st">"RMW"</span>, <span class="st">"CMA"</span>, <span class="st">"RF"</span>] <span class="cf">if</span> c <span class="kw">in</span> ff5.columns]]</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>rf <span class="op">=</span> ff5[<span class="st">"RF"</span>]</span>
@@ -722,6 +807,7 @@ r_{t,i}^{excess} = R_{t,i} - RF_t
 <span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>display(factor_range)</span>
 <span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>display(ff5.describe().T[[<span class="st">"mean"</span>, <span class="st">"std"</span>, <span class="st">"min"</span>, <span class="st">"max"</span>]].<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -811,6 +897,8 @@ r_{t,i}^{excess} = R_{t,i} - RF_t
 </div>
 </div>
 <div id="82bfd5bf" class="cell" data-execution_count="7">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>us_momentum_candidates <span class="op">=</span> [</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"F-F_Momentum_Factor.csv"</span>,</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Momentum_Factor.csv"</span>,</span>
@@ -851,6 +939,7 @@ r_{t,i}^{excess} = R_{t,i} - RF_t
 <span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>factor_cols <span class="op">=</span> factors.columns.tolist()</span>
 <span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>display(momentum_status)</span>
 <span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame({<span class="st">"factor columns"</span>: factor_cols}))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -927,6 +1016,8 @@ r_{t,i}^{excess} = R_{t,i} - RF_t
 <h3 class="anchored" data-anchor-id="industry-portfolios-as-a-factor-exposure-test-bed">3.2 Industry Portfolios as a Factor Exposure Test Bed</h3>
 <p>Before applying factor scores to sector ETFs, we first use long-history Fama-French 12-industry portfolios. These industry portfolios go back to 1963, much earlier than the ETF data. They act like a diagnostic laboratory: if factor regressions can’t explain broad industry portfolios over a long sample, we shouldn’t expect them to explain sector ETFs reliably.</p>
 <div id="1396554b" class="cell" data-execution_count="8">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>industry_returns <span class="op">=</span> read_ff_table(industry_file)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>industry_dates <span class="op">=</span> industry_returns.index.intersection(factors.dropna(subset<span class="op">=</span>factor_cols).index).intersection(rf.index)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>industry_returns <span class="op">=</span> industry_returns.loc[industry_dates]</span>
@@ -941,6 +1032,7 @@ r_{t,i}^{excess} = R_{t,i} - RF_t
 <span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    }</span>
 <span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>display(industry_summary.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stderr">
 <pre><code>C:\Users\Lenovo\AppData\Local\Temp\ipykernel_8376\1607122259.py:14: UserWarning: obj.round has no effect with datetime, timedelta, or period dtypes. Use obj.dt.round(...) instead.
   display(industry_summary.round(4))</code></pre>
@@ -1053,6 +1145,8 @@ r_{t,i}^{excess} = R_{t,i} - RF_t
 <p>The industry table shows annualized means and volatilities across industries. Durable goods and business equipment have high volatility, while utilities and non-durables are much more defensive. Energy has high volatility and a very different cycle from technology or health care. These differences are exactly what make sector factor analysis useful.</p>
 <p>A sector isn’t only an economic label. It has a factor signature. Business equipment usually has strong market and growth exposure. Utilities tend to have lower market beta and more defensive behavior. Energy is tied to commodity cycles and often has lower explanatory power from standard equity factors. Financials connect to value, credit, rates, and market beta. The factor regression turns these qualitative descriptions into estimated numbers.</p>
 <div id="db4972ac" class="cell" data-execution_count="9">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>factor_summary <span class="op">=</span> pd.DataFrame(</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    {</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"mean"</span>: factors.mean() <span class="op">*</span> <span class="fl">12.0</span>,</span>
@@ -1063,6 +1157,7 @@ r_{t,i}^{excess} = R_{t,i} - RF_t
 <span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    }</span>
 <span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>display(factor_summary.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1152,6 +1247,8 @@ r_{t,i}^{excess} = R_{t,i} - RF_t
 <p>During <strong>broad recovery regimes</strong>, small-cap and cyclical exposure can rebound strongly. <span class="math inline">\(SMB\)</span> and <span class="math inline">\(HML\)</span> often improve together when the market moves from narrow defensive/growth leadership into broader risk appetite.</p>
 <p>This is why we don’t simply rank factors by long-run mean. The current state of each factor tells us which regime is being rewarded now, and rolling sector betas tell us which sectors are positioned for that regime.</p>
 <div id="296dc136" class="cell" data-execution_count="10">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">18</span>, <span class="fl">4.2</span>))</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>factor_growth <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> factors).cumprod()</span>
@@ -1177,10 +1274,11 @@ r_{t,i}^{excess} = R_{t,i} - RF_t
 <span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, ax<span class="op">=</span>axes[<span class="dv">2</span>], fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
 <span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="15_factor_investing_files/figure-html/cell-11-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="15_factor_investing_files/figure-html/cell-11-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="15_factor_investing_files/figure-html/cell-11-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1243,6 +1341,8 @@ R_i^2 = 1 - \frac{\sum_t \hat{\varepsilon}_{t,i}^2}{\sum_t (r_{t,i}^{excess} - \
 <p>because the regression is monthly. A monthly alpha of 0.004 becomes about 4.8% annualized before compounding. We still have to be careful with alpha interpretation. If a sector has positive alpha, it can mean genuine unexplained outperformance, but it can also mean omitted factors, nonlinear behavior, sector-specific macro exposure, or sample-specific luck.</p>
 <p>The regression also assumes a linear relationship between sector returns and factor returns. That is a simplification. Energy doesn’t respond linearly to oil shocks through the Fama-French factor set, and utilities can respond to rates in a way that isn’t fully captured by equity factors. That is why residual diagnostics are part of the strategy rather than a secondary afterthought.</p>
 <div id="7a3ee8cc" class="cell" data-execution_count="11">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> full_sample_factor_regression(y, x):</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> pd.DataFrame(y).astype(<span class="bu">float</span>)</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> pd.DataFrame(x).astype(<span class="bu">float</span>)</span>
@@ -1267,8 +1367,11 @@ R_i^2 = 1 - \frac{\sum_t \hat{\varepsilon}_{t,i}^2}{\sum_t (r_{t,i}^{excess} - \
 <span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    beta_out <span class="op">=</span> pd.DataFrame(beta_rows).T</span>
 <span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    stats_out <span class="op">=</span> pd.DataFrame(rows).set_index(<span class="st">"asset"</span>)</span>
 <span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> beta_out, stats_out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="e5950a76" class="cell" data-execution_count="12">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>industry_beta, industry_stats <span class="op">=</span> full_sample_factor_regression(</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    industry_excess,</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    factors.loc[industry_excess.index, factor_cols],</span>
@@ -1299,10 +1402,11 @@ R_i^2 = 1 - \frac{\sum_t \hat{\varepsilon}_{t,i}^2}{\sum_t (r_{t,i}^{excess} - \
 <span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>display(alpha_table.sort_values(<span class="st">"alpha_ann"</span>).<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="15_factor_investing_files/figure-html/cell-13-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="15_factor_investing_files/figure-html/cell-13-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="15_factor_investing_files/figure-html/cell-13-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1461,6 +1565,8 @@ R_i^2 = 1 - \frac{\sum_t \hat{\varepsilon}_{t,i}^2}{\sum_t (r_{t,i}^{excess} - \
 <p>These aren’t perfect replicas of academic factors. For example, MTUM isn’t the same as the Fama-French momentum factor. It has sector constraints, holdings turnover rules, and a live ETF construction process. VLUE isn’t exactly <span class="math inline">\(HML\)</span>, and QUAL isn’t exactly <span class="math inline">\(RMW\)</span>. But they help us check whether the academic factor state is also visible in tradable instruments.</p>
 <p>This distinction matters for implementation. An academic factor can show strong performance, but if the tradable proxy disagrees, the model should be less confident. That is why we later blend academic factor states with tradable proxy states and shrink the signal when they disagree.</p>
 <div id="d57df06e" class="cell" data-execution_count="13">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>factor_etfs <span class="op">=</span> [<span class="st">"MTUM"</span>, <span class="st">"VLUE"</span>, <span class="st">"QUAL"</span>, <span class="st">"USMV"</span>, <span class="st">"RSP"</span>, <span class="st">"IWF"</span>, <span class="st">"IWD"</span>, <span class="st">"IWM"</span>]</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>proxy_prices <span class="op">=</span> load_yfinance_panel(</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    etf_path,</span>
@@ -1476,6 +1582,7 @@ R_i^2 = 1 - \frac{\sum_t \hat{\varepsilon}_{t,i}^2}{\sum_t (r_{t,i}^{excess} - \
 <span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>proxy_beta, proxy_stats <span class="op">=</span> full_sample_factor_regression(proxy_excess, factors.loc[proxy_dates, factor_cols])</span>
 <span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame({<span class="st">"available factor ETF proxies"</span>: proxy_available}))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1527,6 +1634,8 @@ R_i^2 = 1 - \frac{\sum_t \hat{\varepsilon}_{t,i}^2}{\sum_t (r_{t,i}^{excess} - \
 </div>
 </div>
 <div id="d2c2e25c" class="cell" data-execution_count="14">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">19</span>, <span class="fl">4.5</span>))</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>im <span class="op">=</span> axes[<span class="dv">0</span>].imshow(proxy_beta, cmap<span class="op">=</span><span class="st">"coolwarm"</span>, aspect<span class="op">=</span><span class="st">"auto"</span>)</span>
@@ -1551,10 +1660,11 @@ R_i^2 = 1 - \frac{\sum_t \hat{\varepsilon}_{t,i}^2}{\sum_t (r_{t,i}^{excess} - \
 <span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>plt.show()</span>
 <span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>display(proxy_table[[<span class="st">"alpha_ann"</span>, <span class="st">"r2"</span>]].<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="15_factor_investing_files/figure-html/cell-15-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="15_factor_investing_files/figure-html/cell-15-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="15_factor_investing_files/figure-html/cell-15-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1640,6 +1750,8 @@ R_{t+1,i}
 \]</span></p>
 <p>so the score at time <span class="math inline">\(t\)</span> is tested against the next month’s sector return. That separation between estimation period and future payoff is what makes the signal validation meaningful.</p>
 <div id="ca713921" class="cell" data-execution_count="15">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>valid_factor_dates <span class="op">=</span> factors.dropna(subset<span class="op">=</span>factor_cols).index</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>common_dates <span class="op">=</span> sector_returns.index</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>common_dates <span class="op">=</span> common_dates.intersection(cash_returns.index)</span>
@@ -1663,6 +1775,7 @@ R_{t+1,i}
 <span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>[<span class="st">"sector returns"</span>, <span class="st">"cash returns"</span>, <span class="st">"benchmark returns"</span>, <span class="st">"factors"</span>, <span class="st">"rf"</span>],</span>
 <span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>display(alignment)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1746,6 +1859,8 @@ r_{\tau,i}^{excess} = \alpha_{t,i} + \beta_{t,i}^\top f_\tau + \varepsilon_{\tau
 <p>That is why we use rolling betas as <strong>signals</strong>, not as perfect structural truths. The factor score doesn’t say the sector permanently belongs to a specific style. It says that based on the recent relationship between sector returns and factors, this sector currently behaves as if it has certain exposures.</p>
 <p>A strong strategy shouldn’t require every beta estimate to be exact. It should still work if the broad exposure ranking is approximately right.</p>
 <div id="8ebc79ae" class="cell" data-execution_count="16">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rolling_factor_fit(y, x, window<span class="op">=</span><span class="dv">60</span>):</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> pd.DataFrame(y).astype(<span class="bu">float</span>)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> pd.DataFrame(x).astype(<span class="bu">float</span>)</span>
@@ -1782,8 +1897,11 @@ r_{\tau,i}^{excess} = \alpha_{t,i} + \beta_{t,i}^\top f_\tau + \varepsilon_{\tau
 <span id="cb17-34"><a href="#cb17-34" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> np.isfinite(row_x).<span class="bu">all</span>() <span class="kw">and</span> np.isfinite(y[asset].iloc[i]):</span>
 <span id="cb17-35"><a href="#cb17-35" aria-hidden="true" tabindex="-1"></a>                eps.loc[date, asset] <span class="op">=</span> <span class="bu">float</span>(y[asset].iloc[i] <span class="op">-</span> row_x <span class="op">@</span> coef)</span>
 <span id="cb17-36"><a href="#cb17-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> alpha, beta, r2, eps</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="6dfcba12" class="cell" data-execution_count="17">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>alpha, beta, r2, eps <span class="op">=</span> rolling_factor_fit(sector_excess, factors, window<span class="op">=</span><span class="dv">60</span>)</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>latest_beta <span class="op">=</span> beta.dropna(how<span class="op">=</span><span class="st">"all"</span>).iloc[<span class="op">-</span><span class="dv">1</span>].unstack(<span class="st">"factor"</span>)</span>
@@ -1811,10 +1929,11 @@ r_{\tau,i}^{excess} = \alpha_{t,i} + \beta_{t,i}^\top f_\tau + \varepsilon_{\tau
 <span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="15_factor_investing_files/figure-html/cell-18-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="15_factor_investing_files/figure-html/cell-18-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="15_factor_investing_files/figure-html/cell-18-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1859,6 +1978,8 @@ z_{t,k} = \frac{S_{t,k}^{raw} - \bar{S}_{t,k}}{s_{t,k}}
 <p>So the same factor state rewards one sector and penalizes the other. This is the whole idea of factor rotation: we don’t directly buy the factor, we tilt toward assets whose exposures match the current factor environment.</p>
 <p>The same logic applies to every factor, and the final factor score sums all components. A sector can be helped by value but hurt by profitability or momentum at the same time.</p>
 <div id="5dcb6ca9" class="cell" data-execution_count="18">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> factor_state(factors, short_window<span class="op">=</span><span class="dv">6</span>, long_window<span class="op">=</span><span class="dv">12</span>, vol_window<span class="op">=</span><span class="dv">36</span>, skip<span class="op">=</span><span class="dv">1</span>, clip<span class="op">=</span><span class="fl">2.0</span>):</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    f <span class="op">=</span> pd.DataFrame(factors).astype(<span class="bu">float</span>)</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    short <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> f).rolling(short_window).<span class="bu">apply</span>(np.prod, raw<span class="op">=</span><span class="va">True</span>) <span class="op">-</span> <span class="fl">1.0</span></span>
@@ -1907,6 +2028,7 @@ z_{t,k} = \frac{S_{t,k}^{raw} - \bar{S}_{t,k}}{s_{t,k}}
 <span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a>    agree <span class="op">=</span> np.sign(a.loc[idx, cols]) <span class="op">*</span> np.sign(t.loc[idx, cols]) <span class="op">&gt;=</span> <span class="dv">0</span></span>
 <span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a>    out.loc[idx, cols] <span class="op">=</span> blended.where(agree, blended <span class="op">*</span> disagreement_scale)</span>
 <span id="cb19-48"><a href="#cb19-48" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="academic-and-tradable-factor-state-blending" class="level3">
@@ -1927,6 +2049,8 @@ z_{t,k}^{final} = d \cdot z_{t,k}^{blend}, \qquad d = 0.50
 \]</span></p>
 <p>This is a useful risk control. If the academic value factor is strong but value ETFs aren’t confirming it, the model still listens to the academic signal, but with less conviction.</p>
 <div id="4fe94db5" class="cell" data-execution_count="19">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>z_academic <span class="op">=</span> factor_state(factors, short_window<span class="op">=</span><span class="dv">6</span>, long_window<span class="op">=</span><span class="dv">12</span>, vol_window<span class="op">=</span><span class="dv">36</span>, skip<span class="op">=</span><span class="dv">1</span>, clip<span class="op">=</span><span class="fl">2.0</span>)</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>tradable_spreads <span class="op">=</span> factor_proxy_spreads(proxy_monthly_returns, benchmark_ticker<span class="op">=</span>benchmark_ticker, cash_ticker<span class="op">=</span>cash_ticker)</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>tradable_spreads <span class="op">=</span> tradable_spreads.reindex(common_dates)</span>
@@ -1962,6 +2086,7 @@ z_{t,k}^{final} = d \cdot z_{t,k}^{blend}, \qquad d = 0.50
 <span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2020,7 +2145,7 @@ z_{t,k}^{final} = d \cdot z_{t,k}^{blend}, \qquad d = 0.50
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="15_factor_investing_files/figure-html/cell-20-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="15_factor_investing_files/figure-html/cell-20-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="15_factor_investing_files/figure-html/cell-20-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2045,6 +2170,8 @@ s_{t,i}^{factor} = \beta_{t,i,MKT}z_{t,MKT} + \beta_{t,i,SMB}z_{t,SMB} + \beta_{
 \]</span></p>
 <p>This makes scores comparable across dates. A score of 1.5 means the sector is high relative to other sectors at that month, not necessarily high in absolute return terms.</p>
 <div id="17862140" class="cell" data-execution_count="20">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cross_section_z(values):</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    v <span class="op">=</span> pd.DataFrame(values).astype(<span class="bu">float</span>)</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    mean <span class="op">=</span> v.mean(axis<span class="op">=</span><span class="dv">1</span>)</span>
@@ -2063,8 +2190,11 @@ s_{t,i}^{factor} = \beta_{t,i,MKT}z_{t,MKT} + \beta_{t,i,SMB}z_{t,SMB} + \beta_{
 <span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(cols):</span>
 <span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>            out.loc[date, b.index] <span class="op">=</span> b[cols].dot(z.loc[date, cols])</span>
 <span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="c2430e5e" class="cell" data-execution_count="21">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>s_factor <span class="op">=</span> factor_scores(beta, z_factor)</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>s_factor <span class="op">=</span> cross_section_z(s_factor)</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2088,6 +2218,7 @@ s_{t,i}^{factor} = \beta_{t,i,MKT}z_{t,MKT} + \beta_{t,i,SMB}z_{t,SMB} + \beta_{
 <span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2156,7 +2287,7 @@ s_{t,i}^{factor} = \beta_{t,i,MKT}z_{t,MKT} + \beta_{t,i,SMB}z_{t,SMB} + \beta_{
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="15_factor_investing_files/figure-html/cell-22-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="15_factor_investing_files/figure-html/cell-22-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="15_factor_investing_files/figure-html/cell-22-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2197,6 +2328,8 @@ s_{t,i}^{risk} = \sigma_{t,i}^{36m} + |DD_{t,i}^{12m}|
 \]</span></p>
 <p>Higher values mean the sector is riskier. Later, risk enters as a negative component in the dynamic score.</p>
 <div id="8be7e3cc" class="cell" data-execution_count="22">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> residual_strength(eps, window<span class="op">=</span><span class="dv">6</span>):</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(eps).astype(<span class="bu">float</span>).rolling(window).<span class="bu">sum</span>()</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -2212,8 +2345,11 @@ s_{t,i}^{risk} = \sigma_{t,i}^{36m} + |DD_{t,i}^{12m}|
 <span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>    peak <span class="op">=</span> nav.rolling(drawdown_window, min_periods<span class="op">=</span>drawdown_window).<span class="bu">max</span>()</span>
 <span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>    drawdown <span class="op">=</span> (nav <span class="op">/</span> peak <span class="op">-</span> <span class="fl">1.0</span>).clip(upper<span class="op">=</span><span class="fl">0.0</span>)</span>
 <span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> vol <span class="op">+</span> drawdown.<span class="bu">abs</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="69fe6738" class="cell" data-execution_count="23">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>raw_risk <span class="op">=</span> risk_penalty(sector_returns, vol_window<span class="op">=</span><span class="dv">36</span>, drawdown_window<span class="op">=</span><span class="dv">12</span>)</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>s_resid <span class="op">=</span> cross_section_z(residual_strength(eps, window<span class="op">=</span><span class="dv">6</span>))</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>s_trend <span class="op">=</span> cross_section_z(trend_strength(sector_returns, window<span class="op">=</span><span class="dv">12</span>, skip<span class="op">=</span><span class="dv">1</span>))</span>
@@ -2241,10 +2377,11 @@ s_{t,i}^{risk} = \sigma_{t,i}^{36m} + |DD_{t,i}^{12m}|
 <span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="15_factor_investing_files/figure-html/cell-24-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="15_factor_investing_files/figure-html/cell-24-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="15_factor_investing_files/figure-html/cell-24-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2270,6 +2407,8 @@ Spread_{t+1} = \frac{1}{N_{top}}\sum_{i\in Top}R_{t+1,i} - \frac{1}{N_{bottom}}\
 \]</span></p>
 <p>The validation weight rewards signals that have positive rank IC and positive active payoff. It also has caps so one noisy component can’t dominate.</p>
 <div id="621262aa" class="cell" data-execution_count="24">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rank_ic_series(score, future_returns):</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    vals <span class="op">=</span> []</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> date <span class="kw">in</span> score.index.intersection(future_returns.index):</span>
@@ -2437,6 +2576,7 @@ Spread_{t+1} = \frac{1}{N_{top}}\sum_{i\in Top}R_{t+1,i} - \frac{1}{N_{bottom}}\
 <span id="cb25-165"><a href="#cb25-165" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-166"><a href="#cb25-166" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb25-167"><a href="#cb25-167" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2612,7 +2752,7 @@ Spread_{t+1} = \frac{1}{N_{top}}\sum_{i\in Top}R_{t+1,i} - \frac{1}{N_{bottom}}\
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="15_factor_investing_files/figure-html/cell-25-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="15_factor_investing_files/figure-html/cell-25-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="15_factor_investing_files/figure-html/cell-25-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -2650,6 +2790,8 @@ Active_{t+1} = R_{t+1}^{top} - \bar{R}_{t+1}
 <p>A signal can have positive top-minus-bottom but weak top-versus-average if it mainly identifies losers rather than winners. For a long-only sector strategy, top-versus-average matters a lot.</p>
 <p><strong>Hit rate</strong> measures the fraction of periods where the spread is positive. A signal with 50% hit rate can still be useful if its winning months are larger than its losing months. So we don’t judge the signal only by hit rate.</p>
 <div id="7c6a0b68" class="cell" data-execution_count="25">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rank_ic_series(score, future_returns):</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    vals <span class="op">=</span> []</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> date <span class="kw">in</span> score.index.intersection(future_returns.index):</span>
@@ -2696,8 +2838,11 @@ Active_{t+1} = R_{t+1}^{top} - \bar{R}_{t+1}
 <span id="cb26-44"><a href="#cb26-44" aria-hidden="true" tabindex="-1"></a>            }</span>
 <span id="cb26-45"><a href="#cb26-45" aria-hidden="true" tabindex="-1"></a>        )</span>
 <span id="cb26-46"><a href="#cb26-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(rows).set_index(<span class="st">"signal"</span>), pd.DataFrame(ic_series), spreads, top_active</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="cd6e72f1" class="cell" data-execution_count="26">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>signals <span class="op">=</span> {</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"s_factor"</span>: s_factor,</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"s_resid"</span>: s_resid,</span>
@@ -2708,6 +2853,7 @@ Active_{t+1} = R_{t+1}^{top} - \bar{R}_{t+1}
 <span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>validation_table, ic_history, spread_map, active_map <span class="op">=</span> signal_validation(signals, future_returns, top_n<span class="op">=</span><span class="dv">4</span>, bottom_n<span class="op">=</span><span class="dv">4</span>)</span>
 <span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>display(validation_table.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2778,6 +2924,8 @@ Active_{t+1} = R_{t+1}^{top} - \bar{R}_{t+1}
 <h3 class="anchored" data-anchor-id="signal-decay-across-horizons">7.1 Signal Decay Across Horizons</h3>
 <p>The signal decay table checks whether a score is only a one-month effect or whether it survives over longer holding periods.</p>
 <div id="5162650e" class="cell" data-execution_count="27">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> signal_decay(scores, returns, horizons<span class="op">=</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">6</span>), top_n<span class="op">=</span><span class="dv">4</span>):</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> h <span class="kw">in</span> horizons:</span>
@@ -2811,6 +2959,7 @@ Active_{t+1} = R_{t+1}^{top} - \bar{R}_{t+1}
 <span id="cb28-31"><a href="#cb28-31" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb28-32"><a href="#cb28-32" aria-hidden="true" tabindex="-1"></a>decay_table <span class="op">=</span> signal_decay(signals, sector_returns, horizons<span class="op">=</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">6</span>), top_n<span class="op">=</span><span class="dv">4</span>)</span>
 <span id="cb28-33"><a href="#cb28-33" aria-hidden="true" tabindex="-1"></a>display(decay_table.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2938,6 +3087,8 @@ Active_{t+1} = R_{t+1}^{top} - \bar{R}_{t+1}
 </div>
 </div>
 <div id="cd0ef4ca" class="cell" data-execution_count="28">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">19</span>, <span class="fl">4.5</span>))</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>ic_history.rolling(<span class="dv">24</span>).mean().plot(ax<span class="op">=</span>axes[<span class="dv">0</span>], lw<span class="op">=</span><span class="fl">1.2</span>)</span>
@@ -2956,10 +3107,11 @@ Active_{t+1} = R_{t+1}^{top} - \bar{R}_{t+1}
 <span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="15_factor_investing_files/figure-html/cell-29-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="15_factor_investing_files/figure-html/cell-29-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="15_factor_investing_files/figure-html/cell-29-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3012,6 +3164,8 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 <p>The min/max constraints also matter. A 2% minimum keeps every sector represented, which reduces the chance of completely missing a sudden reversal. A 25% maximum prevents one sector from dominating. The turnover limit makes the strategy more realistic because it doesn’t let weights instantly jump from one month to the next.</p>
 <p>The SHY risk overlay is conservative. It doesn’t try to time the entire equity market. It only allows cash-like exposure when broad sector risk is elevated relative to its own history.</p>
 <div id="bf09a03f" class="cell" data-execution_count="29">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> soft_active_weights(</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    scores,</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    returns,</span>
@@ -3070,8 +3224,11 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 <span id="cb30-56"><a href="#cb30-56" aria-hidden="true" tabindex="-1"></a>        out.loc[date] <span class="op">=</span> target</span>
 <span id="cb30-57"><a href="#cb30-57" aria-hidden="true" tabindex="-1"></a>        prev <span class="op">=</span> target</span>
 <span id="cb30-58"><a href="#cb30-58" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="d2ad146f" class="cell" data-execution_count="30">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>score_dates <span class="op">=</span> s_total.dropna(how<span class="op">=</span><span class="st">"all"</span>).index</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>backtest_cols <span class="op">=</span> sector_tickers <span class="op">+</span> [cash_ticker, benchmark_ticker]</span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>backtest_returns <span class="op">=</span> monthly_returns[backtest_cols].loc[common_dates]</span>
@@ -3097,8 +3254,11 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 <span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>weights <span class="op">=</span> {name: w.reindex(index<span class="op">=</span>backtest_dates, columns<span class="op">=</span>backtest_cols).fillna(<span class="fl">0.0</span>) <span class="cf">for</span> name, w <span class="kw">in</span> weights.items()}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="dbe79ebe" class="cell" data-execution_count="31">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>latest_weights <span class="op">=</span> pd.concat({name: w.iloc[<span class="op">-</span><span class="dv">1</span>] <span class="cf">for</span> name, w <span class="kw">in</span> weights.items()}, axis<span class="op">=</span><span class="dv">1</span>).fillna(<span class="fl">0.0</span>)</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>display(latest_weights.loc[latest_weights.<span class="bu">abs</span>().<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>).gt(<span class="dv">0</span>)].<span class="bu">round</span>(<span class="dv">3</span>))</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -3115,6 +3275,7 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 <span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, ax<span class="op">=</span>ax, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span>
 <span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3248,7 +3409,7 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="15_factor_investing_files/figure-html/cell-32-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="15_factor_investing_files/figure-html/cell-32-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="15_factor_investing_files/figure-html/cell-32-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3263,6 +3424,8 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 <h2 class="anchored" data-anchor-id="backtest-results-and-portfolio-evaluation">9) Backtest Results and Portfolio Evaluation</h2>
 <p>The backtest tables and plots evaluate whether the factor scores survive transaction costs, turnover limits, next-close timing, and realistic diversification controls.</p>
 <div id="8382baa0" class="cell" data-execution_count="32">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>w_max <span class="op">=</span> pd.Series(<span class="fl">0.25</span>, index<span class="op">=</span>backtest_cols)</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>w_max[cash_ticker] <span class="op">=</span> <span class="fl">1.0</span></span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>w_max[benchmark_ticker] <span class="op">=</span> <span class="fl">1.0</span></span>
@@ -3281,6 +3444,7 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 <span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>display(summary.<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a>display(trade_summary[[<span class="st">"Avg Turnover"</span>, <span class="st">"Total Turnover"</span>, <span class="st">"Total Costs"</span>, <span class="st">"Cost Drag"</span>, <span class="st">"Effective N"</span>]].<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3525,6 +3689,8 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 <p>Effective N is around 9.0 for the active sector models, compared with 11 for equal weight and 1 for SPY. This tells us the strategy remains diversified. It isn’t simply making one or two large sector bets. That matters because sector rotation can easily overfit if it concentrates too aggressively in recent winners.</p>
 <p>The combination of lower volatility, lower drawdown, and effective N around 9 suggests the model is acting like a controlled tilt engine rather than a high-conviction timing system.</p>
 <div id="24fe911e" class="cell" data-execution_count="33">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>nav <span class="op">=</span> pd.DataFrame({name: result.net_values <span class="cf">for</span> name, result <span class="kw">in</span> results.items()})</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>net_returns <span class="op">=</span> pd.DataFrame({name: result.net_returns <span class="cf">for</span> name, result <span class="kw">in</span> results.items()})</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>turnover <span class="op">=</span> pd.DataFrame({name: result.turnover <span class="cf">for</span> name, result <span class="kw">in</span> results.items()})</span>
@@ -3559,10 +3725,11 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 <span id="cb34-32"><a href="#cb34-32" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">5</span>].axis(<span class="st">"off"</span>)</span>
 <span id="cb34-33"><a href="#cb34-33" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb34-34"><a href="#cb34-34" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="15_factor_investing_files/figure-html/cell-34-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="15_factor_investing_files/figure-html/cell-34-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="15_factor_investing_files/figure-html/cell-34-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3572,6 +3739,8 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 <p>The rolling 12-month return plot shows that SPY dominates during strong growth-led markets. The rolling active return versus SPY is often negative during those periods, especially when the model underweights technology. That is a real limitation. A factor rotation model that penalizes growth-style exposure can lag badly when mega-cap growth leads the entire market.</p>
 <p>The turnover panel confirms that active strategies trade regularly but not explosively. Turnover spikes around regime shifts, which is expected because factor states and sector ranks change fastest during stress and recovery periods.</p>
 <div id="bc1fe137" class="cell" data-execution_count="34">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>stress_windows <span class="op">=</span> {</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2018 Q4"</span>: (<span class="st">"2018-10-01"</span>, <span class="st">"2018-12-31"</span>),</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2020 COVID crash"</span>: (<span class="st">"2020-02-01"</span>, <span class="st">"2020-03-31"</span>),</span>
@@ -3591,6 +3760,7 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 <span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a>stress_table <span class="op">=</span> pd.DataFrame(stress_rows)</span>
 <span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>display(stress_table.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3651,6 +3821,8 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 </div>
 </div>
 <div id="932e984f" class="cell" data-execution_count="35">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>final_name <span class="op">=</span> <span class="st">"Factor + Residual + Trend - Risk"</span></span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>final_weights <span class="op">=</span> results[final_name].weights.reindex(columns<span class="op">=</span>backtest_cols).fillna(<span class="fl">0.0</span>)</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -3663,6 +3835,7 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 <span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>display(avg_exposure.<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>display(sector_contribution.<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>display(pd.concat({<span class="st">"best"</span>: best_months, <span class="st">"worst"</span>: worst_months}, axis<span class="op">=</span><span class="dv">0</span>).<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3871,6 +4044,8 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 \]</span></p>
 <p>where <span class="math inline">\(W_t\)</span> is the portfolio weight vector and <span class="math inline">\(B_t\)</span> is the matrix of sector betas. This tells us what kind of factor portfolio the final strategy has become after selecting sector weights.</p>
 <div id="3824cf97" class="cell" data-execution_count="36">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> portfolio_factor_exposure(weights, beta):</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>    W <span class="op">=</span> pd.DataFrame(weights).astype(<span class="bu">float</span>)</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    assets <span class="op">=</span> beta.columns.get_level_values(<span class="st">"asset"</span>).unique()</span>
@@ -3886,8 +4061,11 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 <span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(common):</span>
 <span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>            out.loc[date] <span class="op">=</span> w.reindex(common).dot(b.reindex(common))</span>
 <span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="7061eb58" class="cell" data-execution_count="37">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>latest_date <span class="op">=</span> w_final.dropna(how<span class="op">=</span><span class="st">"all"</span>).index[<span class="op">-</span><span class="dv">1</span>]</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>latest_factor_states <span class="op">=</span> z_factor.loc[latest_date].sort_values(ascending<span class="op">=</span><span class="va">False</span>).to_frame(<span class="st">"state"</span>)</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>latest_sector_scores <span class="op">=</span> pd.concat(</span>
@@ -3913,6 +4091,7 @@ a_{t,i} = B \cdot \frac{\tilde{s}_{t,i}}{\sum_j |\tilde{s}_{t,j}|}
 <span id="cb38-23"><a href="#cb38-23" aria-hidden="true" tabindex="-1"></a>display(latest_final_weights[latest_final_weights[<span class="st">"weight"</span>].gt(<span class="dv">0</span>)].<span class="bu">round</span>(<span class="dv">3</span>))</span>
 <span id="cb38-24"><a href="#cb38-24" aria-hidden="true" tabindex="-1"></a>display(latest_final_beta.<span class="bu">round</span>(<span class="dv">3</span>))</span>
 <span id="cb38-25"><a href="#cb38-25" aria-hidden="true" tabindex="-1"></a>display(active_vs_equal.<span class="bu">round</span>(<span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4351,6 +4530,8 @@ R_{country}^{USD} \approx R_{local\ equity} + R_{currency} + \text{interaction t
 <p>The sector composition also differs. Switzerland has large health care and staples exposure, Australia and Canada have financials and commodities, Germany has cyclicals and exporters, Hong Kong has financial/property/China sensitivity, and Japan has exporters, industrials, financials, and currency-sensitive companies.</p>
 <p>This means a developed ex-U.S. country factor score is not as clean as a U.S. sector factor score. The same <span class="math inline">\(HML\)</span> or <span class="math inline">\(SMB\)</span> state can show up differently across countries because local indices have different sector weights and currency exposures. That is why the residual component performs strongly in the secondary results.</p>
 <div id="dadbf789" class="cell" data-execution_count="38">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -4699,6 +4880,7 @@ R_{country}^{USD} \approx R_{local\ equity} + R_{currency} + \text{interaction t
 <span id="cb39-346"><a href="#cb39-346" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Final Strategy Rolling Factor Exposure"</span>,</span>
 <span id="cb39-347"><a href="#cb39-347" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb39-348"><a href="#cb39-348" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5333,14 +5515,14 @@ R_{country}^{USD} \approx R_{local\ equity} + R_{currency} + \text{interaction t
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="15_factor_investing_files/figure-html/cell-39-output-8.png" class="img-fluid figure-img"></p>
+<p><a href="15_factor_investing_files/figure-html/cell-39-output-8.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="15_factor_investing_files/figure-html/cell-39-output-8.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="15_factor_investing_files/figure-html/cell-39-output-9.png" class="img-fluid figure-img"></p>
+<p><a href="15_factor_investing_files/figure-html/cell-39-output-9.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13"><img src="15_factor_investing_files/figure-html/cell-39-output-9.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5485,6 +5667,57 @@ R_{country}^{USD} \approx R_{local\ equity} + R_{currency} + \text{interaction t
         container: window.document.getElementById('quarto-embedded-source-code-modal')
       });
       clipboardModal.on('success', onCopySuccess);
+    }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
     }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
@@ -5828,6 +6061,38 @@ R_{country}^{USD} \approx R_{local\ equity} + R_{currency} + \text{interaction t
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 

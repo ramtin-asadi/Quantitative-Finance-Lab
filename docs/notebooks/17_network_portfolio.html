@@ -2,16 +2,13 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.9.38">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>17. Network-Aware Portfolio Construction – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
 div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -72,14 +69,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/16_regime_switching_portfolio.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-2742fb78835d63aab0f7b12a43d3e825.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -112,7 +113,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <script type="text/javascript">
 const typesetMath = (el) => {
@@ -143,7 +144,7 @@ window.Quarto = {
 
 </head>
 
-<body class="nav-sidebar floating fullcontent quarto-light">
+<body class="nav-sidebar floating quarto-light">
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
@@ -292,13 +293,97 @@ window.Quarto = {
 </nav>
 <div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
 <!-- margin-sidebar -->
-    
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#a-graph-first-view-of-a-stock-market" id="toc-a-graph-first-view-of-a-stock-market" class="nav-link active" data-scroll-target="#a-graph-first-view-of-a-stock-market">A graph-first view of a stock market</a></li>
+  <li><a href="#network-matrices-and-diversification-intuition" id="toc-network-matrices-and-diversification-intuition" class="nav-link" data-scroll-target="#network-matrices-and-diversification-intuition">Network matrices and diversification intuition</a></li>
+  <li><a href="#setup-data-and-baseline-portfolios" id="toc-setup-data-and-baseline-portfolios" class="nav-link" data-scroll-target="#setup-data-and-baseline-portfolios">1) Setup, data, and baseline portfolios</a>
+  <ul class="collapse">
+  <li><a href="#imports-and-plotting-settings" id="toc-imports-and-plotting-settings" class="nav-link" data-scroll-target="#imports-and-plotting-settings">Imports and plotting settings</a></li>
+  <li><a href="#rolling-universe-design" id="toc-rolling-universe-design" class="nav-link" data-scroll-target="#rolling-universe-design">Rolling universe design</a></li>
+  <li><a href="#liquidity-and-graph-reliability" id="toc-liquidity-and-graph-reliability" class="nav-link" data-scroll-target="#liquidity-and-graph-reliability">Liquidity and graph reliability</a></li>
+  </ul></li>
+  <li><a href="#from-returns-to-dependence-matrices" id="toc-from-returns-to-dependence-matrices" class="nav-link" data-scroll-target="#from-returns-to-dependence-matrices">2) From returns to dependence matrices</a>
+  <ul class="collapse">
+  <li><a href="#matrix-geometry-behind-correlation-distance" id="toc-matrix-geometry-behind-correlation-distance" class="nav-link" data-scroll-target="#matrix-geometry-behind-correlation-distance">Matrix geometry behind correlation distance</a></li>
+  <li><a href="#shrinkage-as-network-noise-control" id="toc-shrinkage-as-network-noise-control" class="nav-link" data-scroll-target="#shrinkage-as-network-noise-control">Shrinkage as network noise control</a></li>
+  </ul></li>
+  <li><a href="#student-t-copula-tail-dependence" id="toc-student-t-copula-tail-dependence" class="nav-link" data-scroll-target="#student-t-copula-tail-dependence">3) Student-t copula tail dependence</a>
+  <ul class="collapse">
+  <li><a href="#pairwise-t-copula-likelihood" id="toc-pairwise-t-copula-likelihood" class="nav-link" data-scroll-target="#pairwise-t-copula-likelihood">Pairwise t-copula likelihood</a></li>
+  <li><a href="#tail-dependence-as-a-portfolio-object" id="toc-tail-dependence-as-a-portfolio-object" class="nav-link" data-scroll-target="#tail-dependence-as-a-portfolio-object">Tail dependence as a portfolio object</a></li>
+  <li><a href="#a-simple-tail-dependence-example" id="toc-a-simple-tail-dependence-example" class="nav-link" data-scroll-target="#a-simple-tail-dependence-example">A simple tail-dependence example</a></li>
+  </ul></li>
+  <li><a href="#adjacency-matrices-and-dense-networks" id="toc-adjacency-matrices-and-dense-networks" class="nav-link" data-scroll-target="#adjacency-matrices-and-dense-networks">4) Adjacency matrices and dense networks</a>
+  <ul class="collapse">
+  <li><a href="#edge-weights-edge-distances-and-graph-attributes" id="toc-edge-weights-edge-distances-and-graph-attributes" class="nav-link" data-scroll-target="#edge-weights-edge-distances-and-graph-attributes">Edge weights, edge distances, and graph attributes</a></li>
+  </ul></li>
+  <li><a href="#pmfg-and-mst-filtered-networks" id="toc-pmfg-and-mst-filtered-networks" class="nav-link" data-scroll-target="#pmfg-and-mst-filtered-networks">5) PMFG and MST filtered networks</a>
+  <ul class="collapse">
+  <li><a href="#filter-strength-and-information-loss" id="toc-filter-strength-and-information-loss" class="nav-link" data-scroll-target="#filter-strength-and-information-loss">Filter strength and information loss</a></li>
+  <li><a href="#pmfg-and-mst-effects-on-centrality-rankings" id="toc-pmfg-and-mst-effects-on-centrality-rankings" class="nav-link" data-scroll-target="#pmfg-and-mst-effects-on-centrality-rankings">PMFG and MST effects on centrality rankings</a></li>
+  <li><a href="#reading-filtered-network-plots" id="toc-reading-filtered-network-plots" class="nav-link" data-scroll-target="#reading-filtered-network-plots">Reading filtered network plots</a></li>
+  </ul></li>
+  <li><a href="#centrality-measures" id="toc-centrality-measures" class="nav-link" data-scroll-target="#centrality-measures">6) Centrality measures</a>
+  <ul class="collapse">
+  <li><a href="#degree-and-weighted-strength" id="toc-degree-and-weighted-strength" class="nav-link" data-scroll-target="#degree-and-weighted-strength">6.1 Degree and weighted strength</a></li>
+  <li><a href="#eigenvector-centrality" id="toc-eigenvector-centrality" class="nav-link" data-scroll-target="#eigenvector-centrality">6.2 Eigenvector centrality</a></li>
+  <li><a href="#betweenness-centrality" id="toc-betweenness-centrality" class="nav-link" data-scroll-target="#betweenness-centrality">6.3 Betweenness centrality</a></li>
+  <li><a href="#closeness-centrality" id="toc-closeness-centrality" class="nav-link" data-scroll-target="#closeness-centrality">6.4 Closeness centrality</a></li>
+  <li><a href="#combined-centrality" id="toc-combined-centrality" class="nav-link" data-scroll-target="#combined-centrality">6.5 Combined centrality</a></li>
+  <li><a href="#centrality-in-financial-language" id="toc-centrality-in-financial-language" class="nav-link" data-scroll-target="#centrality-in-financial-language">Centrality in financial language</a></li>
+  <li><a href="#centrality-scores-as-risk-exposures" id="toc-centrality-scores-as-risk-exposures" class="nav-link" data-scroll-target="#centrality-scores-as-risk-exposures">Centrality scores as risk exposures</a></li>
+  <li><a href="#crowding-and-shock-transmission" id="toc-crowding-and-shock-transmission" class="nav-link" data-scroll-target="#crowding-and-shock-transmission">Crowding and shock transmission</a></li>
+  </ul></li>
+  <li><a href="#rolling-centrality-through-time" id="toc-rolling-centrality-through-time" class="nav-link" data-scroll-target="#rolling-centrality-through-time">7) Rolling centrality through time</a>
+  <ul class="collapse">
+  <li><a href="#network-compression-during-stress" id="toc-network-compression-during-stress" class="nav-link" data-scroll-target="#network-compression-during-stress">Network compression during stress</a></li>
+  </ul></li>
+  <li><a href="#network-portfolio-construction" id="toc-network-portfolio-construction" class="nav-link" data-scroll-target="#network-portfolio-construction">8) Network portfolio construction</a>
+  <ul class="collapse">
+  <li><a href="#most-central-20" id="toc-most-central-20" class="nav-link" data-scroll-target="#most-central-20">8.1 Most Central 20</a></li>
+  <li><a href="#most-peripheral-20" id="toc-most-peripheral-20" class="nav-link" data-scroll-target="#most-peripheral-20">8.2 Most Peripheral 20</a></li>
+  <li><a href="#network-diversifier" id="toc-network-diversifier" class="nav-link" data-scroll-target="#network-diversifier">8.3 Network Diversifier</a></li>
+  <li><a href="#capped-normalization-in-portfolio-terms" id="toc-capped-normalization-in-portfolio-terms" class="nav-link" data-scroll-target="#capped-normalization-in-portfolio-terms">Capped normalization in portfolio terms</a></li>
+  </ul></li>
+  <li><a href="#choosing-the-network-specification" id="toc-choosing-the-network-specification" class="nav-link" data-scroll-target="#choosing-the-network-specification">9) Choosing the network specification</a>
+  <ul class="collapse">
+  <li><a href="#model-selection-risk-inside-network-portfolios" id="toc-model-selection-risk-inside-network-portfolios" class="nav-link" data-scroll-target="#model-selection-risk-inside-network-portfolios">Model-selection risk inside network portfolios</a></li>
+  </ul></li>
+  <li><a href="#backtest-comparison" id="toc-backtest-comparison" class="nav-link" data-scroll-target="#backtest-comparison">10) Backtest comparison</a>
+  <ul class="collapse">
+  <li><a href="#detailed-model-comparison" id="toc-detailed-model-comparison" class="nav-link" data-scroll-target="#detailed-model-comparison">Detailed model comparison</a></li>
+  <li><a href="#effective-number-and-concentration" id="toc-effective-number-and-concentration" class="nav-link" data-scroll-target="#effective-number-and-concentration">Effective number and concentration</a></li>
+  <li><a href="#return-volatility-drawdown-and-concentration-together" id="toc-return-volatility-drawdown-and-concentration-together" class="nav-link" data-scroll-target="#return-volatility-drawdown-and-concentration-together">Return, volatility, drawdown, and concentration together</a></li>
+  <li><a href="#holdings-correlation-as-a-direct-validation" id="toc-holdings-correlation-as-a-direct-validation" class="nav-link" data-scroll-target="#holdings-correlation-as-a-direct-validation">Holdings correlation as a direct validation</a></li>
+  </ul></li>
+  <li><a href="#risk-report-and-stress-windows" id="toc-risk-report-and-stress-windows" class="nav-link" data-scroll-target="#risk-report-and-stress-windows">11) Risk report and stress windows</a>
+  <ul class="collapse">
+  <li><a href="#tail-metrics-and-drawdown-duration" id="toc-tail-metrics-and-drawdown-duration" class="nav-link" data-scroll-target="#tail-metrics-and-drawdown-duration">Tail metrics and drawdown duration</a></li>
+  <li><a href="#stress-behavior-by-market-regime" id="toc-stress-behavior-by-market-regime" class="nav-link" data-scroll-target="#stress-behavior-by-market-regime">Stress behavior by market regime</a></li>
+  <li><a href="#centrality-through-the-stress-windows" id="toc-centrality-through-the-stress-windows" class="nav-link" data-scroll-target="#centrality-through-the-stress-windows">Centrality through the stress windows</a></li>
+  </ul></li>
+  <li><a href="#secondary-hkex-implementation" id="toc-secondary-hkex-implementation" class="nav-link" data-scroll-target="#secondary-hkex-implementation">12) Secondary HKEX implementation</a>
+  <ul class="collapse">
+  <li><a href="#hkex-network-interpretation" id="toc-hkex-network-interpretation" class="nav-link" data-scroll-target="#hkex-network-interpretation">HKEX network interpretation</a></li>
+  <li><a href="#hkex-comparison-to-the-nasdaq-result" id="toc-hkex-comparison-to-the-nasdaq-result" class="nav-link" data-scroll-target="#hkex-comparison-to-the-nasdaq-result">HKEX comparison to the NASDAQ result</a></li>
+  <li><a href="#hkex-stress-window-interpretation" id="toc-hkex-stress-window-interpretation" class="nav-link" data-scroll-target="#hkex-stress-window-interpretation">HKEX stress-window interpretation</a></li>
+  <li><a href="#full-project-interpretation" id="toc-full-project-interpretation" class="nav-link" data-scroll-target="#full-project-interpretation">Full project interpretation</a></li>
+  <li><a href="#practical-limitations-inside-the-same-framework" id="toc-practical-limitations-inside-the-same-framework" class="nav-link" data-scroll-target="#practical-limitations-inside-the-same-framework">Practical limitations inside the same framework</a></li>
+  <li><a href="#main-lesson-for-the-series" id="toc-main-lesson-for-the-series" class="nav-link" data-scroll-target="#main-lesson-for-the-series">Main lesson for the series</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-title">17. Network-Aware Portfolio Construction</span></h1>
+<div class="quarto-title-block"><div><h1 class="title"><span class="chapter-title">17. Network-Aware Portfolio Construction</span></h1><button type="button" class="btn code-tools-button dropdown-toggle" id="quarto-code-tools-menu" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi"></i> Code</button><ul class="dropdown-menu dropdown-menu-end" aria-labelelledby="quarto-code-tools-menu"><li><a id="quarto-show-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Show All Code</a></li><li><a id="quarto-hide-all-code" class="dropdown-item" href="javascript:void(0)" role="button">Hide All Code</a></li></ul></div></div>
 </div>
 
 
@@ -401,6 +486,8 @@ x^\top Lx = \frac{1}{2}\sum_{i,j}A_{ij}(x_i-x_j)^2
 <section id="imports-and-plotting-settings" class="level3">
 <h3 class="anchored" data-anchor-id="imports-and-plotting-settings">Imports and plotting settings</h3>
 <div id="2c148977" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:55:19.081894Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:55:19.081894Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:55:22.583206Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:55:22.581033Z&quot;}}" data-execution_count="1">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
@@ -452,6 +539,7 @@ x^\top Lx = \frac{1}{2}\sum_{i,j}A_{ij}(x_i-x_j)^2
 <span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>        <span class="st">"legend.fontsize"</span>: <span class="dv">7</span>,</span>
 <span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>    }</span>
 <span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="rolling-universe-design" class="level3">
@@ -468,6 +556,8 @@ x^\top Lx = \frac{1}{2}\sum_{i,j}A_{ij}(x_i-x_j)^2
 <p>The liquidity filter reduces this problem. By selecting the top 100 liquid names at each date, we make the graph more likely to reflect real market dependence rather than microstructure noise. This is especially important for peripheral portfolios. If we didn’t filter for liquidity, the peripheral portfolio could accidentally become a portfolio of stale-price artifacts.</p>
 <p>There is still a tradeoff. A top-100 NASDAQ universe mostly captures the liquid part of the market. It doesn’t fully represent the long tail of small stocks. But that is acceptable here because the project is about a tradable network strategy. A graph that includes every tiny illiquid stock may look richer, but it would be much less useful for a realistic portfolio.</p>
 <div id="52bd2e00" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:55:22.737035Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:55:22.736531Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:55:22.743872Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:55:22.743872Z&quot;}}" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>data_path <span class="op">=</span> Path(<span class="st">"../data"</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="kw">not</span> (data_path <span class="op">/</span> <span class="st">"nasdaq_close_volume.parquet"</span>).exists():</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    data_path <span class="op">=</span> Path(<span class="st">"data"</span>)</span>
@@ -483,8 +573,11 @@ x^\top Lx = \frac{1}{2}\sum_{i,j}A_{ij}(x_i-x_j)^2
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>annualization <span class="op">=</span> <span class="dv">252</span></span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>rf_annual <span class="op">=</span> <span class="fl">0.04</span></span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>rf_daily <span class="op">=</span> (<span class="fl">1.0</span> <span class="op">+</span> rf_annual) <span class="op">**</span> (<span class="fl">1.0</span> <span class="op">/</span> annualization) <span class="op">-</span> <span class="fl">1.0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="ff3f792a" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:55:22.797921Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:55:22.797921Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:12.015533Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:12.015533Z&quot;}}" data-execution_count="3">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>panel <span class="op">=</span> load_yfinance_panel(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    primary_path,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    fields<span class="op">=</span>(<span class="st">"close"</span>, <span class="st">"volume"</span>),</span>
@@ -516,8 +609,11 @@ x^\top Lx = \frac{1}{2}\sum_{i,j}A_{ij}(x_i-x_j)^2
 <span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    min_price<span class="op">=</span><span class="fl">1.0</span>,</span>
 <span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>rebalance_dates <span class="op">=</span> pd.DatetimeIndex([dt <span class="cf">for</span> dt <span class="kw">in</span> sampled_candidates <span class="cf">if</span> dt <span class="kw">in</span> universe_by_date])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="20428bb4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:12.413702Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:12.413702Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:12.443288Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:12.442282Z&quot;}}" data-execution_count="4">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>coverage <span class="op">=</span> pd.DataFrame(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    {</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"value"</span>: [</span>
@@ -540,6 +636,7 @@ x^\top Lx = \frac{1}{2}\sum_{i,j}A_{ij}(x_i-x_j)^2
 <span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>display(coverage)</span>
 <span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame({<span class="st">"rebalance_date"</span>: rebalance_dates.date}))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -740,6 +837,8 @@ x^\top Lx = \frac{1}{2}\sum_{i,j}A_{ij}(x_i-x_j)^2
 <li><strong>HRP</strong> enters because hierarchical risk allocation is naturally connected to dependence geometry, but we don’t re-explain HRP here.</li>
 </ul>
 <div id="6ec1bcf9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:12.578974Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:12.578974Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:18.444835Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:18.443487Z&quot;}}" data-execution_count="5">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> run_walkforward_grid(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>ret_d,</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    close<span class="op">=</span>close,</span>
@@ -775,8 +874,11 @@ x^\top Lx = \frac{1}{2}\sum_{i,j}A_{ij}(x_i-x_j)^2
 <span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>    w_min<span class="op">=</span>w_min,</span>
 <span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    w_max<span class="op">=</span>w_max,</span>
 <span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="9c7c640d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:18.594391Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:18.594391Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:18.611855Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:18.610679Z&quot;}}" data-execution_count="6">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>baseline_construction <span class="op">=</span> pd.DataFrame(</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    {</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"rebalance rows"</span>: [<span class="bu">len</span>(w_equal), <span class="bu">len</span>(w_minvar), <span class="bu">len</span>(w_hrp)],</span>
@@ -786,6 +888,7 @@ x^\top Lx = \frac{1}{2}\sum_{i,j}A_{ij}(x_i-x_j)^2
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>[<span class="st">"Equal Weight"</span>, <span class="st">"MinVar"</span>, <span class="st">"HRP"</span>],</span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>display(baseline_construction.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -913,6 +1016,8 @@ E\left[\lVert \hat{\Sigma}_{LW}-\Sigma\rVert_F^2\right] &lt; E\left[\lVert S-\Si
 <p>For a graph, this means the centrality scores are less likely to be driven by random sample noise. A stock becomes central because it has stable estimated dependence with other stocks, not because a few daily observations created an extreme sample correlation.</p>
 <p>This is especially important with 100 stocks. There are 4,950 pairwise relationships. Even if each estimate is only slightly noisy, the graph filter has thousands of chances to pick up false edges. Shrinkage is one of the safeguards against that.</p>
 <div id="41ca2390" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:18.675537Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:18.675537Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:18.685748Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:18.685748Z&quot;}}" data-execution_count="7">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> clean_window(returns):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> returns.<span class="bu">apply</span>(pd.to_numeric, errors<span class="op">=</span><span class="st">"coerce"</span>).replace([np.inf, <span class="op">-</span>np.inf], np.nan)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out.dropna(axis<span class="op">=</span><span class="dv">0</span>, how<span class="op">=</span><span class="st">"any"</span>).dropna(axis<span class="op">=</span><span class="dv">1</span>, how<span class="op">=</span><span class="st">"any"</span>).astype(<span class="bu">float</span>)</span>
@@ -939,15 +1044,21 @@ E\left[\lVert \hat{\Sigma}_{LW}-\Sigma\rVert_F^2\right] &lt; E\left[\lVert S-\Si
 <span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    ax.set_xticks([])</span>
 <span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    ax.set_yticks([])</span>
 <span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>    ax.figure.colorbar(image, ax<span class="op">=</span>ax, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="1a29867b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:18.746634Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:18.746634Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:18.787988Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:18.787988Z&quot;}}" data-execution_count="8">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>first_dt <span class="op">=</span> rebalance_dates[<span class="dv">0</span>]</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>first_names <span class="op">=</span> <span class="bu">list</span>(universe_by_date[first_dt][<span class="st">"tickers"</span>])</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>first_window <span class="op">=</span> clean_window(ret_d.loc[:first_dt, first_names].tail(lookback))</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>corr_first <span class="op">=</span> shrink_corr(first_window)</span>
 <span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>corr_dist_first <span class="op">=</span> corr_distance(corr_first)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="b7fa1370" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:18.846772Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:18.846772Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:19.154557Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:19.154557Z&quot;}}" data-execution_count="9">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>tri <span class="op">=</span> np.triu_indices_from(corr_first, k<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>corr_description <span class="op">=</span> pd.Series(</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    {</span>
@@ -966,6 +1077,7 @@ E\left[\lVert \hat{\Sigma}_{LW}-\Sigma\rVert_F^2\right] &lt; E\left[\lVert S-\Si
 <span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>matrix_heatmap(axes[<span class="dv">1</span>], corr_dist_first, <span class="st">"First Correlation Distance"</span>, <span class="st">"viridis_r"</span>)</span>
 <span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1010,7 +1122,7 @@ E\left[\lVert \hat{\Sigma}_{LW}-\Sigma\rVert_F^2\right] &lt; E\left[\lVert S-\Si
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="17_network_portfolio_files/figure-html/cell-10-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="17_network_portfolio_files/figure-html/cell-10-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="17_network_portfolio_files/figure-html/cell-10-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1114,6 +1226,8 @@ d_{ij}^{tail} = \sqrt{2(1-\lambda_{ij})}
 \]</span></p>
 <p>This mirrors the correlation distance. Strong tail dependence gives short distance. Weak tail dependence gives long distance. The resulting graph isn’t asking which stocks move together on average. It is asking which stocks share extreme-state risk.</p>
 <div id="2fe3007d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:19.313847Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:19.313847Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:19.336036Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:19.336036Z&quot;}}" data-execution_count="10">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pseudo_observations(returns):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    window <span class="op">=</span> clean_window(returns)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (window.rank(axis<span class="op">=</span><span class="dv">0</span>, method<span class="op">=</span><span class="st">"average"</span>) <span class="op">/</span> (<span class="bu">len</span>(window) <span class="op">+</span> <span class="fl">1.0</span>)).clip(<span class="fl">1e-6</span>, <span class="fl">1.0</span> <span class="op">-</span> <span class="fl">1e-6</span>)</span>
@@ -1173,15 +1287,21 @@ d_{ij}^{tail} = \sqrt{2(1-\lambda_{ij})}
 <span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> np.sqrt(np.clip(<span class="fl">2.0</span> <span class="op">*</span> (<span class="fl">1.0</span> <span class="op">-</span> dependence.to_numpy()), <span class="fl">0.0</span>, <span class="fl">2.0</span>))</span>
 <span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a>    np.fill_diagonal(values, <span class="fl">0.0</span>)</span>
 <span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(values, index<span class="op">=</span>dependence.index, columns<span class="op">=</span>dependence.columns)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="d304e69d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:19.397894Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:19.396933Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:22.495721Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:22.494627Z&quot;}}" data-execution_count="11">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>u_first <span class="op">=</span> pseudo_observations(first_window)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>rho_t_first <span class="op">=</span> kendall_to_t_copula_corr(u_first)</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>nu_first, nu_scores_first <span class="op">=</span> select_t_copula_nu(u_first)</span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>tail_first <span class="op">=</span> student_t_tail_dependence(rho_t_first, nu_first)</span>
 <span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>tail_dist_first <span class="op">=</span> dependence_to_distance(tail_first)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="b3f6a373" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:22.651647Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:22.651647Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:23.161777Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:23.160280Z&quot;}}" data-execution_count="12">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>tri <span class="op">=</span> np.triu_indices_from(tail_first, k<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>display(nu_scores_first.to_frame().<span class="bu">round</span>(<span class="dv">4</span>))</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>display(</span>
@@ -1200,6 +1320,7 @@ d_{ij}^{tail} = \sqrt{2(1-\lambda_{ij})}
 <span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>matrix_heatmap(axes[<span class="dv">1</span>], tail_dist_first, <span class="st">"First Tail-Dependence Distance"</span>, <span class="st">"viridis_r"</span>)</span>
 <span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1265,7 +1386,7 @@ d_{ij}^{tail} = \sqrt{2(1-\lambda_{ij})}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="17_network_portfolio_files/figure-html/cell-13-output-3.png" class="img-fluid figure-img"></p>
+<p><a href="17_network_portfolio_files/figure-html/cell-13-output-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2"><img src="17_network_portfolio_files/figure-html/cell-13-output-3.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1311,6 +1432,8 @@ A_{ij} = \begin{cases}
 <p>For a simple three-stock example, suppose A and B are highly correlated, B and C are moderately correlated, and A and C are weakly correlated. The graph may decide that the shortest path from A to C goes through B. If B lies on many such paths, betweenness centrality rises. That is how bridge stocks appear.</p>
 <p>The dense graph contains all such paths, but because all pairs are connected directly, path-based centrality can become less informative. Filtering with MST or PMFG makes shortest-path structure more meaningful.</p>
 <div id="88a5e32d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:23.328833Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:23.328337Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:23.350775Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:23.349285Z&quot;}}" data-execution_count="13">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dependence_adjacency(dependence):</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    adjacency <span class="op">=</span> dependence.clip(lower<span class="op">=</span><span class="fl">0.0</span>).copy()</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> adjacency.to_numpy(copy<span class="op">=</span><span class="va">True</span>)</span>
@@ -1364,14 +1487,20 @@ A_{ij} = \begin{cases}
 <span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a>    ax.set_title(title)</span>
 <span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a>    ax.set_axis_off()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="f35bd61b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:23.422295Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:23.422295Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:24.177224Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:24.175958Z&quot;}}" data-execution_count="14">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>corr_adjacency_first <span class="op">=</span> dependence_adjacency(corr_first)</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>tail_adjacency_first <span class="op">=</span> dependence_adjacency(tail_first)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>corr_dense_first <span class="op">=</span> dense_network(corr_adjacency_first, corr_dist_first)</span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>tail_dense_first <span class="op">=</span> dense_network(tail_adjacency_first, tail_dist_first)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="99b0bfc3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:24.337426Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:24.337426Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:26.483575Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:26.481013Z&quot;}}" data-execution_count="15">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">4</span>))</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>matrix_heatmap(axes[<span class="dv">0</span>], corr_adjacency_first, <span class="st">"Correlation Adjacency"</span>, <span class="st">"plasma"</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>matrix_heatmap(axes[<span class="dv">1</span>], tail_adjacency_first, <span class="st">"Tail-Dependence Adjacency"</span>, <span class="st">"plasma"</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>)</span>
@@ -1393,17 +1522,18 @@ A_{ij} = \begin{cases}
 <span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="17_network_portfolio_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="17_network_portfolio_files/figure-html/cell-16-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3"><img src="17_network_portfolio_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="17_network_portfolio_files/figure-html/cell-16-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="17_network_portfolio_files/figure-html/cell-16-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4"><img src="17_network_portfolio_files/figure-html/cell-16-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1510,6 +1640,8 @@ A_{ij} = \begin{cases}
 <p>But visual layout is only an aid. Spring layouts aren’t unique; if we rerun the layout with a different seed, the exact picture can rotate or stretch. The reliable information is in the graph object: edge weights, edge distances, and centrality scores. That is why the project doesn’t build portfolios from where the node appears in the drawing. It builds portfolios from numeric centrality.</p>
 <p>The drawings help the reader understand the graph, but the backtest uses the actual matrices and network measures. This separation is important. Good visualizations are teaching tools; the portfolio needs reproducible numeric signals.</p>
 <div id="f8000788" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:26.682792Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:26.682792Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:26.697150Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:26.696148Z&quot;}}" data-execution_count="16">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pmfg_network(adjacency, distance):</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    names <span class="op">=</span> <span class="bu">list</span>(adjacency.index)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    graph <span class="op">=</span> nx.Graph()</span>
@@ -1591,8 +1723,11 @@ A_{ij} = \begin{cases}
 <span id="cb16-79"><a href="#cb16-79" aria-hidden="true" tabindex="-1"></a>                distance<span class="op">=</span><span class="bu">max</span>(<span class="bu">float</span>(distance.iat[i, j]), <span class="fl">1e-8</span>),</span>
 <span id="cb16-80"><a href="#cb16-80" aria-hidden="true" tabindex="-1"></a>            )</span>
 <span id="cb16-81"><a href="#cb16-81" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> nx.minimum_spanning_tree(candidate, weight<span class="op">=</span><span class="st">"distance"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="167ef5ce" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:26.787362Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:26.786359Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:30.574451Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:30.574451Z&quot;}}" data-execution_count="17">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>corr_networks_first <span class="op">=</span> {</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"PMFG"</span>: pmfg_network(corr_adjacency_first, corr_dist_first),</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MST"</span>: mst_network(corr_adjacency_first, corr_dist_first),</span>
@@ -1613,6 +1748,7 @@ A_{ij} = \begin{cases}
 <span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>[<span class="st">"nodes"</span>, <span class="st">"edges"</span>, <span class="st">"planar"</span>],</span>
 <span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>).T</span>
 <span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>display(network_sizes)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1670,6 +1806,8 @@ A_{ij} = \begin{cases}
 </div>
 </div>
 <div id="abb557fc" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:30.746651Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:30.746651Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:31.155443Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:31.155443Z&quot;}}" data-execution_count="18">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">14</span>, <span class="dv">5</span>))</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>corr_positions <span class="op">=</span> nx.spring_layout(corr_networks_first[<span class="st">"PMFG"</span>], seed<span class="op">=</span><span class="dv">17</span>, weight<span class="op">=</span><span class="st">"weight"</span>)</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, (label, graph) <span class="kw">in</span> <span class="bu">zip</span>(axes, corr_networks_first.items()):</span>
@@ -1683,17 +1821,18 @@ A_{ij} = \begin{cases}
 <span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    draw_network(ax, graph, <span class="ss">f"Copula </span><span class="sc">{</span>label<span class="sc">}</span><span class="ss"> | </span><span class="sc">{</span>graph<span class="sc">.</span>number_of_edges()<span class="sc">}</span><span class="ss"> edges"</span>, copula_positions)</span>
 <span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="17_network_portfolio_files/figure-html/cell-19-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="17_network_portfolio_files/figure-html/cell-19-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5"><img src="17_network_portfolio_files/figure-html/cell-19-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="17_network_portfolio_files/figure-html/cell-19-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="17_network_portfolio_files/figure-html/cell-19-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6"><img src="17_network_portfolio_files/figure-html/cell-19-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1793,6 +1932,8 @@ C_i^{combined} = \text{scale}_{0,1}\left(\frac{1}{4}\sum_{m\in M}\text{rankpct}\
 <p>where the arrows aren’t causal proof, but dependence channels. If stock <span class="math inline">\(j\)</span> lies on many shortest paths, it may be a bridge between groups. If stock <span class="math inline">\(i\)</span> has high eigenvector centrality, it is embedded in an important neighborhood. These graph roles aren’t causal structural models, but they are useful summaries of how shocks are likely to spread through returns.</p>
 <p>This is why the project uses multiple centrality measures. A crowded central stock and a bridge stock are both important, but for different reasons. Degree and eigenvector capture crowding inside the core. Betweenness captures path importance. Closeness captures geometric nearness to the whole graph.</p>
 <div id="f578a1c0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:31.329741Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:31.329741Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:31.351801Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:31.351801Z&quot;}}" data-execution_count="19">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> scale_01(values):</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(values, pd.DataFrame):</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> values.<span class="bu">apply</span>(scale_01)</span>
@@ -1844,8 +1985,11 @@ C_i^{combined} = \text{scale}_{0,1}\left(\frac{1}{4}\sum_{m\in M}\text{rankpct}\
 <span id="cb19-49"><a href="#cb19-49" aria-hidden="true" tabindex="-1"></a>    ax.set_yticks(<span class="bu">range</span>(<span class="bu">len</span>(frame.index)))</span>
 <span id="cb19-50"><a href="#cb19-50" aria-hidden="true" tabindex="-1"></a>    ax.set_yticklabels(frame.index.astype(<span class="bu">str</span>), fontsize<span class="op">=</span><span class="dv">6</span>)</span>
 <span id="cb19-51"><a href="#cb19-51" aria-hidden="true" tabindex="-1"></a>    ax.figure.colorbar(image, ax<span class="op">=</span>ax, fraction<span class="op">=</span><span class="fl">0.046</span>, pad<span class="op">=</span><span class="fl">0.04</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="a43c701f" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:31.413612Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:31.413612Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:56:32.098838Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:56:32.098838Z&quot;}}" data-execution_count="20">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>first_centralities <span class="op">=</span> {</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"correlation"</span>, <span class="st">"pmfg"</span>): centrality_table(corr_networks_first[<span class="st">"PMFG"</span>]),</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"correlation"</span>, <span class="st">"mst"</span>): centrality_table(corr_networks_first[<span class="st">"MST"</span>]),</span>
@@ -1866,6 +2010,7 @@ C_i^{combined} = \text{scale}_{0,1}\left(\frac{1}{4}\sum_{m\in M}\text{rankpct}\
 <span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>    frame_heatmap(ax, shown, <span class="ss">f"First </span><span class="sc">{</span>key[<span class="dv">0</span>]<span class="sc">.</span>title()<span class="sc">}</span><span class="ss"> PMFG Centrality"</span>)</span>
 <span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -1924,7 +2069,7 @@ C_i^{combined} = \text{scale}_{0,1}\left(\frac{1}{4}\sum_{m\in M}\text{rankpct}\
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="17_network_portfolio_files/figure-html/cell-21-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="17_network_portfolio_files/figure-html/cell-21-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7"><img src="17_network_portfolio_files/figure-html/cell-21-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -1948,6 +2093,8 @@ C_i^{combined} = \text{scale}_{0,1}\left(\frac{1}{4}\sum_{m\in M}\text{rankpct}\
 </ol>
 <p>This gives a time series of network structures. The rolling design is important because the identity of the market center changes. In calm growth markets, mega-cap tech and semiconductors may dominate the centrality rankings. During stress, correlation and tail dependence can rise across the whole universe, and the network can become more compressed.</p>
 <div id="ac8d2720" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:56:32.128757Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:56:32.128757Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:57:30.499553Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:57:30.499553Z&quot;}}" data-execution_count="21">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>correlation_store <span class="op">=</span> {}</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> dt <span class="kw">in</span> rebalance_dates:</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    names <span class="op">=</span> <span class="bu">list</span>(universe_by_date[dt][<span class="st">"tickers"</span>])</span>
@@ -1969,8 +2116,11 @@ C_i^{combined} = \text{scale}_{0,1}\left(\frac{1}{4}\sum_{m\in M}\text{rankpct}\
 <span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>        <span class="st">"graphs"</span>: graphs,</span>
 <span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">"centralities"</span>: {name: centrality_table(graph) <span class="cf">for</span> name, graph <span class="kw">in</span> graphs.items()},</span>
 <span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>    }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="461e0649" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:57:30.525991Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:57:30.525991Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:57:30.550578Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:57:30.550578Z&quot;}}" data-execution_count="22">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>display(</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    pd.DataFrame(</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>        {</span>
@@ -1981,6 +2131,7 @@ C_i^{combined} = \text{scale}_{0,1}\left(\frac{1}{4}\sum_{m\in M}\text{rankpct}\
 <span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>        index<span class="op">=</span>[<span class="st">"rolling correlation centralities"</span>],</span>
 <span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    ).<span class="bu">round</span>(<span class="dv">1</span>)</span>
 <span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2008,6 +2159,8 @@ C_i^{combined} = \text{scale}_{0,1}\left(\frac{1}{4}\sum_{m\in M}\text{rankpct}\
 </div>
 </div>
 <div id="74237802" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:57:30.643154Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:57:30.643154Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:59:57.183050Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:59:57.181944Z&quot;}}" data-execution_count="23">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>copula_store <span class="op">=</span> {}</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> dt, correlation_record <span class="kw">in</span> correlation_store.items():</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    window <span class="op">=</span> correlation_record[<span class="st">"window"</span>]</span>
@@ -2046,8 +2199,11 @@ C_i^{combined} = \text{scale}_{0,1}\left(\frac{1}{4}\sum_{m\in M}\text{rankpct}\
 <span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a>        },</span>
 <span id="cb23-37"><a href="#cb23-37" aria-hidden="true" tabindex="-1"></a>    }</span>
 <span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a>model_dates <span class="op">=</span> pd.DatetimeIndex(<span class="bu">sorted</span>(network_store))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="1da57171" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:59:58.955823Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:59:58.955823Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:59:58.998167Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:59:58.998167Z&quot;}}" data-execution_count="24">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>copula_diagnostics <span class="op">=</span> pd.DataFrame(</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    {</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>        <span class="st">"nu"</span>: {dt: record[<span class="st">"nu"</span>] <span class="cf">for</span> dt, record <span class="kw">in</span> copula_store.items()},</span>
@@ -2066,6 +2222,7 @@ C_i^{combined} = \text{scale}_{0,1}\left(\frac{1}{4}\sum_{m\in M}\text{rankpct}\
 <span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>display(pd.DataFrame({<span class="st">"centrality preview"</span>: [<span class="st">"Latest copula PMFG combined centrality"</span>]}))</span>
 <span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>display(latest_centrality.sort_values(<span class="st">"combined"</span>, ascending<span class="op">=</span><span class="va">False</span>).head(<span class="dv">20</span>).<span class="bu">round</span>(<span class="dv">3</span>))</span>
 <span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>display(latest_centrality.sort_values(<span class="st">"combined"</span>, ascending<span class="op">=</span><span class="va">True</span>).head(<span class="dv">20</span>).<span class="bu">round</span>(<span class="dv">3</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2768,6 +2925,8 @@ w_i \le w_{max}
 <p>This means two stocks with the same network score don’t receive the same weight if one is much more volatile. The more volatile stock receives less capital. In financial terms, the model isn’t only selecting diversifiers; it is trying to size them with risk awareness.</p>
 <p>The drawdown penalty also matters. A peripheral stock with a deep drawdown might be disconnected because it has idiosyncratic problems, not because it is a clean diversifier. Penalizing drawdown avoids treating every isolated stock as attractive.</p>
 <div id="9b8faff3" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:59:59.035474Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:59:59.035013Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T13:59:59.047985Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T13:59:59.047985Z&quot;}}" data-execution_count="25">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> capped_normalize(raw, max_weight<span class="op">=</span><span class="fl">0.10</span>):</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> pd.Series(raw, dtype<span class="op">=</span><span class="bu">float</span>).clip(lower<span class="op">=</span><span class="fl">0.0</span>)</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> weights.<span class="bu">sum</span>() <span class="op">&lt;=</span> <span class="fl">1e-12</span>:</span>
@@ -2835,6 +2994,7 @@ w_i \le w_{max}
 <span id="cb25-65"><a href="#cb25-65" aria-hidden="true" tabindex="-1"></a>        corr <span class="op">=</span> window.corr().to_numpy()</span>
 <span id="cb25-66"><a href="#cb25-66" aria-hidden="true" tabindex="-1"></a>        rows[dt] <span class="op">=</span> <span class="bu">float</span>(np.nanmean(corr[np.triu_indices_from(corr, k<span class="op">=</span><span class="dv">1</span>)]))</span>
 <span id="cb25-67"><a href="#cb25-67" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.Series(rows)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
@@ -2855,6 +3015,8 @@ w_i \le w_{max}
 <p>This stability gate is important. A network method can overfit quickly because there are many ways to define centrality. Without a gate, the selector could chase noisy short-term winners. With the gate, the rolling choice only takes control when recent evidence is strong enough.</p>
 <p>The central portfolio is fixed to <code>central|copula|pmfg|combined</code>. That choice is coherent with the project’s goal: if we want the market’s central names, the copula PMFG combined score gives a broad tail-risk centrality measure with enough edges to be informative.</p>
 <div id="68584321" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T13:59:59.085606Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T13:59:59.085606Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T14:00:31.348583Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T14:00:31.347529Z&quot;}}" data-execution_count="26">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>comparison_weight_rows <span class="op">=</span> {}</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> dt <span class="kw">in</span> model_dates:</span>
@@ -2902,6 +3064,7 @@ w_i \le w_{max}
 <span id="cb26-45"><a href="#cb26-45" aria-hidden="true" tabindex="-1"></a>        }</span>
 <span id="cb26-46"><a href="#cb26-46" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb26-47"><a href="#cb26-47" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -2946,6 +3109,8 @@ w_i \le w_{max}
 <p>If the rolling evidence is weaker, the strategy uses a fixed training choice. This is a conservative design. It accepts that network centrality definitions are noisy. A method that wins over a short period but has weak Sharpe doesn’t automatically become the live method.</p>
 <p>This is a good pattern for research notebooks: when we have many plausible model variants, we need some defense against selection noise. The defense doesn’t make the backtest perfect, but it makes the logic more realistic than full-sample winner picking.</p>
 <div id="91136684" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T14:00:31.671428Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T14:00:31.671428Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T14:00:34.368693Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T14:00:34.368693Z&quot;}}" data-execution_count="27">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> parse_choice_name(name):</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    direction, dependence, network_type, measure <span class="op">=</span> name.split(<span class="st">"|"</span>)</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> direction, dependence, network_type, measure</span>
@@ -3147,6 +3312,7 @@ w_i \le w_{max}
 <span id="cb27-199"><a href="#cb27-199" aria-hidden="true" tabindex="-1"></a>frame_heatmap(axes[<span class="dv">1</span>], latest_network_weights.loc[latest_network_weights.<span class="bu">max</span>(axis<span class="op">=</span><span class="dv">1</span>).sort_values(ascending<span class="op">=</span><span class="va">False</span>).head(<span class="dv">30</span>).index], <span class="st">"Latest Network Weights"</span>, cmap<span class="op">=</span><span class="st">"Blues"</span>)</span>
 <span id="cb27-200"><a href="#cb27-200" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb27-201"><a href="#cb27-201" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -3600,7 +3766,7 @@ w_i \le w_{max}
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="17_network_portfolio_files/figure-html/cell-28-output-5.png" class="img-fluid figure-img"></p>
+<p><a href="17_network_portfolio_files/figure-html/cell-28-output-5.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8"><img src="17_network_portfolio_files/figure-html/cell-28-output-5.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -3664,6 +3830,8 @@ w_i \le w_{max}
 <p>The other clean comparison point is that all strategies are evaluated after trading costs. That matters because network strategies naturally rebalance more often than static or slow-moving baselines. A gross-performance table would make the network methods look better than they are. The costed comparison is more honest, especially because the Network Diversifier has meaningful turnover.</p>
 <p>The interpretation therefore has to stay tied to net returns, not only signal quality. A centrality signal that looks good before costs but disappears after costs wouldn’t be useful in a live portfolio. This is why the model comparison keeps turnover, cost drag, and effective N visible beside return metrics.</p>
 <div id="2d9af7d6" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T14:00:34.429080Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T14:00:34.429080Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T14:00:34.446980Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T14:00:34.446980Z&quot;}}" data-execution_count="28">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>common_index <span class="op">=</span> (</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    w_network.index.intersection(w_equal.index).intersection(w_minvar.index).intersection(w_hrp.index)</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -3684,8 +3852,11 @@ w_i \le w_{max}
 <span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Network Diversifier"</span>: w_network.reindex(index<span class="op">=</span>common_index, columns<span class="op">=</span>common_cols).fillna(<span class="fl">0.0</span>),</span>
 <span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>returns_for_backtest <span class="op">=</span> ret_d.reindex(columns<span class="op">=</span>common_cols).fillna(<span class="fl">0.0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="a66625fb" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T14:00:34.534942Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T14:00:34.534942Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T14:00:39.188848Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T14:00:39.188848Z&quot;}}" data-execution_count="29">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>results <span class="op">=</span> run_many_weights_backtests(</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    weights,</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    returns<span class="op">=</span>returns_for_backtest,</span>
@@ -3696,8 +3867,11 @@ w_i \le w_{max}
 <span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    weight_timing<span class="op">=</span><span class="st">"next_close"</span>,</span>
 <span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    rf_daily<span class="op">=</span>rf_daily,</span>
 <span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div id="e5b6edc7" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T14:00:39.217788Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T14:00:39.217788Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T14:00:41.682928Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T14:00:41.681823Z&quot;}}" data-execution_count="30">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>summary <span class="op">=</span> build_strategy_summary(results, rf_daily<span class="op">=</span>rf_daily, annualization<span class="op">=</span>annualization)</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>summary_columns <span class="op">=</span> [<span class="st">"CAGR"</span>, <span class="st">"Vol"</span>, <span class="st">"Sharpe"</span>, <span class="st">"Max Drawdown"</span>, <span class="st">"Calmar"</span>, <span class="st">"Turnover"</span>, <span class="st">"Cost Drag"</span>, <span class="st">"Effective N"</span>]</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>display(summary[summary_columns].<span class="bu">round</span>(<span class="dv">4</span>))</span>
@@ -3722,6 +3896,7 @@ w_i \le w_{max}
 <span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a>centrality_comparison <span class="op">=</span> pd.DataFrame(comparison_rows)</span>
 <span id="cb30-23"><a href="#cb30-23" aria-hidden="true" tabindex="-1"></a>display(selection_history.tail(<span class="dv">8</span>))</span>
 <span id="cb30-24"><a href="#cb30-24" aria-hidden="true" tabindex="-1"></a>display(selection_counts)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4084,6 +4259,8 @@ N_{eff}=20
 \]</span></p>
 <p>where <span class="math inline">\(m\)</span> is the number of active holdings.</p>
 <div id="c9d73df4" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T14:00:41.717174Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T14:00:41.717174Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T14:00:43.844807Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T14:00:43.844807Z&quot;}}" data-execution_count="31">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> comparison_heatmap(ax, frame, value, title):</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    plot_frame <span class="op">=</span> frame.copy()</span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    plot_frame[<span class="st">"setup"</span>] <span class="op">=</span> (</span>
@@ -4119,17 +4296,18 @@ N_{eff}=20
 <span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>comparison_heatmap(axes[<span class="dv">1</span>], centrality_comparison, <span class="st">"Max Drawdown"</span>, <span class="st">"Centrality Comparison: Max Drawdown"</span>)</span>
 <span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>fig.tight_layout()</span>
 <span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="17_network_portfolio_files/figure-html/cell-32-output-1.png" class="img-fluid figure-img"></p>
+<p><a href="17_network_portfolio_files/figure-html/cell-32-output-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="17_network_portfolio_files/figure-html/cell-32-output-1.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="17_network_portfolio_files/figure-html/cell-32-output-2.png" class="img-fluid figure-img"></p>
+<p><a href="17_network_portfolio_files/figure-html/cell-32-output-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10"><img src="17_network_portfolio_files/figure-html/cell-32-output-2.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4158,6 +4336,8 @@ ES_{5\%}=E[L\mid L\ge VaR_{5\%}]
 \]</span></p>
 <p>Expected shortfall is usually more informative because it tells us how bad losses are once we are already in the tail.</p>
 <div id="dc3b90b9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T14:00:43.888103Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T14:00:43.888103Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T14:00:44.718468Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T14:00:44.717973Z&quot;}}" data-execution_count="32">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>stress_windows <span class="op">=</span> {</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2018_q4"</span>: (<span class="st">"2018-10-01"</span>, <span class="st">"2018-12-31"</span>),</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"2020_covid"</span>: (<span class="st">"2020-02-20"</span>, <span class="st">"2020-04-30"</span>),</span>
@@ -4185,6 +4365,7 @@ ES_{5\%}=E[L\mid L\ge VaR_{5\%}]
 <span id="cb32-25"><a href="#cb32-25" aria-hidden="true" tabindex="-1"></a>    stress_settings<span class="op">=</span>{<span class="st">"windows"</span>: stress_windows, <span class="st">"worst_only"</span>: <span class="va">False</span>},</span>
 <span id="cb32-26"><a href="#cb32-26" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span>{<span class="st">"display_tables"</span>: <span class="va">True</span>, <span class="st">"show_figures"</span>: <span class="va">False</span>, <span class="st">"round_tables"</span>: <span class="dv">4</span>},</span>
 <span id="cb32-27"><a href="#cb32-27" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -4547,7 +4728,7 @@ ES_{5\%}=E[L\mid L\ge VaR_{5\%}]
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="17_network_portfolio_files/figure-html/cell-33-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="17_network_portfolio_files/figure-html/cell-33-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11"><img src="17_network_portfolio_files/figure-html/cell-33-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -4598,6 +4779,8 @@ ES_{5\%}=E[L\mid L\ge VaR_{5\%}]
 <p>That makes HKEX a useful second test. If a network model only works in NASDAQ because NASDAQ had a strong central tech rally, it may fail in HKEX. If the network diversifier still improves risk-adjusted performance, the graph idea is more portable.</p>
 <p>The secondary code uses the packaged <code>quantfinlab.portfolio.network</code> implementation for the same logic: shrinkage correlation, t-copula tail dependence, PMFG/MST, centrality tables, central/peripheral selection, network-diversifier scores, and risk reporting.</p>
 <div id="3cc57277" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-05-29T15:00:46.639553Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-05-29T15:00:46.639553Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-05-29T15:05:18.834165Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-05-29T15:05:18.834165Z&quot;}}" data-execution_count="2">
+<details class="code-fold">
+<summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -5104,6 +5287,7 @@ ES_{5\%}=E[L\mid L\ge VaR_{5\%}]
 <span id="cb33-504"><a href="#cb33-504" aria-hidden="true" tabindex="-1"></a>    output<span class="op">=</span>{<span class="st">"display_tables"</span>: <span class="va">True</span>, <span class="st">"show_figures"</span>: <span class="va">False</span>, <span class="st">"round_tables"</span>: <span class="dv">4</span>},</span>
 <span id="cb33-505"><a href="#cb33-505" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb33-506"><a href="#cb33-506" aria-hidden="true" tabindex="-1"></a>plt.close(<span class="st">"all"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-display">
 <div>
 
@@ -5408,7 +5592,7 @@ ES_{5\%}=E[L\mid L\ge VaR_{5\%}]
 <div class="cell-output cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="17_network_portfolio_files/figure-html/cell-34-output-4.png" class="img-fluid figure-img"></p>
+<p><a href="17_network_portfolio_files/figure-html/cell-34-output-4.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12"><img src="17_network_portfolio_files/figure-html/cell-34-output-4.png" class="img-fluid figure-img"></a></p>
 </figure>
 </div>
 </div>
@@ -5922,6 +6106,57 @@ R \rightarrow u_{t,i} \rightarrow \rho_{ij}^{copula} \rightarrow \lambda_{ij} \r
       });
       clipboardModal.on('success', onCopySuccess);
     }
+    const viewSource = window.document.getElementById('quarto-view-source') ||
+                       window.document.getElementById('quarto-code-tools-source');
+    if (viewSource) {
+      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
+      viewSource.addEventListener("click", function(e) {
+        if (sourceUrl) {
+          // rstudio viewer pane
+          if (/\bcapabilities=\b/.test(window.location)) {
+            window.open(sourceUrl);
+          } else {
+            window.location.href = sourceUrl;
+          }
+        } else {
+          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
+          modal.show();
+        }
+        return false;
+      });
+    }
+    function toggleCodeHandler(show) {
+      return function(e) {
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
+          if (show) {
+            details.open = true;
+          } else {
+            details.removeAttribute("open");
+          }
+        }
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
+        const fromCls = show ? "hidden" : "unhidden";
+        const toCls = show ? "unhidden" : "hidden";
+        for (let i=0; i<cellCodeDivs.length; i++) {
+          const codeDiv = cellCodeDivs[i];
+          if (codeDiv.classList.contains(fromCls)) {
+            codeDiv.classList.remove(fromCls);
+            codeDiv.classList.add(toCls);
+          } 
+        }
+        return false;
+      }
+    }
+    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
+    if (hideAllCode) {
+      hideAllCode.addEventListener("click", toggleCodeHandler(false));
+    }
+    const showAllCode = window.document.getElementById("quarto-show-all-code");
+    if (showAllCode) {
+      showAllCode.addEventListener("click", toggleCodeHandler(true));
+    }
       var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
       var mailtoRegex = new RegExp(/^mailto:/);
         var filterRegex = new RegExp('/' + window.location.host + '/');
@@ -6264,6 +6499,38 @@ R \rightarrow u_{t,i} \rightarrow \rho_{ij}^{copula} \rightarrow \lambda_{ij} \r
   </div>
 </nav>
 </div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
 
 
 
