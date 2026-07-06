@@ -4,7 +4,6 @@ import math
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -33,6 +32,22 @@ try:  # optional
     from IPython.display import display as ipy_display
 except Exception:  # pragma: no cover
     ipy_display = None
+
+
+def _require_risk_plotting():
+    try:
+        import matplotlib.pyplot as plt
+
+        from quantfinlab.plotting import risk as pl
+    except ModuleNotFoundError as exc:  # pragma: no cover - depends on optional extra
+        if exc.name and (exc.name == "matplotlib" or exc.name.startswith("matplotlib.")):
+            raise ImportError(
+                "risk_report figure generation requires matplotlib. "
+                "Install the plotting extra with `pip install quantfinlab[plotting]`."
+            ) from exc
+        raise
+    return plt, pl
+
 
 def _display_table(df: pd.DataFrame, *, round_digits: int = 4) -> None:
     show = df.round(int(round_digits)) if isinstance(df, pd.DataFrame) else df
@@ -107,8 +122,6 @@ def risk_report(
     layout: Mapping[str, Any] | None = None,
     output: Mapping[str, Any] | None = None,
 ) -> RiskReportArtifacts:
-    from quantfinlab.plotting import risk as pl
-
     raw_obj = _coerce_objects(objects)
     raw_names = list(raw_obj.keys())
 
@@ -179,6 +192,8 @@ def risk_report(
     }
     if output:
         output_cfg.update(dict(output))
+
+    plt, pl = _require_risk_plotting()
 
     if bool(output_cfg.get("short_labels", True)):
         label_map = pl.short_label_map(

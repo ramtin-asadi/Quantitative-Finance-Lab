@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pytest
 
 from quantfinlab.common.contracts import RiskReportArtifacts
 from quantfinlab.reports import executive_bullets, risk_report
+
+plt = pytest.importorskip("matplotlib.pyplot")
 
 
 def _report_returns() -> pd.DataFrame:
