@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from scipy import optimize
 
+from quantfinlab._optional import prefer_auto_engine
 from quantfinlab.calibration.fft_cos import calibration_weights, cos_group_arrays
 from quantfinlab.options import bsm
 from quantfinlab.options.fourier import cos_prices
@@ -57,6 +58,37 @@ def atm_skew_term_structure(
     tau_values=None,
     dk: float = 0.01,
 ) -> pd.DataFrame:
+    """Estimate the ATM implied-volatility skew term structure.
+
+    Skew can be computed from a fitted surface by symmetric finite differences around
+    ATM, or directly from quote slices by a local polynomial fit around zero
+    log-moneyness.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table.
+    fit : dict, optional
+        Fitted volatility surface used to evaluate skew smoothly.
+    k_col : str, default='k'
+        Log-moneyness column.
+    tau_col : str, default='tau'
+        Maturity column in years.
+    iv_col : str, default='iv_mid'
+        Implied-volatility column.
+    tau_values : array-like, optional
+        Maturities at which to estimate ATM skew. If omitted, unique maturities from
+        the quote table are used.
+    dk : float, default=0.01
+        Symmetric log-moneyness step used for finite-difference skew.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with maturity, maturity in days, ATM IV, ATM skew, absolute skew, and
+        supporting observation count.
+    """
+
     q = quotes.copy()
     if tau_values is None:
         tau_values = np.sort(pd.to_numeric(q[tau_col], errors="coerce").dropna().unique())
@@ -90,6 +122,27 @@ def atm_skew_term_structure(
 
 
 def skew_power_law(psi: pd.DataFrame, *, tau_col: str = "tau", skew_col: str = "atm_skew") -> pd.DataFrame:
+    """Fit a power law to the absolute ATM skew term structure.
+
+    The fitted relationship is ``|skew(tau)| = c * tau**(-alpha)`` and the roughness
+    proxy is reported as ``h = 0.5 - alpha``.
+
+    Parameters
+    ----------
+    psi : pandas.DataFrame
+        ATM skew term-structure table.
+    tau_col : str, default='tau'
+        Maturity column in years.
+    skew_col : str, default='atm_skew'
+        ATM skew column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One-row table with ``c``, ``alpha``, ``h``, ``r2``, and number of fitted
+        observations. Returns NaNs when too few valid points are available.
+    """
+
     q = psi.copy()
     y = pd.to_numeric(q[skew_col], errors="coerce").abs()
     x = pd.to_numeric(q[tau_col], errors="coerce")
@@ -118,12 +171,38 @@ def forward_variance_curve(
     use_pchip: bool = True,
     floor: float = 1e-6,
 ) -> pd.DataFrame:
-    """Compute the forward variance curve xi_0(tau) = d/d_tau [tau * sigma_atm(tau)^2].
+    """Estimate a forward variance curve from ATM total variance.
 
-    Uses PCHIP interpolation on the total-variance curve by default to guarantee
-    positive forward variance (a simple finite difference on unevenly spaced IV
-    knots can produce negative values).
+    The curve is computed as the derivative of total variance,
+    ``xi_0(tau) = d/dtau [tau * sigma_atm(tau)^2]``. PCHIP interpolation is used by
+    default to reduce negative forward-variance artifacts from uneven expiry spacing.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table containing maturity and implied-volatility information.
+    fit : dict, optional
+        Fitted volatility surface used to evaluate ATM IV.
+    tau_values : array-like, optional
+        Maturities at which to estimate the curve.
+    k : float, default=0.0
+        Log-moneyness used for ATM volatility evaluation.
+    iv_col : str, default='iv_mid'
+        Implied-volatility column for quote-based estimation.
+    tau_col : str, default='tau'
+        Maturity column in years.
+    use_pchip : bool, default=True
+        If True, use PCHIP derivative of total variance when enough points exist.
+    floor : float, default=1e-6
+        Positive lower bound for forward variance.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with maturity, total variance, ATM variance, ATM IV, and forward
+        variance.
     """
+
     q = quotes.copy()
     if tau_values is None:
         tau_values = np.sort(pd.to_numeric(q[tau_col], errors="coerce").dropna().unique())
@@ -259,21 +338,57 @@ def simulate_rbergomi(
     paths: int = 10000,
     steps: int = 120,
     seed: int = 7,
-    engine: str = "numba",
+    engine: str = "auto",
     rate: float = 0.0,
     dividend_yield: float = 0.0,
     antithetic: bool = True,
     z1: np.ndarray | None = None,
     z2: np.ndarray | None = None,
 ) -> dict:
-    """Simulate rBergomi spot and variance paths.
+    """Simulate spot and variance paths under an rBergomi-style rough-volatility model.
 
-    When ``z1`` and ``z2`` are provided (common-random-number arrays of shape
-    (paths, steps)) they are used directly and the ``seed`` / ``antithetic``
-    arguments are ignored.  This is the key ingredient for stable calibration:
-    all candidate parameter vectors see the same noise, so objective differences
-    reflect genuine parameter sensitivity rather than Monte Carlo variance.
+    The function supports internally generated antithetic shocks or externally
+    provided common-random-number arrays. Supplying ``z1`` and ``z2`` is useful for
+    calibration because all candidate parameters are evaluated on the same noise.
+
+    Parameters
+    ----------
+    spot : float
+        Initial spot price.
+    xi : pandas.DataFrame, pandas.Series, or float
+        Initial forward variance curve or constant variance level.
+    h : float
+        Hurst exponent. Values below 0.5 correspond to rough volatility.
+    nu : float
+        Vol-of-vol parameter.
+    rho : float
+        Correlation between price and volatility shocks.
+    tau : float
+        Simulation horizon in years.
+    paths : int, default=10000
+        Number of Monte Carlo paths when shocks are generated internally.
+    steps : int, default=120
+        Number of time steps.
+    seed : int, default=7
+        Random seed for internally generated shocks.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Simulation backend.
+    rate : float, default=0.0
+        Continuously compounded risk-free rate.
+    dividend_yield : float, default=0.0
+        Continuously compounded dividend yield.
+    antithetic : bool, default=True
+        Whether to use antithetic shocks when shocks are generated internally.
+    z1, z2 : numpy.ndarray, optional
+        Pre-generated common-random-number arrays with shape ``(paths, steps)``.
+
+    Returns
+    -------
+    dict
+        Dictionary containing simulated ``spot`` paths, ``variance`` paths, time grid,
+        parameter metadata, and the forward-variance curve used for simulation.
     """
+
     xi_tau, xi_var = _xi_arrays(xi)
     if z1 is not None and z2 is not None:
         z1_use = np.asarray(z1, dtype=float)
@@ -289,7 +404,10 @@ def simulate_rbergomi(
         if bool(antithetic):
             z1_use = np.vstack([z1_use, -z1_use])
             z2_use = np.vstack([z2_use, -z2_use])
-    if str(engine).lower() == "numba" and _rbergomi_paths_numba is not None:
+    engine_key = str(engine).lower()
+    if engine_key == "auto":
+        engine_key = prefer_auto_engine(allow_cpp=False)
+    if engine_key == "numba" and _rbergomi_paths_numba is not None:
         spot_paths, var_paths = _rbergomi_paths_numba(float(spot), xi_tau, xi_var, float(h), float(nu), float(rho), float(rate), float(dividend_yield), float(tau), z1_use, z2_use)
     else:
         spot_paths, var_paths = _rbergomi_paths_python(float(spot), xi_tau, xi_var, float(h), float(nu), float(rho), float(rate), float(dividend_yield), float(tau), z1_use, z2_use)
@@ -328,8 +446,40 @@ def rbergomi_smile(
     paths: int = 20000,
     steps: int = 120,
     seed: int = 7,
-    engine: str = "numba",
+    engine: str = "auto",
 ) -> pd.DataFrame:
+    """Generate model-implied volatility smiles from rBergomi Monte Carlo simulations.
+
+    For each requested maturity, the function simulates terminal spot values,
+    computes call prices across a log-moneyness grid, and inverts the prices to
+    Black-Scholes implied volatilities.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table used to infer spot, rate, and dividend/carry inputs.
+    xi : pandas.DataFrame, pandas.Series, or float
+        Initial forward variance curve.
+    params : dict or pandas.Series
+        rBergomi parameters containing roughness, vol-of-vol, and correlation values.
+    maturity_days : iterable, default=(7, 14, 30, 60, 90)
+        Maturities at which to simulate smiles.
+    paths : int, default=20000
+        Monte Carlo paths.
+    steps : int, default=120
+        Simulation time steps.
+    seed : int, default=7
+        Base random seed.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Simulation backend.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Smile table with maturity, log-moneyness, strike, price, price standard error,
+        implied volatility, and model label.
+    """
+
     q = quotes.copy()
     spot = float(pd.to_numeric(q["spot"], errors="coerce").median())
     rate = float(_numeric(q, ("rate",), 0.0).median())
@@ -384,12 +534,57 @@ def rbergomi_calibration(
     steps: int = 120,
     restarts: int = 4,
     seed: int = 7,
-    engine: str = "numba",
+    engine: str = "auto",
     lambda_skew: float = 0.0,
     market_skew: pd.DataFrame | None = None,
     use_sobol: bool = True,
     vega_floor: float = 0.0,
 ) -> dict:
+    """Calibrate rBergomi rough-volatility parameters to implied-volatility observations.
+
+    The calibration focuses on short-to-medium maturities and a central moneyness
+    range where rough-volatility skew is most informative. It uses common random
+    numbers, a staged candidate search over Hurst exponent, vol-of-vol, and
+    correlation, optional skew penalties, and a final full-path re-evaluation of the
+    best candidates.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table with ``iv_mid`` and option inputs.
+    xi : pandas.DataFrame, pandas.Series, or float
+        Initial forward variance curve.
+    h_start : float, default=0.12
+        Starting Hurst exponent.
+    nu_start : float, default=2.0
+        Starting vol-of-vol.
+    rho_start : float, default=-0.70
+        Starting spot/volatility correlation.
+    paths : int, default=15000
+        Monte Carlo paths for calibration.
+    steps : int, default=120
+        Simulation time steps.
+    restarts : int, default=4
+        Number of additional random candidate starts.
+    seed : int, default=7
+        Random seed.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Simulation backend.
+    lambda_skew : float, default=0.0
+        Weight of optional ATM-skew penalty.
+    market_skew : pandas.DataFrame, optional
+        Market ATM skew term-structure table for the skew penalty.
+    use_sobol : bool, default=True
+        Whether to use Sobol-style common random numbers when available.
+    vega_floor : float, default=0.0
+        Optional minimum vega filter.
+
+    Returns
+    -------
+    dict
+        Calibration result with best parameters, candidate fit table, and scalar loss.
+    """
+
     q = quotes.copy()
     target = q.dropna(subset=["iv_mid"]).copy()
     if target.empty:
@@ -486,7 +681,7 @@ def rbergomi_calibration(
                     iv_loss += float(lambda_skew) * ((psi_model - psi_market) / skew_scale) ** 2
         return iv_loss, pd.DataFrame()
 
-    # --- Stage 1: H fixed at h_start, grid search over nu × rho ---
+    # --- Stage 1: H fixed at h_start, grid search over nu x rho ---
     nu_grid = [nu_start * 0.55, nu_start * 0.80, nu_start, nu_start * 1.35, nu_start * 1.80, 0.8, 1.4, 2.2, 3.5]
     rho_grid = [rho_start - 0.20, rho_start, rho_start + 0.15, -0.90, -0.70, -0.50, -0.30]
     stage1_candidates = [
@@ -595,6 +790,28 @@ def _fractional_riccati_terms(u, params, tau: float, *, n_steps: int = 512, sche
 
 
 def fractional_riccati(u, params, tau: float, *, n_steps: int = 512, scheme: str = "adams") -> pd.DataFrame:
+    """Solve and return the fractional Riccati path used by rough-Heston pricing.
+
+    Parameters
+    ----------
+    u : complex or array-like
+        Fourier argument.
+    params : mapping or array-like
+        Rough-Heston parameters.
+    tau : float
+        Time horizon in years.
+    n_steps : int, default=512
+        Number of time-discretization steps.
+    scheme : str, default='adams'
+        Numerical scheme label.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Time-indexed table containing real, imaginary, absolute Riccati values,
+        fractional exponent metadata, and scheme label.
+    """
+
     solved = _fractional_riccati_terms(u, params, tau, n_steps=n_steps, scheme=scheme)
     psi = solved["psi"][:, 0]
     return pd.DataFrame(
@@ -667,6 +884,37 @@ def rough_heston_cf(
     allow_clip: bool = False,
     return_diagnostics: bool = False,
 ):
+    """Evaluate the rough-Heston characteristic function.
+
+    Parameters
+    ----------
+    u : array-like
+        Complex Fourier argument.
+    params : mapping or array-like
+        Rough-Heston parameters.
+    spot : float
+        Spot price.
+    rate : float
+        Continuously compounded risk-free rate.
+    dividend_yield : float
+        Continuously compounded dividend yield.
+    tau : float
+        Time to expiry in years.
+    riccati_steps : int, default=512
+        Number of steps used in the fractional Riccati solver.
+    scheme : str, default='adams'
+        Riccati discretization scheme.
+    allow_clip : bool, default=False
+        If True, allow numerical clipping in the characteristic-function evaluation.
+    return_diagnostics : bool, default=False
+        If True, return both characteristic-function values and diagnostics.
+
+    Returns
+    -------
+    numpy.ndarray or tuple[numpy.ndarray, dict]
+        Characteristic-function values, optionally with diagnostic metadata.
+    """
+
     out, diag = _rough_heston_cf_values(
         u,
         params,
@@ -694,6 +942,36 @@ def rough_heston_cf_diagnostics(
     riccati_steps: int = 512,
     scheme: str = "adams",
 ) -> pd.DataFrame:
+    """Run diagnostic checks on the rough-Heston characteristic function.
+
+    The function evaluates characteristic-function normalization, martingale behavior,
+    maximum magnitude, and Riccati metadata at selected Fourier arguments.
+
+    Parameters
+    ----------
+    params : mapping or array-like
+        Rough-Heston parameters.
+    spot : float
+        Spot price.
+    rate : float
+        Continuously compounded risk-free rate.
+    dividend_yield : float
+        Continuously compounded dividend yield.
+    tau : float
+        Time to expiry in years.
+    u_values : array-like, optional
+        Fourier arguments used for diagnostics.
+    riccati_steps : int, default=512
+        Number of Riccati steps.
+    scheme : str, default='adams'
+        Riccati scheme.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One-row diagnostic table including normalization and martingale errors.
+    """
+
     if u_values is None:
         u_values = np.r_[0.0, 0.5, 1.0, 2.0, 5.0, 10.0, -1j]
     u_values = np.asarray(u_values, dtype=complex)
@@ -754,13 +1032,50 @@ def rough_heston_prices(
     dividend_yield=0.0,
     *,
     option_type="call",
-    engine: str = "cpp",
+    engine: str = "auto",
     n_terms: int = 160,
     truncation_width: float = 16.0,
     riccati_steps: int = 512,
     scheme: str = "adams",
     allow_cf_clip: bool = False,
 ) -> np.ndarray:
+    """Price vanilla options under the rough-Heston model with a COS/Fourier method.
+
+    Parameters
+    ----------
+    params : mapping or array-like
+        Rough-Heston parameters.
+    strikes : array-like
+        Strike prices.
+    tau : array-like
+        Times to expiry in years.
+    spot : float or array-like
+        Spot prices.
+    rate : float or array-like, default=0.0
+        Continuously compounded risk-free rates.
+    dividend_yield : float or array-like, default=0.0
+        Continuously compounded dividend yields.
+    option_type : array-like or scalar, default='call'
+        Option type labels.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='auto'
+        Pricing backend.
+    n_terms : int, default=160
+        Number of COS expansion terms.
+    truncation_width : float, default=16.0
+        COS truncation width.
+    riccati_steps : int, default=512
+        Number of fractional Riccati steps.
+    scheme : str, default='adams'
+        Riccati scheme.
+    allow_cf_clip : bool, default=False
+        Whether to allow clipping inside the characteristic-function evaluator.
+
+    Returns
+    -------
+    numpy.ndarray
+        Rough-Heston option prices.
+    """
+
     p = _params_array(params)
     variance_hint = max(float(p[1]), float(p[3]), 1e-6)
 
@@ -795,6 +1110,33 @@ def rough_heston_prices(
 
 
 def rough_heston_iv(params, strikes, tau, spot, rate=0.0, dividend_yield=0.0, *, option_type="call", **kwargs):
+    """Compute rough-Heston implied volatilities by pricing and Black-Scholes inversion.
+
+    Parameters
+    ----------
+    params : mapping or array-like
+        Rough-Heston parameters.
+    strikes : array-like
+        Strike prices.
+    tau : array-like
+        Times to expiry in years.
+    spot : float or array-like
+        Spot prices.
+    rate : float or array-like, default=0.0
+        Continuously compounded risk-free rates.
+    dividend_yield : float or array-like, default=0.0
+        Continuously compounded dividend yields.
+    option_type : array-like or scalar, default='call'
+        Option type labels.
+    **kwargs
+        Additional keyword arguments forwarded to the rough-Heston pricer.
+
+    Returns
+    -------
+    numpy.ndarray
+        Black-Scholes implied volatilities corresponding to rough-Heston prices.
+    """
+
     price = rough_heston_prices(params, strikes, tau, spot, rate, dividend_yield, option_type=option_type, **kwargs)
     forward = np.asarray(spot, dtype=float) * np.exp((np.asarray(rate, dtype=float) - np.asarray(dividend_yield, dtype=float)) * np.asarray(tau, dtype=float))
     df = np.exp(-np.asarray(rate, dtype=float) * np.asarray(tau, dtype=float))
@@ -811,7 +1153,7 @@ def fit_rough_heston_dates(
     h_penalty: float = 0.0,
     min_quotes: int = 80,
     max_nfev: int = 55,
-    engine: str = "cpp",
+    engine: str = "auto",
     n_terms: int = 160,
     truncation_width: float = 16.0,
     riccati_steps: int = 512,
@@ -821,6 +1163,56 @@ def fit_rough_heston_dates(
     surface_fit_map: dict | None = None,
     n_jobs: int = 1,
 ) -> dict:
+    """Calibrate rough-Heston parameters across multiple quote dates.
+
+    The function prepares weighted calibration quotes, optionally anchors or penalizes
+    Hurst exponents by date, calibrates fixed-H and optionally free-H parameter sets,
+    uses reduced Riccati resolution during inner optimization, reprices with full
+    accuracy for reporting, and returns daily parameter and quote-level fit tables.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready option quote table.
+    calibration_dates : iterable, optional
+        Dates to calibrate. If omitted, dates with enough quotes are selected.
+    h_start : float, default=0.12
+        Default Hurst exponent anchor.
+    h_by_date : Series, DataFrame, dict, optional
+        Date-specific Hurst anchors.
+    h_mode : {'fixed', 'penalized', 'free'}, default='fixed'
+        Hurst treatment during calibration.
+    h_penalty : float, default=0.0
+        Penalty weight for deviations from H anchor when ``h_mode='penalized'``.
+    min_quotes : int, default=80
+        Minimum quotes per calibration date.
+    max_nfev : int, default=55
+        Maximum optimizer evaluations.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='auto'
+        Pricing backend.
+    n_terms : int, default=160
+        COS expansion terms.
+    truncation_width : float, default=16.0
+        COS truncation width.
+    riccati_steps : int, default=512
+        Full Riccati step count for final reporting.
+    scheme : str, default='adams'
+        Riccati solver scheme.
+    lambda_skew : float, default=0.0
+        Optional skew-penalty weight.
+    skew_tau_days : tuple, default=(7, 14, 21, 30, 45, 60)
+        Maturities used in the skew penalty.
+    surface_fit_map : dict, optional
+        Date-to-surface mapping used for market-skew penalty evaluation.
+    n_jobs : int, default=1
+        Reserved parallelism parameter.
+
+    Returns
+    -------
+    dict
+        Dictionary containing daily ``params`` and quote-level ``fit`` DataFrames.
+    """
+
     q = calibration_weights(quotes)
     q["date"] = pd.to_datetime(q["date"], errors="coerce").dt.normalize()
     if calibration_dates is None:
@@ -867,7 +1259,7 @@ def fit_rough_heston_dates(
         rate_d = float(_numeric(day, ("rate",), 0.0).median())
         div_d = float(_numeric(day, ("implied_dividend_yield", "dividend_yield"), 0.0).median())
         sfit = (surface_fit_map or {}).get(d) if float(lambda_skew) > 0.0 else None
-        # Use fewer Riccati steps for inner optimization evaluations — roughly 3×
+        # Use fewer Riccati steps for inner optimization evaluations - roughly 3x
         # faster with negligible effect on convergence direction.  Final prices
         # are always computed with the full riccati_steps.
         riccati_inner = max(32, int(riccati_steps) // 3)
@@ -1093,6 +1485,22 @@ def fit_rough_heston_dates(
 
 
 def rough_heston_residuals(fit: pd.DataFrame, *, scale_col: str = "calib_scale_px") -> pd.DataFrame:
+    """Aggregate rough-Heston scaled residuals by moneyness and maturity buckets.
+
+    Parameters
+    ----------
+    fit : pandas.DataFrame
+        Quote-level rough-Heston fit table containing price residuals.
+    scale_col : str, default='calib_scale_px'
+        Residual scale column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Grouped residual table by model, moneyness bucket, and DTE bucket. Returns an
+        empty DataFrame for empty input.
+    """
+
     if fit.empty:
         return pd.DataFrame()
     q = fit.copy()
@@ -1108,6 +1516,23 @@ def rough_heston_residuals(fit: pd.DataFrame, *, scale_col: str = "calib_scale_p
 
 
 def compare_heston_rough_heston(*, heston_daily: pd.DataFrame, rough_daily: pd.DataFrame) -> pd.DataFrame:
+    """Compare daily Heston and rough-Heston calibration diagnostics.
+
+    Parameters
+    ----------
+    heston_daily : pandas.DataFrame
+        Daily Heston diagnostic table.
+    rough_daily : pandas.DataFrame
+        Daily rough-Heston diagnostic table.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Model-level comparison table including dates, quote counts, success rate,
+        average price/IV RMSE, tail and short-maturity errors, bid-ask hit rate, and
+        total runtime.
+    """
+
     rows = []
     for name, frame in [("heston", heston_daily), ("rough_heston", rough_daily)]:
         if frame is None or frame.empty:
@@ -1131,7 +1556,29 @@ def compare_heston_rough_heston(*, heston_daily: pd.DataFrame, rough_daily: pd.D
     return pd.DataFrame(rows).sort_values("weighted_price_rmse").reset_index(drop=True)
 
 
-def riccati_convergence(quotes: pd.DataFrame, *, params, n_grid_values=(128, 256, 512, 1024), n_terms: int = 160, engine: str = "cpp") -> pd.DataFrame:
+def riccati_convergence(quotes: pd.DataFrame, *, params, n_grid_values=(128, 256, 512, 1024), n_terms: int = 160, engine: str = "auto") -> pd.DataFrame:
+    """Check rough-Heston price convergence as the Riccati grid is refined.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table; the first row is used as the test contract.
+    params : mapping or array-like
+        Rough-Heston parameters.
+    n_grid_values : iterable, default=(128, 256, 512, 1024)
+        Riccati step counts to evaluate.
+    n_terms : int, default=160
+        COS expansion terms.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='auto'
+        Pricing backend.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Convergence table with Riccati step count, terminal Riccati magnitude, price,
+        and absolute price change from the previous grid size.
+    """
+
     q = quotes.head(1).copy()
     if q.empty:
         return pd.DataFrame()
@@ -1163,9 +1610,51 @@ def rough_delta_grid(
     paths: int = 10000,
     steps: int = 120,
     seed: int = 7,
-    engine: str = "cpp",
-    mc_engine: str = "numba",
+    engine: str = "auto",
+    mc_engine: str = "auto",
 ) -> pd.DataFrame:
+    """Compare rough-Heston, Heston, flat-BSM, and surface-BSM deltas on a strike-maturity grid.
+
+    The function computes finite-difference deltas for Heston and rough-Heston prices,
+    analytic flat-BSM deltas, and optionally surface-implied BSM deltas.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table used to infer spot, rate, dividend/carry, and default IVs.
+    heston_params : mapping or array-like
+        Heston parameters.
+    rough_params : mapping or array-like
+        Rough-Heston parameters.
+    rbergomi_params : optional
+        Reserved parameter for compatibility.
+    xi : optional
+        Reserved parameter for compatibility with rough-volatility workflows.
+    surface_fit : dict, optional
+        Fitted volatility surface used for surface-BSM delta.
+    k_values : array-like, optional
+        Log-moneyness grid.
+    tau_days : array-like, optional
+        Maturities in days.
+    n_terms : int, default=160
+        COS expansion terms.
+    riccati_steps : int, default=512
+        Rough-Heston Riccati steps.
+    bump : float, default=0.005
+        Relative spot bump for finite-difference deltas.
+    paths, steps, seed : int
+        Reserved Monte Carlo parameters for compatibility.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='auto'
+        Fourier-pricing backend.
+    mc_engine : str, default='auto'
+        Reserved Monte Carlo backend label.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Delta comparison grid with model deltas and rough-minus-benchmark columns.
+    """
+
     q = quotes.copy()
     spot = float(pd.to_numeric(q["spot"], errors="coerce").median())
     rate = float(_numeric(q, ("rate",), 0.0).median())
@@ -1238,5 +1727,4 @@ __all__ = [
     "rough_heston_residuals",
     "simulate_rbergomi",
     "skew_power_law",
-    "_generate_crn",
 ]

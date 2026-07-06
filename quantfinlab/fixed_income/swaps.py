@@ -5,17 +5,79 @@ import pandas as pd
 
 
 def zero_rate_at(zero_rates: pd.DataFrame, date, times, *, shift: float = 0.0):
+    """Interpolate zero rates at selected maturities for one date.
+
+    Parameters
+    ----------
+    zero_rates : pandas.DataFrame
+        Date-indexed zero-rate panel with maturity columns in years.
+    date : date-like
+        Date to select from the panel.
+    times : array-like
+        Maturities in years at which to interpolate rates.
+    shift : float, default 0.0
+        Additive rate shift in decimal units.
+
+    Returns
+    -------
+    numpy.ndarray
+        Interpolated zero rates plus the optional shift.
+
+    Notes
+    -----
+    Rates outside the maturity grid are flat-extrapolated from the nearest endpoint.
+    """
+
     grid = zero_rates.columns.to_numpy(float)
     values = zero_rates.loc[pd.Timestamp(date)].to_numpy(float)
     return np.interp(np.asarray(times, dtype=float), grid, values, left=values[0], right=values[-1]) + float(shift)
 
 
 def discount_at(zero_rates: pd.DataFrame, date, times, *, shift: float = 0.0):
+    """Compute discount factors from a zero-rate panel for one date.
+
+    Parameters
+    ----------
+    zero_rates : pandas.DataFrame
+        Date-indexed zero-rate panel with maturity columns in years.
+    date : date-like
+        Date to select from the panel.
+    times : array-like
+        Maturities in years.
+    shift : float, default 0.0
+        Additive zero-rate shift in decimal units.
+
+    Returns
+    -------
+    numpy.ndarray
+        Discount factors ``exp(-r(t) * t)`` at the requested maturities.
+    """
+
     t = np.asarray(times, dtype=float)
     return np.exp(-zero_rate_at(zero_rates, date, t, shift=shift) * t)
 
 
 def swap_schedule(remaining_tenor, *, fixed_freq: int = 2):
+    """Build a fixed-leg swap payment schedule.
+
+    Parameters
+    ----------
+    remaining_tenor : float
+        Remaining swap tenor in years.
+    fixed_freq : int, default 2
+        Fixed-leg payment frequency per year.
+
+    Returns
+    -------
+    tuple[numpy.ndarray, numpy.ndarray]
+        Payment times in years and accrual fractions between adjacent payments.
+
+    Notes
+    -----
+    The schedule uses regular intervals of ``1 / fixed_freq`` and appends the exact
+    remaining tenor when needed to include a final stub.
+    """
+
     step = 1 / int(fixed_freq)
     remaining = max(float(remaining_tenor), step)
     times = np.arange(step, remaining + 1e-10, step)
@@ -26,11 +88,61 @@ def swap_schedule(remaining_tenor, *, fixed_freq: int = 2):
 
 
 def swap_annuity(zero_rates: pd.DataFrame, date, remaining_tenor, *, shift: float = 0.0, fixed_freq: int = 2):
+    """Compute fixed-leg swap annuity from a zero-rate panel.
+
+    Parameters
+    ----------
+    zero_rates : pandas.DataFrame
+        Date-indexed zero-rate panel.
+    date : date-like
+        Valuation date.
+    remaining_tenor : float
+        Remaining swap tenor in years.
+    shift : float, default 0.0
+        Additive zero-rate shift in decimal units.
+    fixed_freq : int, default 2
+        Fixed-leg payment frequency per year.
+
+    Returns
+    -------
+    float
+        Present value of one unit of fixed-leg coupon rate.
+
+    Notes
+    -----
+    The annuity is the sum of accrual fractions multiplied by corresponding
+    discount factors.
+    """
+
     times, accruals = swap_schedule(remaining_tenor, fixed_freq=fixed_freq)
     return float(np.sum(accruals * discount_at(zero_rates, date, times, shift=shift)))
 
 
 def par_swap_rate(zero_rates: pd.DataFrame, date, tenor, *, fixed_freq: int = 2):
+    """Compute the par fixed rate of a plain fixed-for-floating swap.
+
+    Parameters
+    ----------
+    zero_rates : pandas.DataFrame
+        Date-indexed zero-rate panel.
+    date : date-like
+        Valuation date.
+    tenor : float
+        Swap tenor in years.
+    fixed_freq : int, default 2
+        Fixed-leg payment frequency per year.
+
+    Returns
+    -------
+    float
+        Par swap fixed rate in decimal units.
+
+    Notes
+    -----
+    The floating leg is approximated as ``1 - DF(T)`` and the fixed leg uses the
+    computed annuity.
+    """
+
     annuity = swap_annuity(zero_rates, date, tenor, fixed_freq=fixed_freq)
     maturity_df = float(discount_at(zero_rates, date, [tenor])[0])
     return (1.0 - maturity_df) / max(annuity, 1e-12)
@@ -47,6 +159,39 @@ def swap_value(
     shift: float = 0.0,
     fixed_freq: int = 2,
 ):
+    """Value a plain fixed-for-floating interest-rate swap.
+
+    Parameters
+    ----------
+    zero_rates : pandas.DataFrame
+        Date-indexed zero-rate panel.
+    date : date-like
+        Valuation date.
+    remaining_tenor : float
+        Remaining swap tenor in years.
+    fixed_rate : float
+        Fixed coupon rate of the swap in decimal units.
+    notional : float, default 1.0
+        Swap notional.
+    side : {"receiver", "payer"}, default "receiver"
+        Receiver side receives fixed and pays floating. Any other value is treated
+        as payer.
+    shift : float, default 0.0
+        Additive zero-rate shift in decimal units.
+    fixed_freq : int, default 2
+        Fixed-leg payment frequency per year.
+
+    Returns
+    -------
+    float
+        Swap value from the selected side's perspective.
+
+    Notes
+    -----
+    The function uses a simple single-curve approximation with fixed-leg annuity
+    and terminal floating-leg value ``1 - DF(T)``.
+    """
+
     annuity = swap_annuity(zero_rates, date, remaining_tenor, shift=shift, fixed_freq=fixed_freq)
     maturity_df = float(discount_at(zero_rates, date, [remaining_tenor], shift=shift)[0])
     fixed_value = float(fixed_rate) * annuity * float(notional)
@@ -56,6 +201,33 @@ def swap_value(
 
 
 def swap_pv01(zero_rates: pd.DataFrame, date, tenor, *, side: str = "receiver", bump: float = 1e-4, fixed_freq: int = 2):
+    """Compute PV01 of a par swap by symmetric curve shifts.
+
+    Parameters
+    ----------
+    zero_rates : pandas.DataFrame
+        Date-indexed zero-rate panel.
+    date : date-like
+        Valuation date.
+    tenor : float
+        Swap tenor in years.
+    side : {"receiver", "payer"}, default "receiver"
+        Swap side for valuation.
+    bump : float, default 1e-4
+        Additive zero-rate bump in decimal units.
+    fixed_freq : int, default 2
+        Fixed-leg payment frequency per year.
+
+    Returns
+    -------
+    float
+        Symmetric finite-difference PV01 of the par swap.
+
+    Notes
+    -----
+    The fixed rate is first set to the par swap rate at the base curve.
+    """
+
     fixed_rate = par_swap_rate(zero_rates, date, tenor, fixed_freq=fixed_freq)
     pv_up = swap_value(zero_rates, date, tenor, fixed_rate, side=side, shift=bump, fixed_freq=fixed_freq)
     pv_down = swap_value(zero_rates, date, tenor, fixed_rate, side=side, shift=-bump, fixed_freq=fixed_freq)
@@ -63,6 +235,28 @@ def swap_pv01(zero_rates: pd.DataFrame, date, tenor, *, side: str = "receiver", 
 
 
 def swap_overlay_signal_from_duration_target(target_duration, *, neutral_duration: float = 5.0, neutral_band: float = 0.5):
+    """Convert a target duration into a swap overlay signal.
+
+    Parameters
+    ----------
+    target_duration : float
+        Desired duration.
+    neutral_duration : float, default 5.0
+        Neutral duration level.
+    neutral_band : float, default 0.5
+        No-signal band around the neutral level.
+
+    Returns
+    -------
+    int
+        ``1`` for duration extension, ``-1`` for duration reduction, and ``0`` for
+        no overlay.
+
+    Notes
+    -----
+    The signal is based only on the target duration relative to the neutral band.
+    """
+
     target = float(target_duration)
     if target > float(neutral_duration) + float(neutral_band):
         return 1
@@ -112,6 +306,45 @@ def run_synthetic_swap_overlay(
     start_date=None,
     label: str = "curve-implied synthetic swap overlay",
 ):
+    """Simulate a simple swap overlay on top of a base strategy.
+
+    Parameters
+    ----------
+    base_result : object
+        Base strategy result with returns and effective-duration diagnostics.
+    zero_rates : pandas.DataFrame
+        Date-indexed zero-rate panel.
+    target_log : pandas.DataFrame
+        Target-duration decision log indexed by decision date.
+    tenor : float, default 10.0
+        Overlay swap tenor in years.
+    neutral_duration : float, default 5.0
+        Neutral duration used to derive overlay signal.
+    neutral_band : float, default 0.5
+        No-trade band around neutral duration.
+    duration_budget : float, default 1.5
+        Maximum duration adjustment budget.
+    dv01_fraction_cap : float, default 0.40
+        Cap on overlay DV01 as a fraction of base duration exposure.
+    slippage_bp : float, default 0.5
+        Transaction slippage in basis points of annuity notional change.
+    start_date : date-like or None, optional
+        Optional first date to include.
+    label : str, default "curve-implied synthetic swap overlay"
+        Name assigned to the overlay return series.
+
+    Returns
+    -------
+    tuple[pandas.DataFrame, pandas.Series]
+        Overlay trade/performance log and overlay component return series.
+
+    Notes
+    -----
+    The overlay is re-evaluated on decision dates, held to the next curve date, and
+    combined with base strategy returns through a simple NAV recursion. The routine
+    is a stylized overlay simulation, not a full swap valuation or collateral model.
+    """
+
     curve_dates = pd.DatetimeIndex(zero_rates.index)
     base_returns = base_result.returns
     base_duration = base_result.diagnostics["risk"]["effective_duration"]

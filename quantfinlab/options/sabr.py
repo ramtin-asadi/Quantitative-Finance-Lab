@@ -59,6 +59,39 @@ else:
 
 
 def sabr_hagan_iv(forward, strike, tau, alpha, beta, rho, nu, engine: str = "auto"):
+    """Evaluate Hagan's SABR implied-volatility approximation.
+
+    Parameters
+    ----------
+    forward : array-like
+        Forward prices.
+    strike : array-like
+        Strike prices.
+    tau : array-like
+        Times to expiry in years.
+    alpha : array-like or scalar
+        SABR alpha parameter.
+    beta : float
+        SABR beta elasticity parameter.
+    rho : array-like or scalar
+        Correlation parameter.
+    nu : array-like or scalar
+        Vol-of-vol parameter.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Evaluation backend.
+
+    Returns
+    -------
+    numpy.ndarray
+        SABR implied volatilities with the broadcast input shape.
+
+    Notes
+    -----
+    Inputs are stabilized near ATM and for non-positive forwards/strikes using small
+    positive floors. Parameters should still be interpreted under the usual SABR
+    constraints.
+    """
+
     f = np.asarray(forward, dtype=float)
     k = np.asarray(strike, dtype=float)
     t = np.asarray(tau, dtype=float)
@@ -162,6 +195,33 @@ def fit_sabr_surface(
     weight_col: str = "obs_weight",
     engine: str = "auto",
 ) -> dict:
+    """Fit SABR smile slices across expiries and compare beta choices.
+
+    The function calibrates alpha, rho, and nu separately by expiry or date-expiry
+    slice for each candidate beta, warm-starting from the previous slice. It then
+    returns the primary beta fit together with beta-comparison diagnostics.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table with forward, strike, tau, IV, option type, and
+        pricing inputs.
+    betas : iterable, default=(1.0, 0.7, 0.5)
+        Candidate beta values to compare.
+    primary_beta : float, default=1.0
+        Beta value whose parameter and fit tables are returned as the main fit.
+    weight_col : str, default='obs_weight'
+        Observation-weight column.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Evaluation backend.
+
+    Returns
+    -------
+    dict
+        Fit dictionary with model name, primary beta, parameter slices, quote-level
+        fit table, diagnostics, beta-comparison table, elapsed time, and engine.
+    """
+
     t0 = time.perf_counter()
     engine_used = _engine_name(engine)
     q = _prepare(quotes)
@@ -206,6 +266,36 @@ def fit_sabr_holdout(
     warm_start: bool = True,
     engine: str = "auto",
 ) -> dict:
+    """Fit SABR on anchor strikes and evaluate holdout quotes by date.
+
+    For each selected date, the function selects sparse anchor strikes by expiry,
+    fits SABR to those anchors, records holdout quote IDs, and reprices the holdout
+    set for out-of-sample model comparison.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table.
+    dates : iterable
+        Dates to evaluate.
+    beta : float, default=1.0
+        Fixed SABR beta parameter.
+    train_mode : str, default='anchor_strikes'
+        Training-selection label retained for configuration readability.
+    weight_col : str, default='obs_weight'
+        Observation-weight column.
+    warm_start : bool, default=True
+        Compatibility flag; fitting internally uses slice warm starts.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Evaluation backend.
+
+    Returns
+    -------
+    dict
+        Holdout fit dictionary with parameters, holdout IDs, holdout predictions,
+        diagnostics, elapsed time, and engine metadata.
+    """
+
     t0 = time.perf_counter()
     q = _prepare(quotes)
     if "quote_id" not in q.columns:
@@ -243,6 +333,23 @@ def fit_sabr_holdout(
 
 
 def sabr_prices(quotes: pd.DataFrame, fit: dict, engine: str = "auto") -> pd.DataFrame:
+    """Reprice quotes with a fitted SABR surface.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table to price.
+    fit : dict
+        SABR fit dictionary containing parameter slices and beta value.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Evaluation backend.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote-level SABR implied volatilities, model prices, and residuals.
+    """
+
     return _price_fit(_prepare(quotes), fit.get("params", pd.DataFrame()), float(fit.get("beta", 1.0)), _engine_name(engine))
 
 

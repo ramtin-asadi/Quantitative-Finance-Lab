@@ -17,11 +17,35 @@ def synthetic_issuance_book(
     freq: int = 2,
     col_map: dict[int, str] | None = None,
 ) -> IssuanceBook:
+    """Build a synthetic par-bond issuance book from month-end curves.
+
+    Parameters
+    ----------
+    month_end_curve : pandas.DataFrame
+        Date-indexed par-yield curve panel. Each row is treated as an issuance
+        date, and each selected maturity is issued at the par yield available on
+        that date.
+    maturities : list of int, tuple of int, or None, optional
+        Maturity buckets to issue. If ``None``, the default issuance maturities are
+        used.
+    freq : int, default 2
+        Coupon payment frequency per year.
+    col_map : dict[int, str] or None, optional
+        Mapping from maturity bucket to the curve column used as the coupon source.
+        If omitted, maturities map to labels such as ``2 -> "2Y"``.
+
+    Returns
+    -------
+    IssuanceBook
+        Synthetic book grouped by maturity bucket.
+
+    Notes
+    -----
+    Each issued bond has face value one and a coupon equal to the observed par
+    yield for its maturity bucket on the issue date. Rows with missing or non-finite
+    coupon data are skipped for the affected maturity.
     """
-    Build a synthetic issuance book:
-    - For each month-end date, "issue" a par bond in each maturity bucket
-    - coupon = par yield at that maturity for that date
-    """
+
     if maturities is None:
         maturities = list(DEFAULT_ISSUE_MATURITIES)
     maturities = [int(x) for x in maturities]
@@ -44,6 +68,31 @@ def synthetic_issuance_book(
 
 
 def bond_cashflows(coupon: float, maturity_years: float, *, freq: int = 2, face: float = 1.0) -> tuple[np.ndarray, np.ndarray]:
+    """Generate fixed-coupon bond cash-flow times and amounts.
+
+    Parameters
+    ----------
+    coupon : float
+        Annual coupon rate expressed as a decimal.
+    maturity_years : float
+        Maturity in years.
+    freq : int, default 2
+        Number of coupon payments per year.
+    face : float, default 1.0
+        Face value repaid at maturity.
+
+    Returns
+    -------
+    tuple[numpy.ndarray, numpy.ndarray]
+        Payment times in years and corresponding cash-flow amounts.
+
+    Notes
+    -----
+    Coupon payments are level at ``coupon / freq * face`` and the final cash flow
+    includes principal repayment. The schedule assumes regular coupon intervals and
+    does not model stub periods or calendar adjustments.
+    """
+
     times = np.arange(1 / freq, maturity_years + 1e-9, 1 / freq)
     cfs = np.full_like(times, (coupon / freq) * face, dtype=float)
     cfs[-1] += face
@@ -51,6 +100,31 @@ def bond_cashflows(coupon: float, maturity_years: float, *, freq: int = 2, face:
 
 
 def price_bond_from_issue(df_func: Callable[[np.ndarray], np.ndarray], times: np.ndarray, cfs: np.ndarray, age: float) -> float:
+    """Price remaining cash flows of a bond after a given age.
+
+    Parameters
+    ----------
+    df_func : callable
+        Discount-factor function accepting remaining maturities in years.
+    times : numpy.ndarray
+        Original cash-flow times from issue date, in years.
+    cfs : numpy.ndarray
+        Cash-flow amounts corresponding to ``times``.
+    age : float
+        Years elapsed since issue date.
+
+    Returns
+    -------
+    float
+        Present value of all cash flows with payment time greater than ``age``.
+        Returns zero if no future cash flows remain.
+
+    Notes
+    -----
+    The function discounts remaining cash flows by time-to-payment, not by original
+    payment time. Cash flows at or before the age cutoff are excluded.
+    """
+
     mask = times > age + 1e-12
     if not np.any(mask):
         return 0.0
@@ -88,9 +162,29 @@ def book_pv_timeseries(
     book: IssuanceBook,
     curves_for_dates: dict[pd.Timestamp, dict[str, Curve]],
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Compute total and maturity-bucket present values for a synthetic book.
+
+    Parameters
+    ----------
+    book : IssuanceBook
+        Synthetic issuance book to value.
+    curves_for_dates : dict[pandas.Timestamp, dict[str, Curve]]
+        Nested mapping from valuation date to curve method to fitted curve.
+
+    Returns
+    -------
+    tuple[pandas.DataFrame, pandas.DataFrame]
+        Total present value table indexed by date with curve methods as columns,
+        and bucket present value table indexed by date with a method/maturity
+        column MultiIndex.
+
+    Notes
+    -----
+    Each valuation uses only bonds issued before or on the valuation date. The
+    curve's discount-factor function is used directly for present-value
+    calculation.
     """
-    Compute total PV and bucket PV by valuation date/method.
-    """
+
     pv_records: list[dict] = []
     bucket_records: list[dict] = []
 
@@ -121,6 +215,32 @@ def bond_from_par_curve_row(
     freq: int = 2,
     face: float = 1.0,
 ) -> tuple[Bond, str]:
+    """Create a fixed-coupon bond from the nearest tenor in a par-curve row.
+
+    Parameters
+    ----------
+    row : pandas.Series
+        One row of a par-yield curve panel.
+    maturity_years : float
+        Desired bond maturity in years.
+    tenor_cols : list of str or None, optional
+        Candidate tenor columns. If omitted, all row labels are considered.
+    freq : int, default 2
+        Coupon payment frequency per year.
+    face : float, default 1.0
+        Bond face value.
+
+    Returns
+    -------
+    tuple[Bond, str]
+        Bond whose coupon is the nearest-tenor par yield, and the tenor label used.
+
+    Notes
+    -----
+    The input row is assumed to contain yields in decimal units. No interpolation
+    is performed; the coupon is taken from the nearest available tenor label.
+    """
+
     cols = tenor_cols if tenor_cols is not None else [str(c) for c in row.index]
     tenor_label = nearest_tenor_label(cols, target_maturity_years=maturity_years)
     coupon = float(row[tenor_label])
@@ -134,6 +254,32 @@ def bond_price(
     settle: float = 0.0,   # years since last coupon date (0 means on coupon date)
     clean: bool = True,
 ) -> float:
+    """Price a fixed-coupon bond from a fitted discount curve.
+
+    Parameters
+    ----------
+    bond : Bond
+        Bond specification.
+    curve : Curve
+        Fitted curve providing a discount-factor function.
+    settle : float, default 0.0
+        Years since the last coupon date. A value of zero represents settlement on
+        a coupon date.
+    clean : bool, default True
+        If ``True``, subtract simple accrued interest from the dirty price.
+
+    Returns
+    -------
+    float
+        Clean or dirty bond price depending on ``clean``.
+
+    Notes
+    -----
+    Accrued interest is approximated as ``coupon * face * settle``. The function
+    uses a simplified regular coupon schedule and does not apply full market
+    settlement conventions.
+    """
+
     times, cfs = bond_cashflows(bond.coupon, bond.maturity_years, freq=bond.freq, face=bond.face)
     dirty = price_bond_from_issue(curve.df, times, cfs, age=settle)
     if not clean:
@@ -150,6 +296,35 @@ def make_synthetic_bond(
     units: float = 0.0,
     freq: int = 2,
 ) -> dict:
+    """Create a dictionary representation of a synthetic fixed-coupon bond.
+
+    Parameters
+    ----------
+    issue_date : pandas.Timestamp
+        Bond issue date.
+    maturity_years : float
+        Original maturity in years.
+    coupon : float
+        Annual coupon rate expressed as a decimal.
+    units : float, default 0.0
+        Position size in face-value units.
+    freq : int, default 2
+        Coupon payment frequency per year.
+
+    Returns
+    -------
+    dict
+        Synthetic bond record containing issue date, original maturity, coupon,
+        relative cash-flow times, cash-flow amounts, payment dates, units, and
+        frequency.
+
+    Notes
+    -----
+    Payment dates are approximated by adding rounded month offsets to the issue
+    date. The representation is optimized for backtesting synthetic ladders rather
+    than exact bond-settlement accounting.
+    """
+
     times, cfs = bond_cashflows(coupon, maturity_years, freq=freq)
     payment_dates = pd.to_datetime(
         [pd.Timestamp(issue_date) + pd.DateOffset(months=round(12 * t)) for t in times]
@@ -167,6 +342,26 @@ def make_synthetic_bond(
 
 
 def remaining_maturity(bond: dict | None, valuation_date: pd.Timestamp) -> float:
+    """Compute remaining maturity of a synthetic bond.
+
+    Parameters
+    ----------
+    bond : dict or None
+        Synthetic bond record.
+    valuation_date : pandas.Timestamp
+        Date at which remaining maturity is measured.
+
+    Returns
+    -------
+    float
+        Remaining maturity in years. Returns zero for ``None`` bonds or bonds that
+        have fully matured.
+
+    Notes
+    -----
+    The elapsed time is computed using the package year-fraction convention.
+    """
+
     if bond is None:
         return 0.0
     delta = yearfrac(bond["issue_date"], valuation_date)
@@ -177,6 +372,26 @@ def remaining_cashflow_arrays(
     bond: dict | None,
     valuation_date: pd.Timestamp,
 ) -> tuple[np.ndarray, np.ndarray]:
+    """Return remaining cash-flow times and amounts for a synthetic bond position.
+
+    Parameters
+    ----------
+    bond : dict or None
+        Synthetic bond record with cash-flow arrays and units.
+    valuation_date : pandas.Timestamp
+        Valuation date.
+
+    Returns
+    -------
+    tuple[numpy.ndarray, numpy.ndarray]
+        Remaining times to payment in years and position-scaled cash-flow amounts.
+        Empty arrays are returned for missing, zero-unit, or fully matured bonds.
+
+    Notes
+    -----
+    Only cash flows strictly after the valuation date are retained.
+    """
+
     if bond is None or bond.get("units", 0.0) <= 0:
         return np.array([], dtype=float), np.array([], dtype=float)
     delta = yearfrac(bond["issue_date"], valuation_date)
@@ -193,6 +408,28 @@ def bond_position_value(
     valuation_date: pd.Timestamp,
     df_func: Callable[[np.ndarray], np.ndarray],
 ) -> float:
+    """Value a synthetic bond position using a discount-factor function.
+
+    Parameters
+    ----------
+    bond : dict or None
+        Synthetic bond record with units, cash-flow times, and cash-flow amounts.
+    valuation_date : pandas.Timestamp
+        Valuation date.
+    df_func : callable
+        Discount-factor function accepting maturities in years.
+
+    Returns
+    -------
+    float
+        Present value of the position. Returns zero for missing or zero-unit bonds.
+
+    Notes
+    -----
+    The function prices one unit of the bond from its original cash-flow schedule
+    and scales by the current position units.
+    """
+
     if bond is None or bond.get("units", 0.0) <= 0:
         return 0.0
     delta = yearfrac(bond["issue_date"], valuation_date)
@@ -206,6 +443,29 @@ def position_values_by_bucket(
     *,
     buckets: list[int] | tuple[int, ...] = DEFAULT_ISSUE_MATURITIES,
 ) -> dict[int, float]:
+    """Value synthetic bond positions by maturity bucket.
+
+    Parameters
+    ----------
+    positions : dict[int, dict]
+        Mapping from maturity bucket to synthetic bond record.
+    valuation_date : pandas.Timestamp
+        Valuation date.
+    df_func : callable
+        Discount-factor function.
+    buckets : list of int or tuple of int, default DEFAULT_ISSUE_MATURITIES
+        Buckets to include in the output.
+
+    Returns
+    -------
+    dict[int, float]
+        Present value for each requested bucket. Missing buckets receive zero.
+
+    Notes
+    -----
+    The function preserves the requested bucket order through the returned mapping.
+    """
+
     return {
         int(m): bond_position_value(positions.get(int(m)), valuation_date, df_func)
         for m in buckets
@@ -217,6 +477,30 @@ def bond_cashflows_between(
     start_date: pd.Timestamp,
     end_date: pd.Timestamp,
 ) -> tuple[float, float, float]:
+    """Sum bond cash flows paid within a date interval.
+
+    Parameters
+    ----------
+    bond : dict or None
+        Synthetic bond record with payment dates, cash flows, coupon, frequency,
+        and units.
+    start_date : pandas.Timestamp
+        Start of the interval. Payments on this date are excluded.
+    end_date : pandas.Timestamp
+        End of the interval. Payments on this date are included.
+
+    Returns
+    -------
+    tuple[float, float, float]
+        Gross cash flow, coupon component, and principal component.
+
+    Notes
+    -----
+    The coupon component is computed from the number of payment dates in the
+    interval and the bond's coupon/frequency. The principal component is the
+    residual gross amount after coupon income.
+    """
+
     if bond is None or bond.get("units", 0.0) <= 0:
         return 0.0, 0.0, 0.0
 

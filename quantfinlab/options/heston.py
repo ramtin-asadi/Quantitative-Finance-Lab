@@ -32,7 +32,41 @@ def _rng_shocks(n_path: int, n_step: int, random_state: int = 7):
 
 
 def heston_cf(u, spot, rate, dividend_yield, tau, v0, kappa, theta, sigma_v, rho):
-    """Stable little-Heston-trap characteristic function of log spot."""
+    """Evaluate the Heston characteristic function of log spot at expiry.
+
+    The implementation uses a stable little-Heston-trap formulation with clipped
+    variance, mean-reversion, volatility-of-variance, and correlation parameters to
+    avoid common numerical singularities.
+
+    Parameters
+    ----------
+    u : array-like
+        Complex Fourier argument.
+    spot : float or array-like
+        Current spot price.
+    rate : float or array-like
+        Continuously compounded risk-free rate.
+    dividend_yield : float or array-like
+        Continuously compounded dividend yield.
+    tau : float or array-like
+        Time to expiry in years.
+    v0 : float or array-like
+        Initial variance.
+    kappa : float or array-like
+        Variance mean-reversion speed.
+    theta : float or array-like
+        Long-run variance.
+    sigma_v : float or array-like
+        Volatility of variance.
+    rho : float or array-like
+        Correlation between spot and variance shocks.
+
+    Returns
+    -------
+    numpy.ndarray
+        Characteristic-function values ``E[exp(i u log(S_T))]``.
+    """
+
     u = np.asarray(u, dtype=complex)
     spot = np.asarray(spot, dtype=float)
     tau = np.asarray(tau, dtype=float)
@@ -124,6 +158,45 @@ def heston_mc_price(
     random_state: int = 7,
     engine: str = "auto",
 ):
+    """Price options by Monte Carlo simulation under the Heston stochastic-volatility model.
+
+    The function simulates forward-relative terminal prices with a full-truncation
+    Euler variance scheme and supports common random shocks supplied by the caller.
+    It returns both prices and Monte Carlo standard errors.
+
+    Parameters
+    ----------
+    option_type : array-like
+        Option type labels.
+    forward : array-like
+        Forward prices at option expiry.
+    strike : array-like
+        Strike prices.
+    tau : array-like
+        Times to expiry in years.
+    discount_factor : array-like
+        Expiry discount factors.
+    v0, kappa, theta, xi, rho : float
+        Heston parameters: initial variance, mean-reversion speed, long-run variance,
+        volatility of variance, and spot/variance correlation.
+    steps_per_year : int, default=52
+        Simulation time-step frequency.
+    z_s, z_v : numpy.ndarray, optional
+        Pre-generated standard-normal shock arrays. If supplied, they enable common
+        random numbers across parameter evaluations.
+    paths : int, default=2048
+        Number of Monte Carlo paths generated when shocks are not supplied.
+    random_state : int, default=7
+        Random seed used when shocks are generated internally.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Simulation backend.
+
+    Returns
+    -------
+    tuple[numpy.ndarray, numpy.ndarray]
+        Model prices and Monte Carlo standard errors.
+    """
+
     option_type = np.asarray(option_type).astype(str)
     forward = np.asarray(forward, dtype=float)
     strike = np.asarray(strike, dtype=float)
@@ -185,6 +258,45 @@ def fit_heston_mc(
     weight_col: str = "obs_weight",
     max_nfev: int = 55,
 ) -> dict:
+    """Calibrate a Heston Monte Carlo model to an option quote panel.
+
+    The calibration uses weighted least squares on prices with common random numbers
+    for stable objective comparisons. Several starting points are tried, the best fit
+    is repriced with a larger final path count, and diagnostic tables are returned.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Calibration quote table containing option type, forward, strike, tau,
+        discount factor, mid price, and preferably ``iv_mid`` and quote weights.
+    paths_opt : int, default=2048
+        Number of paths used during optimization.
+    paths_final : int, default=8192
+        Number of paths used for final repricing and diagnostics.
+    steps_per_year : int, default=52
+        Simulation time-step frequency.
+    random_method : str, default='antithetic'
+        Randomization label retained for configuration compatibility.
+    common_random_numbers : bool, default=True
+        Whether the calibration logic uses common random numbers. The current
+        implementation pre-generates shared shocks for stable residual evaluation.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Simulation backend.
+    random_state : int, default=7
+        Base random seed.
+    weight_col : str, default='obs_weight'
+        Observation-weight column.
+    max_nfev : int, default=55
+        Maximum function evaluations per least-squares start.
+
+    Returns
+    -------
+    dict
+        Dictionary with ``model``, ``params``, ``fit``, ``diag``, ``mc_error``,
+        ``mc_convergence``, elapsed time, backend, path count, and random-state
+        metadata.
+    """
+
     t0 = time.perf_counter()
     q = quotes.copy()
     engine_used = _engine_name(engine)
@@ -244,6 +356,25 @@ def fit_heston_mc(
 
 
 def heston_prices(quotes: pd.DataFrame, fit: dict, engine: str = "auto") -> pd.DataFrame:
+    """Reprice a quote table using parameters from a fitted Heston Monte Carlo model.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table to price.
+    fit : dict
+        Fit dictionary containing a non-empty ``params`` table.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Simulation backend.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote table with model prices, residuals, and Monte Carlo standard errors.
+        Returns an empty slice of ``quotes`` when inputs are empty or parameters are
+        unavailable.
+    """
+
     params = fit.get("params", pd.DataFrame())
     if quotes.empty or params.empty:
         return quotes.head(0).copy()

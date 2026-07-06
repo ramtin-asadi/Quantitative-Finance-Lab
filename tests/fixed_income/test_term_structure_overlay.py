@@ -4,14 +4,18 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from quantfinlab.fixed_income.bond_pricing import position_values_by_bucket
 from quantfinlab.fixed_income.duration_overlay import compute_duration_gap, duration_overlay_trade
 from quantfinlab.fixed_income.ladder import (
     choose_backtest_block,
     clone_positions,
     gap_safe_frame,
+    initialize_ladder,
     ladder_nav,
     ladder_performance_table,
     ladder_returns,
+    rebalance_ladder_to_buckets,
+    roll_bucket_positions,
     split_contiguous_blocks,
 )
 from quantfinlab.fixed_income.scenarios import (
@@ -21,6 +25,7 @@ from quantfinlab.fixed_income.scenarios import (
     scenario_quantiles,
     strategy_scenario_summary,
 )
+from tests.synthetic.generators import flat_curve
 
 
 def test_duration_overlay_trade_is_capped_by_available_sell_value() -> None:
@@ -64,3 +69,50 @@ def test_scenarios_and_ladder_helpers_produce_diagnostic_tables() -> None:
     assert pnl.loc["parallel +50 bp"] < 0.0
     assert summary.shape == (4, 1)
     assert q.shape == (1, 4)
+
+
+def test_ladder_initialization_rebalance_and_roll_workflow_changes_positions() -> None:
+    date = pd.Timestamp("2024-01-31")
+    curve = flat_curve(0.04)
+
+    def coupon_lookup(_: pd.Timestamp, maturity: int) -> float:
+        return 0.035 + 0.001 * int(maturity)
+
+    positions, cash = initialize_ladder(
+        date,
+        buckets=(2, 5),
+        target_weights={2: 0.60, 5: 0.40},
+        initial_nav=100.0,
+        coupon_lookup=coupon_lookup,
+    )
+    before = position_values_by_bucket(positions, date, curve.df, buckets=(2, 5))
+    positions, cash, trades = rebalance_ladder_to_buckets(
+        positions,
+        cash,
+        date,
+        curve.df,
+        {2: 0.40, 5: 0.60},
+        buckets=(2, 5),
+        rebalance_band=0.01,
+        coupon_lookup=coupon_lookup,
+        trading_cost_bps=0.0,
+    )
+    after = position_values_by_bucket(positions, date, curve.df, buckets=(2, 5))
+    pre_roll_count = len(positions)
+    rolled, rolled_cash, roll_trades = roll_bucket_positions(
+        positions,
+        cash,
+        date + pd.DateOffset(months=18),
+        curve.df,
+        buckets=(2, 5),
+        bucket_floor={2: 1.0, 5: 4.0},
+        trading_cost_bps=0.0,
+    )
+
+    assert cash == pytest.approx(0.0, abs=1e-8)
+    assert before[2] > before[5]
+    assert after[5] > after[2]
+    assert {row["side"] for row in trades} == {"buy", "sell"}
+    assert roll_trades
+    assert rolled_cash > cash
+    assert len(rolled) < pre_roll_count

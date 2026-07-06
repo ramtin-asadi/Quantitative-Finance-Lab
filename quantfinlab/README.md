@@ -1,8 +1,8 @@
 # quantfinlab Library
 
-`quantfinlab` is the reusable Python library extracted from the [Quantitative Finance Lab](../README.md) project series. It is not a general-purpose finance library. it is a focused, package covering exactly the methods developed across the twenty projects: fixed income, options pricing, portfolio construction, risk reporting, volatility modeling, hedging, macro indicators, dependence networks, and ML/RL components for finance.
+`quantfinlab` is the reusable Python library extracted from the [Quantitative Finance Lab](https://github.com/ramtin-asadi/Quantitative-Finance-Lab) project series. It is not a general-purpose finance library. It is a focused package covering the methods developed across the twenty projects: fixed income, options pricing, portfolio construction, risk reporting, volatility modeling, hedging, macro indicators, dependence networks, and ML/RL components for finance.
 
-Every public function is covered by at least one test in `tests/` that checks a real property of the model (weights summing to one, CVaR being bounded by the benchmark, a PSD square root reconstructing its matrix). 171 tests pass in CI, alongside a clean `ruff` lint pass.
+The test suite checks real model properties rather than notebook snapshots: weights summing to one, CVaR behavior, curve/discount consistency, American option engine fallbacks, implied-volatility diagnostics, and PSD matrix reconstruction. The current package checks pass with a clean `ruff` lint pass.
 
 ## Installation
 
@@ -12,9 +12,17 @@ From the repository root:
 pip install -e .
 ```
 
-This builds the C++ extension (`quantfinlab._kernels`, used by `options.american` and `calibration`) automatically via `scikit-build-core`, CMake, and pybind11. a C++ compiler and CMake need to be available, but no manual build step is required.
+Source installs build the optional C++ extension (`quantfinlab._kernels`) automatically via `scikit-build-core`, CMake, and pybind11 when a C++ compiler is available. The extension accelerates the heaviest American-option, Fourier/COS, Monte Carlo, and calibration kernels, but the package also works from a pure-Python wheel when native builds are not available.
 
-Most of the library works with just the core dependencies (NumPy, pandas, SciPy, cvxpy, scikit-learn, matplotlib). A handful of modules need optional extras, installed as needed:
+To disable native kernels during a source install:
+
+```bash
+pip install . --config-settings=cmake.define.QUANTFINLAB_BUILD_CPP=OFF
+```
+
+Functions that accept `engine="auto"` prefer C++ when available, then Numba when installed, then NumPy/SciPy fallback paths where implemented. If you explicitly request `engine="cpp"` without the extension installed, `quantfinlab` raises `MissingKernelsError` with installation and fallback guidance.
+
+Most of the library works with just the core dependencies (NumPy, pandas, SciPy, cvxpy, and scikit-learn). A handful of modules need optional extras, installed as needed:
 
 ```bash
 pip install -e ".[numerics]"   # JAX / Numba acceleration (autodiff Greeks, fast IV)
@@ -22,11 +30,11 @@ pip install -e ".[volatility]" # arch, statsmodels (GARCH, HAR)
 pip install -e ".[hedging]"    # statsmodels (dynamic hedge ratios)
 pip install -e ".[ml]"         # PyTorch (sequence models, RL policies)
 pip install -e ".[network]"    # networkx (dependence networks)
-pip install -e ".[plotting]"   # seaborn
+pip install -e ".[plotting]"   # matplotlib, seaborn
 pip install -e ".[all]"        # everything above
 ```
 
-**Every module degrades without its optional dependency**. Functions either fall back to a pure NumPy/SciPy implementation, or raise a clear, specific error telling you which extra to install, rather than failing on import. This is enforced by the test suite: tests that need an optional dependency use `pytest.importorskip` and skip cleanly rather than fail when the dependency is absent.
+Optional dependencies are checked at the point of use. Functions either fall back to a pure NumPy/SciPy implementation, or raise a clear, specific error telling you which extra to install, rather than failing on package import. Tests that need optional dependencies use `pytest.importorskip` and skip cleanly rather than fail when the dependency is absent.
 
 ## Module map
 
@@ -48,11 +56,11 @@ pip install -e ".[all]"        # everything above
 | `quantfinlab.plotting` | Consistent plotting utilities per domain (curves, options, portfolio, risk, volatility, macro, regimes, ML, hedging, fixed income) and explanatory diagrams. |
 | `quantfinlab.common` | Shared contracts/dataclasses (`Curve`, `Bond`, `PortfolioState`, `BacktestResult`, ...), error types, date utilities, and input validation used across every other module. |
 
-The C++ pricing kernels (`cpp/`, exposed as `quantfinlab._kernels`) implement the LSM regression solver, the PSOR finite-difference PDE solver, the binomial tree, and the Fourier/COS pricer (the numerically heaviest loops in `options.american` and `calibration`), written in C++ and bound via pybind11 for speed, with a pure-Python fallback path used automatically when the extension isn't built.
+The optional C++ pricing kernels (`cpp/`, exposed as `quantfinlab._kernels`) implement the LSM regression solver, the PSOR finite-difference PDE solver, the binomial tree, Monte Carlo paths, and the Fourier/COS pricer. They are written in C++ and bound via pybind11 for speed; pure-Python installs keep the public APIs importable and use automatic fallbacks where those methods exist.
 
 ## Data loading
 
-`quantfinlab.dataio` is what every notebook uses to turn a raw downloaded file into a clean, analysis-ready dataset. It is also the boundary the project series treats most carefully. see the [`README.md`](../README.md#data-and-reproducibility) and [`data/README.md`](../data/README.md) for how raw data is obtained in the first place, `dataio` is what runs after having the data files for turning them into analysis ready dataframes.
+`quantfinlab.dataio` is what every notebook uses to turn a raw downloaded file into a clean, analysis-ready dataset. It is also the boundary the project series treats most carefully. see the [project README](https://github.com/ramtin-asadi/Quantitative-Finance-Lab#data-and-reproducibility) and [data README](https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data) for how raw data is obtained in the first place, `dataio` is what runs after having the data files for turning them into analysis ready dataframes.
 
 ```python
 from quantfinlab.dataio import load_par_yield_curve, load_yfinance_panel

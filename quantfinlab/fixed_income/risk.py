@@ -21,10 +21,28 @@ from .tenors import DEFAULT_ISSUE_MATURITIES
 
 
 def key_bump_func(keys: list[int], key: int, *, bump_bp: float = 1.0) -> Callable[[np.ndarray], np.ndarray]:
+    """Create a piecewise-linear key-rate bump function.
+
+    Parameters
+    ----------
+    keys : list of int
+        Key tenors in years.
+    key : int
+        Tenor to bump.
+    bump_bp : float, default 1.0
+        Bump size in basis points.
+
+    Returns
+    -------
+    callable
+        Function mapping maturities in years to rate shifts in decimal units.
+
+    Notes
+    -----
+    The selected key receives the full bump and all other key nodes receive zero.
+    Shifts between key nodes are linearly interpolated.
     """
-    Piecewise-linear key bump on the key-tenor grid (in continuous rate terms).
-    Mimics your notebook: bump at one node, 0 elsewhere, interpolated linearly.
-    """
+
     values = np.zeros(len(keys), dtype=float)
     k_idx = keys.index(key)
     values[k_idx] = bump_bp / 10000.0
@@ -42,6 +60,29 @@ def bucket_bump_func(
     bucket_bounds: dict[int, tuple[float, float]] | None = None,
     bump_bp: float = 1.0,
 ) -> Callable[[np.ndarray], np.ndarray]:
+    """Create a bucket-local rate bump function.
+
+    Parameters
+    ----------
+    key : int
+        Bucket key whose maturity interval should be shocked.
+    bucket_bounds : dict[int, tuple[float, float]] or None, optional
+        Mapping from key to lower and upper maturity bounds in years. Defaults to
+        broad 2Y, 5Y, 10Y, and 30Y buckets.
+    bump_bp : float, default 1.0
+        Bump size in basis points.
+
+    Returns
+    -------
+    callable
+        Function mapping maturities in years to bucket shocks in decimal units.
+
+    Notes
+    -----
+    Maturities inside the selected bucket receive the full bump; maturities outside
+    the bucket receive zero.
+    """
+
     if bucket_bounds is None:
         bucket_bounds = {
             2: (0.0, 3.5),
@@ -67,9 +108,28 @@ def book_parallel_risk_timeseries(
     *,
     bump_bp: float = 1.0,
 ) -> pd.DataFrame:
+    """Compute book-level PV01 and convexity through time.
+
+    Parameters
+    ----------
+    book : object
+        Synthetic issuance book.
+    curves_for_dates : dict[pandas.Timestamp, dict[str, Curve]]
+        Nested mapping from valuation date to curve method to fitted curve.
+    bump_bp : float, default 1.0
+        Symmetric parallel bump size in basis points.
+
+    Returns
+    -------
+    pandas.DataFrame
+        MultiIndex-column table of PV01 and convexity by date and curve method.
+
+    Notes
+    -----
+    PV01 is estimated from symmetric up/down parallel shifts. Convexity is computed
+    as the second-order price response scaled by base PV and squared bump size.
     """
-    Compute PV01 and convexity time series with a symmetric parallel bump.
-    """
+
     bump = bump_bp / 10000.0
     risk_records: list[dict] = []
 
@@ -106,9 +166,31 @@ def book_krd_timeseries(
     keys: list[int] | tuple[int, ...] | None = None,
     bump_bp: float = 1.0,
 ) -> pd.DataFrame:
+    """Compute book-level key-rate duration time series.
+
+    Parameters
+    ----------
+    book : object
+        Synthetic issuance book.
+    curves_for_dates : dict[pandas.Timestamp, dict[str, Curve]]
+        Nested mapping from valuation date to curve method to fitted curve.
+    keys : list of int, tuple of int, or None, optional
+        Key tenors in years. If omitted, book maturity buckets are used.
+    bump_bp : float, default 1.0
+        Key-rate bump size in basis points.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Pivot table indexed by valuation date with method/key columns and KRD
+        values.
+
+    Notes
+    -----
+    Each key-rate duration is estimated by bumping one key-tenor node through a
+    piecewise-linear shift function and revaluing the book.
     """
-    Compute key-rate duration time series by method and key tenor.
-    """
+
     bump = bump_bp / 10000.0
     keys_l = [int(k) for k in (keys if keys is not None else book.maturities)]
     krd_records: list[dict] = []
@@ -140,6 +222,34 @@ def bond_price_and_risk(
     key_tenors: list[int] | tuple[int, ...] | None = None,
     settle: float = 0.0,
 ) -> pd.DataFrame:
+    """Compute bond price and rate-risk measures under multiple curves.
+
+    Parameters
+    ----------
+    bond : Bond
+        Fixed-coupon bond specification.
+    curves : dict[str, Curve]
+        Mapping from curve method to fitted curve.
+    bump_bp : float, default 1.0
+        Bump size in basis points for PV01, convexity, and KRD.
+    key_tenors : list of int, tuple of int, or None, optional
+        Key tenors used for key-rate duration. Defaults to standard maturity
+        buckets.
+    settle : float, default 0.0
+        Years since the last coupon date.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table indexed by curve method with clean price, PV01, convexity, and
+        key-rate duration columns.
+
+    Notes
+    -----
+    Clean price is computed first, then simple accrued interest is added back to
+    form the dirty-price base for risk calculations.
+    """
+
     if key_tenors is None:
         key_tenors = list(DEFAULT_ISSUE_MATURITIES)
     bump = bump_bp / 10000.0
@@ -186,6 +296,30 @@ def pv01(
     bump_bp: float = 1.0,
     settle: float = 0.0,
 ) -> float:
+    """Compute PV01 of a fixed-coupon bond under one curve.
+
+    Parameters
+    ----------
+    bond : Bond
+        Fixed-coupon bond specification.
+    curve : Curve
+        Fitted discount curve.
+    bump_bp : float, default 1.0
+        Bump size in basis points.
+    settle : float, default 0.0
+        Years since the last coupon date.
+
+    Returns
+    -------
+    float
+        Symmetric finite-difference PV01.
+
+    Notes
+    -----
+    The curve method label is taken from the curve object and used internally to
+    build a one-curve risk table.
+    """
+
     table = bond_price_and_risk(bond, {curve.method: curve}, bump_bp=bump_bp, settle=settle)
     return float(table.iloc[0]["pv01"])
 
@@ -197,14 +331,81 @@ def dv01(
     bump_bp: float = 1.0,
     settle: float = 0.0,
 ) -> float:
+    """Compute DV01 of a fixed-coupon bond under one curve.
+
+    Parameters
+    ----------
+    bond : Bond
+        Fixed-coupon bond specification.
+    curve : Curve
+        Fitted discount curve.
+    bump_bp : float, default 1.0
+        Bump size in basis points.
+    settle : float, default 0.0
+        Years since the last coupon date.
+
+    Returns
+    -------
+    float
+        DV01 value, implemented as an alias of PV01.
+
+    Notes
+    -----
+    The function is provided for naming convenience; it returns the same value as
+    the PV01 helper.
+    """
+
     return pv01(bond, curve, bump_bp=bump_bp, settle=settle)
 
 
 def price_from_ytm(y: float, times: np.ndarray, cfs: np.ndarray, *, freq: int = 2) -> float:
+    """Price cash flows using a flat yield-to-maturity.
+
+    Parameters
+    ----------
+    y : float
+        Annual yield-to-maturity in decimal units.
+    times : numpy.ndarray
+        Cash-flow times in years.
+    cfs : numpy.ndarray
+        Cash-flow amounts.
+    freq : int, default 2
+        Compounding frequency per year.
+
+    Returns
+    -------
+    float
+        Present value of the cash flows under periodic compounding.
+    """
+
     return float(np.sum(cfs / np.power(1.0 + y / freq, freq * times)))
 
 
 def solve_bond_ytm(price: float, times: np.ndarray, cfs: np.ndarray, *, freq: int = 2) -> float:
+    """Solve the yield-to-maturity that matches a bond price.
+
+    Parameters
+    ----------
+    price : float
+        Target bond price.
+    times : numpy.ndarray
+        Remaining cash-flow times in years.
+    cfs : numpy.ndarray
+        Remaining cash-flow amounts.
+    freq : int, default 2
+        Compounding frequency per year.
+
+    Returns
+    -------
+    float
+        Yield-to-maturity in decimal units, or NaN when no valid bracket is found.
+
+    Notes
+    -----
+    The solver uses bracketing and bisection. The upper bracket is expanded when
+    needed up to a finite limit.
+    """
+
     if price <= 0 or len(times) == 0:
         return np.nan
 
@@ -243,6 +444,31 @@ def bond_modified_duration(
     *,
     bump_bp: float = 1.0,
 ) -> float:
+    """Estimate modified duration of a synthetic bond position.
+
+    Parameters
+    ----------
+    bond : dict or None
+        Synthetic bond record.
+    valuation_date : pandas.Timestamp
+        Valuation date.
+    df_func : callable
+        Discount-factor function used to value the position.
+    bump_bp : float, default 1.0
+        Yield bump size in basis points.
+
+    Returns
+    -------
+    float
+        Modified duration. Returns zero for missing or matured positions and NaN
+        when yield-to-maturity cannot be solved.
+
+    Notes
+    -----
+    The function first solves a per-unit yield-to-maturity from the current market
+    value, then computes symmetric finite-difference duration under yield bumps.
+    """
+
     t_rem, cf_rem = remaining_cashflow_arrays(bond, valuation_date)
     if len(t_rem) == 0:
         return 0.0
@@ -270,6 +496,34 @@ def portfolio_parallel_risk(
     buckets: list[int] | tuple[int, ...] = DEFAULT_ISSUE_MATURITIES,
     bump_bp: float = 1.0,
 ) -> dict[str, float]:
+    """Compute parallel rate risk for a synthetic bond portfolio.
+
+    Parameters
+    ----------
+    positions : dict[int, dict]
+        Synthetic bond positions by maturity bucket.
+    cash : float
+        Cash balance included in NAV but not rate-sensitive.
+    valuation_date : pandas.Timestamp
+        Valuation date.
+    df_func : callable
+        Base discount-factor function.
+    buckets : list of int or tuple of int, default DEFAULT_ISSUE_MATURITIES
+        Maturity buckets included in the portfolio.
+    bump_bp : float, default 1.0
+        Parallel bump size in basis points.
+
+    Returns
+    -------
+    dict[str, float]
+        Dictionary with ``pv01``, ``effective_duration``, and ``convexity``.
+
+    Notes
+    -----
+    Cash is included in base NAV but does not change under rate shifts. If base NAV
+    is non-positive, all metrics are returned as NaN.
+    """
+
     dy = bump_bp / 10000.0
     base_bucket = position_values_by_bucket(positions, valuation_date, df_func, buckets=buckets)
     base = float(cash) + sum(base_bucket.values())
@@ -298,6 +552,35 @@ def portfolio_modified_duration(
     buckets: list[int] | tuple[int, ...] = DEFAULT_ISSUE_MATURITIES,
     bump_bp: float = 1.0,
 ) -> float:
+    """Compute value-weighted modified duration of a synthetic bond portfolio.
+
+    Parameters
+    ----------
+    positions : dict[int, dict]
+        Synthetic bond positions by maturity bucket.
+    cash : float
+        Cash balance.
+    valuation_date : pandas.Timestamp
+        Valuation date.
+    df_func : callable
+        Discount-factor function.
+    buckets : list of int or tuple of int, default DEFAULT_ISSUE_MATURITIES
+        Buckets included in the calculation.
+    bump_bp : float, default 1.0
+        Yield bump size used in individual-bond duration estimates.
+
+    Returns
+    -------
+    float
+        Value-weighted modified duration. Returns NaN when total NAV is
+        non-positive.
+
+    Notes
+    -----
+    Only buckets with positive market value and finite individual modified duration
+    contribute to the result.
+    """
+
     bucket_values = position_values_by_bucket(positions, valuation_date, df_func, buckets=buckets)
     total_nav = float(cash) + sum(bucket_values.values())
     if total_nav <= 0:
@@ -329,6 +612,36 @@ def portfolio_key_rate_risk(
     bucket_bounds: dict[int, tuple[float, float]] | None = None,
     bump_bp: float = 1.0,
 ) -> pd.DataFrame:
+    """Compute bucket key-rate risk for a synthetic bond portfolio.
+
+    Parameters
+    ----------
+    positions : dict[int, dict]
+        Synthetic bond positions by maturity bucket.
+    cash : float
+        Cash balance.
+    valuation_date : pandas.Timestamp
+        Valuation date.
+    df_func : callable
+        Base discount-factor function.
+    buckets : list of int or tuple of int, default DEFAULT_ISSUE_MATURITIES
+        Key buckets to shock and value.
+    bucket_bounds : dict[int, tuple[float, float]] or None, optional
+        Maturity intervals assigned to each key bucket.
+    bump_bp : float, default 1.0
+        Symmetric bump size in basis points.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with ``key``, ``krd``, and ``key_rate_pv01`` columns.
+
+    Notes
+    -----
+    The function applies bucket-local up and down shifts and scales the resulting
+    price sensitivity by base NAV and bump size.
+    """
+
     base_bucket = position_values_by_bucket(positions, valuation_date, df_func, buckets=buckets)
     base = float(cash) + sum(base_bucket.values())
     if base <= 0:
@@ -369,6 +682,35 @@ def strategy_risk_timeseries(
     bucket_bounds: dict[int, tuple[float, float]] | None = None,
     bump_bp: float = 1.0,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Compute risk and key-rate diagnostics for a strategy through time.
+
+    Parameters
+    ----------
+    strategy_df : pandas.DataFrame
+        Strategy table indexed by date with at least ``strategy`` and ``nav``
+        columns.
+    snapshots : dict[pandas.Timestamp, dict]
+        Stored position/cash snapshots by date.
+    curve_lookup : callable
+        Function returning a curve object or discount-factor function for a date.
+    buckets : list of int or tuple of int, default DEFAULT_ISSUE_MATURITIES
+        Buckets included in risk calculations.
+    bucket_bounds : dict[int, tuple[float, float]] or None, optional
+        Bucket bounds for key-rate shocks.
+    bump_bp : float, default 1.0
+        Bump size in basis points.
+
+    Returns
+    -------
+    tuple[pandas.DataFrame, pandas.DataFrame]
+        Strategy-level risk table and long-form key-rate risk table.
+
+    Notes
+    -----
+    Dates without a curve or without a stored snapshot are skipped. The first
+    returned table is indexed by date; the second contains one row per date/key.
+    """
+
     risk_rows = []
     krd_rows = []
 
@@ -430,12 +772,45 @@ def strategy_risk_timeseries(
 
 
 def krd_pivot(krd_df: pd.DataFrame, *, value: str = "krd") -> pd.DataFrame:
+    """Pivot long-form key-rate risk into a date-by-key table.
+
+    Parameters
+    ----------
+    krd_df : pandas.DataFrame
+        Long-form key-rate risk table containing ``date``, ``key``, and the
+        selected value column.
+    value : str, default "krd"
+        Column to pivot.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Pivoted table indexed by date with key columns. Returns an empty DataFrame
+        if the input is empty or the requested value column is unavailable.
+    """
+
     if krd_df is None or krd_df.empty or value not in krd_df.columns:
         return pd.DataFrame()
     return krd_df.pivot(index="date", columns="key", values=value).sort_index()
 
 
 def latest_krd_table(krd_df: pd.DataFrame, *, date: pd.Timestamp | None = None) -> pd.DataFrame:
+    """Return key-rate risk rows for the latest or selected date.
+
+    Parameters
+    ----------
+    krd_df : pandas.DataFrame
+        Long-form key-rate risk table.
+    date : pandas.Timestamp or None, optional
+        Date to select. If omitted, the latest available date is used.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with ``key``, ``krd``, and ``key_rate_pv01`` columns sorted by key.
+        Empty input returns an empty table with those columns.
+    """
+
     if krd_df is None or krd_df.empty:
         return pd.DataFrame(columns=["key", "krd", "key_rate_pv01"])
     use_date = pd.Timestamp(date) if date is not None else pd.Timestamp(krd_df["date"].max())
@@ -443,6 +818,27 @@ def latest_krd_table(krd_df: pd.DataFrame, *, date: pd.Timestamp | None = None) 
 
 
 def duration_sanity_table(risk_df: pd.DataFrame, krd_df: pd.DataFrame) -> pd.DataFrame:
+    """Compare aggregate key-rate duration with portfolio duration measures.
+
+    Parameters
+    ----------
+    risk_df : pandas.DataFrame
+        Strategy risk table containing effective and/or modified duration.
+    krd_df : pandas.DataFrame
+        Long-form key-rate risk table.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with KRD sum, effective duration, and modified duration aligned by
+        date. Returns an empty DataFrame when ``risk_df`` is empty.
+
+    Notes
+    -----
+    The table is intended as a diagnostic check, not a formal identity; the match
+    depends on the key-rate bucket design.
+    """
+
     if risk_df is None or risk_df.empty:
         return pd.DataFrame()
     krd_sum = krd_pivot(krd_df, value="krd").sum(axis=1).reindex(risk_df.index)
@@ -455,6 +851,26 @@ def duration_sanity_table(risk_df: pd.DataFrame, krd_df: pd.DataFrame) -> pd.Dat
 
 
 def pv01_sanity_table(risk_df: pd.DataFrame, krd_df: pd.DataFrame) -> pd.DataFrame:
+    """Compare aggregate key-rate PV01 with parallel PV01.
+
+    Parameters
+    ----------
+    risk_df : pandas.DataFrame
+        Strategy risk table containing ``pv01``.
+    krd_df : pandas.DataFrame
+        Long-form key-rate risk table containing ``key_rate_pv01``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with summed key-rate PV01 and parallel PV01 aligned by date.
+
+    Notes
+    -----
+    Differences can arise because key-rate shocks and parallel shocks are not the
+    same perturbation unless the bucket design fully spans the curve shift.
+    """
+
     if risk_df is None or risk_df.empty:
         return pd.DataFrame()
     pv01_sum = krd_pivot(krd_df, value="key_rate_pv01").sum(axis=1).reindex(risk_df.index)
@@ -466,6 +882,23 @@ def make_book_metrics(
     bucket_pv: pd.DataFrame,
     risk: pd.DataFrame,
 ) -> BookMetrics:
+    """Create a book-metrics container from valuation and risk tables.
+
+    Parameters
+    ----------
+    total_pv : pandas.DataFrame
+        Total present-value table.
+    bucket_pv : pandas.DataFrame
+        Bucket present-value table.
+    risk : pandas.DataFrame
+        Risk metric table.
+
+    Returns
+    -------
+    BookMetrics
+        Container holding the supplied tables.
+    """
+
     return BookMetrics(total_pv=total_pv, bucket_pv=bucket_pv, risk=risk)
 
 
@@ -482,9 +915,42 @@ def book_metrics(
     bump_bp: float = 1.0,
     tenor_cols: list[str] | None = None,
 ) -> tuple[BookMetrics, pd.DataFrame]:
+    """Build valuation and rate-risk metrics for a synthetic issuance book.
+
+    Parameters
+    ----------
+    book : object
+        Synthetic issuance book.
+    valuation_dates : pandas.Index or list of pandas.Timestamp
+        Dates on which to value the book.
+    par_yields : pandas.DataFrame
+        Date-indexed par-yield curve panel.
+    methods : iterable of str, default ("loglinear", "pchip", "nss", "qp")
+        Curve-fitting methods to use.
+    holdouts : list of str or None, optional
+        Accepted for compatibility and ignored by this routine.
+    freq : int, default 2
+        Coupon frequency used in bootstrapping.
+    short_end : str, default "continuous"
+        Short-end bootstrap convention.
+    min_df : float, default 1e-12
+        Discount-factor floor.
+    bump_bp : float, default 1.0
+        Bump size used in risk calculations.
+    tenor_cols : list of str or None, optional
+        Tenor columns to use.
+
+    Returns
+    -------
+    tuple[BookMetrics, pandas.DataFrame]
+        Book-metrics container and key-rate duration table.
+
+    Notes
+    -----
+    The function fits curves for each valuation date, computes total and bucket PV,
+    parallel PV01/convexity, and key-rate duration across book maturities.
     """
-    Build Project-1 synthetic book PV, PV01/convexity, and KRD tables.
-    """
+
     _ = holdouts
     curves_for_dates = curves_by_valuation_date(
         valuation_dates,

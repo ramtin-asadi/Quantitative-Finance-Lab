@@ -425,7 +425,7 @@ window.Quarto = {
 </ul>
 <section id="imports-and-plotting-style" class="level3">
 <h3 class="anchored" data-anchor-id="imports-and-plotting-style">imports and plotting style</h3>
-<div id="e8a7848e" class="cell" data-execution_count="1">
+<div id="e8a7848e" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> warnings</span>
@@ -3277,20 +3277,15 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 <p>The autodiff system does all of this automatically. It walks backward through every node, accumulating gradients using the chain rule, until it reaches the input nodes. At that point, it has computed all the first-order Greeks at the same time.</p>
 <p>Also for second derivatives like gamma or vanna, you simply differentiate the first derivative function.</p>
 <p>The autodiff Greeks are computed through a completely independent code path. They don’t use any of the manually derived formulas. If your analytic delta formula has a bug, the autodiff delta will be correct, and the discrepancy will show up immediately when you compare them. Also with more factors that we have and more exposures we want to calculate for a model, autodiff is much faster. it calcuulates sensitivities to all the parameters at the same time.</p>
-<div id="71ca8923" class="cell">
+<div id="71ca8923" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Show code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting <span class="im">import</span> diagrams</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">20</span>, <span class="dv">10</span>))</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>diagrams.plot_computation_dag(</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    title<span class="op">=</span><span class="st">"Black-Scholes-Merton: Forward Computation DAG"</span>,</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    ax<span class="op">=</span>ax,</span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>diagrams.plot_computation_dag()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
-<div class="cell-output cell-output-display" data-execution_count="17">
-<pre><code>(&lt;Figure size 4000x2000 with 1 Axes&gt;,
- &lt;Axes: title={'center': 'Black-Scholes-Merton: Forward Computation DAG'}&gt;)</code></pre>
+<div class="cell-output cell-output-display" data-execution_count="5">
+<pre><code>(&lt;Figure size 3080x1540 with 1 Axes&gt;,
+ &lt;Axes: title={'left': 'BSM Call Price - Computational Graph (DAG)'}&gt;)</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <div>
@@ -6057,6 +6052,30 @@ df_pairs with forward shape: (299214, 41)</code></pre>
 </section>
 
 </main> <!-- /main -->
+<script>
+(function () {
+  function setCodeFolds(open) {
+    document.querySelectorAll("details.code-fold").forEach(function (details) {
+      details.open = open;
+    });
+  }
+
+  function handleCodeToolsClick(event) {
+    var showAll = event.target.closest("#quarto-show-all-code");
+    var hideAll = event.target.closest("#quarto-hide-all-code");
+
+    if (!showAll && !hideAll) {
+      return;
+    }
+
+    window.setTimeout(function () {
+      setCodeFolds(Boolean(showAll));
+    }, 0);
+  }
+
+  document.addEventListener("click", handleCodeToolsClick, true);
+})();
+</script>
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";

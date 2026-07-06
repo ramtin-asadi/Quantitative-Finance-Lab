@@ -18,7 +18,48 @@ def attach_rates_to_options(
     interpolation: str = "linear",
     input_compounding: str = "continuous",
 ) -> pd.DataFrame:
-    """Attach continuous zero rates while delegating curve math to fixed_income."""
+    """Attach continuous zero rates to option quotes from exactly one rate source.
+
+    Rates can be supplied as a zero-curve panel, a dated rate series/table, or a
+    constant rate. Curve-panel inputs are mapped by quote date and maturity using the
+    latest available curve on or before the quote date, avoiding future information.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    curve_panel : pandas.DataFrame, optional
+        Date-indexed zero-curve panel with tenor columns in years or tenor labels.
+    rates : pandas.Series or pandas.DataFrame, optional
+        Dated rate series or table. Values are matched by previous available date.
+    constant_rate : float, optional
+        Constant annualized rate applied to all rows.
+    date_col : str, default='date'
+        Quote date column.
+    tau_col : str, default='tau'
+        Time-to-expiry column in years.
+    rate_col : str, default='rate'
+        Output rate column.
+    method : {'previous'}, default='previous'
+        Date-matching method for curve-panel rates.
+    interpolation : {'linear'}, default='linear'
+        Maturity interpolation method for curve-panel rates.
+    input_compounding : {'continuous', 'simple'}, default='continuous'
+        Compounding convention for supplied scalar or dated rates. Simple rates are
+        converted to continuous rates over each option horizon.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``quotes`` with a continuous-rate column.
+
+    Raises
+    ------
+    ValueError
+        If zero or multiple rate sources are supplied, or if a rate table has no
+        usable numeric column.
+    """
+
     out = quotes.copy()
     out[date_col] = pd.to_datetime(out[date_col], errors="coerce").astype("datetime64[ns]")
 
@@ -70,7 +111,24 @@ def attach_rates_to_options(
 
 
 def attach_rates(quotes: pd.DataFrame, curve_panel: pd.DataFrame | None = None, **kwargs) -> pd.DataFrame:
-    """Short alias used by option notebooks."""
+    """Short alias for attaching rates to option quotes.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    curve_panel : pandas.DataFrame, optional
+        Zero-curve panel passed to the rate attachment routine.
+    **kwargs
+        Additional rate-attachment options. The compatibility keyword ``out_col`` is
+        mapped to ``rate_col`` when present.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote table with attached rate column.
+    """
+
     if "out_col" in kwargs and "rate_col" not in kwargs:
         kwargs["rate_col"] = kwargs.pop("out_col")
     return attach_rates_to_options(quotes, curve_panel=curve_panel, **kwargs)
@@ -82,7 +140,25 @@ def add_discount_factors(
     tau_col: str = "tau",
     out_col: str = "discount_factor",
 ) -> pd.DataFrame:
-    """Attach discount factors using Project 1 fixed_income helpers."""
+    """Attach discount factors computed from continuous rates and option maturities.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    rate_col : str, default='rate'
+        Continuous annualized rate column.
+    tau_col : str, default='tau'
+        Time-to-expiry column in years.
+    out_col : str, default='discount_factor'
+        Output discount-factor column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``quotes`` with discount factors.
+    """
+
     out = quotes.copy()
     out[out_col] = discounting.discount_factor_from_rate(out[rate_col], out[tau_col])
     return out
@@ -101,7 +177,42 @@ def infer_dividend_yield_from_forward(
     carry_col: str = "implied_carry",
     out_col: str | None = None,
 ) -> float | np.ndarray | pd.Series | pd.DataFrame:
-    """Infer continuous dividend yield q from F = S exp((r - q)T)."""
+    """Infer continuous dividend yield from spot, forward, rate, and maturity.
+
+    The calculation rearranges ``F = S * exp((r - q) * T)`` to obtain
+    ``q = r - log(F / S) / T``. DataFrame input is supported for table-level use.
+
+    Parameters
+    ----------
+    spot : scalar, array-like, pandas.Series, or pandas.DataFrame
+        Spot price input, or a DataFrame containing spot, forward, rate, and maturity
+        columns.
+    forward : scalar or array-like, optional
+        Forward price. Required unless ``spot`` is a DataFrame.
+    rate : scalar or array-like, optional
+        Continuous annualized rate. Required unless ``spot`` is a DataFrame.
+    tau : scalar or array-like, optional
+        Time to expiry in years. Required unless ``spot`` is a DataFrame.
+    spot_col, forward_col, rate_col, tau_col : str
+        Column names used for DataFrame input.
+    carry_col : str, default='implied_carry'
+        Carry column used as an alternative to forward when DataFrame input already
+        contains implied carry.
+    out_col : str, optional
+        Output column name for DataFrame input. Defaults to
+        ``'implied_dividend_yield'``.
+
+    Returns
+    -------
+    float, numpy.ndarray, pandas.Series, or pandas.DataFrame
+        Implied continuous dividend yield, preserving the input style where possible.
+
+    Raises
+    ------
+    ValueError
+        If required scalar/array inputs are missing.
+    """
+
     if isinstance(spot, pd.DataFrame):
         out = spot.copy()
         if carry_col in out.columns:
@@ -138,7 +249,36 @@ def infer_carry_from_forward(
     tau_col: str = "tau",
     out_col: str | None = None,
 ) -> float | np.ndarray | pd.Series | pd.DataFrame:
-    """Infer continuous carry log(F/S)/T from an observed forward."""
+    """Infer continuous carry from spot, forward, and maturity.
+
+    The carry is defined as ``log(F / S) / T`` and is therefore equal to
+    risk-free rate minus dividend yield under the continuous-carry model.
+
+    Parameters
+    ----------
+    spot : scalar, array-like, pandas.Series, or pandas.DataFrame
+        Spot price input, or a DataFrame containing spot, forward, and maturity
+        columns.
+    forward : scalar or array-like, optional
+        Forward price. Required unless ``spot`` is a DataFrame.
+    tau : scalar or array-like, optional
+        Time to expiry in years. Required unless ``spot`` is a DataFrame.
+    spot_col, forward_col, tau_col : str
+        Column names used for DataFrame input.
+    out_col : str, optional
+        Output column name for DataFrame input. Defaults to ``'implied_carry'``.
+
+    Returns
+    -------
+    float, numpy.ndarray, pandas.Series, or pandas.DataFrame
+        Implied continuous carry.
+
+    Raises
+    ------
+    ValueError
+        If required scalar/array inputs are missing.
+    """
+
     if isinstance(spot, pd.DataFrame):
         out = spot.copy()
         out[out_col or "implied_carry"] = infer_carry_from_forward(out[spot_col], out[forward_col], out[tau_col])

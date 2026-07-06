@@ -23,13 +23,40 @@ def normalize_par_yields(
     tenor_cols: list[str] | None = None,
     assume_percent: bool | None = None,
 ) -> pd.DataFrame:
+    """Normalize a raw par-yield table into a clean tenor panel.
+
+    Parameters
+    ----------
+    raw : pandas.DataFrame
+        Raw table containing a date column or date index and tenor yield columns.
+    date_col : str or None, optional
+        Explicit date column. If omitted, the function tries to infer one.
+    tenor_cols : list of str or None, optional
+        Explicit tenor columns to keep. If omitted, tenor-like columns are detected
+        automatically.
+    assume_percent : bool or None, optional
+        If ``True``, divide input yields by 100. If ``None``, infer percent units
+        from the median yield level.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Date-indexed par-yield panel with normalized tenor labels sorted by
+        maturity and yield values in decimal units.
+
+    Raises
+    ------
+    InputError
+        If the input is empty, no date index/column can be resolved, no tenor
+        columns are detected, or no usable numeric tenor data remain.
+
+    Notes
+    -----
+    Common tenor labels are harmonized, such as whitespace variants of month/year
+    labels. The function assumes tenor yields are par yields and does not bootstrap
+    discount factors.
     """
-    Normalize a raw par-yield table:
-    - harmonize common column names (e.g., '1 mo' -> '1M')
-    - detect/parse date index
-    - detect tenor columns and sort by maturity
-    - convert yields to float and (optionally) percent -> decimal
-    """
+
     if raw.empty:
         raise InputError("Input DataFrame is empty.")
 
@@ -96,6 +123,33 @@ def load_par_yields_csv(
     assume_percent: bool | None = None,
     **read_csv_kwargs,
 ) -> pd.DataFrame:
+    """Read a CSV file and normalize it as a par-yield curve panel.
+
+    Parameters
+    ----------
+    path : str or path-like
+        CSV file to read.
+    date_col : str or None, optional
+        Explicit date column passed to the normalization routine.
+    tenor_cols : list of str or None, optional
+        Explicit tenor columns passed to the normalization routine.
+    assume_percent : bool or None, optional
+        Percent-to-decimal conversion flag passed to the normalization routine.
+    **read_csv_kwargs
+        Additional keyword arguments forwarded to ``pandas.read_csv``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Normalized date-indexed par-yield panel with yields in decimal units.
+
+    Raises
+    ------
+    InputError
+        Propagated from normalization when the CSV cannot be interpreted as a
+        valid curve panel.
+    """
+
     raw = pd.read_csv(path, **read_csv_kwargs)
     return normalize_par_yields(
         raw,
@@ -109,11 +163,32 @@ def extract_par_curve(
     row: pd.Series | dict,
     tenor_cols: list[str] | None = None,
 ) -> tuple[list[str], np.ndarray, np.ndarray]:
+    """Extract finite tenor labels, maturities, and par yields from one curve row.
+
+    Parameters
+    ----------
+    row : pandas.Series or dict
+        Row-like object containing tenor-labeled par yields in decimal units.
+    tenor_cols : list of str or None, optional
+        Tenor labels to extract. If omitted, tenor-like labels are detected from
+        the row index.
+
+    Returns
+    -------
+    tuple[list[str], numpy.ndarray, numpy.ndarray]
+        Sorted tenor labels, maturities in years, and finite par yields.
+
+    Raises
+    ------
+    InputError
+        If no tenor columns are found or all selected tenor values are non-finite.
+
+    Notes
+    -----
+    The function assumes yields are already in decimal units and does not perform
+    percent conversion.
     """
-    Extract (labels, T, par) from a row-like object.
-    - If tenor_cols is None, detect columns like '1M','6M','1Y','2Y',...
-    - Returns par yields as decimals (assumes input already decimals).
-    """
+
     if isinstance(row, dict):
         row = pd.Series(row)
 
@@ -152,15 +227,36 @@ def bootstrap_pillars(
     short_end: Literal["continuous", "simple"] = "continuous",
     min_df: float = 1e-12,
 ) -> CurvePillars:
-    """
-    Bootstrap discount factors at observed tenors from a par-yield curve row.
+    """Bootstrap discount factors at observed tenors from one par-curve row.
 
-    Convention:
-    - For T < 1y: DF(T) = exp(-r*T) if short_end='continuous',
-                 or 1/(1+r*T) if short_end='simple'
-    - For T >= 1y: solve for DF(T) from par-bond equation with coupon=par yield,
-      allowing log-linear interpolation between last known DF and the unknown DF(T).
+    Parameters
+    ----------
+    par_curve_row : pandas.Series or dict
+        Row-like par-yield curve with yields in decimal units.
+    asof : pandas.Timestamp or None, optional
+        Valuation date stored on the returned pillar object.
+    tenor_cols : list of str or None, optional
+        Tenors to use. If omitted, tenor columns are detected.
+    freq : int, default 2
+        Coupon frequency used in the par-bond equation.
+    short_end : {"continuous", "simple"}, default "continuous"
+        Discounting convention used for maturities shorter than one year.
+    min_df : float, default 1e-12
+        Minimum discount factor floor.
+
+    Returns
+    -------
+    CurvePillars
+        Bootstrapped par-curve pillars containing labels, maturities, par yields,
+        and discount factors.
+
+    Notes
+    -----
+    For maturities shorter than one year, discount factors are computed directly
+    from the short-end convention. Longer maturities are solved from par-bond
+    equations using previously bootstrapped points.
     """
+
     labels, T, par = extract_par_curve(par_curve_row, tenor_cols=tenor_cols)
     dfs = bootstrap_from_inputs(
         T=T,
@@ -184,6 +280,38 @@ def bootstrap_from_inputs(
     short_end: Literal["continuous", "simple"] = "continuous",
     min_df: float = 1e-12,
 ) -> dict:
+    """Bootstrap discount factors from sorted maturity and par-yield arrays.
+
+    Parameters
+    ----------
+    T : numpy.ndarray
+        Maturities in years.
+    par : numpy.ndarray
+        Par yields in decimal units.
+    labels : list of str
+        Tenor labels corresponding to ``T``.
+    date : pandas.Timestamp or None, optional
+        Optional valuation date included in the returned dictionary.
+    freq : int, default 2
+        Coupon frequency used for long-end bootstrapping.
+    short_end : {"continuous", "simple"}, default "continuous"
+        Short-maturity discounting convention.
+    min_df : float, default 1e-12
+        Minimum positive discount-factor floor.
+
+    Returns
+    -------
+    dict
+        Dictionary containing ``date``, ``T``, ``par``, ``labels``, and
+        bootstrapped ``dfs``.
+
+    Notes
+    -----
+    Inputs are expected to be ordered by increasing maturity and already filtered
+    for finite values. The function applies a positive floor to discount factors
+    when numerical solves produce invalid values.
+    """
+
     d_map: dict[float, float] = {}
 
     for Ti, ri in zip(T, par, strict=True):
@@ -306,12 +434,39 @@ def rmse_backtest(
     min_df: float = 1e-12,
     tenor_cols: list[str] | None = None,
 ) -> pd.DataFrame:
+    """Evaluate curve-fitting methods by in-sample and holdout par-yield RMSE.
+
+    Parameters
+    ----------
+    par_yields : pandas.DataFrame
+        Date-indexed par-yield curve panel with yields in decimal units.
+    methods : Iterable[str], default ("loglinear", "pchip", "nss", "qp")
+        Curve-fitting methods to compare.
+    holdouts : list of str or None, optional
+        Tenors to hold out when available and interior to the curve. Defaults to a
+        representative set of short, intermediate, and long tenors.
+    freq : int, default 2
+        Coupon frequency used in par-yield reconstruction.
+    short_end : {"continuous", "simple"}, default "continuous"
+        Short-end bootstrap convention.
+    min_df : float, default 1e-12
+        Discount-factor floor.
+    tenor_cols : list of str or None, optional
+        Explicit tenor columns to use.
+
+    Returns
+    -------
+    pandas.DataFrame
+        RMSE summary indexed by method, including in-sample RMSE, optional holdout
+        RMSE, observation counts, date counts, and failure count.
+
+    Notes
+    -----
+    For each date, the function bootstraps pillars, optionally removes holdout
+    tenors, fits the requested curves, and compares reconstructed par yields to
+    training and holdout tenors.
     """
-    Replicates your notebook logic:
-    - For each date, optionally hold out a few tenors (if available and interior)
-    - Fit curves on training set
-    - Compute RMSE on training pillars (IS) and holdouts (OOS)
-    """
+
     methods = [m.lower().strip() for m in methods]
     holdouts = holdouts or ["6M", "2Y", "7Y", "20Y"]
     curve_order = methods
@@ -416,6 +571,25 @@ def rmse_backtest(
 
 
 def normalize_methods(methods: Iterable[str] = DEFAULT_METHODS) -> list[str]:
+    """Normalize and deduplicate curve-method names.
+
+    Parameters
+    ----------
+    methods : Iterable[str], default DEFAULT_METHODS
+        Method names to normalize.
+
+    Returns
+    -------
+    list[str]
+        Lowercase, stripped, de-duplicated method names preserving first
+        occurrence order.
+
+    Raises
+    ------
+    InputError
+        If no method names remain after normalization.
+    """
+
     vals = [m.lower().strip() for m in methods]
     if not vals:
         raise InputError("At least one curve method is required.")
@@ -423,9 +597,25 @@ def normalize_methods(methods: Iterable[str] = DEFAULT_METHODS) -> list[str]:
 
 
 def sort_rmse_table(rmse: pd.DataFrame, *, methods: Iterable[str] | None = None) -> pd.DataFrame:
+    """Sort a curve RMSE table with optional method-order filtering.
+
+    Parameters
+    ----------
+    rmse : pandas.DataFrame
+        RMSE summary table indexed by method.
+    methods : Iterable[str] or None, optional
+        Optional method list used to filter and order the table before sorting.
+
+    Returns
+    -------
+    pandas.DataFrame
+        RMSE table sorted by in-sample ``rmse`` when that column is present.
+
+    Notes
+    -----
+    When ``methods`` is supplied, methods not present in the table are ignored.
     """
-    Keep a stable method order (if provided) and sort by in-sample RMSE.
-    """
+
     out = rmse.copy()
     if methods is not None:
         ordered = [m for m in normalize_methods(methods) if m in out.index]
@@ -441,9 +631,29 @@ def add_curve_names(
     curves: dict | None = None,
     method_names: dict[str, str] | None = None,
 ) -> pd.DataFrame:
+    """Add a human-readable curve-name column to an RMSE table.
+
+    Parameters
+    ----------
+    rmse : pandas.DataFrame
+        RMSE summary table indexed by method.
+    curves : dict or None, optional
+        Optional mapping from method to curve object. Curve ``name`` attributes
+        override default display names.
+    method_names : dict[str, str] or None, optional
+        Additional or replacement display names.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``rmse`` with a leading ``name`` column.
+
+    Notes
+    -----
+    Default names are provided for common curve methods and can be overridden by
+    explicit ``method_names`` or by curve objects.
     """
-    Attach the notebook-style display name column used in curve comparison tables.
-    """
+
     out = rmse.copy()
     names = {
         "loglinear": "Log-linear DF",
@@ -466,10 +676,29 @@ def rank_rmse_table(
     methods: Iterable[str] | None = None,
     prefer_oos: bool = True,
 ) -> pd.DataFrame:
+    """Rank curve methods by holdout or in-sample RMSE.
+
+    Parameters
+    ----------
+    rmse : pandas.DataFrame
+        RMSE summary table indexed by method.
+    methods : Iterable[str] or None, optional
+        Optional method list used to filter and order the table before ranking.
+    prefer_oos : bool, default True
+        If ``True`` and at least one holdout RMSE is available, rank by
+        ``rmse_oos`` with ``rmse`` as a secondary key.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Ranked RMSE table.
+
+    Notes
+    -----
+    If out-of-sample RMSE is unavailable or entirely missing, the function falls
+    back to sorting by in-sample RMSE.
     """
-    Mirror the notebook's primary-curve ranking:
-    sort by OOS RMSE when available, otherwise by in-sample RMSE.
-    """
+
     out = rmse.copy()
     if methods is not None:
         ordered = [m for m in normalize_methods(methods) if m in out.index]
@@ -492,11 +721,33 @@ def select_primary_curve(
     method_names: dict[str, str] | None = None,
     prefer_oos: bool = True,
 ) -> tuple[str, str, pd.DataFrame]:
-    """
-    Select the primary curve method with the same logic used in Notebook 1.
+    """Select the primary curve method from an RMSE comparison table.
 
-    Returns (method, display_name, ranked_table).
+    Parameters
+    ----------
+    rmse : pandas.DataFrame
+        RMSE summary table indexed by method.
+    methods : Iterable[str] or None, optional
+        Optional subset/order of methods to consider.
+    curves : dict or None, optional
+        Optional curve objects used to populate display names.
+    method_names : dict[str, str] or None, optional
+        Optional display-name overrides.
+    prefer_oos : bool, default True
+        If ``True``, prefer holdout RMSE when available.
+
+    Returns
+    -------
+    tuple[str, str, pandas.DataFrame]
+        Selected method key, selected display name, and ranked RMSE table with a
+        ``name`` column.
+
+    Notes
+    -----
+    The first row of the ranked table is selected. Ensure the input table contains
+    at least one valid method row.
     """
+
     ranked = rank_rmse_table(rmse, methods=methods, prefer_oos=prefer_oos)
     ranked = add_curve_names(ranked.drop(columns=["name"], errors="ignore"), curves=curves, method_names=method_names)
     method = str(ranked.index[0])
@@ -514,13 +765,44 @@ def build_zero_curve_panel_from_par_yields(
     short_end: Literal["continuous", "simple"] = "continuous",
     min_df: float = 1e-12,
 ) -> pd.DataFrame:
-    """
-    Build a date-indexed zero-rate panel from Treasury par-yield curves.
+    """Build a date-indexed panel of zero rates from par-yield curves.
 
-    The helper reuses Project 1 normalization, bootstrapping, and smoothing:
-    each curve date is fitted independently, so no future curve information is
-    used when Project 4 maps rates onto option quotes.
+    Parameters
+    ----------
+    par_yields : pandas.DataFrame
+        Date-indexed par-yield curve panel with yields in decimal units.
+    method : str, default "pchip"
+        Curve-fitting method used for discount-factor interpolation.
+    tenors : list of str or float or None, optional
+        Maturities at which to output zero rates. If omitted, the input tenors are
+        used.
+    as_continuous : bool, default True
+        If ``True``, return continuously compounded zero rates. If ``False``,
+        return annually compounded rates implied by discount factors.
+    freq : int, default 2
+        Coupon frequency used in bootstrapping.
+    short_end : {"continuous", "simple"}, default "continuous"
+        Short-end bootstrap convention.
+    min_df : float, default 1e-12
+        Discount-factor floor.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Zero-rate panel indexed by date with float maturity columns.
+
+    Raises
+    ------
+    InputError
+        If the input is empty or no zero curves can be built.
+
+    Notes
+    -----
+    Each date is fitted independently, so no future curve information is used. If
+    curve fitting fails for a date, the function falls back to interpolating the
+    available par yields and converting them to discount factors.
     """
+
     if par_yields.empty:
         raise InputError("par_yields is empty.")
 

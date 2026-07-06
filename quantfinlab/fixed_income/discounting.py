@@ -13,10 +13,29 @@ from .tenors import DEFAULT_METHODS, TENOR_PATTERN, tenor_to_years
 
 
 def par_from_df(df_func: Callable[[np.ndarray], np.ndarray], T: np.ndarray, *, freq: int = 2) -> np.ndarray:
+    """Compute par yields from a discount-factor function.
+
+    Parameters
+    ----------
+    df_func : callable
+        Discount-factor function accepting maturities in years.
+    T : numpy.ndarray
+        Maturities in years at which to compute par yields.
+    freq : int, default 2
+        Coupon frequency for maturities of at least one year.
+
+    Returns
+    -------
+    numpy.ndarray
+        Par yields in decimal units. Invalid or non-positive maturities return NaN.
+
+    Notes
+    -----
+    For maturities below one year, the function returns the continuously compounded
+    zero rate implied by the discount factor. For longer maturities, it applies the
+    standard fixed-coupon par-bond formula.
     """
-    Compute par yield for maturity T from a discount factor function.
-    Uses standard coupon bond equation with coupon dates 1/f,2/f,...,T.
-    """
+
     T = np.array(T, dtype=float)
     out = np.full_like(T, np.nan, dtype=float)
     for i, Ti in enumerate(T):
@@ -49,15 +68,41 @@ def curve_value_table(
     points: int = 400,
     freq: int = 2,
 ) -> pd.DataFrame:
-    """
-    Build a common-grid table of curve values by method.
+    """Evaluate fitted curves on a common maturity grid.
 
-    value:
-    - "par": par yields (decimal)
-    - "zero": zero rates (decimal)
-    - "df": discount factors
-    - "forward": instantaneous forward rates (decimal)
+    Parameters
+    ----------
+    curves : dict[str, Curve]
+        Mapping from method name to fitted curve.
+    value : {"par", "zero", "df", "forward"}, default "zero"
+        Curve value to report.
+    grid : numpy.ndarray or None, optional
+        Explicit maturity grid in years. If omitted, a linear grid is created.
+    t_min : float, default 1/12
+        Minimum maturity for the generated grid.
+    t_max : float, default 30.0
+        Maximum maturity for the generated grid.
+    points : int, default 400
+        Number of grid points when ``grid`` is omitted.
+    freq : int, default 2
+        Coupon frequency used when ``value="par"``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table indexed by maturity in years with one column per curve method.
+
+    Raises
+    ------
+    InputError
+        If no curves are supplied, the grid is empty, or ``value`` is unsupported.
+
+    Notes
+    -----
+    Discount factors, zero rates, and forward rates are interpolated from stored
+    curve grids. Par yields are recomputed from the discount-factor callable.
     """
+
     if not curves:
         raise InputError("curves is empty.")
 
@@ -93,6 +138,27 @@ def zero_curve_table(
     t_max: float = 30.0,
     points: int = 400,
 ) -> pd.DataFrame:
+    """Evaluate zero rates from fitted curves on a common maturity grid.
+
+    Parameters
+    ----------
+    curves : dict[str, Curve]
+        Mapping from method name to fitted curve.
+    grid : numpy.ndarray or None, optional
+        Explicit maturity grid in years.
+    t_min : float, default 1/12
+        Minimum maturity when generating a grid.
+    t_max : float, default 30.0
+        Maximum maturity when generating a grid.
+    points : int, default 400
+        Number of grid points when ``grid`` is omitted.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Zero-rate table indexed by maturity in years with one column per method.
+    """
+
     return curve_value_table(curves, value="zero", grid=grid, t_min=t_min, t_max=t_max, points=points)
 
 
@@ -105,6 +171,29 @@ def par_curve_table(
     points: int = 400,
     freq: int = 2,
 ) -> pd.DataFrame:
+    """Evaluate par yields from fitted curves on a common maturity grid.
+
+    Parameters
+    ----------
+    curves : dict[str, Curve]
+        Mapping from method name to fitted curve.
+    grid : numpy.ndarray or None, optional
+        Explicit maturity grid in years.
+    t_min : float, default 1/12
+        Minimum maturity when generating a grid.
+    t_max : float, default 30.0
+        Maximum maturity when generating a grid.
+    points : int, default 400
+        Number of grid points when ``grid`` is omitted.
+    freq : int, default 2
+        Coupon frequency used in par-yield reconstruction.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Par-yield table indexed by maturity in years with one column per method.
+    """
+
     return curve_value_table(
         curves,
         value="par",
@@ -124,14 +213,54 @@ def discount_curve_table(
     t_max: float = 30.0,
     points: int = 400,
 ) -> pd.DataFrame:
+    """Evaluate discount factors from fitted curves on a common maturity grid.
+
+    Parameters
+    ----------
+    curves : dict[str, Curve]
+        Mapping from method name to fitted curve.
+    grid : numpy.ndarray or None, optional
+        Explicit maturity grid in years.
+    t_min : float, default 1/12
+        Minimum maturity when generating a grid.
+    t_max : float, default 30.0
+        Maximum maturity when generating a grid.
+    points : int, default 400
+        Number of grid points when ``grid`` is omitted.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Discount-factor table indexed by maturity in years with one column per
+        method.
+    """
+
     return curve_value_table(curves, value="df", grid=grid, t_min=t_min, t_max=t_max, points=points)
 
 
 def shifted_df_func(df_func: Callable[[np.ndarray], np.ndarray], shift_func: Callable[[np.ndarray], np.ndarray]) -> Callable[[np.ndarray], np.ndarray]:
+    """Apply an additive continuous-rate shift to a discount-factor function.
+
+    Parameters
+    ----------
+    df_func : callable
+        Base discount-factor function.
+    shift_func : callable
+        Function mapping maturities in years to additive rate shifts in decimal
+        units.
+
+    Returns
+    -------
+    callable
+        Discount-factor function satisfying
+        ``DF_shifted(t) = DF(t) * exp(-shift(t) * t)``.
+
+    Notes
+    -----
+    A positive shift lowers discount factors and represents an upward shift in
+    continuously compounded zero rates.
     """
-    Apply a continuous-rate shift: DF_shifted(t) = DF(t) * exp(-shift(t)*t)
-    where shift(t) is in absolute rate units (e.g. 0.0001 for 1bp).
-    """
+
     def _f(t: np.ndarray) -> np.ndarray:
         tt = np.array(t, dtype=float)
         return df_func(tt) * np.exp(-shift_func(tt) * tt)
@@ -139,7 +268,27 @@ def shifted_df_func(df_func: Callable[[np.ndarray], np.ndarray], shift_func: Cal
 
 
 def curve_date_for(index: pd.Index, d: pd.Timestamp) -> pd.Timestamp | None:
-    """Return the most recent curve date <= d (like your notebook)."""
+    """Resolve the latest available curve date on or before a target date.
+
+    Parameters
+    ----------
+    index : pandas.Index
+        Sorted date index of available curve observations.
+    d : pandas.Timestamp
+        Target date.
+
+    Returns
+    -------
+    pandas.Timestamp or None
+        Matching or previous available date. Returns ``None`` if the target is
+        before the first available curve date.
+
+    Notes
+    -----
+    This helper is commonly used to avoid look-ahead bias when assigning curves to
+    trade or valuation dates.
+    """
+
     d = pd.Timestamp(d)
     if d in index:
         return d
@@ -155,10 +304,29 @@ def short_rate_from_first_tenor(
     tenor_cols: list[str] | None = None,
     default_rate: float = 0.02,
 ) -> float:
+    """Extract a short-rate proxy from the first available tenor in a curve row.
+
+    Parameters
+    ----------
+    curve_row : pandas.Series or dict
+        Row-like par-yield curve with decimal yield values.
+    tenor_cols : list of str or None, optional
+        Candidate tenor columns. If omitted, tenor-like labels are detected.
+    default_rate : float, default 0.02
+        Fallback rate returned when no finite tenor value is available.
+
+    Returns
+    -------
+    float
+        First finite tenor yield after sorting tenors by maturity, or the fallback
+        rate.
+
+    Notes
+    -----
+    The function expects input yields to be in decimal units. It does not convert
+    from percent units.
     """
-    Extract a short rate from the first available tenor in a par-yield row.
-    Input yields are expected in decimal form.
-    """
+
     if isinstance(curve_row, dict):
         curve_row = pd.Series(curve_row)
 
@@ -182,10 +350,29 @@ def short_rate_from_first_tenor(
 
 
 def zero_rate_from_df(df: np.ndarray | float, tau: np.ndarray | float, *, default_rate: float = 0.02) -> np.ndarray | float:
+    """Convert discount factors to continuously compounded zero rates.
+
+    Parameters
+    ----------
+    df : float or numpy.ndarray
+        Discount factor or discount-factor array.
+    tau : float or numpy.ndarray
+        Matching maturity or maturity array in years.
+    default_rate : float, default 0.02
+        Rate used where ``tau <= 0``.
+
+    Returns
+    -------
+    float or numpy.ndarray
+        Continuously compounded zero rate(s), preserving scalar output when both
+        inputs are scalar.
+
+    Notes
+    -----
+    Discount factors are clipped to a small positive floor before applying the
+    logarithm.
     """
-    Convert discount factors to continuously-compounded zero rates.
-    Uses default_rate where tau <= 0.
-    """
+
     df_arr = np.asarray(df, dtype=float)
     tau_arr = np.asarray(tau, dtype=float)
     safe_df = np.clip(df_arr, 1e-16, None)
@@ -221,12 +408,33 @@ def discount_factor_from_rate(
     tau: float | np.ndarray | pd.Series,
     compounding: Literal["continuous", "simple", "annual"] = "continuous",
 ) -> float | np.ndarray | pd.Series:
-    """
-    Convert annualized rates into discount factors.
+    """Convert annualized rates into discount factors.
 
-    Project 4 routes option discounting through this Project 1 fixed-income
-    helper so options code does not duplicate rate-conversion logic.
+    Parameters
+    ----------
+    rate : float, numpy.ndarray, or pandas.Series
+        Annualized rate(s) in decimal units.
+    tau : float, numpy.ndarray, or pandas.Series
+        Time to maturity in years.
+    compounding : {"continuous", "simple", "annual"}, default "continuous"
+        Compounding convention used for conversion.
+
+    Returns
+    -------
+    float, numpy.ndarray, or pandas.Series
+        Discount factor(s), wrapped to resemble the input type where possible.
+
+    Raises
+    ------
+    InputError
+        If ``compounding`` is unsupported.
+
+    Notes
+    -----
+    For non-positive maturities, the discount factor is set to one. Invalid or
+    non-positive computed discount factors are returned as NaN.
     """
+
     rate_arr, tau_arr = np.broadcast_arrays(np.asarray(rate, dtype=float), np.asarray(tau, dtype=float))
     comp = str(compounding).lower().strip()
 
@@ -248,7 +456,27 @@ def continuous_rate_from_discount_factor(
     df: float | np.ndarray | pd.Series,
     tau: float | np.ndarray | pd.Series,
 ) -> float | np.ndarray | pd.Series:
-    """Convert discount factors to continuously compounded zero rates."""
+    """Convert discount factors to continuously compounded zero rates.
+
+    Parameters
+    ----------
+    df : float, numpy.ndarray, or pandas.Series
+        Discount factor(s).
+    tau : float, numpy.ndarray, or pandas.Series
+        Time to maturity in years.
+
+    Returns
+    -------
+    float, numpy.ndarray, or pandas.Series
+        Continuously compounded rate(s), wrapped to resemble the input type where
+        possible.
+
+    Notes
+    -----
+    Rates are returned only where discount factors are positive and maturities are
+    strictly positive; other locations are NaN.
+    """
+
     df_arr, tau_arr = np.broadcast_arrays(np.asarray(df, dtype=float), np.asarray(tau, dtype=float))
     out = np.full_like(df_arr, np.nan, dtype=float)
     mask = (tau_arr > 0) & (df_arr > 0) & np.isfinite(df_arr) & np.isfinite(tau_arr)
@@ -260,7 +488,27 @@ def continuous_rate_from_simple_rate(
     simple_rate: float | np.ndarray | pd.Series,
     tau: float | np.ndarray | pd.Series,
 ) -> float | np.ndarray | pd.Series:
-    """Convert simple annualized rates over horizon tau into continuous rates."""
+    """Convert simple annualized rates over a horizon to continuous rates.
+
+    Parameters
+    ----------
+    simple_rate : float, numpy.ndarray, or pandas.Series
+        Simple annualized rate(s) in decimal units.
+    tau : float, numpy.ndarray, or pandas.Series
+        Horizon in years.
+
+    Returns
+    -------
+    float, numpy.ndarray, or pandas.Series
+        Equivalent continuously compounded rate(s), preserving the input wrapper
+        where possible.
+
+    Notes
+    -----
+    The conversion is defined only where ``tau > 0`` and
+    ``1 + simple_rate * tau > 0``. Other values return NaN.
+    """
+
     rate_arr, tau_arr = np.broadcast_arrays(
         np.asarray(simple_rate, dtype=float),
         np.asarray(tau, dtype=float),
@@ -277,13 +525,33 @@ def constant_rate_series(
     rate: float = 0.06,
     input_compounding: Literal["continuous", "simple"] = "continuous",
 ) -> float | np.ndarray | pd.Series:
-    """
-    Return a horizon-aligned continuously compounded rate series.
+    """Return a horizon-aligned continuous-rate object from a constant rate.
 
-    The NIFTY Project 4 workflow uses this for its temporary 6 percent India
-    proxy rate; replacing that proxy with a curve later only changes the rate
-    source, not the option-pricing code.
+    Parameters
+    ----------
+    tau : float, numpy.ndarray, or pandas.Series
+        Horizon(s) in years.
+    rate : float, default 0.06
+        Constant annualized rate in decimal units.
+    input_compounding : {"continuous", "simple"}, default "continuous"
+        Compounding convention of ``rate``.
+
+    Returns
+    -------
+    float, numpy.ndarray, or pandas.Series
+        Continuously compounded rate(s), wrapped to resemble ``tau``.
+
+    Raises
+    ------
+    InputError
+        If ``input_compounding`` is unsupported.
+
+    Notes
+    -----
+    When the input rate is simple, the function converts it horizon by horizon into
+    a continuous rate.
     """
+
     tau_arr = np.asarray(tau, dtype=float)
     comp = str(input_compounding).lower().strip()
     if comp == "continuous":
@@ -323,7 +591,34 @@ def rate_from_zero_curve(
     tau: float | np.ndarray | pd.Series,
     method: Literal["linear"] = "linear",
 ) -> float | np.ndarray | pd.Series:
-    """Interpolate a continuous zero curve at option maturity tau."""
+    """Interpolate a zero curve at one or more maturities.
+
+    Parameters
+    ----------
+    zero_curve : pandas.Series, pandas.DataFrame, or dict[str, float]
+        Curve values indexed by maturity labels or maturity values. If a DataFrame
+        is supplied, the first row is used.
+    tau : float, numpy.ndarray, or pandas.Series
+        Target maturity or maturities in years.
+    method : {"linear"}, default "linear"
+        Interpolation method. Only linear interpolation is currently supported.
+
+    Returns
+    -------
+    float, numpy.ndarray, or pandas.Series
+        Interpolated zero rate(s), wrapped to resemble ``tau`` where possible.
+
+    Raises
+    ------
+    InputError
+        If the curve is empty or an unsupported interpolation method is requested.
+
+    Notes
+    -----
+    Values outside the curve's maturity range are flat-extrapolated from the
+    nearest endpoint. Non-positive maturities receive the first available rate.
+    """
+
     if method != "linear":
         raise InputError("Only method='linear' is currently supported.")
 
@@ -363,12 +658,41 @@ def map_curve_rates_to_dates_and_taus(
     interpolation: Literal["linear"] = "linear",
     return_source_dates: bool = False,
 ) -> pd.Series | tuple[pd.Series, pd.Series]:
-    """
-    Map quote dates and maturities to zero rates from a panel of zero curves.
+    """Map quote dates and maturities to zero rates from a curve panel.
 
-    For each quote date, the latest curve date on or before the quote date is
-    used. This prevents options workflows from leaking future rate information.
+    Parameters
+    ----------
+    curve_panel : pandas.DataFrame
+        Date-indexed zero-rate panel with maturity columns.
+    dates : pandas.Series, pandas.Index, numpy.ndarray, or list
+        Quote or valuation dates to map.
+    taus : pandas.Series, numpy.ndarray, list, or float
+        Time-to-maturity values in years.
+    method : {"previous"}, default "previous"
+        Date-matching rule. Only previous-available-date matching is supported.
+    interpolation : {"linear"}, default "linear"
+        Maturity interpolation method.
+    return_source_dates : bool, default False
+        If ``True``, also return the curve date used for each observation.
+
+    Returns
+    -------
+    pandas.Series or tuple[pandas.Series, pandas.Series]
+        Interpolated zero rates, and optionally the source curve dates.
+
+    Raises
+    ------
+    InputError
+        If an unsupported date-matching rule is requested or the curve panel is
+        empty.
+
+    Notes
+    -----
+    For each quote date, the function uses the latest curve date on or before the
+    quote date. This prevents future curve information from leaking into
+    time-indexed valuation workflows.
     """
+
     if method != "previous":
         raise InputError("Only method='previous' is currently supported.")
     if curve_panel.empty:
@@ -416,21 +740,46 @@ def make_discount_lookup(
     min_df: float = 1e-12,
     default_rate: float = 0.02,
 ) -> dict[str, Any]:
-    """
-    Build a cached lookup for option-horizon discount factors by trade date.
+    """Build a cached lookup for discount factors and zero rates by date.
 
-    Returns a dict with:
-    - get_df(date, tau): discount factor(s)
-    - get_rate(date, tau): zero rate(s)
-    - resolve_date(date): latest available curve date <= date (or first date)
-    - curve_mode: dict[curve_date -> mode string]
-    - r0_by_date: dict[curve_date -> short rate]
-    - tau_min: first tenor in years
+    Parameters
+    ----------
+    par_yields : pandas.DataFrame
+        Date-indexed par-yield curve panel with yields in decimal units.
+    tenor_cols : list of str or None, optional
+        Tenor columns to use. If omitted, all columns are used.
+    curve_method : str, default "loglinear"
+        Curve-fitting method used when building discount-factor functions.
+    freq : int, default 2
+        Coupon frequency used in bootstrapping.
+    short_end : {"continuous", "simple"}, default "continuous"
+        Short-end bootstrap convention.
+    short_end_policy : {"first_tenor_exp", "curve_only"}, default "first_tenor_exp"
+        Policy for maturities shorter than the first tenor.
+    min_df : float, default 1e-12
+        Discount-factor floor.
+    default_rate : float, default 0.02
+        Fallback short rate used when no finite tenor is available.
 
-    Notes:
-    - Designed as an optional convenience layer; existing APIs are unchanged.
-    - For tau < first tenor, short_end_policy='first_tenor_exp' uses exp(-r0*tau).
+    Returns
+    -------
+    dict[str, Any]
+        Lookup dictionary containing ``get_df(date, tau)``, ``get_rate(date, tau)``,
+        ``resolve_date(date)``, ``curve_mode``, ``r0_by_date``, and ``tau_min``.
+
+    Raises
+    ------
+    InputError
+        If ``par_yields`` is empty.
+
+    Notes
+    -----
+    Fitted discount-factor functions are cached by curve date. If bootstrapping or
+    curve fitting fails for a date, a log-linear fallback based on available yields
+    is used. Date resolution uses the latest available curve date on or before the
+    requested date, with a first-date fallback for earlier requests.
     """
+
     from .bootstrap import bootstrap_pillars
     from .smoothers import fit_curves
 
@@ -556,10 +905,34 @@ def attach_discount_columns(
     df_col: str = "df",
     rate_col: str = "r_short",
 ) -> pd.DataFrame:
+    """Attach discount-factor and rate columns to a DataFrame.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Table containing date and maturity columns.
+    lookup : dict[str, Any]
+        Lookup returned by ``make_discount_lookup``.
+    date_col : str
+        Column containing valuation or quote dates.
+    tau_col : str
+        Column containing maturities in years.
+    df_col : str, default "df"
+        Name of the output discount-factor column.
+    rate_col : str, default "r_short"
+        Name of the output zero-rate column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``data`` with discount-factor and rate columns added.
+
+    Notes
+    -----
+    Rows are processed in date groups so the lookup is called once per date with a
+    vector of maturities.
     """
-    Attach discount factor and short rate columns to a table using a lookup
-    returned by make_discount_lookup.
-    """
+
     out = data.copy()
     out[df_col] = np.nan
     out[rate_col] = np.nan
@@ -587,10 +960,37 @@ def curves_by_valuation_date(
     min_df: float = 1e-12,
     tenor_cols: list[str] | None = None,
 ) -> dict[pd.Timestamp, dict[str, Curve]]:
+    """Build fitted curves for multiple valuation dates.
+
+    Parameters
+    ----------
+    valuation_dates : pandas.Index or list of pandas.Timestamp
+        Dates for which curves are needed.
+    par_yields : pandas.DataFrame
+        Date-indexed par-yield curve panel.
+    methods : Iterable[str], default DEFAULT_METHODS
+        Curve-fitting methods to build.
+    freq : int, default 2
+        Coupon frequency used in bootstrapping.
+    short_end : {"continuous", "simple"}, default "continuous"
+        Short-end bootstrap convention.
+    min_df : float, default 1e-12
+        Discount-factor floor.
+    tenor_cols : list of str or None, optional
+        Tenor columns to use.
+
+    Returns
+    -------
+    dict[pandas.Timestamp, dict[str, Curve]]
+        Mapping from valuation date to fitted curve dictionary.
+
+    Notes
+    -----
+    Each valuation date uses the latest available curve date on or before that
+    valuation date. Fitted curves are cached by source curve date to avoid repeated
+    work.
     """
-    Build fitted curves for each valuation date using the latest available
-    market curve date <= valuation date.
-    """
+
     from .bootstrap import bootstrap_pillars, normalize_methods
     from .smoothers import fit_curves
 
@@ -625,11 +1025,26 @@ def curves_by_valuation_date(
 
 
 def resolve_asof(index: pd.Index, asof: pd.Timestamp | str | None = None) -> pd.Timestamp:
+    """Resolve an analysis date against an available date index.
+
+    Parameters
+    ----------
+    index : pandas.Index
+        Available date index.
+    asof : pandas.Timestamp, str, or None, optional
+        Requested analysis date. If ``None``, the latest available date is used.
+
+    Returns
+    -------
+    pandas.Timestamp
+        Latest available date on or before ``asof``.
+
+    Raises
+    ------
+    InputError
+        If the index is empty or no available date exists on or before ``asof``.
     """
-    Resolve an analysis date against available curve dates.
-    - If asof is None: use latest date in index.
-    - Otherwise: use the latest available date <= asof.
-    """
+
     if len(index) == 0:
         raise InputError("Date index is empty.")
     if asof is None:

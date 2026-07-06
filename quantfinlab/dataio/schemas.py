@@ -95,18 +95,77 @@ OPTION_CHAIN_SOURCES: MappingProxyType[str, dict[str, object]] = MappingProxyTyp
 
 
 def get_rate_source(name: str) -> dict[str, object]:
+    """Return a copy of a registered rate-source schema.
+
+    Parameters
+    ----------
+    name : str
+        Registered rate-source name.
+
+    Returns
+    -------
+    dict[str, object]
+        Source configuration dictionary.
+
+    Raises
+    ------
+    ValueError
+        If ``name`` is unknown.
+
+    Notes
+    -----
+    A copy is returned so callers can inspect or modify the configuration without
+    mutating the registry.
+    """
+
     if name not in _RATE_SOURCES:
         raise ValueError(f"Unknown rate source {name!r}; known: {sorted(_RATE_SOURCES)}")
     return dict(_RATE_SOURCES[name])
 
 
 def get_panel_source(name: str) -> dict[str, object]:
+    """Return a copy of a registered panel-source schema.
+
+    Parameters
+    ----------
+    name : str
+        Registered panel-source name.
+
+    Returns
+    -------
+    dict[str, object]
+        Source configuration dictionary.
+
+    Raises
+    ------
+    ValueError
+        If ``name`` is unknown.
+    """
+
     if name not in _PANEL_SOURCES:
         raise ValueError(f"Unknown panel source {name!r}; known: {sorted(_PANEL_SOURCES)}")
     return dict(_PANEL_SOURCES[name])
 
 
 def get_option_chain_source(name: str) -> dict[str, object]:
+    """Return a copy of a registered option-chain source schema.
+
+    Parameters
+    ----------
+    name : str
+        Registered option-chain source name.
+
+    Returns
+    -------
+    dict[str, object]
+        Source configuration dictionary.
+
+    Raises
+    ------
+    ValueError
+        If ``name`` is unknown.
+    """
+
     if name not in _OPTION_CHAIN_SOURCES:
         raise ValueError(
             f"Unknown option-chain source {name!r}; known: {sorted(_OPTION_CHAIN_SOURCES)}"

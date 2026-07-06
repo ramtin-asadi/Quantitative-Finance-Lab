@@ -48,7 +48,41 @@ def surface_grid(
     n_tau: int = 35,
     annualization_days: float = 365.25,
 ) -> dict:
-    """Date-specific support-aware log-moneyness/maturity grid."""
+    """Create a date-specific support-aware log-moneyness and maturity grid.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table.
+    k_col : str, default='k'
+        Forward log-moneyness column.
+    k_spot_col : str, default='k_spot'
+        Spot log-moneyness column used to add an optional spot-based grid.
+    tau_col : str, default='tau'
+        Maturity column in years.
+    k_quantiles : tuple[float, float], default=(0.02, 0.98)
+        Robust quote-support quantiles for moneyness bounds.
+    tau_quantiles : tuple[float, float], default=(0.02, 0.98)
+        Robust quote-support quantiles for maturity bounds.
+    n_k : int, default=65
+        Number of moneyness grid points.
+    n_tau : int, default=35
+        Number of maturity grid points.
+    annualization_days : float, default=365.25
+        Days per year used for ``tau_days`` metadata.
+
+    Returns
+    -------
+    dict
+        Grid dictionary containing ``k``, ``tau``, ``tau_days``, and optionally
+        ``k_spot``.
+
+    Raises
+    ------
+    ValueError
+        If no finite moneyness/maturity observations are available.
+    """
+
     q = quotes.copy()
     k = pd.to_numeric(q[k_col], errors="coerce")
     tau = pd.to_numeric(q[tau_col], errors="coerce")
@@ -87,7 +121,36 @@ def common_surface_grid(
     min_support_share: float = 0.85,
     annualization_days: float = 365.25,
 ) -> dict:
-    """Conservative common grid and support mask for historical work."""
+    """Build a conservative common grid and support mask for historical surface analysis.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table.
+    date_col : str, default='date'
+        Date column.
+    k_col : str, default='k'
+        Forward log-moneyness column.
+    tau_col : str, default='tau'
+        Maturity column in years.
+    k_min, k_max : float
+        Fixed moneyness grid bounds.
+    tau_min, tau_max : float
+        Fixed maturity grid bounds in years.
+    n_k, n_tau : int
+        Number of grid points.
+    min_support_share : float, default=0.85
+        Minimum fraction of dates supporting a grid node.
+    annualization_days : float, default=365.25
+        Days per year used for metadata.
+
+    Returns
+    -------
+    dict
+        Grid and support dictionary with ``k``, ``tau``, ``support_mask``, support
+        shares, and metadata.
+    """
+
     k_grid = np.linspace(float(k_min), float(k_max), int(n_k))
     tau_grid = np.linspace(float(tau_min), float(tau_max), int(n_tau))
     support = surface_common_support(
@@ -119,7 +182,44 @@ def fit_log_total_variance_surface(
     lambda_tau: float = 10.0,
     label: str | None = None,
 ) -> dict:
-    """Fit ``log(iv**2 * tau)`` with a penalized tensor B-spline."""
+    """Fit a penalized tensor B-spline to log total implied variance.
+
+    The fitted target is ``log(iv**2 * tau)``. The log-total-variance parameterization
+    keeps fitted total variance positive after exponentiation and is well suited for
+    smooth implied-volatility surface construction.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table.
+    k_col : str, default='k'
+        Log-moneyness column.
+    tau_col : str, default='tau'
+        Maturity column in years.
+    iv_col : str, default='iv_mid'
+        Implied-volatility column.
+    weight_col : str, default='surface_weight'
+        Observation-weight column.
+    n_k_basis : int, default=12
+        Number of spline basis functions along moneyness.
+    n_tau_basis : int, default=8
+        Number of spline basis functions along maturity.
+    degree : int, default=3
+        Spline degree.
+    lambda_k : float, default=10.0
+        Roughness penalty along moneyness.
+    lambda_tau : float, default=10.0
+        Roughness penalty along maturity.
+    label : str, optional
+        Human-readable label stored in the fit dictionary.
+
+    Returns
+    -------
+    dict
+        Fitted spline object with target metadata, column mappings, knot aliases,
+        scaling aliases, and fit diagnostics.
+    """
+
     q = quotes.copy()
     total_var = (pd.to_numeric(q[iv_col], errors="coerce") ** 2) * pd.to_numeric(q[tau_col], errors="coerce")
     y = np.log(total_var.clip(lower=1e-12))
@@ -149,15 +249,74 @@ def fit_log_total_variance_surface(
 
 
 def surface_log_total_variance(fit: dict, k, tau, *, grid: bool = False, der_k: int = 0, der_tau: int = 0) -> np.ndarray:
+    """Evaluate fitted log total variance at requested moneyness and maturity points.
+
+    Parameters
+    ----------
+    fit : dict
+        Fitted tensor-spline surface.
+    k : array-like
+        Log-moneyness values.
+    tau : array-like
+        Maturity values in years.
+    grid : bool, default=False
+        If True, evaluate on the Cartesian product of ``k`` and ``tau``.
+    der_k : int, default=0
+        Derivative order along moneyness.
+    der_tau : int, default=0
+        Derivative order along maturity.
+
+    Returns
+    -------
+    numpy.ndarray
+        Log total variance values or derivatives.
+    """
+
     return tensor_spline_values(fit, k, tau, grid=grid, der_x=der_k, der_y=der_tau)
 
 
 def surface_total_variance(fit: dict, k, tau, *, grid: bool = False) -> np.ndarray:
+    """Evaluate fitted total implied variance.
+
+    Parameters
+    ----------
+    fit : dict
+        Fitted log-total-variance surface.
+    k : array-like
+        Log-moneyness values.
+    tau : array-like
+        Maturity values in years.
+    grid : bool, default=False
+        If True, evaluate on the Cartesian product of ``k`` and ``tau``.
+
+    Returns
+    -------
+    numpy.ndarray
+        Positive total variance values ``exp(log_total_variance)``.
+    """
+
     log_w = surface_log_total_variance(fit, k, tau, grid=grid)
     return np.exp(np.clip(log_w, -50.0, 20.0))
 
 
 def surface_total_variance_jax(fit: dict, k, tau):
+    """Evaluate fitted total implied variance with JAX arrays.
+
+    Parameters
+    ----------
+    fit : dict
+        Fitted tensor-spline surface.
+    k : array-like
+        Log-moneyness values.
+    tau : array-like
+        Maturity values in years.
+
+    Returns
+    -------
+    jax.Array
+        Total variance values suitable for automatic differentiation.
+    """
+
     import jax.numpy as jnp
 
     log_w = tensor_spline_values_jax(fit, k, tau)
@@ -165,6 +324,25 @@ def surface_total_variance_jax(fit: dict, k, tau):
 
 
 def surface_iv(fit: dict, k, tau, *, grid: bool = False) -> np.ndarray:
+    """Evaluate fitted implied volatility from total variance.
+
+    Parameters
+    ----------
+    fit : dict
+        Fitted log-total-variance surface.
+    k : array-like
+        Log-moneyness values.
+    tau : array-like
+        Maturity values in years.
+    grid : bool, default=False
+        If True, evaluate on a Cartesian grid.
+
+    Returns
+    -------
+    numpy.ndarray
+        Implied volatility values ``sqrt(total_variance / tau)``.
+    """
+
     tau_arr = np.asarray(tau, dtype=float)
     w = surface_total_variance(fit, k, tau, grid=grid)
     if grid:
@@ -175,6 +353,25 @@ def surface_iv(fit: dict, k, tau, *, grid: bool = False) -> np.ndarray:
 
 
 def surface_iv_jax(fit: dict, k, tau, tau_floor: float = 1e-10):
+    """Evaluate fitted implied volatility with JAX arrays.
+
+    Parameters
+    ----------
+    fit : dict
+        Fitted tensor-spline surface.
+    k : array-like
+        Log-moneyness values.
+    tau : array-like
+        Maturity values in years.
+    tau_floor : float, default=1e-10
+        Lower maturity bound used to avoid division by zero.
+
+    Returns
+    -------
+    jax.Array
+        Implied volatility values suitable for automatic differentiation.
+    """
+
     import jax.numpy as jnp
 
     tau_arr = jnp.asarray(tau)
@@ -183,6 +380,22 @@ def surface_iv_jax(fit: dict, k, tau, tau_floor: float = 1e-10):
 
 
 def surface_iv_grid(fit: dict, grid: dict) -> np.ndarray:
+    """Evaluate a fitted implied-volatility surface on a grid dictionary.
+
+    Parameters
+    ----------
+    fit : dict
+        Fitted volatility surface.
+    grid : dict
+        Grid dictionary containing ``k`` and ``tau`` arrays.
+
+    Returns
+    -------
+    numpy.ndarray
+        Two-dimensional implied-volatility grid with maturity along rows and
+        moneyness along columns.
+    """
+
     return surface_iv(fit, grid["k"], grid["tau"], grid=True)
 
 
@@ -195,6 +408,30 @@ def surface_fit_summary(
     iv_col: str = "iv_mid",
     weight_col: str = "surface_weight",
 ) -> pd.DataFrame:
+    """Summarize in-sample implied-volatility fit quality for one or more surfaces.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table.
+    fits : dict[str, dict]
+        Mapping from fit name to fitted surface object.
+    k_col : str, default='k'
+        Log-moneyness column.
+    tau_col : str, default='tau'
+        Maturity column.
+    iv_col : str, default='iv_mid'
+        Observed implied-volatility column.
+    weight_col : str, default='surface_weight'
+        Observation-weight column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Summary table with quote count, maturity count, RMSE, weighted RMSE, MAE,
+        tail error quantiles, residual mean/std, and support ranges.
+    """
+
     rows = []
     q = quotes.copy()
     weight = pd.to_numeric(q[weight_col], errors="coerce") if weight_col in q.columns else pd.Series(1.0, index=q.index)
@@ -233,6 +470,28 @@ def surface_residuals(
     tau_col: str = "tau",
     iv_col: str = "iv_mid",
 ) -> pd.DataFrame:
+    """Attach fitted implied volatilities and residuals for one or more surfaces.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table.
+    fits : dict[str, dict]
+        Mapping from fit name to fitted surface object.
+    k_col : str, default='k'
+        Log-moneyness column.
+    tau_col : str, default='tau'
+        Maturity column.
+    iv_col : str, default='iv_mid'
+        Observed implied-volatility column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``quotes`` with ``fit_iv_<name>``, ``residual_<name>``, and
+        ``abs_residual_<name>`` columns.
+    """
+
     out = quotes.copy()
     for name, fit in fits.items():
         fitted = surface_iv(fit, out[k_col].to_numpy(dtype=float), out[tau_col].to_numpy(dtype=float))
@@ -253,6 +512,29 @@ def pchip_surface(
     slice_col: str = "expiry",
     min_k: int = 6,
 ) -> np.ndarray:
+    """Interpolate a slice-wise PCHIP implied-volatility surface on a target grid.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table.
+    grid : dict
+        Grid dictionary containing ``k`` and ``tau`` arrays.
+    k_col, tau_col, iv_col : str
+        Input moneyness, maturity, and implied-volatility columns.
+    weight_col : str, default='surface_weight'
+        Optional interpolation weight column.
+    slice_col : str, default='expiry'
+        Slice column used to interpolate by maturity slice.
+    min_k : int, default=6
+        Minimum number of moneyness observations required per slice.
+
+    Returns
+    -------
+    numpy.ndarray
+        Interpolated implied-volatility grid.
+    """
+
     return slice_pchip_grid(
         quotes,
         x_col=k_col,
@@ -276,6 +558,28 @@ def pchip_spline_comparison(
     iv_col: str = "iv_mid",
     weight_col: str = "surface_weight",
 ) -> pd.DataFrame:
+    """Compare a raw PCHIP surface with a smooth fitted spline surface on the same grid.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table.
+    fit : dict
+        Fitted spline surface.
+    grid : dict
+        Grid dictionary.
+    k_col, tau_col, iv_col : str
+        Input moneyness, maturity, and IV columns.
+    weight_col : str, default='surface_weight'
+        Optional weight column for PCHIP interpolation.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One-row comparison table with finite-node count, RMSE, MAE, and median
+        absolute difference between PCHIP and spline grids.
+    """
+
     raw = pchip_surface(quotes, grid=grid, k_col=k_col, tau_col=tau_col, iv_col=iv_col, weight_col=weight_col)
     smooth = surface_iv_grid(fit, grid)
     diff = raw - smooth
@@ -304,6 +608,38 @@ def fit_surface_panel(
     min_quotes: int = 160,
     min_expiries: int = 5,
 ) -> dict:
+    """Fit visual and Dupire-oriented volatility surfaces across multiple quote dates.
+
+    For each date with enough quotes and maturities, the function fits two penalized
+    log-total-variance spline surfaces: one intended for visualization/features and
+    one intended for Dupire/local-volatility diagnostics.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table.
+    date_col : str, default='date'
+        Quote date column.
+    k_col, tau_col, iv_col : str
+        Log-moneyness, maturity, and implied-volatility columns.
+    weight_col : str, default='surface_weight'
+        Observation-weight column.
+    visual_params : dict, optional
+        Parameters passed to the visual surface fit.
+    dupire_params : dict, optional
+        Parameters passed to the Dupire surface fit. Defaults to ``visual_params``.
+    min_quotes : int, default=160
+        Minimum quote count required per date.
+    min_expiries : int, default=5
+        Minimum number of maturities/expiries required per date.
+
+    Returns
+    -------
+    dict
+        Dictionary containing date-to-fit mappings for visual and Dupire surfaces,
+        a fit-summary table, a skipped-date table, and elapsed runtime.
+    """
+
     visual_params = dict(visual_params or {})
     dupire_params = dict(dupire_params or visual_params)
     visual_fits: dict[pd.Timestamp, dict] = {}
@@ -344,6 +680,28 @@ def surface_cube(
     date_col: str = "date",
     output: str = "iv",
 ) -> dict:
+    """Stack fitted volatility surfaces into a dated grid cube.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table retained for interface consistency.
+    fits : dict
+        Mapping from date to fitted surface object.
+    grid : dict
+        Grid dictionary containing moneyness, maturity, and optional support mask.
+    date_col : str, default='date'
+        Date column name retained for compatibility.
+    output : {'iv', 'total_variance'}, default='iv'
+        Quantity to evaluate on the cube.
+
+    Returns
+    -------
+    dict
+        Dictionary with ``values`` as a date x tau x k array, ``dates``, ``grid``, and
+        ``output`` metadata.
+    """
+
     dates = sorted(pd.to_datetime(list(fits.keys())))
     values = []
     for date in dates:
@@ -383,6 +741,33 @@ def surface_pca(
     standardize: bool = False,
     random_state: int | None = None,
 ) -> dict:
+    """Run PCA on changes in a volatility-surface cube.
+
+    The function flattens date-to-date surface changes, keeps grid nodes with enough
+    finite history, optionally removes the level component for shape analysis, and
+    returns PCA scores, components, explained-variance diagnostics, and node metadata.
+
+    Parameters
+    ----------
+    cube : dict
+        Surface cube returned by the cube builder.
+    n_components : int, default=5
+        Number of principal components.
+    mode : {'level', 'shape', 'shape_only', 'level_and_shape'}, default='level'
+        PCA transformation mode. ``'level_and_shape'`` returns a nested shape PCA in
+        addition to level PCA.
+    standardize : bool, default=False
+        If True, standardize retained nodes before PCA.
+    random_state : int, optional
+        Random state passed to the PCA helper when relevant.
+
+    Returns
+    -------
+    dict
+        PCA result with scores, components, explained-variance table, retained node
+        positions, grid metadata, and diagnostics.
+    """
+
     mode_key = str(mode).lower()
     if mode_key == "level_and_shape":
         level = surface_pca(
@@ -436,6 +821,25 @@ def surface_pca(
 
 
 def surface_pca_shocks(pca: dict, *, grid: dict | None = None, components=(1, 2, 3), output_units: str = "iv_points") -> dict:
+    """Convert PCA components into grid-shaped one-standard-deviation surface shocks.
+
+    Parameters
+    ----------
+    pca : dict
+        PCA result dictionary.
+    grid : dict, optional
+        Grid dictionary. If omitted, the grid stored in ``pca`` is used.
+    components : iterable[int], default=(1, 2, 3)
+        One-based component numbers to reconstruct.
+    output_units : str, default='iv_points'
+        Label describing the units of the reconstructed shocks.
+
+    Returns
+    -------
+    dict
+        Dictionary containing grid metadata and one array per requested component.
+    """
+
     grid = grid or pca.get("grid", {})
     shape = pca.get("cube_shape")
     if shape is None and "tau" in grid and "k" in grid:
@@ -458,6 +862,26 @@ def surface_pca_shocks(pca: dict, *, grid: dict | None = None, components=(1, 2,
 
 
 def surface_features(cube: dict, pca: dict | None = None, *, down_k: float = -0.125, up_k: float = 0.08) -> pd.DataFrame:
+    """Extract interpretable level, term-structure, skew, and curvature features from a surface cube.
+
+    Parameters
+    ----------
+    cube : dict
+        Surface cube containing values, dates, and grid metadata.
+    pca : dict, optional
+        PCA result whose score table should be merged into the feature output.
+    down_k : float, default=-0.125
+        Downside log-moneyness node used for skew features.
+    up_k : float, default=0.08
+        Upside log-moneyness node used for skew features.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Date-level feature table including short/mid/long ATM IV, term slope,
+        downside and upside skew, curvature, smile asymmetry, and optional PCA scores.
+    """
+
     values = np.asarray(cube["values"], dtype=float)
     grid = cube["grid"]
     dates = pd.to_datetime(cube["dates"])
@@ -504,6 +928,28 @@ def surface_project_tables(
     pca: dict | None = None,
     features: pd.DataFrame | None = None,
 ) -> dict:
+    """Collect key volatility-surface analysis tables into a named dictionary.
+
+    Parameters
+    ----------
+    fit_summary : pandas.DataFrame, optional
+        Surface fit-summary table.
+    pchip_comparison : pandas.DataFrame, optional
+        PCHIP-versus-spline comparison table.
+    residuals : pandas.DataFrame, optional
+        Surface residual table.
+    pca : dict, optional
+        Surface PCA result.
+    features : pandas.DataFrame, optional
+        Surface feature table.
+
+    Returns
+    -------
+    dict[str, pandas.DataFrame]
+        Dictionary containing standardized project tables such as fit summary, largest
+        residuals, PCA explained variance, feature tail, and top regimes.
+    """
+
     tables = {
         "fit_summary": fit_summary if fit_summary is not None else pd.DataFrame(),
         "pchip_comparison": pchip_comparison if pchip_comparison is not None else pd.DataFrame(),

@@ -9,12 +9,14 @@ from quantfinlab.fixed_income.discounting import (
     attach_discount_columns,
     constant_rate_series,
     continuous_rate_from_discount_factor,
+    discount_curve_table,
     discount_factor_from_rate,
     make_discount_lookup,
     map_curve_rates_to_dates_and_taus,
+    par_from_df,
     rate_from_zero_curve,
 )
-from tests.synthetic.generators import yield_curve_panel
+from tests.synthetic.generators import flat_curve, yield_curve_panel
 
 
 def test_discount_factor_round_trip_and_pandas_shape() -> None:
@@ -70,3 +72,14 @@ def test_discount_lookup_attaches_finite_discount_factors() -> None:
     assert out["r_short"].notna().all()
     assert np.all(np.isfinite(direct_rate))
     assert lookup["resolve_date"](pd.Timestamp("2024-01-10")) == par_yields.index[-1]
+
+
+def test_flat_curve_discount_table_and_par_yields_are_consistent() -> None:
+    curve = flat_curve(0.04)
+    grid = np.array([1.0, 2.0, 5.0, 10.0])
+    discounts = discount_curve_table({"flat": curve}, grid=grid)
+    par = par_from_df(curve.df, grid)
+
+    assert discounts.index.tolist() == pytest.approx(grid.tolist())
+    assert np.all(np.diff(discounts["flat"].to_numpy()) < 0.0)
+    assert np.allclose(par, par[0], atol=2e-3)

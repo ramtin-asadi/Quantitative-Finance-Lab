@@ -490,10 +490,6 @@ weights_maxsharpe_frontier_grid = max_sharpe_frontier_grid
 
 __all__ = [
     "DEFAULT_SOLVER_ORDER",
-    "_greedy_max_return_weight",
-    "_normalize_solver_order",
-    "_sharpe_from_weights",
-    "_solve_with_solvers",
     "equal_weight",
     "max_sharpe_frontier_grid",
     "max_sharpe_slsqp",

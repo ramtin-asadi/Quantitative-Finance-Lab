@@ -12,6 +12,26 @@ from .tenors import DEFAULT_ISSUE_MATURITIES
 
 
 def compute_duration_gap(portfolio_duration: float, target_duration: float) -> float:
+    """Compute the difference between current and target duration.
+
+    Parameters
+    ----------
+    portfolio_duration : float
+        Current portfolio duration.
+    target_duration : float
+        Desired target duration.
+
+    Returns
+    -------
+    float
+        ``portfolio_duration - target_duration``.
+
+    Notes
+    -----
+    A positive value indicates the portfolio is longer than the target; a negative
+    value indicates it is shorter.
+    """
+
     return float(portfolio_duration - target_duration)
 
 
@@ -24,6 +44,35 @@ def duration_overlay_trade(
     duration_buy: float,
     sell_value_available: float,
 ) -> float:
+    """Compute the notional value to switch between two duration buckets.
+
+    Parameters
+    ----------
+    effective_duration : float
+        Current effective duration of the portfolio.
+    target_duration : float
+        Desired portfolio duration.
+    nav : float
+        Portfolio net asset value.
+    duration_sell : float
+        Duration of the bucket or instrument to be sold.
+    duration_buy : float
+        Duration of the bucket or instrument to be bought.
+    sell_value_available : float
+        Maximum market value available to sell.
+
+    Returns
+    -------
+    float
+        Trade value capped by available sell value. Returns zero when inputs are
+        non-finite or the buy/sell durations are effectively identical.
+
+    Notes
+    -----
+    The calculation uses a linear duration-gap approximation and does not account
+    for convexity, transaction costs, or the effect of the trade on cash carry.
+    """
+
     if not np.isfinite(effective_duration):
         return 0.0
     if not np.isfinite(duration_sell) or not np.isfinite(duration_buy):
@@ -48,6 +97,53 @@ def duration_switch_overlay(
     apply_trade_fn: Callable | None = None,
     bump_bp: float = 1.0,
 ) -> tuple[dict[int, dict], float, list[dict], float]:
+    """Adjust a ladder portfolio toward a target duration by switching buckets.
+
+    Parameters
+    ----------
+    positions : dict[int, dict]
+        Current synthetic bond positions by maturity bucket.
+    cash : float
+        Current cash balance.
+    date : pandas.Timestamp
+        Valuation and trade date.
+    df_func : callable
+        Discount-factor function used to value positions and estimate duration.
+    target_duration : float
+        Desired effective duration.
+    duration_band : float
+        No-trade band around the target duration.
+    buckets : list of int or tuple of int, default DEFAULT_ISSUE_MATURITIES
+        Maturity buckets considered in the overlay.
+    short_maturity : int or None, optional
+        Short bucket used when duration needs to be reduced or increased. Defaults
+        to the shortest bucket.
+    long_maturity : int or None, optional
+        Long bucket used when duration needs to be reduced or increased. Defaults
+        to the longest bucket.
+    apply_trade_fn : callable or None, optional
+        Trade-execution callback used to modify positions and cash.
+    bump_bp : float, default 1.0
+        Bump size in basis points used for duration estimates.
+
+    Returns
+    -------
+    tuple[dict[int, dict], float, list[dict], float]
+        Updated positions, updated cash balance, trade records, and new effective
+        duration.
+
+    Raises
+    ------
+    InputError
+        If a target is requested but no trade-application function is supplied.
+
+    Notes
+    -----
+    If the current duration is within the band, no trade is placed. The function
+    sells the long bucket and buys the short bucket when duration is too high, and
+    does the reverse when duration is too low.
+    """
+
     if target_duration is None:
         return positions, float(cash), [], np.nan
     if apply_trade_fn is None:
@@ -128,6 +224,26 @@ def duration_switch_overlay(
 
 
 def apply_duration_targeting(*args, **kwargs):
+    """Alias for duration-switch overlay execution.
+
+    Parameters
+    ----------
+    *args
+        Positional arguments forwarded to the duration overlay routine.
+    **kwargs
+        Keyword arguments forwarded to the duration overlay routine.
+
+    Returns
+    -------
+    tuple
+        Return value of the duration overlay routine.
+
+    Notes
+    -----
+    This wrapper preserves an alternate public name for the same duration-targeting
+    operation.
+    """
+
     return duration_switch_overlay(*args, **kwargs)
 
 

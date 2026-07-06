@@ -29,10 +29,36 @@ def fit_curves(
     freq: int = 2,
     min_df: float = 1e-12,
 ) -> dict[str, Curve]:
+    """Fit one or more curve representations from bootstrapped pillars.
+
+    Parameters
+    ----------
+    pillars : CurvePillars
+        Bootstrapped curve pillars.
+    methods : Iterable[str], default ("loglinear", "pchip", "nss", "qp")
+        Curve methods to fit.
+    freq : int, default 2
+        Coupon frequency used by methods that reconstruct par yields.
+    min_df : float, default 1e-12
+        Discount-factor floor used by fitted curves.
+
+    Returns
+    -------
+    dict[str, Curve]
+        Mapping from normalized method name to fitted curve object.
+
+    Raises
+    ------
+    ValueError
+        If an unknown method name is requested.
+
+    Notes
+    -----
+    Supported methods include log-linear discount-factor interpolation, PCHIP
+    zero-rate smoothing, Nelson-Siegel-Svensson fitting, and constrained
+    quadratic-programming discount-factor fitting where available.
     """
-    Build multiple curves from pillars using selected methods.
-    Returns dict: method -> Curve
-    """
+
     methods = list(methods)
     T = pillars.T
     par = pillars.par

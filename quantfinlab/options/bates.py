@@ -35,7 +35,34 @@ def _jump_shocks(n_path: int, n_step: int, random_state: int = 7):
 
 
 def bates_cf(u, spot, rate, dividend_yield, tau, v0, kappa, theta, sigma_v, rho, lambda_jump, mu_jump, sigma_jump):
-    """Bates characteristic function: Heston times compensated Merton jumps."""
+    """Evaluate the Bates characteristic function for stochastic volatility with jumps.
+
+    The Bates characteristic function is implemented as the Heston characteristic
+    function multiplied by a compensated Merton jump component, preserving the
+    martingale drift adjustment under continuous rates and dividend yields.
+
+    Parameters
+    ----------
+    u : array-like
+        Complex Fourier argument.
+    spot, rate, dividend_yield, tau : float or array-like
+        Spot price, continuous risk-free rate, continuous dividend yield, and time to
+        expiry.
+    v0, kappa, theta, sigma_v, rho : float or array-like
+        Heston variance-process parameters.
+    lambda_jump : float or array-like
+        Jump intensity.
+    mu_jump : float or array-like
+        Mean log-jump size.
+    sigma_jump : float or array-like
+        Log-jump volatility.
+
+    Returns
+    -------
+    numpy.ndarray
+        Characteristic-function values.
+    """
+
     u_arr = np.asarray(u, dtype=complex)
     lam = np.asarray(lambda_jump, dtype=float)
     mu = np.asarray(mu_jump, dtype=float)
@@ -111,6 +138,45 @@ def bates_mc_price(
     random_state: int = 7,
     engine: str = "auto",
 ):
+    """Price options by Monte Carlo simulation under the Bates stochastic-volatility jump model.
+
+    The function simulates Heston-style variance dynamics together with compound
+    Poisson log jumps. Pre-generated diffusion and jump shocks can be supplied for
+    common-random-number calibration.
+
+    Parameters
+    ----------
+    option_type : array-like
+        Option type labels.
+    forward : array-like
+        Forward prices at expiry.
+    strike : array-like
+        Strike prices.
+    tau : array-like
+        Times to expiry in years.
+    discount_factor : array-like
+        Expiry discount factors.
+    v0, kappa, theta, xi, rho : float
+        Stochastic-volatility parameters.
+    lambda_jump, mu_jump, sigma_jump : float
+        Jump intensity, mean log-jump, and log-jump volatility.
+    steps_per_year : int, default=52
+        Simulation time-step frequency.
+    z_s, z_v, z_j, u_j : numpy.ndarray, optional
+        Pre-generated shocks and jump uniforms.
+    paths : int, default=2048
+        Number of paths generated when shocks are not supplied.
+    random_state : int, default=7
+        Base random seed.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Simulation backend.
+
+    Returns
+    -------
+    tuple[numpy.ndarray, numpy.ndarray]
+        Model prices and Monte Carlo standard errors.
+    """
+
     option_type = np.asarray(option_type).astype(str)
     forward = np.asarray(forward, dtype=float)
     strike = np.asarray(strike, dtype=float)
@@ -181,6 +247,47 @@ def fit_bates_mc(
     weight_col: str = "obs_weight",
     max_nfev: int = 45,
 ) -> dict:
+    """Calibrate a Bates Monte Carlo model to an option quote panel.
+
+    The calibration starts from supplied or inferred Heston and jump parameters,
+    regularizes jump parameters around their starting values, uses common random
+    numbers during optimization, and reprices the final fit with a larger path count.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Calibration quote table containing option inputs, mid prices, and optional
+        weights.
+    heston_start : dict, optional
+        Existing Heston fit used to initialize stochastic-volatility parameters.
+    jump_start : dict, optional
+        Existing jump-model fit used to initialize jump parameters.
+    paths_opt : int, default=2048
+        Number of paths used during optimization.
+    paths_final : int, default=8192
+        Number of paths used for final repricing.
+    steps_per_year : int, default=52
+        Simulation time-step frequency.
+    random_method : str, default='antithetic'
+        Randomization label retained for configuration compatibility.
+    common_random_numbers : bool, default=True
+        Whether shared random numbers are used across residual evaluations.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Simulation backend.
+    random_state : int, default=7
+        Base random seed.
+    weight_col : str, default='obs_weight'
+        Observation-weight column.
+    max_nfev : int, default=45
+        Maximum number of least-squares function evaluations.
+
+    Returns
+    -------
+    dict
+        Fit dictionary containing parameter, fit, diagnostic, runtime, backend, path,
+        and random-state metadata.
+    """
+
     t0 = time.perf_counter()
     q = quotes.copy()
     engine_used = _engine_name(engine)
@@ -237,6 +344,24 @@ def fit_bates_mc(
 
 
 def bates_prices(quotes: pd.DataFrame, fit: dict, engine: str = "auto") -> pd.DataFrame:
+    """Reprice a quote table using parameters from a fitted Bates model.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table to price.
+    fit : dict
+        Bates fit dictionary containing a non-empty ``params`` table.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Simulation backend.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote-level model prices and residual diagnostics, or an empty quote slice
+        when inputs or parameters are unavailable.
+    """
+
     params = fit.get("params", pd.DataFrame())
     if quotes.empty or params.empty:
         return quotes.head(0).copy()

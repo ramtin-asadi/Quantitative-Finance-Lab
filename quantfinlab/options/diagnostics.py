@@ -181,7 +181,57 @@ def build_atm_iv_panel_from_option_quotes(
     engine: str = "auto",
     underlying_default: str | None = "SPX",
 ) -> pd.DataFrame:
-    """Build a clean ATM/near-ATM IV panel using the Project 4 options modules."""
+    """Build a cleaned near-ATM implied-volatility panel from raw or wide option quotes.
+
+    The pipeline prefilters wide call/put chains, converts them to long-form quotes,
+    standardizes prices, applies liquidity and moneyness filters, attaches rates and
+    discount factors, infers parity forwards, solves bid/mid/ask implied volatility,
+    pairs calls and puts, and selects the best ATM strike per date-expiry slice.
+
+    Parameters
+    ----------
+    option_quotes : pandas.DataFrame
+        Raw or preloaded option quote table.
+    rates : pandas.DataFrame or pandas.Series, optional
+        Rate source used to attach continuous zero rates. A DataFrame is interpreted
+        as a curve panel; a Series is matched by date.
+    constant_rate : float, default=0.0
+        Constant rate used when no rates are supplied and the quote table has no rate
+        column.
+    min_dte, max_dte : int
+        Calendar-DTE filter bounds.
+    moneyness_range : tuple[float, float], default=(0.85, 1.15)
+        Strike-over-spot moneyness range for cleaning.
+    max_relative_spread : float, default=0.20
+        Maximum relative bid-ask spread.
+    closest_atm_pairs : int or None, default=25
+        Number of closest ATM pairs retained per date-expiry slice.
+    min_pairs_per_expiry : int, default=10
+        Minimum number of paired strikes required per date-expiry slice.
+    annualization_days : float, default=365.25
+        Days per year used for maturity conversion.
+    solver : str, default='lbr_lite'
+        Implied-volatility solver.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Implied-volatility backend.
+    underlying_default : str, optional, default='SPX'
+        Underlying label used when absent from the raw data.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Clean ATM panel with date, expiry, maturity, spot, forward, strike, rates,
+        discount factors, call/put bid-mid-ask prices, straddle diagnostics, ATM IV
+        bid/mid/ask, quote-quality scores, and metadata. Cleaning and forward tables
+        are stored in DataFrame attributes.
+
+    Notes
+    -----
+    The function is designed to produce a compact term-structure panel from large
+    quote files while retaining traceability through the cleaning report and parity
+    forward table.
+    """
+
     if option_quotes.empty:
         out = pd.DataFrame()
         out.attrs["cleaning_report"] = pd.DataFrame([{"step": "raw rows", "rows": 0, "removed": np.nan}])
@@ -391,7 +441,33 @@ def realized_vol_forward_bsm_pricing_comparison(
     price_col: str = "mid",
     annualization_days: float = 365.0,
 ) -> dict[str, pd.DataFrame]:
-    """Price quotes with realized volatility in the forward-BSM model."""
+    """Price option quotes with realized volatility and summarize pricing errors.
+
+    Realized volatility is aligned to each option expiry, inserted into the forward
+    Black-Scholes model, and compared with observed market prices. The output includes
+    vega-scaled errors and, when bid/ask quotes are available, a hit-rate for whether
+    the realized-vol price lies inside the market spread.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table containing forward-model pricing inputs.
+    realized_vol : pandas.DataFrame or pandas.Series
+        Realized-volatility estimates indexed by date and/or maturity.
+    vol_window : int, default=30
+        Realized-volatility window selected from columns such as ``rv_30``.
+    price_col : str, default='mid'
+        Market price column used as the benchmark.
+    annualization_days : float, default=365.0
+        Days per year recorded in the output for transparency.
+
+    Returns
+    -------
+    dict[str, pandas.DataFrame]
+        Dictionary with ``table`` containing quote-level prices/errors and ``summary``
+        containing aggregate error statistics.
+    """
+
     from quantfinlab.volatility import realized
 
     data = realized.align_realized_to_option_expiries(realized_vol, quotes, date_col="date")
@@ -441,6 +517,24 @@ def solver_failure_by_log_moneyness(
     x_col: str = "log_moneyness",
     bins: int | np.ndarray = 16,
 ) -> pd.DataFrame:
+    """Summarize implied-volatility solver failure rates by log-moneyness bin.
+
+    Parameters
+    ----------
+    iv_table : pandas.DataFrame
+        Implied-volatility table with success-status columns.
+    x_col : str, default='log_moneyness'
+        Column used for binning.
+    bins : int or array-like, default=16
+        Bin specification passed to ``pandas.cut``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with bin medians, failure rates, and observation counts. Returns an
+        empty DataFrame when required inputs are unavailable.
+    """
+
     if iv_table.empty or x_col not in iv_table.columns:
         return pd.DataFrame()
     data = iv_table.copy()
@@ -460,6 +554,26 @@ def solver_iterations_by_log_moneyness(
     x_col: str = "log_moneyness",
     bins: int | np.ndarray = 16,
 ) -> pd.DataFrame:
+    """Summarize implied-volatility solver iteration counts by log-moneyness bin.
+
+    Only successful IV inversions are included in the iteration distribution.
+
+    Parameters
+    ----------
+    iv_table : pandas.DataFrame
+        Implied-volatility table with success and iteration columns.
+    x_col : str, default='log_moneyness'
+        Column used for binning.
+    bins : int or array-like, default=16
+        Bin specification passed to ``pandas.cut``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with bin medians, median iterations, 90th-percentile iterations, and
+        counts. Returns an empty DataFrame when required inputs are unavailable.
+    """
+
     if iv_table.empty or x_col not in iv_table.columns:
         return pd.DataFrame()
     data = iv_table.copy()
@@ -483,7 +597,24 @@ def iv_solver_diagnostics(
     x_col: str = "log_moneyness",
     bins: int | np.ndarray = 16,
 ) -> dict[str, pd.DataFrame]:
-    """Summarize solver failures and iterations by log-moneyness."""
+    """Compare implied-volatility solver diagnostics across multiple solver outputs.
+
+    Parameters
+    ----------
+    solver_tables : dict[str, pandas.DataFrame]
+        Mapping from solver name to an implied-volatility table.
+    x_col : str, default='log_moneyness'
+        Column used for failure and iteration binning.
+    bins : int or array-like, default=16
+        Bin specification passed to ``pandas.cut``.
+
+    Returns
+    -------
+    dict[str, pandas.DataFrame]
+        Dictionary containing ``failure_by_log_moneyness``,
+        ``iterations_by_log_moneyness``, and ``summary`` tables.
+    """
+
     failure_frames = []
     iteration_frames = []
     summary_rows: list[dict[str, Any]] = []
@@ -522,6 +653,22 @@ def iv_solver_diagnostics(
 
 
 def pricing_error_summary(frame: pd.DataFrame, error_col: str = "pricing_error") -> pd.DataFrame:
+    """Summarize signed pricing errors in a quote- or model-fit table.
+
+    Parameters
+    ----------
+    frame : pandas.DataFrame
+        Table containing an error column.
+    error_col : str, default='pricing_error'
+        Error column to summarize.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One-row summary with count, mean error, median error, median absolute error,
+        90th-percentile absolute error, and maximum absolute error.
+    """
+
     err = pd.to_numeric(frame.get(error_col), errors="coerce")
     finite = err[np.isfinite(err)]
     return pd.DataFrame(
@@ -543,6 +690,23 @@ def choose_liquid_single_day_for_diagnostics(
     min_pairs: int = 20,
     prefer_dte_range: tuple[int, int] = (21, 60),
 ) -> pd.Timestamp:
+    """Select a liquid quote date for single-day option diagnostics.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    min_pairs : int, default=20
+        Minimum pair count used in date selection.
+    prefer_dte_range : tuple[int, int], default=(21, 60)
+        Preferred DTE range for quote selection.
+
+    Returns
+    -------
+    pandas.Timestamp
+        Selected quote date.
+    """
+
     return parity.choose_liquid_single_day(quotes, min_pairs=min_pairs, prefer_dte_range=prefer_dte_range)
 
 

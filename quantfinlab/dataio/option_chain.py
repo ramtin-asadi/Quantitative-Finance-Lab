@@ -57,13 +57,37 @@ def combine_optionsdx_texts(
     *,
     compression: str = "zstd",
 ) -> pd.DataFrame:
-    """Combine monthly OptionsDX wide call/put text files into one parquet.
+    """Combine one or more OptionsDX text files into a single Parquet file.
 
-    The raw files keep vendor column names in square brackets and include a
-    space after each delimiter. The combined parquet follows the same lowercase
-    wide schema as the existing SPX parquet and adds ``source_file`` and
-    ``source_month`` for traceability.
+    Parameters
+    ----------
+    files : str, pathlib.Path, or list of path-like
+        File path, glob-like path, directory, or explicit list of raw text files to
+        combine. If a directory is supplied, all ``*.txt`` files in that directory
+        are used.
+    output_path : str or pathlib.Path
+        Destination Parquet path. Parent directories are created automatically.
+    compression : str, default "zstd"
+        Parquet compression codec passed to the Parquet writer.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Summary table with one row per source file and the number of normalized
+        rows written from that file.
+
+    Raises
+    ------
+    ValueError
+        If no input files are found.
+
+    Notes
+    -----
+    The output is written incrementally through a Parquet writer to avoid holding
+    all normalized monthly files in memory at once. The normalized output includes
+    source-file and source-month traceability columns where available.
     """
+
     if isinstance(files, (str, Path)):
         p = Path(files)
         file_list = sorted(p.glob("*.txt")) if p.is_dir() else sorted(p.parent.glob(p.name))
@@ -147,19 +171,41 @@ def load_option_chain(
     columns: list[str] | None = None,
     annualization_days: float | None = None,
 ) -> pd.DataFrame:
-    """Load an option chain parquet/CSV into a normalized **long** DataFrame.
+    """Load an option-chain file into a normalized long quote table.
 
-    Output columns (always present where the source provides them):
-    ``date``, ``timestamp``, ``expiry``, ``strike``, ``option_type``,
-    ``underlying``, ``spot``, ``bid``, ``ask``, ``mid``, ``last``,
-    ``mark``, ``volume``, ``open_interest``, ``iv``, ``delta``,
-    ``gamma``, ``vega``, ``theta``, ``rho``, ``tau`` (in years),
-    ``dte_calendar``, ``spread``, ``rel_spread``, ``k_over_s``,
-    ``liq_score``, ``quote_profile``.
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        CSV or Parquet option-chain file.
+    source : str, default "optionsdx_spx"
+        Registered source schema used to determine whether the raw file is wide
+        call/put format or already close to long quote format.
+    columns : list of str or None, optional
+        Optional column subset to read from the source file.
+    annualization_days : float or None, optional
+        Denominator used to convert calendar time-to-expiry into year fractions.
+        If omitted, the registered source default is used.
 
-    ``annualization_days`` controls the ``tau`` denominator (default
-    365.25 for equities, 365 for crypto).
+    Returns
+    -------
+    pandas.DataFrame
+        Long-form option quote table with normalized date, expiry, strike,
+        option-type, underlying, spot, quote, Greek, maturity, spread, moneyness,
+        liquidity, and quote-profile columns where available. Metadata attributes
+        include ``chain_source`` and ``annualization_days``.
+
+    Raises
+    ------
+    ValueError
+        If the file does not exist, normalization produces an empty table, or
+        required normalized columns are missing.
+
+    Notes
+    -----
+    The returned ``tau`` is measured in years. Quote-mid, spread, relative spread,
+    moneyness, and liquidity diagnostics are added after schema normalization.
     """
+
     p = Path(path)
     if not p.exists():
         raise ValueError(f"Option-chain file does not exist: {p}")
@@ -206,14 +252,46 @@ def load_spx_option_pairs(
     top_n_per_expiry: int | None = 70,
     min_pairs_per_expiry: int = 6,
 ) -> pd.DataFrame:
-    """Load OptionsDX SPX quotes as a fast paired call/put panel.
+    """Load wide SPX option quotes as paired call/put rows.
 
-    The OptionsDX SPX file is already wide, with one call and one put on
-    each ``(date, expiry, strike)`` row. Keeping it wide through quote
-    filtering avoids expanding millions of rows before the ATM-window
-    selection. The result is still normalized enough for notebooks to
-    convert into long form before IV solving.
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        OptionsDX-style wide quote file containing call and put columns on the same
+        date-expiry-strike row.
+    annualization_days : float, default 365.25
+        Number of calendar days used to convert time to expiry into years.
+    max_rel_spread : float, default 0.30
+        Maximum allowed relative bid-ask spread for both call and put legs.
+    tau_min_days : float, default 7.0
+        Minimum calendar days to expiry.
+    tau_max_days : float, default 180.0
+        Maximum calendar days to expiry.
+    k_over_s_range : tuple of float, default (0.70, 1.42)
+        Inclusive strike-to-spot moneyness range.
+    top_n_per_expiry : int or None, default 70
+        If positive, keep the closest-to-the-money rows per date-expiry group.
+    min_pairs_per_expiry : int, default 6
+        Minimum number of paired strikes required for a date-expiry group.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Filtered wide quote table with paired call/put bid, ask, mid, spread,
+        relative-spread, volume, moneyness, time-to-expiry, and liquidity columns.
+
+    Raises
+    ------
+    ValueError
+        If the source file does not exist.
+
+    Notes
+    -----
+    The function keeps the input in paired wide form for efficiency. This avoids
+    doubling very large quote files before basic liquidity and ATM-window filters
+    are applied.
     """
+
     p = Path(path)
     if not p.exists():
         raise ValueError(f"Option-chain file does not exist: {p}")
@@ -343,7 +421,43 @@ def load_optionsdx_equity_pairs(
     top_n_per_expiry: int | None = 70,
     min_pairs_per_expiry: int = 6,
 ) -> pd.DataFrame:
-    """Load SPY/QQQ OptionsDX wide quotes as paired call/put rows."""
+    """Load OptionsDX-style equity option quotes as paired call/put rows.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        Wide OptionsDX-style quote file.
+    source : str, default "optionsdx_spy"
+        Registered equity-option source used to set source metadata and default
+        underlying label.
+    annualization_days : float, default 365.25
+        Number of calendar days used to convert time to expiry into years.
+    max_rel_spread : float, default 0.35
+        Maximum allowed relative bid-ask spread for both legs.
+    tau_min_days : float, default 7.0
+        Minimum calendar days to expiry.
+    tau_max_days : float, default 180.0
+        Maximum calendar days to expiry.
+    k_over_s_range : tuple of float, default (0.70, 1.35)
+        Inclusive strike-to-spot moneyness range.
+    top_n_per_expiry : int or None, default 70
+        Number of closest-to-the-money paired strikes to keep per date-expiry group.
+    min_pairs_per_expiry : int, default 6
+        Minimum paired strikes required for each date-expiry group.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Filtered paired quote panel with call/put quote columns, moneyness,
+        maturity, and liquidity diagnostics. Metadata attributes include the source
+        name and annualization convention.
+
+    Notes
+    -----
+    This helper reuses the paired-quote filtering logic and then assigns the
+    underlying label from the registered source configuration.
+    """
+
     cfg = get_option_chain_source(source)
     underlying = str(cfg.get("underlying_default", ""))
     out = load_spx_option_pairs(
@@ -368,11 +482,30 @@ def filter_valid_quotes(
     min_bid: float = 0.0,
     require_pair: bool = True,
 ) -> pd.DataFrame:
-    """Drop quote rows with non-finite or negative quote prices.
+    """Filter long option quotes for basic quote validity.
 
-    With ``require_pair=True``, also drop legs whose ``(date, expiry,
-    strike)`` group lacks both a call and a put.
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Long-form option quote table.
+    min_bid : float, default 0.0
+        Minimum allowed bid.
+    require_pair : bool, default True
+        If ``True``, keep only date-expiry-strike groups that contain both a call
+        and a put.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Filtered quote table with the index reset.
+
+    Notes
+    -----
+    Rows are retained only when bid and ask are finite, bid is at least
+    ``min_bid``, ask is not below bid, and mid is strictly positive. Pair filtering
+    is applied only when the required grouping columns are present.
     """
+
     out = df.copy()
     bid = pd.to_numeric(out.get("bid"), errors="coerce") if "bid" in out.columns else pd.Series(np.nan, index=out.index)
     ask = pd.to_numeric(out.get("ask"), errors="coerce") if "ask" in out.columns else pd.Series(np.nan, index=out.index)
@@ -400,7 +533,32 @@ def filter_liquidity(
     tau_min_days: float = 7.0,
     tau_max_days: float = 120.0,
 ) -> pd.DataFrame:
-    """Drop legs with too-wide spreads or DTE outside ``[tau_min_days, tau_max_days]``."""
+    """Filter option quotes by spread and time-to-expiry bounds.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Option quote table containing ``rel_spread`` and either ``dte_calendar`` or
+        ``tau`` where available.
+    max_rel_spread : float, default 0.20
+        Maximum allowed relative bid-ask spread.
+    tau_min_days : float, default 7.0
+        Minimum calendar days to expiry.
+    tau_max_days : float, default 120.0
+        Maximum calendar days to expiry.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Liquidity-filtered quote table with the index reset.
+
+    Notes
+    -----
+    If ``dte_calendar`` is missing but ``tau`` is present, days-to-expiry are
+    computed using the ``annualization_days`` DataFrame attribute, defaulting to
+    365.25.
+    """
+
     out = df.copy()
     if "rel_spread" in out.columns:
         rs = pd.to_numeric(out["rel_spread"], errors="coerce")
@@ -424,7 +582,32 @@ def filter_atm_window(
     top_n_per_expiry: int = 25,
     min_pairs_per_group: int = 10,
 ) -> pd.DataFrame:
-    """Restrict to ATM-window strikes and keep the top-N closest per expiry."""
+    """Restrict option quotes to an at-the-money moneyness window.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Option quote table.
+    k_over_s_range : tuple of float, default (0.85, 1.15)
+        Inclusive strike-to-spot range to keep.
+    top_n_per_expiry : int, default 25
+        Number of closest-to-the-money paired strikes to keep per date-expiry group
+        when the necessary columns are available.
+    min_pairs_per_group : int, default 10
+        Minimum number of complete call/put pairs required per date-expiry group.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Filtered quote table with the index reset.
+
+    Notes
+    -----
+    The function first applies the explicit moneyness interval, then optionally
+    keeps the closest ATM pairs, and finally drops date-expiry groups with too few
+    complete pairs.
+    """
+
     out = df.copy()
     if "k_over_s" in out.columns:
         kos = pd.to_numeric(out["k_over_s"], errors="coerce")
@@ -446,14 +629,33 @@ def filter_atm_window(
 
 
 def pair_calls_puts(df: pd.DataFrame) -> pd.DataFrame:
-    """Collapse long-form quotes into wide ``(date, expiry, strike)`` rows.
+    """Collapse long-form call and put quotes into paired wide rows.
 
-    Output columns: ``date``, ``expiry``, ``strike``, ``underlying``,
-    ``spot``, ``c_bid``, ``c_ask``, ``c_mid``, ``c_volume``, ``p_bid``,
-    ``p_ask``, ``p_mid``, ``p_volume``, ``c_spread``, ``p_spread``,
-    ``c_rel_spread``, ``p_rel_spread``, ``tau``, ``dte_calendar``,
-    ``k_over_s``.
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Long-form quote table containing ``date``, ``expiry``, ``strike``, and
+        ``option_type``. Optional leg-level columns include bid, ask, mid, volume,
+        spread, and relative spread.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Wide table indexed by rows rather than a MultiIndex, with common contract
+        columns and prefixed call/put leg columns such as ``c_mid`` and ``p_mid``.
+
+    Raises
+    ------
+    ValueError
+        If ``option_type`` is missing.
+
+    Notes
+    -----
+    If multiple rows exist for the same date-expiry-strike-leg combination, the
+    last row is retained. The function does not require both legs to be present;
+    missing legs remain NaN in the paired output.
     """
+
     if df.empty:
         return df.copy()
     if "option_type" not in df.columns:

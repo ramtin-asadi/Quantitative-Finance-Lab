@@ -70,7 +70,21 @@ def _find_column(columns: Iterable[Any], candidates: Iterable[str]) -> Any | Non
 
 
 def parse_option_type(x: Any) -> str | float:
-    """Map common option type labels to 'call' or 'put'."""
+    """Normalize common option-type labels to ``'call'`` or ``'put'``.
+
+    Parameters
+    ----------
+    x : Any
+        Raw option type value. Supported labels include ``'C'``, ``'CE'``, ``'CALL'``,
+        ``'P'``, ``'PE'``, and ``'PUT'`` in any capitalization.
+
+    Returns
+    -------
+    str or float
+        ``'call'`` for call labels, ``'put'`` for put labels, and ``nan`` for missing
+        or unrecognized inputs.
+    """
+
     if pd.isna(x):
         return np.nan
     text = str(x).strip().upper()
@@ -101,7 +115,34 @@ def normalize_option_quote_schema(
     profile: str = "spx_optiondx",
     underlying_default: str | None = None,
 ) -> pd.DataFrame:
-    """Normalize already-loaded option quote tables to long-form columns."""
+    """Normalize an already-loaded option quote table to a standard long-form schema.
+
+    The function resolves common date, expiry, strike, option-type, underlying, spot,
+    quote, open-interest, implied-volatility, and Greek column aliases. It also parses
+    instrument names when available, normalizes option types, coerces numeric fields,
+    standardizes dates to pandas datetime values, and records a quote-profile label.
+
+    Parameters
+    ----------
+    raw : pandas.DataFrame
+        Raw option quote table.
+    profile : str, default='spx_optiondx'
+        Source/profile hint used for schema-specific parsing and metadata.
+    underlying_default : str, optional
+        Underlying symbol used when the raw table does not provide one.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Normalized quote table with preferred columns first and remaining original
+        columns preserved afterward.
+
+    Notes
+    -----
+    The function does not apply liquidity or moneyness filters. Use the dedicated
+    cleaning pipeline for quote validation and near-ATM selection.
+    """
+
     if raw.empty:
         return raw.copy()
 
@@ -233,10 +274,40 @@ def normalize_option_quote_schema(
 
 
 def normalize_spx_option_schema(raw: pd.DataFrame, underlying_default: str | None = "SPX") -> pd.DataFrame:
+    """Normalize an SPX-style option quote table to the standard long-form schema.
+
+    Parameters
+    ----------
+    raw : pandas.DataFrame
+        Raw option quote table.
+    underlying_default : str, optional, default='SPX'
+        Underlying label used when missing from the raw data.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Normalized quote table.
+    """
+
     return normalize_option_quote_schema(raw, profile="spx_optiondx", underlying_default=underlying_default)
 
 
 def normalize_btc_deribit_option_schema(raw: pd.DataFrame, underlying_default: str | None = "BTC") -> pd.DataFrame:
+    """Normalize a BTC Deribit-style option quote table to the standard long-form schema.
+
+    Parameters
+    ----------
+    raw : pandas.DataFrame
+        Raw option quote table.
+    underlying_default : str, optional, default='BTC'
+        Underlying label used when missing from the raw data.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Normalized quote table with parsed instrument information where possible.
+    """
+
     return normalize_option_quote_schema(raw, profile="btc_deribit", underlying_default=underlying_default)
 
 
@@ -246,15 +317,29 @@ def wide_option_chain_to_long(
     underlying_default: str | None = "SPX",
     include_greeks: bool = True,
 ) -> pd.DataFrame:
-    """
-    Convert one-row-per-strike call/put chains into the long option quote schema.
+    """Convert a wide call/put option chain into one row per option contract.
 
-    The SPX OptionDx files used in Projects 4 and 5 store call and put quotes in
-    separate ``c_*`` and ``p_*`` columns on the same row. Most reusable option
-    helpers expect one row per option contract, so this function is the adapter
-    between the vendor-shaped file and the Project 4 cleaning, parity, IV, and
-    Greek modules.
+    Wide vendor chains often store call and put quotes for the same strike on a
+    single row using prefixes such as ``c_`` and ``p_``. This function splits those
+    legs into separate call and put rows, preserves common quote metadata, optionally
+    keeps Greeks, and returns the standard long-form quote schema.
+
+    Parameters
+    ----------
+    raw : pandas.DataFrame
+        Raw option chain. If it already contains long-form ``option_type``, ``bid``,
+        and ``ask`` columns, it is passed through schema normalization.
+    underlying_default : str, optional, default='SPX'
+        Underlying symbol used when missing.
+    include_greeks : bool, default=True
+        If False, skip call/put Greek columns during the wide-to-long conversion.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Long-form normalized quote table.
     """
+
     if raw.empty:
         return raw.copy()
 
@@ -337,7 +422,25 @@ def wide_option_chain_to_long(
 
 
 def ensure_option_mid_quotes(quotes: pd.DataFrame) -> pd.DataFrame:
-    """Create a usable mid quote from bid/ask, close, or last prices."""
+    """Create or repair usable option mid quotes and spread diagnostics.
+
+    The function coerces quote columns to numeric form, fills missing positive mid
+    prices from valid bid/ask pairs, then from mark, close, or last prices when
+    available. If bid and ask are available, spread, half-spread, and relative-spread
+    columns are attached.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``quotes`` with a usable ``mid`` column and spread diagnostics when
+        possible.
+    """
+
     out = quotes.copy()
     for col in ["bid", "ask", "last", "mark", "close", "mid"]:
         if col in out.columns:
@@ -379,7 +482,39 @@ def attach_spot_from_series(
     method: str = "previous",
     overwrite: bool = False,
 ) -> pd.DataFrame:
-    """Attach spot values using same-day or previous available observations only."""
+    """Attach underlying spot prices to option quotes using previous-available observations.
+
+    The function performs an as-of merge from a spot time series onto quote dates,
+    never using future spot observations. Existing positive spot values are preserved
+    unless ``overwrite=True``.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    spot_series : pandas.Series
+        Spot price series indexed by date or timestamp.
+    date_col : str, default='date'
+        Quote date column.
+    spot_col : str, default='spot'
+        Output spot column.
+    method : {'previous'}, default='previous'
+        As-of matching method. Only previous-available matching is supported.
+    overwrite : bool, default=False
+        If True, replace existing spot values.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote table with attached spot values.
+
+    Raises
+    ------
+    ValueError
+        If the method is unsupported, the spot series is empty, or no valid spot value
+        can be attached.
+    """
+
     if method != "previous":
         raise ValueError("Only method='previous' is supported.")
     if spot_series.empty:
@@ -418,7 +553,28 @@ def attach_spot_from_series(
 
 
 def extract_spot_series(quotes: pd.DataFrame, date_col: str = "date", spot_col: str = "spot") -> pd.Series:
-    """Extract one spot observation per quote date from normalized quotes."""
+    """Extract one representative spot observation per quote date.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Normalized quote table.
+    date_col : str, default='date'
+        Quote date column.
+    spot_col : str, default='spot'
+        Spot price column.
+
+    Returns
+    -------
+    pandas.Series
+        Date-indexed median spot series named ``'spot'``.
+
+    Raises
+    ------
+    ValueError
+        If required columns are missing or no positive spot observations are found.
+    """
+
     if date_col not in quotes.columns or spot_col not in quotes.columns:
         raise ValueError(f"quotes must contain {date_col!r} and {spot_col!r}.")
     data = quotes[[date_col, spot_col]].copy()
@@ -432,7 +588,29 @@ def extract_spot_series(quotes: pd.DataFrame, date_col: str = "date", spot_col: 
 
 
 def detect_option_price_unit(quotes: pd.DataFrame) -> str:
-    """Detect whether option prices are USD, BTC/base, or unknown."""
+    """Infer whether option premiums are quoted in USD-like currency or base-asset units.
+
+    The function first checks explicit unit or currency columns. If they are absent,
+    it uses price magnitudes and the ratio of option premium to spot to distinguish
+    USD-like prices from base-denominated premiums.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table containing price columns and, ideally, spot or currency
+        metadata.
+
+    Returns
+    -------
+    {'usd', 'base', 'unknown'}
+        Detected premium unit.
+
+    Notes
+    -----
+    The heuristic is designed for practical data cleaning. For high-stakes valuation,
+    explicit source metadata should be preferred over automatic detection.
+    """
+
     cols = {_normalize_key(c): c for c in quotes.columns}
     for key, col in cols.items():
         if key in {"price_unit", "premium_unit", "quote_price_unit", "price_unit_detected"}:
@@ -479,7 +657,38 @@ def convert_quotes_to_usd_equivalent(
     unit: str = "auto",
     contract_size: float = 1.0,
 ) -> pd.DataFrame:
-    """Convert BTC/base-denominated option premiums to USD-equivalent terms."""
+    """Convert base-denominated option premiums to USD-equivalent prices.
+
+    If premiums are detected or declared as base-asset units, selected price columns
+    are multiplied by spot and contract size. Original values are preserved in
+    ``<column>_raw`` columns before conversion.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    spot_col : str, default='spot'
+        Spot price column used for base-to-USD conversion.
+    price_cols : tuple[str, ...], default=('bid', 'ask', 'mid', 'last', 'mark')
+        Price columns to convert.
+    unit : {'auto', 'usd', 'base', 'btc', 'unknown'}, default='auto'
+        Premium-unit assumption. ``'auto'`` uses automatic detection.
+    contract_size : float, default=1.0
+        Contract multiplier applied during conversion.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote table with USD-equivalent price columns, raw-price backups,
+        ``valuation_currency``, ``price_unit_detected``, and ``contract_size``.
+
+    Raises
+    ------
+    ValueError
+        If base-unit conversion is requested without a spot column or if ``unit`` is
+        invalid.
+    """
+
     out = quotes.copy()
     detected = detect_option_price_unit(out) if str(unit).lower() == "auto" else str(unit).lower()
     if detected == "btc":
@@ -514,6 +723,25 @@ def add_time_to_expiry(
     expiry_col: str = "expiry",
     annualization_days: float = 365.0,
 ) -> pd.DataFrame:
+    """Add calendar days to expiry and year-fraction maturity columns to option quotes.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    date_col : str, default='date'
+        Valuation date column.
+    expiry_col : str, default='expiry'
+        Expiry date column.
+    annualization_days : float, default=365.0
+        Number of days used to convert calendar DTE to year fraction.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``quotes`` with ``dte``, ``tau``, and ``annualization_days`` columns.
+    """
+
     out = quotes.copy()
     out[date_col] = _to_datetime_ns(out[date_col])
     out[expiry_col] = _to_datetime_ns(out[expiry_col])
@@ -529,6 +757,23 @@ def add_moneyness(
     spot_col: str = "spot",
     strike_col: str = "strike",
 ) -> pd.DataFrame:
+    """Add strike-over-spot moneyness and log-moneyness columns.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    spot_col : str, default='spot'
+        Spot price column.
+    strike_col : str, default='strike'
+        Strike price column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``quotes`` with ``moneyness`` and ``log_moneyness`` columns.
+    """
+
     out = quotes.copy()
     spot = pd.to_numeric(out[spot_col], errors="coerce")
     strike = pd.to_numeric(out[strike_col], errors="coerce")
@@ -538,6 +783,19 @@ def add_moneyness(
 
 
 def split_calls_puts(quotes: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Split a quote table into call and put subsets.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table containing an ``option_type`` column.
+
+    Returns
+    -------
+    tuple[pandas.DataFrame, pandas.DataFrame]
+        ``(calls, puts)`` after option-type normalization.
+    """
+
     out = quotes.copy()
     if "option_type" in out.columns:
         out["option_type"] = out["option_type"].map(parse_option_type)
@@ -549,6 +807,24 @@ def pair_put_call_quotes(
     on: tuple[str, ...] = ("date", "expiry", "strike"),
     price_col: str = "mid",
 ) -> pd.DataFrame:
+    """Pair call and put quotes that share the same date, expiry, and strike keys.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Long-form option quote table.
+    on : tuple[str, ...], default=('date', 'expiry', 'strike')
+        Columns used as pair keys.
+    price_col : str, default='mid'
+        Price column included in the paired output.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Wide paired table containing call-prefixed and put-prefixed columns merged on
+        the common keys.
+    """
+
     calls, puts = split_calls_puts(quotes)
     common = [c for c in on if c in quotes.columns]
     keep = list(dict.fromkeys([*common, price_col, "bid", "ask", "spot", "forward", "tau", "rate", "moneyness"]))
@@ -585,6 +861,21 @@ def _closest_atm_pairs_impl(quotes: pd.DataFrame, n_pairs: int | None = 25) -> p
 
 
 def closest_atm_pairs(quotes: pd.DataFrame, n_pairs: int = 25) -> pd.DataFrame:
+    """Select the closest near-the-money call/put pairs per date and expiry.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Long-form option quote table.
+    n_pairs : int, default=25
+        Number of strike pairs to retain per date-expiry group.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Filtered quote table restricted to the closest available ATM pairs.
+    """
+
     return _closest_atm_pairs_impl(quotes, n_pairs=n_pairs)
 
 
@@ -610,7 +901,41 @@ def clean_option_quotes(
     min_pairs_per_expiry: int = 10,
     annualization_days: float = 365.0,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Normalize and filter a liquid near-ATM option panel."""
+    """Normalize and filter an option quote panel to a liquid near-ATM dataset.
+
+    The cleaning pipeline standardizes schema, builds mid quotes, adds expiry and
+    moneyness fields, removes invalid quotes, filters bid-ask and relative-spread
+    outliers, restricts DTE and moneyness ranges, selects closest ATM pairs, and
+    requires a minimum number of pairs per expiry.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Raw or normalized option quote table.
+    min_dte : int, default=7
+        Minimum calendar days to expiry.
+    max_dte : int, default=120
+        Maximum calendar days to expiry.
+    moneyness_range : tuple[float, float], default=(0.85, 1.15)
+        Inclusive strike-over-spot moneyness range.
+    max_relative_spread : float, default=0.20
+        Maximum allowed relative bid-ask spread for quotes with bid and ask.
+    closest_atm_pairs : int or None, default=25
+        Number of closest ATM pairs to retain per date-expiry group. If None, skip
+        this selection step.
+    min_pairs_per_expiry : int, default=10
+        Minimum number of complete call/put strike pairs required for a date-expiry
+        group to remain.
+    annualization_days : float, default=365.0
+        Days per year used to compute ``tau``.
+
+    Returns
+    -------
+    tuple[pandas.DataFrame, pandas.DataFrame]
+        Cleaned quote table and a stepwise cleaning report with row counts and
+        removals.
+    """
+
     report: list[dict[str, Any]] = []
 
     def add_step(step: str, frame: pd.DataFrame, previous: int | None) -> int:
@@ -679,6 +1004,21 @@ def clean_option_quotes(
 
 
 def filter_liquid_atm_panel(quotes: pd.DataFrame, **kwargs: Any) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Compatibility alias for the liquid near-ATM option quote cleaning pipeline.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    **kwargs
+        Keyword arguments forwarded to the cleaning pipeline.
+
+    Returns
+    -------
+    tuple[pandas.DataFrame, pandas.DataFrame]
+        Cleaned quote table and cleaning report.
+    """
+
     return clean_option_quotes(quotes, **kwargs)
 
 
@@ -695,7 +1035,37 @@ def select_hedging_option_path(
     dte_range: tuple[int, int] = (21, 60),
     moneyness_range: tuple[float, float] = (0.95, 1.05),
 ) -> pd.DataFrame:
-    """Select a fixed or rolling near-ATM option path for hedging diagnostics."""
+    """Select a fixed-contract or rolling near-ATM option path for hedging diagnostics.
+
+    The function first searches for a single contract with enough observations inside
+    the requested DTE and moneyness ranges. If no fixed contract has sufficient
+    history, it constructs a rolling path by selecting the best near-ATM contract on
+    each date.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    min_path_length : int, default=20
+        Minimum number of dates required for a fixed-contract path.
+    preferred_option_type : str, default='call'
+        Preferred option type for the path.
+    dte_range : tuple[int, int], default=(21, 60)
+        Calendar-DTE range used for the initial path search.
+    moneyness_range : tuple[float, float], default=(0.95, 1.05)
+        Strike-over-spot moneyness range used for the initial path search.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Selected path with ``path_mode`` and ``rolling_path`` metadata columns.
+
+    Raises
+    ------
+    ValueError
+        If no usable fixed or rolling path can be selected.
+    """
+
     if quotes.empty:
         raise ValueError("No usable option quotes are available for hedging path selection.")
 
@@ -792,7 +1162,54 @@ def surface_ready_quotes(
     min_weight=0.05,
     max_weight=20.0,
 ):
-    """Prepare broad call/put IV observations for volatility-surface fitting."""
+    """Prepare option quotes for volatility-surface fitting.
+
+    The function validates core option inputs, filters implausible maturities and
+    volatilities, computes forward and spot log-moneyness, total variance, log total
+    variance, IV uncertainty, and a robust surface-fitting weight that combines
+    spread quality, vega information, wing distance, and uncertainty penalties.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table containing option type, strike, spot, forward, maturity, IV, and
+        quote-quality columns.
+    date_col, expiry_col, option_type_col, strike_col, spot_col, forward_col : str
+        Column names for date, expiry, option type, strike, spot, and forward.
+    tau_col : str, default='tau'
+        Time-to-expiry column in years.
+    rate_col : str, default='rate'
+        Continuous rate column.
+    discount_col : str, default='discount_factor'
+        Discount-factor column.
+    iv_bid_col, iv_mid_col, iv_ask_col : str
+        Bid, mid, and ask implied-volatility columns.
+    rel_spread_col : str, default='relative_spread'
+        Relative-spread column used for weights.
+    out_k_col : str, default='k'
+        Output forward log-moneyness column.
+    out_k_spot_col : str, default='k_spot'
+        Output spot log-moneyness column.
+    out_weight_col : str, default='surface_weight'
+        Output fitting-weight column.
+    min_iv, max_iv : float
+        Allowed implied-volatility range.
+    min_tau, max_tau : float
+        Allowed maturity range in years.
+    min_weight, max_weight : float
+        Bounds applied to the final surface-fitting weights.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Surface-ready quote table sorted by date, expiry, strike, and option type.
+
+    Raises
+    ------
+    ValueError
+        If required columns are missing.
+    """
+
     out = quotes.copy()
     for col in [date_col, expiry_col]:
         if col in out.columns:
@@ -905,7 +1322,28 @@ def surface_support_by_date(
     tau_col: str = "tau",
     k_quantiles: tuple[float, float] = (0.01, 0.99),
 ) -> pd.DataFrame:
-    """Quote support summary by date for support-aware surface grids."""
+    """Summarize observed moneyness and maturity support by quote date.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table.
+    date_col : str, default='date'
+        Date column.
+    k_col : str, default='k'
+        Log-moneyness column.
+    tau_col : str, default='tau'
+        Time-to-expiry column in years.
+    k_quantiles : tuple[float, float], default=(0.01, 0.99)
+        Quantiles used to define robust lower and upper moneyness support.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Per-date support table with quote count, min/max and quantile moneyness, and
+        min/max maturity.
+    """
+
     if quotes.empty:
         return pd.DataFrame(columns=[date_col, "quotes", "k_min", "k_max", "k_lo", "k_hi", "tau_min", "tau_max"])
     data = quotes[[date_col, k_col, tau_col]].copy()
@@ -937,7 +1375,40 @@ def surface_common_support(
     min_support_share: float = 0.85,
     k_quantiles: tuple[float, float] = (0.01, 0.99),
 ) -> dict:
-    """Common support mask for fixed historical grids."""
+    """Build a common historical volatility-surface support mask.
+
+    The function evaluates how often each node of a candidate ``k``/``tau`` grid lies
+    inside the robust quote support of each date and marks nodes that meet a minimum
+    support-share threshold.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table.
+    date_col : str, default='date'
+        Date column.
+    k_col : str, default='k'
+        Log-moneyness column.
+    tau_col : str, default='tau'
+        Maturity column in years.
+    k_grid : array-like, optional
+        Candidate log-moneyness grid. If omitted, a grid is derived from median
+        historical support quantiles.
+    tau_grid : array-like, optional
+        Candidate maturity grid. If omitted, a grid is derived from median historical
+        maturity support.
+    min_support_share : float, default=0.85
+        Minimum fraction of dates that must support a node.
+    k_quantiles : tuple[float, float], default=(0.01, 0.99)
+        Robust support quantiles used by date.
+
+    Returns
+    -------
+    dict
+        Dictionary containing ``k``, ``tau``, ``support_share``, ``support_mask``, and
+        the per-date ``support_by_date`` table.
+    """
+
     support = surface_support_by_date(quotes, date_col=date_col, k_col=k_col, tau_col=tau_col, k_quantiles=k_quantiles)
     if k_grid is None:
         k_grid = np.linspace(float(support["k_lo"].median()), float(support["k_hi"].median()), 41)

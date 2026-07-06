@@ -35,6 +35,7 @@ def test_normalize_and_bootstrap_par_curve_orders_tenors() -> None:
     assert np.allclose(par, [0.050, 0.048, 0.042, 0.045])
     assert np.all(np.isfinite(pillars.dfs))
     assert np.all((pillars.dfs > 0.0) & (pillars.dfs <= 1.0))
+    assert np.diff(pillars.dfs).max() <= 1e-6
 
 
 def test_zero_curve_panel_and_rmse_ranking_are_populated() -> None:

@@ -6,7 +6,14 @@ import pytest
 
 from quantfinlab.common.contracts import BacktestResult
 from quantfinlab.common.errors import InputError
-from quantfinlab.portfolio import black_litterman, factors, regimes, walkforward
+from quantfinlab.portfolio import (
+    black_litterman,
+    covariance,
+    expected_returns,
+    factors,
+    regimes,
+    walkforward,
+)
 from tests.synthetic.generators import price_panel, return_panel
 
 
@@ -225,6 +232,58 @@ def test_walkforward_result_contract_and_rebalance_frequency() -> None:
     assert result.as_dict()["metadata"] == {"sample": True}
     with pytest.raises(KeyError):
         _ = result["missing"]
+
+
+def test_walkforward_grid_runs_from_cached_covariance_and_mu_state() -> None:
+    pytest.importorskip("cvxpy")
+
+    returns = return_panel(n=90, assets=("AAA", "BBB", "CCC", "DDD"))
+    rebalance_dates = [returns.index[45], returns.index[65]]
+    universe_by_date = {
+        dt: {
+            "tickers": list(returns.columns),
+            "avg_dollar_volume": pd.Series(1_000_000.0, index=returns.columns),
+        }
+        for dt in rebalance_dates
+    }
+    cache = walkforward.build_rebalance_state_cache(
+        returns=returns,
+        rebalance_dates=rebalance_dates,
+        universe_by_date=universe_by_date,
+        cov_models={"Sample": covariance.sample_covariance},
+        mu_models={"Momentum": expected_returns.momentum_mu},
+        cov_lookback=35,
+        mu_lookback=45,
+        min_cov_observations=25,
+        min_mu_observations=25,
+    )
+    specs = [
+        {"name": "EW", "optimizer": "EW"},
+        {"name": "MV sample momentum", "optimizer": "MV", "cov_model": "Sample", "mu_model": "Momentum"},
+    ]
+    grid = walkforward.run_walkforward_grid(
+        returns=returns,
+        rebalance_dates=rebalance_dates,
+        cache=cache,
+        strategy_specs=specs,
+        max_weight=0.80,
+        trading_cost_bps=1.0,
+        turnover_penalty_bps=0.0,
+        solver_order=("OSQP", "SCS"),
+    )
+    with_frontier = walkforward.append_frontiergrid_strategy(
+        grid,
+        cov_model="Sample",
+        mu_model="Momentum",
+        grid_n=5,
+    )
+
+    assert set(cache) == set(rebalance_dates)
+    assert {"EW", "MV sample momentum"}.issubset(grid.backtests)
+    assert grid.nav.notna().any().all()
+    assert grid.diagnostics.loc["MV sample momentum", "Optimizer"] == "MV"
+    assert len(with_frontier.backtests) == len(grid.backtests) + 1
+    assert any("FrontierGrid" in name for name in with_frontier.backtests)
 
 
 def test_walkforward_rejects_empty_state_and_invalid_strategy_specs() -> None:

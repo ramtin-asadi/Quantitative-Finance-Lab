@@ -9,6 +9,25 @@ def option_position_greeks(
     quantity: float = 1.0,
     multiplier: float = 1.0,
 ) -> pd.Series:
+    """Scale a single option row's Greeks by position quantity and contract multiplier.
+
+    Parameters
+    ----------
+    row : pandas.Series or dict
+        Option row containing Greek columns such as ``delta``, ``gamma``, ``vega``,
+        ``theta``, and ``rho``. ``<greek>_mid`` columns are used as fallbacks.
+    quantity : float, default=1.0
+        Number of contracts or option units.
+    multiplier : float, default=1.0
+        Contract multiplier.
+
+    Returns
+    -------
+    pandas.Series
+        Series with ``delta_exposure``, ``gamma_exposure``, ``vega_exposure``,
+        ``theta_exposure``, and ``rho_exposure``.
+    """
+
     data = pd.Series(row)
     scale = float(quantity) * float(multiplier)
     out = {}
@@ -23,6 +42,23 @@ def portfolio_greek_exposure(
     quantity_col: str = "quantity",
     multiplier_col: str = "multiplier",
 ) -> pd.Series:
+    """Aggregate Greek exposures across an option-position table.
+
+    Parameters
+    ----------
+    positions : pandas.DataFrame
+        Position table containing Greek values and quantity/multiplier columns.
+    quantity_col : str, default='quantity'
+        Quantity column.
+    multiplier_col : str, default='multiplier'
+        Contract multiplier column. If missing, a multiplier of one is used.
+
+    Returns
+    -------
+    pandas.Series
+        Portfolio-level Greek exposure totals.
+    """
+
     if positions.empty:
         return pd.Series({f"{g}_exposure": 0.0 for g in ["delta", "gamma", "vega", "theta", "rho"]})
     frame = positions.copy()
@@ -36,6 +72,22 @@ def portfolio_greek_exposure(
 
 
 def target_delta_hedge(delta_exposure: float, hedge_delta: float = 1.0) -> float:
+    """Compute hedge units required to neutralize delta exposure.
+
+    Parameters
+    ----------
+    delta_exposure : float
+        Current portfolio delta exposure.
+    hedge_delta : float, default=1.0
+        Delta per hedge unit.
+
+    Returns
+    -------
+    float
+        Hedge quantity ``-delta_exposure / hedge_delta``. Returns ``nan`` when hedge
+        delta is effectively zero.
+    """
+
     hedge_delta = float(hedge_delta)
     if abs(hedge_delta) < 1e-12:
         return np.nan
@@ -43,6 +95,22 @@ def target_delta_hedge(delta_exposure: float, hedge_delta: float = 1.0) -> float
 
 
 def target_vega_hedge(vega_exposure: float, hedge_vega: float) -> float:
+    """Compute hedge units required to neutralize vega exposure.
+
+    Parameters
+    ----------
+    vega_exposure : float
+        Current portfolio vega exposure.
+    hedge_vega : float
+        Vega per hedge instrument.
+
+    Returns
+    -------
+    float
+        Hedge quantity ``-vega_exposure / hedge_vega``. Returns ``nan`` when hedge
+        vega is effectively zero.
+    """
+
     hedge_vega = float(hedge_vega)
     if abs(hedge_vega) < 1e-12:
         return np.nan
@@ -55,6 +123,26 @@ def build_delta_hedge_targets(
     multiplier: float = 1.0,
     delta_col: str = "delta",
 ) -> pd.DataFrame:
+    """Add target underlying hedge units for delta-neutral option hedging.
+
+    Parameters
+    ----------
+    greek_table : pandas.DataFrame
+        Table containing option deltas.
+    option_quantity : float, default=1.0
+        Option position quantity.
+    multiplier : float, default=1.0
+        Contract multiplier.
+    delta_col : str, default='delta'
+        Delta column used for exposure calculation.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``greek_table`` with ``option_delta_exposure`` and
+        ``target_underlying_units`` columns.
+    """
+
     out = greek_table.copy()
     out["option_delta_exposure"] = pd.to_numeric(out[delta_col], errors="coerce") * option_quantity * multiplier
     out["target_underlying_units"] = -out["option_delta_exposure"]
@@ -67,6 +155,25 @@ def build_delta_vega_hedge_targets(
     option_quantity: float = 1.0,
     multiplier: float = 1.0,
 ) -> pd.DataFrame:
+    """Build combined delta and vega hedge targets from option and hedge-instrument Greeks.
+
+    Parameters
+    ----------
+    greek_table : pandas.DataFrame
+        Option Greek table containing ``delta`` and ``vega``.
+    vega_hedge_table : pandas.DataFrame
+        Hedge-instrument table with date, vega, and delta columns.
+    option_quantity : float, default=1.0
+        Option position quantity.
+    multiplier : float, default=1.0
+        Contract multiplier applied to both option and hedge exposures.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with target vega-hedge contracts and residual target underlying units.
+    """
+
     out = build_delta_hedge_targets(greek_table, option_quantity=option_quantity, multiplier=multiplier)
     hedge = vega_hedge_table.copy()
     hedge_cols = ["date", "vega", "delta"]
@@ -86,6 +193,26 @@ def hedge_trade_from_band(
     exposure: float,
     band: float,
 ) -> float:
+    """Compute a hedge trade only when exposure breaches a tolerance band.
+
+    Parameters
+    ----------
+    current_units : float
+        Current hedge units.
+    target_units : float
+        Desired hedge units.
+    exposure : float
+        Current net exposure used for the band test.
+    band : float
+        Absolute exposure tolerance.
+
+    Returns
+    -------
+    float
+        Trade size ``target_units - current_units`` when the exposure exceeds the
+        band; otherwise zero. Returns zero for non-finite targets.
+    """
+
     if not np.isfinite(target_units):
         return 0.0
     if abs(float(exposure)) <= float(band):
@@ -97,6 +224,22 @@ def hedge_exposure_table(
     greek_table: pd.DataFrame,
     underlying_units_col: str = "underlying_units",
 ) -> pd.DataFrame:
+    """Attach net delta and vega exposure columns to a Greek table.
+
+    Parameters
+    ----------
+    greek_table : pandas.DataFrame
+        Table containing option Greeks and optional underlying hedge units.
+    underlying_units_col : str, default='underlying_units'
+        Column containing underlying hedge units.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``greek_table`` with ``net_delta_exposure`` and
+        ``net_vega_exposure`` columns.
+    """
+
     out = greek_table.copy()
     under = out[underlying_units_col] if underlying_units_col in out.columns else 0.0
     out["net_delta_exposure"] = out.get("delta", 0.0) + under
@@ -105,6 +248,19 @@ def hedge_exposure_table(
 
 
 def hedging_summary_table(results: dict) -> pd.DataFrame:
+    """Extract a hedging summary table from a results dictionary.
+
+    Parameters
+    ----------
+    results : dict
+        Results dictionary that may contain a ``summary`` DataFrame.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The stored summary table, or an empty DataFrame when no summary is present.
+    """
+
     if "summary" in results:
         return results["summary"]
     return pd.DataFrame()

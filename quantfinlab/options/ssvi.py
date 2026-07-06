@@ -10,6 +10,27 @@ from quantfinlab.options.bsm import black76_price
 
 
 def ssvi_total_var(k, theta, rho, eta, gamma):
+    """Evaluate SSVI total variance for log-moneyness values.
+
+    Parameters
+    ----------
+    k : array-like
+        Forward log-moneyness.
+    theta : array-like or scalar
+        ATM total variance for the slice.
+    rho : float
+        SSVI correlation/skew parameter.
+    eta : float
+        SSVI scale parameter.
+    gamma : float
+        SSVI power parameter controlling theta dependence.
+
+    Returns
+    -------
+    numpy.ndarray
+        SSVI total implied variance values.
+    """
+
     k_arr = np.asarray(k, dtype=float)
     theta_arr = np.maximum(np.asarray(theta, dtype=float), 1e-8)
     phi = float(eta) / np.maximum(theta_arr, 1e-8) ** float(gamma)
@@ -41,6 +62,28 @@ def _prepare(q: pd.DataFrame) -> pd.DataFrame:
 
 
 def fit_ssvi_surface(quotes: pd.DataFrame, weight_col: str = "obs_weight", engine: str = "auto") -> dict:
+    """Fit a global SSVI surface to quote-level total variance.
+
+    The function first estimates an ATM total-variance curve by expiry/date-expiry
+    slice, then fits global SSVI shape parameters to all quote observations using
+    weighted least squares.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table.
+    weight_col : str, default='obs_weight'
+        Observation-weight column.
+    engine : str, default='auto'
+        Compatibility engine label. The current fit uses NumPy/SciPy.
+
+    Returns
+    -------
+    dict
+        Fit dictionary containing SSVI parameters, theta curve, quote-level fit,
+        diagnostics, elapsed time, and engine metadata.
+    """
+
     t0 = time.perf_counter()
     q = _prepare(quotes)
     theta = _theta_curve(q)
@@ -93,6 +136,24 @@ def fit_ssvi_surface(quotes: pd.DataFrame, weight_col: str = "obs_weight", engin
 
 
 def ssvi_prices(quotes: pd.DataFrame, fit: dict, engine: str = "auto") -> pd.DataFrame:
+    """Reprice quotes with a fitted SSVI surface.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table to price.
+    fit : dict
+        SSVI fit dictionary containing parameters and theta curve.
+    engine : str, default='auto'
+        Compatibility engine label.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote-level SSVI total variance, model IV, model price, IV residual, and price
+        residual columns. Returns an empty quote slice when inputs are unavailable.
+    """
+
     q = _prepare(quotes)
     params = fit.get("params", pd.DataFrame())
     theta = fit.get("theta", pd.DataFrame())

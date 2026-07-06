@@ -1,10 +1,10 @@
-# Data Reproducibility Layer
+# Data Reproducibility
 
-This folder is a reproducibility layer, not a redistributed data archive. Final files are produced directly under `data/` by one script per source folder. Raw/manual vendor files stay under the relevant `raw/` directory and are ignored by Git.
+We don't redistribute data used in every project, but we included guides and helpers for remaking all the data files that are used in notebooks. Final files are produced directly under `data/` by one script per source folder. Raw/manual vendor files stay under the relevant `raw/` directory.
 
 Script-downloadable sources include FRED U.S. Treasury yields, FRED NFCI, Japan MOF JGB yields, NY Fed ACM term premia, yfinance OHLCV/ETF data, macro factors from FRED/StatCan/Bank of Canada, and Kenneth French factor files. The HKEX stock-name workbook is downloaded inside the Stooq HKEX processor so the Hong Kong panel uses security names as its asset columns.
 
-Manual or restricted sources include Stooq bulk stock downloads and OptionsDX option-chain files. Those files must be placed under the matching `raw/` folder before running the local processor. Raw folders are tracked with `.gitkeep` placeholders, but all real raw files inside them are ignored.
+Manual or restricted sources include Stooq bulk stock downloads and OptionsDX option-chain files. Those files must be downloaded manually by user and placed under the matching `raw/` folder before running the local processor. Raw folders are tracked with `.gitkeep` placeholders, but all real raw files inside them are ignored.
 
 ## Raw Folder Checklist
 

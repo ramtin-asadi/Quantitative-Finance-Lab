@@ -6,7 +6,13 @@ import pytest
 from quantfinlab.common.contracts import Bond
 from quantfinlab.fixed_income.bond_pricing import bond_cashflows, bond_price, price_bond_from_issue
 from quantfinlab.fixed_income.discounting import shifted_df_func
-from quantfinlab.fixed_income.risk import bond_price_and_risk, price_from_ytm, pv01, solve_bond_ytm
+from quantfinlab.fixed_income.risk import (
+    bond_price_and_risk,
+    dv01,
+    price_from_ytm,
+    pv01,
+    solve_bond_ytm,
+)
 from tests.synthetic.generators import flat_curve
 
 
@@ -25,6 +31,7 @@ def test_pv01_matches_symmetric_parallel_bump() -> None:
     assert table.loc["flat", "clean_price"] == pytest.approx(bond_price(bond, curve))
     assert table.loc["flat", "pv01"] > 0.0
     assert table.filter(like="krd_").to_numpy().sum() > 0.0
+    assert dv01(bond, curve) > 0.0
 
 
 def test_ytm_solver_round_trips_bond_price() -> None:

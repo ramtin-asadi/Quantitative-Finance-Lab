@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from quantfinlab._optional import get_cpp_kernels, prefer_auto_engine
 from quantfinlab.options.bates import bates_cf
 from quantfinlab.options.bsm import bsm_cf
 from quantfinlab.options.heston import heston_cf
@@ -15,12 +16,7 @@ MODEL_IDS = {"bsm": 0, "merton": 1, "vg": 2, "variance_gamma": 2, "heston": 3, "
 def _resolve_engine(engine: str) -> str:
     key = str(engine).lower()
     if key == "auto":
-        try:
-            import numba  # noqa: F401
-
-            return "numba"
-        except Exception:
-            return "numpy"
+        return prefer_auto_engine()
     if key in {"numpy", "python"}:
         return "numpy"
     if key == "numba":
@@ -74,6 +70,35 @@ def _params(model, params) -> np.ndarray:
 
 
 def model_cf(model, u, params, spot, rate, dividend_yield, tau):
+    """Evaluate a supported model characteristic function of log spot at expiry.
+
+    The function dispatches to Black-Scholes, Merton jump-diffusion, Variance Gamma,
+    Heston, or Bates characteristic functions according to the model identifier and
+    parameter set.
+
+    Parameters
+    ----------
+    model : str or identifier
+        Model name or supported model identifier.
+    u : array-like
+        Complex Fourier argument.
+    params : mapping or array-like
+        Model parameters in the convention expected by the selected model.
+    spot : float or array-like
+        Current spot price.
+    rate : float or array-like
+        Continuously compounded risk-free rate.
+    dividend_yield : float or array-like
+        Continuously compounded dividend yield.
+    tau : float or array-like
+        Time to expiry in years.
+
+    Returns
+    -------
+    numpy.ndarray
+        Characteristic-function values.
+    """
+
     mid = _model_id(model)
     p = _params(model, params)
     if mid == 0:
@@ -114,8 +139,51 @@ def direct_price(
     option_type="call",
     n: int = 512,
     u_max: float = 120.0,
-    engine: str = "numba",
+    engine: str = "auto",
 ):
+    """Price vanilla options by direct Fourier integration.
+
+    The function evaluates model prices contract by contract or through accelerated
+    backends when available. Put prices are obtained from call prices through forward
+    put-call parity.
+
+    Parameters
+    ----------
+    model : str or identifier
+        Supported model name.
+    params : mapping or array-like
+        Model parameters.
+    spot : array-like
+        Spot prices.
+    strike : array-like
+        Strike prices.
+    rate : array-like
+        Continuously compounded risk-free rates.
+    dividend_yield : array-like
+        Continuously compounded dividend yields.
+    tau : array-like
+        Times to expiry in years.
+    option_type : array-like or scalar, default='call'
+        Option type labels.
+    n : int, default=512
+        Number of integration grid points.
+    u_max : float, default=120.0
+        Upper integration frequency.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='auto'
+        Numerical backend.
+
+    Returns
+    -------
+    numpy.ndarray
+        Option prices with the broadcast input shape.
+
+    Raises
+    ------
+    ValueError
+        If an explicitly requested C++ batch path cannot support the supplied batch
+        shape.
+    """
+
     s, k, r, q, t = np.broadcast_arrays(np.asarray(spot, dtype=float), np.asarray(strike, dtype=float), np.asarray(rate, dtype=float), np.asarray(dividend_yield, dtype=float), np.asarray(tau, dtype=float))
     flags = _flag(option_type)
     if flags.size == 1 and k.size > 1:
@@ -123,24 +191,20 @@ def direct_price(
     resolved = _resolve_engine(engine)
     p = _params(model, params)
     if resolved == "cpp":
-        try:
-            from quantfinlab import _kernels
-        except Exception:
-            _kernels = None
+        kernels = get_cpp_kernels("Fourier direct option pricing")
         flat_s = s.reshape(-1)
         flat_r = r.reshape(-1)
         flat_q = q.reshape(-1)
         flat_flags = flags.reshape(-1)
         if (
-            _kernels is not None
-            and np.unique(np.round(flat_s, 12)).size == 1
+            np.unique(np.round(flat_s, 12)).size == 1
             and np.unique(np.round(flat_r, 12)).size == 1
             and np.unique(np.round(flat_q, 12)).size == 1
             and np.unique(flat_flags).size == 1
-            and hasattr(_kernels, "direct_prices")
+            and hasattr(kernels, "direct_prices")
         ):
             return np.asarray(
-                _kernels.direct_prices(
+                kernels.direct_prices(
                     _model_id(model),
                     p,
                     k.reshape(-1),
@@ -154,6 +218,8 @@ def direct_price(
                 ),
                 dtype=float,
             ).reshape(k.shape)
+        if str(engine).lower() in {"cpp", "c++"}:
+            raise ValueError("The C++ Fourier direct engine requires common spot, rate, dividend yield, and option type across the batch.")
         resolved = "numba"
     if resolved == "numba":
         try:
@@ -170,19 +236,48 @@ def direct_price(
     return out.reshape(k.shape)
 
 
-def fft_grid(model, params, spot, rate, dividend_yield, tau, *, alpha: float = 1.5, n: int = 256, eta: float = 0.25, option_type="call", engine: str = "numba") -> pd.DataFrame:
+def fft_grid(model, params, spot, rate, dividend_yield, tau, *, alpha: float = 1.5, n: int = 256, eta: float = 0.25, option_type="call", engine: str = "auto") -> pd.DataFrame:
+    """Generate Carr-Madan FFT option prices over a strike grid.
+
+    Parameters
+    ----------
+    model : str or identifier
+        Supported model name.
+    params : mapping or array-like
+        Model parameters.
+    spot : float
+        Spot price.
+    rate : float
+        Continuously compounded risk-free rate.
+    dividend_yield : float
+        Continuously compounded dividend yield.
+    tau : float
+        Time to expiry in years.
+    alpha : float, default=1.5
+        Dampening parameter in the Carr-Madan transform.
+    n : int, default=256
+        Number of FFT grid points.
+    eta : float, default=0.25
+        Frequency-grid spacing.
+    option_type : {'call', 'put'}, default='call'
+        Option type to return. Put prices are obtained through parity from the call
+        grid.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='auto'
+        Numerical backend.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Strike-price grid with columns ``strike`` and ``price``.
+    """
+
     resolved = _resolve_engine(engine)
     p = _params(model, params)
     flag = int(_flag(option_type).reshape(-1)[0])
     if resolved == "cpp":
-        try:
-            from quantfinlab import _kernels
-        except Exception:
-            _kernels = None
-        if _kernels is not None:
-            out = _kernels.fft_prices(_model_id(model), p, float(spot), float(rate), float(dividend_yield), float(tau), float(alpha), int(n), float(eta), flag)
-            return pd.DataFrame({"strike": np.asarray(out["strikes"], dtype=float), "price": np.asarray(out["prices"], dtype=float)})
-        resolved = "numba"
+        kernels = get_cpp_kernels("Carr-Madan FFT option pricing")
+        out = kernels.fft_prices(_model_id(model), p, float(spot), float(rate), float(dividend_yield), float(tau), float(alpha), int(n), float(eta), flag)
+        return pd.DataFrame({"strike": np.asarray(out["strikes"], dtype=float), "price": np.asarray(out["prices"], dtype=float)})
     if resolved == "numba":
         from quantfinlab.numerics.fourier import carr_madan_fft_numba
 
@@ -216,6 +311,19 @@ def fft_grid(model, params, spot, rate, dividend_yield, tau, *, alpha: float = 1
 
 
 def fft_prices(*args, **kwargs) -> pd.DataFrame:
+    """Compatibility alias for Carr-Madan FFT strike-grid pricing.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        Arguments forwarded to the FFT grid pricer.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Strike-price grid with model prices.
+    """
+
     return fft_grid(*args, **kwargs)
 
 
@@ -357,12 +465,62 @@ def cos_prices(
     n_terms: int = 256,
     truncation_width: float = 12.0,
     option_type="call",
-    engine: str = "numba",
+    engine: str = "auto",
     cf=None,
     variance_hint=None,
     x_center=None,
     x_width=None,
 ) -> np.ndarray:
+    """Price vanilla options with the COS method or a compatible Fourier fallback.
+
+    The function supports built-in models and custom characteristic functions. When a
+    custom characteristic function is supplied, it is called directly; otherwise the
+    selected model parameters are dispatched to accelerated COS implementations when
+    available.
+
+    Parameters
+    ----------
+    model : str or identifier
+        Supported model name, or ``'custom'`` when ``cf`` is provided.
+    params : mapping or array-like
+        Model parameters. May be ``None`` for custom characteristic functions.
+    strikes : array-like
+        Strike prices.
+    tau : array-like
+        Times to expiry in years.
+    spot : array-like
+        Spot prices.
+    rate : array-like
+        Continuously compounded risk-free rates.
+    dividend_yield : array-like
+        Continuously compounded dividend yields.
+    n_terms : int, default=256
+        Number of COS expansion terms.
+    truncation_width : float, default=12.0
+        Width parameter for the log-price integration interval.
+    option_type : array-like or scalar, default='call'
+        Option type labels.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='auto'
+        Numerical backend.
+    cf : callable, optional
+        Custom characteristic-function callback.
+    variance_hint : float, optional
+        Variance scale used by custom-CF truncation logic.
+    x_center, x_width : float, optional
+        Optional custom log-price truncation center and width.
+
+    Returns
+    -------
+    numpy.ndarray
+        Option prices with the broadcast strike/maturity shape.
+
+    Notes
+    -----
+    When the requested accelerated backend cannot support heterogeneous batch inputs,
+    the function falls back to a supported numerical path unless the backend was
+    explicitly requested in a way that requires failure.
+    """
+
     if cf is not None:
         return _cos_prices_custom_cf(
             cf,
@@ -387,13 +545,10 @@ def cos_prices(
     resolved = _resolve_engine(engine)
     p = _params(model, params)
     if resolved == "cpp":
-        try:
-            from quantfinlab import _kernels
-        except Exception:
-            _kernels = None
-        if _kernels is not None and np.unique(np.round(s.reshape(-1), 12)).size == 1 and np.unique(np.round(r.reshape(-1), 12)).size == 1 and np.unique(np.round(q.reshape(-1), 12)).size == 1 and np.unique(flags.reshape(-1)).size == 1:
+        kernels = get_cpp_kernels("COS option pricing")
+        if np.unique(np.round(s.reshape(-1), 12)).size == 1 and np.unique(np.round(r.reshape(-1), 12)).size == 1 and np.unique(np.round(q.reshape(-1), 12)).size == 1 and np.unique(flags.reshape(-1)).size == 1:
             return np.asarray(
-                _kernels.cos_prices(
+                kernels.cos_prices(
                     _model_id(model),
                     p,
                     k.reshape(-1),
@@ -407,6 +562,8 @@ def cos_prices(
                 ),
                 dtype=float,
             ).reshape(k.shape)
+        if str(engine).lower() in {"cpp", "c++"}:
+            raise ValueError("The C++ COS engine requires common spot, rate, dividend yield, and option type across the batch.")
         resolved = "numba"
     if resolved == "numba":
         from quantfinlab.numerics.fourier import cos_price_numba
@@ -427,6 +584,33 @@ def cos_prices(
 
 
 def cos_density(model, params, x_grid, spot, rate, dividend_yield, tau, *, n_terms: int = 512):
+    """Approximate the risk-neutral density on a log-price grid from a model characteristic function.
+
+    Parameters
+    ----------
+    model : str or identifier
+        Supported model name.
+    params : mapping or array-like
+        Model parameters.
+    x_grid : array-like
+        Log-price grid on which to evaluate the density.
+    spot : float
+        Spot price.
+    rate : float
+        Continuously compounded risk-free rate.
+    dividend_yield : float
+        Continuously compounded dividend yield.
+    tau : float
+        Time to expiry in years.
+    n_terms : int, default=512
+        Number of integration frequencies.
+
+    Returns
+    -------
+    numpy.ndarray
+        Non-negative density values normalized to integrate to one when possible.
+    """
+
     x = np.asarray(x_grid, dtype=float)
     u = np.linspace(1e-6, 160.0, int(n_terms))
     phi = model_cf(model, u, params, spot, rate, dividend_yield, tau)
@@ -439,10 +623,42 @@ def cos_density(model, params, x_grid, spot, rate, dividend_yield, tau, *, n_ter
 
 
 def risk_neutral_density(model, params, x_grid, spot, rate, dividend_yield, tau, *, n_terms: int = 512):
+    """Alias for risk-neutral density evaluation on a log-price grid.
+
+    Parameters
+    ----------
+    model, params, x_grid, spot, rate, dividend_yield, tau
+        Inputs forwarded to the density evaluator.
+    n_terms : int, default=512
+        Number of integration frequencies.
+
+    Returns
+    -------
+    numpy.ndarray
+        Risk-neutral density values.
+    """
+
     return cos_density(model, params, x_grid, spot, rate, dividend_yield, tau, n_terms=n_terms)
 
 
 def tail_probability(x_grid, density, threshold):
+    """Integrate left-tail probability up to a threshold on a density grid.
+
+    Parameters
+    ----------
+    x_grid : array-like
+        Grid values.
+    density : array-like
+        Density values on the same grid.
+    threshold : float
+        Upper threshold for the left-tail event.
+
+    Returns
+    -------
+    float
+        Numerical integral of the density over ``x_grid <= threshold``.
+    """
+
     x = np.asarray(x_grid, dtype=float)
     d = np.asarray(density, dtype=float)
     mask = x <= float(threshold)

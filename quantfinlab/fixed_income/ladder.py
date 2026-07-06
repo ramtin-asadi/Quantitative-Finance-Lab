@@ -25,6 +25,24 @@ from .tenors import DEFAULT_ISSUE_MATURITIES, nearest_tenor_label
 
 
 def clone_positions(positions: dict[int, dict]) -> dict[int, dict]:
+    """Deep-copy a dictionary of synthetic bond positions.
+
+    Parameters
+    ----------
+    positions : dict[int, dict]
+        Position dictionary to copy.
+
+    Returns
+    -------
+    dict[int, dict]
+        Deep copy of ``positions``.
+
+    Notes
+    -----
+    A deep copy is used so nested arrays, dates, and mutable bond records can be
+    safely stored as backtest snapshots without later mutation.
+    """
+
     return copy.deepcopy(positions)
 
 
@@ -33,6 +51,26 @@ def split_contiguous_blocks(
     *,
     max_gap_days: int = 45,
 ) -> list[pd.DatetimeIndex]:
+    """Split dates into contiguous blocks separated by large gaps.
+
+    Parameters
+    ----------
+    dates : array-like
+        Date-like values.
+    max_gap_days : int, default 45
+        Maximum allowed gap in calendar days within a block.
+
+    Returns
+    -------
+    list[pandas.DatetimeIndex]
+        Sorted contiguous date blocks. Empty input returns an empty list.
+
+    Notes
+    -----
+    A new block begins whenever the gap between adjacent sorted dates is greater
+    than ``max_gap_days``.
+    """
+
     dates_idx = pd.DatetimeIndex(sorted(pd.to_datetime(dates).unique()))
     if len(dates_idx) == 0:
         return []
@@ -53,6 +91,24 @@ def choose_backtest_block(
     max_gap_days: int = 45,
     min_len: int = 60,
 ) -> pd.DatetimeIndex:
+    """Choose the longest eligible contiguous date block for a backtest.
+
+    Parameters
+    ----------
+    dates : array-like
+        Candidate date-like values.
+    max_gap_days : int, default 45
+        Maximum allowed gap within a contiguous block.
+    min_len : int, default 60
+        Minimum number of dates required for eligibility.
+
+    Returns
+    -------
+    pandas.DatetimeIndex
+        Longest eligible block, or an empty ``DatetimeIndex`` if no block satisfies
+        the length requirement.
+    """
+
     blocks = split_contiguous_blocks(dates, max_gap_days=max_gap_days)
     if not blocks:
         return pd.DatetimeIndex([])
@@ -64,6 +120,26 @@ def choose_backtest_block(
 
 
 def gap_safe_frame(obj: pd.Series | pd.DataFrame, *, max_gap_days: int = 45):
+    """Insert NaNs after large date gaps in a Series or DataFrame.
+
+    Parameters
+    ----------
+    obj : pandas.Series or pandas.DataFrame
+        Time-indexed object to mark.
+    max_gap_days : int, default 45
+        Gap threshold in calendar days.
+
+    Returns
+    -------
+    pandas.Series or pandas.DataFrame
+        Float-cast copy with observations after large gaps set to NaN.
+
+    Notes
+    -----
+    This is useful for plotting or return analysis where visually connecting
+    non-contiguous time blocks would be misleading.
+    """
+
     out = obj.copy()
     if len(out.index) == 0:
         return out
@@ -80,14 +156,61 @@ def gap_safe_frame(obj: pd.Series | pd.DataFrame, *, max_gap_days: int = 45):
 
 
 def ladder_returns(strategy_df: pd.DataFrame) -> pd.Series:
+    """Extract the return series from a ladder strategy table.
+
+    Parameters
+    ----------
+    strategy_df : pandas.DataFrame
+        Strategy table containing a ``"ret"`` column.
+
+    Returns
+    -------
+    pandas.Series
+        Copy of the ladder return column.
+    """
+
     return strategy_df["ret"].copy()
 
 
 def ladder_nav(strategy_df: pd.DataFrame) -> pd.Series:
+    """Extract the NAV series from a ladder strategy table.
+
+    Parameters
+    ----------
+    strategy_df : pandas.DataFrame
+        Strategy table containing a ``"nav"`` column.
+
+    Returns
+    -------
+    pandas.Series
+        Copy of the ladder NAV column.
+    """
+
     return strategy_df["nav"].copy()
 
 
 def ladder_performance_table(strategy_df: pd.DataFrame) -> pd.DataFrame:
+    """Compute simple performance metrics for a ladder strategy table.
+
+    Parameters
+    ----------
+    strategy_df : pandas.DataFrame
+        Strategy table containing ``"ret"``, ``"nav"``, and ``"strategy"``
+        columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One-row table indexed by strategy name with final NAV, annualized return,
+        annualized volatility, and maximum drawdown. Returns an empty DataFrame
+        when no non-missing returns are available.
+
+    Notes
+    -----
+    The annualization assumes monthly returns. Maximum drawdown is computed from
+    the cumulative wealth path based on non-missing returns.
+    """
+
     rets = strategy_df["ret"].dropna()
     if len(rets) == 0:
         return pd.DataFrame()
@@ -177,9 +300,34 @@ def make_curve_lookup(
     short_end: str = "continuous",
     min_df: float = 1e-12,
 ):
+    """Build a cached curve lookup for ladder backtests.
+
+    Parameters
+    ----------
+    par_yields : pandas.DataFrame
+        Date-indexed par-yield curve panel.
+    curve_method : str
+        Curve-fitting method used by the lookup.
+    tenor_cols : list of str or None, optional
+        Tenor columns to use. If omitted, all columns are used.
+    freq : int, default 2
+        Coupon frequency used in bootstrapping.
+    short_end : str, default "continuous"
+        Short-end bootstrap convention.
+    min_df : float, default 1e-12
+        Discount-factor floor.
+
+    Returns
+    -------
+    callable
+        Function that resolves a requested date to a fitted curve.
+
+    Notes
+    -----
+    The returned lookup is designed for repeated strategy simulation and caches
+    curves internally through the underlying builder.
     """
-    Build the cached primary-curve lookup used by the ladder notebook cells.
-    """
+
     cols = tenor_cols if tenor_cols is not None else [str(c) for c in par_yields.columns]
     return _get_curve_builder(
         par_yields[cols],
@@ -221,6 +369,36 @@ def initialize_ladder(
     coupon_lookup: Callable[[pd.Timestamp, int], float],
     freq: int = 2,
 ) -> tuple[dict[int, dict], float]:
+    """Initialize a synthetic bond ladder at target bucket weights.
+
+    Parameters
+    ----------
+    start_date : pandas.Timestamp
+        Initial issue date.
+    buckets : list of int or tuple of int, default DEFAULT_ISSUE_MATURITIES
+        Maturity buckets to initialize.
+    target_weights : dict[int, float] or None, optional
+        Target bucket weights. If omitted, defaults are used by the internal weight
+        normalizer.
+    initial_nav : float, default 100.0
+        Starting portfolio value.
+    coupon_lookup : callable
+        Function returning the coupon rate for a given date and maturity bucket.
+    freq : int, default 2
+        Coupon payment frequency per year.
+
+    Returns
+    -------
+    tuple[dict[int, dict], float]
+        Initial position dictionary and remaining cash balance.
+
+    Notes
+    -----
+    Each bucket is populated with a newly issued synthetic bond whose units equal
+    the target dollar allocation. Initial cash is reduced by the units allocated to
+    the positions.
+    """
+
     buckets_l = [int(x) for x in buckets]
     weights = _target_weights_series(target_weights, buckets_l)
     positions: dict[int, dict] = {}
@@ -264,6 +442,45 @@ def apply_trade(
     trading_cost_bps: float = 1.0,
     freq: int = 2,
 ) -> float:
+    """Apply a buy or sell trade to one maturity bucket.
+
+    Parameters
+    ----------
+    positions : dict[int, dict]
+        Current synthetic bond positions by maturity bucket.
+    cash : float
+        Current cash balance.
+    date : pandas.Timestamp
+        Trade date.
+    df_func : callable
+        Discount-factor function used to value current holdings.
+    maturity : int
+        Maturity bucket to trade.
+    target_value_delta : float
+        Positive values buy the bucket; negative values sell the bucket.
+    trade_rows : list of dict
+        Mutable list to which trade records are appended.
+    reason : str
+        Trade reason recorded in the trade log.
+    coupon_lookup : callable
+        Function returning the coupon for newly created bucket positions.
+    trading_cost_bps : float, default 1.0
+        Trading cost in basis points, possibly adjusted internally by maturity.
+    freq : int, default 2
+        Coupon payment frequency for newly created bonds.
+
+    Returns
+    -------
+    float
+        Updated cash balance.
+
+    Notes
+    -----
+    Buy trades are capped by available cash after costs. Sell trades are capped by
+    current bucket market value. The function mutates ``positions`` and
+    ``trade_rows`` in place.
+    """
+
     maturity = int(maturity)
     tc = _cost_bps_for_maturity(trading_cost_bps, maturity) / 10000.0
 
@@ -329,6 +546,36 @@ def roll_bucket_positions(
     bucket_floor: dict[int, float] | None = None,
     trading_cost_bps: float = 1.0,
 ) -> tuple[dict[int, dict], float, list[dict]]:
+    """Roll synthetic bond positions whose remaining maturities fall below floors.
+
+    Parameters
+    ----------
+    positions : dict[int, dict]
+        Current synthetic bond positions by maturity bucket.
+    cash : float
+        Current cash balance.
+    date : pandas.Timestamp
+        Valuation date.
+    df_func : callable
+        Discount-factor function used to value positions.
+    buckets : list of int or tuple of int, default DEFAULT_ISSUE_MATURITIES
+        Maturity buckets to inspect.
+    bucket_floor : dict[int, float] or None, optional
+        Minimum remaining maturity for each bucket. Defaults are used when omitted.
+    trading_cost_bps : float, default 1.0
+        Trading cost in basis points.
+
+    Returns
+    -------
+    tuple[dict[int, dict], float, list[dict]]
+        Updated positions, updated cash balance, and roll trade records.
+
+    Notes
+    -----
+    Positions below their bucket floor are sold, trading costs are deducted from
+    cash proceeds, and the position is removed from the book.
+    """
+
     buckets_l = [int(x) for x in buckets]
     if bucket_floor is None:
         bucket_floor = {2: 1.5, 5: 3.5, 10: 7.5, 30: 20.0}
@@ -381,6 +628,44 @@ def rebalance_ladder_to_buckets(
     freq: int = 2,
     reason: str = "rebalance",
 ) -> tuple[dict[int, dict], float, list[dict]]:
+    """Rebalance a synthetic ladder toward target bucket weights.
+
+    Parameters
+    ----------
+    positions : dict[int, dict]
+        Current synthetic bond positions.
+    cash : float
+        Current cash balance.
+    date : pandas.Timestamp
+        Rebalance date.
+    df_func : callable
+        Discount-factor function used to value positions.
+    target_weights : dict[int, float]
+        Desired bucket weights.
+    buckets : list of int or tuple of int, default DEFAULT_ISSUE_MATURITIES
+        Maturity buckets included in the ladder.
+    rebalance_band : float, default 0.05
+        No-trade band around target weights.
+    coupon_lookup : callable
+        Coupon lookup for creating missing bucket positions.
+    trading_cost_bps : float, default 1.0
+        Trading cost in basis points.
+    freq : int, default 2
+        Coupon frequency for newly created bonds.
+    reason : str, default "rebalance"
+        Reason label recorded in the trade log.
+
+    Returns
+    -------
+    tuple[dict[int, dict], float, list[dict]]
+        Updated positions, updated cash balance, and rebalance trade records.
+
+    Notes
+    -----
+    The function sells overweight buckets first, recomputes NAV, then buys
+    underweight or missing buckets subject to available cash.
+    """
+
     buckets_l = [int(x) for x in buckets]
     weights = _target_weights_series(target_weights, buckets_l)
     trade_rows: list[dict] = []
@@ -440,6 +725,21 @@ def rebalance_ladder_to_buckets(
 
 
 def rebalance_to_targets(*args, **kwargs):
+    """Alias for ladder bucket rebalancing.
+
+    Parameters
+    ----------
+    *args
+        Positional arguments forwarded to the ladder rebalancing routine.
+    **kwargs
+        Keyword arguments forwarded to the ladder rebalancing routine.
+
+    Returns
+    -------
+    tuple
+        Return value of the ladder rebalancing routine.
+    """
+
     return rebalance_ladder_to_buckets(*args, **kwargs)
 
 
@@ -469,6 +769,80 @@ def run_ladder_backtest(
     curve_lookup: Callable[[pd.Timestamp], Any] | None = None,
     risk_bucket_bounds: dict[int, tuple[float, float]] | None = None,
 ) -> SimpleBacktestResult:
+    """Run a synthetic fixed-income ladder backtest.
+
+    Parameters
+    ----------
+    par_yields : pandas.DataFrame
+        Date-indexed par-yield curve panel with decimal yields.
+    strategy_name : str, default "bond_ladder"
+        Strategy label stored in outputs.
+    curve_method : str, default "pchip"
+        Curve-fitting method used for valuation.
+    buckets : list of int or tuple of int, default DEFAULT_ISSUE_MATURITIES
+        Maturity buckets included in the ladder.
+    target_weights : dict[int, float] or None, optional
+        Target bucket weights.
+    bucket_floor : dict[int, float] or None, optional
+        Minimum remaining-maturity floor for rolling each bucket.
+    rebalance_band : float, default 0.05
+        Weight deviation threshold for rebalancing.
+    trading_cost_bps : float, dict, or callable, default 1.0
+        Trading cost specification in basis points.
+    initial_nav : float, default 100.0
+        Initial portfolio NAV.
+    cash_tenor_label : str, default "1M"
+        Preferred tenor used for cash carry.
+    cash_fallback_labels : tuple of str, default ("3M", "6M", "1Y")
+        Fallback cash-yield tenors.
+    duration_target : float or None, optional
+        Static target duration for optional overlay.
+    duration_target_by_date : pandas.Series, dict, or None, optional
+        Time-varying duration target.
+    duration_band : float or None, optional
+        No-trade band around target duration.
+    overlay_fn : callable or None, optional
+        Optional duration-overlay function. If omitted and a target is supplied,
+        the default duration switch overlay is used.
+    freq : int, default 2
+        Coupon frequency.
+    short_end : str, default "continuous"
+        Short-end bootstrap convention.
+    min_df : float, default 1e-12
+        Discount-factor floor.
+    max_gap_days : int, default 45
+        Maximum date gap allowed within the selected backtest block.
+    min_block_len : int, default 60
+        Minimum number of dates required for the selected block.
+    tenor_cols : list of str or None, optional
+        Tenor columns to use.
+    curve_lookup : callable or None, optional
+        Prebuilt curve lookup. If omitted, one is built from ``par_yields``.
+    risk_bucket_bounds : dict[int, tuple[float, float]] or None, optional
+        Bucket bounds used for key-rate risk.
+
+    Returns
+    -------
+    SimpleBacktestResult
+        Result object containing NAV, returns, weights, trades, costs, carry
+        components, and detailed diagnostics.
+
+    Raises
+    ------
+    InputError
+        If the input curve panel is empty.
+    BacktestError
+        If no valid contiguous curve block is available or required yield data are
+        missing.
+
+    Notes
+    -----
+    The simulation initializes a ladder, grows cash, collects coupon/principal cash
+    flows, decomposes carry/roll and curve-move P&L, rolls aged positions,
+    rebalances to targets, optionally applies duration targeting, and records
+    risk diagnostics at each valuation date.
+    """
+
     if par_yields.empty:
         raise InputError("par_yields is empty.")
 
@@ -801,6 +1175,31 @@ def prepare_secondary_curve_market(
     min_len: int = 60,
     max_gap_days: int = 45,
 ):
+    """Prepare a monthly curve panel and zero-rate panel for secondary analysis.
+
+    Parameters
+    ----------
+    par_yields : pandas.DataFrame
+        Date-indexed par-yield curve panel.
+    selected_tenors : list of str or None, optional
+        Tenors to keep. If omitted, all columns are used.
+    min_len : int, default 60
+        Minimum contiguous block length.
+    max_gap_days : int, default 45
+        Maximum allowed gap within the selected block.
+
+    Returns
+    -------
+    tuple[pandas.DataFrame, pandas.DataFrame, pandas.DatetimeIndex]
+        Monthly par-yield panel, matching continuous zero-rate panel, and selected
+        curve-date index.
+
+    Notes
+    -----
+    The function resamples input curves to month-end observations, selects a
+    contiguous block, and builds a PCHIP zero-rate panel on the selected tenors.
+    """
+
     from .bootstrap import build_zero_curve_panel_from_par_yields
 
     monthly_all = par_yields.sort_index().resample("ME").last()
@@ -835,6 +1234,46 @@ def build_duration_reference_ladders(
     min_block_len: int = 60,
     **kwargs,
 ):
+    """Build reference ladder backtests for several duration targets.
+
+    Parameters
+    ----------
+    par_yields : pandas.DataFrame
+        Date-indexed par-yield curve panel.
+    duration_targets : dict[str, float]
+        Mapping from strategy name to target duration.
+    neutral_name : str, default "neutral duration"
+        Name used for the neutral reference result when available.
+    strategy_prefix : str, default ""
+        Optional prefix added to strategy names.
+    buckets : list of int or tuple of int, default DEFAULT_ISSUE_MATURITIES
+        Maturity buckets used in each ladder.
+    target_weights : dict[int, float] or None, optional
+        Target bucket weights.
+    trading_cost_bps : float, dict, or callable, default 1.0
+        Trading cost specification.
+    duration_band : float, default 0.20
+        No-trade band around each target duration.
+    tenor_cols : list of str or None, optional
+        Tenor columns to use.
+    risk_bucket_bounds : dict[int, tuple[float, float]] or None, optional
+        Key-rate bucket bounds.
+    min_block_len : int, default 60
+        Minimum block length for each backtest.
+    **kwargs
+        Additional keyword arguments forwarded to the ladder backtest routine.
+
+    Returns
+    -------
+    dict[str, SimpleBacktestResult]
+        Backtest results keyed by target name.
+
+    Notes
+    -----
+    If a target with duration 5.0 exists and ``neutral_name`` is not already in the
+    output, it is also exposed under the neutral name.
+    """
+
     out = {}
     for name, target in duration_targets.items():
         out[name] = run_ladder_backtest(
@@ -868,6 +1307,41 @@ def forward_carry_roll_panel(
     freq: int = 2,
     short_end: str = "continuous",
 ):
+    """Estimate one-period forward carry/roll returns for reference ladders.
+
+    Parameters
+    ----------
+    reference_results : dict[str, SimpleBacktestResult]
+        Reference ladder results with stored position snapshots.
+    par_yields : pandas.DataFrame
+        Date-indexed par-yield curve panel.
+    curve_dates : array-like
+        Curve dates defining the forward periods.
+    buckets : list of int or tuple of int, default DEFAULT_ISSUE_MATURITIES
+        Maturity buckets included in the ladders.
+    tenor_cols : list of str or None, optional
+        Tenor columns used to build the curve lookup.
+    curve_method : str, default "pchip"
+        Curve-fitting method.
+    cash_tenor_label : str, default "3M"
+        Tenor used for cash carry.
+    freq : int, default 2
+        Coupon frequency.
+    short_end : str, default "continuous"
+        Short-end bootstrap convention.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Forward carry/roll return estimates by date and reference strategy.
+
+    Notes
+    -----
+    For each snapshot date, the function values unchanged positions at the next
+    curve date under the same curve and adds cash carry plus cash flows, producing
+    a one-period no-curve-move return proxy.
+    """
+
     curve_dates = pd.DatetimeIndex(curve_dates)
     buckets_l = [int(x) for x in buckets]
     curve_lookup = make_curve_lookup(
@@ -922,6 +1396,45 @@ def target_score_table(
     neutral_name: str = "neutral duration",
     risk_penalty: float = 0.15,
 ):
+    """Score duration targets using curve views, active risk, and carry.
+
+    Parameters
+    ----------
+    date : date-like
+        Decision date.
+    model_name : str
+        Name of the curve-view model.
+    target_names : list of str
+        Candidate duration-target names.
+    duration_targets : dict[str, float]
+        Mapping from target name to target duration.
+    reference_krd : dict[str, pandas.DataFrame]
+        Key-rate-duration history for each target strategy.
+    reference_carry : pandas.DataFrame
+        Expected carry/roll return table for each target.
+    model_view_func : callable
+        Function returning expected curve changes and covariance for a model/date.
+    key_maturities : array-like
+        Maturities corresponding to the key-rate exposure vector.
+    previous_target : str
+        Previously selected target, used for transition-cost penalty.
+    neutral_name : str, default "neutral duration"
+        Reference target used to compute active exposure and active carry.
+    risk_penalty : float, default 0.15
+        Penalty multiplier applied to active risk.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Score table indexed by candidate target with expected active return, active
+        risk, score, carry difference, curve-view return, and transition cost.
+
+    Notes
+    -----
+    The score uses active key-rate exposure relative to the neutral strategy and a
+    simple transition-cost penalty when switching target duration.
+    """
+
     expected_change, cov = model_view_func(model_name, date, key_maturities)
     rows = []
     base_krd = reference_krd[neutral_name].loc[:date].iloc[-1].to_numpy(float)
@@ -960,6 +1473,33 @@ def select_dynamic_duration_targets(
     validation_months: int = 36,
     neutral_duration: float = 5.0,
 ):
+    """Select dynamic duration targets using rolling validation performance.
+
+    Parameters
+    ----------
+    model_target_by_date : pandas.DataFrame
+        Candidate target durations by date and model.
+    model_returns : pandas.DataFrame
+        Model-driven strategy returns by date and model.
+    baseline_returns : pandas.Series
+        Baseline return series used to compute active returns.
+    validation_months : int, default 36
+        Rolling validation window length.
+    neutral_duration : float, default 5.0
+        Default duration used before enough validation history is available.
+
+    Returns
+    -------
+    tuple[pandas.DataFrame, pandas.Series]
+        Selection log indexed by decision date and a target-duration series over
+        the full model index.
+
+    Notes
+    -----
+    For each decision date after the initial validation window, the model with the
+    highest rolling mean active return divided by active volatility is selected.
+    """
+
     model_index = model_target_by_date.dropna(how="all").index
     rows = []
     for i in range(int(validation_months), len(model_index)):
@@ -988,6 +1528,21 @@ def select_dynamic_duration_targets(
 
 
 def active_returns_against_baseline(returns, baseline_returns: pd.Series):
+    """Compute active returns relative to a baseline series.
+
+    Parameters
+    ----------
+    returns : array-like or pandas.DataFrame
+        Strategy return series or table.
+    baseline_returns : pandas.Series
+        Baseline returns aligned by date.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Strategy returns minus baseline returns, aligned to the strategy index.
+    """
+
     data = pd.DataFrame(returns).copy()
     base = baseline_returns.reindex(data.index)
     return data.sub(base, axis=0)

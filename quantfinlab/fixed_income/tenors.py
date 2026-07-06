@@ -30,10 +30,30 @@ _COLUMN_ALIASES = {
 }
 
 def tenor_to_years(x: str | int | float) -> float:
+    """Convert tenor labels or numeric maturities to years.
+
+    Parameters
+    ----------
+    x : str, int, or float
+        Tenor label such as ``"6M"`` or ``"2Y"``, a numeric year value, or a digit
+        string interpreted as years.
+
+    Returns
+    -------
+    float
+        Maturity expressed in years.
+
+    Raises
+    ------
+    ValueError
+        If the label cannot be interpreted as months or years.
+
+    Notes
+    -----
+    Month labels are converted as ``months / 12``. Numeric inputs are returned as
+    floating-point years.
     """
-    Convert tenor labels like '6M', '2Y' to years.
-    Also accepts numeric years (int/float).
-    """
+
     if isinstance(x, (int, float, np.integer, np.floating)):
         return float(x)
     s = str(x).strip().upper()
@@ -51,6 +71,31 @@ def nearest_tenor_label(
     *,
     target_maturity_years: float,
 ) -> str:
+    """Find the tenor label closest to a target maturity.
+
+    Parameters
+    ----------
+    tenor_labels : list of str, tuple of str, or pandas.Index
+        Candidate tenor labels.
+    target_maturity_years : float
+        Target maturity in years.
+
+    Returns
+    -------
+    str
+        Candidate label whose year value is closest to the target.
+
+    Raises
+    ------
+    InputError
+        If no candidate labels are supplied.
+
+    Notes
+    -----
+    The function compares absolute distance in years after converting each tenor
+    label.
+    """
+
     labels = [str(x) for x in tenor_labels]
     if not labels:
         raise InputError("tenor_labels is empty.")
@@ -61,7 +106,6 @@ __all__ = [
     "DEFAULT_ISSUE_MATURITIES",
     "DEFAULT_METHODS",
     "TENOR_PATTERN",
-    "_COLUMN_ALIASES",
     "nearest_tenor_label",
     "tenor_to_years",
 ]

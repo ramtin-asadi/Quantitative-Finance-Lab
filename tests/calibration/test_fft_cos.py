@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from quantfinlab.calibration import fft_cos
+from quantfinlab.options.surface import fit_log_total_variance_surface
 from tests.synthetic.generators import option_surface_quotes
 
 
@@ -104,3 +105,52 @@ def test_daily_success_and_residual_bucket_tables() -> None:
     assert success.loc[success["model"].eq("bsm"), "failures"].iloc[0] == 1
     assert not bucket.empty
     assert {"median_scaled_residual", "rows"}.issubset(bucket.columns)
+
+
+def test_surface_target_grid_and_small_bsm_date_calibration_workflow() -> None:
+    quotes = _surface_quotes()
+    fits = {}
+    for date, day in quotes.groupby("date"):
+        fits[pd.Timestamp(date)] = fit_log_total_variance_surface(
+            day,
+            n_k_basis=5,
+            n_tau_basis=4,
+            degree=2,
+            lambda_k=0.01,
+            lambda_tau=0.01,
+        )
+
+    target, steps = fft_cos.surface_target_grid_quotes(
+        quotes,
+        fits,
+        min_dte=14,
+        max_dte=90,
+        dte_targets=(21, 45, 75),
+        k_targets=(-0.10, 0.0, 0.10),
+        min_quotes_per_date=6,
+        min_source_quotes_per_date=20,
+        return_steps=True,
+    )
+    fit = fft_cos.fit_date_model(
+        target.loc[target["date"].eq(target["date"].min())].head(8),
+        "bsm",
+        max_nfev=4,
+        engine="numpy",
+        n_terms=48,
+    )
+    daily = fft_cos.fit_daily_models(
+        target,
+        ["bsm"],
+        min_quotes=6,
+        max_nfev=3,
+        engine="numpy",
+        n_terms=48,
+    )
+
+    assert not target.empty
+    assert steps.iloc[-1]["step"] == "balanced surface grid"
+    assert {"iv_target_error", "quote_quality_weight", "obs_weight"}.issubset(target.columns)
+    assert fit["row"]["quotes"] == 8
+    assert fit["fit"]["model_price"].gt(0.0).all()
+    assert not daily["params"].empty
+    assert not daily["fit"].empty

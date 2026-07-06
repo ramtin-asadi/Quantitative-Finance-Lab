@@ -41,7 +41,44 @@ def forward_bsm_greeks_numpy(
     rate=0.0,
     spot=None,
 ) -> pd.DataFrame:
-    """Compute forward-BSM Greeks using NumPy/SciPy formulas."""
+    """Compute forward Black-Scholes Greeks with vectorized NumPy/SciPy formulas.
+
+    The function returns delta, gamma, vega, volga, vanna, theta, rho, and the
+    forward-delta/forward-gamma pair. When spot is supplied, spot-based delta, gamma,
+    vanna, theta, and rho estimates replace the forward-only values where finite.
+
+    Parameters
+    ----------
+    option_type : array-like or scalar
+        Option type labels.
+    forward : array-like
+        Forward price.
+    strike : array-like
+        Strike price.
+    tau : array-like
+        Time to expiry in years.
+    sigma : array-like
+        Annualized volatility.
+    discount_factor : array-like or scalar, default=1.0
+        Expiry discount factor.
+    rate : array-like or scalar, default=0.0
+        Continuously compounded risk-free rate used in theta/rho calculations.
+    spot : array-like, optional
+        Spot price. When supplied, spot Greeks are computed in addition to forward
+        Greeks.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Greek table containing ``delta``, ``gamma``, ``vega``, ``volga``, ``vanna``,
+        ``theta``, ``rho``, ``forward_delta``, and ``forward_gamma``.
+
+    Notes
+    -----
+    Vega is reported per one unit of volatility, not per one volatility point. The
+    index of the first pandas Series input is preserved when possible.
+    """
+
     index = None
     for value in [forward, strike, tau, sigma, discount_factor, rate, spot]:
         if isinstance(value, pd.Series):
@@ -149,7 +186,32 @@ def compute_greeks_numpy(
     iv_col: str = "iv_mid",
     price_model: str = "forward_bsm",
 ) -> pd.DataFrame:
-    """Compute forward-BSM Greeks with the NumPy engine."""
+    """Attach analytic NumPy forward-BSM Greeks to an option quote table.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table containing option type, strike, tau, forward or spot-based
+        forward inputs, discount factors, and an implied-volatility column.
+    iv_col : str, default='iv_mid'
+        Implied-volatility column used for Greek calculation.
+    price_model : {'forward_bsm'}, default='forward_bsm'
+        Pricing model. Only the forward Black-Scholes convention is currently
+        supported.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``quotes`` with Greek columns, suffix-specific Greek columns, and
+        ``*_numpy`` diagnostic columns. The ``greek_engine`` attribute is set to
+        ``'numpy'``.
+
+    Raises
+    ------
+    ValueError
+        If the price model is unsupported or the requested IV column is missing.
+    """
+
     if price_model != "forward_bsm":
         raise ValueError("Only price_model='forward_bsm' is supported.")
     if iv_col not in quotes.columns:
@@ -197,7 +259,32 @@ def _jax_modules(strict: bool = False):
 
 
 def forward_bsm_price_jax(option_type, forward, strike, tau, sigma, rate=0.0, *, strict: bool = True):
-    """JAX implementation of the forward-BSM price."""
+    """Evaluate the forward Black-Scholes price with JAX arrays.
+
+    Parameters
+    ----------
+    option_type : array-like or scalar
+        Option type labels.
+    forward : array-like
+        Forward prices.
+    strike : array-like
+        Strike prices.
+    tau : array-like
+        Times to expiry in years.
+    sigma : array-like
+        Annualized volatilities.
+    rate : array-like or scalar, default=0.0
+        Continuously compounded risk-free rates used for discounting.
+    strict : bool, default=True
+        If True, raise or propagate missing-JAX errors. If False, return ``None``
+        when JAX is unavailable.
+
+    Returns
+    -------
+    jax.Array or None
+        JAX price array, or ``None`` when JAX is unavailable and ``strict=False``.
+    """
+
     jax, jnp, exc = _jax_modules(strict=strict)
     if exc is not None:
         return None
@@ -232,7 +319,34 @@ def forward_bsm_greeks_jax(
     rate=0.0,
     strict: bool = False,
 ) -> pd.DataFrame:
-    """Compute forward-BSM Greeks with JAX autodiff."""
+    """Compute forward Black-Scholes Greeks with JAX automatic differentiation.
+
+    Parameters
+    ----------
+    option_type : array-like or scalar
+        Option type labels.
+    forward : array-like
+        Forward prices.
+    strike : array-like
+        Strike prices.
+    tau : array-like
+        Times to expiry in years.
+    sigma : array-like
+        Annualized volatilities.
+    rate : array-like or scalar, default=0.0
+        Continuously compounded risk-free rates.
+    strict : bool, default=False
+        If True, require JAX availability. If False, return an empty diagnostic table
+        when JAX cannot be imported.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Greek table with ``delta``, ``gamma``, ``vega``, ``volga``, ``vanna``,
+        ``theta``, ``rho``, ``forward_delta``, and ``forward_gamma``. If JAX is
+        unavailable, returns an empty table with diagnostic attributes.
+    """
+
     jax, jnp, exc = _jax_modules(strict=strict)
     if exc is not None:
         out = pd.DataFrame(index=getattr(forward, "index", None))
@@ -433,7 +547,36 @@ def compute_greeks_jax(
     on_missing: str = "warn",
     strict: bool = False,
 ) -> pd.DataFrame:
-    """Compute Greeks with JAX when available, otherwise return diagnostics."""
+    """Attach JAX autodiff Greeks to an option quote table when JAX is available.
+
+    The function uses spot-based Greeks when spot is present and otherwise falls back
+    to forward-based Greeks. If JAX is unavailable and strict mode is disabled, the
+    output contains ``nan`` Greek columns and diagnostic attributes instead of failing.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table containing option inputs and an IV column.
+    iv_col : str, default='iv_mid'
+        Implied-volatility column.
+    price_model : {'forward_bsm'}, default='forward_bsm'
+        Pricing model convention.
+    on_missing : {'warn', 'ignore'}, default='warn'
+        Behavior when JAX is unavailable and ``strict=False``.
+    strict : bool, default=False
+        If True, require a working JAX runtime.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote table with JAX Greek columns and ``greek_engine`` metadata.
+
+    Raises
+    ------
+    ValueError
+        If the price model is unsupported or the IV column is missing.
+    """
+
     if price_model != "forward_bsm":
         raise ValueError("Only price_model='forward_bsm' is supported.")
     out = quotes.copy()
@@ -492,7 +635,26 @@ def compare_numpy_jax_greeks(
     greek_cols: tuple[str, ...] = ("delta", "gamma", "vega", "volga", "vanna", "theta", "rho"),
     greek_bands: pd.DataFrame | None = None,
 ) -> dict[str, pd.DataFrame]:
-    """Compare NumPy and JAX Greek tables with absolute and relative errors."""
+    """Compare NumPy analytic Greeks with JAX autodiff Greeks.
+
+    Parameters
+    ----------
+    greeks_numpy : pandas.DataFrame
+        Table containing NumPy Greek columns.
+    greeks_jax : pandas.DataFrame
+        Table containing JAX Greek columns.
+    greek_cols : tuple[str, ...]
+        Greek names to compare.
+    greek_bands : pandas.DataFrame, optional
+        Optional Greek uncertainty-band table to pass through in the result.
+
+    Returns
+    -------
+    dict[str, pandas.DataFrame]
+        Dictionary with ``comparison`` and ``summary`` tables. If JAX is unavailable,
+        the summary contains a diagnostic row and the comparison table is empty.
+    """
+
     if greeks_jax.attrs.get("diagnostic") == "jax_unavailable":
         summary = pd.DataFrame(
             [
@@ -564,7 +726,31 @@ def compute_greek_bands_from_iv_band(
     iv_high_col: str = "iv_ask",
     price_model: str = "forward_bsm",
 ) -> pd.DataFrame:
-    """Recompute Greeks across bid/mid/ask IV to show quote-driven uncertainty."""
+    """Recompute Greeks across bid, mid, and ask implied volatility to estimate quote uncertainty.
+
+    For each Greek, the function computes low, mid, high, and band columns by
+    revaluating Greeks at the low, mid, and high IV levels.
+
+    Parameters
+    ----------
+    iv_table : pandas.DataFrame
+        Quote table containing implied-volatility inputs.
+    iv_low_col : str, default='iv_bid'
+        Lower IV column.
+    iv_mid_col : str, default='iv_mid'
+        Mid IV column.
+    iv_high_col : str, default='iv_ask'
+        Upper IV column.
+    price_model : {'forward_bsm'}, default='forward_bsm'
+        Pricing model convention.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with ``<greek>_low``, ``<greek>_mid``, ``<greek>_high``, and
+        ``<greek>_band`` columns.
+    """
+
     if price_model != "forward_bsm":
         raise ValueError("Only price_model='forward_bsm' is supported.")
     out = iv_table.copy()
@@ -596,7 +782,30 @@ def compute_greeks(
     method: str = "analytic",
     price_model: str = "forward_bsm",
 ) -> pd.DataFrame:
-    """Compatibility wrapper for the old analytic API."""
+    """Compatibility wrapper for analytic/NumPy Greek calculation.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    iv_col : str, default='iv_mid'
+        Implied-volatility column.
+    method : {'analytic', 'numpy'}, default='analytic'
+        Compatibility method name.
+    price_model : {'forward_bsm'}, default='forward_bsm'
+        Pricing model convention.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote table with analytic Greek columns.
+
+    Raises
+    ------
+    ValueError
+        If ``method`` is not ``'analytic'`` or ``'numpy'``.
+    """
+
     if method not in {"analytic", "numpy"}:
         raise ValueError("method must be 'analytic' or 'numpy'.")
     return compute_greeks_numpy(quotes, iv_col=iv_col, price_model=price_model)
@@ -606,7 +815,22 @@ def compare_analytic_vs_jax_greeks(
     quotes: pd.DataFrame,
     iv_col: str = "iv_mid",
 ) -> pd.DataFrame:
-    """Compatibility wrapper returning the summary table only."""
+    """Compare analytic NumPy Greeks with JAX autodiff Greeks on a finite sample.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    iv_col : str, default='iv_mid'
+        Implied-volatility column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Summary table of absolute and relative Greek differences. If no finite sample
+        is available, returns a diagnostic row.
+    """
+
     sample = quotes.dropna(subset=[iv_col, "strike", "tau"]).head(250).copy()
     if sample.empty:
         return pd.DataFrame([{"diagnostic": "no_finite_rows", "n": 0}])
@@ -616,6 +840,22 @@ def compare_analytic_vs_jax_greeks(
 
 
 def greek_summary_table(greek_table: pd.DataFrame, greek_bands: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Summarize Greek coverage and median uncertainty bands.
+
+    Parameters
+    ----------
+    greek_table : pandas.DataFrame
+        Table containing Greek estimates.
+    greek_bands : pandas.DataFrame, optional
+        Optional table containing ``<greek>_band`` columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Summary table with one row per Greek, including finite-count, median value,
+        and median uncertainty band when available.
+    """
+
     rows = []
     source = greek_bands if greek_bands is not None else greek_table
     for greek in ["delta", "gamma", "vega", "volga", "vanna", "theta", "rho"]:
@@ -773,7 +1013,44 @@ def surface_delta_gamma_grid(
     use_jax: bool | None = None,
     annualization_days: float = 365.25,
 ) -> pd.DataFrame:
-    """Flat-vol vs surface-aware call delta/gamma corrections on a fixed strike grid."""
+    """Compare flat-vol and surface-aware delta/gamma on a strike-maturity grid.
+
+    The function evaluates call prices and Greeks across a fixed grid using the fitted
+    volatility surface and a flat-vol benchmark. JAX autodiff is used by default when
+    available, with an optional finite-difference fallback.
+
+    Parameters
+    ----------
+    fit : dict
+        Fitted volatility-surface object.
+    q : pandas.DataFrame
+        Quote table used to infer spot, rate, and carry term structures.
+    k_min, k_max : float
+        Bounds for spot log-moneyness grid.
+    n_k : int, default=41
+        Number of strike-grid nodes.
+    tau_days : array-like, optional
+        Maturities in calendar days. If omitted, a default short-to-medium grid is
+        used.
+    spot_shock : float, default=0.01
+        Relative spot shock used to scale delta/gamma P&L differences.
+    engine : {'jax', 'auto', 'numpy', 'finite_difference'}, default='jax'
+        Greek evaluation backend.
+    fallback : bool, default=True
+        If True, fall back to finite differences when JAX fails.
+    use_jax : bool, optional
+        Backward-compatible override for ``engine``.
+    annualization_days : float, default=365.25
+        Days per year used to convert ``tau_days`` to year fractions.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Grid table with implied vol, price, flat and surface delta/gamma, differences,
+        and P&L-scaled delta/gamma model-risk terms. Backend metadata is stored in
+        DataFrame attributes.
+    """
+
     from .local_vol import carry_by_tau, rate_by_tau
 
     if use_jax is not None:
@@ -871,7 +1148,20 @@ def surface_delta_gamma_grid(
 
 
 def surface_delta_gamma_risk(greek_grid: pd.DataFrame) -> pd.DataFrame:
-    """P&L-scaled delta/gamma model-risk summary."""
+    """Summarize P&L-scaled delta/gamma model risk from a Greek grid.
+
+    Parameters
+    ----------
+    greek_grid : pandas.DataFrame
+        Output from the surface delta/gamma grid evaluator.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One-row summary with RMS delta P&L, RMS gamma P&L, combined RMS Greek P&L,
+        and maximum absolute delta/gamma differences.
+    """
+
     if greek_grid.empty:
         return pd.DataFrame()
     g = greek_grid.copy()
@@ -895,6 +1185,26 @@ def surface_greek_risk_panel(
     date_col: str = "date",
     **kwargs,
 ) -> pd.DataFrame:
+    """Evaluate surface-aware Greek risk across multiple dates.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table containing a date column.
+    fits : dict
+        Mapping from date to fitted volatility-surface object.
+    date_col : str, default='date'
+        Quote date column.
+    **kwargs
+        Additional arguments forwarded to the surface delta/gamma grid evaluator.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Date-indexed summary table of Greek model-risk metrics and backend metadata.
+        Dates that fail are reported with an ``error`` column.
+    """
+
     rows = []
     data = quotes.copy()
     data[date_col] = pd.to_datetime(data[date_col], errors="coerce").dt.normalize()

@@ -1,30 +1,36 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(quantfinlab_kernels LANGUAGES CXX)
+project(quantfinlab_kernels LANGUAGES NONE)
 
-find_package(Python REQUIRED COMPONENTS Interpreter Development.Module NumPy)
-find_package(pybind11 CONFIG REQUIRED)
-find_package(OpenMP QUIET)
+option(QUANTFINLAB_BUILD_CPP "Build the optional QuantFinLab C++ pricing kernels" ON)
 
-pybind11_add_module(_kernels
-    bindings/kernels_bindings.cpp
-    src/american_tree.cpp
-    src/american_pde.cpp
-    src/american_lsm.cpp
-    src/fourier.cpp
-)
+if(QUANTFINLAB_BUILD_CPP)
+    enable_language(CXX)
 
-target_include_directories(_kernels PRIVATE include ${Python_NumPy_INCLUDE_DIRS})
-target_compile_features(_kernels PRIVATE cxx_std_17)
+    find_package(Python REQUIRED COMPONENTS Interpreter Development.Module NumPy)
+    find_package(pybind11 CONFIG REQUIRED)
+    find_package(OpenMP QUIET)
 
-if(OpenMP_CXX_FOUND)
-    target_link_libraries(_kernels PRIVATE OpenMP::OpenMP_CXX)
+    pybind11_add_module(_kernels
+        bindings/kernels_bindings.cpp
+        src/american_tree.cpp
+        src/american_pde.cpp
+        src/american_lsm.cpp
+        src/fourier.cpp
+    )
+
+    target_include_directories(_kernels PRIVATE include ${Python_NumPy_INCLUDE_DIRS})
+    target_compile_features(_kernels PRIVATE cxx_std_17)
+
+    if(OpenMP_CXX_FOUND)
+        target_link_libraries(_kernels PRIVATE OpenMP::OpenMP_CXX)
+    endif()
+
+    if(MSVC)
+        target_compile_options(_kernels PRIVATE /O2 /EHsc)
+    else()
+        target_compile_options(_kernels PRIVATE -O3)
+    endif()
+
+    install(TARGETS _kernels LIBRARY DESTINATION quantfinlab)
 endif()
-
-if(MSVC)
-    target_compile_options(_kernels PRIVATE /O2 /EHsc)
-else()
-    target_compile_options(_kernels PRIVATE -O3)
-endif()
-
-install(TARGETS _kernels LIBRARY DESTINATION quantfinlab)

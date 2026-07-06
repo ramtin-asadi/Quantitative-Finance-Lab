@@ -22,7 +22,25 @@ def _jax_available() -> bool:
 
 
 def curve_by_tau(q, value_col, tau_values, fallback=np.nan):
-    """Median-by-maturity curve interpolated onto requested maturities."""
+    """Interpolate a median-by-maturity curve onto requested maturity values.
+
+    Parameters
+    ----------
+    q : pandas.DataFrame
+        Table containing a ``tau`` column and the requested value column.
+    value_col : str
+        Column to aggregate by maturity and interpolate.
+    tau_values : array-like
+        Target maturities in years.
+    fallback : float, default=nan
+        Fill value returned when no usable observations are available.
+
+    Returns
+    -------
+    numpy.ndarray
+        Interpolated values with the same shape as ``tau_values``.
+    """
+
     tau_values = np.asarray(tau_values, dtype=float)
     out = np.full(tau_values.shape, float(fallback), dtype=float)
     if q is None or len(q) == 0 or value_col not in q.columns or "tau" not in q.columns:
@@ -42,6 +60,23 @@ def curve_by_tau(q, value_col, tau_values, fallback=np.nan):
 
 
 def rate_by_tau(q, tau_values, rate_col: str = "rate"):
+    """Interpolate median continuous rates by maturity and fill missing values robustly.
+
+    Parameters
+    ----------
+    q : pandas.DataFrame
+        Quote table containing maturity and rate columns.
+    tau_values : array-like
+        Target maturities in years.
+    rate_col : str, default='rate'
+        Rate column to interpolate.
+
+    Returns
+    -------
+    numpy.ndarray
+        Rate values aligned to ``tau_values``. Missing curves are filled with zeros.
+    """
+
     r = curve_by_tau(q, rate_col, tau_values, fallback=np.nan)
     if np.isfinite(r).any():
         fill = float(np.nanmedian(r[np.isfinite(r)]))
@@ -50,6 +85,28 @@ def rate_by_tau(q, tau_values, rate_col: str = "rate"):
 
 
 def carry_by_tau(q, tau_values, spot_value=None, carry_col: str = "implied_carry", forward_col: str = "forward"):
+    """Interpolate implied carry by maturity or infer it from forwards and spot.
+
+    Parameters
+    ----------
+    q : pandas.DataFrame
+        Quote table containing maturity and carry or forward information.
+    tau_values : array-like
+        Target maturities in years.
+    spot_value : float, optional
+        Spot price used to infer carry from forwards when carry is unavailable.
+    carry_col : str, default='implied_carry'
+        Existing carry column.
+    forward_col : str, default='forward'
+        Forward column used for fallback carry inference.
+
+    Returns
+    -------
+    numpy.ndarray
+        Continuous carry values aligned to ``tau_values``. Missing curves are filled
+        with zeros.
+    """
+
     tau_values = np.asarray(tau_values, dtype=float)
     b = curve_by_tau(q, carry_col, tau_values, fallback=np.nan)
     if np.isfinite(b).any():
@@ -72,6 +129,27 @@ def carry_by_tau(q, tau_values, spot_value=None, carry_col: str = "implied_carry
 
 
 def dividend_yield_by_tau(q, tau_values, spot_value=None, rate_col: str = "rate", carry_col: str = "implied_carry"):
+    """Infer a maturity-aligned dividend-yield curve as rate minus carry.
+
+    Parameters
+    ----------
+    q : pandas.DataFrame
+        Quote table containing rate and carry or forward information.
+    tau_values : array-like
+        Target maturities in years.
+    spot_value : float, optional
+        Spot price used when carry must be inferred from forwards.
+    rate_col : str, default='rate'
+        Rate column.
+    carry_col : str, default='implied_carry'
+        Carry column.
+
+    Returns
+    -------
+    numpy.ndarray
+        Continuous dividend-yield values aligned to ``tau_values``.
+    """
+
     return rate_by_tau(q, tau_values, rate_col=rate_col) - carry_by_tau(q, tau_values, spot_value=spot_value, carry_col=carry_col)
 
 
@@ -269,7 +347,44 @@ def dupire_grid_numpy(
     engine_requested="numpy",
     fallback_used=False,
 ) -> dict:
-    """Internal finite-difference fallback for Dupire diagnostics."""
+    """Evaluate a Dupire local-volatility grid with finite differences.
+
+    The function builds a strike-maturity grid, evaluates the fitted implied-volatility
+    surface, prices calls with the forward Black-Scholes model, estimates the required
+    Dupire derivatives by finite differences, and finishes the result with validity,
+    support, and stress masks.
+
+    Parameters
+    ----------
+    fit : dict
+        Fitted implied-volatility surface.
+    q : pandas.DataFrame
+        Quote table used to infer spot, rate, carry, and grid support.
+    k_min, k_max : float
+        Spot log-moneyness grid bounds.
+    tau_min, tau_max : float
+        Maturity grid bounds in years.
+    n_k, n_tau : int
+        Number of moneyness and maturity grid nodes.
+    max_local_vol : float, default=2.50
+        Upper cap used for stress flagging and clipping.
+    ratio_bounds : tuple[float, float], default=(0.50, 1.80)
+        Acceptable local-vol-to-implied-vol ratio range.
+    annualization_days : float, default=365.25
+        Days per year used for grid metadata.
+    engine_requested : str, default='numpy'
+        Requested engine label stored in output metadata.
+    fallback_used : bool, default=False
+        Whether this evaluation is a fallback from another backend.
+
+    Returns
+    -------
+    dict
+        Local-volatility diagnostic grid containing IV, price, local variance,
+        numerator/denominator terms, support masks, invalid flags, local-vol ratios,
+        and backend metadata.
+    """
+
     base = _base_grid(q, k_min, k_max, tau_min, tau_max, n_k, n_tau, annualization_days)
     tau = base["tau"]
     strike = base["strike"]
@@ -320,7 +435,39 @@ def dupire_grid_jax(
     annualization_days=365.25,
     engine_requested="jax",
 ) -> dict:
-    """JAX-autodiff Dupire grid."""
+    """Evaluate a Dupire local-volatility grid with JAX automatic differentiation.
+
+    The function uses autodiff to compute the derivatives needed in the Dupire formula
+    from the fitted implied-volatility surface and then applies the same finishing and
+    stress-flagging logic as the finite-difference implementation.
+
+    Parameters
+    ----------
+    fit : dict
+        Fitted implied-volatility surface.
+    q : pandas.DataFrame
+        Quote table used to infer spot, rate, carry, and grid support.
+    k_min, k_max : float
+        Spot log-moneyness grid bounds.
+    tau_min, tau_max : float
+        Maturity grid bounds in years.
+    n_k, n_tau : int
+        Number of grid nodes.
+    max_local_vol : float, default=2.50
+        Upper cap used for stress flagging and clipping.
+    ratio_bounds : tuple[float, float], default=(0.50, 1.80)
+        Acceptable local-vol-to-IV ratio range.
+    annualization_days : float, default=365.25
+        Days per year used for metadata.
+    engine_requested : str, default='jax'
+        Requested engine label stored in output metadata.
+
+    Returns
+    -------
+    dict
+        Local-volatility diagnostic grid with ``engine_used='jax'`` metadata.
+    """
+
     import jax.numpy as jnp
 
     base = _base_grid(q, k_min, k_max, tau_min, tau_max, n_k, n_tau, annualization_days)
@@ -374,7 +521,44 @@ def dupire_grid(
     engine: str = "jax",
     fallback: bool = True,
 ) -> dict:
-    """Dupire local-volatility diagnostics, using JAX autodiff by default."""
+    """Compute Dupire local-volatility diagnostics with JAX or finite-difference fallback.
+
+    Parameters
+    ----------
+    fit : dict
+        Fitted implied-volatility surface.
+    q : pandas.DataFrame
+        Quote table used for market inputs and grid support.
+    k_min, k_max : float
+        Spot log-moneyness grid bounds.
+    tau_min, tau_max : float
+        Maturity grid bounds in years.
+    n_k, n_tau : int
+        Number of grid nodes.
+    max_local_vol : float, default=2.50
+        Upper cap used in local-vol diagnostics.
+    ratio_bounds : tuple[float, float], default=(0.50, 1.80)
+        Acceptable local-vol-to-IV ratio range.
+    annualization_days : float, default=365.25
+        Days per year used for maturity metadata.
+    engine : {'jax', 'auto', 'numpy', 'finite_difference'}, default='jax'
+        Evaluation backend.
+    fallback : bool, default=True
+        If True, use finite differences when JAX is unavailable or fails.
+
+    Returns
+    -------
+    dict
+        Local-volatility grid and diagnostic masks.
+
+    Raises
+    ------
+    ValueError
+        If an unsupported engine is requested.
+    ImportError
+        If JAX is requested without fallback and JAX is unavailable.
+    """
+
     engine_requested = str(engine).lower()
     common = dict(
         k_min=k_min,
@@ -416,7 +600,21 @@ def dupire_grid(
 
 
 def dupire_stress_summary(lv: dict) -> dict:
-    """Actual Dupire stress metrics inside supported interior nodes."""
+    """Summarize Dupire local-volatility stress flags inside supported grid regions.
+
+    Parameters
+    ----------
+    lv : dict
+        Local-volatility diagnostic grid returned by the Dupire evaluator.
+
+    Returns
+    -------
+    dict
+        Stress metrics including invalid-node shares, negative-density share,
+        local-vol-to-IV ratio summaries, ATM/downside/upside local-vol levels, and a
+        composite ``dupire_stress`` score.
+    """
+
     region = np.asarray(lv["support"], dtype=bool) & (~np.asarray(lv["boundary"], dtype=bool))
     if not region.any():
         region = np.isfinite(lv["iv"])
@@ -468,6 +666,26 @@ def dupire_stress_panel(
     date_col: str = "date",
     **kwargs,
 ) -> pd.DataFrame:
+    """Compute Dupire stress summaries for multiple fitted surfaces by date.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table with a date column.
+    fits : dict
+        Mapping from date to fitted volatility-surface object.
+    date_col : str, default='date'
+        Quote date column.
+    **kwargs
+        Additional arguments forwarded to the Dupire grid evaluator.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Date-level Dupire stress panel. Failed dates are reported with an ``error``
+        message.
+    """
+
     rows = []
     data = quotes.copy()
     data[date_col] = pd.to_datetime(data[date_col], errors="coerce").dt.normalize()

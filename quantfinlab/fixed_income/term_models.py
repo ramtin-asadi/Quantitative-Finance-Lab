@@ -7,6 +7,24 @@ from sklearn.decomposition import PCA
 
 
 def acf1(values) -> float:
+    """Compute first-order autocorrelation of a numeric series.
+
+    Parameters
+    ----------
+    values : array-like
+        Input values.
+
+    Returns
+    -------
+    float
+        Lag-1 autocorrelation, or NaN when fewer than three observations are
+        available or the series has zero standard deviation.
+
+    Notes
+    -----
+    Missing values are dropped before calculation.
+    """
+
     x = pd.Series(values).dropna().astype(float)
     if len(x) < 3 or x.std() == 0:
         return float("nan")
@@ -14,6 +32,25 @@ def acf1(values) -> float:
 
 
 def hessian_condition(result) -> float:
+    """Estimate the condition number of an optimizer inverse Hessian.
+
+    Parameters
+    ----------
+    result : object
+        Optimizer result object with a ``hess_inv`` attribute.
+
+    Returns
+    -------
+    float
+        Matrix condition number, or NaN if the inverse Hessian cannot be converted
+        to a dense numeric array.
+
+    Notes
+    -----
+    The helper is intended for fit diagnostics and handles missing or incompatible
+    optimizer attributes defensively.
+    """
+
     try:
         hess_inv = np.asarray(result.hess_inv.todense(), dtype=float)
         return float(np.linalg.cond(hess_inv))
@@ -22,6 +59,29 @@ def hessian_condition(result) -> float:
 
 
 def vasicek_ab(kappa, theta, sigma, tau):
+    """Compute Vasicek affine bond-pricing coefficients.
+
+    Parameters
+    ----------
+    kappa : float
+        Mean-reversion speed.
+    theta : float
+        Long-run short-rate mean.
+    sigma : float
+        Short-rate volatility.
+    tau : array-like
+        Maturities in years.
+
+    Returns
+    -------
+    tuple[numpy.ndarray, numpy.ndarray]
+        Affine ``A`` and ``B`` components for the Vasicek zero-coupon bond formula.
+
+    Notes
+    -----
+    The implementation floors ``kappa`` away from zero for numerical stability.
+    """
+
     tau = np.asarray(tau, dtype=float)
     kappa = max(float(kappa), 1e-8)
     b = (1 - np.exp(-kappa * tau)) / kappa
@@ -30,22 +90,99 @@ def vasicek_ab(kappa, theta, sigma, tau):
 
 
 def vasicek_loadings(params, maturities):
+    """Compute Vasicek yield intercept and short-rate loading.
+
+    Parameters
+    ----------
+    params : Mapping[str, float]
+        Model parameters containing ``kappa``, ``theta``, and ``sigma``.
+    maturities : array-like
+        Maturities in years.
+
+    Returns
+    -------
+    tuple[numpy.ndarray, numpy.ndarray]
+        Affine yield intercept and short-rate loading by maturity.
+
+    Notes
+    -----
+    The returned arrays correspond to the yield representation derived from the
+    Vasicek zero-coupon bond formula.
+    """
+
     a, b = vasicek_ab(params["kappa"], params["theta"], params["sigma"], maturities)
     maturities = np.asarray(maturities, dtype=float)
     return -a / maturities, b / maturities
 
 
 def vasicek_yield_loading(params, maturities):
+    """Return the Vasicek short-rate loading for yields.
+
+    Parameters
+    ----------
+    params : Mapping[str, float]
+        Model parameters containing ``kappa``, ``theta``, and ``sigma``.
+    maturities : array-like
+        Maturities in years.
+
+    Returns
+    -------
+    numpy.ndarray
+        Short-rate loading by maturity.
+    """
+
     return vasicek_loadings(params, maturities)[1]
 
 
 def vasicek_expected_average(r0, params, years=10.0):
+    """Compute the expected average short rate under a Vasicek model.
+
+    Parameters
+    ----------
+    r0 : float
+        Initial short rate.
+    params : Mapping[str, float]
+        Model parameters containing ``kappa`` and ``theta``.
+    years : float, default 10.0
+        Averaging horizon in years.
+
+    Returns
+    -------
+    float
+        Expected average short rate over the horizon.
+
+    Notes
+    -----
+    The formula integrates the conditional mean of the Ornstein-Uhlenbeck short
+    rate over the specified horizon.
+    """
+
     kappa = max(float(params["kappa"]), 1e-8)
     theta = float(params["theta"])
     return theta + (float(r0) - theta) * (1 - np.exp(-kappa * years)) / (kappa * years)
 
 
 def fit_vasicek_ar(short_history):
+    """Estimate fallback Vasicek parameters from a short-rate history.
+
+    Parameters
+    ----------
+    short_history : array-like
+        Time series of short rates, typically monthly.
+
+    Returns
+    -------
+    dict
+        Parameter dictionary containing ``kappa``, ``theta``, ``sigma``,
+        ``obs_sd``, method label, and optimizer-success flag.
+
+    Notes
+    -----
+    When enough observations are available, an AR(1) approximation is used to map
+    discrete dynamics to continuous-time Vasicek parameters. With very short
+    history, conservative fallback parameters are returned.
+    """
+
     x = pd.Series(short_history).dropna().astype(float)
     if len(x) < 12:
         return {
@@ -76,6 +213,32 @@ def fit_vasicek_ar(short_history):
 
 
 def vasicek_kalman(yields, maturities, params, *, state_hint=None):
+    """Run a one-factor Vasicek Kalman filter on a yield panel.
+
+    Parameters
+    ----------
+    yields : array-like
+        Yield observations with rows as dates and columns as maturities.
+    maturities : array-like
+        Maturities corresponding to the yield columns.
+    params : Mapping[str, float]
+        Model parameters including ``kappa``, ``theta``, ``sigma``, and optionally
+        observation parameters.
+    state_hint : array-like or None, optional
+        Optional short-rate state hint used for initialization or intercept
+        adjustment.
+
+    Returns
+    -------
+    tuple[float, numpy.ndarray]
+        Negative log-likelihood and filtered short-rate state path.
+
+    Notes
+    -----
+    The filter supports panels with missing yield observations. Missing maturities
+    are skipped observation by observation.
+    """
+
     data = np.asarray(yields, dtype=float)
     maturities = np.asarray(maturities, dtype=float)
     affine_level, b = vasicek_loadings(params, maturities)
@@ -140,6 +303,29 @@ def vasicek_kalman(yields, maturities, params, *, state_hint=None):
 
 
 def fit_vasicek_kalman(yields, maturities, *, maxiter: int = 80):
+    """Fit Vasicek short-rate dynamics and filter the latent short rate.
+
+    Parameters
+    ----------
+    yields : array-like or pandas.DataFrame
+        Yield panel with observations in rows and maturities in columns.
+    maturities : array-like
+        Maturities corresponding to the yield columns.
+    maxiter : int, default 80
+        Maximum number of optimizer iterations for the OU transition fit.
+
+    Returns
+    -------
+    tuple[dict, pandas.Series]
+        Parameter dictionary and filtered short-rate series.
+
+    Notes
+    -----
+    The routine estimates transition parameters from the shortest-maturity history
+    using bounded maximum likelihood, then runs the Kalman filter across the yield
+    panel. If optimization fails, AR-based fallback parameters are used.
+    """
+
     y = pd.DataFrame(yields).dropna(how="all")
     y_values = y.to_numpy(float)
     maturities = np.asarray(maturities, dtype=float)
@@ -191,6 +377,28 @@ def fit_vasicek_kalman(yields, maturities, *, maxiter: int = 80):
 
 
 def cir_expected_average(r0, params, years=10.0):
+    """Compute the expected average short rate under a shifted CIR model.
+
+    Parameters
+    ----------
+    r0 : float
+        Initial observed short rate.
+    params : Mapping[str, float]
+        Model parameters containing ``kappa``, ``theta``, and optional ``shift``.
+    years : float, default 10.0
+        Averaging horizon in years.
+
+    Returns
+    -------
+    float
+        Expected average observed short rate over the horizon.
+
+    Notes
+    -----
+    The expectation is computed in shifted-rate space and then transformed back by
+    subtracting the shift.
+    """
+
     kappa = max(float(params["kappa"]), 1e-8)
     theta = float(params["theta"])
     shift = float(params.get("shift", 0.0))
@@ -200,12 +408,58 @@ def cir_expected_average(r0, params, years=10.0):
 
 
 def cir_yield_loading(params, maturities):
+    """Compute an approximate CIR yield loading.
+
+    Parameters
+    ----------
+    params : Mapping[str, float]
+        Model parameters containing ``kappa``.
+    maturities : array-like
+        Maturities in years.
+
+    Returns
+    -------
+    numpy.ndarray
+        Mean-reversion loading by maturity.
+
+    Notes
+    -----
+    The loading is a simplified exponential mean-reversion loading and is not a
+    full closed-form CIR bond-pricing coefficient.
+    """
+
     kappa = max(float(params["kappa"]), 1e-6)
     t = np.asarray(maturities, dtype=float)
     return (1 - np.exp(-kappa * t)) / (kappa * np.maximum(t, 1e-8))
 
 
 def fit_cir_fast(short_history, *, maxiter: int = 160, fit_log: list[dict] | None = None):
+    """Fit a fast shifted-CIR approximation to short-rate history.
+
+    Parameters
+    ----------
+    short_history : array-like
+        Short-rate series, typically monthly.
+    maxiter : int, default 160
+        Maximum number of optimizer iterations.
+    fit_log : list of dict or None, optional
+        Optional mutable list that receives failure messages.
+
+    Returns
+    -------
+    dict
+        Parameter dictionary containing ``kappa``, ``theta``, ``sigma``, ``shift``,
+        method label, optimizer-success flag, Hessian condition, residual
+        autocorrelation, parameter bounds, and fit message.
+
+    Notes
+    -----
+    The routine shifts rates upward when needed to keep the CIR state positive,
+    uses a quasi-likelihood based on Euler dynamics, and penalizes Feller-condition
+    violations. If optimization fails, bounded AR-based fallback parameters are
+    returned.
+    """
+
     raw = pd.Series(short_history).dropna().astype(float)
     shift = max(0.0, 0.002 - float(raw.min())) if len(raw) else 0.0
     x = raw + shift
@@ -270,10 +524,56 @@ def fit_cir_fast(short_history, *, maxiter: int = 160, fit_log: list[dict] | Non
 
 
 def fit_cir(short_history, **kwargs):
+    """Fit a shifted-CIR short-rate model.
+
+    Parameters
+    ----------
+    short_history : array-like
+        Short-rate history.
+    **kwargs
+        Additional keyword arguments forwarded to the fast CIR fitting routine.
+
+    Returns
+    -------
+    dict
+        Fitted or fallback CIR parameter dictionary.
+
+    Notes
+    -----
+    This function is a public convenience alias for the fast CIR fitting routine.
+    """
+
     return fit_cir_fast(short_history, **kwargs)
 
 
 def simulate_vasicek_paths(r0, params, years=5.0, steps_per_year=12, n_paths=200, seed=9):
+    """Simulate short-rate paths under a Vasicek model.
+
+    Parameters
+    ----------
+    r0 : float
+        Initial short rate.
+    params : Mapping[str, float]
+        Model parameters containing ``kappa``, ``theta``, and ``sigma``.
+    years : float, default 5.0
+        Simulation horizon in years.
+    steps_per_year : int, default 12
+        Number of time steps per year.
+    n_paths : int, default 200
+        Number of simulated paths.
+    seed : int, default 9
+        Random seed.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Simulated paths indexed by time in years, with one column per path.
+
+    Notes
+    -----
+    The exact Gaussian transition of the Ornstein-Uhlenbeck process is used.
+    """
+
     local_rng = np.random.default_rng(seed)
     steps = int(years * steps_per_year)
     dt = 1 / steps_per_year
@@ -290,6 +590,35 @@ def simulate_vasicek_paths(r0, params, years=5.0, steps_per_year=12, n_paths=200
 
 
 def simulate_cir_paths(r0, params, years=5.0, steps_per_year=12, n_paths=200, seed=10):
+    """Simulate shifted-CIR short-rate paths with Euler discretization.
+
+    Parameters
+    ----------
+    r0 : float
+        Initial observed short rate.
+    params : Mapping[str, float]
+        Model parameters containing ``kappa``, ``theta``, ``sigma``, and optional
+        ``shift``.
+    years : float, default 5.0
+        Simulation horizon in years.
+    steps_per_year : int, default 12
+        Number of time steps per year.
+    n_paths : int, default 200
+        Number of simulated paths.
+    seed : int, default 10
+        Random seed.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Simulated observed-rate paths indexed by time in years.
+
+    Notes
+    -----
+    Simulation is performed in shifted positive-rate space and transformed back by
+    subtracting the shift.
+    """
+
     local_rng = np.random.default_rng(seed)
     steps = int(years * steps_per_year)
     dt = 1 / steps_per_year
@@ -305,6 +634,25 @@ def simulate_cir_paths(r0, params, years=5.0, steps_per_year=12, n_paths=200, se
 
 
 def ar1_expected_score(scores):
+    """Estimate a one-step AR(1) forecast and persistence coefficient.
+
+    Parameters
+    ----------
+    scores : array-like
+        Time series of factor scores or model scores.
+
+    Returns
+    -------
+    tuple[float, float]
+        Expected next score and clipped AR(1) slope. Returns ``(0.0, 0.0)`` when
+        there is insufficient variation or history.
+
+    Notes
+    -----
+    The AR coefficient is clipped to a conservative range to reduce instability in
+    small rolling samples.
+    """
+
     x = pd.Series(scores).dropna().astype(float)
     if len(x) < 12 or x.std() == 0:
         return 0.0, 0.0
@@ -316,6 +664,25 @@ def ar1_expected_score(scores):
 
 
 def estimate_mean_reversion(series):
+    """Estimate annualized mean reversion from a time series.
+
+    Parameters
+    ----------
+    series : array-like
+        Time series assumed to be sampled monthly.
+
+    Returns
+    -------
+    float
+        Annualized mean-reversion speed. Returns a default value when fewer than
+        24 observations are available.
+
+    Notes
+    -----
+    The estimate maps a monthly AR(1) slope to a continuous-time mean-reversion
+    speed using ``-log(phi) * 12`` with slope clipping.
+    """
+
     x = pd.Series(series).dropna().astype(float)
     if len(x) < 24:
         return 0.25
@@ -327,12 +694,55 @@ def estimate_mean_reversion(series):
 
 
 def hw1f_loading(a, maturities):
+    """Compute one-factor Hull-White-style yield loadings.
+
+    Parameters
+    ----------
+    a : float
+        Mean-reversion speed.
+    maturities : array-like
+        Maturities in years.
+
+    Returns
+    -------
+    numpy.ndarray
+        Yield loading by maturity.
+
+    Notes
+    -----
+    The loading equals ``(1 - exp(-a T)) / (a T)`` with a small floor on ``a`` for
+    numerical stability.
+    """
+
     maturities = np.asarray(maturities, dtype=float)
     a = max(float(a), 1e-6)
     return (1 - np.exp(-a * maturities)) / (a * maturities)
 
 
 def estimate_hw1f(history, maturities):
+    """Estimate a one-factor curve-change model from zero-rate history.
+
+    Parameters
+    ----------
+    history : pandas.DataFrame
+        Zero-rate history with maturity columns.
+    maturities : array-like
+        Maturities to model.
+
+    Returns
+    -------
+    dict
+        Model dictionary containing mean-reversion speed, monthly factor volatility,
+        loading vector, expected curve change, factor autocorrelation, and variance
+        share.
+
+    Notes
+    -----
+    The routine estimates a Hull-White-style loading, projects monthly curve
+    changes onto that loading, and summarizes how much cross-sectional variance is
+    explained by the one-factor approximation.
+    """
+
     maturities = np.asarray(maturities, dtype=float)
     changes = history[maturities].diff().dropna()
     short_col = 0.25 if 0.25 in history else history.columns[0]
@@ -354,6 +764,31 @@ def estimate_hw1f(history, maturities):
 
 
 def simulate_hw1f_curves(base_curve, params, n_scenarios=2000, seed=21):
+    """Simulate curve scenarios from a one-factor curve-change model.
+
+    Parameters
+    ----------
+    base_curve : array-like
+        Current zero-rate curve values.
+    params : Mapping[str, Any]
+        One-factor model parameters containing ``sigma monthly``, ``loading``, and
+        optionally ``expected change``.
+    n_scenarios : int, default 2000
+        Number of simulated curve scenarios.
+    seed : int, default 21
+        Random seed.
+
+    Returns
+    -------
+    numpy.ndarray
+        Simulated curve scenarios with shape ``(n_scenarios, n_maturities)``.
+
+    Notes
+    -----
+    Scenarios add expected curve change and one Gaussian factor shock multiplied by
+    the estimated loading.
+    """
+
     local_rng = np.random.default_rng(seed)
     base = np.asarray(base_curve, dtype=float)
     shocks = local_rng.normal(0, params["sigma monthly"], size=n_scenarios)
@@ -361,6 +796,28 @@ def simulate_hw1f_curves(base_curve, params, n_scenarios=2000, seed=21):
 
 
 def g2_loadings(a, b, maturities):
+    """Construct two orthogonalized curve loadings.
+
+    Parameters
+    ----------
+    a : float
+        Mean-reversion parameter for the first loading.
+    b : float
+        Mean-reversion parameter for the second loading.
+    maturities : array-like
+        Maturities in years.
+
+    Returns
+    -------
+    numpy.ndarray
+        Two-column loading matrix.
+
+    Notes
+    -----
+    The second loading is orthogonalized against the first and rescaled to a
+    comparable norm. The result is a stylized two-factor curve-shape basis.
+    """
+
     first = hw1f_loading(a, maturities)
     second = hw1f_loading(b, maturities)
     second = second - first * float(first @ second) / max(float(first @ first), 1e-10)
@@ -370,6 +827,28 @@ def g2_loadings(a, b, maturities):
 
 
 def estimate_g2_style(history, maturities):
+    """Estimate a two-factor curve-change model from zero-rate history.
+
+    Parameters
+    ----------
+    history : pandas.DataFrame
+        Zero-rate history with maturity columns.
+    maturities : array-like
+        Maturities to model.
+
+    Returns
+    -------
+    dict
+        Model dictionary containing loading parameters, loading matrix, factor
+        covariance, expected factors, expected curve change, factor persistence,
+        factor correlation, and degeneracy flag.
+
+    Notes
+    -----
+    Curve changes are projected onto two stylized loadings. If the estimated factor
+    covariance is nearly degenerate, a small diagonal regularization is added.
+    """
+
     maturities = np.asarray(maturities, dtype=float)
     changes = history[maturities].diff().dropna().to_numpy(float)
     short_col = 0.25 if 0.25 in history else history.columns[0]
@@ -400,6 +879,31 @@ def estimate_g2_style(history, maturities):
 
 
 def simulate_g2_curves(base_curve, params, n_scenarios=2000, seed=31):
+    """Simulate curve scenarios from a two-factor curve-change model.
+
+    Parameters
+    ----------
+    base_curve : array-like
+        Current zero-rate curve values.
+    params : Mapping[str, Any]
+        Two-factor model parameters containing ``factor covariance``, ``loadings``,
+        and optionally ``expected change``.
+    n_scenarios : int, default 2000
+        Number of simulated scenarios.
+    seed : int, default 31
+        Random seed.
+
+    Returns
+    -------
+    numpy.ndarray
+        Simulated curve scenarios with shape ``(n_scenarios, n_maturities)``.
+
+    Notes
+    -----
+    Factor shocks are drawn from the fitted two-factor covariance matrix and
+    projected through the loading matrix.
+    """
+
     local_rng = np.random.default_rng(seed)
     base = np.asarray(base_curve, dtype=float)
     factors = local_rng.multivariate_normal(np.zeros(2), params["factor covariance"], size=n_scenarios)
@@ -407,6 +911,27 @@ def simulate_g2_curves(base_curve, params, n_scenarios=2000, seed=31):
 
 
 def orient_pca_loadings(loadings, scores):
+    """Orient PCA loadings and scores for consistent curve-factor interpretation.
+
+    Parameters
+    ----------
+    loadings : numpy.ndarray
+        PCA loading matrix with maturities in rows and components in columns.
+    scores : numpy.ndarray
+        PCA score matrix with observations in rows and components in columns.
+
+    Returns
+    -------
+    tuple[numpy.ndarray, numpy.ndarray]
+        Sign-adjusted loadings and scores.
+
+    Notes
+    -----
+    The first component is oriented as a positive level factor, the second as a
+    positive-slope factor, and the third as a negative-belly curvature factor when
+    available.
+    """
+
     loadings = loadings.copy()
     scores = scores.copy()
     if loadings[:, 0].mean() < 0:
@@ -423,6 +948,29 @@ def orient_pca_loadings(loadings, scores):
 
 
 def estimate_pca_curve(history, maturities, n_components=3):
+    """Estimate PCA curve factors from zero-rate changes.
+
+    Parameters
+    ----------
+    history : pandas.DataFrame
+        Zero-rate history with maturity columns.
+    maturities : array-like
+        Maturities to include.
+    n_components : int, default 3
+        Number of principal components to estimate.
+
+    Returns
+    -------
+    dict
+        PCA output containing loadings, scores, explained variances, explained
+        variance ratios, and AR(1) persistence estimates for component scores.
+
+    Notes
+    -----
+    PCA is fit to demeaned first differences of the selected zero-rate history, and
+    loadings are sign-oriented for stable interpretation.
+    """
+
     maturities = np.asarray(maturities, dtype=float)
     changes = history[maturities].diff().dropna()
     demeaned = changes - changes.mean()
@@ -441,6 +989,34 @@ def estimate_pca_curve(history, maturities, n_components=3):
 
 
 def rolling_pca_diagnostics(zero_rates, maturities, dates=None, window=60, n_components=3):
+    """Compute rolling PCA explained-variance diagnostics.
+
+    Parameters
+    ----------
+    zero_rates : pandas.DataFrame
+        Date-indexed zero-rate panel.
+    maturities : array-like
+        Maturities included in the PCA.
+    dates : array-like or None, optional
+        Dates at which to run the rolling diagnostic. If omitted, dates start after
+        the initial window.
+    window : int, default 60
+        Rolling window length.
+    n_components : int, default 3
+        Number of PCA components.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Diagnostic table indexed by date with total explained variance and
+        component-level explained variance ratios.
+
+    Notes
+    -----
+    Each row fits PCA using observations up to the diagnostic date and the last
+    ``window`` rows.
+    """
+
     dates = pd.DatetimeIndex(dates if dates is not None else zero_rates.index[int(window):])
     rows = []
     for date in dates:
@@ -475,6 +1051,41 @@ def model_curve_view(
     scenario_maturities,
     rolling_window=60,
 ):
+    """Generate a model-implied expected curve change and covariance matrix.
+
+    Parameters
+    ----------
+    model_name : str
+        Model identifier. Supported names include Vasicek-style, CIR, one-factor
+        curve, and two-factor curve specifications.
+    date : date-like
+        Decision date.
+    maturities : array-like
+        Scenario maturities for the returned view.
+    zero_rates : pandas.DataFrame
+        Historical zero-rate panel.
+    short_rate : pandas.Series
+        Short-rate history indexed by date.
+    model_parameters : pandas.DataFrame
+        Time-indexed fitted model-parameter table.
+    scenario_maturities : array-like
+        Full maturity grid used for fitting curve-shape models.
+    rolling_window : int, default 60
+        Number of trailing observations used for full-curve model views.
+
+    Returns
+    -------
+    tuple[numpy.ndarray, numpy.ndarray]
+        Expected curve change vector and covariance matrix for the requested
+        maturities.
+
+    Notes
+    -----
+    The function dispatches to different curve-view approximations based on model
+    name. Short-rate models use parameter rows available up to ``date``; curve
+    shape models are estimated from a rolling zero-rate history.
+    """
+
     history = zero_rates.loc[:date].tail(int(rolling_window))
     maturities = np.asarray(maturities, dtype=float)
     dt = 1 / 12
@@ -498,6 +1109,32 @@ def model_curve_view(
 
 
 def rolling_model_views(dates, model_names, maturities, **kwargs):
+    """Compute model-implied curve views over dates and model names.
+
+    Parameters
+    ----------
+    dates : array-like
+        Decision dates.
+    model_names : iterable of str
+        Model names to evaluate at each date.
+    maturities : array-like
+        Maturities for expected curve changes.
+    **kwargs
+        Additional keyword arguments forwarded to the single-date curve-view
+        routine.
+
+    Returns
+    -------
+    pandas.DataFrame
+        MultiIndex table indexed by ``date`` and ``model`` with expected changes
+        by maturity and average covariance diagonal.
+
+    Notes
+    -----
+    Rows are produced for every date/model combination. Errors from the underlying
+    view routine are not caught here.
+    """
+
     rows = []
     for date in dates:
         for model_name in model_names:

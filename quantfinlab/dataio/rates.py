@@ -31,7 +31,24 @@ _TENOR_NORMALIZE_REPLACEMENTS = (
 
 
 def tenor_label_to_years(label: str | int | float) -> float:
-    """Convert a tenor label like '6M' or '2Y' to a float number of years."""
+    """Convert a tenor label to years.
+
+    Parameters
+    ----------
+    label : str, int, or float
+        Tenor such as ``"6M"``, ``"2Y"``, or a numeric year value.
+
+    Returns
+    -------
+    float
+        Tenor expressed in years.
+
+    Notes
+    -----
+    This is a convenience wrapper around the tenor-conversion routine used by the
+    fixed-income loaders.
+    """
+
     return tenor_to_years(label)
 
 
@@ -49,24 +66,40 @@ def load_par_yield_curve(
     column_map: dict[str, str] | None = None,
     percent: bool | None = None,
 ) -> pd.DataFrame:
-    """Load a par-yield curve panel into a normalized wide DataFrame.
+    """Load and normalize a par-yield curve panel.
 
-    Returns a DataFrame indexed by a sorted, deduplicated ``DatetimeIndex``
-    with tenor columns drawn from {'1M','2M','3M','4M','6M','1Y','2Y','3Y',
-    '5Y','7Y','10Y','20Y','30Y', ...}. Values are in decimals
-    (e.g. 4.25% -> 0.0425) when ``percent`` is True or auto-detected.
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        CSV file containing date and tenor columns.
+    source : str or None, optional
+        Registered source schema. If omitted and ``column_map`` is not supplied,
+        the default Treasury-style schema is used.
+    column_map : dict[str, str] or None, optional
+        Mapping from raw column names to normalized names. Overrides source-based
+        column mapping when supplied.
+    percent : bool or None, optional
+        Whether input yields are in percent units. If ``None``, units are inferred
+        from source metadata or from value magnitudes.
 
-    Exactly one of ``source`` or ``column_map`` should be supplied for
-    sources outside the registry; ``column_map`` (raw -> normalized name)
-    overrides ``source`` when both are given.
-
-    Example
+    Returns
     -------
-    >>> us = load_par_yield_curve("data/us_treasury_yields.csv",
-    ...                           source="us_treasury")
-    >>> jp = load_par_yield_curve("data/japan_mof_yields.csv",
-    ...                           source="japan_mof")
+    pandas.DataFrame
+        Date-indexed wide curve panel with normalized tenor columns sorted by
+        maturity and yield values expressed as decimals.
+
+    Raises
+    ------
+    ValueError
+        If the file does not exist or no tenor columns are detected.
+
+    Notes
+    -----
+    Tenor labels are normalized to compact forms such as ``"3M"`` and ``"10Y"``.
+    Duplicate dates keep the last observation. Files with source-specific banner
+    rows are handled through the registered source configuration.
     """
+
     p = Path(path)
     if not p.exists():
         raise ValueError(f"Par-yield file does not exist: {p}")
@@ -82,7 +115,7 @@ def load_par_yield_curve(
 
     if skip_banner:
         first_line = p.read_text(encoding="utf-8", errors="ignore").splitlines()[0].strip().lower()
-        if first_line.startswith("interest rate") or first_line.startswith("﻿interest rate"):
+        if first_line.startswith("interest rate") or first_line.startswith("\ufeffinterest rate"):
             raw = pd.read_csv(p, skiprows=1, na_values=na_values, keep_default_na=True)
         else:
             raw = pd.read_csv(p, na_values=na_values, keep_default_na=True)
@@ -140,7 +173,23 @@ def load_par_yield_curve(
 
 
 def tenor_first_valid(curve: pd.DataFrame) -> pd.Series:
-    """For each tenor column, the first date with a finite value."""
+    """Return the first valid date for each tenor column.
+
+    Parameters
+    ----------
+    curve : pandas.DataFrame
+        Wide curve panel containing tenor columns.
+
+    Returns
+    -------
+    pandas.Series
+        First non-missing index value for each detected tenor column.
+
+    Notes
+    -----
+    Only columns whose names look like tenor labels are included in the result.
+    """
+
     tenor_cols = [c for c in curve.columns if TENOR_PATTERN.fullmatch(str(c).strip().upper())]
     return curve[tenor_cols].apply(lambda s: s.first_valid_index())
 

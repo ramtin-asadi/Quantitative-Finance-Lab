@@ -126,3 +126,24 @@ def test_lsm_train_value_crossfit_boundaries_and_policy_gap() -> None:
     assert lsm.policy_gap(3.0, 3.5) == pytest.approx(0.5)
     assert lsm.lsm_boundary(train["coefficients"], 100.0, "put").equals(boundary)
     assert {"step", "boundary"}.issubset(boundary.columns)
+
+
+def test_lsm_auto_engine_runs_small_crossfit_without_cpp_requirement() -> None:
+    crossfit = lsm.lsm_crossfit(
+        100.0,
+        100.0,
+        0.03,
+        0.0,
+        0.20,
+        0.25,
+        "put",
+        steps=4,
+        paths=100,
+        degree=2,
+        seed=3,
+        engine="auto",
+    )
+
+    assert crossfit["engine_used"] in {"cpp", "numba", "numpy"}
+    assert crossfit["coefficients"].shape == (5, 3)
+    assert np.isfinite(crossfit["evaluation_price"])

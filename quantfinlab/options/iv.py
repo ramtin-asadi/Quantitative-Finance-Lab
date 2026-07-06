@@ -139,6 +139,49 @@ def implied_vol_bisection_python(
     max_iter: int = 100,
     return_status: bool = False,
 ):
+    """Invert Black-76 implied volatility with a pure-Python bisection solver.
+
+    This wrapper calls the general implied-volatility inverter with the bisection-only
+    solver path. It is deterministic and robust for prices inside no-arbitrage bounds,
+    but typically slower than Newton or accelerated backends.
+
+    Parameters
+    ----------
+    option_type : array-like or scalar
+        Option type labels.
+    price : array-like
+        Observed option prices.
+    forward : array-like
+        Forward prices for the corresponding expiries.
+    strike : array-like
+        Strike prices.
+    tau : array-like
+        Times to expiry in years.
+    discount_factor : array-like or scalar, default=1.0
+        Expiry discount factors.
+    vol_lower : float, default=1e-8
+        Lower volatility bracket.
+    vol_upper : float, default=5.0
+        Upper volatility bracket.
+    tol : float, default=1e-8
+        Price or volatility convergence tolerance used by the solver.
+    max_iter : int, default=100
+        Maximum number of iterations per contract.
+    return_status : bool, default=False
+        If True, return volatility, integer status code, and iteration count.
+
+    Returns
+    -------
+    float, numpy.ndarray, or tuple
+        Implied volatility values. If ``return_status=True``, returns
+        ``(sigma, status, iterations)``. Status code ``0`` indicates success.
+
+    Notes
+    -----
+    Failed inversions are returned as ``nan`` volatility values. The function accepts
+    scalar and vector inputs and preserves scalar output for scalar inputs.
+    """
+
     return implied_vol_newton_bisection_python(
         option_type,
         price,
@@ -170,6 +213,55 @@ def implied_vol_newton_bisection_python(
     max_iter: int = 100,
     return_status: bool = False,
 ):
+    """Invert Black-76 implied volatility with pure-Python scalar solvers.
+
+    The function supports Newton-bisection, bisection-only, and a lightweight
+    Li-like Halley/Newton-bisection hybrid. Inputs are broadcast to a common shape,
+    and each contract is solved independently against the forward Black-Scholes price.
+
+    Parameters
+    ----------
+    option_type : array-like or scalar
+        Option type labels.
+    price : array-like
+        Observed option prices.
+    forward : array-like
+        Forward prices.
+    strike : array-like
+        Strike prices.
+    tau : array-like
+        Times to expiry in years.
+    discount_factor : array-like or scalar, default=1.0
+        Expiry discount factors.
+    solver : {'newton_bisection', 'bisection', 'lbr_lite'}, default='newton_bisection'
+        Root-finding method.
+    vol_lower : float, default=1e-8
+        Lower volatility bracket.
+    vol_upper : float, default=5.0
+        Upper volatility bracket.
+    tol : float, default=1e-8
+        Solver tolerance.
+    max_iter : int, default=100
+        Maximum iterations per contract.
+    return_status : bool, default=False
+        If True, include integer status codes and iteration counts.
+
+    Returns
+    -------
+    float, numpy.ndarray, or tuple
+        Implied volatilities, optionally with status and iteration arrays.
+
+    Raises
+    ------
+    ValueError
+        If ``solver`` is not one of the supported solver names.
+
+    Notes
+    -----
+    Status code ``0`` indicates a successful inversion. Nonzero statuses are mapped to
+    ``nan`` volatility values in the returned volatility array.
+    """
+
     solver = str(solver).lower()
     if solver not in {"newton_bisection", "bisection", "lbr_lite"}:
         raise ValueError("solver must be one of {'newton_bisection', 'bisection', 'lbr_lite'}.")
@@ -405,12 +497,45 @@ def implied_vol(
     solver: str = "lbr_lite",
     return_status: bool = False,
 ):
-    """
-    Public IV inverter with optional Numba acceleration.
+    """Invert forward Black-Scholes implied volatility with optional acceleration.
 
-    Numba is a speed backend only. The NumPy path is always available for
-    small inputs and for environments without the optional dependency.
+    The public interface selects between accelerated and pure-Python solvers while
+    preserving the same pricing convention: option prices are matched against the
+    forward Black-Scholes/Black-76 formula using forward prices and discount factors.
+
+    Parameters
+    ----------
+    option_type : array-like or scalar
+        Option type labels.
+    price : array-like
+        Observed option prices.
+    forward : array-like
+        Forward prices.
+    strike : array-like
+        Strike prices.
+    tau : array-like
+        Times to expiry in years.
+    discount_factor : array-like or scalar, default=1.0
+        Expiry discount factors.
+    engine : {'auto', 'python', 'numpy', 'numba'}, default='auto'
+        Solver backend. ``'auto'`` attempts the accelerated backend and falls back to
+        the Python/NumPy implementation.
+    solver : {'lbr_lite', 'newton_bisection', 'bisection'}, default='lbr_lite'
+        Root-finding algorithm.
+    return_status : bool, default=False
+        If True, return volatility, status, and iteration arrays.
+
+    Returns
+    -------
+    float, numpy.ndarray, or tuple
+        Implied volatilities, optionally with solver diagnostics.
+
+    Raises
+    ------
+    ValueError
+        If an unsupported engine is requested.
     """
+
     engine = str(engine).lower()
     if engine == "numba":
         return _implied_vol_numba(
@@ -478,7 +603,23 @@ def iv_newton_bisection(
     engine: str = "auto",
     return_status: bool = False,
 ):
-    """Invert IV with the Newton-bisection solver only."""
+    """Invert implied volatility using the Newton-bisection solver.
+
+    Parameters
+    ----------
+    option_type, price, forward, strike, tau, discount_factor
+        Standard forward Black-Scholes implied-volatility inputs.
+    engine : {'auto', 'python', 'numpy', 'numba'}, default='auto'
+        Numerical backend.
+    return_status : bool, default=False
+        If True, include solver status and iteration count.
+
+    Returns
+    -------
+    float, numpy.ndarray, or tuple
+        Implied volatility values, optionally with diagnostics.
+    """
+
     return implied_vol(
         option_type,
         price,
@@ -503,7 +644,26 @@ def iv_lbr_lite(
     engine: str = "auto",
     return_status: bool = False,
 ):
-    """Invert IV with the LBR-lite Halley/Newton-bisection solver only."""
+    """Invert implied volatility using the LBR-lite solver.
+
+    The LBR-lite path combines a fast higher-order update with bracketing safeguards,
+    providing a practical default for large quote panels.
+
+    Parameters
+    ----------
+    option_type, price, forward, strike, tau, discount_factor
+        Standard forward Black-Scholes implied-volatility inputs.
+    engine : {'auto', 'python', 'numpy', 'numba'}, default='auto'
+        Numerical backend.
+    return_status : bool, default=False
+        If True, include solver status and iteration count.
+
+    Returns
+    -------
+    float, numpy.ndarray, or tuple
+        Implied volatility values, optionally with diagnostics.
+    """
+
     return implied_vol(
         option_type,
         price,
@@ -518,12 +678,36 @@ def iv_lbr_lite(
 
 
 def iv_newton_bisection_vectorized(*args, **kwargs):
-    """Vectorized Newton-bisection IV inversion."""
+    """Vectorized compatibility alias for Newton-bisection implied-volatility inversion.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        Arguments forwarded to the Newton-bisection implied-volatility solver.
+
+    Returns
+    -------
+    float, numpy.ndarray, or tuple
+        Implied volatility output from the underlying solver.
+    """
+
     return iv_newton_bisection(*args, **kwargs)
 
 
 def iv_lbr_lite_vectorized(*args, **kwargs):
-    """Vectorized LBR-lite IV inversion."""
+    """Vectorized compatibility alias for LBR-lite implied-volatility inversion.
+
+    Parameters
+    ----------
+    *args, **kwargs
+        Arguments forwarded to the LBR-lite implied-volatility solver.
+
+    Returns
+    -------
+    float, numpy.ndarray, or tuple
+        Implied volatility output from the underlying solver.
+    """
+
     return iv_lbr_lite(*args, **kwargs)
 
 
@@ -566,7 +750,39 @@ def compute_iv_table(
     solver: str = "lbr_lite",
     engine: str = "auto",
 ) -> pd.DataFrame:
-    """Compute bid/mid/ask implied volatility columns for an option table."""
+    """Compute bid, mid, and ask implied-volatility columns for an option quote table.
+
+    The function prepares option type, forward, strike, expiry horizon, and discount
+    factor inputs, solves implied volatility for each requested price column, and
+    adds solver-status diagnostics, iteration counts, absolute repricing errors, and
+    engine metadata.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Normalized option quote table. Required columns include option type, strike,
+        ``tau``, and enough information to identify forward and discount-factor inputs.
+    price_cols : tuple[str, ...], default=('bid', 'mid', 'ask')
+        Price columns for which implied volatilities should be computed.
+    solver : {'lbr_lite', 'newton_bisection', 'bisection'}, default='lbr_lite'
+        Implied-volatility solver.
+    engine : {'auto', 'numpy', 'python', 'numba'}, default='auto'
+        Numerical backend.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``quotes`` with ``iv_<price_col>``, status, success, iteration, and
+        absolute price-error columns for each requested price column. If ``mid`` is
+        included, convenience columns such as ``iv_success``, ``iv_status``,
+        ``iv_iterations``, ``iv_solver``, and ``engine_used`` are also attached.
+
+    Notes
+    -----
+    Missing price columns are reported explicitly with ``missing_price`` statuses
+    rather than causing the whole table computation to fail.
+    """
+
     solver_key = _solver_label(solver)
     out = quotes.copy()
     if "source_index" not in out.columns:
@@ -638,6 +854,21 @@ def compute_iv_table(
 
 
 def compute_implied_vols(quotes: pd.DataFrame, **kwargs: Any) -> pd.DataFrame:
+    """Compatibility alias for table-level implied-volatility computation.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    **kwargs
+        Keyword arguments forwarded to the implied-volatility table builder.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote table augmented with implied-volatility columns and solver diagnostics.
+    """
+
     return compute_iv_table(quotes, **kwargs)
 
 
@@ -649,11 +880,51 @@ def implied_vol_table(
     engine: str = "auto",
     **_: Any,
 ) -> pd.DataFrame:
-    """Notebook-friendly alias that ignores already-standardized column hints."""
+    """Notebook-friendly wrapper for bid, mid, and ask implied-volatility tables.
+
+    Extra keyword arguments that describe already-standardized columns are ignored,
+    which makes the function convenient in pipelines that pass broader configuration
+    dictionaries.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    price_cols : tuple[str, ...], default=('bid', 'mid', 'ask')
+        Price columns to invert.
+    solver : {'lbr_lite', 'newton_bisection', 'bisection'}, default='lbr_lite'
+        Implied-volatility solver.
+    engine : {'auto', 'numpy', 'python', 'numba'}, default='auto'
+        Numerical backend.
+    **_ : Any
+        Ignored compatibility keywords.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote table augmented with implied-volatility and solver-diagnostic columns.
+    """
+
     return compute_iv_table(quotes, price_cols=price_cols, solver=solver, engine=engine)
 
 
 def implied_vol_bid_mid_ask(quotes: pd.DataFrame, **kwargs: Any) -> pd.DataFrame:
+    """Compute bid, mid, and ask implied volatilities for a quote table.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    **kwargs
+        Additional keyword arguments forwarded to the implied-volatility table builder.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote table with ``iv_bid``, ``iv_mid``, ``iv_ask``, and associated solver
+        diagnostics.
+    """
+
     return compute_iv_table(quotes, price_cols=("bid", "mid", "ask"), **kwargs)
 
 
@@ -663,6 +934,30 @@ def iv_uncertainty_band(
     mid_col: str = "iv_mid",
     high_col: str = "iv_ask",
 ) -> pd.DataFrame:
+    """Construct an implied-volatility uncertainty band from bid, mid, and ask IV columns.
+
+    Parameters
+    ----------
+    iv_table : pandas.DataFrame
+        Table containing implied-volatility columns.
+    low_col : str, default='iv_bid'
+        Lower implied-volatility column.
+    mid_col : str, default='iv_mid'
+        Mid implied-volatility column.
+    high_col : str, default='iv_ask'
+        Upper implied-volatility column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``iv_table`` with ``iv_low``, ``iv_high``, and ``iv_band`` columns.
+
+    Notes
+    -----
+    If bid or ask implied volatility is missing, the mid IV is used as a fallback.
+    The final low/high values are ordered around the mid value.
+    """
+
     out = iv_table.copy()
     low = out[low_col] if low_col in out.columns else out[mid_col]
     high = out[high_col] if high_col in out.columns else out[mid_col]
@@ -680,6 +975,26 @@ def compare_iv_solvers(
     price_col: str = "mid",
     engine: str = "auto",
 ) -> pd.DataFrame:
+    """Benchmark implied-volatility solvers on the same quote table.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    solvers : Iterable[str], default=('newton_bisection', 'lbr_lite')
+        Solver names to compare.
+    price_col : str, default='mid'
+        Price column to invert.
+    engine : {'auto', 'numpy', 'python', 'numba'}, default='auto'
+        Numerical backend.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Summary table with solver name, backend used, success rate, elapsed time,
+        quotes per second, median iterations, and median absolute repricing error.
+    """
+
     rows: list[dict[str, Any]] = []
     for solver in solvers:
         t0 = time.perf_counter()
@@ -705,6 +1020,22 @@ def compare_iv_solvers(
 
 
 def weighted_median(values, weights):
+    """Compute a finite positive-weight weighted median.
+
+    Parameters
+    ----------
+    values : array-like
+        Values to summarize.
+    weights : array-like
+        Non-negative weights. Only strictly positive finite weights are used.
+
+    Returns
+    -------
+    float
+        Weighted median, or ``nan`` when no finite positively weighted observations
+        are available.
+    """
+
     values = np.asarray(values, dtype=float)
     weights = np.asarray(weights, dtype=float)
     mask = np.isfinite(values) & np.isfinite(weights) & (weights > 0)
@@ -724,6 +1055,28 @@ def iv_pricing_error_summary(
     price_col: str = "mid",
     iv_col: str = "iv_mid",
 ) -> pd.DataFrame:
+    """Summarize repricing error from an implied-volatility table.
+
+    The function reprices each option with the specified implied-volatility column and
+    compares the model price with the selected market price column.
+
+    Parameters
+    ----------
+    iv_table : pandas.DataFrame
+        Quote table containing option inputs and implied-volatility columns.
+    price_col : str, default='mid'
+        Market price column used as the reference.
+    iv_col : str, default='iv_mid'
+        Implied-volatility column used for repricing.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One-row summary with count, median signed error, median absolute error,
+        90th-percentile absolute error, and maximum absolute error. Returns an empty
+        DataFrame if required columns are missing.
+    """
+
     if iv_col not in iv_table.columns or price_col not in iv_table.columns:
         return pd.DataFrame()
     option_type, forward, strike, df = _prepare_quote_inputs(iv_table)

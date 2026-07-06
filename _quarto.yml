@@ -45,3 +45,4 @@ format:
     code-overflow: wrap
     fig-responsive: true
     lightbox: true
+    include-after-body: code-tools-toggle.html

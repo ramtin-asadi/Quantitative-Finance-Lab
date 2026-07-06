@@ -51,6 +51,27 @@ def _read_first_table(path: str | Path) -> pd.DataFrame:
 
 
 def load_ff_factors(path, columns=None):
+    """Load a Fama-French factor table from a saved text or CSV file.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        File containing the factor table.
+    columns : sequence of str or None, optional
+        Optional subset of columns to keep. Missing requested columns are ignored.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Parsed factor table. If ``columns`` is supplied, the result contains only
+        requested columns that are present in the parsed table.
+
+    Notes
+    -----
+    The function expects the input to contain a recognizable first data table.
+    Column names and date parsing are handled by the underlying table reader.
+    """
+
     out = _read_first_table(path)
     if columns is not None:
         out = out.loc[:, [c for c in columns if c in out.columns]]
@@ -58,6 +79,27 @@ def load_ff_factors(path, columns=None):
 
 
 def load_ff_momentum(path, name="MOM"):
+    """Load a Fama-French momentum factor as a Series.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        File containing the momentum factor table.
+    name : str, default "MOM"
+        Name assigned to the returned Series.
+
+    Returns
+    -------
+    pandas.Series
+        First numeric factor column from the parsed table, named according to
+        ``name``. If the parsed table is empty, an empty float Series is returned.
+
+    Notes
+    -----
+    This helper is intended for single-column momentum files. For multi-column
+    factor files, use a factor-table loader instead.
+    """
+
     out = _read_first_table(path)
     if out.empty:
         return pd.Series(dtype=float, name=name)
@@ -67,6 +109,24 @@ def load_ff_momentum(path, name="MOM"):
 
 
 def load_ff_industries(path):
+    """Load a Fama-French industry portfolio table.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        File containing industry portfolio returns or related industry data.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Parsed first data table from the file.
+
+    Notes
+    -----
+    The function delegates parsing to the same first-table reader used by the
+    factor loaders and returns the table unchanged after parsing.
+    """
+
     return _read_first_table(path)
 
 

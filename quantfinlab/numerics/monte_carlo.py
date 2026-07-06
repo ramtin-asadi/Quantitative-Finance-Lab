@@ -2,18 +2,22 @@ from __future__ import annotations
 
 import numpy as np
 
+from quantfinlab._optional import get_cpp_kernels, prefer_auto_engine
+
 _GBM_NUMBA = None
 
 
 def _resolve_engine(engine: str) -> str:
     key = str(engine).lower()
+    if key == "auto":
+        return prefer_auto_engine()
     if key in {"numpy", "python"}:
         return "numpy"
     if key == "numba":
         return "numba"
     if key in {"cpp", "c++"}:
         return "cpp"
-    raise ValueError("engine must be one of {'numpy', 'numba', 'cpp'}.")
+    raise ValueError("engine must be one of {'auto', 'numpy', 'numba', 'cpp'}.")
 
 
 def _get_gbm_numba():
@@ -59,13 +63,12 @@ def gbm_paths(
     steps: int = 50,
     paths: int = 10000,
     seed: int = 7,
-    engine: str = "numba",
+    engine: str = "auto",
 ) -> np.ndarray:
     resolved = _resolve_engine(engine)
     if resolved == "cpp":
-        from quantfinlab import _kernels
-
-        return np.asarray(_kernels.gbm_paths_antithetic(s0, r, q, sigma, tau, int(steps), int(paths), int(seed)), dtype=float)
+        kernels = get_cpp_kernels("GBM Monte Carlo path generation")
+        return np.asarray(kernels.gbm_paths_antithetic(s0, r, q, sigma, tau, int(steps), int(paths), int(seed)), dtype=float)
     z = antithetic_normals(paths, steps, seed)
     if resolved == "numba":
         try:

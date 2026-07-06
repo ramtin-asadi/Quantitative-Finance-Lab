@@ -28,15 +28,20 @@ def plot_computation_dag(
     del colormap
     set_plot_style()
 
-    bg_colour = "#fafafa"
-    text_colour = "black"
-    edge_colour = "black"
-    arrow_colour = LAB_COLORS[2]
-    input_fc = LAB_COLORS[0]
-    output_fc = LAB_COLORS[1]
-    op_fc = LAB_COLORS[8]
-    intermed_fc = LAB_COLORS[10]
-    legend_edge = "#bbbbbb"
+    bg_colour = "#fbfdff"
+    panel_colour = "#ffffff"
+    panel_edge = "#d7e3f5"
+    text_colour = "#1f2937"
+    muted_text = "#475569"
+    arrow_colour = "#4b6478"
+    legend_edge = "#cbd5e1"
+    shadow_colour = "#0f172a18"
+    node_styles = {
+        "input": {"fc": "#eaf3ff", "ec": LAB_COLORS[0], "tc": "#0f3f63"},
+        "op": {"fc": "#fff7ed", "ec": "#fb923c", "tc": "#7c2d12"},
+        "intermed": {"fc": "#f5f3ff", "ec": LAB_COLORS[6], "tc": "#4c1d95"},
+        "output": {"fc": "#ecfdf5", "ec": LAB_COLORS[3], "tc": "#064e3b"},
+    }
 
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize, facecolor=bg_colour)
@@ -113,20 +118,62 @@ def plot_computation_dag(
 
     pos = {n[0]: (n[1], n[2]) for n in nodes}
     labels = {n[0]: n[3] for n in nodes}
-    cat_colours = {
-        "input": input_fc,
-        "op": op_fc,
-        "intermed": intermed_fc,
-        "output": output_fc,
-    }
+    cat_colours = {cat: style["fc"] for cat, style in node_styles.items()}
+
+    def _label_weight(nid):
+        label = labels[nid]
+        return len(
+            label.replace("$", "")
+            .replace("\\", "")
+            .replace("{", "")
+            .replace("}", "")
+            .replace("!", "")
+            .replace(",", "")
+        )
 
     def _node_radius(nid):
         txt = labels[nid]
-        if len(txt) > 18:
-            return r * 2.2, r * 1.0
-        if len(txt) > 10:
-            return r * 1.7, r * 0.9
-        return r, r
+        visible_len = _label_weight(nid)
+        if visible_len > 22:
+            return r * 3.15, r * 1.05
+        if visible_len > 15:
+            return r * 2.55, r * 0.98
+        if visible_len > 8:
+            return r * 1.85, r * 0.90
+        if len(txt) > 6:
+            return r * 1.35, r * 0.88
+        return r * 1.08, r * 1.08
+
+    graph_panel = mpatches.FancyBboxPatch(
+        (-1.20, -0.72),
+        24.25,
+        10.55,
+        boxstyle="round,pad=0.18,rounding_size=0.22",
+        facecolor=panel_colour,
+        edgecolor=panel_edge,
+        linewidth=1.0,
+        zorder=0,
+    )
+    ax.add_patch(graph_panel)
+
+    for x, name in [
+        (0.00, "Inputs"),
+        (4.35, "Elementary transforms"),
+        (9.15, "Build numerator / denominator"),
+        (13.50, r"$d_1,\ d_2$"),
+        (17.90, "Discounted payoff terms"),
+        (22.50, "Call price"),
+    ]:
+        ax.text(
+            x,
+            10.15,
+            name,
+            ha="center",
+            va="center",
+            fontsize=font_size - 2.4,
+            color=muted_text,
+            fontweight="medium",
+        )
 
     for src, dst, lbl in edges:
         x0, y0 = pos[src]
@@ -147,7 +194,8 @@ def plot_computation_dag(
             mutation_scale=14,
             lw=edge_lw,
             color=arrow_colour,
-            connectionstyle="arc3,rad=0.06",
+            alpha=0.78,
+            connectionstyle="arc3,rad=0.035",
             zorder=1,
         )
         ax.add_patch(arrow)
@@ -160,7 +208,12 @@ def plot_computation_dag(
                 va="center",
                 fontsize=font_size - 2,
                 color=text_colour,
-                bbox={"boxstyle": "round,pad=0.18", "fc": bg_colour, "ec": legend_edge},
+                bbox={
+                    "boxstyle": "round,pad=0.18,rounding_size=0.08",
+                    "fc": panel_colour,
+                    "ec": legend_edge,
+                    "lw": 0.8,
+                },
                 zorder=5,
             )
 
@@ -171,32 +224,37 @@ def plot_computation_dag(
             2 * rx,
             2 * ry,
             boxstyle=f"round,pad=0.0,rounding_size={min(rx, ry) * 0.9}",
-            facecolor="#00000015",
+            facecolor=shadow_colour,
             edgecolor="none",
             linewidth=0,
             zorder=2,
         )
         ax.add_patch(shadow)
+        style = node_styles[cat]
         node = mpatches.FancyBboxPatch(
             (x - rx, y - ry),
             2 * rx,
             2 * ry,
             boxstyle=f"round,pad=0.0,rounding_size={min(rx, ry) * 0.9}",
-            facecolor=cat_colours[cat],
-            edgecolor=edge_colour,
-            linewidth=1.6,
+            facecolor=style["fc"],
+            edgecolor=style["ec"],
+            linewidth=1.8 if cat == "output" else 1.35,
             zorder=3,
         )
         ax.add_patch(node)
+        visible_len = _label_weight(nid)
+        label_size = font_size if visible_len <= 10 else font_size - 1.3
+        if visible_len > 20:
+            label_size = font_size - 2.0
         ax.text(
             x,
             y,
             label,
             ha="center",
             va="center",
-            fontsize=font_size if len(label) < 14 else font_size - 2,
-            fontweight="bold",
-            color=text_colour,
+            fontsize=label_size,
+            fontweight="medium",
+            color=style["tc"],
             zorder=4,
         )
 
@@ -205,7 +263,12 @@ def plot_computation_dag(
         "",
         xy=(8, y_ann),
         xytext=(1, y_ann),
-        arrowprops={"arrowstyle": "-|>", "lw": 2.2, "color": LAB_COLORS[0]},
+        arrowprops={
+            "arrowstyle": "-|>",
+            "lw": 2.0,
+            "color": LAB_COLORS[0],
+            "alpha": 0.82,
+        },
     )
     ax.text(
         4.5,
@@ -220,7 +283,12 @@ def plot_computation_dag(
         "",
         xy=(15, y_ann),
         xytext=(22, y_ann),
-        arrowprops={"arrowstyle": "-|>", "lw": 2.2, "color": LAB_COLORS[1]},
+        arrowprops={
+            "arrowstyle": "-|>",
+            "lw": 2.0,
+            "color": LAB_COLORS[1],
+            "alpha": 0.82,
+        },
     )
     ax.text(
         18.5,
@@ -242,7 +310,7 @@ def plot_computation_dag(
             0.55,
             boxstyle="round,pad=0.0,rounding_size=0.2",
             facecolor=cat_colours[cat],
-            edgecolor=edge_colour,
+            edgecolor=node_styles[cat]["ec"],
             lw=1.2,
             zorder=3,
         )
@@ -253,10 +321,25 @@ def plot_computation_dag(
             name,
             fontsize=font_size - 1,
             va="center",
-            color=text_colour,
+            color=muted_text,
         )
 
-    ax.set_title(title, fontsize=font_size + 5, pad=20)
+    ax.set_title(
+        title,
+        fontsize=14,
+        fontweight="normal",
+        loc="left",
+        pad=16,
+        color=LAB_COLORS[2],
+    )
+    ax.plot(
+        [0.0, 0.16],
+        [1.02, 1.02],
+        transform=ax.transAxes,
+        color=LAB_COLORS[0],
+        lw=2.5,
+        clip_on=False,
+    )
     ax.set_xlim(-2.0, 24.5)
     ax.set_ylim(-3.5, 12.0)
     fig.tight_layout()

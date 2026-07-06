@@ -13,6 +13,20 @@ from quantfinlab.options.svi import svi_prices
 
 
 def choose_model_engine(engine: str = "auto") -> pd.DataFrame:
+    """Resolve the numerical engine used for option model-risk calculations.
+
+    Parameters
+    ----------
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Requested backend. ``'auto'`` selects Numba when available and NumPy otherwise.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One-row diagnostic table with requested engine, resolved engine, and Numba
+        availability.
+    """
+
     try:
         import numba  # noqa: F401
 
@@ -37,6 +51,34 @@ def add_calibration_weights(
     iv_uncertainty: str = "spread_over_vega",
     expiry_balance: bool = True,
 ) -> pd.DataFrame:
+    """Add quote-quality scales and observation weights for option model calibration.
+
+    The function combines bid-ask half-spreads, IV uncertainty, vega information,
+    relative spreads, wing distance, and optional expiry balancing to produce price
+    scales and bounded observation weights for calibration residuals.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table containing bid, ask, mid, IV, moneyness, expiry, and
+        optionally vega columns.
+    price_uncertainty : str, default='half_spread'
+        Label for the price-uncertainty convention; retained for configuration
+        readability.
+    iv_uncertainty : str, default='spread_over_vega'
+        Label for the IV-uncertainty convention; retained for configuration
+        readability.
+    expiry_balance : bool, default=True
+        If True, downweight densely populated date-expiry groups to reduce slice
+        imbalance.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote table with ``half_spread``, ``eps_iv``, ``eps_px``, ``calib_scale_px``,
+        and ``obs_weight`` columns.
+    """
+
     out = quotes.copy()
     if "contract_key" not in out.columns and {"option_type", "expiry", "strike"}.issubset(out.columns):
         out["contract_key"] = _contract_key(out)
@@ -87,6 +129,35 @@ def calibration_quotes(
     max_relative_spread: float = 0.85,
     otm_only: bool = True,
 ) -> pd.DataFrame:
+    """Filter an option quote table for model calibration.
+
+    The function keeps positive, finite, sufficiently liquid quotes within a maturity
+    range, optional vega floor, and relative-spread cap. When requested, it chooses a
+    single out-of-the-money leg per strike to reduce duplicated call/put information.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    min_dte : float, default=3.0
+        Minimum days to expiry.
+    max_dte : float, default=120.0
+        Maximum days to expiry.
+    min_vega : float, default=0.0
+        Minimum absolute vega.
+    max_relative_spread : float, default=0.85
+        Maximum relative bid-ask spread.
+    otm_only : bool, default=True
+        If True, prefer OTM puts below ATM and OTM calls above ATM, while allowing
+        either side near ATM.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Filtered, sorted calibration quote table with stable ``quote_id`` and
+        ``contract_key`` columns.
+    """
+
     q = quotes.copy()
     if "quote_id" not in q.columns:
         q["quote_id"] = np.arange(len(q), dtype=int)
@@ -116,6 +187,26 @@ def calibration_quotes(
 
 
 def choose_surface_date(quotes: pd.DataFrame, min_expiries: int = 4, min_quotes: int = 80, prefer_tail_coverage: bool = True):
+    """Select a single quote date with strong volatility-surface coverage.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Calibration-ready quote table containing date, expiry, quote_id, moneyness,
+        and spread columns.
+    min_expiries : int, default=4
+        Minimum number of expiries required for a preferred candidate.
+    min_quotes : int, default=80
+        Minimum quote count required for a preferred candidate.
+    prefer_tail_coverage : bool, default=True
+        If True, prefer dates with sufficient left- and right-tail observations.
+
+    Returns
+    -------
+    pandas.Timestamp
+        Selected normalized quote date.
+    """
+
     q = quotes.copy()
     table = q.groupby("date").agg(
         quotes=("quote_id", "size"),
@@ -144,6 +235,27 @@ def balanced_model_quotes(
     min_quotes_per_expiry: int = 6,
     prefer_tail_coverage: bool = True,
 ) -> pd.DataFrame:
+    """Select a balanced grid of calibration quotes across target maturities and moneyness nodes.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Calibration-ready quote table.
+    target_dtes : iterable, default=(7, 14, 21, 30, 45, 60, 90)
+        Target days-to-expiry values.
+    target_ks : iterable
+        Target log-moneyness values.
+    min_quotes_per_expiry : int, default=6
+        Minimum selected quotes required for an expiry to be included.
+    prefer_tail_coverage : bool, default=True
+        Reserved configuration flag for tail-aware selection.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Balanced subset sorted by expiry and log-moneyness.
+    """
+
     q = quotes.copy()
     base = q.groupby("expiry").agg(dte=("dte_days", "median"), n=("quote_id", "size")).reset_index()
     base = base[base["n"] >= int(min_quotes_per_expiry)].copy()
@@ -174,6 +286,24 @@ def balanced_model_quotes(
 
 
 def common_model_quotes(quotes: pd.DataFrame, model_quotes: pd.DataFrame | None = None, min_tail_count: int = 6) -> pd.DataFrame:
+    """Build or augment a common benchmark quote set for model comparison.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Full calibration quote table.
+    model_quotes : pandas.DataFrame, optional
+        Preselected benchmark quotes. If absent, a balanced subset is constructed.
+    min_tail_count : int, default=6
+        Minimum number of tail quotes desired in the benchmark set.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Benchmark quote set sorted by expiry and moneyness, augmented with additional
+        tail quotes when necessary.
+    """
+
     q = model_quotes.copy() if model_quotes is not None and not model_quotes.empty else balanced_model_quotes(quotes)
     if int((q["k"].abs() >= 0.14).sum()) < int(min_tail_count):
         tail = quotes[quotes["k"].abs() >= 0.14].sort_values(["expiry", "relative_spread"]).groupby("expiry").head(2)
@@ -235,6 +365,28 @@ def _with_price_iv(pred: pd.DataFrame, engine: str = "auto") -> pd.DataFrame:
 
 
 def compare_model_fits(quotes: pd.DataFrame, fits: dict, engine: str = "auto") -> pd.DataFrame:
+    """Compare option-pricing model fits on a common quote table.
+
+    For each fitted model, the function reprices the benchmark quotes, computes
+    weighted price and IV errors when available, evaluates tail performance, records
+    runtime, and applies a pragmatic usability success flag.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Benchmark quote table.
+    fits : dict
+        Mapping from model name to fit dictionary.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='auto'
+        Pricing backend used for model prediction.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Model-comparison table with quote counts, IV quote counts, weighted IV RMSE,
+        weighted price RMSE, tail error, runtime, and success indicator.
+    """
+
     rows = []
     for name, fit in fits.items():
         pred = _predict(name, quotes, fit, engine=engine)
@@ -270,6 +422,35 @@ def model_fair_values(
     min_model_weight: float = 0.30,
     engine: str = "auto",
 ) -> pd.DataFrame:
+    """Build ensemble fair values from multiple fitted option-pricing models.
+
+    The function intersects available holdout IDs when present, reprices quotes with
+    each model, assigns inverse-error ensemble weights with optional caps/floors, and
+    computes ensemble residuals and model disagreement.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table used for fair-value estimation.
+    fits : dict
+        Mapping from model name to fit dictionary.
+    ensemble_method : str, default='capped_weighted'
+        Ensemble method label retained for configuration clarity.
+    max_model_weight : float, default=0.70
+        Maximum allowed model weight for selected models.
+    min_model_weight : float, default=0.30
+        Minimum model weight for selected anchor models when present.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='auto'
+        Pricing backend.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote table with model price columns, ``ensemble_price``,
+        ``ensemble_price_residual``, and ``model_disagreement``. Ensemble weights are
+        stored in DataFrame attributes.
+    """
+
     base_ids = None
     for fit in fits.values():
         ids = fit.get("holdout_ids", pd.DataFrame()) if isinstance(fit, dict) else pd.DataFrame()
@@ -324,6 +505,28 @@ def residual_scores(
     model_uncertainty_col: str = "model_disagreement",
     score_method: str = "cost_adjusted_z",
 ) -> pd.DataFrame:
+    """Convert ensemble pricing residuals into cost-adjusted z-style signal scores.
+
+    Parameters
+    ----------
+    fair_values : pandas.DataFrame
+        Table containing ensemble residuals, quote costs, and model uncertainty.
+    residual_col : str, default='ensemble_price_residual'
+        Residual column to score.
+    quote_cost_col : str, default='half_spread'
+        Entry quote-cost proxy.
+    model_uncertainty_col : str, default='model_disagreement'
+        Model uncertainty column.
+    score_method : str, default='cost_adjusted_z'
+        Score-method label retained for readability.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with ``total_error``, ``z_residual``, ``watchlist_candidate``, and
+        ``strict_candidate`` columns.
+    """
+
     out = fair_values.copy()
     quote_cost = pd.to_numeric(out.get(quote_cost_col, 0.0), errors="coerce").fillna(0.0)
     exit_cost = pd.to_numeric(out.get("expected_exit_half_spread", quote_cost), errors="coerce").fillna(quote_cost)
@@ -338,6 +541,25 @@ def residual_scores(
 
 
 def signal_dates(quotes: pd.DataFrame, min_quotes: int = 60, min_expiries: int = 3, min_near_atm_quotes: int = 10):
+    """Identify dates with enough option coverage for residual-signal validation.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table with date, quote_id, expiry, and moneyness columns.
+    min_quotes : int, default=60
+        Minimum quote count per date.
+    min_expiries : int, default=3
+        Minimum expiry count per date.
+    min_near_atm_quotes : int, default=10
+        Minimum number of near-ATM quotes per date.
+
+    Returns
+    -------
+    numpy.ndarray
+        Sorted array of eligible normalized dates.
+    """
+
     table = quotes.groupby("date").agg(
         quotes=("quote_id", "size"),
         expiries=("expiry", "nunique"),
@@ -348,6 +570,35 @@ def signal_dates(quotes: pd.DataFrame, min_quotes: int = 60, min_expiries: int =
 
 
 def next_day_residual_check(scores: pd.DataFrame, option_quotes: pd.DataFrame, hedge_delta_col: str = "delta", cost_model: str = "scheduled", calendar: str = "crypto_24_7", engine: str = "auto") -> pd.DataFrame:
+    """Validate residual signals against next-day delta-hedged price changes.
+
+    The function links scored contracts to the next available quote date, computes a
+    raw delta-hedged P&L after entry and exit half-spread costs, estimates rolling
+    information coefficient direction, and builds a direction-adjusted next-day P&L
+    validation table.
+
+    Parameters
+    ----------
+    scores : pandas.DataFrame
+        Residual-scored quote table.
+    option_quotes : pandas.DataFrame
+        Full option quote table containing next-day observations.
+    hedge_delta_col : str, default='delta'
+        Delta column used for underlying hedge P&L.
+    cost_model : str, default='scheduled'
+        Cost-model label retained for compatibility.
+    calendar : str, default='crypto_24_7'
+        Calendar label retained for configuration metadata.
+    engine : str, default='auto'
+        Backend label retained for compatibility.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Validation table with next-day prices, hedged P&L, information-coefficient
+        diagnostics, and adjusted P&L. Summary and IC tables are stored in attributes.
+    """
+
     if scores.empty:
         return scores.copy()
     q = option_quotes.copy()
@@ -395,6 +646,33 @@ def residual_entry_schedule(
     require_signal_direction: bool = True,
     chronological: bool = True,
 ) -> pd.DataFrame:
+    """Convert residual-validation candidates into a chronological entry schedule.
+
+    Parameters
+    ----------
+    validation : pandas.DataFrame
+        Residual validation table containing watchlist flags, residuals, z-scores, and
+        optional signal-direction columns.
+    selector_name : str, default='residual_fixed_3d'
+        Label assigned to scheduled entries.
+    hold_days : int, default=3
+        Maximum holding period stored in the schedule.
+    max_entries : int, default=80
+        Maximum number of entries.
+    entry_spacing_days : int, default=3
+        Minimum calendar-day spacing between entries.
+    require_signal_direction : bool, default=True
+        If True, require nonzero signal direction when the column is available.
+    chronological : bool, default=True
+        Compatibility flag; entries are selected chronologically.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Entry schedule with entry date, contract key, signed quantity, label, score,
+        residual diagnostics, and exit-rule flags.
+    """
+
     cols = ["entry_date", "contract_key", "quantity", "label", "entry_score", "entry_residual", "entry_total_error", "entry_z", "max_hold_days", "exit_on_convergence", "exit_on_sign_flip"]
     if validation.empty:
         return pd.DataFrame(columns=cols)
@@ -423,6 +701,29 @@ def residual_entry_schedule(
 
 
 def market_summary(asset: str, quotes: pd.DataFrame, model_comparison: pd.DataFrame, validation: pd.DataFrame, hedge_comparison: pd.DataFrame, engine: str = "auto") -> pd.DataFrame:
+    """Summarize quote, model, validation, and hedge coverage for a market run.
+
+    Parameters
+    ----------
+    asset : str
+        Asset or market label.
+    quotes : pandas.DataFrame
+        Quote table.
+    model_comparison : pandas.DataFrame
+        Model-comparison table.
+    validation : pandas.DataFrame
+        Residual-validation table.
+    hedge_comparison : pandas.DataFrame
+        Hedge-comparison table.
+    engine : str, default='auto'
+        Engine label to record.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One-row market summary.
+    """
+
     return pd.DataFrame([{
         "asset": asset,
         "date": pd.Timestamp(quotes["date"].iloc[0]).date() if not quotes.empty and "date" in quotes else pd.NaT,

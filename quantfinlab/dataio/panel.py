@@ -144,31 +144,50 @@ def load_yfinance_panel(
     suffix: str = "__",
     source: str | None = "yfinance_export",
 ) -> dict[str, pd.DataFrame]:
-    """Load a wide multi-asset panel into ``{field -> DataFrame}``.
-
-    Returns a dict mapping the lowercased field name to a wide DataFrame
-    with a sorted, deduplicated ``DatetimeIndex`` and tickers as columns.
-    Coerces all values to numeric, drops empty columns, sorts columns
-    alphabetically, and (optionally) restricts to ``tickers``.
+    """Load one or more wide multi-asset price panels.
 
     Parameters
     ----------
-    path
-        Path to a CSV or Parquet file.
-    fields
-        Field names to extract. Names are matched case-insensitively.
-        Missing fields become empty DataFrames in the output.
-    tickers
-        Optional whitelist of ticker symbols. Matching is case-insensitive.
-    start, end
-        Optional date cutoff applied after parsing.
-    lowercase
-        If true, normalize ticker columns to lowercase. This is useful when
-        combining ETF and equity panels in notebooks.
-    source
-        Registered schema in :data:`PANEL_SOURCES`. ``None`` skips the
-        registry; use ``date_col``/``suffix`` to drive the loader.
+    path : str, pathlib.Path, or sequence of path-like
+        CSV or Parquet file, or sequence of files, containing wide multi-asset
+        fields.
+    fields : tuple of str, default ("close", "volume", "dividends", "stock_splits")
+        Field names to extract.
+    tickers : list of str or None, optional
+        Optional ticker whitelist. Matching is case-insensitive.
+    start : str, pandas.Timestamp, or None, optional
+        Optional lower date bound.
+    end : str, pandas.Timestamp, or None, optional
+        Optional upper date bound.
+    lowercase : bool, default False
+        If ``True``, normalize ticker labels to lowercase.
+    date_col : str or None, optional
+        Explicit date column override.
+    suffix : str, default "__"
+        Field suffix separator used for wide-suffix schemas.
+    source : str or None, default "yfinance_export"
+        Registered source schema. Use ``None`` to bypass the registry and rely on
+        explicit ``date_col`` and ``suffix`` settings.
+
+    Returns
+    -------
+    dict[str, pandas.DataFrame]
+        Mapping from lowercase field name to a wide DataFrame indexed by sorted
+        dates with tickers as columns.
+
+    Raises
+    ------
+    ValueError
+        If a requested file does not exist or the registered panel format is
+        unsupported.
+
+    Notes
+    -----
+    When a sequence of paths is supplied, panels are loaded separately and merged
+    field by field. Duplicate ticker columns keep the last occurrence. Missing
+    fields return empty DataFrames.
     """
+
     if isinstance(path, Sequence) and not isinstance(path, (str, bytes, Path)):
         merged: dict[str, pd.DataFrame] = {}
         for one_path in path:
@@ -273,7 +292,28 @@ def load_nasdaq_close_volume(
     end: str | pd.Timestamp | None = None,
     lowercase: bool = False,
 ) -> dict[str, pd.DataFrame]:
-    """Load the source-centered NASDAQ Stooq close/volume Parquet panel."""
+    """Load a NASDAQ close/volume panel.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        Path to the panel file or a directory containing the expected close/volume
+        Parquet file.
+    tickers : list of str or None, optional
+        Optional ticker whitelist.
+    start : str, pandas.Timestamp, or None, optional
+        Optional lower date bound.
+    end : str, pandas.Timestamp, or None, optional
+        Optional upper date bound.
+    lowercase : bool, default False
+        If ``True``, normalize ticker labels to lowercase.
+
+    Returns
+    -------
+    dict[str, pandas.DataFrame]
+        Dictionary containing ``"close"`` and ``"volume"`` DataFrames.
+    """
+
     p = _resolve_data_file(path, "nasdaq_close_volume.parquet")
     return load_yfinance_panel(
         p,
@@ -294,7 +334,28 @@ def load_hkex_close_volume(
     end: str | pd.Timestamp | None = None,
     lowercase: bool = False,
 ) -> dict[str, pd.DataFrame]:
-    """Load the source-centered HKEX Stooq close/volume Parquet panel."""
+    """Load an HKEX close/volume panel.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        Path to the panel file or a directory containing the expected close/volume
+        Parquet file.
+    tickers : list of str or None, optional
+        Optional ticker whitelist.
+    start : str, pandas.Timestamp, or None, optional
+        Optional lower date bound.
+    end : str, pandas.Timestamp, or None, optional
+        Optional upper date bound.
+    lowercase : bool, default False
+        If ``True``, normalize ticker labels to lowercase.
+
+    Returns
+    -------
+    dict[str, pandas.DataFrame]
+        Dictionary containing ``"close"`` and ``"volume"`` DataFrames.
+    """
+
     p = _resolve_data_file(path, "hkex_close_volume.parquet")
     return load_yfinance_panel(
         p,
@@ -308,7 +369,28 @@ def load_hkex_close_volume(
 
 
 def align_panels(*panels: pd.DataFrame, how: str = "inner") -> tuple[pd.DataFrame, ...]:
-    """Align several wide panels on the index/columns intersection or union."""
+    """Align multiple wide panels on shared or combined dates and columns.
+
+    Parameters
+    ----------
+    *panels : pandas.DataFrame
+        Wide DataFrames to align.
+    how : {"inner", "outer"}, default "inner"
+        ``"inner"`` uses the intersection of indices and columns. Any other value
+        uses the union.
+
+    Returns
+    -------
+    tuple[pandas.DataFrame, ...]
+        Reindexed panels in the order of the non-None inputs. Empty input returns
+        an empty tuple.
+
+    Notes
+    -----
+    ``None`` inputs are ignored when computing the alignment set and are not
+    included in the returned tuple.
+    """
+
     if not panels:
         return ()
     valid = [p for p in panels if p is not None]
@@ -330,13 +412,33 @@ def prices_to_returns_panel(
     ffill_limit: int | None = 3,
     fill_isolated_with: float | None = 0.0,
 ) -> pd.DataFrame:
-    """Wrap :func:`portfolio.universe.prices_to_returns` with NB6 idioms.
+    """Convert a wide price panel to a wide return panel.
 
-    Optionally forward-fills price gaps within ``ffill_limit`` and fills
-    any remaining post-inception NaNs with ``fill_isolated_with`` (so
-    isolated holiday gaps don't propagate). Returns a returns DataFrame
-    aligned to ``close``'s index.
+    Parameters
+    ----------
+    close : pandas.DataFrame
+        Price panel indexed by date with assets in columns.
+    kind : str, default "simple"
+        Return convention passed to the underlying price-to-return routine.
+    ffill_limit : int or None, default 3
+        Optional maximum number of consecutive missing prices to forward-fill
+        before computing returns.
+    fill_isolated_with : float or None, default 0.0
+        Value used to fill remaining missing returns after return calculation. Use
+        ``None`` to preserve NaNs.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Return panel aligned to the input price index.
+
+    Notes
+    -----
+    Infinite returns are replaced by NaN before optional filling. The default
+    settings are designed to avoid isolated holiday gaps from propagating through
+    daily panels.
     """
+
     px = close.copy()
     if ffill_limit is not None and ffill_limit > 0:
         px = px.ffill(limit=ffill_limit)
@@ -353,12 +455,30 @@ def load_vix(
     index: pd.Index | None = None,
     ffill_limit: int | None = None,
 ) -> pd.Series:
-    """Load a saved CBOE VIX close series and optionally align it to a target index.
+    """Load a saved VIX close series and optionally align it to a target index.
 
-    The CSV is expected to have a date column and a single ``VIX`` close column
-    (as written by ``yfinance``). When ``index`` is supplied the series is
-    forward-filled onto that index so it can be merged with a daily return panel.
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        CSV file containing a date column and a VIX close column.
+    index : pandas.Index or None, optional
+        Optional target index. When supplied, the VIX series is forward-filled onto
+        this index.
+    ffill_limit : int or None, optional
+        Maximum number of consecutive missing values to forward-fill during
+        alignment.
+
+    Returns
+    -------
+    pandas.Series
+        VIX close series named ``"VIX"``.
+
+    Notes
+    -----
+    The value column is selected as ``"VIX"`` when present; otherwise the first
+    numeric column is used. Duplicate dates keep the last observation.
     """
+
     frame = pd.read_csv(Path(path))
     date_col = _resolve_date_column(frame.columns, "Date") or frame.columns[0]
     frame[date_col] = pd.to_datetime(frame[date_col], errors="coerce")
@@ -373,12 +493,29 @@ def load_vix(
 
 
 def vix_feature_frame(vix: pd.Series, *, index: pd.Index | None = None) -> pd.DataFrame:
-    """Distil a raw VIX series into stationary RL-observation features.
+    """Transform a VIX series into bounded volatility-regime features.
 
-    Returns three columns: a 20-day rolling z-score of the level, the ratio of
-    VIX to its 63-day moving average (term-structure proxy), and the 252-day
-    percentile rank of the level. All are bounded and free of raw macro data.
+    Parameters
+    ----------
+    vix : pandas.Series
+        Raw VIX level series.
+    index : pandas.Index or None, optional
+        Optional target index. When supplied, features are forward-filled onto this
+        index.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Feature frame with columns ``vix_z_20``, ``vix_ma_ratio_63``, and
+        ``vix_pct_252``.
+
+    Notes
+    -----
+    The features are a 20-day rolling z-score, a 63-day moving-average ratio, and a
+    252-day rolling percentile rank. Missing and infinite values are replaced with
+    zero after feature construction.
     """
+
     v = pd.to_numeric(pd.Series(vix), errors="coerce").astype(float)
     v.index = pd.to_datetime(v.index)
     v = v.sort_index().ffill()

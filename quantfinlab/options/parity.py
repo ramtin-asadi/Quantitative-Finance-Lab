@@ -24,7 +24,28 @@ def infer_forward_from_put_call_pair(
     rate,
     tau,
 ):
-    """Infer F from C - P = DF * (F - K)."""
+    """Infer a forward price from one matched call-put pair using put-call parity.
+
+    Parameters
+    ----------
+    call_mid : array-like
+        Call price.
+    put_mid : array-like
+        Put price.
+    strike : array-like
+        Strike price shared by the call and put.
+    rate : array-like
+        Continuously compounded risk-free rate.
+    tau : array-like
+        Time to expiry in years.
+
+    Returns
+    -------
+    numpy.ndarray
+        Parity-implied forward price computed from
+        ``C - P = DF * (F - K)``.
+    """
+
     df = discounting.discount_factor_from_rate(rate, tau)
     return strike + (np.asarray(call_mid, dtype=float) - np.asarray(put_mid, dtype=float)) / np.asarray(
         df,
@@ -40,6 +61,30 @@ def put_call_parity_residual(
     rate,
     tau,
 ) -> np.ndarray:
+    """Compute put-call parity residuals for matched call-put quotes.
+
+    Parameters
+    ----------
+    call_price : array-like
+        Call prices.
+    put_price : array-like
+        Put prices.
+    strike : array-like
+        Strike prices.
+    forward : array-like
+        Forward prices.
+    rate : array-like
+        Continuously compounded rates.
+    tau : array-like
+        Times to expiry in years.
+
+    Returns
+    -------
+    numpy.ndarray
+        Residuals ``C - P - DF * (F - K)``. Values near zero indicate consistency
+        with put-call parity under the supplied forward and discount curve.
+    """
+
     df = discounting.discount_factor_from_rate(rate, tau)
     return np.asarray(call_price, dtype=float) - np.asarray(put_price, dtype=float) - np.asarray(
         df,
@@ -48,7 +93,25 @@ def put_call_parity_residual(
 
 
 def robust_forward_by_group(pairs: pd.DataFrame) -> pd.Series:
-    """Robust weighted median forward estimate for one date/expiry group."""
+    """Aggregate pair-level parity forwards into one robust forward estimate.
+
+    The group-level forward is a weighted median of pair-implied forwards when
+    positive finite weights are available, and a simple median otherwise. The function
+    also reports robust parity-error dispersion statistics.
+
+    Parameters
+    ----------
+    pairs : pandas.DataFrame
+        Matched call-put pairs for one date/expiry group. Expected columns include
+        ``pair_forward`` and, optionally, ``pair_weight``.
+
+    Returns
+    -------
+    pandas.Series
+        Series containing ``forward``, parity-error median, MAD, IQR, and number of
+        usable pairs.
+    """
+
     if pairs.empty:
         return pd.Series(dtype=float)
     fwd = pd.to_numeric(pairs["pair_forward"], errors="coerce")
@@ -85,7 +148,29 @@ def infer_forwards_from_put_call_parity(
     rates: pd.Series | pd.DataFrame | None = None,
     price_col: str = "mid",
 ) -> pd.DataFrame:
-    """Pair calls and puts, infer parity forwards, and aggregate by date/expiry."""
+    """Infer a forward curve by pairing calls and puts and aggregating parity forwards.
+
+    The function matches calls and puts by date, expiry, and strike, computes a
+    pair-level forward from put-call parity, weights pairs by quote quality or ATM
+    proximity, and returns one robust forward estimate per date-expiry group.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Long-form option quote table.
+    rates : pandas.Series or pandas.DataFrame, optional
+        Optional rates to merge when the quote table does not already contain a rate
+        column.
+    price_col : str, default='mid'
+        Price column used for both call and put prices.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Forward table with date, expiry, maturity, spot, rate, parity-implied forward,
+        implied carry, number of pairs, and parity-error diagnostics.
+    """
+
     data = _datetime_keys_ns(quotes)
     if rates is not None and "rate" not in data.columns:
         if isinstance(rates, pd.DataFrame):
@@ -179,7 +264,28 @@ def infer_forwards_from_parity(
     spot_col: str = "spot",
     out_col: str = "forward",
 ) -> pd.DataFrame:
-    """Infer parity forwards and merge them back onto the quote table."""
+    """Infer date-expiry parity forwards and merge them back onto the quote table.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Long-form option quote table.
+    date_col, expiry_col, strike_col, option_type_col, mid_col : str
+        Column names for quote date, expiry, strike, option type, and mid price.
+    discount_col : str, default='discount_factor'
+        Discount-factor column used to recover rates if a rate column is absent.
+    spot_col : str, default='spot'
+        Spot price column.
+    out_col : str, default='forward'
+        Name of the output forward column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote table with parity-implied forward and diagnostic columns merged by date
+        and expiry.
+    """
+
     data = quotes.copy()
     rename = {}
     for src, dst in [
@@ -215,7 +321,29 @@ def infer_forwards_from_paired_quotes(
     call_mid_col: str = "c_mid",
     put_mid_col: str = "p_mid",
 ) -> pd.DataFrame:
-    """Infer forwards from an already paired wide call/put quote table."""
+    """Infer forwards from an already paired wide call/put quote table.
+
+    Parameters
+    ----------
+    pairs : pandas.DataFrame
+        Wide table with one row per date, expiry, and strike, containing call and put
+        mid-price columns.
+    call_mid_col : str, default='c_mid'
+        Call mid-price column.
+    put_mid_col : str, default='p_mid'
+        Put mid-price column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Date-expiry forward table with parity diagnostics.
+
+    Raises
+    ------
+    ValueError
+        If required paired-quote columns are missing.
+    """
+
     if pairs.empty:
         return pd.DataFrame(
             columns=[
@@ -326,7 +454,31 @@ def choose_liquid_single_day(
     min_pairs: int = 20,
     prefer_dte_range: tuple[int, int] = (21, 60),
 ) -> pd.Timestamp:
-    """Choose one quote date with enough near-dated put-call pairs."""
+    """Choose a quote date with sufficient liquid put-call pair coverage.
+
+    The function prefers dates with enough pairs in a target DTE window and falls back
+    to broader quote coverage when necessary.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table containing at least a date column.
+    min_pairs : int, default=20
+        Minimum number of pairs or quotes required for a candidate date.
+    prefer_dte_range : tuple[int, int], default=(21, 60)
+        Preferred calendar-DTE window.
+
+    Returns
+    -------
+    pandas.Timestamp
+        Selected normalized quote date.
+
+    Raises
+    ------
+    ValueError
+        If no candidate date can be selected.
+    """
+
     if quotes.empty or "date" not in quotes.columns:
         raise ValueError("quotes must contain date rows.")
     data = quotes.copy()
@@ -351,7 +503,24 @@ def infer_single_day_forward_curve(
     price_col: str = "mid",
     rate_col: str = "rate",
 ) -> pd.DataFrame:
-    """Infer the parity forward curve for one quote date."""
+    """Infer the parity forward curve for a single quote date.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table, typically already filtered to one date.
+    price_col : str, default='mid'
+        Price column used in put-call parity.
+    rate_col : str, default='rate'
+        Input rate column. If different from ``'rate'``, it is copied into the
+        standard rate column before inference.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Date-expiry forward table with parity diagnostics.
+    """
+
     data = quotes.copy()
     if rate_col != "rate" and rate_col in data.columns:
         data["rate"] = data[rate_col]
@@ -363,6 +532,25 @@ def parity_error_table(
     forward_table: pd.DataFrame | None = None,
     price_col: str = "mid",
 ) -> pd.DataFrame:
+    """Build a paired quote table with put-call parity residuals.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Long-form option quote table.
+    forward_table : pandas.DataFrame, optional
+        Optional table containing date-expiry forward values to merge before residual
+        computation.
+    price_col : str, default='mid'
+        Price column used for call and put values.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Matched call-put pairs with a ``parity_residual`` column and relevant merged
+        rate, maturity, forward, and moneyness fields.
+    """
+
     data = quotes.copy()
     data = _datetime_keys_ns(data)
     if forward_table is not None and "forward" not in data.columns:

@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from quantfinlab._optional import get_cpp_kernels, prefer_auto_engine
 from quantfinlab.options.bsm import bsm_price
 
 
@@ -46,13 +47,15 @@ _PDE_NUMBA = None
 
 def _resolve_engine(engine: str) -> str:
     key = str(engine).lower()
+    if key == "auto":
+        return prefer_auto_engine()
     if key in {"numpy", "python"}:
         return "numpy"
     if key == "numba":
         return "numba"
     if key in {"cpp", "c++"}:
         return "cpp"
-    raise ValueError("engine must be one of {'numpy', 'numba', 'cpp'}.")
+    raise ValueError("engine must be one of {'auto', 'numpy', 'numba', 'cpp'}.")
 
 
 def _get_tree_numba():
@@ -311,8 +314,61 @@ def tree_price(
     steps: int = 200,
     tree_type: str = "crr",
     american: bool = True,
-    engine: str = "numba",
+    engine: str = "auto",
 ) -> float:
+    """Price a vanilla European or American option with a recombining binomial tree.
+
+    The function supports call and put options, continuous risk-free and dividend-yield
+    inputs, CRR- or Tian-style tree parameters, and optional acceleration through the
+    configured numerical backend. For American contracts, early exercise is checked at
+    each backward-induction node.
+
+    Parameters
+    ----------
+    s : float
+        Current underlying price. Must be positive for a finite model price.
+    k : float
+        Strike price. Must be positive for a finite model price.
+    r : float
+        Continuously compounded annual risk-free rate.
+    q : float
+        Continuously compounded annual dividend yield or carry adjustment.
+    sigma : float
+        Annualized volatility in decimal units.
+    tau : float
+        Time to expiry in years.
+    option_type : {'call', 'put', 1, -1}, default='put'
+        Option direction. String labels starting with ``'c'`` are treated as calls;
+        labels starting with ``'p'`` are treated as puts. Integer flags follow the
+        same internal convention used by the vectorized tree routines.
+    steps : int, default=200
+        Number of time steps in the tree. Values below two are treated as degenerate
+        cases and return intrinsic value.
+    tree_type : {'crr', 'tian'}, default='crr'
+        Binomial tree parameterization. Labels beginning with ``'tian'`` use the Tian
+        moment-matching tree; all other values use the CRR-style tree.
+    american : bool, default=True
+        If True, allow early exercise during backward induction. If False, compute the
+        European tree value.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='auto'
+        Numerical backend. ``'auto'`` selects the fastest available backend and falls
+        back to the pure Python/NumPy implementation when optional accelerators are
+        unavailable.
+
+    Returns
+    -------
+    float
+        Option value. Returns ``nan`` for invalid positive-price inputs and intrinsic
+        value for expired or zero-volatility cases.
+
+    Notes
+    -----
+    Rates and dividend yields are annualized continuous rates. The output is in the
+    same currency units as the underlying and strike inputs. The tree is intended for
+    plain-vanilla contracts; it does not model discrete dividends, barriers, or path
+    dependence.
+    """
+
     resolved = _resolve_engine(engine)
     if resolved in {"numba", "cpp"}:
         return float(
@@ -366,8 +422,45 @@ def tree_batch(
     steps: int = 200,
     tree_type: str = "crr",
     american: bool = True,
-    engine: str = "numba",
+    engine: str = "auto",
 ) -> np.ndarray:
+    """Vectorize binomial-tree pricing over arrays of option inputs.
+
+    All numeric inputs are broadcast to a common shape, priced contract by contract,
+    and returned as an array with that broadcast shape. The function is suitable for
+    large quote panels where strikes, expiries, volatilities, rates, and option types
+    vary by row.
+
+    Parameters
+    ----------
+    s, k, r, q, sigma, tau : array-like
+        Broadcastable arrays of underlying price, strike, continuous risk-free rate,
+        continuous dividend yield, annualized volatility, and time to expiry in years.
+    option_type : array-like or scalar
+        Option type labels or integer flags. A scalar option type is broadcast to all
+        contracts.
+    steps : int, default=200
+        Number of time steps used for each tree.
+    tree_type : {'crr', 'tian'}, default='crr'
+        Tree parameterization.
+    american : bool, default=True
+        Whether to apply early-exercise checks.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='auto'
+        Pricing backend. ``'auto'`` attempts accelerated engines when available and
+        falls back to NumPy-compatible pricing.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of option values with the broadcast input shape.
+
+    Notes
+    -----
+    The vectorized interface is the preferred entry point for quote-table pricing.
+    Invalid contracts produce ``nan`` values rather than stopping the full batch,
+    unless a requested explicit backend raises during execution.
+    """
+
     s_arr, k_arr, r_arr, q_arr, sig_arr, tau_arr = np.broadcast_arrays(
         np.asarray(s, dtype=float),
         np.asarray(k, dtype=float),
@@ -402,26 +495,22 @@ def tree_batch(
                 raise
             resolved = "numpy"
     if resolved == "cpp":
-        try:
-            from quantfinlab import _kernels
-
-            return np.asarray(
-                _kernels.american_tree_batch(
-                    s_arr.reshape(-1),
-                    k_arr.reshape(-1),
-                    r_arr.reshape(-1),
-                    q_arr.reshape(-1),
-                    sig_arr.reshape(-1),
-                    tau_arr.reshape(-1),
-                    flags,
-                    int(steps),
-                    int(tree_code),
-                    bool(american),
-                ),
-                dtype=float,
-            ).reshape(s_arr.shape)
-        except Exception:
-            raise
+        kernels = get_cpp_kernels("American tree pricing")
+        return np.asarray(
+            kernels.american_tree_batch(
+                s_arr.reshape(-1),
+                k_arr.reshape(-1),
+                r_arr.reshape(-1),
+                q_arr.reshape(-1),
+                sig_arr.reshape(-1),
+                tau_arr.reshape(-1),
+                flags,
+                int(steps),
+                int(tree_code),
+                bool(american),
+            ),
+            dtype=float,
+        ).reshape(s_arr.shape)
     out = np.empty(s_arr.size, dtype=float)
     for i, vals in enumerate(zip(s_arr.reshape(-1), k_arr.reshape(-1), r_arr.reshape(-1), q_arr.reshape(-1), sig_arr.reshape(-1), tau_arr.reshape(-1), flags, strict=False)):
         out[i] = tree_price(*vals[:6], int(vals[6]), steps=steps, tree_type=tree_type, american=american, engine=resolved)
@@ -439,8 +528,36 @@ def european_tree_batch(
     *,
     steps: int = 200,
     tree_type: str = "crr",
-    engine: str = "numba",
+    engine: str = "auto",
 ) -> np.ndarray:
+    """Price a batch of European vanilla options with a recombining binomial tree.
+
+    This convenience wrapper calls the vectorized tree pricer with early exercise
+    disabled. It is useful for comparing tree convergence against closed-form
+    Black-Scholes/Black-76 prices or for measuring the early-exercise premium of
+    American contracts.
+
+    Parameters
+    ----------
+    s, k, r, q, sigma, tau : array-like
+        Broadcastable option-pricing inputs: underlying price, strike, continuous
+        risk-free rate, continuous dividend yield, annualized volatility, and time to
+        expiry in years.
+    option_type : array-like or scalar
+        Option type labels or integer flags.
+    steps : int, default=200
+        Number of tree steps.
+    tree_type : {'crr', 'tian'}, default='crr'
+        Tree parameterization.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='auto'
+        Numerical backend.
+
+    Returns
+    -------
+    numpy.ndarray
+        European option values with the broadcast input shape.
+    """
+
     return tree_batch(
         s,
         k,
@@ -468,19 +585,61 @@ def tree_boundary(
     steps: int = 200,
     tree_type: str = "crr",
     american: bool = True,
-    engine: str = "numba",
+    engine: str = "auto",
 ) -> pd.DataFrame:
+    """Extract the early-exercise boundary from a recombining option tree.
+
+    The function prices the option backward through the tree and records the boundary
+    level at each time step where immediate exercise dominates continuation value. For
+    puts the boundary is the highest exercise stock level; for calls it is the lowest
+    exercise stock level under the internal option-flag convention.
+
+    Parameters
+    ----------
+    s : float
+        Current underlying price.
+    k : float
+        Strike price.
+    r : float
+        Continuously compounded annual risk-free rate.
+    q : float
+        Continuously compounded annual dividend yield.
+    sigma : float
+        Annualized volatility.
+    tau : float
+        Time to expiry in years.
+    option_type : {'call', 'put', 1, -1}, default='put'
+        Option type.
+    steps : int, default=200
+        Number of tree steps.
+    tree_type : {'crr', 'tian'}, default='crr'
+        Tree parameterization.
+    american : bool, default=True
+        Whether to perform early-exercise checks. If False, the boundary is generally
+        undefined except at expiry.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='auto'
+        Numerical backend.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns ``time`` and ``boundary``. Missing boundary values are
+        represented by ``nan`` when no early-exercise region is detected at a time
+        level.
+
+    Notes
+    -----
+    The boundary is a numerical diagnostic rather than an analytical exercise rule.
+    It becomes more stable as the number of tree steps increases.
+    """
+
     flag = int(_option_flag(option_type).reshape(-1)[0]) if not isinstance(option_type, int) else int(option_type)
     tree_code = 1 if str(tree_type).lower().startswith("tian") else 0
     resolved = _resolve_engine(engine)
     if resolved == "cpp":
-        try:
-            from quantfinlab import _kernels
-
-            out = _kernels.american_tree_boundary(s, k, r, q, sigma, tau, flag, int(steps), int(tree_code), bool(american))
-            return pd.DataFrame({"time": np.asarray(out["times"], dtype=float), "boundary": np.asarray(out["boundary"], dtype=float)})
-        except Exception:
-            raise
+        kernels = get_cpp_kernels("American tree exercise-boundary extraction")
+        out = kernels.american_tree_boundary(s, k, r, q, sigma, tau, flag, int(steps), int(tree_code), bool(american))
+        return pd.DataFrame({"time": np.asarray(out["times"], dtype=float), "boundary": np.asarray(out["boundary"], dtype=float)})
     n = int(max(2, steps))
     dt = float(tau) / n
     u, d, p = _tree_ud_p(float(r), float(q), float(sigma), dt, tree_type)
@@ -517,8 +676,61 @@ def pde_price(
     tol: float = 1e-7,
     max_iter: int = 5000,
     american: bool = True,
-    engine: str = "numba",
+    engine: str = "auto",
 ) -> dict[str, Any]:
+    """Price a vanilla European or American option with a finite-difference PDE solver.
+
+    The solver builds an asset-price grid, steps backward through time, and applies a
+    projected successive-over-relaxation style constraint when American exercise is
+    enabled. The returned dictionary contains both the interpolated price and the
+    terminal numerical objects needed for diagnostics.
+
+    Parameters
+    ----------
+    s : float
+        Current underlying price.
+    k : float
+        Strike price.
+    r : float
+        Continuously compounded annual risk-free rate.
+    q : float
+        Continuously compounded annual dividend yield.
+    sigma : float
+        Annualized volatility.
+    tau : float
+        Time to expiry in years.
+    option_type : {'call', 'put', 1, -1}, default='put'
+        Option type.
+    s_steps : int, default=160
+        Number of asset-price grid intervals.
+    t_steps : int, default=120
+        Number of time steps.
+    s_max_mult : float, default=3.0
+        Upper asset-grid bound as a multiple of the larger of spot and strike.
+    omega : float, default=1.35
+        Relaxation parameter used by the iterative obstacle solver.
+    tol : float, default=1e-7
+        Convergence tolerance for the iterative linear solve.
+    max_iter : int, default=5000
+        Maximum number of iterations per time step.
+    american : bool, default=True
+        If True, enforce the early-exercise obstacle.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='auto'
+        Numerical backend.
+
+    Returns
+    -------
+    dict
+        Dictionary containing at least ``price``, ``s_grid``, ``values``, ``boundary``,
+        ``residuals``, and ``engine_used`` when the backend reports it.
+
+    Notes
+    -----
+    PDE prices are sensitive to grid size, domain truncation, and relaxation settings.
+    For production-style analysis, compare this output with tree prices and check the
+    residual path and boundary stability.
+    """
+
     flag = int(_option_flag(option_type).reshape(-1)[0]) if not isinstance(option_type, int) else int(option_type)
     resolved = _resolve_engine(engine)
     if resolved == "numba":
@@ -553,9 +765,8 @@ def pde_price(
                 raise
             resolved = "numpy"
     if resolved == "cpp":
-        from quantfinlab import _kernels
-
-        out = _kernels.american_pde_psor(
+        kernels = get_cpp_kernels("American finite-difference PDE pricing")
+        out = kernels.american_pde_psor(
             float(s),
             float(k),
             float(r),
@@ -592,6 +803,22 @@ def pde_price(
 
 
 def pde_boundary(result: dict[str, Any], tau: float | None = None) -> pd.DataFrame:
+    """Convert a PDE pricing result into a time-indexed exercise-boundary table.
+
+    Parameters
+    ----------
+    result : dict
+        Result dictionary returned by the PDE pricer. The dictionary should contain a
+        ``boundary`` array.
+    tau : float, optional
+        Expiry horizon in years. If omitted, the time grid is normalized to ``[0, 1]``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with columns ``time`` and ``boundary``.
+    """
+
     boundary = np.asarray(result.get("boundary", []), dtype=float)
     if tau is None:
         time_grid = np.linspace(0.0, 1.0, len(boundary))
@@ -610,15 +837,86 @@ def american_premium(
     rate=0.0,
     dividend_yield=0.0,
 ) -> np.ndarray:
+    """Compute the American early-exercise premium over the corresponding European price.
+
+    The European benchmark is evaluated with the Black-Scholes model using the same
+    spot, strike, time to expiry, volatility, rate, dividend yield, and option type.
+    The result is useful for identifying contracts where early exercise materially
+    changes valuation.
+
+    Parameters
+    ----------
+    american_price : array-like
+        American model prices.
+    option_type : array-like or scalar
+        Option type labels.
+    spot : array-like
+        Current underlying prices.
+    strike : array-like
+        Strike prices.
+    tau : array-like
+        Times to expiry in years.
+    sigma : array-like
+        Annualized volatilities.
+    rate : array-like or scalar, default=0.0
+        Continuously compounded risk-free rates.
+    dividend_yield : array-like or scalar, default=0.0
+        Continuously compounded dividend yields.
+
+    Returns
+    -------
+    numpy.ndarray
+        ``american_price - european_price`` with broadcast-compatible shape.
+    """
+
     euro = bsm_price(option_type, spot, strike, tau, sigma, rate=rate, dividend_yield=dividend_yield)
     return np.asarray(american_price, dtype=float) - np.asarray(euro, dtype=float)
 
 
 def pricing_error(model_price, market_mid) -> np.ndarray:
+    """Compute signed pricing errors against observed market mid prices.
+
+    Parameters
+    ----------
+    model_price : array-like
+        Model-implied prices.
+    market_mid : array-like
+        Observed mid prices or other reference prices.
+
+    Returns
+    -------
+    numpy.ndarray
+        Signed errors ``model_price - market_mid``.
+
+    Notes
+    -----
+    Positive values indicate model prices above the market reference; negative values
+    indicate model prices below the market reference.
+    """
+
     return np.asarray(model_price, dtype=float) - np.asarray(market_mid, dtype=float)
 
 
 def model_disagreement(*prices) -> np.ndarray:
+    """Measure cross-model price dispersion for one or more model-price arrays.
+
+    Parameters
+    ----------
+    *prices : array-like
+        One or more arrays of model prices. ``None`` inputs are ignored.
+
+    Returns
+    -------
+    numpy.ndarray
+        Pointwise range across supplied model prices, computed as
+        ``nanmax(prices) - nanmin(prices)`` after broadcasting.
+
+    Notes
+    -----
+    The output is a simple model-uncertainty proxy. It measures disagreement in price
+    units and does not adjust for bid-ask spreads, vega, or quote quality.
+    """
+
     arrays = [np.asarray(x, dtype=float) for x in prices if x is not None]
     if not arrays:
         return np.asarray([], dtype=float)
@@ -627,6 +925,28 @@ def model_disagreement(*prices) -> np.ndarray:
 
 
 def boundary_distance(spot, boundary, option_type="put") -> np.ndarray:
+    """Compute normalized distance between spot and an early-exercise boundary.
+
+    For puts, positive values mean the boundary is above spot. For calls, positive
+    values mean spot is above the boundary. The output is scaled by spot so that the
+    measure is comparable across underlying price levels.
+
+    Parameters
+    ----------
+    spot : array-like
+        Current underlying prices.
+    boundary : array-like
+        Exercise-boundary levels.
+    option_type : {'call', 'put'} or array-like, default='put'
+        Option type used to orient the distance.
+
+    Returns
+    -------
+    numpy.ndarray
+        Normalized boundary distance with the broadcast input shape. Invalid or
+        non-positive spot values produce ``nan``.
+    """
+
     spot_arr, bound_arr = np.broadcast_arrays(np.asarray(spot, dtype=float), np.asarray(boundary, dtype=float))
     flag = _option_flag(option_type)
     if flag.size == 1 and spot_arr.size > 1:
@@ -653,6 +973,40 @@ def assignment_risk(
     spread_col: str = "rel_spread",
     disagreement_col: str = "model_disagreement",
 ) -> pd.DataFrame:
+    """Score early-assignment risk for option quotes using liquidity, moneyness, and exercise diagnostics.
+
+    The function builds a heuristic risk score from intrinsic value, proximity to the
+    exercise boundary, dividend-versus-time-value pressure, low remaining time value,
+    ex-dividend proximity when available, spread quality, and model disagreement.
+    Scores are clipped to the interval ``[0, 1]``.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table containing at least option type, spot, strike, and mid
+        price columns. Optional columns improve the score when present.
+    dividend_col : str, default='next_dividend'
+        Column containing the next expected cash dividend amount.
+    time_value_col : str, default='time_value'
+        Column to read or create for option time value.
+    boundary_distance_col : str, default='boundary_distance'
+        Column containing normalized distance to the exercise boundary.
+    spread_col : str, default='rel_spread'
+        Relative bid-ask spread column used as a liquidity penalty.
+    disagreement_col : str, default='model_disagreement'
+        Model price dispersion column used as a model-uncertainty input.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``quotes`` with intermediate score columns and ``assignment_risk``.
+
+    Notes
+    -----
+    This is a screening heuristic, not an exchange assignment model. It is most useful
+    for ranking contracts and flagging positions that require manual review or rolling.
+    """
+
     out = quotes.copy()
     option_type = out.get("option_type", "call").astype(str).str.lower()
     spot = pd.to_numeric(out.get("spot"), errors="coerce")
@@ -708,6 +1062,27 @@ def roll_signal(
     spread_col: str = "rel_spread",
     threshold: float = 1.0,
 ) -> pd.DataFrame:
+    """Create a roll-urgency score and boolean roll signal from assignment-risk inputs.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table containing assignment-risk, DTE, and spread columns.
+    risk_col : str, default='assignment_risk'
+        Column containing assignment-risk scores.
+    dte_col : str, default='dte_days'
+        Column containing days to expiry. If missing, ``'dte'`` is used when present.
+    spread_col : str, default='rel_spread'
+        Relative-spread column.
+    threshold : float, default=1.0
+        Roll-urgency cutoff for setting ``roll_signal`` to True.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``quotes`` with ``roll_urgency`` and ``roll_signal`` columns.
+    """
+
     out = quotes.copy()
     risk = pd.to_numeric(out.get(risk_col, 0.0), errors="coerce").fillna(0.0)
     dte = pd.to_numeric(out.get(dte_col, out.get("dte", 30.0)), errors="coerce").fillna(30.0)
@@ -718,6 +1093,28 @@ def roll_signal(
 
 
 def speed_table(fn, sizes: list[int], repeats: int = 3) -> pd.DataFrame:
+    """Benchmark a callable across a sequence of problem sizes.
+
+    Parameters
+    ----------
+    fn : callable
+        Function that accepts a single integer size argument.
+    sizes : list[int]
+        Problem sizes to evaluate.
+    repeats : int, default=3
+        Number of repetitions per size. The reported runtime is the median.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with columns ``n``, ``seconds``, and ``runs_per_sec``.
+
+    Notes
+    -----
+    This helper is intended for lightweight backend and vectorization diagnostics. It
+    does not isolate warm-up, compilation, or garbage-collection effects.
+    """
+
     rows = []
     for n in sizes:
         times = []

@@ -38,14 +38,41 @@ def load_ohlcv(
     fields: tuple[str, ...] = ("close",),
     date_col: str | None = None,
 ) -> pd.DataFrame:
-    """Load a single-asset OHLCV CSV / Parquet into a normalized panel.
+    """Load and normalize a single-asset OHLCV file.
 
-    Output: DataFrame with sorted ``DatetimeIndex`` and the requested
-    fields in lowercase ``snake_case``. Common aliases are resolved so
-    that ``"close"`` returns the adj-close column when present and falls
-    back to the unadjusted close otherwise; ``"dividend"`` resolves to
-    a ``dividends`` / ``dividend`` column when present.
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        CSV or Parquet file containing one asset's OHLCV-style observations.
+    source : str, default "yfinance_csv"
+        Source label used for schema intent. The current implementation normalizes
+        yfinance-style exports and rejects missing required fields explicitly.
+    fields : tuple of str, default ("close",)
+        Fields to extract. Common aliases are resolved case-insensitively; for
+        example, ``"close"`` prefers adjusted close when available, and
+        ``"dividend"`` accepts dividend/dividends columns.
+    date_col : str or None, optional
+        Explicit date column. If omitted, a common date column is inferred.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame indexed by a sorted, deduplicated ``DatetimeIndex`` with one
+        numeric column per requested field. Output column names are lowercase
+        snake-case versions of the requested fields.
+
+    Raises
+    ------
+    ValueError
+        If the file does not exist, no date column can be resolved, or a requested
+        field is unavailable.
+
+    Notes
+    -----
+    Duplicate dates are resolved by keeping the last observation. Values are coerced
+    to numeric and infinite values are replaced by NaN.
     """
+
     p = Path(path)
     if not p.exists():
         raise ValueError(f"OHLCV file does not exist: {p}")

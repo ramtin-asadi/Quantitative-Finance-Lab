@@ -16,7 +16,14 @@ from .contracts import (
     validate_sorted_strictly_increasing,
 )
 from .dates import align_to_previous_available, month_end_dates, previous_available_date, yearfrac
-from .errors import BacktestError, DataError, InputError, ModelError, QuantFinLabError
+from .errors import (
+    BacktestError,
+    DataError,
+    InputError,
+    MissingKernelsError,
+    ModelError,
+    QuantFinLabError,
+)
 from .results import SimpleBacktestResult
 from .types import ArrayLike, DFCallable, SeriesOrFrame
 from .validation import (
@@ -40,6 +47,7 @@ __all__ = [
     "InputError",
     "IssuanceBook",
     "IssuedBond",
+    "MissingKernelsError",
     "ModelError",
     "PortfolioState",
     "QuantFinLabError",

@@ -51,7 +51,35 @@ def _weights(lam_tau: float, n_max: int) -> np.ndarray:
 
 
 def merton_cf(u, spot, rate, dividend_yield, tau, sigma, lambda_jump, mu_jump, sigma_jump):
-    """Merton jump-diffusion characteristic function of log spot at expiry."""
+    """Evaluate the Merton jump-diffusion characteristic function of log spot.
+
+    Parameters
+    ----------
+    u : array-like
+        Complex Fourier argument.
+    spot : float or array-like
+        Current spot price.
+    rate : float or array-like
+        Continuously compounded risk-free rate.
+    dividend_yield : float or array-like
+        Continuously compounded dividend yield.
+    tau : float or array-like
+        Time to expiry in years.
+    sigma : float or array-like
+        Diffusive volatility.
+    lambda_jump : float or array-like
+        Jump intensity.
+    mu_jump : float or array-like
+        Mean log-jump size.
+    sigma_jump : float or array-like
+        Log-jump volatility.
+
+    Returns
+    -------
+    numpy.ndarray
+        Characteristic-function values with martingale drift compensation.
+    """
+
     u_arr = np.asarray(u, dtype=complex)
     sigma = np.asarray(sigma, dtype=float)
     lam = np.asarray(lambda_jump, dtype=float)
@@ -70,6 +98,42 @@ def merton_cf(u, spot, rate, dividend_yield, tau, sigma, lambda_jump, mu_jump, s
 
 
 def merton_price(option_type, forward, strike, tau, discount_factor, sigma, lambda_jump, mu_jump, sigma_jump, n_max: int = 40, engine: str = "auto"):
+    """Price vanilla options under the Merton jump-diffusion model by Poisson mixture.
+
+    The price is computed as a weighted sum of Black-76 prices conditional on the
+    number of jumps up to expiry.
+
+    Parameters
+    ----------
+    option_type : array-like or scalar
+        Option type labels.
+    forward : array-like
+        Forward prices.
+    strike : array-like
+        Strike prices.
+    tau : array-like
+        Times to expiry in years.
+    discount_factor : array-like
+        Expiry discount factors.
+    sigma : array-like
+        Diffusive volatility.
+    lambda_jump : array-like
+        Jump intensity.
+    mu_jump : array-like
+        Mean log-jump size.
+    sigma_jump : array-like
+        Log-jump volatility.
+    n_max : int, default=40
+        Maximum number of jumps included in the Poisson mixture.
+    engine : str, default='auto'
+        Compatibility backend argument.
+
+    Returns
+    -------
+    numpy.ndarray
+        Model option prices with broadcast input shape.
+    """
+
     option_type = np.asarray(option_type)
     forward = np.asarray(forward, dtype=float)
     strike = np.asarray(strike, dtype=float)
@@ -193,6 +257,32 @@ def _fit_one_merton(q: pd.DataFrame, weight_col: str, engine: str, max_nfev: int
 
 
 def fit_merton_jump_diffusion(quotes: pd.DataFrame, weight_col: str = "obs_weight", engine: str = "auto", max_nfev: int = 180, fit_by_expiry: bool = True) -> dict:
+    """Calibrate Merton jump-diffusion slices to option quotes.
+
+    The model is fitted by date-expiry or expiry slice when requested, using weighted
+    price residuals and warm-starting from the previous successful slice.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Calibration quote table.
+    weight_col : str, default='obs_weight'
+        Observation-weight column.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Pricing backend.
+    max_nfev : int, default=180
+        Maximum least-squares evaluations per slice.
+    fit_by_expiry : bool, default=True
+        If True, calibrate separate parameters by expiry/date-expiry group. If False,
+        fit a single parameter set to all quotes.
+
+    Returns
+    -------
+    dict
+        Fit dictionary containing model name, parameter slices, quote-level fit,
+        diagnostic summary, elapsed time, and engine metadata.
+    """
+
     t0 = time.perf_counter()
     engine_used = _engine_name(engine)
     q = quotes.copy()
@@ -228,6 +318,24 @@ def fit_merton_jump_diffusion(quotes: pd.DataFrame, weight_col: str = "obs_weigh
 
 
 def merton_prices(quotes: pd.DataFrame, fit: dict, engine: str = "auto") -> pd.DataFrame:
+    """Reprice quotes with a fitted Merton jump-diffusion model.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table to price.
+    fit : dict
+        Fit dictionary containing parameter slices.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Pricing backend.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote-level model prices and residuals, or an empty quote slice when inputs or
+        fitted parameters are unavailable.
+    """
+
     params = fit.get("params", pd.DataFrame())
     if quotes.empty or params.empty:
         return quotes.head(0).copy()

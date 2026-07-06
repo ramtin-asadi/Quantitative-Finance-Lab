@@ -4,7 +4,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from quantfinlab.dataio.panel import align_panels, load_yfinance_panel, prices_to_returns_panel
+from quantfinlab.dataio.panel import (
+    align_panels,
+    load_vix,
+    load_yfinance_panel,
+    prices_to_returns_panel,
+    vix_feature_frame,
+)
 
 
 def test_load_yfinance_panel_sorts_dedupes_and_filters_tickers(tmp_path) -> None:
@@ -49,3 +55,42 @@ def test_align_panels_and_returns_panel_keep_shape_without_lookahead() -> None:
     assert list(returns.index) == list(close.index[1:])
     assert returns.loc[pd.Timestamp("2024-01-04"), "AAA"] == pytest.approx(0.02)
     assert returns.loc[pd.Timestamp("2024-01-03"), "AAA"] == 0.0
+
+
+def test_panel_loader_merges_multiple_files_lowercases_and_builds_vix_features(tmp_path) -> None:
+    first = pd.DataFrame(
+        {
+            "date": ["2024-01-02", "2024-01-03"],
+            "AAA__close": [100.0, 101.0],
+            "AAA__volume": [1000, 1100],
+        }
+    )
+    second = pd.DataFrame(
+        {
+            "date": ["2024-01-02", "2024-01-03"],
+            "BBB__close": [50.0, 51.0],
+            "BBB__volume": [2000, 2100],
+        }
+    )
+    path_a = tmp_path / "a.csv"
+    path_b = tmp_path / "b.csv"
+    first.to_csv(path_a, index=False)
+    second.to_csv(path_b, index=False)
+    vix_path = tmp_path / "vix.csv"
+    pd.DataFrame(
+        {
+            "Date": pd.bdate_range("2024-01-02", periods=80),
+            "VIX": np.linspace(12.0, 25.0, 80),
+        }
+    ).to_csv(vix_path, index=False)
+
+    panels = load_yfinance_panel([path_a, path_b], fields=("close", "volume"), tickers=["bbb", "aaa"], lowercase=True)
+    target_index = pd.bdate_range("2024-01-02", periods=85)
+    vix = load_vix(vix_path, index=target_index, ffill_limit=5)
+    features = vix_feature_frame(vix, index=target_index)
+
+    assert list(panels["close"].columns) == ["bbb", "aaa"]
+    assert panels["volume"].loc[pd.Timestamp("2024-01-03"), "bbb"] == 2100
+    assert vix.index.equals(target_index)
+    assert {"vix_z_20", "vix_ma_ratio_63", "vix_pct_252"}.issubset(features.columns)
+    assert np.isfinite(features.to_numpy()).all()

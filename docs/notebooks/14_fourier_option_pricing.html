@@ -7836,6 +7836,30 @@ E^Q[H_T]&gt;P_0
 </section>
 
 </main> <!-- /main -->
+<script>
+(function () {
+  function setCodeFolds(open) {
+    document.querySelectorAll("details.code-fold").forEach(function (details) {
+      details.open = open;
+    });
+  }
+
+  function handleCodeToolsClick(event) {
+    var showAll = event.target.closest("#quarto-show-all-code");
+    var hideAll = event.target.closest("#quarto-hide-all-code");
+
+    if (!showAll && !hideAll) {
+      return;
+    }
+
+    window.setTimeout(function () {
+      setCodeFolds(Boolean(showAll));
+    }, 0);
+  }
+
+  document.addEventListener("click", handleCodeToolsClick, true);
+})();
+</script>
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";

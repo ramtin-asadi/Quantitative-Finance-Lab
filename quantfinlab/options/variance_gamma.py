@@ -8,6 +8,33 @@ from scipy import optimize
 
 
 def vg_cf(u, spot, rate, dividend_yield, tau, sigma, theta, nu):
+    """Evaluate the Variance Gamma characteristic function of log spot at expiry.
+
+    Parameters
+    ----------
+    u : array-like
+        Complex Fourier argument.
+    spot : float or array-like
+        Spot price.
+    rate : float or array-like
+        Continuously compounded risk-free rate.
+    dividend_yield : float or array-like
+        Continuously compounded dividend yield.
+    tau : float or array-like
+        Time to expiry in years.
+    sigma : float or array-like
+        Volatility parameter.
+    theta : float or array-like
+        Variance Gamma drift/skew parameter.
+    nu : float or array-like
+        Variance rate parameter.
+
+    Returns
+    -------
+    numpy.ndarray
+        Martingale-corrected characteristic-function values.
+    """
+
     u_arr = np.asarray(u, dtype=complex)
     sigma = np.asarray(sigma, dtype=float)
     theta = np.asarray(theta, dtype=float)
@@ -22,6 +49,33 @@ def vg_cf(u, spot, rate, dividend_yield, tau, sigma, theta, nu):
 
 
 def vg_price(option_type, spot, strike, tau, rate, dividend_yield, sigma, theta, nu, *, engine: str = "numba"):
+    """Price vanilla options under the Variance Gamma model by Fourier integration.
+
+    Parameters
+    ----------
+    option_type : array-like or scalar
+        Option type labels.
+    spot : array-like
+        Spot prices.
+    strike : array-like
+        Strike prices.
+    tau : array-like
+        Times to expiry in years.
+    rate : array-like
+        Continuously compounded risk-free rates.
+    dividend_yield : array-like
+        Continuously compounded dividend yields.
+    sigma, theta, nu : float
+        Variance Gamma parameters.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='numba'
+        Fourier-pricing backend.
+
+    Returns
+    -------
+    numpy.ndarray
+        Model option prices.
+    """
+
     from quantfinlab.options.fourier import direct_price
 
     params = {"sigma": sigma, "theta": theta, "nu": nu}
@@ -29,6 +83,27 @@ def vg_price(option_type, spot, strike, tau, rate, dividend_yield, sigma, theta,
 
 
 def fit_variance_gamma(quotes: pd.DataFrame, weight_col: str = "obs_weight", max_nfev: int = 80, engine: str = "numba") -> dict:
+    """Calibrate a Variance Gamma option-pricing model to a quote panel.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Calibration quotes containing spot, strike, rate, maturity, option type, mid
+        price, and optional weights.
+    weight_col : str, default='obs_weight'
+        Observation-weight column.
+    max_nfev : int, default=80
+        Maximum least-squares evaluations per starting point.
+    engine : {'auto', 'numpy', 'numba', 'cpp'}, default='numba'
+        Fourier-pricing backend.
+
+    Returns
+    -------
+    dict
+        Dictionary with model name, fitted parameters, quote-level fit, diagnostic
+        summary, elapsed time, and engine metadata.
+    """
+
     from quantfinlab.options.fourier import direct_price
 
     t0 = time.perf_counter()

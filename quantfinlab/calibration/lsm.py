@@ -5,6 +5,7 @@ import time
 import numpy as np
 import pandas as pd
 
+from quantfinlab._optional import get_cpp_kernels, prefer_auto_engine
 from quantfinlab.numerics.monte_carlo import gbm_paths, payoff_paths
 
 _LSM_NUMBA = None
@@ -13,13 +14,15 @@ _LSM_EVAL_NUMBA = None
 
 def _resolve_engine(engine: str) -> str:
     key = str(engine).lower()
+    if key == "auto":
+        return prefer_auto_engine()
     if key in {"numpy", "python"}:
         return "numpy"
     if key == "numba":
         return "numba"
     if key in {"cpp", "c++"}:
         return "cpp"
-    raise ValueError("engine must be one of {'numpy', 'numba', 'cpp'}.")
+    raise ValueError("engine must be one of {'auto', 'numpy', 'numba', 'cpp'}.")
 
 
 def _get_lsm_numba():
@@ -173,13 +176,12 @@ def basis_matrix(x, degree: int = 3) -> np.ndarray:
     return np.column_stack(cols)
 
 
-def lsm_train(paths: np.ndarray, strike: float, r: float, tau: float, option_type: str = "put", degree: int = 3, engine: str = "numba") -> dict:
+def lsm_train(paths: np.ndarray, strike: float, r: float, tau: float, option_type: str = "put", degree: int = 3, engine: str = "auto") -> dict:
     resolved = _resolve_engine(engine)
     flag = 1 if str(option_type).lower().startswith("c") else -1
     if resolved == "cpp":
-        from quantfinlab import _kernels
-
-        return _kernels.lsm_backward(np.asarray(paths, dtype=float), float(strike), float(r), float(tau), int(flag), int(degree))
+        kernels = get_cpp_kernels("Longstaff-Schwartz training")
+        return kernels.lsm_backward(np.asarray(paths, dtype=float), float(strike), float(r), float(tau), int(flag), int(degree))
     if resolved == "numba":
         try:
             train_nb, _ = _get_lsm_numba()
@@ -213,13 +215,12 @@ def lsm_train(paths: np.ndarray, strike: float, r: float, tau: float, option_typ
     return {"price": price, "exercise_time": exercise_time, "coefficients": coeffs}
 
 
-def lsm_value(paths: np.ndarray, strike: float, r: float, tau: float, option_type: str, coefficients: np.ndarray, engine: str = "numba") -> dict:
+def lsm_value(paths: np.ndarray, strike: float, r: float, tau: float, option_type: str, coefficients: np.ndarray, engine: str = "auto") -> dict:
     resolved = _resolve_engine(engine)
     flag = 1 if str(option_type).lower().startswith("c") else -1
     if resolved == "cpp":
-        from quantfinlab import _kernels
-
-        return _kernels.lsm_eval_policy(np.asarray(paths, dtype=float), float(strike), float(r), float(tau), int(flag), np.asarray(coefficients, dtype=float))
+        kernels = get_cpp_kernels("Longstaff-Schwartz policy evaluation")
+        return kernels.lsm_eval_policy(np.asarray(paths, dtype=float), float(strike), float(r), float(tau), int(flag), np.asarray(coefficients, dtype=float))
     if resolved == "numba":
         try:
             _, eval_nb = _get_lsm_numba()
@@ -258,13 +259,14 @@ def lsm_crossfit(
     paths: int = 20000,
     degree: int = 3,
     seed: int = 7,
-    engine: str = "numba",
+    engine: str = "auto",
 ) -> dict:
     resolved = _resolve_engine(engine)
-    train_paths = gbm_paths(s0, r, q, sigma, tau, steps=steps, paths=paths, seed=seed, engine=resolved if resolved != "cpp" else "cpp")
-    eval_paths = gbm_paths(s0, r, q, sigma, tau, steps=steps, paths=paths, seed=seed + 1009, engine=resolved if resolved != "cpp" else "cpp")
-    train = lsm_train(train_paths, strike, r, tau, option_type, degree, engine=resolved)
-    val = lsm_value(eval_paths, strike, r, tau, option_type, train["coefficients"], engine=resolved)
+    child_engine = "auto" if str(engine).lower() == "auto" else resolved
+    train_paths = gbm_paths(s0, r, q, sigma, tau, steps=steps, paths=paths, seed=seed, engine=child_engine)
+    eval_paths = gbm_paths(s0, r, q, sigma, tau, steps=steps, paths=paths, seed=seed + 1009, engine=child_engine)
+    train = lsm_train(train_paths, strike, r, tau, option_type, degree, engine=child_engine)
+    val = lsm_value(eval_paths, strike, r, tau, option_type, train["coefficients"], engine=child_engine)
     return {
         "train_price": float(train["price"]),
         "evaluation_price": float(val["price"]),
@@ -338,7 +340,7 @@ def lsm_regime_map(
     paths: int = 64000,
     steps: int = 40,
     degree: int = 3,
-    engine: str = "cpp",
+    engine: str = "auto",
     seed: int = 11,
     repeats: int = 1,
 ) -> pd.DataFrame:
@@ -433,7 +435,7 @@ def lsm_stability(
     path_counts=(16000, 64000, 128000),
     degrees=(2, 3, 4),
     steps: int = 40,
-    engine: str = "cpp",
+    engine: str = "auto",
 ) -> pd.DataFrame:
     rows = []
     for paths in path_counts:

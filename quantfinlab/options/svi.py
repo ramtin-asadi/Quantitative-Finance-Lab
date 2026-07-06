@@ -36,6 +36,34 @@ else:
 
 
 def svi_total_var(k, a, b, rho, m, sigma, engine: str = "auto"):
+    """Evaluate raw SVI total variance.
+
+    The raw SVI parameterization is
+    ``w(k) = a + b * (rho * (k - m) + sqrt((k - m)**2 + sigma**2))``.
+
+    Parameters
+    ----------
+    k : array-like
+        Forward log-moneyness.
+    a : array-like or scalar
+        Level parameter.
+    b : array-like or scalar
+        Slope/scale parameter.
+    rho : array-like or scalar
+        Skew/correlation parameter.
+    m : array-like or scalar
+        Horizontal shift parameter.
+    sigma : array-like or scalar
+        Curvature parameter.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Evaluation backend.
+
+    Returns
+    -------
+    numpy.ndarray
+        Total implied variance values.
+    """
+
     k_arr = np.asarray(k, dtype=float)
     a_arr = np.asarray(a, dtype=float)
     b_arr = np.asarray(b, dtype=float)
@@ -57,6 +85,25 @@ def svi_total_var(k, a, b, rho, m, sigma, engine: str = "auto"):
 
 
 def svi_iv(k, tau, a, b, rho, m, sigma, engine: str = "auto"):
+    """Convert raw SVI total variance to implied volatility.
+
+    Parameters
+    ----------
+    k : array-like
+        Forward log-moneyness.
+    tau : array-like
+        Time to expiry in years.
+    a, b, rho, m, sigma : array-like or scalar
+        Raw SVI parameters.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Evaluation backend.
+
+    Returns
+    -------
+    numpy.ndarray
+        Implied volatilities ``sqrt(total_variance / tau)``.
+    """
+
     w = svi_total_var(k, a, b, rho, m, sigma, engine=engine)
     return np.sqrt(np.maximum(w, 1e-12) / np.maximum(np.asarray(tau, dtype=float), 1e-12))
 
@@ -138,6 +185,28 @@ def _price_fit(q: pd.DataFrame, params: pd.DataFrame, engine: str) -> pd.DataFra
 
 
 def fit_svi_surface(quotes: pd.DataFrame, weight_col: str = "obs_weight", engine: str = "auto") -> dict:
+    """Fit raw SVI smile slices across expiries or date-expiry groups.
+
+    The function calibrates raw SVI parameters for each slice with warm starts from
+    the previous successful slice, then reprices the quote table and summarizes IV
+    fit quality by slice.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table.
+    weight_col : str, default='obs_weight'
+        Observation-weight column.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Evaluation backend.
+
+    Returns
+    -------
+    dict
+        Fit dictionary containing parameter slices, quote-level fit, diagnostics,
+        elapsed time, and engine metadata.
+    """
+
     t0 = time.perf_counter()
     engine_used = _engine_name(engine)
     q = _prepare(quotes)
@@ -176,6 +245,33 @@ def fit_svi_holdout(
     warm_start: bool = True,
     engine: str = "auto",
 ) -> dict:
+    """Fit SVI on anchor strikes and evaluate held-out quotes by date.
+
+    For each date, sparse anchor strikes are selected by expiry, SVI is fitted on the
+    anchor set, and model predictions are produced for the remaining holdout quotes.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Surface-ready quote table.
+    dates : iterable
+        Dates to evaluate.
+    train_mode : str, default='anchor_strikes'
+        Training-selection label retained for readability.
+    weight_col : str, default='obs_weight'
+        Observation-weight column.
+    warm_start : bool, default=True
+        Compatibility flag.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Evaluation backend.
+
+    Returns
+    -------
+    dict
+        Holdout fit dictionary with parameters, holdout IDs, predictions,
+        diagnostics, elapsed time, and engine metadata.
+    """
+
     t0 = time.perf_counter()
     q = _prepare(quotes)
     if "quote_id" not in q.columns:
@@ -215,6 +311,23 @@ def fit_svi_holdout(
 
 
 def svi_prices(quotes: pd.DataFrame, fit: dict, engine: str = "auto") -> pd.DataFrame:
+    """Reprice quotes with a fitted SVI surface.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table to price.
+    fit : dict
+        SVI fit dictionary containing parameter slices.
+    engine : {'auto', 'numpy', 'numba'}, default='auto'
+        Evaluation backend.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote-level SVI model IV, model price, IV residual, and price residual table.
+    """
+
     return _price_fit(_prepare(quotes), fit.get("params", pd.DataFrame()), _engine_name(engine))
 
 
