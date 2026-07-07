@@ -44,6 +44,26 @@ def _clean_weights(values, index, *, w_min=0.0, w_max=1.0):
 
 
 def risk_contributions(weights, cov_ann):
+    """Compute volatility risk contributions for a weighted portfolio.
+
+    Parameters
+    ----------
+    weights : pandas.Series or mapping
+        Portfolio weights indexed by asset.
+    cov_ann : pandas.DataFrame or array-like
+        Annualized covariance matrix aligned to the weight labels.
+
+    Returns
+    -------
+    pandas.Series
+        Volatility contribution of each asset.
+
+    Notes
+    -----
+    The sum of the returned contributions is portfolio volatility. Divide by the
+    sum to obtain fractional risk contributions.
+    """
+
     w = pd.Series(weights, dtype=float)
     labels = w.index
     cov = pd.DataFrame(cov_ann, index=labels, columns=labels).reindex(index=labels, columns=labels).to_numpy(dtype=float)
@@ -69,6 +89,33 @@ def risk_contribution_table(weights, cov_ann):
 
 
 def equal_risk_contribution_weights(cov_ann, *, tickers=None, w_min=0.0, w_max=0.40):
+    """Compute equal-risk-contribution portfolio weights.
+
+    The optimizer minimizes squared deviations between asset risk contributions
+    and equal risk budgets, subject to full investment and per-asset bounds.
+
+    Parameters
+    ----------
+    cov_ann : array-like or pandas.DataFrame
+        Annualized covariance matrix.
+    tickers : sequence of str, optional
+        Asset labels.
+    w_min : float, default=0.0
+        Minimum per-asset weight.
+    w_max : float, default=0.40
+        Maximum per-asset weight.
+
+    Returns
+    -------
+    pandas.Series
+        Long-only risk-parity weights indexed by asset.
+
+    Notes
+    -----
+    If SLSQP fails, the function returns a cleaned equal-weight-like initial
+    allocation under the same bounds.
+    """
+
     cov = make_psd(np.asarray(cov_ann, dtype=float), eps=1e-10)
     n = cov.shape[0]
     labels = pd.Index(tickers if tickers is not None else [f"a{i}" for i in range(n)])
@@ -90,6 +137,31 @@ def equal_risk_contribution_weights(cov_ann, *, tickers=None, w_min=0.0, w_max=0
 
 
 def risk_parity_weight_frame(cache, rebalance_dates, *, cov_model, w_min=0.0, w_max=0.40):
+    """Build a rebalance-date panel of equal-risk-contribution weights.
+
+    Parameters
+    ----------
+    cache : mapping
+        Rebalance-state cache containing tickers and covariance matrices.
+    rebalance_dates : sequence
+        Candidate rebalance dates.
+    cov_model : str
+        Covariance model key to use from each cached state.
+    w_min : float, default=0.0
+        Minimum per-asset weight.
+    w_max : float, default=0.40
+        Maximum per-asset weight.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Risk-parity weight frame indexed by rebalance date.
+
+    Notes
+    -----
+    Dates missing from the cache are skipped.
+    """
+
     rows = []
     for dt in [pd.Timestamp(x) for x in rebalance_dates if pd.Timestamp(x) in cache][:-1]:
         state = cache[pd.Timestamp(dt)]

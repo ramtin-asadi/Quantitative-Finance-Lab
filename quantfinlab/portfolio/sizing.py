@@ -14,6 +14,28 @@ def normalize_long_only(
     min_weight: float = 0.0,
     max_weight: float | Mapping[str, float] | pd.Series | None = None,
 ) -> pd.Series:
+    """Normalize a long-only weight vector with optional caps.
+
+    Parameters
+    ----------
+    weights : pandas.Series
+        Raw weights indexed by asset.
+    min_weight : float, default=0.0
+        Minimum weight applied before normalization.
+    max_weight : float, mapping, pandas.Series, or None
+        Optional per-asset cap.
+
+    Returns
+    -------
+    pandas.Series
+        Normalized long-only weights.
+
+    Notes
+    -----
+    If the cleaned vector sums to zero, equal weights are used before cap
+    redistribution.
+    """
+
     w = pd.Series(weights, dtype=float).replace([np.inf, -np.inf], np.nan).fillna(0.0)
     w = w.clip(lower=float(min_weight))
     if float(w.sum()) <= 1e-12:
@@ -41,7 +63,31 @@ def cap_weights(
     max_weight: float | Mapping[str, float] | pd.Series = 0.35,
     min_weight: float = 0.0,
 ) -> pd.Series | pd.DataFrame:
-    """Long-only cap-and-renormalize for a Series or each row of a DataFrame."""
+    """Apply long-only caps and renormalize weights.
+
+    The function works on either a single weight vector or a DataFrame of weight
+    vectors. Excess weight above caps is redistributed to assets with remaining
+    capacity.
+
+    Parameters
+    ----------
+    weights : pandas.Series or pandas.DataFrame
+        Raw weights. DataFrame rows are processed independently.
+    max_weight : float, mapping, or pandas.Series, default=0.35
+        Per-asset maximum weight.
+    min_weight : float, default=0.0
+        Lower bound applied before normalization.
+
+    Returns
+    -------
+    pandas.Series or pandas.DataFrame
+        Capped and normalized weights with the same orientation as the input.
+
+    Notes
+    -----
+    This is a long-only helper. It does not preserve intentional shorts.
+    """
+
     if isinstance(weights, pd.DataFrame):
         return weights.apply(
             lambda row: cap_weights(row, max_weight=max_weight, min_weight=min_weight),
@@ -69,7 +115,26 @@ def cap_weights(
 
 
 def smooth_weights(weights: pd.DataFrame, *, strength: float = 0.35) -> pd.DataFrame:
-    """Blend each rebalance with the previous rebalance to reduce turnover."""
+    """Blend each rebalance weight vector with the previous rebalance.
+
+    Parameters
+    ----------
+    weights : pandas.DataFrame
+        Weight panel indexed by rebalance date.
+    strength : float, default=0.35
+        Smoothing strength in ``[0, 1]``. A value of zero leaves weights
+        unchanged; larger values place more weight on the previous allocation.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Smoothed and normalized weight panel.
+
+    Notes
+    -----
+    Smoothing reduces turnover but can delay portfolio response to new signals.
+    """
+
     W = pd.DataFrame(weights).copy().astype(float).replace([np.inf, -np.inf], np.nan).fillna(0.0)
     if W.empty:
         return W
@@ -92,12 +157,36 @@ def kelly_weight_vector(
     max_weight: float = 0.35,
     ridge: float = 1e-6,
 ) -> pd.Series:
-    """Long-only fractional Kelly weights from excess return and covariance.
+    """Compute long-only fractional Kelly weights from forecasts and covariance.
 
-    The output is a continuous risky sleeve that may sum below 1.0.  That keeps
-    ``kelly_fraction`` meaningful and lets the caller assign residual capital
-    to cash/SHY instead of forcing every positive forecast to be fully invested.
+    The function solves the unconstrained Kelly direction ``Sigma^{-1} mu``,
+    scales it by ``kelly_fraction``, clips negative weights to zero, applies a
+    per-asset cap, and allows the risky sleeve to sum below one.
+
+    Parameters
+    ----------
+    mu : array-like or pandas.Series
+        Expected return vector, typically over the forecast horizon.
+    cov : array-like or pandas.DataFrame
+        Covariance matrix over the same horizon.
+    kelly_fraction : float, default=0.25
+        Fraction of full Kelly exposure to use.
+    max_weight : float, default=0.35
+        Maximum weight per risky asset.
+    ridge : float, default=1e-6
+        Ridge added to the covariance matrix before solving.
+
+    Returns
+    -------
+    pandas.Series
+        Long-only risky weights. The weights may sum below one.
+
+    Notes
+    -----
+    Allowing the risky sleeve to sum below one makes fractional Kelly meaningful
+    and lets callers assign residual capital to cash.
     """
+
     mu_s = pd.Series(mu, dtype=float).replace([np.inf, -np.inf], np.nan).fillna(0.0)
     labels = mu_s.index
     cov_df = pd.DataFrame(cov, index=labels, columns=labels).astype(float)
@@ -203,13 +292,71 @@ def weights_from_forecasts(
     top_k: int | None = None,
     cov_model: str = "ledoit_wolf",
 ) -> pd.DataFrame:
-    """Convert a long forecast table into rebalance-date Kelly weights.
+    """Convert a long forecast table into rebalance-date Kelly allocations.
 
-    When ``cash_asset`` is supplied and present in ``returns``, risky weights
-    are allowed to sum below 1.0 and residual capital is assigned to cash.
-    This is the preferred way to model underinvestment with the existing
-    backtest engine, which otherwise normalizes active weights.
+    For each rebalance date, the function extracts asset forecasts, optionally
+    converts z-scores into expected returns using forecast volatility, estimates
+    a covariance matrix from trailing returns, builds fractional Kelly risky
+    weights, and applies confidence, gross-exposure, volatility-target, top-k,
+    and cash-allocation controls.
+
+    Parameters
+    ----------
+    forecast : pandas.DataFrame
+        Long forecast table with date, asset, and forecast columns.
+    date_col : str
+        Forecast date column.
+    asset_col : str
+        Asset identifier column.
+    mu_col : str
+        Forecast or expected-return column.
+    returns : pandas.DataFrame
+        Asset return panel used for covariance estimation and available assets.
+    rebalance_dates : sequence of pandas.Timestamp or str
+        Dates on which weights should be produced.
+    sigma_col : str, optional
+        Forecast volatility column used when forecasts are z-scores.
+    mu_is_z : bool, optional
+        Whether ``mu_col`` should be multiplied by ``sigma_col``.
+    lookback : int, default=252
+        Trailing observations used for covariance estimation.
+    horizon : int, default=21
+        Forecast horizon used to scale covariance.
+    kelly_fraction : float, default=0.25
+        Fractional Kelly multiplier.
+    max_weight : float, default=0.35
+        Maximum risky-asset weight.
+    ridge : float, default=1e-6
+        Ridge used in Kelly covariance solve.
+    cash_asset : str, optional
+        Cash asset receiving residual capital.
+    confidence_cols : sequence of str, optional
+        Columns used to scale gross exposure by forecast confidence.
+    base_gross : float, default=1.0
+        Baseline risky gross exposure.
+    min_gross : float, default=0.20
+        Minimum risky gross after confidence scaling.
+    max_gross : float, default=1.0
+        Maximum risky gross after confidence scaling.
+    target_vol : float, optional
+        Annualized target volatility cap used to reduce gross exposure.
+    top_k : int, optional
+        Restrict active forecasts to the top-k assets by forecast.
+    cov_model : str, default="ledoit_wolf"
+        Covariance estimator label.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Weight frame indexed by rebalance date. If ``cash_asset`` is supplied,
+        residual weight is assigned to cash.
+
+    Notes
+    -----
+    Dates with insufficient trailing covariance history are skipped. If no
+    positive forecast exists on a date, allocation moves to cash when available.
     """
+
     f = pd.DataFrame(forecast).copy()
     f[date_col] = pd.to_datetime(f[date_col])
     R = pd.DataFrame(returns).copy().astype(float)
@@ -314,11 +461,66 @@ def forecast_kelly_weight_frame(
     lookback: int = 252,
     horizon: int = 21,
 ) -> pd.DataFrame:
-    """Forecast-to-Kelly wrapper used by the Project 19 notebooks.
+    """Build a smoothed forecast-to-Kelly weight frame.
 
-    The default is a continuous long-only risky sleeve.  Supplying ``cash_asset``
-    keeps residual capital in cash after confidence or volatility scaling.
+    This wrapper applies the forecast-to-Kelly allocator, then smooths and caps
+    the risky sleeve while preserving residual cash allocation when a cash asset
+    is supplied.
+
+    Parameters
+    ----------
+    forecast : pandas.DataFrame
+        Long forecast table.
+    date_col : str, default="date"
+        Forecast date column.
+    asset_col : str, default="asset"
+        Asset identifier column.
+    mu_col : str
+        Forecast or expected-return column.
+    returns : pandas.DataFrame
+        Asset return panel.
+    rebalance_dates : sequence
+        Rebalance dates.
+    sigma_col : str, optional
+        Forecast volatility column.
+    mu_is_z : bool, optional
+        Whether the forecast is a z-score.
+    assets : sequence of str, optional
+        Asset universe/order for the output.
+    kelly_fraction : float, default=0.50
+        Fractional Kelly multiplier.
+    max_weight : float, default=0.35
+        Maximum risky-asset weight.
+    top_k : int, optional
+        Restrict active forecasts to top-k names.
+    smooth : float, default=0.10
+        Weight smoothing strength.
+    target_vol : float, optional
+        Annualized volatility cap.
+    cash_asset : str, optional
+        Cash asset receiving residual capital.
+    confidence_cols : sequence of str, optional
+        Forecast-confidence columns.
+    base_gross, min_gross, max_gross : float
+        Gross-exposure controls.
+    cov_model : str, default="ledoit_wolf"
+        Covariance estimator label.
+    lookback : int, default=252
+        Trailing observations for covariance.
+    horizon : int, default=21
+        Forecast horizon.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Smoothed, capped weight frame.
+
+    Notes
+    -----
+    When cash is used, smoothing is applied to the risky sleeve and the cash
+    weight is recomputed as residual capital.
     """
+
     R = pd.DataFrame(returns).copy()
     cols = list(assets) if assets is not None else [c for c in R.columns if str(c) != str(cash_asset)]
     W = weights_from_forecasts(
@@ -487,13 +689,30 @@ def ml_alpha_maxsharpe_weight_frame(
 
 
 def forecast_gated_maxsharpe_weight_frame(*args, **kwargs) -> pd.DataFrame:
-    """Forecast-gated MaxSharpe allocator.
+    """Build forecast-gated maximum-Sharpe weights.
 
-    This is the Project 19-facing name for the allocator implemented by
-    :func:`ml_alpha_maxsharpe_weight_frame`: a standard MaxSharpe optimizer
-    whose expected-return vector is adjusted by scaled ML active alpha and
-    soft forecast confidence.
+    This compatibility wrapper delegates to the ML-alpha maximum-Sharpe allocator.
+    It preserves the public project-facing name for an allocator that adjusts
+    expected returns using scaled ML active alpha and soft forecast confidence.
+
+    Parameters
+    ----------
+    *args
+        Positional arguments passed to the underlying allocator.
+    **kwargs
+        Keyword arguments passed to the underlying allocator.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Forecast-gated maximum-Sharpe weight frame.
+
+    Notes
+    -----
+    Use this name when the workflow should be described in terms of
+    forecast-gated allocation rather than the lower-level implementation name.
     """
+
     return ml_alpha_maxsharpe_weight_frame(*args, **kwargs)
 
 
@@ -506,7 +725,38 @@ def align_weight_frame(
     cash_asset: str | None = None,
     max_weight: float | None = None,
 ) -> pd.DataFrame:
-    """Align a weight table to target dates with equal-weight fallback."""
+    """Align a weight table to target rebalance dates and asset columns.
+
+    The function forward-fills weights onto target dates, fills missing or zero
+    rows with equal weights, normalizes each row, optionally applies caps, and
+    keeps an optional cash asset as residual capital.
+
+    Parameters
+    ----------
+    weights : pandas.DataFrame or mapping
+        Input weights.
+    target_dates : sequence of pandas.Timestamp or str
+        Desired output dates.
+    assets : sequence of str
+        Risky asset columns to include.
+    fallback_dates : sequence, optional
+        Dates used when ``target_dates`` is empty.
+    cash_asset : str, optional
+        Cash column to include.
+    max_weight : float, optional
+        Optional cap applied to risky assets.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Aligned and normalized weight frame.
+
+    Notes
+    -----
+    This helper is useful when strategy-generated weights have sparse rebalance
+    dates and must be aligned to a common backtest schedule.
+    """
+
     target_idx = pd.DatetimeIndex(pd.to_datetime(list(target_dates))).sort_values().unique()
     if len(target_idx) == 0 and fallback_dates is not None:
         target_idx = pd.DatetimeIndex(pd.to_datetime(list(fallback_dates))).sort_values().unique()
@@ -561,9 +811,53 @@ def rank_signal_weight_frame(
 ) -> pd.DataFrame:
     """Build top-k long-only weights from cross-sectional forecast ranks.
 
-    This is intentionally rank based: it uses the ordering of a noisy signal
-    rather than treating small forecast levels as calibrated expected returns.
+    The allocator selects top-ranked assets at each date, transforms score
+    intensity, optionally scales by inverse volatility, caps weights, applies
+    gross exposure, smooths allocations through time, and assigns residual
+    capital to cash when requested.
+
+    Parameters
+    ----------
+    forecast : pandas.DataFrame
+        Long forecast table.
+    date_col : str, default="date"
+        Forecast date column.
+    asset_col : str, default="asset"
+        Asset identifier column.
+    score_col : str
+        Cross-sectional score column.
+    vol_col : str, default="vol_63"
+        Volatility column used for inverse-volatility scaling.
+    rebalance_dates : sequence, optional
+        Rebalance dates. If omitted, forecast dates are used.
+    assets : sequence of str, optional
+        Asset universe/order.
+    top_k : int, default=5
+        Number of assets selected per date.
+    max_weight : float, default=0.35
+        Maximum risky-asset weight.
+    gross : float, default=1.0
+        Risky gross exposure before cash residual.
+    score_power : float, default=1.0
+        Exponent applied to score intensity.
+    vol_power : float, default=1.0
+        Exponent applied to inverse-volatility scaling.
+    smooth : float, default=0.10
+        Smoothing strength between rebalances.
+    cash_asset : str, optional
+        Cash asset receiving residual capital.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Weight frame indexed by rebalance date.
+
+    Notes
+    -----
+    This method is intentionally rank-based. It uses signal ordering rather than
+    treating forecast magnitudes as calibrated expected returns.
     """
+
     f = pd.DataFrame(forecast).copy()
     f[date_col] = pd.to_datetime(f[date_col])
     asset_list = list(assets) if assets is not None else sorted(f[asset_col].dropna().astype(str).unique())

@@ -10,6 +10,20 @@ from quantfinlab.risk.utils import _coerce_objects, _to_numeric_series
 
 
 def tail_shape_table(objects: Mapping[str, Any] | pd.DataFrame) -> pd.DataFrame:
+    """Summarize distribution shape and empirical tail behavior.
+
+    Parameters
+    ----------
+    objects : mapping or pandas.DataFrame
+        Return objects to analyze.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with skew, excess kurtosis, 95/05 tail ratio, worst one-period
+        return, and average worst 5 and 10 one-period returns.
+    """
+
     obj = _coerce_objects(objects)
     rows: list[dict[str, Any]] = []
     for name, r in obj.items():
@@ -47,7 +61,21 @@ def worst_returns_summary(
     *,
     counts: Sequence[int] = (1, 5, 10),
 ) -> pd.DataFrame:
-    """Average of the worst n one-period returns for each object."""
+    """Compute average worst returns for several tail counts.
+
+    Parameters
+    ----------
+    objects : mapping or pandas.DataFrame
+        Return objects.
+    counts : sequence of int, default=(1, 5, 10)
+        Number of worst observations to average.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table indexed by object with one ``worst_nd_avg`` column per count.
+    """
+
     obj = _coerce_objects(objects)
     rows: list[dict[str, Any]] = []
     for name, r in obj.items():

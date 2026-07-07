@@ -33,7 +33,35 @@ def _sanitize_returns(window: pd.DataFrame) -> pd.DataFrame:
 
 
 def make_psd(sigma: np.ndarray | pd.DataFrame, *, eps: float = 1e-10) -> np.ndarray:
-    """Project a square covariance matrix to PSD space via eigenvalue flooring."""
+    """Project a square matrix onto the positive-semidefinite cone.
+
+    The function symmetrizes the input matrix, applies an eigenvalue floor, and
+    reconstructs a symmetric positive-semidefinite matrix.
+
+    Parameters
+    ----------
+    sigma : array-like or pandas.DataFrame
+        Square covariance-like matrix.
+    eps : float, default=1e-10
+        Minimum eigenvalue after projection.
+
+    Returns
+    -------
+    numpy.ndarray
+        Symmetric positive-semidefinite matrix.
+
+    Raises
+    ------
+    InputError
+        If the input is not a square two-dimensional matrix.
+
+    Notes
+    -----
+    The result is useful before passing empirical covariance estimates into
+    quadratic optimizers, where small negative eigenvalues from sampling or
+    rounding can cause numerical failures.
+    """
+
     S = np.asarray(sigma, dtype=float)
     if S.ndim != 2 or S.shape[0] != S.shape[1]:
         raise InputError("sigma must be a square matrix.")
@@ -74,6 +102,34 @@ def sample_covariance(
     psd_eps: float = 1e-10,
     return_df: bool = False,
 ) -> np.ndarray | pd.DataFrame:
+    """Estimate an annualized sample covariance matrix from returns.
+
+    Parameters
+    ----------
+    window : pandas.DataFrame
+        Return window with observations in rows and assets in columns.
+    annualization : float, default=252.0
+        Scale factor applied to the daily covariance estimate.
+    ridge : float, default=1e-10
+        Diagonal ridge added after estimation.
+    psd : bool, default=True
+        Whether to project the result to positive-semidefinite form.
+    psd_eps : float, default=1e-10
+        Eigenvalue floor used when ``psd=True``.
+    return_df : bool, default=False
+        If True, return a labeled DataFrame; otherwise return a NumPy array.
+
+    Returns
+    -------
+    numpy.ndarray or pandas.DataFrame
+        Annualized covariance matrix.
+
+    Notes
+    -----
+    Rows with invalid return values are removed during sanitization before the
+    sample covariance is computed.
+    """
+
     R = _sanitize_returns(window)
     cov_daily = np.cov(R.to_numpy(dtype=float), rowvar=False, ddof=1).astype(float)
     return _finalize_covariance(
@@ -96,6 +152,39 @@ def ledoit_wolf_covariance(
     psd_eps: float = 1e-10,
     return_df: bool = False,
 ) -> np.ndarray | pd.DataFrame:
+    """Estimate an annualized Ledoit-Wolf shrinkage covariance matrix.
+
+    Parameters
+    ----------
+    window : pandas.DataFrame
+        Return window with observations in rows and assets in columns.
+    annualization : float, default=252.0
+        Scale factor applied to the daily covariance estimate.
+    ridge : float, default=1e-10
+        Diagonal ridge added after estimation.
+    psd : bool, default=True
+        Whether to project the result to positive-semidefinite form.
+    psd_eps : float, default=1e-10
+        Eigenvalue floor used when ``psd=True``.
+    return_df : bool, default=False
+        If True, return a labeled DataFrame; otherwise return a NumPy array.
+
+    Returns
+    -------
+    numpy.ndarray or pandas.DataFrame
+        Annualized shrinkage covariance matrix.
+
+    Raises
+    ------
+    ImportError
+        If scikit-learn is not installed.
+
+    Notes
+    -----
+    Ledoit-Wolf shrinkage is often more stable than the raw sample covariance
+    when the asset universe is large relative to the estimation window.
+    """
+
     if LedoitWolf is None:
         raise ImportError("scikit-learn is required for Ledoit-Wolf covariance.")
     R = _sanitize_returns(window)
@@ -145,12 +234,47 @@ def ewma_covariance(
     psd_eps: float = 1e-10,
     return_df: bool = False,
 ) -> np.ndarray | pd.DataFrame:
-    """
-    Estimate EWMA covariance.
+    """Estimate an exponentially weighted covariance matrix.
 
-    If annualization is None, returns the daily covariance. Passing a DataFrame
-    preserves labels when return_df=True.
+    Recent observations receive more weight according to the decay parameter
+    ``lam``. The estimate can be returned as a daily covariance matrix or scaled
+    by an annualization factor.
+
+    Parameters
+    ----------
+    window : pandas.DataFrame or numpy.ndarray
+        Return matrix with observations in rows and assets in columns.
+    lam : float, default=0.94
+        Exponential decay parameter in ``(0, 1)``.
+    annualization : float, optional
+        If supplied, scales the covariance by this factor. If ``None``, the daily
+        covariance is returned.
+    ridge : float, default=0.0
+        Diagonal ridge added after estimation.
+    psd : bool, default=False
+        Whether to project the result to positive-semidefinite form.
+    psd_eps : float, default=1e-10
+        Eigenvalue floor used when ``psd=True``.
+    return_df : bool, default=False
+        If True, return a labeled DataFrame. Labels are preserved for DataFrame
+        input and generated otherwise.
+
+    Returns
+    -------
+    numpy.ndarray or pandas.DataFrame
+        EWMA covariance matrix.
+
+    Raises
+    ------
+    InputError
+        If ``lam`` is outside ``(0, 1)`` or the input has invalid shape.
+
+    Notes
+    -----
+    The estimator de-means the input before applying the EWMA recursion and
+    rescales by the finite-sample EWMA weight mass.
     """
+
     if not (0 < lam < 1):
         raise InputError("EWMA lambda must be in (0, 1).")
     if isinstance(window, pd.DataFrame):
@@ -214,7 +338,41 @@ def estimate_covariance(
     psd_eps: float = 1e-10,
     return_df: bool = False,
 ) -> np.ndarray | pd.DataFrame:
-    """Estimate annualized covariance using a supported Notebook 2 model label."""
+    """Dispatch to a supported covariance estimator by model label.
+
+    Parameters
+    ----------
+    window : pandas.DataFrame
+        Return window with observations in rows and assets in columns.
+    method : str, default="EWMA"
+        Covariance model label. Supported labels include sample covariance,
+        Ledoit-Wolf, OAS, and EWMA aliases.
+    annualization : float, default=252.0
+        Annualization factor.
+    ewma_lambda : float, default=0.94
+        Decay parameter for EWMA covariance.
+    lam : float, optional
+        Alternative EWMA decay parameter. Overrides ``ewma_lambda`` when supplied.
+    ridge : float, default=1e-10
+        Diagonal ridge added after estimation.
+    psd : bool, default=True
+        Whether to project the result to positive-semidefinite form.
+    psd_eps : float, default=1e-10
+        Eigenvalue floor for PSD projection.
+    return_df : bool, default=False
+        If True, return a labeled DataFrame.
+
+    Returns
+    -------
+    numpy.ndarray or pandas.DataFrame
+        Estimated annualized covariance matrix.
+
+    Notes
+    -----
+    This is the canonical covariance-model dispatcher for the walk-forward
+    portfolio grid. It normalizes notebook-style model names before dispatching.
+    """
+
     method_norm = normalize_covariance_method(method)
     if method_norm == "Sample":
         return sample_covariance(

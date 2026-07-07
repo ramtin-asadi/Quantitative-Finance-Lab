@@ -50,7 +50,43 @@ def future_realized_variance(
     return_col: str = "return",
     annualization: int = 252,
 ) -> pd.DataFrame:
-    """Forward realized variance targets aligned to forecast dates."""
+    """Compute forward realized-variance targets for multiple forecast horizons.
+
+    The function builds realized variance targets aligned to forecast dates. For a
+    forecast made at date ``t``, the realized variance for horizon ``h`` is computed
+    from returns over ``t+1`` through ``t+h``. This alignment makes the output
+    directly usable for forecast evaluation, model selection, and variance-risk-
+    premium comparisons without using the return observed on the forecast date.
+
+    Parameters
+    ----------
+    returns : pandas.Series or pandas.DataFrame
+        Return series used to build forward realized variance. If a DataFrame is
+        supplied, ``return_col`` identifies the column containing returns.
+        Values are interpreted as arithmetic one-period returns, not percentages.
+    horizons : tuple of int, default=(1, 5, 10, 21, 42, 63)
+        Forecast horizons, in trading periods, for which forward realized variance
+        targets are computed.
+    return_col : str, default="return"
+        Column to use when ``returns`` is a DataFrame.
+    annualization : int, default=252
+        Number of periods per year used to annualize average daily variance.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Date-indexed table with one group of columns per horizon:
+        ``realized_var_sum_h`` contains the sum of squared future returns,
+        ``realized_var_ann_h`` contains annualized realized variance, and
+        ``realized_vol_ann_h`` contains annualized realized volatility.
+
+    Notes
+    -----
+    Rows near the end of the sample have missing targets when the full forward
+    window is unavailable. The function deliberately does not backfill these rows,
+    because doing so would contaminate forecast evaluation.
+    """
+
     ret = _returns_series(returns, return_col=return_col)
     values = ret.to_numpy(dtype=float)
     out = pd.DataFrame(index=ret.index)
@@ -95,7 +131,54 @@ def fit_arch_model(
     mean: str = "Zero",
     maxiter: int = 500,
 ):
-    """Fit one ARCH-family model using the optional ``arch`` dependency."""
+    """Fit a single ARCH-family volatility model.
+
+    This is a thin wrapper around the optional ``arch`` package. It standardizes the
+    model configuration used by rolling volatility-forecast routines while keeping
+    the direct fitted result available for diagnostics and custom post-processing.
+
+    Parameters
+    ----------
+    returns_pct : pandas.Series or array-like
+        Return series expressed in percentage units, for example ``100 * returns``.
+        The function assumes the caller has already cleaned and aligned the input.
+    vol : str
+        Volatility process passed to ``arch_model``, such as ``"GARCH"``,
+        ``"EGARCH"``, or ``"GJR-GARCH"`` depending on installed ``arch`` support.
+    p : int
+        ARCH lag order.
+    q : int
+        GARCH lag order.
+    dist : str
+        Conditional innovation distribution, such as ``"normal"`` or ``"t"``.
+    o : int, default=0
+        Asymmetric order used by models that support leverage terms.
+    mean : str, default="Zero"
+        Mean specification passed to ``arch_model``.
+    maxiter : int, default=500
+        Maximum optimizer iterations.
+
+    Returns
+    -------
+    tuple
+        ``(model, result)`` where ``model`` is the configured ARCH model object and
+        ``result`` is the fitted result returned by ``arch``.
+
+    Raises
+    ------
+    ImportError
+        If the optional ``arch`` dependency is unavailable.
+    Exception
+        Any model-specific fitting error raised by the ``arch`` optimizer is
+        propagated to the caller.
+
+    Notes
+    -----
+    This function does not rescale internally beyond the supplied percentage input.
+    Passing raw decimal returns instead of percentage returns changes the numerical
+    scale of the optimization and is not recommended.
+    """
+
     try:
         from arch import arch_model
     except Exception as exc:
@@ -145,13 +228,69 @@ def rolling_arch_forecasts_weekly(
     simulations: int = 500,
     seed: int = 7,
 ) -> pd.DataFrame:
-    """
-    Fit ARCH-family models only on weekly signal dates and forecast horizons.
+    """Generate rolling ARCH-family variance forecasts on sparse signal dates.
 
-    Each row is a fresh signal-date forecast. The function does not fill daily
-    dates between refits, which prevents stale repeated forecasts from looking
-    like new information.
+    The function refits ARCH-family models only on scheduled signal dates, usually
+    weekly. Each forecast row is a fresh model fit using information available
+    through the signal date. Daily dates between refits are intentionally not
+    forward-filled, so repeated stale forecasts are not counted as new information
+    during model scoring.
+
+    Parameters
+    ----------
+    returns : pandas.Series or pandas.DataFrame
+        Return series in decimal units. If a DataFrame is supplied, ``return_col``
+        identifies the return column.
+    specs : sequence of dict, default=DEFAULT_ARCH_MODEL_SPECS
+        Model specifications. Each dictionary must define at least ``name``,
+        ``vol``, ``p``, ``q``, and ``dist``; ``o`` is optional.
+    horizons : tuple of int, default=(1, 5, 10, 21, 42, 63)
+        Forecast horizons, in trading periods.
+    train_window : int, default=756
+        Number of historical observations required before the first model fit.
+    signal_step : int, default=5
+        Spacing between signal dates when explicit signal dates are not supplied.
+    forecast_start, forecast_end : str or pandas.Timestamp, optional
+        Optional date bounds for forecast generation.
+    annualization : int, default=252
+        Annualization factor for variance and volatility forecasts.
+    return_col : str, default="return"
+        Return column used when ``returns`` is a DataFrame.
+    maxiter : int, default=500
+        Maximum optimizer iterations for each ARCH fit.
+    simulations : int, default=500
+        Number of simulations used for models whose multi-step forecast requires
+        simulation.
+    seed : int, default=7
+        Base random seed. The routine offsets the seed by model and date so that
+        forecasts are reproducible but not identical across fits.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Long forecast panel with columns including ``date``, ``model``,
+        ``horizon``, ``forecast_var_daily``, ``forecast_var_sum``,
+        ``forecast_var_ann``, ``forecast_vol_ann``, ``realized_var_sum``,
+        ``realized_var_ann``, and ``realized_vol_ann``. Failed fits are recorded
+        internally during construction but rows without a valid horizon are removed
+        from the returned panel.
+
+    Raises
+    ------
+    ImportError
+        If a requested model requires the optional ``arch`` package and it is not
+        installed.
+    Exception
+        Fitting exceptions for individual model/date combinations are captured as
+        failed records; catastrophic input errors may still propagate.
+
+    Notes
+    -----
+    Forecasts use the training window ending at the signal date. Realized targets
+    use future returns after the signal date, so the table is appropriate for
+    out-of-sample forecast scoring.
     """
+
     ret = _returns_series(returns, return_col=return_col)
     max_h = int(max(horizons))
     all_signal_dates = make_weekly_signal_dates(ret.index, step=signal_step, start=forecast_start, end=forecast_end)
@@ -250,7 +389,34 @@ def qlike_loss(realized_var: np.ndarray | pd.Series, forecast_var: np.ndarray | 
 
 
 def score_forecasts_by_model(forecast_panel: pd.DataFrame) -> pd.DataFrame:
-    """Compute compact forecast tournament scores by model and horizon."""
+    """Score variance forecasts by model and horizon.
+
+    The function computes compact forecast-tournament metrics using rows with both
+    forecasted and realized variance. It evaluates errors in variance space,
+    volatility space, and directional co-movement between forecast and realized
+    volatility.
+
+    Parameters
+    ----------
+    forecast_panel : pandas.DataFrame
+        Long forecast table containing at least ``model``, ``horizon``,
+        ``forecast_var_sum``, ``realized_var_sum``, ``forecast_vol_ann``, and
+        ``realized_vol_ann``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One row per ``(model, horizon)`` with QLIKE loss, variance RMSE/MAE,
+        volatility RMSE/MAE, volatility correlation, and observation count.
+
+    Notes
+    -----
+    QLIKE is useful for variance forecasts because it penalizes under-forecasting
+    large realized variance more strongly than symmetric squared error. Lower
+    QLIKE, lower RMSE/MAE, and higher correlation generally indicate better
+    forecast behavior.
+    """
+
     data = forecast_panel.replace([np.inf, -np.inf], np.nan).dropna(
         subset=["model", "horizon", "forecast_var_sum", "realized_var_sum"]
     )
@@ -276,7 +442,32 @@ def score_forecasts_by_model(forecast_panel: pd.DataFrame) -> pd.DataFrame:
 
 
 def mincer_zarnowitz_table(forecast_panel: pd.DataFrame) -> pd.DataFrame:
-    """OLS calibration table: realized annualized variance on forecast variance."""
+    """Estimate Mincer-Zarnowitz calibration regressions for variance forecasts.
+
+    For each model and horizon, the function regresses realized annualized variance
+    on forecast annualized variance. The resulting intercept, slope, and R-squared
+    summarize whether forecasts are biased and whether forecast variation explains
+    realized variation.
+
+    Parameters
+    ----------
+    forecast_panel : pandas.DataFrame
+        Long forecast panel with ``model``, ``horizon``, ``forecast_var_ann``, and
+        ``realized_var_ann`` columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Calibration table with columns ``model``, ``horizon``, ``alpha``, ``beta``,
+        ``r2``, and ``n_obs``. Groups with fewer than 25 observations are skipped.
+
+    Notes
+    -----
+    A well-calibrated variance forecast has an intercept near zero and a slope near
+    one, although finite-sample noise and overlapping horizons can materially affect
+    these estimates.
+    """
+
     rows: list[dict[str, Any]] = []
     data = forecast_panel.replace([np.inf, -np.inf], np.nan).dropna(
         subset=["model", "horizon", "forecast_var_ann", "realized_var_ann"]
@@ -327,7 +518,35 @@ def dm_test(loss_a: np.ndarray | pd.Series, loss_b: np.ndarray | pd.Series, h: i
 
 
 def diebold_mariano_table(forecast_panel: pd.DataFrame, benchmark_model: str | None = None) -> pd.DataFrame:
-    """Compare each model against the best average-QLIKE model by horizon."""
+    """Compare variance-forecast models with Diebold-Mariano loss-difference tests.
+
+    For each horizon, the benchmark model is either supplied explicitly or selected
+    as the model with the lowest average QLIKE loss. Each remaining model is tested
+    against that benchmark using paired forecast dates.
+
+    Parameters
+    ----------
+    forecast_panel : pandas.DataFrame
+        Long forecast table containing ``date``, ``model``, ``horizon``,
+        ``forecast_var_sum``, and ``realized_var_sum``.
+    benchmark_model : str, optional
+        Model name used as the benchmark for all horizons. If omitted, the
+        benchmark is chosen separately for each horizon using average QLIKE loss.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with one row per horizon/competitor comparison. The table includes
+        the benchmark model, competitor model, and Diebold-Mariano statistics
+        returned by the internal test routine.
+
+    Notes
+    -----
+    The test compares loss series on matched forecast dates. Missing dates reduce
+    the sample for that pair and horizon. Results should be interpreted as forecast
+    evaluation diagnostics rather than definitive model-selection proof.
+    """
+
     data = forecast_panel.replace([np.inf, -np.inf], np.nan).dropna(
         subset=["date", "model", "horizon", "forecast_var_sum", "realized_var_sum"]
     )
@@ -389,12 +608,63 @@ def select_forecast_by_rolling_loss(
     top_k: int = 3,
     eps: float = 1e-12,
 ) -> pd.DataFrame:
-    """
-    Select or combine forecasts using only past forecast errors.
+    """Select or combine volatility forecasts using only past forecast errors.
 
-    Selection is date-specific and horizon-specific. At date ``t`` the ranking
-    uses only rows with forecast dates strictly before ``t``.
+    The selector is date-specific and horizon-specific. At forecast date ``t``, the
+    model ranking is based only on forecast rows dated strictly before ``t``. This
+    prevents look-ahead leakage when choosing between ARCH, HAR, rough-kernel, or
+    other forecast models.
+
+    Parameters
+    ----------
+    forecast_panel : pandas.DataFrame
+        Long forecast table containing ``date``, ``model``, ``horizon``, and
+        ``forecast_var_sum``. If realized targets are already present, the selector
+        uses them directly.
+    realized_var_targets : pandas.DataFrame, optional
+        Optional target table used when ``forecast_panel`` does not already contain
+        ``realized_var_sum``. It may be either long by ``date`` and ``horizon`` or
+        preprocessed by the caller into matching columns.
+    horizons : tuple of int, default=(1, 5, 10, 21, 42, 63)
+        Horizons to include in the selection process.
+    lookback : int, default=126
+        Number of past forecast dates used to estimate recent model loss for each
+        horizon.
+    min_obs : int, default=40
+        Minimum number of historical loss observations required for a model to be
+        ranked by rolling loss.
+    loss : str, default="qlike"
+        Loss function used for rolling selection. Supported values depend on the
+        internal row-loss helper.
+    mode : {"best", "topk_inverse_loss"}, default="best"
+        Selection mode. ``"best"`` uses the model with the lowest recent loss.
+        ``"topk_inverse_loss"`` combines the top models with inverse-loss weights.
+    top_k : int, default=3
+        Number of models to combine when ``mode="topk_inverse_loss"``.
+    eps : float, default=1e-12
+        Numerical floor used in loss and inverse-loss calculations.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Selected forecast panel with one row per date and horizon. Columns include
+        ``selected_model``, ``selection_reason``, forecast variance and volatility
+        fields, realized variance when available, recent loss, and the number of
+        historical loss observations used.
+
+    Raises
+    ------
+    ValueError
+        If ``mode`` is not one of the supported selection modes.
+
+    Notes
+    -----
+    If no model has enough historical loss observations at a given date/horizon, the
+    function falls back to a preferred model order and then to the average of valid
+    current forecasts. This makes the selector robust in early samples without
+    using future information.
     """
+
     if mode not in {"best", "topk_inverse_loss"}:
         raise ValueError("mode must be 'best' or 'topk_inverse_loss'.")
 

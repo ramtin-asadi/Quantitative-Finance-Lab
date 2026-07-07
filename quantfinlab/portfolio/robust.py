@@ -89,6 +89,39 @@ def _wasserstein_epsilon(cov, *, n_mu_obs, radius, radius_scale="avg_vol"):
 
 
 def box_robust_mv_weights(mu_ann, cov_ann, *, n_mu_obs, radius=0.25, mv_lambda=3.0, w_min=0.0, w_max=0.40):
+    """Compute box-uncertainty robust mean-variance weights.
+
+    Expected returns are adjusted downward by a multiple of their standard error,
+    then a constrained mean-variance problem is solved using the conservative
+    return vector.
+
+    Parameters
+    ----------
+    mu_ann : array-like or pandas.Series
+        Annualized expected returns.
+    cov_ann : array-like or pandas.DataFrame
+        Annualized covariance matrix.
+    n_mu_obs : int
+        Number of observations used to estimate expected returns.
+    radius : float, default=0.25
+        Size of the box uncertainty set in standard-error units.
+    mv_lambda : float, default=3.0
+        Risk-aversion parameter.
+    w_min : float, default=0.0
+        Minimum per-asset weight.
+    w_max : float or mapping, default=0.40
+        Maximum per-asset weight.
+
+    Returns
+    -------
+    pandas.Series
+        Robust mean-variance weights.
+
+    Notes
+    -----
+    If the optimization fails, a cleaned equal-weight portfolio is returned.
+    """
+
     labels, mu, cov = _inputs(mu_ann, cov_ann)
     se = np.sqrt(np.maximum(np.diag(cov), 0.0)) / math.sqrt(max(int(n_mu_obs), 1))
     robust_mu = mu.to_numpy(dtype=float) - float(radius) * se
@@ -126,6 +159,43 @@ def wasserstein_drmv_weights(
     w_min=0.0,
     w_max=0.40,
 ):
+    """Compute Wasserstein distributionally robust mean-variance weights.
+
+    The objective penalizes expected return by a Wasserstein uncertainty radius
+    and can optionally inflate variance using a worst-case volatility term.
+
+    Parameters
+    ----------
+    mu_ann : array-like or pandas.Series
+        Annualized expected returns.
+    cov_ann : array-like or pandas.DataFrame
+        Annualized covariance matrix.
+    n_mu_obs : int
+        Number of observations used to estimate expected returns.
+    radius : float, default=1.0
+        Distributional uncertainty radius.
+    mv_lambda : float, default=1.5
+        Risk-aversion parameter.
+    radius_scale : str, default="avg_vol"
+        Rule used to scale the Wasserstein radius.
+    worst_case_variance : bool, default=True
+        Whether to use worst-case volatility in the risk penalty.
+    w_min : float, default=0.0
+        Minimum per-asset weight.
+    w_max : float or mapping, default=0.40
+        Maximum per-asset weight.
+
+    Returns
+    -------
+    pandas.Series
+        Distributionally robust portfolio weights.
+
+    Notes
+    -----
+    The formulation discourages large fragile exposures by taxing the L2 norm of
+    the weight vector under mean uncertainty.
+    """
+
     labels, mu, cov = _inputs(mu_ann, cov_ann)
     n = len(labels)
     epsilon = _wasserstein_epsilon(cov, n_mu_obs=n_mu_obs, radius=radius, radius_scale=radius_scale)
@@ -157,6 +227,47 @@ def robust_radius_path(
     w_min=0.0,
     w_max=0.40,
 ):
+    """Evaluate robust-portfolio behavior across uncertainty radii.
+
+    For each radius, the function builds robust weights using the selected model
+    and reports empirical return, robust penalty, robust return, volatility,
+    risk penalty, objective value, effective number of holdings, and maximum
+    weight.
+
+    Parameters
+    ----------
+    model : {"box", "ellipsoid", "wasserstein"}
+        Robust optimization model.
+    mu_ann : array-like or pandas.Series
+        Annualized expected returns.
+    cov_ann : array-like or pandas.DataFrame
+        Annualized covariance matrix.
+    n_mu_obs : int
+        Number of observations used to estimate expected returns.
+    radii : sequence of float
+        Uncertainty radii to evaluate.
+    mv_lambda : float, default=3.0
+        Risk-aversion parameter.
+    radius_scale : str, default="avg_vol"
+        Scaling rule for Wasserstein radius.
+    worst_case_variance : bool, default=True
+        Whether Wasserstein portfolios use worst-case volatility.
+    w_min : float, default=0.0
+        Minimum per-asset weight.
+    w_max : float or mapping, default=0.40
+        Maximum per-asset weight.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Radius-path diagnostic table.
+
+    Raises
+    ------
+    ValueError
+        If ``model`` is not one of the supported robust models.
+    """
+
     labels, mu, cov = _inputs(mu_ann, cov_ann)
     mu_arr = mu.to_numpy(dtype=float)
     omega_sqrt = psd_sqrt(cov / max(int(n_mu_obs), 1))
@@ -242,7 +353,55 @@ def robust_weight_frames(
     w_min=0.0,
     w_max=0.40,
 ):
-    """Build the three robust mean-variance weight frames from explicit inputs."""
+    """Build robust mean-variance weight frames for multiple robust models.
+
+    The function constructs Box Robust MV, Ellipsoid Robust MV, and Wasserstein
+    DRMV weight frames from a rebalance cache using explicit covariance and
+    expected-return model choices.
+
+    Parameters
+    ----------
+    cache : mapping
+        Rebalance-state cache.
+    rebalance_dates : sequence
+        Candidate rebalance dates.
+    cov_model : str, default="LedoitWolf"
+        Covariance model used for box and ellipsoid robust portfolios.
+    mu_model : str, default="Momentum"
+        Expected-return model used for box and ellipsoid robust portfolios.
+    box_radius : float, default=0.25
+        Box uncertainty radius.
+    ellipsoid_radius : float, default=0.10
+        Ellipsoid uncertainty radius.
+    wasserstein_radius : float, default=1.0
+        Wasserstein uncertainty radius.
+    mv_lambda : float, default=2.0
+        Risk-aversion parameter for box and ellipsoid portfolios.
+    wasserstein_cov_model : str, optional
+        Covariance model override for Wasserstein DRMV.
+    wasserstein_mu_model : str, optional
+        Expected-return model override for Wasserstein DRMV.
+    wasserstein_mv_lambda : float, optional
+        Risk-aversion override for Wasserstein DRMV.
+    wasserstein_radius_scale : str, default="avg_vol"
+        Scaling rule for Wasserstein radius.
+    wasserstein_worst_case_variance : bool, default=True
+        Whether Wasserstein DRMV uses worst-case variance.
+    w_min : float, default=0.0
+        Minimum per-asset weight.
+    w_max : float, default=0.40
+        Maximum per-asset weight.
+
+    Returns
+    -------
+    dict
+        Mapping from strategy name to weight frame.
+
+    Notes
+    -----
+    This helper is designed for side-by-side robust-portfolio comparisons.
+    """
+
     w_cov_model = cov_model if wasserstein_cov_model is None else wasserstein_cov_model
     w_mu_model = mu_model if wasserstein_mu_model is None else wasserstein_mu_model
     w_lambda = mv_lambda if wasserstein_mv_lambda is None else wasserstein_mv_lambda

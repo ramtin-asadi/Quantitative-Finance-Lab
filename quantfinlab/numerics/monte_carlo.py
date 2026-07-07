@@ -47,6 +47,23 @@ def _get_gbm_numba():
 
 
 def antithetic_normals(paths: int, steps: int, seed: int = 7) -> np.ndarray:
+    """Generate antithetic standard normal draws.
+
+    Parameters
+    ----------
+    paths : int
+        Requested number of paths. The returned number is approximately ``paths``
+        and is even when possible.
+    steps : int
+        Number of time steps.
+    seed : int, default=7
+        Random seed.
+
+    Returns
+    -------
+    numpy.ndarray
+        Matrix of standard normal draws with antithetic pairs.
+    """
     rng = np.random.default_rng(int(seed))
     half = max(int(paths) // 2, 1)
     z = rng.standard_normal((half, int(steps)))
@@ -65,6 +82,41 @@ def gbm_paths(
     seed: int = 7,
     engine: str = "auto",
 ) -> np.ndarray:
+    """Simulate geometric Brownian motion paths.
+
+    The function supports compiled, Numba, and pure NumPy engines and uses
+    antithetic normal draws for variance reduction.
+
+    Parameters
+    ----------
+    s0 : float
+        Initial spot.
+    r : float
+        Continuously compounded risk-free rate.
+    q : float
+        Continuous dividend yield.
+    sigma : float
+        Volatility.
+    tau : float
+        Time horizon in years.
+    steps : int, default=50
+        Number of time steps.
+    paths : int, default=10000
+        Number of requested paths.
+    seed : int, default=7
+        Random seed.
+    engine : str, default="auto"
+        Execution engine.
+
+    Returns
+    -------
+    numpy.ndarray
+        Simulated path matrix with shape ``(n_paths, steps + 1)``.
+
+    Notes
+    -----
+    The drift is ``r - q - 0.5 * sigma**2`` under the risk-neutral GBM dynamics.
+    """
     resolved = _resolve_engine(engine)
     if resolved == "cpp":
         kernels = get_cpp_kernels("GBM Monte Carlo path generation")
@@ -88,6 +140,27 @@ def gbm_paths(
 
 
 def payoff_paths(paths: np.ndarray, strike: float, option_type: str = "put") -> np.ndarray:
+    """Compute option payoffs along simulated paths.
+
+    Parameters
+    ----------
+    paths : numpy.ndarray
+        Spot path matrix.
+    strike : float
+        Option strike.
+    option_type : str, default="put"
+        Option type.
+
+    Returns
+    -------
+    numpy.ndarray
+        Payoff matrix with the same shape as ``paths``.
+
+    Notes
+    -----
+    For calls, payoff is ``max(S - K, 0)``. For puts, payoff is
+    ``max(K - S, 0)``.
+    """
     p = np.asarray(paths, dtype=float)
     if str(option_type).lower().startswith("c"):
         return np.maximum(p - float(strike), 0.0)

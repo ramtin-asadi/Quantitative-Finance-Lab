@@ -15,6 +15,27 @@ def drawdown_series(
     *,
     input_kind: str = "returns",
 ) -> pd.Series:
+    """Compute drawdown from returns or a NAV/equity curve.
+
+    Parameters
+    ----------
+    returns_or_nav : array-like
+        Return series or NAV series.
+    input_kind : {"returns", "nav"}, default="returns"
+        Interpretation of the input.
+
+    Returns
+    -------
+    pandas.Series
+        Drawdown series, where values are zero at new highs and negative below
+        previous peaks.
+
+    Raises
+    ------
+    InputError
+        If ``input_kind`` is unsupported.
+    """
+
     x = _to_numeric_series(returns_or_nav, name="returns_or_nav")
     kind = str(input_kind).strip().lower()
     if kind in {"returns", "ret", "r"}:
@@ -31,6 +52,22 @@ def max_drawdown(
     *,
     input_kind: str = "returns",
 ) -> float:
+    """Return the maximum drawdown of a return or NAV series.
+
+    Parameters
+    ----------
+    returns_or_nav : array-like
+        Return series or NAV/equity series.
+    input_kind : {"returns", "nav"}, default="returns"
+        Interpretation of the input.
+
+    Returns
+    -------
+    float
+        Minimum drawdown value. The result is negative for losses and ``NaN`` for
+        empty input.
+    """
+
     dd = drawdown_series(returns_or_nav, input_kind=input_kind)
     return float(dd.min()) if len(dd) else float("nan")
 
@@ -91,6 +128,20 @@ def avg_recovery_time(
     return float(np.mean(rec_times)) if rec_times else float("nan")
 
 def drawdown_summary_table(objects: Mapping[str, Any] | pd.DataFrame) -> pd.DataFrame:
+    """Build drawdown summary diagnostics for return objects.
+
+    Parameters
+    ----------
+    objects : mapping or pandas.DataFrame
+        Return objects to analyze.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with maximum drawdown, longest drawdown duration, average recovery
+        time, and ulcer index.
+    """
+
     obj = _coerce_objects(objects)
     rows: list[dict[str, Any]] = []
     for name, r in obj.items():

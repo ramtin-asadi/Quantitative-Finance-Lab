@@ -46,7 +46,30 @@ def _ols_alpha_beta(y: np.ndarray, x: np.ndarray) -> tuple[float, float]:
 
 
 def price_ols_beta(px: pd.DataFrame, target: str, hedge: str, *, n_train: int = 504) -> pd.DataFrame:
-    """Static log-price OLS alpha/beta after the initial training window."""
+    """Estimate a static log-price hedge ratio for a residual spread.
+
+    The function fits ``log(target) = alpha + beta * log(hedge)`` on the initial
+    training window and then holds the estimated alpha and beta constant for the
+    rest of the sample.
+
+    Parameters
+    ----------
+    px : pandas.DataFrame
+        Price panel.
+    target : str
+        Target asset.
+    hedge : str
+        Hedge asset.
+    n_train : int, default=504
+        Initial training-window length.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame with ``alpha`` and ``beta`` columns indexed like the price panel.
+        Rows before the training estimate are missing.
+    """
+
     p = _price_panel(px, target, hedge)
     out = pd.DataFrame(np.nan, index=p.index, columns=["alpha", "beta"], dtype=float)
     z = np.log(p[p > 0]).dropna()
@@ -67,7 +90,27 @@ def roll_price_beta(
     win: int = 252,
     n_train: int = 504,
 ) -> pd.DataFrame:
-    """Rolling log-price OLS alpha/beta."""
+    """Estimate rolling log-price alpha/beta for a residual spread.
+
+    Parameters
+    ----------
+    px : pandas.DataFrame
+        Price panel.
+    target : str
+        Target asset.
+    hedge : str
+        Hedge asset.
+    win : int, default=252
+        Rolling window.
+    n_train : int, default=504
+        Minimum initial history before estimates are emitted.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Rolling ``alpha`` and ``beta`` estimates.
+    """
+
     p = _price_panel(px, target, hedge)
     out = pd.DataFrame(np.nan, index=p.index, columns=["alpha", "beta"], dtype=float)
     z = np.log(p[p > 0]).dropna()
@@ -93,7 +136,34 @@ def kf_price_beta(
     q: float | None = None,
     r_mult: float | None = None,
 ) -> pd.DataFrame:
-    """Filtered Kalman log-price alpha/beta with training-only Q/R calibration."""
+    """Estimate time-varying log-price alpha/beta with a Kalman filter.
+
+    The function initializes alpha and beta from an initial log-price OLS fit,
+    calibrates process and observation noise on the training period, and filters the
+    full spread relationship.
+
+    Parameters
+    ----------
+    px : pandas.DataFrame
+        Price panel.
+    target : str
+        Target asset.
+    hedge : str
+        Hedge asset.
+    n_train : int, default=504
+        Training period used for initialization and noise calibration.
+    q : float, optional
+        Override for beta process noise.
+    r_mult : float, optional
+        Multiplier for observation variance.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Filtered ``alpha`` and ``beta`` path with missing values before the end of
+        the training window.
+    """
+
     p = _price_panel(px, target, hedge)
     out = pd.DataFrame(np.nan, index=p.index, columns=["alpha", "beta"], dtype=float)
     z = np.log(p[p > 0]).dropna()
@@ -164,7 +234,29 @@ def kf_price_beta(
 
 
 def log_spread(px: pd.DataFrame, target: str, hedge: str, beta) -> pd.Series:
-    """Log target minus alpha and beta times log hedge."""
+    """Compute a log-price residual spread.
+
+    The spread is defined as ``log(target) - alpha - beta * log(hedge)``. ``beta``
+    may be a scalar or a DataFrame containing time-varying ``alpha`` and ``beta``
+    columns.
+
+    Parameters
+    ----------
+    px : pandas.DataFrame
+        Price panel.
+    target : str
+        Target asset.
+    hedge : str
+        Hedge asset.
+    beta : float or pandas.DataFrame
+        Scalar beta or time-varying alpha/beta table.
+
+    Returns
+    -------
+    pandas.Series
+        Residual log spread.
+    """
+
     p = _price_panel(px, target, hedge)
     target = str(target).strip().lower()
     hedge = str(hedge).strip().lower()
@@ -232,7 +324,38 @@ def z_signal(
     z_stop: float = 3.5,
     z_cool: int = 5,
 ) -> pd.DataFrame:
-    """Rolling z-score signal, lagged one day for execution."""
+    """Create a lagged residual-spread trading signal from rolling z-scores.
+
+    The signal enters short-spread positions when the z-score is high, long-spread
+    positions when the z-score is low, exits near zero, and optionally stops out
+    during extreme deviations. The final signal is lagged one day for execution.
+
+    Parameters
+    ----------
+    spread : array-like
+        Residual spread series.
+    z_win : int, default=126
+        Rolling window for mean and standard deviation.
+    z_in : float, default=2.0
+        Entry threshold.
+    z_out : float, default=0.5
+        Exit threshold.
+    z_stop : float, default=3.5
+        Stop threshold that forces the signal flat.
+    z_cool : int, default=5
+        Cooldown length after a stop event.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with rolling ``z`` and lagged executable ``signal`` columns.
+
+    Notes
+    -----
+    A positive signal represents long residual spread exposure. A negative signal
+    represents short residual spread exposure.
+    """
+
     s = pd.to_numeric(pd.Series(spread), errors="coerce").replace([np.inf, -np.inf], np.nan)
     mean = s.rolling(int(z_win)).mean()
     std = s.rolling(int(z_win)).std(ddof=1)
@@ -263,7 +386,33 @@ def z_signal(
 
 
 def spread_w(signal, beta, target: str, hedge: str, tickers: Sequence[str]) -> pd.DataFrame:
-    """Convert long/short spread signal to target and hedge weights."""
+    """Convert a residual-spread signal into target and hedge weights.
+
+    Parameters
+    ----------
+    signal : array-like
+        Spread signal, typically from ``z_signal``.
+    beta : float or pandas.DataFrame
+        Scalar beta or time-varying beta table.
+    target : str
+        Target asset.
+    hedge : str
+        Hedge asset.
+    tickers : sequence of str
+        Full ticker list for the output frame.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Weight table with target weight equal to the signal and hedge weight equal
+        to ``-signal * beta``.
+
+    Raises
+    ------
+    InputError
+        If the target or hedge ticker is missing from ``tickers``.
+    """
+
     sig = pd.Series(signal, dtype=float).replace([np.inf, -np.inf], np.nan).fillna(0.0)
     cols = [str(c).strip().lower() for c in tickers]
     target = str(target).strip().lower()
@@ -296,7 +445,39 @@ def resid_gate(
     max_break_p: float = 0.20,
     max_beta_turnover: float = 0.25,
 ) -> pd.DataFrame:
-    """Apply residual-trading eligibility filters to a gate table."""
+    """Apply eligibility filters to residual spread-trading candidates.
+
+    The gate combines cointegration, stationarity, half-life, spread volatility,
+    trade count, cost drag, structural-break, and beta-turnover filters into a
+    single boolean ``eligible`` column.
+
+    Parameters
+    ----------
+    rows : array-like or pandas.DataFrame
+        Candidate gate rows.
+    max_eg_p : float, default=0.10
+        Maximum Engle-Granger p-value for static beta sources.
+    max_adf_p : float, default=0.10
+        Maximum ADF p-value for spread stationarity.
+    min_half_life, max_half_life : float
+        Acceptable half-life range.
+    min_spread_vol : float, default=0.005
+        Minimum annualized spread-change volatility.
+    min_trades : int, default=3
+        Minimum number of signal entries.
+    max_cost_drag : float, default=0.10
+        Maximum cost drag.
+    max_break_p : float, default=0.20
+        Maximum structural-break p-value when available.
+    max_beta_turnover : float, default=0.25
+        Maximum average absolute beta turnover.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Gate table with an ``eligible`` boolean column.
+    """
+
     tab = pd.DataFrame(rows).copy()
     if tab.empty:
         tab["eligible"] = []
@@ -338,7 +519,45 @@ def residual_backtest_grid(
     z_cool: int = 5,
     gate_kwargs: dict[str, float] | None = None,
 ):
-    """Estimate residual signals, backtest them, and build the gate table."""
+    """Build residual-spread signals, backtest them, and evaluate eligibility.
+
+    For each candidate pair and beta source, the function estimates the residual
+    spread, builds a z-score signal, runs a spread backtest, and records diagnostic
+    statistics used by the residual gate.
+
+    Parameters
+    ----------
+    prices : pandas.DataFrame
+        Price panel.
+    returns : pandas.DataFrame
+        Return panel.
+    pairs : sequence of tuple
+        Tuples of ``(pair_name, target, hedge)``.
+    beta_sources : dict
+        Mapping from beta-source name to a callable that returns beta parameters
+        for a target/hedge pair.
+    ann : float, default=252.0
+        Annualization factor.
+    cost_bps : float, default=5.0
+        Transaction cost in basis points applied by the spread backtest.
+    z_win, z_in, z_out, z_stop, z_cool
+        Signal-generation parameters passed to ``z_signal``.
+    gate_kwargs : dict, optional
+        Overrides passed to ``resid_gate``.
+
+    Returns
+    -------
+    tuple
+        ``(gate, backtests, signals, metadata)`` where ``gate`` is the eligibility
+        table, ``backtests`` maps strategy keys to results, ``signals`` maps keys to
+        signal tables, and ``metadata`` stores pair/beta-source identifiers.
+
+    Notes
+    -----
+    Each beta source callable should return a compatible scalar or time-varying
+    beta table for the requested pair.
+    """
+
     gate_rows = []
     backtests = {}
     signals = {}

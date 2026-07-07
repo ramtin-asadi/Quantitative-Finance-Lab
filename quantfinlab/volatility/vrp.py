@@ -121,7 +121,48 @@ def compute_vrp_panel(
     min_periods: int | None = None,
     calendar_days_per_year: float = 365.25,
 ) -> pd.DataFrame:
-    """Compute variance risk premium as annualized IV variance minus forecast variance."""
+    """Compute a variance-risk-premium panel from ATM IV and selected variance forecasts.
+
+    The variance risk premium is computed as annualized implied variance minus
+    annualized forecast variance. The function interpolates selected forecast
+    variance to each option row's target maturity and then adds VRP level, volatility
+    spread, rolling z-score, and rolling historical rank.
+
+    Parameters
+    ----------
+    iv_panel : pandas.DataFrame
+        ATM or near-ATM implied-volatility panel containing quote dates, DTE, and
+        implied volatility.
+    selected_forecasts : pandas.DataFrame
+        Forecast panel selected or combined by date and horizon.
+    dte_col : str, default="dte"
+        DTE column in ``iv_panel``. Calendar DTE is converted to trading-day DTE
+        unless ``dte_col`` is ``"dte_trading"``.
+    iv_col : str, default="atm_iv_mid"
+        Annualized implied-volatility column.
+    annualization : int, default=252
+        Trading-day annualization factor for forecast variance.
+    z_window : int, default=126
+        Rolling window used for past-only VRP z-scores.
+    rank_window : int, optional
+        Rolling window for past-only VRP ranks. Defaults to ``z_window``.
+    min_periods : int, optional
+        Minimum observations for rolling mean, standard deviation, and rank.
+    calendar_days_per_year : float, default=365.25
+        Calendar-day denominator used to convert calendar DTE to trading DTE.
+
+    Returns
+    -------
+    pandas.DataFrame
+        IV panel with interpolated forecast fields plus ``vrp_var``,
+        ``vol_spread``, ``vrp_mean``, ``vrp_std``, ``vrp_z``, and ``vrp_rank``.
+
+    Notes
+    -----
+    Rolling z-scores and ranks use lagged VRP values, so the current observation is
+    not included in its own historical normalization.
+    """
+
     if iv_panel.empty or selected_forecasts.empty:
         return pd.DataFrame()
     data = iv_panel.copy()

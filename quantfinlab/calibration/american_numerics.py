@@ -51,6 +51,55 @@ def prepare_american_quotes(
     max_sigma: float = 2.50,
     annualization_days: float = 365.25,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Clean and enrich option quotes for American-option numerical analysis.
+
+    The function normalizes quote schema, applies liquidity and domain filters,
+    smooths implied volatility by date/expiry/moneyness bucket, attaches rates and
+    discount factors, extracts discrete dividend events from the underlying series,
+    computes dividend-in-life and present-value dividend fields, estimates an
+    implied continuous dividend yield, and returns an audit trail of filtering
+    steps.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Raw option quote table. Required fields include quote dates, expiries,
+        option type, spot, strike, bid, ask, mid, tau or DTE, and implied
+        volatility fields.
+    underlying : pandas.DataFrame or pandas.Series
+        Underlying price/dividend data. Dividend columns are detected from common
+        names such as ``Dividends``, ``dividends``, or ``dividend``.
+    curve_panel : pandas.DataFrame
+        Interest-rate or curve panel used by rate-attachment helpers.
+    min_dte : float, default=7.0
+        Minimum option DTE in calendar days.
+    max_dte : float, default=180.0
+        Maximum option DTE in calendar days.
+    moneyness_range : tuple of float, default=(0.65, 1.45)
+        Allowed strike/spot moneyness range.
+    max_rel_spread : float, default=0.35
+        Maximum relative bid/ask spread.
+    min_sigma : float, default=0.03
+        Minimum allowed implied volatility.
+    max_sigma : float, default=2.50
+        Maximum allowed implied volatility.
+    annualization_days : float, default=365.25
+        Day-count denominator used for DTE and dividend-yield conversion.
+
+    Returns
+    -------
+    tuple
+        ``(clean_quotes, audit, div_events)``. ``clean_quotes`` is the enriched
+        quote table, ``audit`` records row counts by cleaning step, and
+        ``div_events`` contains detected dividend events.
+
+    Notes
+    -----
+    The dividend-yield estimate is derived from the present value of discrete
+    dividends over the option life. This lets tree/PDE routines use a continuous
+    yield approximation while retaining audit fields for the original discrete
+    dividend logic.
+    """
     q = quotes.copy()
     q["date"] = pd.to_datetime(q["date"], errors="coerce").dt.normalize()
     q["expiry"] = pd.to_datetime(q["expiry"], errors="coerce").dt.normalize()
@@ -190,6 +239,47 @@ def full_chain_tree_scan(
     engine: str = "cpp",
     chunk_size: int = 25000,
 ) -> pd.DataFrame:
+    """Price a full option chain with American and European binomial trees.
+
+    The function evaluates American and European tree prices for every quote,
+    computes American premia and pricing errors versus market mid prices, records
+    runtime diagnostics, and optionally caches the result with a settings metadata
+    file.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Clean option quote table containing spot, strike, tau, rate, option type,
+        market mid, and volatility/dividend columns.
+    cache_path : str or pathlib.Path, optional
+        Parquet path used for cached results.
+    settings : dict, optional
+        Additional settings included in the cache metadata.
+    sigma_col : str, default="sigma_used"
+        Volatility column.
+    q_col : str, default="dividend_yield"
+        Dividend-yield column.
+    steps : int, default=300
+        Number of tree steps.
+    tree_type : str, default="crr"
+        Binomial tree type.
+    engine : str, default="cpp"
+        Pricing engine.
+    chunk_size : int, default=25000
+        Number of contracts priced per chunk.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Quote-level tree scan with European price, American price, American
+        premium, pricing error, absolute pricing error, runtime, throughput, and
+        tree-step metadata.
+
+    Notes
+    -----
+    If ``cache_path`` exists and the metadata settings match the current run, the
+    cached result is returned without recomputation.
+    """
     settings = dict(settings or {})
     settings.update({"method": "tree_full_chain", "steps": int(steps), "tree_type": str(tree_type), "engine": str(engine), "sigma_col": sigma_col, "q_col": q_col})
     cache = Path(cache_path) if cache_path is not None else None
@@ -241,6 +331,33 @@ def pde_regime_grid(
     moneyness_bins=(0.65, 0.80, 0.90, 0.97, 1.03, 1.10, 1.25, 1.45),
     sigma_bins=(0.03, 0.15, 0.22, 0.32, 0.50, 2.50),
 ) -> pd.DataFrame:
+    """Select representative option quotes for PDE regime analysis.
+
+    Quotes are bucketed by option type, DTE, moneyness, volatility, dividend
+    presence, and proximity of ex-dividend date. Within each populated regime cell,
+    the function selects a medoid quote closest to the cell medians.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Clean American-option quote table.
+    cache_path : str or pathlib.Path, optional
+        Parquet cache path.
+    settings : dict, optional
+        Additional settings included in cache metadata.
+    dte_bins, moneyness_bins, sigma_bins : sequence
+        Bucket edges for DTE, moneyness, and volatility.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Representative regime quotes with coverage counts and coverage percentages.
+
+    Notes
+    -----
+    The output is designed for expensive PDE diagnostics where pricing every quote
+    is unnecessary but regime coverage must remain auditable.
+    """
     settings = dict(settings or {})
     settings.update({"method": "pde_regime_grid", "dte_bins": list(dte_bins), "moneyness_bins": list(moneyness_bins), "sigma_bins": list(sigma_bins)})
     cache = Path(cache_path) if cache_path is not None else None
@@ -292,6 +409,21 @@ def method_disagreement_table(data: pd.DataFrame) -> pd.DataFrame:
 
 
 def american_scan_summary(scan: pd.DataFrame) -> pd.DataFrame:
+    """Summarize a full American tree scan.
+
+    Parameters
+    ----------
+    scan : pandas.DataFrame
+        Output of a tree scan containing quote identifiers, American premium,
+        pricing error, and runtime diagnostics.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One-row summary with row count, date count, expiry count, contract count,
+        median American premium, median absolute pricing error, and median
+        contracts-per-second throughput.
+    """
     q = scan.copy()
     return pd.DataFrame(
         [
@@ -309,6 +441,27 @@ def american_scan_summary(scan: pd.DataFrame) -> pd.DataFrame:
 
 
 def overlay_candidates(quotes: pd.DataFrame) -> pd.DataFrame:
+    """Score American-option quotes for overlay candidate analysis.
+
+    The function attaches assignment-risk and roll-signal diagnostics, then builds a
+    candidate score that rewards American premium and penalizes relative spread and
+    model disagreement.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Quote table containing American pricing and market-quality diagnostics.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Candidate table with assignment/roll diagnostics and ``candidate_score``.
+
+    Notes
+    -----
+    Higher candidate scores indicate more attractive or more informative overlay
+    candidates under the heuristic scoring rule.
+    """
     out = assignment_risk(quotes)
     out = roll_signal(out)
     spread = pd.to_numeric(out.get("rel_spread", out.get("relative_spread", 0.0)), errors="coerce").fillna(0.0)

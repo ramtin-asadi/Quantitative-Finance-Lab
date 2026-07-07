@@ -64,6 +64,36 @@ def executive_bullets(
     capm_tbl: pd.DataFrame | None = None,
     var_bt_tbl: pd.DataFrame | None = None,
 ) -> list[str]:
+    """Generate short executive bullets from risk-report tables.
+
+    The bullets summarize the most visible risk and performance findings, such as
+    highest Sharpe ratio, least severe drawdown, lower historical ES, beta extremes,
+    and possible VaR model instability.
+
+    Parameters
+    ----------
+    perf_tbl : pandas.DataFrame, optional
+        Performance table.
+    dd_tbl : pandas.DataFrame, optional
+        Drawdown summary table.
+    var_tbl : pandas.DataFrame, optional
+        VaR/ES table.
+    capm_tbl : pandas.DataFrame, optional
+        CAPM table.
+    var_bt_tbl : pandas.DataFrame, optional
+        VaR backtest table.
+
+    Returns
+    -------
+    list of str
+        Human-readable bullet strings.
+
+    Notes
+    -----
+    This helper is intentionally conservative: it only emits bullets when the
+    needed table and column are available.
+    """
+
     bullets: list[str] = []
     if perf_tbl is not None and not perf_tbl.empty and "sharpe" in perf_tbl.columns:
         best = str(perf_tbl["sharpe"].idxmax())
@@ -122,6 +152,94 @@ def risk_report(
     layout: Mapping[str, Any] | None = None,
     output: Mapping[str, Any] | None = None,
 ) -> RiskReportArtifacts:
+    """Build a complete multi-object risk report.
+
+    The function computes risk tables, diagnostic series, explanatory text, and
+    matplotlib figures for a collection of return objects. It is designed as a
+    single high-level reporting API that can be used interactively in notebooks or
+    called programmatically to retrieve all report artifacts.
+
+    Parameters
+    ----------
+    objects : mapping or pandas.DataFrame
+        Return objects to report. A mapping should map object names to return
+        series or result-like objects. A DataFrame is interpreted as a panel of
+        return series. Values must be one-period arithmetic returns in decimal
+        units after coercion.
+    market_ret : pandas.Series or array-like, optional
+        Market return series used for CAPM, beta, capture, and rolling-beta
+        diagnostics. CAPM sections are skipped when this is not supplied.
+    rf_daily : float, default=0.0
+        One-period risk-free rate used for excess-return and performance
+        calculations.
+    portfolios : mapping, optional
+        Portfolio specifications used for attribution tables and contribution
+        plots. Each specification must be compatible with the contribution snapshot
+        utilities.
+    include : mapping of str to bool, optional
+        Section switches. Supported keys include ``performance_tables``,
+        ``shape_tables``, ``drawdowns``, ``rolling_vol``, ``drawdown_episodes``,
+        ``var_es``, ``var_backtest``, ``stress``, ``capm``, ``rolling_beta``,
+        ``correlation``, ``attribution``, and ``exec_bullets``.
+    var_settings : mapping, optional
+        Settings for static VaR/ES tables. Common keys are ``alpha`` and
+        ``methods``.
+    backtest_settings : mapping, optional
+        Settings for rolling VaR backtests. Common keys are ``alpha``, ``methods``,
+        ``lookback``, and ``plot_method``. ``plot_method="best"`` uses the
+        highest-ranked VaR method per object for breach plots.
+    rolling_settings : mapping, optional
+        Rolling diagnostic settings, including ``vol_windows`` and
+        ``beta_windows``.
+    stress_settings : mapping, optional
+        Stress-window settings. At minimum, ``windows`` should map names to
+        ``(start, end)`` date pairs. ``worst_only`` and ``worst_by`` control stress
+        summarization.
+    attribution_settings : mapping, optional
+        Attribution settings such as ``es_alpha`` and ``top_k``.
+    layout : mapping, optional
+        Figure layout controls, including number of columns and shared axes.
+    output : mapping, optional
+        Display controls. Important keys include ``round_tables``,
+        ``display_tables``, ``show_figures``, ``display_table_keys``,
+        ``hide_table_keys``, ``short_labels``, ``label_max_len``, and
+        ``label_map``.
+
+    Returns
+    -------
+    RiskReportArtifacts
+        Result object containing:
+        ``tables`` for computed report tables,
+        ``figures`` for matplotlib figures grouped by section,
+        ``series`` for detailed diagnostic series and intermediate objects, and
+        ``text`` for executive bullets.
+
+    Raises
+    ------
+    InputError
+        Raised by lower-level analytics when required inputs are malformed, empty,
+        or inconsistent.
+    ImportError
+        If plotting dependencies or optional components required by selected
+        sections are unavailable.
+
+    Notes
+    -----
+    The function separates computation from display. Even when ``display_tables``
+    or ``show_figures`` are true, all computed tables and figures are also returned
+    inside the artifact object.
+
+    The report shortens object labels by default to keep plots readable. Use
+    ``output={"short_labels": False}`` or provide ``label_map`` to control the
+    display names. When portfolios are supplied, their keys are mapped through the
+    same label system so attribution tables align with the displayed object names.
+
+    VaR breach plots can use several backtesting methods. When multiple methods
+    are enabled and ``plot_method="best"``, the plot method is selected separately
+    for each object from the VaR backtest ranking. The full multi-method backtest
+    table and best-method mapping are retained in ``tables`` and ``series``.
+    """
+
     raw_obj = _coerce_objects(objects)
     raw_names = list(raw_obj.keys())
 

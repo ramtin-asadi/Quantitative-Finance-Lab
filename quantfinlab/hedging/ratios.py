@@ -33,7 +33,29 @@ def _ols_fit(y: np.ndarray, x: np.ndarray) -> tuple[float, np.ndarray]:
 
 
 def ols_beta(ret: pd.DataFrame, r: rel, *, n_train: int = 504) -> pd.DataFrame:
-    """Static OLS beta estimated on the initial training window."""
+    """Estimate a static OLS hedge beta after an initial training window.
+
+    Parameters
+    ----------
+    ret : pandas.DataFrame
+        Return panel.
+    r : rel
+        Relationship defining the target and hedge assets.
+    n_train : int, default=504
+        Initial training-window length.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Beta path indexed like the relationship return panel. Rows before the end
+        of the training window are missing; later rows contain the static beta.
+
+    Notes
+    -----
+    For multi-hedge relationships, the beta vector is estimated by multivariate
+    least squares.
+    """
+
     panel = _ret_panel(ret, r)
     out = _empty_beta(panel.index, r)
     z = panel.dropna()
@@ -46,7 +68,34 @@ def ols_beta(ret: pd.DataFrame, r: rel, *, n_train: int = 504) -> pd.DataFrame:
 
 
 def roll_beta(ret: pd.DataFrame, r: rel, *, win: int = 252, n_train: int = 504) -> pd.DataFrame:
-    """Rolling OLS beta using only observations up to each date."""
+    """Estimate rolling OLS hedge betas.
+
+    At each date after the initial training and rolling-window requirements are
+    met, the function estimates hedge betas using only the trailing window ending at
+    that date.
+
+    Parameters
+    ----------
+    ret : pandas.DataFrame
+        Return panel.
+    r : rel
+        Relationship defining target and hedge assets.
+    win : int, default=252
+        Rolling estimation window.
+    n_train : int, default=504
+        Minimum initial history before rolling estimates are emitted.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Rolling beta path with one column per hedge asset.
+
+    Notes
+    -----
+    The output is a desired beta path. Trading timing and lagging are handled by the
+    backtest layer.
+    """
+
     panel = _ret_panel(ret, r)
     out = _empty_beta(panel.index, r)
     z = panel.dropna()
@@ -132,7 +181,36 @@ def ridge_beta(
     alpha: float = 10.0,
     n_train: int = 504,
 ) -> pd.DataFrame:
-    """Rolling ridge beta with centered intercept and standardized features."""
+    """Estimate rolling ridge-regression hedge betas.
+
+    The function centers the target and hedge returns, standardizes hedge features,
+    applies ridge shrinkage in standardized space, and converts coefficients back
+    to return units. This is useful when hedge assets are correlated or rolling OLS
+    coefficients are unstable.
+
+    Parameters
+    ----------
+    ret : pandas.DataFrame
+        Return panel.
+    r : rel
+        Relationship defining target and hedge assets.
+    win : int, default=252
+        Rolling estimation window.
+    alpha : float, default=10.0
+        Ridge penalty strength. Larger values shrink betas more strongly.
+    n_train : int, default=504
+        Minimum initial history before estimates are emitted.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Rolling ridge beta path.
+
+    Notes
+    -----
+    The regression includes a centered intercept implicitly through demeaning.
+    """
+
     panel = _ret_panel(ret, r)
     out = _empty_beta(panel.index, r)
     z = panel.dropna()
@@ -169,7 +247,38 @@ def kf_beta(
     q: float | None = None,
     r_mult: float | None = None,
 ) -> pd.DataFrame:
-    """Filtered Kalman beta with training-only Q/R calibration."""
+    """Estimate time-varying hedge betas with a Kalman filter.
+
+    The filter is calibrated using an initial training period and then run through
+    the full relationship history. The state contains an intercept and one beta per
+    hedge asset; only beta columns are returned.
+
+    Parameters
+    ----------
+    ret : pandas.DataFrame
+        Return panel.
+    r : rel
+        Relationship defining target and hedge assets.
+    n_train : int, default=504
+        Initial calibration window.
+    q : float, optional
+        Override for state-noise intensity. If omitted, the function uses the
+        training calibration.
+    r_mult : float, optional
+        Multiplier applied to the observation variance estimate.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Filtered beta path with missing values before the end of the training
+        window.
+
+    Notes
+    -----
+    The calibration uses only the initial training sample. The filter update at each
+    date uses information available through that date.
+    """
+
     panel = _ret_panel(ret, r)
     out = _empty_beta(panel.index, r)
     z = panel.dropna()

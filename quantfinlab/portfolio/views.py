@@ -63,6 +63,42 @@ DEFAULT_SECTOR_DISPLAY_NAMES = {
 
 @dataclass
 class ViewSettings:
+    """Configuration container for signal construction and view generation.
+
+    Attributes
+    ----------
+    family_q_caps : mapping
+        Maximum absolute q tilt by view family.
+    family_display_names : mapping
+        Human-readable display names by view family.
+    assets : sequence of str, optional
+        Explicit asset universe. If omitted, assets are inferred from roles and
+        signal data.
+    annualization : float
+        Annualization factor used in signal calculations.
+    entry_z : float
+        Generic signal-entry threshold used by some view rules.
+    q_strength_scale : float
+        Scale used when converting signal strength to q tilt.
+    min_signal_obs : int
+        Minimum observations required before an asset can enter the signal table.
+    trend_window : int
+        Long trend window, typically 200 trading days.
+    short_trend_window : int
+        Short trend window, typically 50 trading days.
+    medium_window : int
+        Medium window used by signal calculations.
+    long_window : int
+        Long window used by signal calculations.
+    view_horizon_days : int
+        Horizon used for view payoff evaluation.
+
+    Notes
+    -----
+    The settings object allows the same view rules to be reused across universes
+    while preserving q caps and signal conventions.
+    """
+
     family_q_caps: Mapping[str, float] = field(default_factory=lambda: dict(DEFAULT_PRIMARY_FAMILY_Q_CAPS))
     family_display_names: Mapping[str, str] = field(default_factory=lambda: dict(DEFAULT_PRIMARY_DISPLAY_NAMES))
     assets: Sequence[str] | None = None
@@ -79,6 +115,56 @@ class ViewSettings:
 
 @dataclass
 class View:
+    """Structured representation of one relative Black-Litterman view.
+
+    A view states that a basket of long assets should outperform a basket of
+    short assets by a q tilt derived from signal strength, subject to confidence
+    and selection rules.
+
+    Attributes
+    ----------
+    view_family : str
+        Family identifier used for q caps and reliability learning.
+    view_name : str
+        Human-readable view name.
+    economic_label : str
+        Economic description of the view.
+    long_assets : list of str
+        Assets on the long side of the relative view.
+    short_assets : list of str
+        Assets on the short side of the relative view.
+    signal_value : float
+        Raw signed or absolute signal value.
+    q_tilt : float
+        Active return-spread tilt associated with the view.
+    confidence : float
+        Optional confidence value.
+    raw_strength : float, optional
+        Raw strength used for display and scoring.
+    economic_priority : float
+        Priority score used during view selection.
+    confluence_score : float
+        Cross-signal confirmation score.
+    risk_orientation : str
+        Broad risk orientation, such as risk_on, risk_off, or neutral.
+    view_state : str
+        More specific state label.
+    source : str
+        Source label for the rule that generated the view.
+    diagnostics : mapping
+        Additional signal diagnostics.
+    p_vector : mapping
+        View exposure vector by asset.
+    family_display_name : str, optional
+        Human-readable family name.
+
+    Methods
+    -------
+    as_dict()
+        Convert the view to the standardized dictionary format used by selection
+        and Black-Litterman matrix construction.
+    """
+
     view_family: str
     view_name: str
     economic_label: str
@@ -126,6 +212,24 @@ class View:
 
 
 def view_rows(views: Sequence[View | Mapping[str, Any] | None]) -> list[dict[str, Any]]:
+    """Convert a sequence of view objects or mappings to standardized dictionaries.
+
+    Parameters
+    ----------
+    views : sequence of View, mapping, or None
+        View objects, dictionaries, or missing entries.
+
+    Returns
+    -------
+    list of dict
+        List of view dictionaries. ``None`` entries are skipped.
+
+    Notes
+    -----
+    This helper makes view-generation functions composable: each rule may return
+    a ``View``, a mapping, or ``None``.
+    """
+
     rows: list[dict[str, Any]] = []
     for view in views:
         if view is None:
@@ -202,6 +306,55 @@ def make_view(
     confluence_score: float | None = None,
     view_state: str | None = None,
 ) -> View | None:
+    """Create a validated relative view from long/short asset lists and signal strength.
+
+    The function filters long and short assets to the configured universe,
+    checks that the view family has a q cap, converts signal strength into q
+    tilt, builds a P-vector, and returns a structured ``View`` object.
+
+    Parameters
+    ----------
+    view_family : str
+        View-family identifier.
+    view_name : str
+        Human-readable view name.
+    economic_label : str
+        Economic interpretation of the view.
+    long_assets : sequence of str
+        Candidate long-side assets.
+    short_assets : sequence of str
+        Candidate short-side assets.
+    view_strength : float
+        Raw view strength. Only the absolute value is used.
+    risk_orientation : str
+        Broad risk orientation.
+    roles : mapping
+        Asset-role configuration.
+    settings : ViewSettings
+        View-generation settings.
+    source : str, default="family_rule"
+        Source label.
+    priority : float, default=0.50
+        Economic priority score in ``[0, 1]``.
+    diagnostics : mapping, optional
+        Additional signal diagnostics.
+    confluence_score : float, optional
+        Confirmation score. If omitted, it is inferred from strength.
+    view_state : str, optional
+        More specific state label.
+
+    Returns
+    -------
+    View or None
+        Validated view object, or ``None`` if the view is invalid, has no valid
+        long/short assets, lacks a q cap, or has zero/non-finite strength.
+
+    Notes
+    -----
+    Short assets that also appear on the long side are removed to avoid
+    self-offsetting views.
+    """
+
     assets = assets_from_roles(roles, settings)
     long_clean = list(dict.fromkeys([str(x) for x in long_assets if str(x) in assets]))
     short_clean = list(dict.fromkeys([str(x) for x in short_assets if str(x) in assets and str(x) not in long_clean]))
@@ -332,6 +485,36 @@ def signal_table_from_returns(
     roles: Mapping[str, Any] | None = None,
     settings: ViewSettings | None = None,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """Build cross-asset signal table and market-state values from return history.
+
+    The function computes cumulative momentum, trend, volatility, drawdown
+    quality, and a composite score for each eligible signal asset using only
+    observations available through the decision date.
+
+    Parameters
+    ----------
+    signal_returns : pandas.DataFrame
+        Return panel used to compute signals.
+    date : pandas.Timestamp or str
+        Decision date.
+    roles : mapping, optional
+        Asset-role configuration used to assign sleeves and state values.
+    settings : ViewSettings, optional
+        Signal construction settings.
+
+    Returns
+    -------
+    signal_table : pandas.DataFrame
+        Asset-indexed signal table sorted by composite score.
+    values : dict
+        Derived market-state values used by view rules.
+
+    Notes
+    -----
+    Assets with insufficient signal history are skipped. If the date precedes
+    the available history, an empty table and empty dictionary are returned.
+    """
+
     settings = settings or ViewSettings()
     roles = roles or {}
     date = pd.Timestamp(date)
@@ -548,6 +731,34 @@ def sleeve_limited_assets(signal_table: pd.DataFrame, candidates: Sequence[str],
 
 
 def liquid_leadership(state: Any, roles: Mapping[str, Any], settings: ViewSettings) -> View | None:
+    """Generate a liquidity-leadership view when large-cap/growth leadership is narrow.
+
+    The rule looks for positive SPY/QQQ trend, QQQ leadership over SPY, weak
+    cyclicals, and lack of broad reflation confirmation. When active, it creates
+    a risk-on relative view favoring liquid US large-cap/growth leaders versus
+    weaker cyclical assets.
+
+    Parameters
+    ----------
+    state : object
+        Market state with signal table and derived values.
+    roles : mapping
+        Asset-role configuration.
+    settings : ViewSettings
+        View-generation settings.
+
+    Returns
+    -------
+    View or None
+        Liquidity-leadership view when conditions are met; otherwise ``None``.
+
+    Notes
+    -----
+    The rule includes a reflation-confirmation filter to avoid expressing narrow
+    growth leadership when cyclicals, credit, commodities, and real assets are
+    already broadening.
+    """
+
     signal_table, values = _signals(state), _values(state)
     if signal_table.empty:
         return None
@@ -577,6 +788,33 @@ def liquid_leadership(state: Any, roles: Mapping[str, Any], settings: ViewSettin
 
 
 def dual_momentum(state: Any, roles: Mapping[str, Any], settings: ViewSettings) -> View | None:
+    """Generate a diversified dual-momentum relative view.
+
+    The rule ranks eligible assets using a composite of intermediate and long
+    momentum plus trend, then forms long and short baskets across sleeves when
+    cross-sectional dispersion is sufficiently strong.
+
+    Parameters
+    ----------
+    state : object
+        Market state with signal table.
+    roles : mapping
+        Asset-role configuration.
+    settings : ViewSettings
+        View-generation settings.
+
+    Returns
+    -------
+    View or None
+        Dual-momentum view when dispersion and spread thresholds are met;
+        otherwise ``None``.
+
+    Notes
+    -----
+    The rule prefers sleeve-limited long and short baskets to avoid expressing a
+    single crowded asset class as the entire view.
+    """
+
     signal_table = _signals(state)
     candidates = [asset for asset in assets_from_roles(roles, settings) if asset in signal_table.index]
     if len(candidates) < 4:
@@ -597,6 +835,33 @@ def dual_momentum(state: Any, roles: Mapping[str, Any], settings: ViewSettings) 
 
 
 def inflation_rotation(state: Any, roles: Mapping[str, Any], settings: ViewSettings) -> View | None:
+    """Generate an inflation-rotation view.
+
+    The rule activates when commodities/gold lead duration assets while duration
+    is weak and credit confirmation is not strongly risk-on. It expresses a
+    relative view favoring inflation-sensitive assets versus duration and credit
+    defensives.
+
+    Parameters
+    ----------
+    state : object
+        Market state with signal table and derived values.
+    roles : mapping
+        Asset-role configuration.
+    settings : ViewSettings
+        View-generation settings.
+
+    Returns
+    -------
+    View or None
+        Inflation-rotation view when conditions are met; otherwise ``None``.
+
+    Notes
+    -----
+    The rule uses commodity confirmation, duration weakness, and relative
+    commodity-versus-bond momentum as core inputs.
+    """
+
     signal_table, values = _signals(state), _values(state)
     hyg_lqd = state_value(values, "hyg_lqd_63", 0.0)
     dbc_ief = state_value(values, "dbc_ief_63", 0.0)
@@ -616,6 +881,32 @@ def inflation_rotation(state: Any, roles: Mapping[str, Any], settings: ViewSetti
 
 
 def risk_adjusted_momentum(state: Any, roles: Mapping[str, Any], settings: ViewSettings) -> View | None:
+    """Generate a volatility- and drawdown-adjusted momentum view.
+
+    The rule ranks assets using momentum, trend, volatility penalty, and
+    drawdown quality. It forms long and short baskets when cross-sectional
+    dispersion and long-short score spread are strong enough.
+
+    Parameters
+    ----------
+    state : object
+        Market state with signal table.
+    roles : mapping
+        Asset-role configuration.
+    settings : ViewSettings
+        View-generation settings.
+
+    Returns
+    -------
+    View or None
+        Risk-adjusted momentum view when active; otherwise ``None``.
+
+    Notes
+    -----
+    This rule is designed to prefer momentum that is not purely driven by high
+    volatility or poor drawdown quality.
+    """
+
     signal_table = _signals(state)
     candidates = [asset for asset in assets_from_roles(roles, settings) if asset in signal_table.index]
     if len(candidates) < 4:
@@ -637,6 +928,34 @@ def risk_adjusted_momentum(state: Any, roles: Mapping[str, Any], settings: ViewS
 
 
 def credit_switch(state: Any, roles: Mapping[str, Any], settings: ViewSettings) -> View | None:
+    """Generate credit-confirmed risk-on or risk-off views.
+
+    The rule uses equity trend, equity drawdown, volatility state, risky breadth,
+    and high-yield-versus-investment-grade credit relative performance. It
+    creates either a risk-on view favoring equities/high yield or a risk-off
+    view favoring defensive assets.
+
+    Parameters
+    ----------
+    state : object
+        Market state with signal table and derived values.
+    roles : mapping
+        Asset-role configuration.
+    settings : ViewSettings
+        View-generation settings.
+
+    Returns
+    -------
+    View or None
+        Credit-switch view when either risk-on or risk-off conditions are met;
+        otherwise ``None``.
+
+    Notes
+    -----
+    The rule treats credit confirmation as a broad risk-appetite signal rather
+    than a standalone asset-ranking signal.
+    """
+
     signal_table, values = _signals(state), _values(state)
     spy_trend = metric(signal_table, "SPY", "trend_200")
     spy_drawdown = state_value(values, "spy_drawdown_252", 0.0)
@@ -664,6 +983,32 @@ def credit_switch(state: Any, roles: Mapping[str, Any], settings: ViewSettings) 
 
 
 def international_rotation(state: Any, roles: Mapping[str, Any], settings: ViewSettings) -> View | None:
+    """Generate an emerging-market versus developed ex-US rotation view.
+
+    The rule compares EEM and EFA relative strength while accounting for dollar
+    trend and momentum. It can express either EM leadership or developed ex-US
+    leadership depending on the state.
+
+    Parameters
+    ----------
+    state : object
+        Market state with signal table and derived values.
+    roles : mapping
+        Asset-role configuration.
+    settings : ViewSettings
+        View-generation settings.
+
+    Returns
+    -------
+    View or None
+        International-rotation view when conditions are met; otherwise ``None``.
+
+    Notes
+    -----
+    Dollar pressure is used as a filter because EM leadership can be fragile
+    when the dollar is strengthening.
+    """
+
     signal_table, values = _signals(state), _values(state)
     eem_efa = state_value(values, "eem_efa_63", 0.0)
     dollar_trend = state_value(values, "dollar_trend", 0.0)
@@ -681,6 +1026,32 @@ def international_rotation(state: Any, roles: Mapping[str, Any], settings: ViewS
 
 
 def reflation_breadth(state: Any, roles: Mapping[str, Any], settings: ViewSettings) -> View | None:
+    """Generate a broad reflation view.
+
+    The rule activates when small caps, high yield, risky breadth, and real
+    assets confirm a broadening cyclical/reflation environment. It favors
+    cyclical, credit, real-asset, and EM exposures versus defensive ballast.
+
+    Parameters
+    ----------
+    state : object
+        Market state with signal table and derived values.
+    roles : mapping
+        Asset-role configuration.
+    settings : ViewSettings
+        View-generation settings.
+
+    Returns
+    -------
+    View or None
+        Reflation-breadth view when conditions are met; otherwise ``None``.
+
+    Notes
+    -----
+    The rule requires multiple confirmations to avoid treating a single cyclical
+    asset rally as broad reflation.
+    """
+
     signal_table, values = _signals(state), _values(state)
     iwm_spy = state_value(values, "iwm_spy_63", 0.0)
     hyg_lqd = state_value(values, "hyg_lqd_63", 0.0)
@@ -698,6 +1069,33 @@ def reflation_breadth(state: Any, roles: Mapping[str, Any], settings: ViewSettin
 
 
 def growth_duration(state: Any, roles: Mapping[str, Any], settings: ViewSettings) -> View | None:
+    """Generate a growth-duration barbell view.
+
+    The rule looks for growth equity leadership, supportive duration trend,
+    weak commodity pressure, and hedge-like stock-bond correlation. It favors
+    growth equities and duration assets versus weaker cyclical or commodity
+    exposures.
+
+    Parameters
+    ----------
+    state : object
+        Market state with signal table and derived values.
+    roles : mapping
+        Asset-role configuration.
+    settings : ViewSettings
+        View-generation settings.
+
+    Returns
+    -------
+    View or None
+        Growth-duration view when conditions are met; otherwise ``None``.
+
+    Notes
+    -----
+    The rule is intended to capture soft-landing-style states where growth and
+    duration can work together.
+    """
+
     signal_table, values = _signals(state), _values(state)
     qqq_spy = state_value(values, "qqq_spy_63", 0.0)
     hyg_lqd = state_value(values, "hyg_lqd_63", 0.0)
@@ -716,6 +1114,32 @@ def growth_duration(state: Any, roles: Mapping[str, Any], settings: ViewSettings
 
 
 def correlation_stress(state: Any, roles: Mapping[str, Any], settings: ViewSettings) -> View | None:
+    """Generate a protective view under risky-asset correlation stress.
+
+    The rule activates when average risky correlations and equity volatility are
+    elevated, breadth is weak, and duration is not behaving as a reliable hedge.
+    It favors short-duration/gold-style ballast against weak risky assets.
+
+    Parameters
+    ----------
+    state : object
+        Market state with signal table and derived values.
+    roles : mapping
+        Asset-role configuration.
+    settings : ViewSettings
+        View-generation settings.
+
+    Returns
+    -------
+    View or None
+        Correlation-stress view when conditions are met; otherwise ``None``.
+
+    Notes
+    -----
+    This is a protective family. Its learned confidence can be evaluated
+    separately in stress states.
+    """
+
     signal_table, values = _signals(state), _values(state)
     avg_risky_corr = state_value(values, "avg_risky_corr_126")
     spy_vol_z = state_value(values, "spy_vol_z", 0.0)
@@ -735,6 +1159,34 @@ def correlation_stress(state: Any, roles: Mapping[str, Any], settings: ViewSetti
 
 
 def duration_quality(state: Any, roles: Mapping[str, Any], settings: ViewSettings) -> View | None:
+    """Generate a duration-quality view.
+
+    The rule distinguishes between two bond regimes: weak long-duration exposure
+    when stock-bond correlation is positive, and helpful duration exposure when
+    duration trend is positive and correlation is hedge-like.
+
+    Parameters
+    ----------
+    state : object
+        Market state with signal table and derived values.
+    roles : mapping
+        Asset-role configuration.
+    settings : ViewSettings
+        View-generation settings.
+
+    Returns
+    -------
+    View or None
+        Duration-quality view when either duration-weak or duration-helpful
+        conditions are met; otherwise ``None``.
+
+    Notes
+    -----
+    The rule can express either shorter/higher-quality bonds over long duration,
+    or long-duration bonds over cash-like bonds and credit, depending on the
+    market state.
+    """
+
     signal_table, values = _signals(state), _values(state)
     stock_bond_corr = state_value(values, "stock_bond_corr_126")
     hyg_lqd = state_value(values, "hyg_lqd_63", 0.0)

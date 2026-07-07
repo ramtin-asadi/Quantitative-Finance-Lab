@@ -48,7 +48,27 @@ def _average_holding_days(signal: pd.Series) -> float:
 
 
 def coverage_table(frame: pd.DataFrame, rels: Sequence[rel]) -> pd.DataFrame:
-    """Data availability by relationship."""
+    """Report data availability for target/hedge relationships.
+
+    Parameters
+    ----------
+    frame : pandas.DataFrame
+        Price or return panel.
+    rels : sequence
+        Relationship objects containing target and hedge asset names.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One row per relationship with target, hedge labels, first/last valid date,
+        complete-row observation count, missing percentage, and inclusion flag.
+
+    Notes
+    -----
+    A relationship is included only when all required assets are present and at
+    least one complete observation exists.
+    """
+
     x = _frame(frame)
     rows = []
     for r in rels:
@@ -81,7 +101,36 @@ def diag_table(
     ann: float = 252.0,
     win: int = 252,
 ) -> pd.DataFrame:
-    """Relationship-level diagnostics before model scoring."""
+    """Build relationship-level diagnostics before hedge-model scoring.
+
+    The table summarizes target volatility, hedge-proxy volatility, correlation,
+    OLS R-squared, beta instability, and observation count for each relationship.
+
+    Parameters
+    ----------
+    ret : pandas.DataFrame
+        Return panel.
+    rels : sequence
+        Hedge relationships to evaluate.
+    beta_log : mapping, optional
+        Optional beta schedules or logs used to estimate beta dispersion.
+    ann : float, default=252.0
+        Annualization factor.
+    win : int, default=252
+        Rolling window used for beta-dispersion fallback.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Relationship diagnostic table.
+
+    Notes
+    -----
+    The hedge proxy is an equal-weight average of the hedge assets. The beta IQR
+    uses supplied beta logs when available; otherwise it is estimated from rolling
+    single-factor beta.
+    """
+
     rret = _frame(ret)
     rows = []
     for r in rels:
@@ -132,7 +181,39 @@ def model_table(
     ann: float = 252.0,
     alpha: float = 0.05,
 ) -> pd.DataFrame:
-    """Risk-reduction metrics for each relationship/model book."""
+    """Compute hedge-model risk-reduction metrics.
+
+    For each relationship and hedge model, the function compares the hedged return
+    stream with the unhedged target book. It reports volatility reduction, ES
+    reduction, drawdown improvement, beta reduction, turnover, cost drag, hedge
+    error volatility, beta stability, and rebalance count.
+
+    Parameters
+    ----------
+    bt : mapping
+        Mapping of strategy name to backtest result. Names are expected to follow
+        the relationship/model naming convention used by the hedging workflows.
+    rels : sequence
+        Hedge relationships.
+    ret : pandas.DataFrame
+        Original return panel used to build hedge proxies.
+    ann : float, default=252.0
+        Annualization factor.
+    alpha : float, default=0.05
+        Tail probability used for expected shortfall.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One row per relationship/model combination.
+
+    Notes
+    -----
+    Positive reduction metrics indicate improvement relative to the unhedged target.
+    Turnover and cost metrics are retained so the scoring layer can penalize models
+    that reduce volatility only by trading excessively.
+    """
+
     rret = _frame(ret)
     rows = []
     for r in rels:
@@ -239,7 +320,29 @@ def _norm_within_group(s: pd.Series, *, lower_is_better: bool = False) -> pd.Ser
 
 
 def score_table(tab: pd.DataFrame) -> pd.DataFrame:
-    """Relationship-normalized hedge score."""
+    """Score hedge models within each relationship.
+
+    The score combines normalized volatility reduction, ES reduction, drawdown
+    improvement, beta reduction, and beta stability, while penalizing annualized
+    turnover, cost drag, and materially worse drawdowns.
+
+    Parameters
+    ----------
+    tab : pandas.DataFrame
+        Output of ``model_table`` or a compatible table with hedge metrics.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of the input with component score columns and a final ``score`` column.
+
+    Notes
+    -----
+    Scores are normalized within each relationship, not globally. This prevents
+    relationships with naturally larger or smaller hedge benefits from dominating
+    the ranking across unrelated hedge books.
+    """
+
     if tab.empty:
         return tab.copy()
     out = tab.copy()
@@ -278,7 +381,24 @@ def score_table(tab: pd.DataFrame) -> pd.DataFrame:
 
 
 def best_table(tab: pd.DataFrame) -> pd.DataFrame:
-    """Best model per relationship."""
+    """Select the best hedge model for each relationship.
+
+    Parameters
+    ----------
+    tab : pandas.DataFrame
+        Scored hedge table containing ``relationship``, ``model``, and ``score``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Compact table with the best model and key metrics for each relationship.
+
+    Notes
+    -----
+    If the input is empty, the function returns an empty table with the expected
+    columns.
+    """
+
     if tab.empty:
         return pd.DataFrame(columns=["relationship", "best_model", "score", "vol_red", "es_red", "maxdd_diff", "cost_drag_ann"])
     idx = tab.groupby("relationship")["score"].idxmax()
@@ -325,7 +445,32 @@ def residual_trade_table(
     *,
     ann: float = 252.0,
 ) -> pd.DataFrame:
-    """Performance table for residual spread trades."""
+    """Summarize residual spread-trading backtests.
+
+    Parameters
+    ----------
+    backtests : mapping
+        Mapping from strategy key to residual-trade backtest result.
+    signals : mapping
+        Mapping from strategy key to signal DataFrame containing a ``signal``
+        column.
+    metadata : mapping
+        Mapping from strategy key to metadata such as pair name and beta source.
+    ann : float, default=252.0
+        Annualization factor.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Performance table with trade count, average holding period, net return,
+        annualized volatility, Sharpe ratio, maximum drawdown, cost drag, and
+        identifying metadata.
+
+    Notes
+    -----
+    Trade count is inferred from transitions from flat to nonzero signal.
+    """
+
     rows = []
     for key, res in backtests.items():
         ret = pd.Series(getattr(res, "net_returns", pd.Series(dtype=float)), dtype=float).dropna()

@@ -22,6 +22,21 @@ def hist_var_es(
     *,
     alpha: float = 0.05,
 ) -> tuple[float, float]:
+    """Compute historical VaR and expected shortfall.
+
+    Parameters
+    ----------
+    returns : array-like
+        Return series.
+    alpha : float, default=0.05
+        Lower-tail probability.
+
+    Returns
+    -------
+    tuple of float
+        ``(VaR, ES)`` as positive loss values.
+    """
+
     a = _normalize_alpha(alpha)
     r = _to_numeric_series(returns, name="returns")
     q = float(r.quantile(a))
@@ -36,6 +51,31 @@ def cf_var_es(
     n_sim: int = 70_000,
     seed: int = 7,
 ) -> tuple[float, float]:
+    """Compute Cornish-Fisher VaR and expected shortfall.
+
+    Parameters
+    ----------
+    returns : array-like
+        Return series.
+    alpha : float, default=0.05
+        Lower-tail probability.
+    n_sim : int, default=70000
+        Number of simulated transformed-normal draws used to approximate ES.
+    seed : int, default=7
+        Random seed.
+
+    Returns
+    -------
+    tuple of float
+        ``(VaR, ES)`` as positive loss values.
+
+    Notes
+    -----
+    The VaR quantile uses the Cornish-Fisher expansion with sample skewness and
+    excess kurtosis. ES is approximated by simulation from the transformed normal
+    distribution.
+    """
+
     a = _normalize_alpha(alpha)
     r = _to_numeric_series(returns, name="returns")
     if len(r) < 10:
@@ -69,6 +109,28 @@ def fhs_var_es(
     alpha: float = 0.05,
     lam: float = 0.94,
 ) -> tuple[float, float]:
+    """Compute filtered-historical-simulation VaR and expected shortfall.
+
+    Parameters
+    ----------
+    returns : array-like
+        Return series.
+    alpha : float, default=0.05
+        Lower-tail probability.
+    lam : float, default=0.94
+        EWMA volatility decay parameter.
+
+    Returns
+    -------
+    tuple of float
+        ``(VaR, ES)`` as positive loss values.
+
+    Raises
+    ------
+    InputError
+        If ``lam`` is not in ``(0, 1)``.
+    """
+
     a = _normalize_alpha(alpha)
     if not (0.0 < float(lam) < 1.0):
         raise InputError("lam must be in (0, 1).")
@@ -136,6 +198,32 @@ def rolling_var(
     cf_seed: int = 7,
     fhs_lambda: float = 0.94,
 ) -> pd.Series:
+    """Compute rolling one-period VaR forecasts.
+
+    Parameters
+    ----------
+    returns : array-like
+        Return series.
+    alpha : float, default=0.05
+        Lower-tail probability.
+    lookback : int, default=252
+        Rolling estimation window.
+    method : {"hist", "cf", "fhs"}, default="hist"
+        VaR estimation method.
+    cf_n_sim : int, default=15000
+        Number of simulations used by the Cornish-Fisher method.
+    cf_seed : int, default=7
+        Random seed for Cornish-Fisher simulation.
+    fhs_lambda : float, default=0.94
+        EWMA decay parameter for filtered historical simulation.
+
+    Returns
+    -------
+    pandas.Series
+        Rolling VaR quantile in return units. Breaches occur when realized returns
+        are below this negative threshold.
+    """
+
     a = _normalize_alpha(alpha)
     r = _to_numeric_series(returns, name="returns")
     return _rolling_var_quantile(
@@ -154,6 +242,28 @@ def var_es_table(
     alpha: float = 0.05,
     methods: Sequence[str] = ("hist", "cf", "fhs"),
 ) -> pd.DataFrame:
+    """Build VaR and ES tables for multiple objects and methods.
+
+    Parameters
+    ----------
+    objects : mapping or pandas.DataFrame
+        Return objects.
+    alpha : float, default=0.05
+        Lower-tail probability.
+    methods : sequence of str, default=("hist", "cf", "fhs")
+        VaR/ES methods to include.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table indexed by object with method-specific VaR and ES columns.
+
+    Raises
+    ------
+    InputError
+        If no methods are supplied or an unknown method is requested.
+    """
+
     a = _normalize_alpha(alpha)
     obj = _coerce_objects(objects)
     methods_norm = [str(m).strip().lower() for m in methods]

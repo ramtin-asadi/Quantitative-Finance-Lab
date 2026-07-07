@@ -17,6 +17,30 @@ def vol_contribution(
     *,
     index: Sequence[str] | None = None,
 ) -> pd.Series:
+    """Compute volatility risk contributions for a weight vector.
+
+    Parameters
+    ----------
+    weights : array-like
+        Portfolio weights.
+    cov : numpy.ndarray
+        Covariance matrix in the same return units as the desired volatility
+        contribution.
+    index : sequence of str, optional
+        Labels for the returned contribution series.
+
+    Returns
+    -------
+    pandas.Series
+        Asset-level contributions to portfolio volatility. Contributions sum to
+        portfolio volatility, up to numerical precision.
+
+    Raises
+    ------
+    InputError
+        If covariance shape is invalid or inconsistent with the weight vector.
+    """
+
     w = np.asarray(weights, dtype=float).reshape(-1)
     S = np.asarray(cov, dtype=float)
     if S.ndim != 2 or S.shape[0] != S.shape[1]:
@@ -37,6 +61,37 @@ def scenario_es_contribution(
     *,
     alpha: float = 0.05,
 ) -> pd.Series:
+    """Estimate expected-shortfall contributions from historical scenarios.
+
+    The function computes portfolio returns from a historical return window, selects
+    the lower-tail scenarios at tail probability ``alpha``, and averages each
+    asset's weighted loss contribution over those scenarios.
+
+    Parameters
+    ----------
+    returns_window : pandas.DataFrame
+        Historical asset return matrix.
+    weights : array-like
+        Portfolio weights aligned to the columns of ``returns_window``.
+    alpha : float, default=0.05
+        Lower-tail probability.
+
+    Returns
+    -------
+    pandas.Series
+        Asset-level expected-shortfall loss contributions.
+
+    Raises
+    ------
+    InputError
+        If the return window is empty or shape-incompatible with weights.
+
+    Notes
+    -----
+    The output is in positive loss contribution units. Larger values indicate
+    larger contribution to tail loss.
+    """
+
     a = _normalize_alpha(alpha)
     if not isinstance(returns_window, pd.DataFrame) or returns_window.empty:
         raise InputError("returns_window must be a non-empty DataFrame.")
@@ -111,12 +166,37 @@ def portfolio_contribution_snapshot(
     es_alpha: float = 0.05,
     date: pd.Timestamp | None = None,
 ) -> tuple[pd.Series, pd.Series]:
-    """
-    Return (volatility contribution, scenario-ES contribution) for one portfolio snapshot.
+    """Compute volatility and scenario-ES contribution snapshots for one portfolio.
 
-    If a returns window is unavailable in the state cache, ES contribution is returned
-    as an all-NaN series (same index as vol contribution) instead of raising.
+    Parameters
+    ----------
+    portfolio_spec : mapping
+        Portfolio specification containing enough information to resolve weights,
+        state cache, and covariance map.
+    cov_key : str, optional
+        Covariance key to use from the state covariance map.
+    es_alpha : float, default=0.05
+        Tail probability for scenario expected shortfall.
+    date : pandas.Timestamp, optional
+        Snapshot date. If omitted, the internal resolver chooses the relevant date.
+
+    Returns
+    -------
+    tuple of pandas.Series
+        ``(vol_contribution, es_contribution)`` sorted by descending contribution.
+
+    Raises
+    ------
+    InputError
+        If the requested covariance key is unavailable.
+
+    Notes
+    -----
+    If a historical return window is not available, the ES contribution is returned
+    as an all-NaN series instead of raising. This keeps risk reports usable for
+    portfolio objects that have covariance but not scenario history.
     """
+
     w, state, _ = _weights_state_from_spec(portfolio_spec, date=date)
     ck = str(cov_key or portfolio_spec.get("cov_key", "ledoitwolf"))
     cov_map = state.get("cov_ann_map", {})
@@ -156,6 +236,30 @@ def attribution_tables(
     es_alpha: float = 0.05,
     top_k: int = 10,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Build volatility, ES, and overlap attribution tables for multiple portfolios.
+
+    Parameters
+    ----------
+    portfolios : mapping
+        Mapping from portfolio name to a contribution-compatible specification.
+    es_alpha : float, default=0.05
+        Tail probability for ES contribution.
+    top_k : int, default=10
+        Number of top contributors used for overlap counting.
+
+    Returns
+    -------
+    tuple of pandas.DataFrame
+        ``(vol_tbl, es_tbl, overlap_tbl)``. The first two tables are portfolio-by-
+        asset contribution matrices. The overlap table reports how many of the top
+        volatility contributors are also top ES contributors.
+
+    Raises
+    ------
+    InputError
+        If no portfolios are supplied or ``top_k`` is not positive.
+    """
+
     if not portfolios:
         raise InputError("portfolios cannot be empty.")
     if top_k <= 0:

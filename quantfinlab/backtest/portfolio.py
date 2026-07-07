@@ -128,14 +128,67 @@ def run_weights_backtest(
     weight_timing: Literal["next_close", "same_day"] = "next_close",
     name: str | None = None,
 ) -> BacktestResult:
-    """
-    Backtest a precomputed rebalance-weight schedule with daily drift and costs.
+    """Backtest a precomputed rebalance-weight schedule with daily drift and costs.
 
-    The model can be anything that produces a date-indexed weight table.  By
-    default weights decided on date ``t`` are traded on the next available
-    return observation, which avoids using the close-to-close return from the
-    decision day.
+    This engine is intended for strategies that already produce a date-indexed
+    weight table. It aligns each decision-date weight vector to an effective trading
+    date, applies transaction costs when the portfolio is rebalanced, drifts weights
+    with realized returns between rebalances, and returns gross and net value
+    paths.
+
+    Parameters
+    ----------
+    returns : pandas.DataFrame
+        Asset return panel indexed by trading date. Values are one-period
+        arithmetic returns in decimal units.
+    weights : pandas.DataFrame or mapping
+        Rebalance weight schedule indexed by decision date. Columns should match
+        the return assets. Missing asset weights are filled with zero before
+        optional normalization.
+    cost_bps : float, default=10.0
+        Proportional transaction cost in basis points applied to one-way turnover.
+    fixed_fee : float, default=0.0
+        Optional fixed fee applied per asset whose weight changes at a rebalance.
+    initial_value : float, default=1.0
+        Initial portfolio value.
+    rf_daily : float, default=0.0
+        Stored in metadata for downstream reporting.
+    w_min : float, mapping, pandas.Series, or None, default=0.0
+        Minimum weight constraint used when normalizing.
+    w_max : float, mapping, pandas.Series, or None, optional
+        Maximum weight constraint used when normalizing.
+    long_only : bool, default=True
+        Whether negative weights are disallowed during normalization.
+    normalize : bool, default=True
+        If true, rebalance weights are normalized under the supplied constraints.
+    weight_timing : {"next_close", "same_day"}, default="next_close"
+        Timing convention for decision weights. ``"next_close"`` makes a decision
+        dated ``t`` effective on the next available return row, avoiding use of the
+        decision day's close-to-close return. ``"same_day"`` makes it effective on
+        the first return row on or after the decision date.
+    name : str, optional
+        Strategy name stored in result metadata.
+
+    Returns
+    -------
+    BacktestResult
+        Result object containing gross/net value paths, gross/net returns,
+        rebalance weights, turnover, costs, fallback count, and metadata.
+
+    Raises
+    ------
+    InputError
+        If ``initial_value`` is non-positive, timing is invalid, or no weights align
+        to the return index.
+
+    Notes
+    -----
+    Turnover is defined as half the L1 change in portfolio weights. Costs are
+    subtracted from net value before the period return is applied on rebalance
+    dates. Between rebalances, weights drift naturally with asset returns and are
+    renormalized by the portfolio's grossed asset values.
     """
+
     if initial_value <= 0:
         raise InputError("initial_value must be positive.")
     if weight_timing not in {"next_close", "same_day"}:
@@ -244,7 +297,23 @@ def run_many_weights_backtests(
     returns: pd.DataFrame,
     **kwargs,
 ) -> dict[str, BacktestResult]:
-    """Run one precomputed-weight backtest per strategy."""
+    """Run several precomputed-weight backtests.
+
+    Parameters
+    ----------
+    weights_by_strategy : mapping
+        Mapping from strategy name to weight schedule.
+    returns : pandas.DataFrame
+        Asset return panel.
+    **kwargs
+        Additional keyword arguments passed to ``run_weights_backtest``.
+
+    Returns
+    -------
+    dict
+        Mapping from strategy name to ``BacktestResult``.
+    """
+
     return {
         str(name): run_weights_backtest(returns=returns, weights=weights, name=str(name), **kwargs)
         for name, weights in weights_by_strategy.items()
@@ -267,12 +336,69 @@ def run_rebalanced_portfolio_backtest(
     initial_value: float = 1.0,
     rf_daily: float = 0.0,
 ) -> BacktestResult:
-    """
-    Daily-drift, periodic-rebalance portfolio backtest with transaction costs.
+    """Run a model-driven periodic rebalance backtest.
 
-    This is intentionally portfolio-specific but model-agnostic: all model and
-    optimizer choices arrive through ``cache`` and ``weight_fn``.
+    This is the core model-agnostic portfolio backtest engine. At each rebalance
+    date, it retrieves the precomputed model state from ``cache``, calls
+    ``weight_fn`` to obtain target weights, applies fallback logic if the optimizer
+    fails, optionally blends the target with previous weights, applies transaction
+    costs, and then lets weights drift with daily returns until the next rebalance.
+
+    Parameters
+    ----------
+    returns : pandas.DataFrame
+        Asset return panel indexed by trading date.
+    rebal_dates : sequence of str or pandas.Timestamp
+        Candidate rebalance dates. Only dates present in ``cache`` are used.
+    cache : mapping
+        Mapping from rebalance date to state object. Each state should provide
+        ``tickers`` and whatever additional model inputs ``weight_fn`` requires.
+    weight_fn : callable
+        Function with signature ``weight_fn(date, state, previous_weights)``. It
+        must return target weights as an array or Series, or ``None`` on failure.
+    cost_bps : float, default=10.0
+        Proportional transaction cost in basis points applied to one-way turnover.
+    fixed_fee : float, default=0.0
+        Optional fixed fee per changed asset.
+    fallback : {"equal", "previous", "none"}, default="equal"
+        Fallback behavior when ``weight_fn`` fails or returns invalid weights.
+    blend : float, default=0.0
+        Weight smoothing strength. ``0`` uses the new target; ``1`` would keep the
+        previous weights.
+    w_min : float or None, default=0.0
+        Minimum weight for normalization.
+    w_max : float or None, default=0.25
+        Maximum weight for normalization.
+    long_only : bool, default=True
+        Whether negative weights are disallowed.
+    initial_value : float, default=1.0
+        Initial portfolio value.
+    rf_daily : float, default=0.0
+        Stored in metadata for downstream reporting.
+
+    Returns
+    -------
+    BacktestResult
+        Result object with gross/net value paths, returns, weights, turnover,
+        costs, fallback count, and metadata.
+
+    Raises
+    ------
+    InputError
+        If initial value is non-positive, rebalance dates are empty, or no rebalance
+        dates remain after intersecting with cache keys.
+
+    Notes
+    -----
+    The engine itself does not estimate expected returns, covariance matrices, or
+    signals. Those belong in the cache and weight function. This separation is what
+    makes the backtest reusable across mean-variance, risk-parity, Black-Litterman,
+    ML, and custom allocation methods.
+
+    Transaction costs are applied at rebalances before the day's return is applied.
+    Weights then drift between rebalances according to realized asset returns.
     """
+
     if initial_value <= 0:
         raise InputError("initial_value must be positive.")
 
@@ -460,7 +586,29 @@ def run_strategy_grid_backtests(
     cache: Mapping[pd.Timestamp | str, Any],
     **kwargs,
 ) -> dict[str, BacktestResult]:
-    """Run several strategy functions through the same rebalance engine."""
+    """Run several strategy functions through the same rebalance engine.
+
+    Parameters
+    ----------
+    strategy_fns : mapping
+        Mapping from strategy name to a ``weight_fn`` compatible with
+        ``run_rebalanced_portfolio_backtest``.
+    returns : pandas.DataFrame
+        Asset return panel.
+    rebal_dates : sequence
+        Rebalance dates.
+    cache : mapping
+        Rebalance state cache.
+    **kwargs
+        Additional keyword arguments passed to
+        ``run_rebalanced_portfolio_backtest``.
+
+    Returns
+    -------
+    dict
+        Mapping from strategy name to ``BacktestResult``.
+    """
+
     return {
         name: run_rebalanced_portfolio_backtest(
             returns=returns,

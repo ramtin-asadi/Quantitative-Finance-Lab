@@ -71,7 +71,39 @@ def equal_weight(
     long_only: bool = True,
     as_series: bool = False,
 ) -> np.ndarray | pd.Series:
-    """Equal-weight portfolio under bound constraints."""
+    """Build an equal-weight portfolio under simple box constraints.
+
+    Parameters
+    ----------
+    assets : sequence of str or int
+        Asset labels, or the number of assets.
+    w_min : float, optional
+        Minimum per-asset weight.
+    w_max : float, optional
+        Maximum per-asset weight.
+    long_only : bool, default=True
+        Whether weights must be non-negative.
+    as_series : bool, default=False
+        If True, return a Series indexed by asset label.
+
+    Returns
+    -------
+    numpy.ndarray or pandas.Series
+        Equal weights satisfying the requested bounds.
+
+    Raises
+    ------
+    InputError
+        If the asset set is empty or the constraints are infeasible.
+    ModelError
+        If the equal-weight vector cannot be normalized under the constraints.
+
+    Notes
+    -----
+    This function is used both as a benchmark allocator and as a fallback when
+    more complex optimizers fail.
+    """
+
     if isinstance(assets, int):
         n_assets = int(assets)
         labels = [f"a{i}" for i in range(n_assets)]
@@ -104,7 +136,52 @@ def minimum_variance(
     solver_order: Sequence[str] | None = None,
     raise_on_fail: bool = False,
 ) -> np.ndarray | None:
-    """Minimum-variance portfolio with turnover and ridge penalties."""
+    """Solve a constrained minimum-variance portfolio problem.
+
+    The optimizer minimizes annualized portfolio variance plus optional turnover
+    and ridge penalties, subject to full investment, long-only and box
+    constraints.
+
+    Parameters
+    ----------
+    cov_ann : array-like or pandas.DataFrame
+        Annualized covariance matrix.
+    w_prev : array-like, optional
+        Previous portfolio weights used for turnover penalization.
+    w_min : float, optional
+        Minimum per-asset weight.
+    w_max : float, optional
+        Maximum per-asset weight.
+    long_only : bool, default=True
+        Whether negative weights are disallowed.
+    turnover_penalty_bps : float, default=10.0
+        Turnover penalty expressed in basis points.
+    kappa_target_annual : float, optional
+        Annualized turnover penalty override.
+    ridge : float, default=1e-8
+        L2 ridge penalty added to stabilize weights.
+    solver_order : sequence of str, optional
+        CVXPY solver preference order.
+    raise_on_fail : bool, default=False
+        If True, raise ``ModelError`` when constraints are infeasible or the
+        solver fails; otherwise return ``None``.
+
+    Returns
+    -------
+    numpy.ndarray or None
+        Optimized weights, or ``None`` when no feasible solution is found and
+        ``raise_on_fail=False``.
+
+    Raises
+    ------
+    InputError
+        If fewer than two assets are supplied.
+    ImportError
+        If CVXPY is not installed.
+    ModelError
+        If optimization fails and ``raise_on_fail=True``.
+    """
+
     S = _as_square_cov(cov_ann)
     n = S.shape[0]
     if n < 2:
@@ -158,7 +235,55 @@ def mean_variance(
     solver_order: Sequence[str] | None = None,
     raise_on_fail: bool = False,
 ) -> np.ndarray | None:
-    """Mean-variance utility optimizer with L1 turnover and ridge penalties."""
+    """Solve a constrained mean-variance utility portfolio problem.
+
+    The objective maximizes expected excess return minus covariance risk,
+    turnover penalty, and ridge penalty, subject to full investment and
+    per-asset bounds.
+
+    Parameters
+    ----------
+    mu_excess_ann : array-like or pandas.Series
+        Annualized expected excess returns.
+    cov_ann : array-like or pandas.DataFrame
+        Annualized covariance matrix.
+    w_prev : array-like, optional
+        Previous weights used for turnover penalization.
+    mv_lambda : float, default=6.0
+        Risk-aversion parameter applied to portfolio variance.
+    kappa_target_annual : float, optional
+        Annualized turnover-penalty override.
+    w_min : float, optional
+        Minimum per-asset weight.
+    w_max : float, optional
+        Maximum per-asset weight.
+    long_only : bool, default=True
+        Whether negative weights are disallowed.
+    turnover_penalty_bps : float, default=10.0
+        Turnover penalty expressed in basis points.
+    ridge : float, default=1e-8
+        L2 ridge penalty for numerical stability.
+    solver_order : sequence of str, optional
+        CVXPY solver preference order.
+    raise_on_fail : bool, default=False
+        If True, raise ``ModelError`` on infeasibility or solver failure.
+
+    Returns
+    -------
+    numpy.ndarray or None
+        Optimized weights, or ``None`` if optimization fails and
+        ``raise_on_fail=False``.
+
+    Raises
+    ------
+    InputError
+        If the covariance and expected-return dimensions do not match.
+    ImportError
+        If CVXPY is not installed.
+    ModelError
+        If optimization fails and ``raise_on_fail=True``.
+    """
+
     mu = np.asarray(mu_excess_ann, dtype=float).reshape(-1)
     S = _as_square_cov(cov_ann)
     if S.shape[0] != mu.shape[0]:
@@ -218,7 +343,46 @@ def ridge_mean_variance(
     solver_order: Sequence[str] | None = None,
     raise_on_fail: bool = False,
 ) -> np.ndarray | None:
-    """Ridge-regularized mean-variance optimizer matching Notebook 2's L2 form."""
+    """Solve the ridge-regularized mean-variance allocation used in the research grid.
+
+    This is a convenience wrapper around ``mean_variance`` that adds an
+    asset-count-scaled L2 penalty through ``gamma_l2``. The penalty discourages
+    unstable concentrated allocations when expected returns are noisy.
+
+    Parameters
+    ----------
+    mu_excess_ann : array-like or pandas.Series
+        Annualized expected excess returns.
+    cov_ann : array-like or pandas.DataFrame
+        Annualized covariance matrix.
+    w_prev : array-like, optional
+        Previous weights used for turnover penalization.
+    ridge : float, default=1e-4
+        Base ridge penalty.
+    gamma_l2 : float, default=12.0
+        Additional L2 penalty divided by the number of assets.
+    mv_lambda : float, default=6.0
+        Mean-variance risk-aversion parameter.
+    kappa_target_annual : float, optional
+        Annualized turnover-penalty override.
+    w_min, w_max : float, optional
+        Per-asset lower and upper bounds.
+    long_only : bool, default=True
+        Whether negative weights are disallowed.
+    turnover_penalty_bps : float, default=10.0
+        Turnover penalty in basis points.
+    solver_order : sequence of str, optional
+        CVXPY solver preference order.
+    raise_on_fail : bool, default=False
+        If True, raise on optimization failure.
+
+    Returns
+    -------
+    numpy.ndarray or None
+        Optimized weights, or ``None`` when optimization fails and
+        ``raise_on_fail=False``.
+    """
+
     mu = np.asarray(mu_excess_ann, dtype=float).reshape(-1)
     gamma_per_asset = float(gamma_l2) / max(len(mu), 1)
     return mean_variance(
@@ -260,7 +424,55 @@ def max_sharpe_slsqp(
     maxiter: int = 8000,
     raise_on_fail: bool = False,
 ) -> np.ndarray | None:
-    """Max-Sharpe optimization via SLSQP with turnover and ridge penalties."""
+    """Maximize a penalized Sharpe-ratio objective using SLSQP.
+
+    The function maximizes expected return divided by volatility while applying
+    turnover and ridge penalties. If the expected-return vector is effectively
+    zero, it falls back to minimum-variance optimization.
+
+    Parameters
+    ----------
+    mu_excess_ann : array-like or pandas.Series
+        Annualized expected excess returns.
+    cov_ann : array-like or pandas.DataFrame
+        Annualized covariance matrix.
+    w_prev : array-like, optional
+        Previous weights used for turnover penalization.
+    w_min, w_max : float, optional
+        Per-asset lower and upper bounds.
+    long_only : bool, default=True
+        Whether negative weights are disallowed.
+    turnover_penalty_bps : float, default=10.0
+        Turnover penalty in basis points.
+    kappa_target_annual : float, optional
+        Annualized turnover penalty override.
+    ridge : float, default=1e-8
+        L2 ridge penalty.
+    maxiter : int, default=8000
+        Maximum SLSQP iterations.
+    raise_on_fail : bool, default=False
+        If True, raise ``ModelError`` when optimization fails.
+
+    Returns
+    -------
+    numpy.ndarray or None
+        Optimized weights, or ``None`` on failure when ``raise_on_fail=False``.
+
+    Raises
+    ------
+    InputError
+        If dimensions are incompatible or too few assets are supplied.
+    ImportError
+        If SciPy is not installed.
+    ModelError
+        If optimization fails and ``raise_on_fail=True``.
+
+    Notes
+    -----
+    The objective is non-convex because it uses the Sharpe ratio directly.
+    Results can be more sensitive than convex mean-variance optimizers.
+    """
+
     mu = np.asarray(mu_excess_ann, dtype=float).reshape(-1)
     S = _as_square_cov(cov_ann)
     if S.shape[0] != mu.shape[0]:
@@ -381,7 +593,59 @@ def max_sharpe_frontier_grid(
     solver_order: Sequence[str] | None = None,
     raise_on_fail: bool = False,
 ) -> np.ndarray | None:
-    """Approximate max-Sharpe by scanning target-return efficient frontier points."""
+    """Approximate maximum-Sharpe allocation by scanning efficient-frontier targets.
+
+    The function builds a minimum-variance anchor and a greedy maximum-return
+    anchor, then solves a sequence of convex target-return variance problems and
+    selects the feasible solution with the highest Sharpe ratio.
+
+    Parameters
+    ----------
+    mu_excess_ann : array-like or pandas.Series
+        Annualized expected excess returns.
+    cov_ann : array-like or pandas.DataFrame
+        Annualized covariance matrix.
+    w_prev : array-like, optional
+        Previous weights used for turnover penalization.
+    grid_n : int, default=25
+        Number of target-return grid points.
+    w_min, w_max : float, optional
+        Per-asset lower and upper bounds.
+    long_only : bool, default=True
+        Whether negative weights are disallowed.
+    turnover_penalty_bps : float, default=10.0
+        Turnover penalty in basis points.
+    kappa_target_annual : float, optional
+        Annualized turnover penalty override.
+    ridge : float, default=1e-8
+        L2 ridge penalty.
+    solver_order : sequence of str, optional
+        CVXPY solver preference order.
+    raise_on_fail : bool, default=False
+        If True, raise when no feasible frontier point is found.
+
+    Returns
+    -------
+    numpy.ndarray or None
+        Approximate maximum-Sharpe weights, or ``None`` on failure when
+        ``raise_on_fail=False``.
+
+    Raises
+    ------
+    InputError
+        If dimensions are incompatible or ``grid_n < 2``.
+    ImportError
+        If CVXPY is not installed.
+    ModelError
+        If the frontier is degenerate or no feasible solution is found and
+        ``raise_on_fail=True``.
+
+    Notes
+    -----
+    This method is slower than direct SLSQP but uses convex subproblems and can
+    be more stable under tight constraints.
+    """
+
     mu = np.asarray(mu_excess_ann, dtype=float).reshape(-1)
     S = _as_square_cov(cov_ann)
     if S.shape[0] != mu.shape[0]:

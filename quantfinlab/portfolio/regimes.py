@@ -21,6 +21,51 @@ def regime_asset_scores(
     min_weight: float = 1e-4,
     orient: str | None = None,
 ) -> pd.DataFrame:
+    """Score assets conditionally on regime probabilities.
+
+    For each regime state, the function combines probability-weighted return,
+    hit rate, trend, volatility penalty, and drawdown quality into a standardized
+    asset score. The output can be state-by-asset or asset-by-state.
+
+    Parameters
+    ----------
+    returns : pandas.DataFrame
+        Asset return panel.
+    proba : pandas.DataFrame, optional
+        Regime probability panel indexed by date.
+    probabilities : pandas.DataFrame, optional
+        Alias for ``proba``.
+    assets : sequence of str, optional
+        Asset subset to score.
+    trend : pandas.Series, optional
+        External trend score. If omitted, trend is computed from trailing returns.
+    trend_window : int, default=126
+        Window for internal trend calculation.
+    vol_window : int, default=126
+        Window for trailing volatility.
+    drawdown_window : int, default=252
+        Window for drawdown quality.
+    min_weight : float, default=1e-4
+        Minimum probability weight used to judge effective state sample size.
+    orient : str, optional
+        Output orientation. Values beginning with ``"asset"`` return assets in
+        rows; otherwise states are returned in rows.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Regime-conditioned asset scores.
+
+    Raises
+    ------
+    ValueError
+        If neither ``proba`` nor ``probabilities`` is supplied.
+
+    Notes
+    -----
+    States with very low effective sample size receive a score haircut.
+    """
+
     if proba is None:
         if probabilities is None:
             raise ValueError("proba or probabilities is required.")
@@ -74,6 +119,37 @@ def sleeve_weights(
     top_n: int = 5,
     max_weight: float = 0.30,
 ) -> pd.Series:
+    """Convert regime or sleeve scores into a capped risky-sleeve allocation.
+
+    The function selects the top positive scores, normalizes them, applies a
+    risk-budget rule, caps individual weights, and assigns any residual capital
+    to a cash ticker.
+
+    Parameters
+    ----------
+    scores : pandas.Series
+        Asset score vector.
+    assets : sequence of str, optional
+        Eligible risky assets. If omitted, all score names except the cash ticker
+        are eligible.
+    cash_ticker : str, default="SHY"
+        Cash or defensive asset receiving residual capital.
+    top_n : int, default=5
+        Maximum number of risky assets selected.
+    max_weight : float, default=0.30
+        Maximum per-risky-asset weight.
+
+    Returns
+    -------
+    pandas.Series
+        Fully normalized sleeve weights including the cash ticker.
+
+    Notes
+    -----
+    If no positive risky score is available, the function allocates fully to the
+    cash ticker.
+    """
+
     if assets is None:
         assets = [str(x) for x in pd.Series(scores).index if str(x) != str(cash_ticker)]
     cols = list(dict.fromkeys([*assets, cash_ticker]))
@@ -112,6 +188,36 @@ def blend_sleeves(
     probabilities: pd.Series | None = None,
     cash_ticker: str | None = None,
 ) -> pd.Series:
+    """Blend state-specific sleeve allocations using regime probabilities.
+
+    Parameters
+    ----------
+    proba : pandas.Series, optional
+        Regime probabilities indexed by sleeve/state name.
+    sleeves : pandas.DataFrame or mapping
+        State-specific sleeve weights. Rows or mapping keys should correspond to
+        probability labels.
+    probabilities : pandas.Series, optional
+        Alias for ``proba``.
+    cash_ticker : str, optional
+        Accepted for API compatibility and ignored.
+
+    Returns
+    -------
+    pandas.Series
+        Probability-weighted blended allocation, normalized to sum to one when
+        possible.
+
+    Raises
+    ------
+    ValueError
+        If probabilities or sleeves are missing.
+
+    Notes
+    -----
+    If probabilities sum to zero, they are replaced with equal probabilities.
+    """
+
     del cash_ticker
     if proba is None:
         if probabilities is None:

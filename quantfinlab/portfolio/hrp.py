@@ -101,6 +101,36 @@ def _cluster_variance(cov, items):
 
 
 def hrp_weights(cov_ann, *, tickers=None, linkage_method="average", w_min=0.0, w_max=0.40):
+    """Compute hierarchical risk parity portfolio weights.
+
+    The function builds a correlation-distance hierarchy from the covariance
+    matrix, orders assets by the hierarchical clustering leaves, and recursively
+    allocates capital between clusters using inverse cluster variance.
+
+    Parameters
+    ----------
+    cov_ann : array-like or pandas.DataFrame
+        Annualized covariance matrix.
+    tickers : sequence of str, optional
+        Asset labels. Generated labels are used when omitted.
+    linkage_method : str, default="average"
+        Hierarchical clustering linkage method.
+    w_min : float, default=0.0
+        Minimum per-asset weight.
+    w_max : float, default=0.40
+        Maximum per-asset weight.
+
+    Returns
+    -------
+    pandas.Series
+        HRP weights indexed by asset.
+
+    Notes
+    -----
+    The covariance matrix is projected to positive-semidefinite form before
+    clustering and allocation.
+    """
+
     labels = pd.Index(tickers if tickers is not None else [f"a{i}" for i in range(np.asarray(cov_ann).shape[0])])
     cov = make_psd(np.asarray(cov_ann, dtype=float), eps=1e-10)
     _, _, link = _linkage(cov, linkage_method=linkage_method)
@@ -149,6 +179,46 @@ def nco_mv_weights(
     w_min=0.0,
     w_max=0.40,
 ):
+    """Compute nested-clustered mean-variance portfolio weights.
+
+    The function clusters assets, solves a mean-variance allocation within each
+    cluster, builds a cluster-level covariance/return problem from those inner
+    portfolios, and then allocates across clusters.
+
+    Parameters
+    ----------
+    cov_ann : array-like or pandas.DataFrame
+        Annualized covariance matrix.
+    mu_ann : array-like or pandas.Series
+        Annualized expected returns.
+    tickers : sequence of str, optional
+        Asset labels.
+    n_clusters : int, default=3
+        Number of clusters used for nested optimization.
+    inner_lambda : float, default=3.0
+        Risk-aversion parameter for within-cluster optimization.
+    outer_lambda : float, default=3.0
+        Risk-aversion parameter for across-cluster optimization.
+    cluster_cap : float, default=0.75
+        Maximum allocation to any single cluster.
+    linkage_method : str, default="average"
+        Hierarchical clustering linkage method.
+    w_min : float, default=0.0
+        Minimum per-asset weight.
+    w_max : float, default=0.40
+        Maximum per-asset weight.
+
+    Returns
+    -------
+    pandas.Series
+        Nested-clustered portfolio weights indexed by asset.
+
+    Notes
+    -----
+    Nested optimization can reduce estimation error by separating within-cluster
+    selection from between-cluster capital allocation.
+    """
+
     labels = pd.Index(tickers if tickers is not None else pd.Series(mu_ann).index)
     cov = pd.DataFrame(make_psd(np.asarray(cov_ann, dtype=float), eps=1e-10), index=labels, columns=labels)
     mu = pd.Series(mu_ann, dtype=float).reindex(labels).fillna(0.0)
@@ -178,6 +248,33 @@ def nco_mv_weights(
 
 
 def hrp_weight_frame(cache, rebalance_dates, *, cov_model, linkage_method="average", w_min=0.0, w_max=0.40):
+    """Build a rebalance-date panel of hierarchical risk parity weights.
+
+    Parameters
+    ----------
+    cache : mapping
+        Rebalance-state cache containing tickers and covariance matrices.
+    rebalance_dates : sequence
+        Candidate rebalance dates.
+    cov_model : str
+        Covariance model key to extract from each cached state.
+    linkage_method : str, default="average"
+        Hierarchical clustering linkage method.
+    w_min : float, default=0.0
+        Minimum per-asset weight.
+    w_max : float, default=0.40
+        Maximum per-asset weight.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Weight frame indexed by rebalance date.
+
+    Notes
+    -----
+    Dates not present in the cache are skipped.
+    """
+
     rows = []
     for dt in [pd.Timestamp(x) for x in rebalance_dates if pd.Timestamp(x) in cache][:-1]:
         state = cache[pd.Timestamp(dt)]

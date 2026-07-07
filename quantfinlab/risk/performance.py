@@ -16,6 +16,26 @@ def nav_series(
     *,
     start_value: float = 1.0,
 ) -> pd.Series:
+    """Convert returns into a NAV series.
+
+    Parameters
+    ----------
+    returns : array-like
+        One-period returns in decimal units.
+    start_value : float, default=1.0
+        Initial NAV. Must be positive.
+
+    Returns
+    -------
+    pandas.Series
+        Cumulative NAV series.
+
+    Raises
+    ------
+    InputError
+        If ``start_value`` is not positive.
+    """
+
     if start_value <= 0:
         raise InputError("start_value must be positive.")
     r = _to_numeric_series(returns, name="returns").fillna(0.0)
@@ -36,6 +56,24 @@ def sortino_ratio(
     rf_daily: float = 0.0,
     annualization: float = DEFAULT_ANNUALIZATION,
 ) -> float:
+    """Compute the annualized Sortino ratio.
+
+    Parameters
+    ----------
+    returns : array-like
+        Return series.
+    rf_daily : float, default=0.0
+        One-period risk-free rate.
+    annualization : float, default=252.0
+        Annualization factor.
+
+    Returns
+    -------
+    float
+        Annualized Sortino ratio, or ``NaN`` when downside deviation is zero or
+        unavailable.
+    """
+
     r = _to_numeric_series(returns, name="returns")
     ex = r - float(rf_daily)
     dn = np.minimum(ex.to_numpy(dtype=float), 0.0)
@@ -50,6 +88,24 @@ def performance_table(
     rf_daily: float = 0.0,
     annualization: float = DEFAULT_ANNUALIZATION,
 ) -> pd.DataFrame:
+    """Build annualized performance metrics for return objects.
+
+    Parameters
+    ----------
+    objects : mapping or pandas.DataFrame
+        Return objects.
+    rf_daily : float, default=0.0
+        One-period risk-free rate used for Sharpe and Sortino.
+    annualization : float, default=252.0
+        Annualization factor.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with annualized return, annualized volatility, Sharpe ratio, and
+        Sortino ratio.
+    """
+
     obj = _coerce_objects(objects)
     rows: list[dict[str, Any]] = []
     ann = float(annualization)
@@ -89,7 +145,29 @@ def rolling_volatility(
     windows: Sequence[int] = (20, 60, 252),
     annualization: float = DEFAULT_ANNUALIZATION,
 ) -> pd.DataFrame:
-    """Compute annualized rolling volatility for one series or a panel of objects."""
+    """Compute annualized rolling volatility.
+
+    Parameters
+    ----------
+    returns : array-like, mapping, or pandas.DataFrame
+        One return series or several return objects.
+    windows : sequence of int, default=(20, 60, 252)
+        Rolling windows.
+    annualization : float, default=252.0
+        Annualization factor.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Rolling volatility table. For multiple objects, columns are a MultiIndex of
+        ``(object, vol_window)``.
+
+    Raises
+    ------
+    InputError
+        If no valid window greater than one is supplied.
+    """
+
     wlist = [int(w) for w in windows if int(w) > 1]
     if not wlist:
         raise InputError("windows must contain at least one integer > 1.")

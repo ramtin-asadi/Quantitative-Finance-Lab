@@ -59,6 +59,38 @@ def rolling_factor_fit(y, x, window=60):
 
 
 def factor_state(factors, short_window=6, long_window=12, vol_window=36, skip=1, clip=2.0):
+    """Build standardized factor timing states from factor returns.
+
+    The function combines short-horizon and skip-window long-horizon factor
+    momentum, scales the result by rolling volatility, standardizes it using a
+    rolling z-score, and clips extreme values.
+
+    Parameters
+    ----------
+    factors : pandas.DataFrame or array-like
+        Factor return panel.
+    short_window : int, default=6
+        Rolling window used for short-horizon cumulative return.
+    long_window : int, default=12
+        Rolling window used for longer-horizon cumulative return.
+    vol_window : int, default=36
+        Rolling window used for volatility scaling and z-score standardization.
+    skip : int, default=1
+        Number of periods skipped for the long-horizon momentum leg.
+    clip : float, default=2.0
+        Absolute clipping bound applied to standardized states.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Standardized and clipped factor-state panel.
+
+    Notes
+    -----
+    The function is designed for monthly factor data. The volatility scaling uses
+    ``sqrt(12)`` internally.
+    """
+
     f = pd.DataFrame(factors).astype(float)
     short = (1.0 + f).rolling(int(short_window)).apply(np.prod, raw=True) - 1.0
     long_len = max(int(long_window) - int(skip), 1)
@@ -95,6 +127,35 @@ def factor_proxy_spreads(returns, benchmark_ticker="SPY", cash_ticker="SHY"):
 
 
 def blend_factor_states(academic_state, tradable_state, academic_weight=0.70, disagreement_scale=0.50):
+    """Blend academic and tradable factor-state estimates.
+
+    The function forms a weighted average of two aligned state panels and
+    haircuts the blended signal when the two sources disagree in sign.
+
+    Parameters
+    ----------
+    academic_state : pandas.DataFrame
+        Factor-state panel from academic factor returns.
+    tradable_state : pandas.DataFrame
+        Factor-state panel from tradable proxy returns.
+    academic_weight : float, default=0.70
+        Weight assigned to the academic state.
+    disagreement_scale : float, default=0.50
+        Multiplicative haircut applied where academic and tradable signs
+        disagree.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Blended factor-state panel indexed and columned like the academic input
+        where possible.
+
+    Notes
+    -----
+    Only overlapping dates and columns are blended. Non-overlapping entries
+    retain the academic-state values.
+    """
+
     a = pd.DataFrame(academic_state).astype(float)
     t = pd.DataFrame(tradable_state).astype(float)
     idx = a.index.intersection(t.index)
@@ -119,6 +180,30 @@ def cross_section_z(values):
 
 
 def factor_scores(beta, z_factor):
+    """Project factor states through asset factor betas.
+
+    For each date, asset-level scores are computed as the dot product between
+    asset factor exposures and current factor states.
+
+    Parameters
+    ----------
+    beta : pandas.DataFrame
+        Factor beta panel indexed by date. Columns should be a MultiIndex with
+        levels that include asset and factor identifiers.
+    z_factor : pandas.DataFrame
+        Factor-state panel indexed by date with factor columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Asset score panel with dates in rows and assets in columns.
+
+    Notes
+    -----
+    Only factors present in both the beta slice and the factor-state table are
+    used on each date. Missing dates or factors produce missing scores.
+    """
+
     z = pd.DataFrame(z_factor).astype(float)
     dates = beta.index.intersection(z.index)
     assets = beta.columns.get_level_values("asset").unique()
@@ -184,6 +269,38 @@ def benchmark_weight_schedule(returns, benchmark_ticker):
 
 
 def top_score_weights(scores, vol, cash_returns, top_n=4, max_weight=0.35, cash_ticker="SHY"):
+    """Convert positive cross-sectional scores into top-N inverse-volatility weights.
+
+    At each date, the function selects the highest positive scores, scales them
+    by inverse volatility, caps individual weights, and allocates residual
+    capital to a cash ticker.
+
+    Parameters
+    ----------
+    scores : pandas.DataFrame
+        Asset score panel.
+    vol : pandas.DataFrame
+        Asset volatility panel aligned to ``scores``.
+    cash_returns : pandas.Series
+        Cash return series used to define the date index when available.
+    top_n : int, default=4
+        Maximum number of risky assets selected per date.
+    max_weight : float, default=0.35
+        Maximum risky-asset weight before residual cash allocation.
+    cash_ticker : str, default="SHY"
+        Cash or defensive asset column receiving residual capital.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Weight panel with asset columns plus the cash ticker.
+
+    Notes
+    -----
+    If no positive score is available on a date, the allocation is fully assigned
+    to the cash ticker.
+    """
+
     s = pd.DataFrame(scores).astype(float)
     v = pd.DataFrame(vol).astype(float).reindex(index=s.index, columns=s.columns)
     cash = pd.Series(cash_returns, dtype=float)
@@ -376,6 +493,50 @@ def validation_weighted_score(
     validation_strength=1.0,
     max_component_weights=None,
 ):
+    """Blend multiple score panels using rolling validation evidence.
+
+    The function evaluates each score component over a historical validation
+    window using rank information coefficient and top-N active return evidence,
+    then forms a date-specific weighted blend. An optional risk score can be
+    subtracted when it improves historical active performance or drawdown.
+
+    Parameters
+    ----------
+    scores : mapping
+        Mapping from component name to score panel.
+    future_returns : pandas.DataFrame
+        Forward return panel used for validation.
+    risk : pandas.DataFrame, optional
+        Risk penalty panel aligned with the score panels.
+    window : int, default=72
+        Number of historical periods used for validation.
+    min_periods : int, default=36
+        Minimum number of validation observations required before producing
+        scores.
+    top_n : int, default=4
+        Number of top-ranked assets used when evaluating active return.
+    risk_weight : float, default=0.20
+        Candidate risk penalty weight.
+    base_weights : mapping, optional
+        Baseline component weights blended with validation weights.
+    validation_strength : float, default=1.0
+        Strength of validation-driven reweighting.
+    max_component_weights : mapping, optional
+        Component-specific maximum weights.
+
+    Returns
+    -------
+    scores : pandas.DataFrame
+        Validation-weighted score panel.
+    weights : pandas.DataFrame
+        Component weight panel, including the realized risk-penalty weight.
+
+    Notes
+    -----
+    The function does not look ahead from each decision date; it uses only prior
+    validation observations when constructing the current blend.
+    """
+
     frames = {name: pd.DataFrame(value).astype(float) for name, value in scores.items()}
     future = pd.DataFrame(future_returns).astype(float)
     idx = future.index
@@ -449,6 +610,27 @@ def validation_weighted_score(
 
 
 def rank_ic_table(scores, future_returns):
+    """Compute rank information-coefficient diagnostics for one or more signals.
+
+    Parameters
+    ----------
+    scores : pandas.DataFrame or mapping
+        Score panel, or mapping from signal name to score panel.
+    future_returns : pandas.DataFrame
+        Forward return panel aligned with the scores.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Signal-indexed table containing average rank IC, t-statistic, positive
+        IC hit rate, and observation count.
+
+    Notes
+    -----
+    Rank IC is computed cross-sectionally by date and then summarized through
+    time.
+    """
+
     score_map = scores if isinstance(scores, Mapping) else {"score": scores}
     future = pd.DataFrame(future_returns).astype(float)
     rows = []

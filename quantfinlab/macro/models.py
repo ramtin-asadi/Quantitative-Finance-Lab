@@ -30,6 +30,29 @@ def _complete_features(data: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 
 
 def economic_fci(blocks: pd.DataFrame, *, min_history: int = 60) -> pd.Series:
+    """Build an economically weighted financial conditions index.
+
+    The function combines available macro condition blocks using fixed economic
+    weights and standardizes the resulting index with an expanding z-score.
+
+    Parameters
+    ----------
+    blocks : pandas.DataFrame
+        Macro block table.
+    min_history : int, default=60
+        Minimum history used to calibrate the expanding z-score scale.
+
+    Returns
+    -------
+    pandas.Series
+        Financial conditions index named ``"FCI_ECON"``.
+
+    Notes
+    -----
+    Only available weighted blocks are used at each date. Missing blocks reduce the
+    available weight rather than forcing the index to missing.
+    """
+
     cols = [c for c in ECON_WEIGHTS if c in blocks.columns]
     if not cols:
         return pd.Series(np.nan, index=blocks.index, name="FCI_ECON")
@@ -50,6 +73,25 @@ def blended_fci(
     *,
     min_history: int = 12,
 ) -> pd.Series:
+    """Blend PLS, PCA, and economic financial-conditions indices.
+
+    Parameters
+    ----------
+    fci_pls : pandas.Series
+        Targeted PLS-based FCI.
+    fci_pca : pandas.Series
+        PCA-based FCI.
+    fci_econ : pandas.Series
+        Economically weighted FCI.
+    min_history : int, default=12
+        Minimum history for the expanding z-score transformation.
+
+    Returns
+    -------
+    pandas.Series
+        Blended standardized FCI named ``"FCI_BLEND"``.
+    """
+
     raw = (
         0.50 * pd.Series(fci_pls, dtype=float)
         + 0.30 * pd.Series(fci_pca, dtype=float)
@@ -66,6 +108,32 @@ def pca_fci(
     min_history: int = 60,
     min_blocks: int = 5,
 ) -> pd.Series:
+    """Estimate an expanding PCA-based financial conditions index.
+
+    At each date, the function fits a one-component PCA to historical macro block
+    data available up to that date and scores the current row. The component is
+    oriented so higher values are aligned with average macro stress when possible.
+
+    Parameters
+    ----------
+    blocks : pandas.DataFrame
+        Macro condition block table.
+    min_history : int, default=60
+        Minimum observations required for a block to be used.
+    min_blocks : int, default=5
+        Minimum number of usable blocks required to compute an index value.
+
+    Returns
+    -------
+    pandas.Series
+        Expanding PCA FCI named ``"FCI_PCA"``.
+
+    Notes
+    -----
+    The PCA is refit through time using only historical data through the current
+    date.
+    """
+
     cols = _block_columns(blocks)
     x = _complete_features(blocks, cols)
     out = pd.Series(np.nan, index=x.index, name="FCI_PCA")
@@ -103,6 +171,28 @@ def future_stress_target(
     asset: str = "SPY",
     min_history: int = 60,
 ) -> pd.DataFrame:
+    """Construct future market-stress targets from asset returns.
+
+    The target combines future 3-month return weakness, future 3-month volatility,
+    and future 3-month maximum drawdown into a standardized stress measure.
+
+    Parameters
+    ----------
+    returns : pandas.DataFrame
+        Monthly return panel.
+    asset : str, default="SPY"
+        Asset used to define future market stress.
+    min_history : int, default=60
+        Minimum history for expanding z-score components.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table containing future 1-month return, future 3-month return, future
+        3-month volatility, future 3-month maximum drawdown, and combined
+        ``future_stress``.
+    """
+
     r = returns[str(asset)].astype(float).replace([np.inf, -np.inf], np.nan)
     next_1m = r.shift(-1)
     next_3m = (1.0 + r.shift(-1)).rolling(3).apply(np.prod, raw=True).shift(-2) - 1.0
@@ -144,6 +234,40 @@ def targeted_pls_fci(
     min_blocks: int = 5,
     embargo_months: int = 3,
 ) -> pd.Series:
+    """Estimate a targeted PLS financial conditions index.
+
+    The function fits an expanding partial least squares model that maps macro
+    condition blocks to a future stress target. An embargo is applied so that the
+    training sample excludes target observations whose future window would overlap
+    the current decision date.
+
+    Parameters
+    ----------
+    blocks : pandas.DataFrame
+        Macro block table.
+    future_stress : pandas.Series
+        Future stress target.
+    min_history : int, default=60
+        Minimum training observations.
+    n_components : int, default=1
+        Number of PLS components.
+    min_blocks : int, default=5
+        Minimum number of usable macro blocks.
+    embargo_months : int, default=3
+        Number of months excluded between current date and eligible training
+        targets.
+
+    Returns
+    -------
+    pandas.Series
+        Targeted standardized FCI named ``"FCI_PLS"``.
+
+    Notes
+    -----
+    The expanding fit is designed to reduce look-ahead bias in macro allocation
+    experiments.
+    """
+
     cols = _block_columns(blocks)
     x = _complete_features(blocks, cols)
     y = pd.Series(future_stress, index=blocks.index, dtype=float)
@@ -182,6 +306,34 @@ def stress_probability_fci(
     min_history: int = 60,
     embargo_months: int = 3,
 ) -> pd.DataFrame:
+    """Estimate an expanding stress-probability financial conditions model.
+
+    The function turns future stress into a rolling high-stress label and fits a
+    logistic regression through time using available macro features. It returns both
+    the raw predicted probability and an expanding z-score of that probability.
+
+    Parameters
+    ----------
+    features : pandas.DataFrame
+        Macro feature table.
+    future_stress : pandas.Series
+        Future stress target used to define high-stress labels.
+    min_history : int, default=60
+        Minimum training observations.
+    embargo_months : int, default=3
+        Embargo between current date and training targets.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Columns ``FCI_PROB`` and ``FCI_PROB_Z``.
+
+    Notes
+    -----
+    Training rows require non-missing labels and at least two usable features with
+    sufficient history.
+    """
+
     x = features.apply(pd.to_numeric, errors="coerce").replace([np.inf, -np.inf], np.nan)
     y = pd.Series(future_stress, index=x.index, dtype=float)
     threshold = y.expanding(min_periods=int(min_history)).quantile(0.75).shift(1)
@@ -272,6 +424,31 @@ def _rank01(values: pd.Series) -> pd.Series:
 
 
 def fci_model_scores(fci_models: pd.DataFrame, target_table: pd.DataFrame) -> pd.DataFrame:
+    """Score financial-conditions models against future stress outcomes.
+
+    The scoreboard combines rank correlation with future stress, drawdown spread,
+    future-volatility spread, monotonicity across FCI quintiles, and index stability
+    into a final score.
+
+    Parameters
+    ----------
+    fci_models : pandas.DataFrame
+        Candidate FCI series.
+    target_table : pandas.DataFrame
+        Future target table containing at least ``future_stress`` and related
+        future risk columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Model score table indexed by model name and sorted by ``final_score``.
+
+    Notes
+    -----
+    Higher final scores indicate stronger historical association with future stress
+    and more stable index behavior.
+    """
+
     rows = []
     for name in fci_models.columns:
         report = fci_quintile_report(fci_models[name], target_table)
@@ -341,6 +518,30 @@ def select_fci_model(
     *,
     min_observations: int = 96,
 ) -> tuple[str, pd.Series]:
+    """Select the preferred FCI model from a scoreboard.
+
+    Parameters
+    ----------
+    fci_models : pandas.DataFrame
+        Candidate FCI series.
+    scoreboard : pandas.DataFrame
+        Output from ``fci_model_scores``.
+    min_observations : int, default=96
+        Minimum number of observations required before a model is eligible when the
+        scoreboard contains an ``observations`` column.
+
+    Returns
+    -------
+    tuple
+        ``(name, series)`` where ``name`` is the selected model name and ``series``
+        is the selected FCI series.
+
+    Notes
+    -----
+    If no model passes the score/history filter, the function falls back to the
+    model with the most non-missing observations.
+    """
+
     valid = scoreboard.dropna(subset=["final_score"])
     if "observations" in valid.columns:
         enough_history = valid["observations"] >= int(min_observations)

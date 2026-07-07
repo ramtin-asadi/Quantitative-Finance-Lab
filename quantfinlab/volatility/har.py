@@ -9,7 +9,33 @@ import pandas as pd
 
 @dataclass(frozen=True)
 class HARRVFit:
-    """Small immutable result object for a direct-horizon HAR-RV regression."""
+    """Result container for a direct-horizon HAR-RV regression.
+
+    The object stores fitted regression parameters, the feature columns used at fit
+    time, whether the model was trained in log-variance space, the number of
+    training observations, and residual dispersion. It is intentionally small and
+    immutable-style so it can be passed around in rolling forecast loops without
+    carrying a heavyweight statsmodels object.
+
+    Attributes
+    ----------
+    params : pandas.Series
+        Regression coefficients including the intercept as the first element.
+    feature_columns : tuple of str
+        Feature columns expected by ``predict``.
+    use_log : bool
+        Whether the fitted target was log variance. If true, predictions are
+        exponentiated back to variance units.
+    n_obs : int
+        Number of observations used to fit the regression.
+    residual_std : float
+        Standard deviation of fitted residuals in the modeled scale.
+
+    Methods
+    -------
+    predict(features, eps=1e-12)
+        Predict daily variance from one or more HAR feature rows.
+    """
 
     params: pd.Series
     feature_columns: tuple[str, ...]
@@ -18,6 +44,29 @@ class HARRVFit:
     residual_std: float
 
     def predict(self, features: pd.DataFrame | pd.Series, eps: float = 1e-12) -> pd.Series:
+        """Predict daily variance from fitted HAR-RV features.
+
+        Parameters
+        ----------
+        features : pandas.DataFrame or pandas.Series
+            Feature row or table containing the exact columns stored in
+            ``feature_columns``. If a Series is supplied, it is treated as one
+            observation.
+        eps : float, default=1e-12
+            Positive floor applied to predicted variance.
+
+        Returns
+        -------
+        pandas.Series
+            Predicted daily variance indexed like the supplied feature rows and named
+            ``"forecast_var_daily"``.
+
+        Notes
+        -----
+        If the model was fitted in log space, predictions are exponentiated before the
+        variance floor is applied.
+        """
+
         if isinstance(features, pd.Series):
             x = features.to_frame().T
         else:
@@ -47,11 +96,37 @@ def make_har_features(
     use_log: bool = True,
     eps: float = 1e-12,
 ) -> pd.DataFrame:
-    """
-    Build HAR-RV daily, weekly, and monthly realized-variance features.
+    """Build daily, weekly, and monthly HAR-RV realized-variance features.
 
-    Features at date ``t`` use only realized variance observed through ``t``.
+    The generated features at date ``t`` use realized variance observed through
+    date ``t`` only. The output can therefore be used safely as input to a forecast
+    made after observing date ``t``.
+
+    Parameters
+    ----------
+    rv_daily : pandas.Series
+        Daily realized variance series, usually squared daily returns.
+    weekly_window : int, default=5
+        Rolling window used for the weekly realized-variance average.
+    monthly_window : int, default=22
+        Rolling window used for the monthly realized-variance average.
+    use_log : bool, default=True
+        If true, transform all realized-variance features with the natural log.
+    eps : float, default=1e-12
+        Positive floor applied before log transformation.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Feature table with daily, weekly, and monthly realized-variance columns.
+        Column names are prefixed with ``"log_"`` when ``use_log=True``.
+
+    Notes
+    -----
+    Rows before the weekly/monthly windows are fully available contain missing
+    values. Rolling forecast functions should drop or skip those rows.
     """
+
     rv = _as_datetime_series(rv_daily)
     features = pd.DataFrame(index=rv.index)
     features["rv_daily"] = rv
@@ -94,7 +169,34 @@ def fit_har_rv(
     use_log: bool = True,
     eps: float = 1e-12,
 ) -> Any:
-    """Fit a direct-horizon HAR-RV model."""
+    """Fit a direct-horizon HAR-RV regression.
+
+    The function estimates a linear regression of a supplied realized-variance
+    target on HAR-RV daily, weekly, and monthly features. It supports both variance
+    space and log-variance space.
+
+    Parameters
+    ----------
+    rv_daily : pandas.Series
+        Daily realized variance series used to construct HAR features.
+    target : pandas.Series
+        Target variance series aligned by date. For direct-horizon forecasting this
+        is typically average future daily variance over a fixed horizon.
+    weekly_window : int, default=5
+        Weekly feature window.
+    monthly_window : int, default=22
+        Monthly feature window.
+    use_log : bool, default=True
+        Whether to fit the regression in log variance space.
+    eps : float, default=1e-12
+        Positive floor used when taking logs and predicting.
+
+    Returns
+    -------
+    HARRVFit
+        Lightweight fitted HAR-RV result with parameters and a ``predict`` method.
+    """
+
     features = make_har_features(
         rv_daily,
         weekly_window=weekly_window,
@@ -142,13 +244,49 @@ def rolling_har_forecasts(
     forecast_end: str | pd.Timestamp | None = None,
     signal_dates: pd.Index | pd.Series | None = None,
 ) -> pd.DataFrame:
-    """
-    Generate direct-horizon HAR-RV forecasts on weekly-style signal dates.
+    """Generate rolling direct-horizon HAR-RV forecasts.
 
+    For each signal date and horizon, the function fits a direct-horizon HAR model
+    using only training rows whose future target has already been realized by the
+    signal date. This preserves out-of-sample timing even for multi-day horizons.
+
+    Parameters
+    ----------
+    returns : pandas.Series
+        Daily return series in decimal units.
+    horizons : tuple of int, default=(1, 5, 10, 21, 42, 63)
+        Forecast horizons in trading days.
+    train_window : int, default=756
+        Maximum number of historical training observations used for each fit.
+    refit_every : int, default=5
+        Spacing between signal dates when explicit ``signal_dates`` are not
+        supplied.
+    annualization : int, default=252
+        Annualization factor for variance and volatility columns.
+    use_log : bool, default=True
+        Whether to fit HAR regressions in log-variance space.
+    eps : float, default=1e-12
+        Variance floor used in log and prediction steps.
+    forecast_start, forecast_end : str or pandas.Timestamp, optional
+        Optional date bounds.
+    signal_dates : pandas.Index or pandas.Series, optional
+        Explicit forecast dates. When supplied, only valid dates in this set are
+        used.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Long forecast panel containing ``date``, ``model``, ``horizon``,
+        forecast variance/volatility columns, realized target columns, and
+        ``n_train``.
+
+    Notes
+    -----
     The target for horizon ``h`` is the average daily variance over the next
-    ``h`` trading days. Training rows at signal date ``t`` are restricted to
-    rows whose future horizon has already been realized by ``t``.
+    ``h`` trading days. A training row dated ``u`` is eligible at signal date ``t``
+    only if ``u+h`` has already occurred before or at ``t``.
     """
+
     ret = _as_datetime_series(returns).dropna()
     if ret.empty:
         return pd.DataFrame()

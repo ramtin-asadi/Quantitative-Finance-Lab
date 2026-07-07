@@ -20,6 +20,44 @@ from quantfinlab.portfolio import (
 
 @dataclass
 class WalkForwardGridResult:
+    """Container for a complete walk-forward strategy-grid run.
+
+    Attributes
+    ----------
+    results : pandas.DataFrame
+        Strategy performance summary.
+    nav : pandas.DataFrame
+        Net asset value paths by strategy.
+    returns : pandas.DataFrame
+        Net return paths by strategy.
+    weights : dict of pandas.DataFrame
+        Strategy weight frames keyed by strategy name.
+    turnover : pandas.DataFrame
+        Turnover paths by strategy.
+    costs : pandas.DataFrame
+        Cost paths by strategy.
+    diagnostics : pandas.DataFrame
+        Strategy-level diagnostics such as optimizer family and fallback counts.
+    cache : dict
+        Rebalance-state cache used by the run.
+    backtests : dict
+        Raw backtest result objects by strategy.
+    metadata : dict
+        Run configuration and derived metadata.
+
+    Methods
+    -------
+    as_dict()
+        Return all stored artifacts as a plain dictionary.
+    __getitem__(key)
+        Dictionary-style access to stored artifacts.
+
+    Notes
+    -----
+    The object stores both summary outputs and raw artifacts so users can inspect
+    individual strategies without rerunning the grid.
+    """
+
     results: pd.DataFrame
     nav: pd.DataFrame
     returns: pd.DataFrame
@@ -145,7 +183,83 @@ def build_rebalance_state_cache(
     winsor_lo: float = 0.05,
     winsor_hi: float = 0.95,
 ) -> dict[pd.Timestamp, dict[str, Any]]:
-    """Build Notebook 2 per-rebalance model state without loading data."""
+    """Build per-rebalance model states for a walk-forward portfolio experiment.
+
+    For each rebalance date, the function selects or receives an eligible
+    universe, slices covariance and expected-return windows, estimates all
+    configured covariance models, builds all configured expected-return models,
+    and stores liquidity diagnostics.
+
+    Parameters
+    ----------
+    returns : pandas.DataFrame
+        Asset return panel.
+    close : pandas.DataFrame, optional
+        Close-price panel used for universe selection and return-window
+        construction.
+    volume : pandas.DataFrame, optional
+        Volume panel used for liquidity filtering.
+    rebalance_dates : sequence of pandas.Timestamp or str
+        Candidate rebalance dates.
+    universe_by_date : mapping, optional
+        Precomputed universe mapping. If omitted, close and volume panels are
+        used to build one.
+    cov_models : mapping, optional
+        Mapping from covariance model name to callable.
+    mu_models : mapping, optional
+        Mapping from expected-return model name to callable.
+    cov_lookback : int, default=252
+        Lookback length for covariance estimation.
+    mu_lookback : int, default=504
+        Lookback length for expected-return estimation.
+    min_cov_observations : int, optional
+        Minimum clean observations required for covariance windows.
+    min_mu_observations : int, default=252
+        Minimum clean observations required for expected-return windows.
+    top_n : int, default=100
+        Number of liquid names selected when building universes internally.
+    liquidity_lookback : int, default=252
+        Average-dollar-volume lookback.
+    min_listing_days : int, default=252
+        Seasoning requirement for universe selection.
+    min_obs : int, default=252
+        Minimum valid dollar-volume observations.
+    min_price : float, optional
+        Minimum price filter for universe selection.
+    annualization : float, default=252.0
+        Annualization factor.
+    ewma_lambda : float, default=0.94
+        EWMA covariance decay parameter.
+    momentum_mode : str, default="6-1"
+        Momentum convention for expected-return models.
+    rf_daily : float, default=0.0
+        Daily risk-free rate for expected-return estimation.
+    target_sharpe_ann : float, default=0.80
+        Target Sharpe used when scaling expected-return directions.
+    mu_cap_ann : float, default=0.30
+        Absolute cap for annualized expected returns.
+    winsor_lo, winsor_hi : float
+        Winsorization quantiles for expected-return scaling.
+
+    Returns
+    -------
+    dict
+        Mapping from rebalance date to state dictionaries containing tickers,
+        covariance and expected-return windows, raw signals, expected-return
+        maps, covariance maps, model diagnostics, and average dollar volume.
+
+    Raises
+    ------
+    InputError
+        If returns are empty or universe information cannot be built.
+
+    Notes
+    -----
+    The cache is designed to separate expensive state construction from strategy
+    evaluation. Multiple optimizers can reuse the same cache without recomputing
+    covariance and expected-return estimates.
+    """
+
     if returns.empty:
         raise InputError("returns is empty.")
     R_all = returns.copy()
@@ -314,7 +428,41 @@ def build_strategy_grid(
     optimizers: Mapping[str, Callable],
     include_ridge: bool = True,
 ) -> list[dict[str, Any]]:
-    """Build Notebook 2 full mu x covariance model strategy specs."""
+    """Build the default Cartesian strategy specification grid.
+
+    The function combines expected-return models, covariance models, and
+    optimizers into named strategy specifications used by the walk-forward
+    engine.
+
+    Parameters
+    ----------
+    mu_models : mapping
+        Expected-return model callables keyed by model name.
+    cov_models : mapping
+        Covariance model callables keyed by model name.
+    optimizers : mapping
+        Optimizer callables keyed by optimizer name.
+    include_ridge : bool, default=True
+        Whether to include RidgeMV strategy variants.
+
+    Returns
+    -------
+    list of dict
+        Strategy specifications. Each specification contains name, optimizer
+        family, covariance model, expected-return model, and optimizer function.
+
+    Raises
+    ------
+    InputError
+        If generated strategy names are not unique.
+
+    Notes
+    -----
+    Equal-weight and minimum-variance strategies are added without expected
+    return models. Mean-variance, RidgeMV, and MaxSharpe strategies are expanded
+    across covariance and expected-return model combinations.
+    """
+
     cov_keys = [covariance.normalize_covariance_method(k) for k in cov_models]
     mu_keys = [expected_returns.normalize_mu_model(k) for k in mu_models]
     specs: list[dict[str, Any]] = []
@@ -518,7 +666,83 @@ def run_walkforward_grid(
     annualization: float = 252.0,
     **cache_kwargs,
 ) -> WalkForwardGridResult:
-    """Run the Project 2 walk-forward strategy grid. No data loading or plotting."""
+    """Run a full walk-forward portfolio strategy grid.
+
+    The function builds or accepts a rebalance-state cache, constructs strategy
+    specifications, runs each strategy through a rebalanced portfolio backtest,
+    collects performance, NAV, returns, turnover, costs, diagnostics, and raw
+    backtest objects, and returns a single result container.
+
+    Parameters
+    ----------
+    returns : pandas.DataFrame
+        Asset return panel used for backtesting and, when needed, state
+        construction.
+    close : pandas.DataFrame, optional
+        Close-price panel used for universe selection and state construction.
+    volume : pandas.DataFrame, optional
+        Volume panel used for universe selection.
+    rebalance_dates : sequence of pandas.Timestamp or str
+        Candidate rebalance dates.
+    universe_by_date : mapping, optional
+        Precomputed liquid universes by date.
+    mu_models : mapping, optional
+        Expected-return model callables.
+    cov_models : mapping, optional
+        Covariance model callables.
+    optimizers : mapping, optional
+        Optimizer callables.
+    strategy_specs : sequence of mappings, optional
+        Explicit strategy specifications. If omitted, the default grid is built.
+    cache : dict, optional
+        Precomputed rebalance-state cache.
+    cov_lookback : int, default=252
+        Covariance lookback used when building the cache.
+    mu_lookback : int, default=504
+        Expected-return lookback used when building the cache.
+    max_weight : float, default=0.25
+        Per-asset upper bound.
+    min_weight : float, default=0.0
+        Per-asset lower bound.
+    long_only : bool, default=True
+        Whether strategies are long-only.
+    trading_cost_bps : float, default=10.0
+        Transaction cost in basis points.
+    turnover_penalty_bps : float, default=10.0
+        Turnover penalty used by optimizers.
+    fallback : str, default="equal"
+        Fallback rule used by the backtest engine when a strategy cannot produce
+        valid weights.
+    solver_order : sequence of str, optional
+        Optimizer solver preference order.
+    optimizer_params : mapping, optional
+        Per-optimizer parameter overrides.
+    blend_by_optimizer : mapping, optional
+        Optional smoothing/blending strength by optimizer family.
+    rf_daily : float, default=0.0
+        Daily risk-free rate for performance metrics.
+    annualization : float, default=252.0
+        Annualization factor.
+    **cache_kwargs
+        Additional keyword arguments passed to cache construction.
+
+    Returns
+    -------
+    WalkForwardGridResult
+        Complete walk-forward grid result, including summary tables, paths,
+        weights, turnover, costs, diagnostics, cache, raw backtests, and metadata.
+
+    Raises
+    ------
+    InputError
+        If no valid rebalance dates remain after cache construction.
+
+    Notes
+    -----
+    This function intentionally performs no plotting or data loading. It is the
+    core reusable engine behind the notebook strategy grid.
+    """
+
     if mu_models is None:
         mu_models = {
             "Momentum": expected_returns.momentum_mu,
@@ -663,7 +887,7 @@ def append_frontiergrid_strategy(
     grid_n: int = 25,
     name: str | None = None,
 ) -> WalkForwardGridResult:
-    """Append one FrontierGrid strategy for an explicit covariance/μ pair."""
+    """Append one FrontierGrid strategy for an explicit covariance/mu pair."""
     cov_key = covariance.normalize_covariance_method(cov_model)
     mu_key = expected_returns.normalize_mu_model(mu_model)
     strategy_name = name or f"MaxSharpe (FrontierGrid) ({cov_key}, {mu_key})"
@@ -744,7 +968,7 @@ def append_frontiergrid_from_best_maxsharpe(
     metric: str = "Sharpe",
     grid_n: int = 25,
 ) -> WalkForwardGridResult:
-    """Append one FrontierGrid strategy using the best existing MaxSharpe cov/μ pair."""
+    """Append one FrontierGrid strategy using the best existing MaxSharpe cov/mu pair."""
     from quantfinlab.portfolio import selection
 
     best = selection.select_best_maxsharpe_combination(grid.results, metric=metric)

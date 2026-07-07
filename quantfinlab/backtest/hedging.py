@@ -12,6 +12,49 @@ from quantfinlab.common.errors import InputError
 
 @dataclass(frozen=True)
 class HedgeBacktestResult:
+    """Container for hedge-book backtest results.
+
+    The object stores the target return, gross and net hedged returns, turnover,
+    transaction costs, traded beta path, and cumulative value paths. It also exposes
+    portfolio-style aliases so hedge results can be consumed by shared reporting
+    and scoring functions.
+
+    Attributes
+    ----------
+    target_return : pandas.Series
+        Unhedged target or spread return.
+    gross_return : pandas.Series
+        Hedged return before transaction costs.
+    net_return : pandas.Series
+        Hedged return after transaction costs.
+    turnover : pandas.Series
+        Period turnover of hedge ratios or hedge weights.
+    cost : pandas.Series
+        Period transaction-cost drag.
+    beta : pandas.DataFrame
+        Traded hedge beta path.
+    gross_values : pandas.Series
+        Cumulative gross value path.
+    net_values : pandas.Series
+        Cumulative net value path.
+    target_values : pandas.Series
+        Cumulative unhedged target value path.
+    metadata : mapping, optional
+        Strategy metadata such as target, hedges, cost assumptions, and beta lag.
+
+    Properties
+    ----------
+    gross_returns, net_returns, costs, weights
+        Compatibility aliases for portfolio and risk-report APIs.
+
+    Methods
+    -------
+    as_dict()
+        Return all fields as a dictionary.
+    __getitem__(key)
+        Dictionary-style field access.
+    """
+
     target_return: pd.Series
     gross_return: pd.Series
     net_return: pd.Series
@@ -100,13 +143,58 @@ def run_hedge_backtest(
     beta_lag: int = 1,
     name: str | None = None,
 ) -> HedgeBacktestResult:
-    """
-    Direct hedge-book P&L with target return minus lagged beta times hedge returns.
+    """Backtest a direct target-minus-beta hedge book.
 
-    ``beta`` is interpreted as the desired hedge ratio known at its timestamp.
-    The traded beta used in period ``t`` is lagged by ``beta_lag`` rows after
-    alignment to the relationship's return history.
+    The hedge-book return is computed as the target return minus the lagged hedge
+    beta times hedge returns. A positive beta therefore represents a short hedge
+    position against the target. Transaction costs are applied to changes in traded
+    beta exposure.
+
+    Parameters
+    ----------
+    returns : pandas.DataFrame
+        Return panel containing the target and all hedge assets. Column names are
+        normalized to lowercase internally.
+    beta : pandas.DataFrame or None
+        Desired hedge beta path with one column per hedge asset. Betas are aligned
+        to the relationship return panel and lagged before use.
+    target : str
+        Target asset column.
+    hedges : list of str
+        Hedge asset columns.
+    cost_bps : float, default=5.0
+        Transaction cost in basis points applied to beta turnover.
+    beta_lag : int, default=1
+        Number of rows by which the desired beta is lagged before trading. The
+        default uses a beta known at date ``t`` starting in period ``t+1``.
+    name : str, optional
+        Strategy name stored in result metadata.
+
+    Returns
+    -------
+    HedgeBacktestResult
+        Hedge backtest result with gross/net returns, turnover, costs, traded beta,
+        and cumulative value paths.
+
+    Raises
+    ------
+    InputError
+        If required return columns are missing, no complete return rows remain, or
+        no rows remain after beta lagging.
+
+    Notes
+    -----
+    The gross return formula is:
+
+    ``target_return - sum(beta_h * hedge_return_h)``.
+
+    Transaction cost for each period is:
+
+    ``sum(abs(delta beta_h)) * cost_bps / 10000``.
+
+    The first traded beta row is treated as opening turnover.
     """
+
     target = str(target).strip().lower()
     hedges = [str(h).strip().lower() for h in hedges]
     r = _clean_returns(returns)
@@ -169,7 +257,26 @@ def run_many_hedge_backtests(
     cost_bps: float = 5.0,
     beta_lag: int = 1,
 ) -> dict[str, HedgeBacktestResult]:
-    """Run direct hedge-book backtests for several named beta schedules."""
+    """Run several hedge-book backtests with shared return and cost settings.
+
+    Parameters
+    ----------
+    books : mapping
+        Mapping from strategy name to either a mapping with ``target``, ``hedges``,
+        and optional ``beta`` keys, or a tuple ``(target, hedges, beta)``.
+    returns : pandas.DataFrame
+        Return panel.
+    cost_bps : float, default=5.0
+        Transaction cost in basis points.
+    beta_lag : int, default=1
+        Execution lag applied to all beta paths.
+
+    Returns
+    -------
+    dict
+        Mapping from strategy name to ``HedgeBacktestResult``.
+    """
+
     out: dict[str, HedgeBacktestResult] = {}
     for name, spec in books.items():
         if isinstance(spec, Mapping):
@@ -201,7 +308,49 @@ def run_spread_backtest(
     beta_lag: int = 1,
     name: str | None = None,
 ) -> HedgeBacktestResult:
-    """Long/short residual spread P&L with target minus beta times hedge."""
+    """Backtest a residual spread-trading signal.
+
+    The spread return is ``target_return - beta * hedge_return``. The supplied
+    signal scales exposure to that spread, and transaction costs are applied to
+    changes in target and hedge weights implied by the signal and beta.
+
+    Parameters
+    ----------
+    returns : pandas.DataFrame
+        Return panel containing target and hedge columns.
+    beta : pandas.DataFrame
+        Time-varying residual beta table with a ``beta`` column.
+    signal : pandas.Series
+        Trading signal. Positive values are long the residual spread; negative
+        values are short the residual spread.
+    target : str
+        Target asset.
+    hedge : str
+        Hedge asset.
+    cost_bps : float, default=5.0
+        Transaction cost in basis points.
+    beta_lag : int, default=1
+        Lag applied to the beta path before execution.
+    name : str, optional
+        Strategy name stored in metadata.
+
+    Returns
+    -------
+    HedgeBacktestResult
+        Spread backtest result.
+
+    Raises
+    ------
+    InputError
+        If required columns are missing, beta lacks a ``beta`` column, or alignment
+        leaves no tradable rows.
+
+    Notes
+    -----
+    The traded weights are ``signal`` in the target and ``-signal * beta`` in the
+    hedge. Turnover is the sum of absolute changes in those weights.
+    """
+
     target = str(target).strip().lower()
     hedge = str(hedge).strip().lower()
     r = _clean_returns(returns)

@@ -80,7 +80,47 @@ def tensor_spline_fit(
     lambda_y: float = 10.0,
     ridge: float = 1e-8,
 ) -> dict:
-    """Fit a weighted penalized tensor-product B-spline to scattered data."""
+    """Fit a weighted penalized tensor-product B-spline to scattered data.
+
+    The function constructs standardized x/y coordinates, builds B-spline bases in
+    each dimension, solves a weighted least-squares system with second-difference
+    smoothness penalties, and returns all objects needed for later evaluation.
+
+    Parameters
+    ----------
+    x, y, z : array-like
+        Scattered coordinate/value observations.
+    weights : array-like, optional
+        Positive observation weights.
+    n_x_basis : int, default=12
+        Number of basis functions in the x dimension.
+    n_y_basis : int, default=8
+        Number of basis functions in the y dimension.
+    degree : int, default=3
+        Spline degree.
+    lambda_x : float, default=10.0
+        Smoothness penalty in the x dimension.
+    lambda_y : float, default=10.0
+        Smoothness penalty in the y dimension.
+    ridge : float, default=1e-8
+        Numerical ridge added to the normal equations.
+
+    Returns
+    -------
+    dict
+        Spline fit dictionary containing coefficients, knots, scaling parameters,
+        degree, basis sizes, penalties, ridge, and observation count.
+
+    Raises
+    ------
+    ValueError
+        If too few finite positive-weight observations are available.
+
+    Notes
+    -----
+    Inputs are centered and scaled before basis construction. Evaluation functions
+    apply the same scaling automatically.
+    """
     x_arr = np.asarray(x, dtype=float).reshape(-1)
     y_arr = np.asarray(y, dtype=float).reshape(-1)
     z_arr = np.asarray(z, dtype=float).reshape(-1)
@@ -140,7 +180,29 @@ def tensor_spline_fit(
 
 
 def tensor_spline_values(fit: dict, x, y, *, grid: bool = False, der_x: int = 0, der_y: int = 0) -> np.ndarray:
-    """Evaluate a tensor B-spline at paired points or on a full ``y`` by ``x`` grid."""
+    """Evaluate a tensor-product B-spline fit.
+
+    Parameters
+    ----------
+    fit : dict
+        Fit dictionary returned by ``tensor_spline_fit``.
+    x, y : array-like
+        Evaluation coordinates.
+    grid : bool, default=False
+        If true, evaluate on the full ``y`` by ``x`` grid. If false, evaluate at
+        paired broadcast coordinates.
+    der_x : int, default=0
+        Derivative order in x.
+    der_y : int, default=0
+        Derivative order in y.
+
+    Returns
+    -------
+    numpy.ndarray
+        Evaluated spline values. In grid mode, the shape is
+        ``(len(y), len(x))``; otherwise the output follows the broadcast input
+        shape.
+    """
     coef = np.asarray(fit["coef"], dtype=float)
     degree = int(fit.get("degree", 3))
     scale_x = float(fit.get("scale_x", 1.0))
@@ -223,7 +285,42 @@ def slice_pchip_grid(
     slice_col: str | None = None,
     min_x: int = 6,
 ) -> tuple[np.ndarray, pd.DataFrame]:
-    """Build a support-limited PCHIP grid from x-slices, then across y."""
+    """Interpolate scattered slice data onto a support-limited two-dimensional grid.
+
+    The function first applies monotone PCHIP interpolation along ``x`` within each
+    observed ``y`` slice, then interpolates across observed ``y`` slices for each
+    x-grid point. Extrapolated regions outside observed support are left missing.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Scattered data table.
+    x_col : str
+        X-coordinate column.
+    y_col : str
+        Y-coordinate column.
+    z_col : str
+        Value column.
+    x_grid, y_grid : array-like
+        Target x and y grids.
+    weight_col : str, optional
+        Observation weight column used when collapsing duplicate x values.
+    slice_col : str, optional
+        Slice key. Defaults to ``y_col``.
+    min_x : int, default=6
+        Minimum unique x values required in a slice.
+
+    Returns
+    -------
+    tuple
+        ``(grid, meta)`` where ``grid`` has shape ``(len(y_grid), len(x_grid))``
+        and ``meta`` records slice support.
+
+    Notes
+    -----
+    This helper is useful for surface construction when data are naturally grouped
+    by maturity or another slice dimension.
+    """
     x_grid = np.asarray(x_grid, dtype=float)
     y_grid = np.asarray(y_grid, dtype=float)
     if data.empty:

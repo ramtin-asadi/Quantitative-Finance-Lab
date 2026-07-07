@@ -51,7 +51,35 @@ def prices_to_returns(
     drop_all_nan: bool = True,
     dtype: str | np.dtype = np.float64,
 ) -> pd.DataFrame:
-    """Convert a price panel to simple or log returns."""
+    """Convert a price panel into simple or log returns.
+
+    Parameters
+    ----------
+    prices : pandas.DataFrame
+        Price panel with dates in rows and assets in columns.
+    kind : {"simple", "log"}, default="simple"
+        Return calculation. ``"simple"`` uses percentage change; ``"log"`` uses
+        log price differences.
+    drop_all_nan : bool, default=True
+        Whether to drop rows where all returns are missing.
+    dtype : str or numpy.dtype, default=numpy.float64
+        Output dtype.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Return panel with the same columns as ``prices``.
+
+    Raises
+    ------
+    InputError
+        If an unsupported return kind is supplied.
+
+    Notes
+    -----
+    Infinite values are replaced with ``NaN`` before optional row dropping.
+    """
+
     px = _sanitize_frame(prices, name="prices")
     if kind == "simple":
         returns = px.pct_change(fill_method=None)
@@ -71,7 +99,38 @@ def make_rebalance_dates(
     freq: str = "M",
     min_history_days: int = 0,
 ) -> pd.DatetimeIndex:
-    """Build rebalance dates from a trading-day index."""
+    """Build rebalance dates from a trading-day index.
+
+    The function groups dates by a pandas frequency and selects the last
+    available trading date in each period.
+
+    Parameters
+    ----------
+    index : pandas.Index or sequence of pandas.Timestamp or str
+        Trading-day index.
+    freq : str, default="M"
+        Rebalance frequency. Common aliases such as ``"M"``, ``"Q"``, and
+        ``"Y"`` are mapped to pandas month/quarter/year-end aliases.
+    min_history_days : int, default=0
+        Minimum number of historical observations required before a rebalance
+        date is allowed.
+
+    Returns
+    -------
+    pandas.DatetimeIndex
+        Sorted unique rebalance dates.
+
+    Raises
+    ------
+    InputError
+        If ``min_history_days`` exceeds the available index length.
+
+    Notes
+    -----
+    The returned dates are actual dates from the input index, not calendar period
+    ends that may fall on non-trading days.
+    """
+
     idx = _to_datetime_index(index)
     freq_norm = str(freq).upper().strip()
     freq_alias = {"M": "ME", "Q": "QE", "Y": "YE", "A": "YE"}
@@ -153,12 +212,55 @@ def select_liquid_universe(
     min_price: float | None = None,
     first_date: pd.Series | None = None,
 ) -> tuple[list[str], pd.Series]:
-    """
-    Select the most liquid seasoned names at a rebalance date.
+    """Select the most liquid seasoned assets at a rebalance date.
 
-    The ranking follows Notebook 2: average dollar volume over a lookback window,
-    with seasoning and observation-count filters.
+    The universe is ranked by average dollar volume over a trailing lookback
+    window after applying seasoning, observation-count, positive-volume, and
+    optional minimum-price filters.
+
+    Parameters
+    ----------
+    dt : pandas.Timestamp or str
+        Rebalance date. The latest available date on or before ``dt`` is used.
+    close : pandas.DataFrame, optional
+        Close-price panel.
+    volume : pandas.DataFrame, optional
+        Volume panel.
+    close_prices, volumes : pandas.DataFrame, optional
+        Aliases for ``close`` and ``volume``.
+    top_n : int, default=100
+        Maximum number of assets selected.
+    liquidity_lookback : int, optional
+        Lookback window for average dollar volume.
+    liq_lookback : int, optional
+        Alias for ``liquidity_lookback``.
+    min_listing_days : int, default=252
+        Minimum days since first valid price/volume observation.
+    min_obs : int, default=200
+        Minimum valid dollar-volume observations in the lookback window.
+    min_price : float, optional
+        Minimum close price filter.
+    first_date : pandas.Series, optional
+        Precomputed first valid close/volume date per asset.
+
+    Returns
+    -------
+    tickers : list of str
+        Selected asset tickers.
+    avg_dollar_volume : pandas.Series
+        Average dollar volume for the selected assets.
+
+    Raises
+    ------
+    InputError
+        If close/volume panels are missing or configuration values are invalid.
+
+    Notes
+    -----
+    If insufficient history or no eligible assets are available, the function
+    returns an empty list and empty Series rather than raising.
     """
+
     close_panel = close if close is not None else close_prices
     volume_panel = volume if volume is not None else volumes
     if close_panel is None or volume_panel is None:
@@ -234,7 +336,47 @@ def build_liquid_universe_by_date(
     min_obs: int = 200,
     min_price: float | None = None,
 ) -> dict[pd.Timestamp, dict[str, object]]:
-    """Build the liquidity-filtered universe and ADV diagnostics by rebalance date."""
+    """Build liquidity-filtered universes for multiple rebalance dates.
+
+    Parameters
+    ----------
+    close : pandas.DataFrame, optional
+        Close-price panel.
+    volume : pandas.DataFrame, optional
+        Volume panel.
+    close_prices, volumes : pandas.DataFrame, optional
+        Aliases for ``close`` and ``volume``.
+    rebalance_dates : sequence of pandas.Timestamp or str
+        Dates for which universes should be selected.
+    top_n : int, default=100
+        Maximum number of assets per date.
+    liquidity_lookback : int, default=252
+        Lookback window for average dollar volume.
+    liq_lookback : int, optional
+        Alias for ``liquidity_lookback``.
+    min_listing_days : int, default=252
+        Minimum seasoning requirement.
+    min_obs : int, default=200
+        Minimum valid observations in the lookback window.
+    min_price : float, optional
+        Minimum price filter.
+
+    Returns
+    -------
+    dict
+        Mapping from rebalance date to a dictionary containing selected
+        ``tickers`` and ``avg_dollar_volume``.
+
+    Raises
+    ------
+    InputError
+        If close/volume panels are missing.
+
+    Notes
+    -----
+    Dates with no eligible universe are omitted from the returned mapping.
+    """
+
     close_panel = close if close is not None else close_prices
     volume_panel = volume if volume is not None else volumes
     if close_panel is None or volume_panel is None:

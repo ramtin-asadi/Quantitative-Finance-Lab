@@ -19,6 +19,30 @@ def _numeric_column(frame: pd.DataFrame, names, default: float = 0.0) -> pd.Seri
 
 
 def calibration_weights(quotes: pd.DataFrame) -> pd.DataFrame:
+    """Attach price scales and observation weights for option model calibration.
+
+    The function builds a robust calibration scale from bid/ask spread, half spread,
+    or a preexisting calibration scale, and constructs observation weights from
+    spread tightness and vega. If valid ``obs_weight`` values already exist, they
+    are cleaned, clipped, and median-normalized.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table containing mid prices and, when available, relative
+        spread, half spread, vega, DTE, and existing observation weights.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``quotes`` with ``calib_scale_px`` and normalized ``obs_weight``.
+
+    Notes
+    -----
+    The calibrated residual used by Fourier model fitting is approximately:
+
+    ``(model_price - market_mid) / (calib_scale_px / sqrt(obs_weight))``.
+    """
     out = quotes.copy()
     spread = _numeric_column(out, ("rel_spread", "relative_spread"), 0.10).clip(lower=0.003)
     vega = _numeric_column(out, ("vega",), 1.0).abs().fillna(1.0)
@@ -113,6 +137,33 @@ def cos_prices_grouped(
     n_terms: int = 160,
     truncation_width: float = 12.0,
 ) -> np.ndarray:
+    """Price grouped option quotes with a COS expansion.
+
+    Parameters
+    ----------
+    model : str
+        Model family identifier.
+    params : array-like
+        Model parameters.
+    quotes : pandas.DataFrame
+        Option quote table.
+    engine : str, default="numba"
+        Pricing engine.
+    n_terms : int, default=160
+        Number of COS expansion terms.
+    truncation_width : float, default=12.0
+        Width of the COS truncation interval.
+
+    Returns
+    -------
+    numpy.ndarray
+        Model prices aligned to the input quote order.
+
+    Notes
+    -----
+    Grouping avoids repeated setup for quotes that share maturity, spot, rate, and
+    dividend inputs.
+    """
     groups = cos_group_arrays(quotes)
     return cos_prices_from_groups(model, params, groups, len(quotes), engine=engine, n_terms=n_terms, truncation_width=truncation_width)
 
@@ -133,6 +184,53 @@ def calibration_grid_quotes(
     max_quotes_per_date: int = 200,
     return_steps: bool = False,
 ) -> pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]:
+    """Build a balanced raw-quote calibration grid for Fourier model fitting.
+
+    The function filters a raw option quote table to a liquid, finite, supported
+    region; chooses one OTM side per strike; enforces expiry/date support; and then
+    selects quotes near target DTE and log-moneyness nodes for each calibration
+    date. It returns a daily grid with calibration scales and observation weights.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Raw or cleaned option quote table.
+    min_dte : float, default=14.0
+        Minimum DTE in days.
+    max_dte : float, default=150.0
+        Maximum DTE in days.
+    min_vega : float, default=0.0
+        Optional minimum absolute vega filter.
+    max_relative_spread : float, default=0.45
+        Maximum relative spread.
+    max_abs_log_moneyness : float, default=0.32
+        Maximum absolute log-moneyness.
+    min_quotes_per_expiry : int, default=8
+        Minimum quotes required for an expiry to be retained.
+    min_expiries_per_date : int, default=5
+        Minimum expiries required for a date.
+    dte_targets : sequence of float
+        Target maturities for grid selection.
+    k_targets : sequence of float
+        Target log-moneyness nodes.
+    min_quotes_per_date : int, default=120
+        Minimum selected quotes per date.
+    max_quotes_per_date : int, default=200
+        Maximum selected quotes per date.
+    return_steps : bool, default=False
+        If true, also return a cleaning/selection audit table.
+
+    Returns
+    -------
+    pandas.DataFrame or tuple
+        Calibration quote grid, or ``(grid, steps)`` when ``return_steps=True``.
+
+    Notes
+    -----
+    The grid reduces accidental vendor quote clustering by aiming for comparable
+    maturity/moneyness coverage across dates. This makes model comparisons more
+    stable than calibrating directly to all raw quotes.
+    """
     x = quotes.copy()
     rows = [{"step": "clean quotes", "rows": int(len(x)), "removed": 0}]
     x["date"] = pd.to_datetime(x["date"], errors="coerce").dt.normalize()
@@ -318,13 +416,76 @@ def surface_target_grid_quotes(
     adaptive_k_min_nodes: int = 7,
     adaptive_k_max_nodes: int = 11,
 ) -> pd.DataFrame | tuple[pd.DataFrame, pd.DataFrame]:
-    """Build a balanced model-calibration grid from a fitted IV surface.
+    """Build a balanced synthetic calibration grid from fitted implied-vol surfaces.
 
-    The output is a synthetic but market-implied target panel. Each date gets
-    the same requested maturity/log-forward-moneyness grid inside observed
-    support, Black-76 prices at surface IV, and IV-space calibration scales
-    (``calib_scale_px = vega * iv_target_error``). This avoids calibrating
-    stochastic-volatility models to accidental clusters of raw vendor quotes.
+    For each date, the function samples a target maturity/log-forward-moneyness
+    grid within observed support, evaluates the fitted IV surface, converts surface
+    IVs into Black-76 prices, and assigns price-scale and observation-weight fields
+    for model calibration.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Source quote table used to define observed support and market inputs.
+    fits : dict
+        Fitted surface objects keyed by date or convertible date keys.
+    date_col : str, default="date"
+        Quote date column.
+    expiry_col : str, default="expiry"
+        Expiry column.
+    k_col : str, default="k"
+        Log-forward-moneyness column.
+    tau_col : str, default="tau"
+        Time-to-expiry column in years.
+    iv_col : str, default="iv_mid"
+        Market IV column.
+    min_dte, max_dte : float
+        Maturity support bounds in days.
+    dte_targets : sequence of float
+        Target maturity nodes.
+    k_targets : sequence of float
+        Target log-forward-moneyness nodes.
+    max_abs_log_moneyness : float, default=0.45
+        Maximum absolute log moneyness.
+    min_quotes_per_date : int, default=60
+        Minimum grid rows required for a date to be kept.
+    min_source_quotes_per_date : int, default=60
+        Minimum raw quote support required for a date.
+    tau_support_buffer_days : float, default=4.0
+        Maturity support buffer in days.
+    k_support_buffer : float, default=0.025
+        Moneyness support buffer.
+    annualization_days : float, default=365.25
+        Day-count denominator for DTE-to-tau conversion.
+    iv_floor : float, default=0.02
+        Lower IV floor.
+    iv_cap : float, default=4.00
+        Upper IV cap.
+    iv_error_floor : float, default=0.008
+        Lower calibration IV uncertainty floor.
+    iv_error_cap : float, default=0.080
+        Upper calibration IV uncertainty cap.
+    return_steps : bool, default=False
+        If true, return an audit table.
+    adaptive_k_grid : bool, default=False
+        If true, build date-specific log-moneyness nodes from observed support.
+    adaptive_k_min_nodes : int, default=7
+        Minimum adaptive k nodes.
+    adaptive_k_max_nodes : int, default=11
+        Maximum adaptive k nodes.
+
+    Returns
+    -------
+    pandas.DataFrame or tuple
+        Synthetic market-implied calibration grid, or ``(grid, steps)`` when
+        ``return_steps=True``.
+
+    Notes
+    -----
+    The output is synthetic in the sense that quotes are sampled from the fitted
+    market IV surface, but the targets remain market-implied. This is useful for
+    calibrating stochastic-volatility and jump models to a balanced target panel
+    rather than to uneven raw quote density.
     """
     x = quotes.copy()
     rows = [{"step": "input quotes", "rows": int(len(x)), "removed": 0}]
@@ -486,6 +647,30 @@ def surface_target_grid_quotes(
 
 
 def price_residuals(quotes: pd.DataFrame, model: str, params, *, engine: str = "numba") -> pd.DataFrame:
+    """Compute model prices and residuals for option quotes.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    model : str
+        Fourier/COS model family.
+    params : array-like
+        Model parameters.
+    engine : str, default="numba"
+        Pricing engine.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of ``quotes`` with ``model_price``, ``price_residual``, and, when vega
+        and IV are available, ``iv_residual``.
+
+    Notes
+    -----
+    ``price_residual`` is ``model_price - market_mid``. Positive values indicate
+    that the model price is above the market mid.
+    """
     out = quotes.copy()
     div = _numeric_column(out, ("dividend_yield", "implied_dividend_yield"), 0.0)
     rate = _numeric_column(out, ("rate",), 0.0)
@@ -572,6 +757,34 @@ def _date_metrics(q: pd.DataFrame, px: np.ndarray, scale: np.ndarray, model: str
 
 
 def fit_fourier_model(quotes: pd.DataFrame, model: str, *, max_nfev: int = 80, engine: str = "numba") -> dict:
+    """Fit one Fourier/COS option model to a quote panel.
+
+    The function constructs calibration weights, initializes model parameters and
+    bounds, prices the quote panel with COS grouped pricing, and solves a weighted
+    least-squares problem in price space.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Calibration quote table.
+    model : str
+        Model family identifier.
+    max_nfev : int, default=80
+        Maximum least-squares function evaluations.
+    engine : str, default="numba"
+        Pricing engine.
+
+    Returns
+    -------
+    dict
+        Dictionary containing fitted parameter table, quote-level fitted prices,
+        diagnostics, elapsed runtime, and engine name.
+
+    Notes
+    -----
+    Residuals are scaled by ``calib_scale_px / sqrt(obs_weight)``. The reported
+    weighted RMSE is therefore in scaled calibration units rather than raw dollars.
+    """
     t0 = time.perf_counter()
     q = calibration_weights(quotes)
     start, bounds = _bounds_start(model, q)
@@ -604,6 +817,42 @@ def fit_date_model(
     n_terms: int = 160,
     truncation_width: float = 12.0,
 ) -> dict:
+    """Fit one Fourier/COS model for a single calibration date.
+
+    This date-level fitter supports warm starts, parameter bounds, model-specific
+    regularization, multiple starting guesses for difficult models, and diagnostic
+    row generation for daily calibration panels.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        One-date calibration quote table.
+    model : str
+        Model family identifier.
+    start : array-like, optional
+        Warm-start parameter vector.
+    max_nfev : int, default=80
+        Maximum least-squares evaluations.
+    engine : str, default="numba"
+        Pricing engine.
+    n_terms : int, default=160
+        Number of COS expansion terms.
+    truncation_width : float, default=12.0
+        COS truncation width.
+
+    Returns
+    -------
+    dict
+        Dictionary with ``row`` diagnostics, quote-level ``fit`` table, optimized
+        ``params``, and raw optimizer ``result``.
+
+    Notes
+    -----
+    For Heston/Bates-style models, additional soft regularization discourages
+    extreme variance-of-variance, correlation, and jump parameters. The function
+    marks a fit usable when optimization succeeds or when the scaled loss is
+    acceptably small.
+    """
     t0 = time.perf_counter()
     q = calibration_weights(quotes)
     if q.empty:
@@ -660,6 +909,44 @@ def fit_daily_models(
     n_terms: int = 160,
     truncation_width: float = 12.0,
 ) -> dict:
+    """Fit one or more Fourier/COS model families across calibration dates.
+
+    The function loops over model families and calibration dates, fits each
+    date/model combination, warm-starts each model from its previous successful
+    fit, and collects daily parameter diagnostics and quote-level residuals.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Calibration quote table containing a ``date`` column.
+    models : list or tuple of str
+        Model families to fit.
+    calibration_dates : sequence, optional
+        Explicit dates to fit. If omitted, dates with at least ``min_quotes`` rows
+        are used.
+    min_quotes : int, default=80
+        Minimum quotes required for a date.
+    max_nfev : int, default=80
+        Maximum least-squares evaluations per date/model.
+    engine : str, default="numba"
+        Pricing engine.
+    n_terms : int, default=160
+        Number of COS expansion terms.
+    truncation_width : float, default=12.0
+        COS truncation width.
+
+    Returns
+    -------
+    dict
+        ``{"params": params_table, "fit": fit_table}`` where ``params`` contains
+        one diagnostic row per successful attempted fit and ``fit`` contains
+        quote-level fitted prices and residuals.
+
+    Notes
+    -----
+    Warm starting by model family helps stabilize time-series calibration and
+    reduces unnecessary optimizer work.
+    """
     q = quotes.copy()
     q["date"] = pd.to_datetime(q["date"], errors="coerce").dt.normalize()
     if calibration_dates is None:
@@ -711,6 +998,31 @@ def fit_daily_models(
 
 
 def compare_fourier_models(quotes: pd.DataFrame | None = None, fits: dict[str, dict] | None = None, daily: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Compare fitted Fourier/COS model families.
+
+    The function accepts either a daily calibration diagnostics table or a mapping
+    of single-run fit dictionaries, and returns a compact model-comparison table.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame, optional
+        Reserved compatibility input.
+    fits : dict, optional
+        Mapping from model name to fit dictionary containing diagnostics.
+    daily : pandas.DataFrame, optional
+        Daily calibration diagnostics table.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Model comparison table sorted by weighted price RMSE and runtime.
+
+    Notes
+    -----
+    When ``daily`` is supplied, the output aggregates over dates and includes
+    success rate, IV RMSE, bid/ask hit rate, bucket-specific RMSEs, and total
+    runtime when those fields exist.
+    """
     if daily is not None:
         q = daily.copy()
         if q.empty:
@@ -765,6 +1077,19 @@ def family_winner(comparison: pd.DataFrame) -> str:
 
 
 def calibration_success_table(daily: pd.DataFrame) -> pd.DataFrame:
+    """Summarize daily calibration success by model family.
+
+    Parameters
+    ----------
+    daily : pandas.DataFrame
+        Daily calibration diagnostics table.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with number of dates, success rate, failure count, median function
+        evaluations, and median runtime by model.
+    """
     if daily.empty:
         return daily.copy()
     q = daily.copy()
@@ -778,6 +1103,24 @@ def calibration_success_table(daily: pd.DataFrame) -> pd.DataFrame:
 
 
 def residual_by_bucket(fit: pd.DataFrame) -> pd.DataFrame:
+    """Summarize calibration residuals by moneyness and maturity bucket.
+
+    Parameters
+    ----------
+    fit : pandas.DataFrame
+        Quote-level fitted price table containing model names and price residuals.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Bucket table with median, 25th percentile, and 75th percentile scaled
+        residuals plus row counts.
+
+    Notes
+    -----
+    Residuals are scaled by ``calib_scale_px`` when available. Bucket diagnostics
+    are useful for detecting systematic smile or short-maturity misfit.
+    """
     if fit.empty:
         return fit.copy()
     q = fit.copy()

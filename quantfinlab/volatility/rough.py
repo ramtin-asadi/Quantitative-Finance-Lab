@@ -20,6 +20,27 @@ def _series(x: pd.Series | pd.DataFrame | np.ndarray, name: str = "x") -> pd.Ser
 
 
 def daily_variance(returns: pd.Series | pd.DataFrame, annualization: float | None = None) -> pd.Series:
+    """Convert returns to daily variance.
+
+    Parameters
+    ----------
+    returns : pandas.Series or pandas.DataFrame
+        Return series in decimal units. If a DataFrame is supplied, the default
+        return column is used by the internal series coercion helper.
+    annualization : float, optional
+        Optional metadata value stored in the returned Series attributes.
+
+    Returns
+    -------
+    pandas.Series
+        Squared-return series named ``"daily_variance"``.
+
+    Notes
+    -----
+    The returned values are not annualized. ``annualization`` is recorded only as
+    metadata for downstream interpretation.
+    """
+
     ret = _series(returns, "return")
     out = (ret * ret).rename("daily_variance")
     if annualization is not None:
@@ -46,6 +67,30 @@ def fbm_cholesky_paths(
     n_paths: int = 4,
     seed: int = 7,
 ) -> pd.DataFrame:
+    """Simulate fractional Brownian motion paths by Cholesky factorization.
+
+    Parameters
+    ----------
+    h_values : sequence of float, default=(0.05, 0.10, 0.20, 0.50, 0.80)
+        Hurst exponents to simulate.
+    n_steps : int, default=512
+        Number of increments per path.
+    n_paths : int, default=4
+        Number of paths per Hurst value.
+    seed : int, default=7
+        Random seed.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Long table with columns ``h``, ``path``, ``t``, and ``x``.
+
+    Notes
+    -----
+    This implementation is designed for diagnostics and visual comparison, not for
+    large-scale high-performance simulation.
+    """
+
     rng = np.random.default_rng(int(seed))
     rows = []
     n = int(n_steps)
@@ -67,6 +112,28 @@ def moment_scaling(
     q_values=(0.5, 1.0, 1.5, 2.0, 3.0),
     lags=(1, 2, 4, 8, 16, 32),
 ) -> pd.DataFrame:
+    """Compute empirical moment scaling across lags.
+
+    The function estimates moments of absolute increments,
+    ``E[|X(t+lag)-X(t)|^q]``, for several powers and lags. The output can be passed
+    to Hurst-estimation routines.
+
+    Parameters
+    ----------
+    x : pandas.Series or pandas.DataFrame
+        Path or series to analyze.
+    q_values : sequence of float, default=(0.5, 1.0, 1.5, 2.0, 3.0)
+        Moment powers.
+    lags : sequence of int, default=(1, 2, 4, 8, 16, 32)
+        Increment lags.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Long table with moment estimates, log-lags, log-moments, and observation
+        counts.
+    """
+
     s = _series(x, "x")
     values = s.to_numpy(dtype=float)
     rows = []
@@ -99,6 +166,33 @@ def hurst_from_moments(
     lag_col: str = "lag",
     moment_col: str = "moment",
 ) -> pd.DataFrame:
+    """Estimate Hurst exponents from moment-scaling regressions.
+
+    For each moment order ``q``, the function regresses log moment on log lag. The
+    Hurst estimate is the fitted slope divided by ``q``.
+
+    Parameters
+    ----------
+    scaling : pandas.DataFrame
+        Output from a moment-scaling routine.
+    q_col : str, default="q"
+        Column identifying the moment order.
+    lag_col : str, default="lag"
+        Lag column.
+    moment_col : str, default="moment"
+        Moment-value column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with one row per ``q`` containing slope, Hurst estimate, standard
+        error, R-squared, and observation count.
+
+    Notes
+    -----
+    At least three valid lag observations are required for a given ``q``.
+    """
+
     rows = []
     if scaling.empty:
         return pd.DataFrame(columns=["q", "slope", "h", "standard_error", "r2", "n"])
@@ -154,6 +248,41 @@ def rough_kernel_forecasts(
     annualization: float = 252.0,
     eps: float = 1e-12,
 ) -> pd.DataFrame:
+    """Generate variance forecasts with a rough-volatility kernel.
+
+    The forecast is a weighted average of past realized variance, where the weights
+    depend on the Hurst exponent and forecast horizon. This provides a lightweight
+    rough-memory benchmark for volatility forecasting.
+
+    Parameters
+    ----------
+    rv : pandas.Series or pandas.DataFrame
+        Daily variance series.
+    h : float
+        Hurst exponent controlling kernel roughness.
+    horizons : sequence of int, default=(1, 5, 10, 21, 42, 63)
+        Forecast horizons.
+    train_window : int, default=756
+        Number of historical variance observations used at each forecast date.
+    signal_step : int, default=5
+        Spacing between forecast dates.
+    annualization : float, default=252.0
+        Annualization factor.
+    eps : float, default=1e-12
+        Positive floor for input variance.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Long forecast panel with model name ``"rough_kernel"`` and forecast
+        variance/volatility columns.
+
+    Notes
+    -----
+    The function does not attach realized targets. Use ``rough_forecast_frame`` or
+    an external target merge for scoring.
+    """
+
     v = _series(rv, "variance").clip(lower=float(eps))
     max_h = int(max(horizons))
     records = []
@@ -189,6 +318,29 @@ def rough_forecast_frame(
     rv_targets: pd.DataFrame | None = None,
     horizons=(1, 5, 10, 21, 42, 63),
 ) -> pd.DataFrame:
+    """Combine rough-kernel, HAR, and ARCH forecast panels into one table.
+
+    Parameters
+    ----------
+    rough_fc, har_fc, arch_fc : pandas.DataFrame, optional
+        Forecast panels to concatenate. Empty or missing panels are ignored.
+    rv_targets : pandas.DataFrame, optional
+        Forward realized-variance target table. If provided, matching target
+        columns are reshaped and merged by ``date`` and ``horizon``.
+    horizons : sequence of int, default=(1, 5, 10, 21, 42, 63)
+        Horizons used when reshaping target columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Combined long forecast panel sorted by date, model, and horizon.
+
+    Notes
+    -----
+    This helper is designed to standardize forecast panels before model scoring and
+    rolling-loss selection.
+    """
+
     frames = [x for x in (rough_fc, har_fc, arch_fc) if isinstance(x, pd.DataFrame) and not x.empty]
     if not frames:
         return pd.DataFrame()
@@ -306,7 +458,7 @@ def hurst_multi_window(
 
     For each window, builds a rolling sum proxy, log-transforms, and runs the
     pooled moment-scaling regression.  The reported *main_H* is the median over
-    the short windows (1–10d) to avoid the upward bias from long smoothing.
+    the short windows (1-10d) to avoid the upward bias from long smoothing.
     """
     ret = _series(returns, "return")
     rv_1d = (ret * ret).clip(lower=float(eps))

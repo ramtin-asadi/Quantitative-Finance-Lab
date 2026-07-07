@@ -56,6 +56,25 @@ def prepare_option_book(option_quotes: pd.DataFrame) -> pd.DataFrame:
 
 
 def select_atm_straddle(panel: pd.DataFrame, min_dte: int = 21, max_dte: int = 45) -> pd.DataFrame:
+    """Select one near-ATM straddle candidate per date.
+
+    Parameters
+    ----------
+    panel : pandas.DataFrame
+        Straddle or paired option panel containing date, expiry, DTE, and quality
+        fields.
+    min_dte : int, default=21
+        Minimum calendar DTE.
+    max_dte : int, default=45
+        Maximum calendar DTE.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One selected row per date, sorted by DTE proximity to 30 days and quote
+        quality when available.
+    """
+
     data = panel.copy()
     data["date"] = pd.to_datetime(data["date"], errors="coerce").dt.normalize()
     data["expiry"] = pd.to_datetime(data["expiry"], errors="coerce").dt.normalize()
@@ -80,6 +99,32 @@ def size_long_straddle_by_premium_budget(
     fractional_units: bool = False,
     max_units: float | None = None,
 ) -> tuple[float, float, str]:
+    """Size a long straddle from a premium budget.
+
+    Parameters
+    ----------
+    nav : float
+        Current portfolio NAV.
+    call_ask : float
+        Call ask price.
+    put_ask : float
+        Put ask price.
+    contract_multiplier : float, default=100.0
+        Contract multiplier.
+    budget_frac : float, default=0.005
+        Fraction of NAV allocated to premium.
+    fractional_units : bool, default=False
+        Whether fractional straddle units are allowed.
+    max_units : float, optional
+        Optional maximum units.
+
+    Returns
+    -------
+    tuple
+        ``(units, unit_premium, skip_reason)``. ``skip_reason`` is empty when the
+        trade is feasible.
+    """
+
     unit_premium = (float(call_ask) + float(put_ask)) * float(contract_multiplier)
     if not np.isfinite(unit_premium) or unit_premium <= 0:
         return 0.0, unit_premium, "invalid_long_premium"
@@ -104,6 +149,37 @@ def size_short_straddle_by_margin_cap(
     fractional_units: bool = False,
     max_units: float | None = None,
 ) -> tuple[float, float, float, str]:
+    """Size a short straddle from margin and notional caps.
+
+    Parameters
+    ----------
+    nav : float
+        Current portfolio NAV.
+    spot : float
+        Underlying spot price.
+    call_mid : float
+        Call mid price.
+    put_mid : float
+        Put mid price.
+    contract_multiplier : float, default=100.0
+        Contract multiplier.
+    short_margin_spot_frac : float, default=0.15
+        Spot-based margin proxy fraction.
+    short_margin_budget_frac : float, default=0.02
+        Maximum fraction of NAV allocated to margin proxy.
+    max_short_notional_frac : float, default=1.0
+        Maximum short notional as a fraction of NAV.
+    fractional_units : bool, default=False
+        Whether fractional units are allowed.
+    max_units : float, optional
+        Optional maximum units.
+
+    Returns
+    -------
+    tuple
+        ``(units, unit_margin, unit_notional, skip_reason)``.
+    """
+
     unit_margin = float(contract_multiplier) * (
         float(short_margin_spot_frac) * float(spot) + float(call_mid) + float(put_mid)
     )
@@ -129,6 +205,34 @@ def find_straddle_exit(
     strike: float,
     max_exit_lag: int = 2,
 ) -> tuple[pd.Series | None, pd.Series | None, str]:
+    """Find the exit call and put quotes for an opened straddle.
+
+    Parameters
+    ----------
+    option_book : pandas.DataFrame
+        Prepared option quote book.
+    entry_date : pandas.Timestamp
+        Entry date.
+    target_exit_date : pandas.Timestamp
+        Desired exit date.
+    expiry : pandas.Timestamp
+        Contract expiry.
+    strike : float
+        Straddle strike.
+    max_exit_lag : int, default=2
+        Maximum number of quote dates after the target exit date allowed.
+
+    Returns
+    -------
+    tuple
+        ``(exit_call, exit_put, exit_flag)``. The first two values are quote rows
+        or ``None`` when no suitable exit is found.
+
+    Notes
+    -----
+    The function requires both call and put legs at the selected exit date.
+    """
+
     strike_key = round(float(strike), 8)
     subset = option_book[
         (option_book["expiry"] == pd.Timestamp(expiry).normalize())
@@ -176,6 +280,63 @@ def backtest_straddle_overlay(
     max_short_notional_frac: float = 1.0,
     max_exit_lag: int = 2,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Backtest long or short ATM straddle overlay trades from a signal panel.
+
+    For each eligible signal date, the function selects a straddle, asks
+    ``signal_rule`` whether to go long, short, or stay in cash, sizes the trade,
+    finds an exit quote after the holding period, computes P&L, and updates an
+    overlay NAV path.
+
+    Parameters
+    ----------
+    signal_panel : pandas.DataFrame
+        Panel containing straddle candidates and signal features.
+    option_quotes : pandas.DataFrame
+        Option quote book used for exit marks.
+    underlying : pandas.Series or pandas.DataFrame
+        Underlying price series used to determine valid holding periods.
+    strategy_name : str
+        Name assigned to output rows.
+    signal_rule : callable
+        Function called on each selected signal row. It should return ``"long"``,
+        ``"short"``, ``"cash"``, or a dictionary with ``side`` and optional
+        ``skip_reason``.
+    initial_nav : float, default=1000000
+        Initial overlay NAV.
+    contract_multiplier : float, default=100.0
+        Option contract multiplier.
+    holding_days : int, default=5
+        Holding period in underlying trading days.
+    allow_overlap : bool, default=False
+        Whether new positions may be opened before the prior one exits.
+    fractional_units : bool, default=False
+        Whether fractional straddle units are allowed.
+    max_units : float, optional
+        Optional maximum units.
+    long_premium_budget_frac : float, default=0.005
+        NAV fraction spent on long-straddle premium.
+    short_margin_spot_frac : float, default=0.15
+        Spot fraction used in short-straddle margin proxy.
+    short_margin_budget_frac : float, default=0.02
+        NAV fraction allocated to short margin proxy.
+    max_short_notional_frac : float, default=1.0
+        Maximum short notional fraction of NAV.
+    max_exit_lag : int, default=2
+        Maximum quote-date lag allowed for exit marks.
+
+    Returns
+    -------
+    tuple of pandas.DataFrame
+        ``(trades, equity, skipped)``. ``trades`` contains executed trade P&L,
+        ``equity`` contains overlay NAV and drawdown, and ``skipped`` records
+        skipped signals with reasons.
+
+    Notes
+    -----
+    The function uses bid/ask fills: long straddles buy at ask and exit at bid;
+    short straddles sell at bid and buy back at ask.
+    """
+
     prices = _as_price_series(underlying)
     dates = pd.Index(prices.index)
     book = prepare_option_book(option_quotes)
@@ -328,6 +489,23 @@ def backtest_straddle_overlay(
 
 
 def summarize_overlay_trades(backtests: dict[str, tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]], initial_nav: float = 1_000_000) -> pd.DataFrame:
+    """Summarize straddle overlay backtests.
+
+    Parameters
+    ----------
+    backtests : dict
+        Mapping from strategy name to ``(trades, equity, skipped)`` tuple.
+    initial_nav : float, default=1000000
+        Initial NAV used to compute total return.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Strategy-level table with P&L, return, volatility, Sharpe, drawdown, trade
+        count, hit rate, trade P&L statistics, exposure statistics, and signal
+        averages when available.
+    """
+
     rows = []
     for name, (trades, equity, _) in backtests.items():
         nav = equity["nav"] if not equity.empty else pd.Series([initial_nav])
@@ -404,6 +582,34 @@ def covered_call_schedule(
     dates_allowed=None,
     risk_weight: float = 0.0,
 ) -> pd.DataFrame:
+    """Build a covered-call entry schedule from option quotes.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    target_delta : float, default=0.30
+        Target absolute call delta.
+    min_dte : int, default=21
+        Minimum DTE.
+    max_dte : int, default=60
+        Maximum DTE.
+    contracts : float, default=1.0
+        Number of contracts to sell at each entry.
+    rebalance_every : int, optional
+        Optional spacing between entries.
+    dates_allowed : array-like, optional
+        Optional allowed entry dates.
+    risk_weight : float, default=0.0
+        Penalty weight for assignment risk in contract selection.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Schedule with ``entry_date``, ``contract_key``, ``quantity``, and ``label``.
+        Quantities are negative because covered calls are short option positions.
+    """
+
     q = quotes.copy()
     if "contract_key" not in q.columns:
         q["contract_key"] = _contract_key_from_book(q)
@@ -431,6 +637,33 @@ def protective_put_schedule(
     dates_allowed=None,
     value_weight: float = 0.0,
 ) -> pd.DataFrame:
+    """Build a protective-put entry schedule from option quotes.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    target_delta : float, default=0.25
+        Target absolute put delta.
+    min_dte : int, default=21
+        Minimum DTE.
+    max_dte : int, default=75
+        Maximum DTE.
+    contracts : float, default=1.0
+        Number of put contracts to buy at each entry.
+    rebalance_every : int, optional
+        Optional spacing between entries.
+    dates_allowed : array-like, optional
+        Optional allowed entry dates.
+    value_weight : float, default=0.0
+        Weight applied to model-value edge in the cost score.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Protective-put schedule with positive option quantities.
+    """
+
     q = quotes.copy()
     if "contract_key" not in q.columns:
         q["contract_key"] = _contract_key_from_book(q)
@@ -458,6 +691,33 @@ def collar_schedule(
     call_risk_weight: float = 0.0,
     put_value_weight: float = 0.0,
 ) -> pd.DataFrame:
+    """Build a collar schedule from protective-put and covered-call schedules.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    put_delta : float, default=0.25
+        Target absolute put delta.
+    call_delta : float, default=0.25
+        Target absolute call delta.
+    contracts : float, default=1.0
+        Contract count for both legs.
+    rebalance_every : int, optional
+        Optional spacing between entries.
+    dates_allowed : array-like, optional
+        Optional allowed dates.
+    call_risk_weight : float, default=0.0
+        Assignment-risk penalty for call selection.
+    put_value_weight : float, default=0.0
+        Model-value edge weight for put selection.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Combined schedule with put and call legs labeled as collar components.
+    """
+
     put = protective_put_schedule(quotes, target_delta=put_delta, contracts=contracts, rebalance_every=rebalance_every, dates_allowed=dates_allowed, value_weight=put_value_weight)
     call = covered_call_schedule(quotes, target_delta=call_delta, contracts=contracts, rebalance_every=rebalance_every, dates_allowed=dates_allowed, risk_weight=call_risk_weight)
     if put.empty and call.empty:
@@ -467,6 +727,24 @@ def collar_schedule(
 
 
 def boundary_roll_schedule(quotes: pd.DataFrame, *, risk_col: str = "assignment_risk", threshold: float = 1.0) -> pd.DataFrame:
+    """Create a roll-alert table from assignment or boundary risk.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    risk_col : str, default="assignment_risk"
+        Risk column used to trigger rolls. If missing, ``roll_urgency`` is used
+        when available.
+    threshold : float, default=1.0
+        Minimum risk value required for a roll flag.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with date, contract key, roll flag, and risk value.
+    """
+
     q = quotes.copy()
     if "contract_key" not in q.columns:
         q["contract_key"] = _contract_key_from_book(q)
@@ -686,6 +964,27 @@ def run_overlay_backtest(
 
 
 def mark_book_for_schedules(quotes: pd.DataFrame, schedules: dict[str, pd.DataFrame] | pd.DataFrame) -> pd.DataFrame:
+    """Restrict an option quote book to contracts referenced by schedules.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    schedules : dict of pandas.DataFrame or pandas.DataFrame
+        Schedule or schedules containing either ``contract_key`` or contract
+        identifiers such as expiry, strike, and option type.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Mark book containing only the required contracts and core quote columns.
+
+    Notes
+    -----
+    When explicit contract keys are unavailable, the function matches by expiry,
+    strike, and option type.
+    """
+
     if isinstance(schedules, dict):
         sched = pd.concat([x for x in schedules.values() if x is not None and not x.empty], ignore_index=True) if schedules else pd.DataFrame()
     else:
@@ -736,6 +1035,24 @@ def mark_book_for_schedules(quotes: pd.DataFrame, schedules: dict[str, pd.DataFr
 
 
 def assignment_defense_actions(quotes: pd.DataFrame, *, threshold: float = 0.25, ex_div_days: int = 7) -> pd.DataFrame:
+    """Identify call options that may require assignment-defense action.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    threshold : float, default=0.25
+        Minimum assignment risk.
+    ex_div_days : int, default=7
+        Maximum days to next dividend.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Action table with date, contract key, assignment risk, and days to next
+        dividend. Empty if no calls satisfy the trigger.
+    """
+
     q = quotes.copy()
     risk = pd.to_numeric(q.get("assignment_risk", 0.0), errors="coerce").fillna(0.0)
     days = pd.to_numeric(q.get("days_to_next_dividend", np.inf), errors="coerce").fillna(np.inf)
@@ -749,6 +1066,23 @@ def assignment_defense_actions(quotes: pd.DataFrame, *, threshold: float = 0.25,
 
 
 def overlay_summary(results: dict) -> pd.DataFrame:
+    """Summarize option overlay backtest results.
+
+    Parameters
+    ----------
+    results : dict
+        Overlay result dictionary containing NAV, trades, drawdown, and related
+        tables.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Strategy summary with final NAV, total P&L, total and annualized return,
+        maximum drawdown, downside deviation, monthly extremes, trade counts,
+        option event counts, premium cashflow, spread cost, and annualized
+        volatility.
+    """
+
     nav = results.get("nav", pd.DataFrame())
     trades = results.get("trades", pd.DataFrame())
     drawdown = results.get("drawdown", pd.DataFrame())
@@ -783,6 +1117,26 @@ def overlay_summary(results: dict) -> pd.DataFrame:
 
 
 def overlay_mechanics_table(results: dict, *, shares: float = 0.0, dividends: pd.Series | None = None) -> pd.DataFrame:
+    """Summarize mechanical details of option overlay execution.
+
+    Parameters
+    ----------
+    results : dict
+        Overlay result dictionary containing trades, NAV, and holdings tables.
+    shares : float, default=0.0
+        Underlying share count used to estimate dividends received.
+    dividends : pandas.Series, optional
+        Dividend series indexed by date.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Strategy-level mechanics table covering opens, closes, roll closes, expiry
+        settlements, assignment-defense closes, active option counts, holding
+        periods, entry option prices, premium flows, spread costs, dividends, and
+        net trade cashflow.
+    """
+
     trades = results.get("trades", pd.DataFrame()).copy()
     nav = results.get("nav", pd.DataFrame())
     calls = results.get("call_holdings", pd.DataFrame())
@@ -840,6 +1194,21 @@ def overlay_mechanics_table(results: dict, *, shares: float = 0.0, dividends: pd
 
 
 def pnl_by_vrp_decile(trades: pd.DataFrame, n_deciles: int = 10) -> pd.DataFrame:
+    """Aggregate overlay trade P&L by VRP rank decile.
+
+    Parameters
+    ----------
+    trades : pandas.DataFrame
+        Trade table containing ``vrp_rank`` and ``net_pnl``.
+    n_deciles : int, default=10
+        Number of VRP rank buckets.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Decile table with trade count, total P&L, average P&L, and hit rate.
+    """
+
     if trades.empty or "vrp_rank" not in trades.columns:
         return pd.DataFrame()
     data = trades.replace([np.inf, -np.inf], np.nan).dropna(subset=["vrp_rank", "net_pnl"]).copy()

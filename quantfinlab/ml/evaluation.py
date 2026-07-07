@@ -32,7 +32,28 @@ def forecast_metrics(
     y_col: str,
     prediction_cols: Sequence[str],
 ) -> pd.DataFrame:
-    """Point forecast metrics for Project 19 model comparison."""
+    """Compute point-forecast metrics for one or more prediction columns.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Evaluation table containing actual outcomes and prediction columns.
+    y_col : str
+        Actual outcome column.
+    prediction_cols : sequence of str
+        Prediction columns to evaluate.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table indexed by model/prediction column with observation count, MAE, RMSE,
+        Spearman information coefficient, directional accuracy, and bias.
+
+    Notes
+    -----
+    Rows with missing actual or predicted values are dropped separately for each
+    prediction column.
+    """
     rows = []
     for col in prediction_cols:
         if col not in data.columns:
@@ -64,7 +85,37 @@ def rank_metrics(
     prediction_cols: Sequence[str],
     top_frac: float = 0.25,
 ) -> pd.DataFrame:
-    """Cross-sectional rank IC and long-short bucket spread by date."""
+    """Evaluate cross-sectional forecast ranking quality by date.
+
+    For each prediction column, the function computes daily rank information
+    coefficients, top-bucket realized spread, top-k hit rate, bucket monotonicity,
+    and the share of dates with positive rank IC.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Long-form forecast table.
+    date_col : str
+        Date column.
+    asset_col : str
+        Asset identifier column.
+    y_col : str
+        Realized outcome column.
+    prediction_cols : sequence of str
+        Prediction columns to evaluate.
+    top_frac : float, default=0.25
+        Fraction of assets used for the top and bottom forecast buckets.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Rank-evaluation table indexed by model/prediction column.
+
+    Notes
+    -----
+    This is the preferred diagnostic when the model is used for cross-sectional
+    selection or weighting rather than calibrated point prediction.
+    """
     rows = []
     for col in prediction_cols:
         if col not in data.columns:
@@ -119,7 +170,31 @@ def forecast_buckets(
     score_col: str,
     n_buckets: int = 5,
 ) -> pd.DataFrame:
-    """Average realized outcome by within-date forecast bucket."""
+    """Summarize realized outcomes by within-date forecast buckets.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Long-form forecast table.
+    date_col : str
+        Date column.
+    y_col : str
+        Realized outcome column.
+    score_col : str
+        Forecast score column used for sorting.
+    n_buckets : int, default=5
+        Number of within-date buckets.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Bucket-level table with mean, median, and count of realized outcomes.
+
+    Notes
+    -----
+    Bucket assignment is performed separately within each date, which removes level
+    differences across dates and focuses on cross-sectional ranking.
+    """
     rows = []
     needed = [date_col, y_col, score_col]
     for dt, group in data[needed].dropna().groupby(date_col):
@@ -178,6 +253,28 @@ def rolling_rank_ic(
     pred_col: str,
     window: int = 12,
 ) -> pd.Series:
+    """Compute a rolling average of daily cross-sectional rank IC.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Long-form forecast table.
+    date_col : str
+        Date column.
+    asset_col : str
+        Asset identifier column.
+    y_col : str
+        Realized outcome column.
+    pred_col : str
+        Prediction column.
+    window : int, default=12
+        Rolling window in forecast dates.
+
+    Returns
+    -------
+    pandas.Series
+        Rolling mean rank-IC series named ``"rolling_rank_ic"``.
+    """
     vals = []
     for dt, group in data[[date_col, asset_col, y_col, pred_col]].dropna().groupby(date_col):
         vals.append((pd.Timestamp(dt), _spearman(group[pred_col], group[y_col])))
@@ -202,10 +299,50 @@ def walkforward_tabular_predictions(
     inner_threads: int | None = None,
     min_train: int = 500,
 ) -> pd.DataFrame:
-    """Fit sklearn-style estimators on rolling windows and predict by date.
+    """Generate walk-forward predictions from sklearn-style estimators.
 
-    The training cutoff subtracts the forecast horizon from each refit date so
-    labels cannot leak from the prediction month into the fitted model.
+    At each refit date, the function fits each estimator on a rolling training
+    window whose label cutoff is shifted backward by ``horizon`` business days. It
+    then predicts all forecast dates assigned to that refit interval. This timing
+    prevents labels from the prediction horizon leaking into the fitted model.
+
+    Parameters
+    ----------
+    x : pandas.DataFrame
+        Feature matrix.
+    y : pandas.Series
+        Target vector aligned to ``x``.
+    dates : sequence
+        Date for each row of ``x`` and ``y``.
+    assets : sequence
+        Asset identifier for each row.
+    refit_dates : sequence
+        Dates on which estimators are refit.
+    prediction_dates : sequence
+        Dates on which predictions are required.
+    estimators : mapping
+        Mapping from output column name to sklearn-style estimator.
+    train_window : int
+        Rolling training window in business days.
+    horizon : int, default=21
+        Forecast horizon used to embargo labels before each refit date.
+    n_jobs : int, default=1
+        Parallel jobs across refit dates.
+    inner_threads : int, optional
+        Thread limit applied inside estimator fitting.
+    min_train : int, default=500
+        Minimum number of training rows required for a refit.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Long prediction table with ``date``, ``asset``, and one prediction column
+        per estimator.
+
+    Notes
+    -----
+    Each estimator is cloned before fitting, so input estimator objects are not
+    mutated by the walk-forward loop.
     """
     from joblib import Parallel, delayed
     from sklearn.base import clone
@@ -274,7 +411,28 @@ def feature_screen_table(
     *,
     top_n: int = 40,
 ) -> pd.DataFrame:
-    """Combine tree importance and linear absolute coefficient screens."""
+    """Combine tree-importance and linear-coefficient feature screens.
+
+    Parameters
+    ----------
+    importance : pandas.Series
+        Tree or model importance values by feature.
+    coefficients : pandas.Series, optional
+        Linear model coefficients by feature. Absolute values are used.
+    top_n : int, default=40
+        Number of features returned.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Feature screen table sorted by mean rank across available importance
+        sources.
+
+    Notes
+    -----
+    The function is useful for comparing nonlinear feature importance with sparse
+    linear-model selection.
+    """
     imp = pd.Series(importance, dtype=float).rename("rf_importance")
     pieces = [imp]
     if coefficients is not None:
@@ -294,7 +452,32 @@ def active_performance_table(
     rf_daily: float = 0.0,
     annualization: float = 252.0,
 ) -> pd.DataFrame:
-    """Benchmark-relative performance summary for policy comparisons."""
+    """Compute benchmark-relative performance metrics for strategies.
+
+    Parameters
+    ----------
+    strategy_returns : pandas.DataFrame
+        Return table containing the benchmark column and one or more strategy
+        columns.
+    benchmark : str
+        Benchmark column name.
+    rf_daily : float, default=0.0
+        Reserved for compatibility with performance APIs.
+    annualization : float, default=252.0
+        Annualization factor.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table indexed by strategy with active CAGR, tracking error, information
+        ratio, active max drawdown, monthly active hit rate, and mean daily active
+        return.
+
+    Raises
+    ------
+    ValueError
+        If ``benchmark`` is not a column of ``strategy_returns``.
+    """
     R = pd.DataFrame(strategy_returns).copy().apply(pd.to_numeric, errors="coerce")
     if benchmark not in R.columns:
         raise ValueError(f"{benchmark!r} is not in strategy_returns.")
@@ -333,7 +516,28 @@ def policy_diagnostics_table(
     returns: pd.DataFrame | None = None,
     cost_bps: float = 10.0,
 ) -> pd.DataFrame:
-    """Turnover, exposure, concentration, and cost diagnostics for policies."""
+    """Summarize turnover, exposure, concentration, and cost diagnostics for policies.
+
+    Parameters
+    ----------
+    weights_by_strategy : mapping of str to pandas.DataFrame
+        Strategy or policy weight frames.
+    returns : pandas.DataFrame, optional
+        Reserved for compatibility with diagnostic workflows.
+    cost_bps : float, default=10.0
+        Basis-point cost assumption used to estimate annualized cost drag.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Diagnostic table indexed by strategy. Columns include average risky
+        exposure, average cash weight, average and annualized turnover, estimated
+        cost drag, HHI, effective number of holdings, and average max weight.
+
+    Notes
+    -----
+    Cash columns are detected by common labels such as ``"SHY"`` and ``"CASH"``.
+    """
     rows = []
     for name, weights in weights_by_strategy.items():
         W = pd.DataFrame(weights).copy()
@@ -398,7 +602,43 @@ def ablation_table(
     ablations: Sequence[str] = ("no_forecasts", "no_priors", "shuffled_forecasts"),
     device=None,
 ) -> pd.DataFrame:
-    """Evaluate trained policies after removing or disturbing key state blocks."""
+    """Evaluate trained policies under state ablations.
+
+    The function first evaluates each policy on the original state, then evaluates
+    the same policy after removing or perturbing selected state blocks. This helps
+    test whether performance depends on forecasts, priors, or other information
+    channels.
+
+    Parameters
+    ----------
+    state : object
+        State object compatible with policy evaluation.
+    policies : mapping
+        Mapping from policy name to trained policy object.
+    returns : pandas.DataFrame, optional
+        Reserved for compatibility with broader evaluation workflows.
+    benchmark_weights : pandas.DataFrame, optional
+        Reserved for compatibility with benchmark-aware workflows.
+    period : tuple
+        Evaluation date range.
+    reward_settings : mapping
+        Reward settings passed to policy evaluation.
+    ablations : sequence of str, default=("no_forecasts", "no_priors", "shuffled_forecasts")
+        Ablations to apply.
+    device : optional
+        Torch device.
+
+    Returns
+    -------
+    pandas.DataFrame
+        MultiIndex table indexed by ``(Policy, Ablation)`` with validation metrics.
+
+    Notes
+    -----
+    A large performance drop under a specific ablation indicates that the policy
+    relies materially on that information block. A small change suggests the block
+    is redundant or unused by the learned policy.
+    """
     from quantfinlab.ml.rl import evaluate_policy
 
     rows = []

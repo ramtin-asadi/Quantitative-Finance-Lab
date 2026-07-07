@@ -54,6 +54,33 @@ def hmm_quality_row(
     proba: pd.DataFrame | np.ndarray | None = None,
     n_params: int | None = None,
 ) -> dict[str, float | str]:
+    """Build a quality row for a fitted Gaussian HMM.
+
+    Parameters
+    ----------
+    name : str
+        Model name.
+    model : object
+        Fitted HMM exposing ``predict``, ``predict_proba``, and ``score``.
+    x : array-like
+        Feature matrix used for likelihood and state assignment.
+    outcomes : pandas.DataFrame or pandas.Series, optional
+        Outcome variables used for economic separation.
+    labels : pandas.Series or sequence of int, optional
+        Precomputed labels. If omitted, ``model.predict`` is used.
+    proba : pandas.DataFrame or numpy.ndarray, optional
+        Precomputed posterior probabilities. If omitted, ``model.predict_proba`` is
+        used.
+    n_params : int, optional
+        Number of model parameters used for AIC/BIC. If omitted, a Gaussian-HMM
+        parameter count is estimated.
+
+    Returns
+    -------
+    dict
+        Regime model quality metrics including likelihood, AIC/BIC, state balance,
+        persistence, posterior confidence, and economic separation.
+    """
     X = np.asarray(x, dtype=float)
     n = len(X)
     if labels is None:
@@ -85,6 +112,32 @@ def pca_hmm_inputs(
     scaler: StandardScaler | None = None,
     pca: PCA | None = None,
 ) -> tuple[pd.DataFrame | np.ndarray, StandardScaler, PCA]:
+    """Standardize features and optionally reduce them with PCA for HMM fitting.
+
+    Parameters
+    ----------
+    x : pandas.DataFrame or numpy.ndarray
+        Input feature matrix.
+    n_components : int, default=5
+        Number of principal components.
+    random_state : int, default=42
+        PCA random state.
+    scaler : sklearn.preprocessing.StandardScaler, optional
+        Existing fitted scaler. If omitted or unfitted, a new scaler is fit.
+    pca : sklearn.decomposition.PCA, optional
+        Existing fitted PCA. If omitted or unfitted, a new PCA is fit.
+
+    Returns
+    -------
+    tuple
+        ``(transformed, scaler, pca)``. ``transformed`` is a DataFrame with PC
+        column names when the input is a DataFrame; otherwise it is a NumPy array.
+
+    Notes
+    -----
+    Passing a fitted ``scaler`` and ``pca`` applies the training transformation to a
+    new sample without refitting.
+    """
     X = x.replace([np.inf, -np.inf], np.nan).dropna() if isinstance(x, pd.DataFrame) else np.asarray(x, dtype=float)
     n_comp = int(max(1, min(int(n_components), min(np.asarray(X).shape))))
     scaler = StandardScaler() if scaler is None else scaler
@@ -124,6 +177,37 @@ def walkforward_hmm_probabilities(
     train_days: int = 1260,
     pca_components: int | None = None,
 ) -> pd.DataFrame:
+    """Estimate walk-forward HMM state probabilities.
+
+    At each rebalance date, the model factory is called to create a fresh HMM, which
+    is fit on a trailing window ending at that date. The function returns the
+    posterior state probabilities for the latest observation in that trailing
+    sample.
+
+    Parameters
+    ----------
+    model_factory : callable
+        Callable that returns an unfitted HMM-like model.
+    x : pandas.DataFrame
+        Date-indexed feature matrix.
+    rebalance_dates : sequence of pandas.Timestamp
+        Dates on which probabilities are estimated.
+    train_days : int, default=1260
+        Trailing training window length.
+    pca_components : int, optional
+        If supplied, features are standardized and reduced by PCA before HMM
+        fitting.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Date-indexed state probability table with columns ``state_0``,
+        ``state_1``, and so on.
+
+    Notes
+    -----
+    Dates with insufficient trailing history are skipped.
+    """
     rows = {}
     for dt in pd.to_datetime(rebalance_dates):
         hist = x.loc[:dt].tail(int(train_days))
@@ -352,7 +436,37 @@ def build_sequence_arrays(
     date_col: str = "date",
     lookback: int = 21,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray | None, pd.Index]:
-    """Build per-asset rolling sequence arrays aligned to original row index."""
+    """Build rolling per-asset sequence arrays for sequence models.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Long-form table containing asset identifiers, dates, feature columns, and
+        optionally a target column.
+    features : sequence of str
+        Feature columns to include in each sequence window.
+    target : str, optional
+        Target column. If omitted, no target array is returned.
+    asset_col : str, default="asset_id"
+        Asset identifier column. Values are coerced to integer asset IDs.
+    date_col : str, default="date"
+        Date column.
+    lookback : int, default=21
+        Number of rows in each rolling sequence.
+
+    Returns
+    -------
+    tuple
+        ``(X, A, Y, index)`` where ``X`` has shape
+        ``(n_samples, lookback, n_features)``, ``A`` contains asset IDs, ``Y`` is
+        the target array or ``None``, and ``index`` maps samples back to original
+        rows.
+
+    Notes
+    -----
+    Sequences are built separately within each asset. Rows with missing targets or
+    non-finite feature windows are skipped.
+    """
     df = pd.DataFrame(data).copy()
     df[date_col] = pd.to_datetime(df[date_col])
     df = df.sort_values([asset_col, date_col])
@@ -518,6 +632,86 @@ def train_torch_model(
     turnover_penalty: float = 0.02,
     device=None,
 ):
+    """Train a PyTorch forecasting model with time-aware validation and early stopping.
+
+    The function supports either prebuilt arrays or a long-form data table from
+    which rolling sequences are constructed. It trains with AdamW, gradient clipping,
+    a plateau scheduler, and early stopping. For cross-sectional forecasting, it can
+    early-stop on a composite validation score based on rank IC, bucket spread,
+    top-k hit rate, and turnover.
+
+    Parameters
+    ----------
+    model : torch.nn.Module
+        Forecasting model. It must accept feature tensors and asset IDs.
+    x : pandas.DataFrame or numpy.ndarray, optional
+        Prebuilt feature array.
+    asset_id : pandas.Series or numpy.ndarray, optional
+        Asset IDs for prebuilt arrays.
+    y : pandas.Series or numpy.ndarray, optional
+        Target vector for prebuilt arrays.
+    data : pandas.DataFrame, optional
+        Long-form table used to build sequence arrays.
+    features : sequence of str, optional
+        Feature columns when training from ``data``.
+    target : str, default="z_21"
+        Target column when training from ``data``.
+    asset_col : str, default="asset_id"
+        Asset identifier column.
+    date_col : str, default="date"
+        Date column.
+    lookback : int, default=21
+        Sequence length when training from ``data``.
+    valid_fraction : float, default=0.20
+        Fraction used for validation when explicit date or mask splits are not
+        supplied.
+    dates : sequence, optional
+        Dates for prebuilt arrays.
+    train_mask, valid_mask : sequence of bool, optional
+        Explicit train and validation masks.
+    train_end, valid_start, valid_end : date-like, optional
+        Date-based split controls.
+    epochs : int, default=80
+        Maximum training epochs.
+    batch_size : int, default=256
+        Training batch size.
+    lr : float, default=1e-3
+        Learning rate.
+    weight_decay : float, default=1e-4
+        AdamW weight decay.
+    patience : int, default=12
+        Early-stopping patience.
+    loss_name : str, default="huber"
+        Loss function name.
+    quantiles : sequence of float, optional
+        Quantile levels for quantile losses.
+    early_stop_metric : str, default="composite"
+        Early-stopping objective. Composite/rank modes use cross-sectional
+        validation diagnostics when dates are available.
+    top_frac : float, default=0.25
+        Top fraction used in selection diagnostics.
+    turnover_penalty : float, default=0.02
+        Penalty applied to validation score for unstable selected buckets.
+    device : optional
+        Torch device.
+
+    Returns
+    -------
+    tuple
+        ``(model, history)`` where ``model`` is loaded with the best validation
+        state and ``history`` is an epoch-level DataFrame.
+
+    Raises
+    ------
+    ValueError
+        If required inputs are missing, masks are inconsistent, or too few
+        observations are available.
+
+    Notes
+    -----
+    The best model is chosen by validation objective, not by final epoch. This is
+    important for noisy financial targets where later epochs can overfit quickly.
+    """
     _require_torch()
     device = auto_device() if device is None else device
     model = model.to(device)
@@ -689,6 +883,42 @@ def torch_predictions(
     batch_size: int = 512,
     device=None,
 ):
+    """Generate predictions from a trained PyTorch forecasting model.
+
+    Parameters
+    ----------
+    model : torch.nn.Module
+        Trained model.
+    x : pandas.DataFrame or numpy.ndarray, optional
+        Prebuilt feature array.
+    asset_id : pandas.Series or numpy.ndarray, optional
+        Asset IDs for prebuilt arrays.
+    data : pandas.DataFrame, optional
+        Long-form table used to build sequence arrays.
+    features : sequence of str, optional
+        Feature columns when predicting from ``data``.
+    asset_col : str, default="asset_id"
+        Asset identifier column.
+    date_col : str, default="date"
+        Date column.
+    lookback : int, default=21
+        Sequence length when predicting from ``data``.
+    batch_size : int, default=512
+        Prediction batch size.
+    device : optional
+        Torch device.
+
+    Returns
+    -------
+    pandas.Series or pandas.DataFrame
+        Prediction series for one-output models, or a prediction DataFrame for
+        multi-output models.
+
+    Raises
+    ------
+    ValueError
+        If required inputs are missing.
+    """
     _require_torch()
     device = auto_device() if device is None else device
     model = model.to(device)

@@ -4,6 +4,24 @@ import numpy as np
 
 
 def pde_grid(spot: float, strike: float, *, s_steps: int = 160, s_max_mult: float = 3.0) -> np.ndarray:
+    """Create a spot grid for finite-difference option pricing.
+
+    Parameters
+    ----------
+    spot : float
+        Current spot price.
+    strike : float
+        Option strike.
+    s_steps : int, default=160
+        Number of spatial steps.
+    s_max_mult : float, default=3.0
+        Multiplier used to set the maximum spot grid value.
+
+    Returns
+    -------
+    numpy.ndarray
+        Equally spaced spot grid from zero to the computed maximum spot.
+    """
     s_max = max(float(s_max_mult) * max(float(spot), float(strike)), 1.5 * max(float(spot), float(strike)))
     return np.linspace(0.0, s_max, int(max(20, s_steps)) + 1)
 
@@ -48,6 +66,32 @@ def crank_nicolson_step(v, lower_i, diag_i, upper_i, lower_e, diag_e, upper_e):
 
 
 def psor_solve(lower, diag, upper, rhs, payoff, *, omega: float = 1.35, tol: float = 1e-8, max_iter: int = 5000):
+    """Solve a tridiagonal linear complementarity step with projected SOR.
+
+    The routine applies projected successive over-relaxation to enforce the
+    American exercise constraint ``value >= payoff`` while solving the implicit
+    finite-difference system.
+
+    Parameters
+    ----------
+    lower, diag, upper : array-like
+        Tridiagonal matrix coefficients.
+    rhs : array-like
+        Right-hand side vector.
+    payoff : array-like
+        Exercise payoff vector used as the lower obstacle.
+    omega : float, default=1.35
+        Over-relaxation parameter.
+    tol : float, default=1e-8
+        Convergence tolerance on the maximum value update.
+    max_iter : int, default=5000
+        Maximum PSOR iterations.
+
+    Returns
+    -------
+    tuple
+        ``(value, residual, iterations)``.
+    """
     lower = np.asarray(lower, dtype=float)
     diag = np.asarray(diag, dtype=float)
     upper = np.asarray(upper, dtype=float)
@@ -104,6 +148,31 @@ def penalty_solve(lower, diag, upper, rhs, payoff, *, penalty: float = 1e4, tol:
 
 
 def extract_boundary(s_grid, value, payoff, option_type: str | int = "put", *, tol: float = 1e-5) -> float:
+    """Extract the exercise boundary from a value/payoff grid.
+
+    Parameters
+    ----------
+    s_grid : array-like
+        Spot grid.
+    value : array-like
+        Option value on the grid.
+    payoff : array-like
+        Exercise payoff on the grid.
+    option_type : str or int, default="put"
+        Option type. Positive integer or call-like string is treated as a call.
+    tol : float, default=1e-5
+        Tolerance for identifying binding exercise points.
+
+    Returns
+    -------
+    float
+        Approximate exercise boundary, or ``NaN`` if no binding region is detected.
+
+    Notes
+    -----
+    For calls, the first binding grid point is returned. For puts, the last binding
+    grid point is returned.
+    """
     grid = np.asarray(s_grid, dtype=float)
     val = np.asarray(value, dtype=float)
     pay = np.asarray(payoff, dtype=float)
@@ -116,6 +185,28 @@ def extract_boundary(s_grid, value, payoff, option_type: str | int = "put", *, t
 
 
 def complementarity_error(value, payoff, residual=None) -> float:
+    """Compute a finite-difference complementarity error diagnostic.
+
+    Parameters
+    ----------
+    value : array-like
+        Option value.
+    payoff : array-like
+        Exercise payoff.
+    residual : array-like, optional
+        Linear-system residual.
+
+    Returns
+    -------
+    float
+        Maximum of exercise-constraint violation and residual magnitude when a
+        residual is supplied.
+
+    Notes
+    -----
+    A small value indicates both numerical convergence and respect of the American
+    exercise obstacle.
+    """
     val = np.asarray(value, dtype=float)
     pay = np.asarray(payoff, dtype=float)
     violation = np.nanmax(np.maximum(pay - val, 0.0)) if val.size else np.nan
@@ -126,6 +217,25 @@ def complementarity_error(value, payoff, residual=None) -> float:
 
 
 def pde_diagnostics(values, payoff, residuals, iterations=None) -> dict:
+    """Summarize finite-difference PDE residual diagnostics.
+
+    Parameters
+    ----------
+    values : array-like
+        Option values.
+    payoff : array-like
+        Exercise payoff.
+    residuals : array-like
+        Residual values.
+    iterations : array-like, optional
+        Iteration counts, usually from PSOR.
+
+    Returns
+    -------
+    dict
+        Maximum residual, median residual, complementarity error, and optionally
+        maximum and median iteration counts.
+    """
     arr = np.asarray(values, dtype=float)
     pay = np.asarray(payoff, dtype=float)
     res = np.asarray(residuals, dtype=float)

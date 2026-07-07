@@ -99,7 +99,27 @@ def scale_01(values: pd.Series | pd.DataFrame) -> pd.Series | pd.DataFrame:
 
 
 def shrink_corr(returns: pd.DataFrame) -> pd.DataFrame:
-    """Ledoit-Wolf shrinkage covariance converted to a correlation matrix."""
+    """Estimate a shrinkage correlation matrix from returns.
+
+    The function fits a Ledoit-Wolf covariance estimator and converts the result
+    to a correlation matrix with unit diagonal and values clipped to ``[-1, 1]``.
+
+    Parameters
+    ----------
+    returns : pandas.DataFrame
+        Asset return panel.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Shrinkage correlation matrix indexed and columned by asset.
+
+    Notes
+    -----
+    This estimator is useful before network construction because sample
+    correlations can be unstable in high-dimensional universes.
+    """
+
     r = _clean_returns(returns)
     cov = LedoitWolf().fit(r.to_numpy(dtype=float)).covariance_.astype(float)
     sd = np.sqrt(np.maximum(np.diag(cov), 1e-16))
@@ -185,7 +205,31 @@ def select_t_copula_nu(
     nu_grid: Sequence[float] = (3, 4, 5, 7, 10, 15, 25, 50),
     max_pairs: int | None = 40,
 ) -> float:
-    """Choose a global t-copula degrees-of-freedom value by pair log likelihood."""
+    """Select a global Student-t copula degrees-of-freedom parameter.
+
+    The function evaluates a grid of candidate ``nu`` values using pairwise
+    copula log likelihood and returns the best finite candidate.
+
+    Parameters
+    ----------
+    pseudo : pandas.DataFrame
+        Pseudo-observations or transformed marginal ranks.
+    nu_grid : sequence of float
+        Candidate degrees-of-freedom values. Values must exceed two.
+    max_pairs : int, optional
+        Maximum number of asset pairs sampled for likelihood evaluation.
+
+    Returns
+    -------
+    float
+        Selected degrees-of-freedom value. Returns ``10.0`` if no finite score is
+        available.
+
+    Notes
+    -----
+    Smaller ``nu`` values imply heavier joint tails and stronger tail dependence.
+    """
+
     u = _clean_returns(pseudo, min_rows=20)
     rho = kendall_to_t_copula_corr(u)
     pairs = _pair_sample(u.shape[1], max_pairs)
@@ -201,7 +245,26 @@ def select_t_copula_nu(
 
 
 def student_t_tail_dependence(rho: pd.DataFrame | np.ndarray, nu: float) -> pd.DataFrame:
-    """Symmetric lower-tail dependence of a Student-t copula."""
+    """Compute symmetric lower-tail dependence for a Student-t copula.
+
+    Parameters
+    ----------
+    rho : pandas.DataFrame or array-like
+        Correlation matrix.
+    nu : float
+        Student-t degrees of freedom.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Tail-dependence matrix with the same labels as ``rho``.
+
+    Notes
+    -----
+    The diagonal is set to one. Off-diagonal values are clipped to the interval
+    ``[0, 1]``.
+    """
+
     r = _matrix_frame(rho, name="rho")
     arr = np.clip(r.to_numpy(dtype=float), -0.995, 0.995)
     arg = -np.sqrt(np.maximum((float(nu) + 1.0) * (1.0 - arr) / np.maximum(1.0 + arr, 1e-10), 0.0))
@@ -236,6 +299,37 @@ def dense_network(dependence: pd.DataFrame | np.ndarray, *, distance: pd.DataFra
 
 
 def pmfg_network(dependence: pd.DataFrame | np.ndarray, *, distance: pd.DataFrame | np.ndarray | None = None) -> nx.Graph:
+    """Construct a planar maximally filtered graph from dependence strengths.
+
+    Edges are considered from strongest to weakest positive dependence and added
+    only when they preserve graph planarity. The final target is the PMFG edge
+    count ``3 * (n - 2)`` when feasible.
+
+    Parameters
+    ----------
+    dependence : pandas.DataFrame or array-like
+        Pairwise dependence matrix.
+    distance : pandas.DataFrame or array-like, optional
+        Distance matrix used as edge distance. If omitted, distances are derived
+        from dependence.
+
+    Returns
+    -------
+    networkx.Graph
+        Planar graph with edge attributes ``weight``, ``signed_weight``, and
+        ``distance``.
+
+    Raises
+    ------
+    ImportError
+        If networkx is not installed.
+
+    Notes
+    -----
+    PMFG retains more structure than a minimum spanning tree while preserving a
+    planar sparse graph constraint.
+    """
+
     nx_mod = _require_networkx()
     dep = _matrix_frame(dependence, name="dependence")
     dist = _matrix_frame(distance, index=dep.index, name="distance") if distance is not None else dependence_to_distance(dep)
@@ -305,6 +399,33 @@ def pmfg_network(dependence: pd.DataFrame | np.ndarray, *, distance: pd.DataFram
 
 
 def mst_network(dependence: pd.DataFrame | np.ndarray, *, distance: pd.DataFrame | np.ndarray | None = None) -> nx.Graph:
+    """Construct a minimum spanning tree from dependence-derived distances.
+
+    Parameters
+    ----------
+    dependence : pandas.DataFrame or array-like
+        Pairwise dependence matrix.
+    distance : pandas.DataFrame or array-like, optional
+        Distance matrix used for the tree. If omitted, distances are derived
+        from dependence.
+
+    Returns
+    -------
+    networkx.Graph
+        Minimum spanning tree with edge attributes ``weight``, ``signed_weight``,
+        and ``distance``.
+
+    Raises
+    ------
+    ImportError
+        If networkx is not installed.
+
+    Notes
+    -----
+    The tree minimizes total distance, so strongly related assets tend to be
+    connected when dependence-to-distance is monotonic.
+    """
+
     nx_mod = _require_networkx()
     dep = _matrix_frame(dependence, name="dependence")
     dist = _matrix_frame(distance, index=dep.index, name="distance") if distance is not None else dependence_to_distance(dep)
@@ -427,7 +548,33 @@ def network_diversifier_weights(
     n_stocks: int = 25,
     max_weight: float = 0.10,
 ) -> pd.Series:
-    """Top-score portfolio with positive-score/inverse-vol weights and cap redistribution."""
+    """Build a capped top-score portfolio with network-diversifier sizing.
+
+    The function selects the highest scoring names, shifts scores to be positive,
+    scales by inverse volatility, and applies cap-and-renormalization.
+
+    Parameters
+    ----------
+    score : pandas.Series
+        Asset score vector.
+    returns : pandas.DataFrame
+        Return panel used to estimate asset volatility.
+    n_stocks : int, default=25
+        Number of top-scoring assets selected.
+    max_weight : float, default=0.10
+        Maximum per-asset weight.
+
+    Returns
+    -------
+    pandas.Series
+        Long-only capped weights indexed by asset.
+
+    Notes
+    -----
+    If no valid score is available, the function falls back to equal weights over
+    the return columns.
+    """
+
     r = _clean_returns(returns)
     s = pd.Series(score, dtype=float).reindex(r.columns).replace([np.inf, -np.inf], np.nan).dropna()
     if s.empty:

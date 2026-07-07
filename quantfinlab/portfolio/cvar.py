@@ -62,6 +62,30 @@ def _dates(cache, rebalance_dates):
 
 
 def historical_cvar_loss(returns, *, alpha=0.95):
+    """Compute historical expected shortfall of return losses.
+
+    The function converts returns into losses, estimates the empirical VaR at
+    confidence level ``alpha``, and averages losses beyond that threshold.
+
+    Parameters
+    ----------
+    returns : array-like or pandas.Series
+        Return observations.
+    alpha : float, default=0.95
+        Confidence level for the tail-loss threshold.
+
+    Returns
+    -------
+    float
+        Historical CVaR/expected-shortfall loss. Returns ``NaN`` when no valid
+        returns are available.
+
+    Notes
+    -----
+    Losses are defined as negative returns. A larger positive value represents
+    larger tail loss.
+    """
+
     r = pd.Series(returns, dtype=float).replace([np.inf, -np.inf], np.nan).dropna()
     if r.empty:
         return float("nan")
@@ -80,6 +104,35 @@ def portfolio_cvar_loss(returns, weights, *, alpha=0.95):
 
 
 def min_cvar_weights(returns, *, alpha=0.95, w_min=0.0, w_max=0.40):
+    """Compute long-only minimum-CVaR portfolio weights.
+
+    The optimizer solves the standard historical CVaR linear program using
+    scenario losses from the supplied return matrix, subject to full investment
+    and per-asset weight bounds.
+
+    Parameters
+    ----------
+    returns : array-like or pandas.DataFrame
+        Asset return matrix with observations in rows and assets in columns.
+    alpha : float, default=0.95
+        CVaR confidence level.
+    w_min : float, default=0.0
+        Minimum per-asset weight.
+    w_max : float or mapping, default=0.40
+        Maximum per-asset weight or asset-specific caps.
+
+    Returns
+    -------
+    pandas.Series
+        Optimized long-only weights indexed by asset. If the solver fails, a
+        cleaned equal-weight fallback is returned.
+
+    Notes
+    -----
+    The objective minimizes expected shortfall of portfolio losses, not variance.
+    The result depends on the empirical scenario window supplied in ``returns``.
+    """
+
     r = pd.DataFrame(returns).astype(float).replace([np.inf, -np.inf], np.nan).dropna(how="any")
     tickers = list(r.columns)
     t, n = r.shape
@@ -108,6 +161,46 @@ def mean_cvar_weights(
     w_min=0.0,
     w_max=0.40,
 ):
+    """Maximize expected return subject to a historical CVaR budget.
+
+    The function uses a CVaR linear-program formulation and attempts one or more
+    budget relaxations when the initial budget is infeasible. The reference
+    portfolio's CVaR can be used as the baseline budget.
+
+    Parameters
+    ----------
+    returns : array-like or pandas.DataFrame
+        Asset return matrix with observations in rows and assets in columns.
+    mu_ann : array-like or pandas.Series
+        Annualized expected returns indexed or ordered like the return columns.
+    reference : {"equal"} or array-like, default="equal"
+        Reference portfolio used to define the base CVaR budget when
+        ``cvar_budget`` is not supplied.
+    cvar_budget : float, optional
+        Explicit CVaR loss budget.
+    budget_scale : float, default=0.90
+        Scale applied to the reference CVaR when ``cvar_budget`` is omitted.
+    relax_scales : sequence of float
+        Additional budget scales tried if the first problem is infeasible.
+    alpha : float, default=0.95
+        CVaR confidence level.
+    w_min : float, default=0.0
+        Minimum per-asset weight.
+    w_max : float or mapping, default=0.40
+        Maximum per-asset weight or asset-specific caps.
+
+    Returns
+    -------
+    pandas.Series
+        Optimized weights. If no feasible solution is found, the cleaned
+        reference portfolio is returned.
+
+    Notes
+    -----
+    This optimizer separates expected-return ranking from tail-risk control. The
+    CVaR budget is based on historical scenario losses from the input window.
+    """
+
     r = pd.DataFrame(returns).astype(float).replace([np.inf, -np.inf], np.nan).dropna(how="any")
     tickers = list(r.columns)
     mu = pd.Series(mu_ann, dtype=float).reindex(tickers).fillna(0.0)
@@ -135,6 +228,36 @@ def mean_cvar_weights(
 
 
 def cvar_budget_path(returns, mu_ann, *, budget_scales=(0.80, 0.90, 1.00, 1.10, 1.25), alpha=0.95, w_min=0.0, w_max=0.40):
+    """Evaluate mean-CVaR portfolios across a path of CVaR budgets.
+
+    Parameters
+    ----------
+    returns : array-like or pandas.DataFrame
+        Asset return matrix.
+    mu_ann : array-like or pandas.Series
+        Annualized expected returns.
+    budget_scales : sequence of float, default=(0.80, 0.90, 1.00, 1.10, 1.25)
+        Multipliers applied to the equal-weight portfolio CVaR.
+    alpha : float, default=0.95
+        CVaR confidence level.
+    w_min : float, default=0.0
+        Minimum per-asset weight.
+    w_max : float or mapping, default=0.40
+        Maximum per-asset weight or asset-specific caps.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Budget path table containing budget scale, absolute CVaR budget,
+        expected return, realized portfolio CVaR loss, effective number of
+        holdings, and maximum weight.
+
+    Notes
+    -----
+    This helper is useful for sensitivity analysis: it shows how allocations and
+    expected return change as the tail-risk constraint is tightened or relaxed.
+    """
+
     r = pd.DataFrame(returns).dropna(how="any")
     tickers = list(r.columns)
     ref_w = pd.Series(1.0 / len(tickers), index=tickers, dtype=float)

@@ -5,6 +5,22 @@ import pandas as pd
 
 
 def pinball_loss(y_true, y_pred, tau: float) -> float:
+    """Compute quantile pinball loss.
+
+    Parameters
+    ----------
+    y_true : array-like
+        Realized target values.
+    y_pred : array-like
+        Predicted quantile values.
+    tau : float
+        Quantile level in ``(0, 1)``.
+
+    Returns
+    -------
+    float
+        Mean pinball loss over valid aligned observations.
+    """
     y = pd.Series(y_true, dtype=float)
     q = pd.Series(y_pred, dtype=float).reindex(y.index)
     err = y - q
@@ -13,6 +29,24 @@ def pinball_loss(y_true, y_pred, tau: float) -> float:
 
 
 def gaussian_nll(y_true, mean, variance, *, eps: float = 1e-8) -> float:
+    """Compute Gaussian negative log likelihood for probabilistic forecasts.
+
+    Parameters
+    ----------
+    y_true : array-like
+        Realized target values.
+    mean : array-like
+        Forecast mean.
+    variance : array-like
+        Forecast variance.
+    eps : float, default=1e-8
+        Lower variance floor for numerical stability.
+
+    Returns
+    -------
+    float
+        Mean Gaussian negative log likelihood.
+    """
     y = pd.Series(y_true, dtype=float)
     mu = pd.Series(mean, dtype=float).reindex(y.index)
     var = pd.Series(variance, dtype=float).reindex(y.index).clip(lower=float(eps))
@@ -21,6 +55,22 @@ def gaussian_nll(y_true, mean, variance, *, eps: float = 1e-8) -> float:
 
 
 def enforce_quantile_order(q_low, q_mid, q_high):
+    """Sort low, middle, and high quantile forecasts row by row.
+
+    Parameters
+    ----------
+    q_low, q_mid, q_high : array-like
+        Lower, central, and upper quantile forecasts.
+
+    Returns
+    -------
+    tuple of pandas.Series
+        Ordered ``(q_low, q_mid, q_high)`` series with the same index.
+
+    Notes
+    -----
+    This is a simple post-processing guard against quantile crossing.
+    """
     q = pd.concat(
         [
             pd.Series(q_low, dtype=float).rename("q_low"),
@@ -102,7 +152,30 @@ def conformal_offsets(
     *,
     alpha: float = 0.20,
 ) -> tuple[float, float]:
-    """Split-conformal lower/upper expansion for a central interval."""
+    """Compute split-conformal expansion offsets for a central prediction interval.
+
+    Parameters
+    ----------
+    y : array-like
+        Realized outcomes in the calibration sample.
+    q_low : array-like
+        Lower interval forecast.
+    q_high : array-like
+        Upper interval forecast.
+    alpha : float, default=0.20
+        Miscoverage level for the two-sided interval.
+
+    Returns
+    -------
+    tuple of float
+        ``(offset_low, offset_high)`` to subtract from the lower bound and add to
+        the upper bound.
+
+    Notes
+    -----
+    The lower and upper offsets are calibrated separately from one-sided residual
+    scores.
+    """
     yy = pd.Series(y, dtype=float)
     lo = pd.Series(q_low, dtype=float).reindex(yy.index)
     hi = pd.Series(q_high, dtype=float).reindex(yy.index)
@@ -122,6 +195,25 @@ def conformalize_interval(
     offset_low: float,
     offset_high: float,
 ) -> tuple[pd.Series, pd.Series]:
+    """Apply conformal offsets to interval forecasts.
+
+    Parameters
+    ----------
+    q_low : array-like
+        Lower interval forecast.
+    q_high : array-like
+        Upper interval forecast.
+    offset_low : float
+        Amount subtracted from the lower bound.
+    offset_high : float
+        Amount added to the upper bound.
+
+    Returns
+    -------
+    tuple of pandas.Series
+        Conformalized lower and upper interval series named ``q_low_c`` and
+        ``q_high_c``.
+    """
     low = pd.Series(q_low, dtype=float) - float(offset_low)
     high = pd.Series(q_high, dtype=float).reindex(low.index) + float(offset_high)
     return low.rename("q_low_c"), high.rename("q_high_c")
@@ -156,11 +248,43 @@ def rolling_conformal_offsets(
     gap_days: int = 21,
     min_obs: int = 126,
 ) -> pd.DataFrame:
-    """Compute date-wise rolling conformal offsets from past out-of-sample errors.
+    """Compute date-wise rolling conformal interval offsets.
 
-    The calibration set for date ``t`` contains rows with dates in
-    ``[t - lookback_days, t - gap_days]``.  The gap avoids using overlapping
-    21-day labels that have not fully resolved by the forecast date.
+    For each forecast date, the calibration set contains only historical rows in a
+    lookback window ending ``gap_days`` business days before the forecast date. This
+    gap is intended to avoid using still-overlapping forward labels.
+
+    Parameters
+    ----------
+    frame : pandas.DataFrame
+        Forecast table containing date, realized outcome, and interval columns.
+    date_col : str, default="date"
+        Date column.
+    y_col : str
+        Realized outcome column.
+    low_col : str
+        Lower interval forecast column.
+    high_col : str
+        Upper interval forecast column.
+    alpha : float, default=0.20
+        Miscoverage level.
+    lookback_days : int, default=504
+        Historical calibration lookback in business days.
+    gap_days : int, default=21
+        Business-day embargo between calibration rows and the forecast date.
+    min_obs : int, default=126
+        Minimum calibration observations required before nonzero offsets are used.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Offset table with date, ``offset_low``, ``offset_high``, and
+        ``calibration_n``.
+
+    Notes
+    -----
+    When the calibration sample is too small, offsets are set to zero and the
+    calibration count is still reported.
     """
     data = pd.DataFrame(frame).copy()
     if data.empty:
@@ -204,7 +328,38 @@ def apply_rolling_conformal(
     output_low: str = "q_low_c",
     output_high: str = "q_high_c",
 ) -> pd.DataFrame:
-    """Attach rolling conformal offsets and adjusted interval columns."""
+    """Attach rolling conformal offsets and adjusted interval columns.
+
+    Parameters
+    ----------
+    frame : pandas.DataFrame
+        Forecast table.
+    date_col : str, default="date"
+        Date column.
+    y_col : str
+        Realized outcome column.
+    low_col : str
+        Lower interval forecast column.
+    high_col : str
+        Upper interval forecast column.
+    alpha : float, default=0.20
+        Miscoverage level.
+    lookback_days : int, default=504
+        Calibration lookback in business days.
+    gap_days : int, default=21
+        Embargo gap in business days.
+    min_obs : int, default=126
+        Minimum calibration observations.
+    output_low : str, default="q_low_c"
+        Output lower interval column.
+    output_high : str, default="q_high_c"
+        Output upper interval column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of the input with conformal offsets and adjusted interval bounds.
+    """
     data = pd.DataFrame(frame).copy()
     offsets = rolling_conformal_offsets(
         data,

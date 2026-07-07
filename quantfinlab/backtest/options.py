@@ -501,10 +501,36 @@ def _pick_main_contract(
 
 
 def run_delta_hedge_backtest(**kwargs: Any) -> dict:
+    """Run an option hedging backtest restricted to the delta strategy.
+
+    Parameters
+    ----------
+    **kwargs
+        Arguments passed to the general option hedging backtest engine.
+
+    Returns
+    -------
+    dict
+        Option hedging result dictionary for the delta strategy.
+    """
+
     return run_option_hedging_backtest(strategies=("delta",), **kwargs)
 
 
 def run_delta_vega_hedge_backtest(**kwargs: Any) -> dict:
+    """Run an option hedging backtest restricted to the delta-vega strategy.
+
+    Parameters
+    ----------
+    **kwargs
+        Arguments passed to the general option hedging backtest engine.
+
+    Returns
+    -------
+    dict
+        Option hedging result dictionary for the delta-vega strategy.
+    """
+
     return run_option_hedging_backtest(strategies=("delta_vega",), **kwargs)
 
 
@@ -564,15 +590,110 @@ def run_scheduled_option_hedging_backtest(
     max_hold_days: int | float | None = None,
     calendar: str = "business",
 ) -> dict:
-    """
-    Run a hedging backtest from an explicit option entry schedule.
+    """Run a scheduled option-position hedging backtest.
 
-    The scheduled engine uses the same option book preparation, mark handling,
-    bid/ask costs, SPY/underlying hedge mechanics, and summary format as
-    ``run_option_hedging_backtest``. The selection difference is that the entry
-    contract comes from ``entry_schedule`` instead of the internal contract
-    picker.
+    This engine opens option positions from an explicit entry schedule rather than
+    selecting contracts internally. It supports unhedged and delta-hedged variants,
+    option bid/ask transaction costs, underlying hedge mechanics, optional stale or
+    missing option mark policies, cash accrual, dividend handling, hedge-beta
+    conversion, exit rules, and detailed diagnostics.
+
+    Parameters
+    ----------
+    option_path : pandas.DataFrame
+        Option quote book containing dated marks for scheduled contracts. Expected
+        columns include ``date``, ``contract_key`` or contract-identifying fields,
+        ``mid``, ``bid``, ``ask``, ``spot``, and Greeks when hedging is requested.
+    entry_schedule : pandas.DataFrame
+        Entry table with at least ``entry_date``, ``contract_key``, and
+        ``quantity``. Optional columns include ``label``, ``entry_score``,
+        ``entry_residual``, ``entry_total_error``, ``entry_z``,
+        ``max_hold_days``, ``exit_on_convergence``, and ``exit_on_sign_flip``.
+    spot_series : pandas.Series, optional
+        Underlying spot series used when option rows need spot alignment.
+    greeks : pandas.DataFrame, optional
+        Separate Greek table to merge into ``option_path``.
+    strategies : sequence of str, default=("unhedged", "delta")
+        Strategies to run. Supported scheduled strategies are ``"unhedged"``,
+        ``"none"``, and ``"delta"``.
+    delta_band : float, default=0.05
+        No-trade band for residual delta-equivalent exposure.
+    trading_cost_bps : float, default=1.0
+        Transaction cost in basis points applied to option and underlying trades.
+    use_bid_ask_costs : bool, default=True
+        If true, option opening/closing uses bid/ask side-aware fills when
+        available.
+    option_multiplier : float, default=1.0
+        Multiplier applied to option premiums and Greeks.
+    delta_inner_band : float, optional
+        Target residual delta after a rebalance. Defaults to a fraction of
+        ``delta_band``.
+    delta_share_lot : float, optional
+        Hedge-share lot size. If supplied, target hedge units are rounded to this
+        lot.
+    delta_cooldown_days : int, default=1
+        Minimum days between underlying hedge rebalances.
+    exit_dte_days : float, default=7.0
+        Exit when option DTE falls to or below this threshold.
+    hedge_price_series : pandas.Series, optional
+        Price series for the hedge instrument. Defaults to spot when omitted.
+    hedge_dividend_series : pandas.Series, optional
+        Dividend or cash-distribution series for the hedge instrument.
+    hedge_beta_series : pandas.Series, optional
+        Conversion factor from hedge shares to underlying-equivalent exposure.
+    hedge_symbol : str, default="underlying"
+        Label used in trade/exposure output for the hedge instrument.
+    valuation_currency : str, default="USD"
+        Currency label stored in diagnostics and component rows.
+    quote_price_unit : {"auto", "usd", "base", "btc", "unknown"}, default="auto"
+        Unit interpretation for option premiums before conversion.
+    pnl_mode : str, default="usd_equivalent"
+        P&L unit mode. In USD-equivalent mode, base-denominated premiums are
+        converted using spot.
+    annualization_days : float, default=365.0
+        Day-count denominator for cash accrual and holding-year calculations.
+    contract_size : float, default=1.0
+        Contract size used when converting base-denominated option premiums.
+    missing_option_mark : {"error", "skip_day", "stale_with_warning"}, default="error"
+        Policy for missing option marks after an entry is opened.
+    max_hold_days : int or float, optional
+        Global maximum holding period used when schedule rows do not define one.
+    calendar : str, default="business"
+        Calendar label stored in diagnostics.
+
+    Returns
+    -------
+    dict
+        Result dictionary with:
+        ``nav`` for strategy NAV/P&L paths,
+        ``returns`` for daily strategy returns,
+        ``pnl`` for daily net P&L,
+        ``components`` for episode-level daily P&L/exposure rows,
+        ``exposures`` for delta/gamma/vega exposure details,
+        ``trades`` for trade ledger rows,
+        ``summary`` for strategy-level performance summaries, and
+        ``diagnostics`` for data-quality and mechanics counters.
+
+    Raises
+    ------
+    ValueError
+        If the option path or cleaned schedule is empty, if the missing-mark policy
+        is invalid, or if no dated option rows remain after preparation.
+
+    Notes
+    -----
+    Timing and mechanics are explicit. Scheduled entries are opened on the first
+    available option quote date on or after ``entry_date``. Delta hedge trades are
+    triggered only when residual delta-equivalent exposure breaches the no-trade
+    band and the cooldown condition is satisfied. Exits may be triggered by maximum
+    hold, DTE threshold, residual convergence, residual sign flip, or missing mark
+    policy.
+
+    The returned ``components`` table is the most detailed audit trail. It contains
+    daily P&L decomposition, costs, turnover, cash, option and hedge positions,
+    Greek exposures, mark status, and exit reasons for each episode.
     """
+
     if option_path.empty:
         raise ValueError("option_path is empty.")
     schedule = _prepare_entry_schedule(entry_schedule)
@@ -1839,6 +1960,19 @@ def rolling_residual_vega(hedge_results: dict, window: int = 20) -> pd.DataFrame
 
 
 def hedging_diagnostics(results: dict) -> pd.DataFrame:
+    """Return hedging diagnostics as a one-row table.
+
+    Parameters
+    ----------
+    results : dict
+        Result dictionary returned by an option hedging backtest.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One-row diagnostics table, or an empty DataFrame if diagnostics are absent.
+    """
+
     diagnostics = dict(results.get("diagnostics", {}))
     if not diagnostics:
         return pd.DataFrame()
@@ -1866,10 +2000,36 @@ def _summarize_one(strategy: str, result: pd.DataFrame) -> dict[str, Any]:
 
 
 def summarize_hedging_backtest(results: dict) -> pd.DataFrame:
+    """Extract the summary table from an option hedging result.
+
+    Parameters
+    ----------
+    results : dict
+        Result dictionary returned by an option hedging backtest.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Strategy summary table, or an empty DataFrame when unavailable.
+    """
+
     return results.get("summary", pd.DataFrame())
 
 
 def hedge_trade_ledger(results: dict) -> pd.DataFrame:
+    """Extract the trade ledger from an option hedging result.
+
+    Parameters
+    ----------
+    results : dict
+        Result dictionary returned by an option hedging backtest.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Trade ledger table, or an empty DataFrame when unavailable.
+    """
+
     return results.get("trades", pd.DataFrame())
 
 
@@ -1885,6 +2045,47 @@ def matched_option_schedule(
     min_future_marks: int = 3,
     selector_name: str = "matched_atm_fixed_3d",
 ) -> pd.DataFrame:
+    """Create a matched option-entry schedule from an existing schedule.
+
+    The function replaces each scheduled contract with a same-date alternative that
+    better matches target delta, option type, DTE proximity, quote durability, and
+    liquidity. This is useful for benchmark or placebo schedules that preserve the
+    timing and quantity sign of another signal while choosing an ATM-like contract.
+
+    Parameters
+    ----------
+    entry_schedule : pandas.DataFrame
+        Source entry schedule.
+    option_quotes : pandas.DataFrame
+        Option quote book containing candidate contracts.
+    same_date : bool, default=True
+        Reserved compatibility flag; matching is performed by entry date.
+    same_option_type : bool, default=True
+        If true, candidate contracts must match the source option type when the
+        source contract can be found.
+    same_quantity_sign : bool, default=True
+        If true, preserve the sign of the source quantity.
+    target_abs_delta : float, default=0.50
+        Target absolute delta used in the selection score.
+    dte_tolerance_days : float, default=7.0
+        Preferred DTE tolerance around the source contract's DTE.
+    min_future_marks : int, default=3
+        Minimum future quote-count requirement when such diagnostics are available.
+    selector_name : str, default="matched_atm_fixed_3d"
+        Label assigned to the matched schedule.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Cleaned schedule with entry date, contract key, quantity, label, entry score,
+        residual placeholders, and exit controls.
+
+    Notes
+    -----
+    The matching score favors target delta proximity, similar DTE, tight spreads,
+    and quote durability. It does not use future P&L.
+    """
+
     schedule = _prepare_entry_schedule(entry_schedule)
     cols = [
         "entry_date",
@@ -1976,6 +2177,28 @@ def hedge_book_from_schedules(
     *,
     lookahead_days: int = 12,
 ) -> pd.DataFrame:
+    """Restrict an option quote book to contracts needed by one or more schedules.
+
+    Parameters
+    ----------
+    option_quotes : pandas.DataFrame
+        Full option quote book.
+    schedules : list, tuple, or other sequence of pandas.DataFrame
+        Entry schedules containing ``contract_key`` and ``entry_date``.
+    lookahead_days : int, default=12
+        Number of days after the latest entry date to retain.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Filtered option book containing scheduled contracts around the required
+        entry and holding period.
+
+    Notes
+    -----
+    This helper reduces large option books before scheduled hedging backtests.
+    """
+
     if option_quotes.empty:
         return option_quotes.copy()
     valid = [s for s in schedules if s is not None and not s.empty and "contract_key" in s.columns]
@@ -2006,6 +2229,25 @@ def scheduled_hedge_comparison(
     *,
     normalize_by: tuple[str, ...] = ("premium", "traded_notional", "initial_vega"),
 ) -> pd.DataFrame:
+    """Compare scheduled hedging runs across result dictionaries.
+
+    Parameters
+    ----------
+    results : dict
+        Mapping from run name to scheduled hedging result dictionary.
+    normalize_by : tuple of str, default=("premium", "traded_notional", "initial_vega")
+        Normalization labels retained for API clarity. The function computes
+        several normalized P&L and cost columns when inputs are available.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Comparison table with one row per run and strategy, including summary
+        metrics, entry premium, initial vega, average absolute delta, P&L per
+        premium, P&L per traded notional, P&L per initial vega, and cost as a
+        percentage of premium.
+    """
+
     rows: list[dict[str, Any]] = []
     for run, result in results.items():
         summary = summarize_hedging_backtest(result).copy()
@@ -2038,6 +2280,24 @@ def scheduled_hedge_comparison(
 
 
 def option_fill_price(row: pd.Series | dict, side: float, action: str = "open") -> float:
+    """Return a side-aware option fill price.
+
+    Parameters
+    ----------
+    row : pandas.Series or dict
+        Option quote row containing ``bid``, ``ask``, and/or ``mid``.
+    side : float
+        Positive for long/buy exposure and negative for short/sell exposure.
+    action : str, default="open"
+        Trade action. Opening long positions use ask and opening short positions
+        use bid; closing logic is reversed.
+
+    Returns
+    -------
+    float
+        Fill price. Falls back to mid when bid/ask are unavailable.
+    """
+
     data = row if isinstance(row, pd.Series) else pd.Series(row)
     bid = float(pd.to_numeric(data.get("bid", np.nan), errors="coerce"))
     ask = float(pd.to_numeric(data.get("ask", np.nan), errors="coerce"))
@@ -2069,6 +2329,20 @@ def close_option_position(row: pd.Series | dict, quantity: float, *, multiplier:
 
 
 def option_trade_ledger(rows: list[dict] | pd.DataFrame) -> pd.DataFrame:
+    """Normalize option trade-ledger rows.
+
+    Parameters
+    ----------
+    rows : list of dict or pandas.DataFrame
+        Raw trade rows.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Cleaned ledger with date-like columns parsed as normalized dates and
+        numeric trade columns coerced to numeric values.
+    """
+
     out = pd.DataFrame(rows).copy()
     if out.empty:
         return out

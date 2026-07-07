@@ -15,14 +15,68 @@ def _numeric_column(frame: pd.DataFrame, names, default: float = 0.0) -> pd.Seri
 
 
 def jump_family_table(merton_fit: dict, vg_fit: dict) -> pd.DataFrame:
+    """Compare Merton and variance-gamma jump-family fits.
+
+    Parameters
+    ----------
+    merton_fit : dict
+        Fit dictionary for the Merton model.
+    vg_fit : dict
+        Fit dictionary for the variance-gamma model.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Model comparison table.
+    """
     return compare_fourier_models(pd.DataFrame(), {"merton": merton_fit, "vg": vg_fit})
 
 
 def sv_family_table(heston_fit: dict, bates_fit: dict) -> pd.DataFrame:
+    """Compare Heston and Bates stochastic-volatility-family fits.
+
+    Parameters
+    ----------
+    heston_fit : dict
+        Fit dictionary for the Heston model.
+    bates_fit : dict
+        Fit dictionary for the Bates model.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Model comparison table.
+    """
     return compare_fourier_models(pd.DataFrame(), {"heston": heston_fit, "bates": bates_fit})
 
 
 def density_summary(models: dict[str, tuple[str, dict]], spot: float, rate: float, dividend_yield: float, tau: float, *, crash_level: float = -0.15) -> pd.DataFrame:
+    """Summarize model-implied terminal log-price densities.
+
+    For each model, the function evaluates a COS density on a log-price grid and
+    reports left-tail probability below a crash threshold, density peak, and mean
+    log level.
+
+    Parameters
+    ----------
+    models : dict
+        Mapping from display label to ``(model_name, params)`` tuple.
+    spot : float
+        Current spot price.
+    rate : float
+        Continuously compounded risk-free rate.
+    dividend_yield : float
+        Continuous dividend yield.
+    tau : float
+        Time to expiry in years.
+    crash_level : float, default=-0.15
+        Log-return threshold for left-tail probability.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Density summary table by model.
+    """
     x = np.linspace(np.log(float(spot)) - 0.8, np.log(float(spot)) + 0.6, 501)
     rows = []
     for label, (model, params) in models.items():
@@ -40,6 +94,29 @@ def density_summary(models: dict[str, tuple[str, dict]], spot: float, rate: floa
 
 
 def hedge_score_components(candidates: pd.DataFrame, *, crash_level: float = 0.85) -> pd.DataFrame:
+    """Compute tail-hedge scoring components for put candidates.
+
+    The function combines crash payoff efficiency, model fair-value edge,
+    convexity per premium, relative spread, premium bleed, calibration penalty, and
+    model uncertainty into component columns used by tail-hedge scoring.
+
+    Parameters
+    ----------
+    candidates : pandas.DataFrame
+        Candidate put option table.
+    crash_level : float, default=0.85
+        Crash spot multiplier used by downstream scoring conventions.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Component table indexed like ``candidates``.
+
+    Notes
+    -----
+    Payoff columns are used when present; otherwise crash payoffs are approximated
+    from strike and spot at 90%, 85%, and 80% spot levels.
+    """
     q = candidates.copy()
     spot = _numeric_column(q, ("spot",), 1.0).clip(lower=1e-8)
     strike = _numeric_column(q, ("strike",), 0.0)
@@ -97,6 +174,30 @@ def tail_hedge_score(candidates: pd.DataFrame, *, crash_level: float = 0.85) -> 
 
 
 def tail_hedge_candidates(quotes: pd.DataFrame, *, top_n: int | None = None, top_n_per_date: int = 5, crash_level: float = 0.85) -> pd.DataFrame:
+    """Select and rank put options as tail-hedge candidates.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Option quote table.
+    top_n : int, optional
+        Overall maximum number of candidates returned.
+    top_n_per_date : int, default=5
+        Maximum candidates per date.
+    crash_level : float, default=0.85
+        Spot multiplier used to compute tail payoff.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Ranked put candidate table with payoff, premium bleed, edge, and hedge
+        score columns.
+
+    Notes
+    -----
+    The function keeps puts with DTE between 14 and 120 days and sorts by
+    ``hedge_score``.
+    """
     out = quotes.copy()
     out = out[out["option_type"].astype(str).str.lower().str.startswith("p")].copy()
     if out.empty:
@@ -176,6 +277,37 @@ def tail_hedge_schedule(
     contract_multiplier: float = 100.0,
     label: str = "tail_put",
 ) -> pd.DataFrame:
+    """Create a tail-put entry schedule from ranked candidates.
+
+    The schedule enforces spacing between entries, sizes each selected put by a
+    premium budget, and records budget and selection metadata.
+
+    Parameters
+    ----------
+    candidates : pandas.DataFrame
+        Candidate table containing date, contract information, price, and
+        ``hedge_score``.
+    max_entries : int, optional
+        Maximum number of scheduled entries.
+    spacing_days : int, default=21
+        Minimum calendar days between entries.
+    budget_notional : float, default=1000000.0
+        Portfolio notional used to convert premium-budget bps to dollar budget.
+    premium_budget_bps : float, default=100.0
+        Default premium budget in basis points of notional.
+    budget_col : str, optional
+        Candidate column containing date-specific premium-budget bps.
+    contract_multiplier : float, default=100.0
+        Option contract multiplier.
+    label : str, default="tail_put"
+        Schedule label.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Entry schedule with entry date, contract key, quantity, label, score, and
+        premium-budget metadata.
+    """
     if candidates.empty:
         return pd.DataFrame(columns=["entry_date", "contract_key", "quantity", "label"])
     q = candidates.copy()

@@ -15,7 +15,33 @@ def constraints_feasible(
     w_max: float | None = None,
     long_only: bool = True,
 ) -> bool:
-    """Check whether box constraints can contain a fully invested portfolio."""
+    """Check whether simple box constraints can hold a fully invested portfolio.
+
+    Parameters
+    ----------
+    n_assets : int
+        Number of assets.
+    w_min : float, optional
+        Minimum weight per asset. For long-only portfolios, missing lower bounds
+        are treated as zero.
+    w_max : float, optional
+        Maximum weight per asset. If omitted, no finite upper bound is applied.
+    long_only : bool, default=True
+        Whether negative weights are disallowed.
+
+    Returns
+    -------
+    bool
+        True if the bounds can contain at least one portfolio whose weights sum
+        to one; otherwise False.
+
+    Notes
+    -----
+    This is a feasibility pre-check for simple per-asset bounds. It does not
+    verify more complex constraints such as turnover, active limits, or sector
+    constraints.
+    """
+
     n = int(n_assets)
     if n <= 0:
         return False
@@ -36,7 +62,49 @@ def normalize_weights(
     n_rounds: int = 3,
     as_series: bool | None = None,
 ) -> np.ndarray | pd.Series | None:
-    """Safely normalize weights under simple long-only/box constraints."""
+    """Normalize a weight vector under simple long-only and box constraints.
+
+    The function clips weights to the requested lower and upper bounds, enforces
+    non-negativity for long-only portfolios, and repeatedly renormalizes the
+    vector to sum to one.
+
+    Parameters
+    ----------
+    weights : array-like, pandas.Series, or mapping
+        Raw portfolio weights.
+    index : pandas.Index or sequence, optional
+        Labels to use when returning a Series or when array-like weights need
+        labels.
+    w_min : float, optional
+        Minimum weight per asset.
+    w_max : float, optional
+        Maximum weight per asset.
+    long_only : bool, default=True
+        Whether negative weights are clipped to zero.
+    n_rounds : int, default=3
+        Number of clip-and-renormalize passes.
+    as_series : bool, optional
+        Force Series output. If omitted, Series output is used when labels are
+        available.
+
+    Returns
+    -------
+    numpy.ndarray, pandas.Series, or None
+        Normalized weights. Returns ``None`` if the input is empty, non-finite, or
+        cannot be normalized.
+
+    Raises
+    ------
+    InputError
+        If Series output is requested but no index is available.
+
+    Notes
+    -----
+    This helper is intentionally simple. For tight caps, repeated clipping can
+    only approximate feasibility; optimization routines should still validate
+    their final solutions.
+    """
+
     labels = None
     if isinstance(weights, pd.Series):
         labels = weights.index

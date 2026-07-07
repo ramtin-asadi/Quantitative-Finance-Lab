@@ -28,6 +28,32 @@ def stress_table(
     worst_only: bool = True,
     worst_by: Literal["cum_return", "max_dd", "worst_day", "worst_week"] = "cum_return",
 ) -> pd.DataFrame:
+    """Evaluate return objects across named stress windows.
+
+    Parameters
+    ----------
+    objects : mapping or pandas.DataFrame
+        Return objects.
+    windows : mapping
+        Mapping from stress-window name to ``(start, end)`` date tuple.
+    worst_only : bool, default=True
+        If true, return one worst window per object. If false, return all
+        object-window rows.
+    worst_by : {"cum_return", "max_dd", "worst_day", "worst_week"}, default="cum_return"
+        Metric used to choose the worst row when ``worst_only=True``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Stress table with cumulative return, max drawdown, worst daily return, and
+        worst weekly return.
+
+    Raises
+    ------
+    InputError
+        If windows are empty or ``worst_by`` is invalid.
+    """
+
     if not windows:
         raise InputError("windows cannot be empty.")
     valid_worst_by = {"cum_return", "max_dd", "worst_day", "worst_week"}

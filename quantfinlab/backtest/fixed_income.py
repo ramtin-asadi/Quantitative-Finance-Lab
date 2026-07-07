@@ -14,6 +14,40 @@ def run_bond_ladder_backtest(
     overlay_fn=None,
     **kwargs,
 ) -> SimpleBacktestResult:
+    """Run a bond-ladder backtest with optional duration targeting.
+
+    This wrapper delegates the fixed-income ladder mechanics to the ladder engine
+    and automatically supplies the standard duration-switch overlay when a duration
+    target is requested and no overlay function is provided.
+
+    Parameters
+    ----------
+    par_yields : pandas.DataFrame
+        Par-yield curve panel indexed by date with tenor columns in decimal yield
+        units.
+    duration_target : float, optional
+        Static target duration.
+    duration_target_by_date : pandas.Series or dict, optional
+        Time-varying target duration. The latest available target on or before each
+        rebalance date is used by the ladder engine.
+    overlay_fn : callable, optional
+        Custom duration overlay function. If omitted and a duration target is
+        supplied, the default duration-switch overlay is used.
+    **kwargs
+        Additional keyword arguments passed to the ladder backtest engine.
+
+    Returns
+    -------
+    SimpleBacktestResult
+        Fixed-income backtest result containing NAV, returns, weights/trades/costs
+        when available, cashflows, and diagnostic tables.
+
+    Notes
+    -----
+    The wrapper does not change yield-curve fitting or cashflow conventions; those
+    are controlled by the underlying ladder engine and keyword arguments.
+    """
+
     if (duration_target is not None or duration_target_by_date is not None) and overlay_fn is None:
         overlay_fn = duration_overlay.duration_switch_overlay
     return ladder.run_ladder_backtest(

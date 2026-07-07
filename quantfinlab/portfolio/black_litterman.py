@@ -19,6 +19,69 @@ except Exception:  # pragma: no cover
 
 @dataclass
 class BLSettings:
+    """Configuration container for the learned-confidence Black-Litterman workflow.
+
+    The settings define the rebalance cadence, lookback windows, covariance and
+    expected-return scaling conventions, Black-Litterman uncertainty parameters,
+    transaction-cost assumptions, portfolio constraints, view-selection rules,
+    and confidence/learning behavior used by the allocation engine.
+
+    Attributes
+    ----------
+    rebalance_freq : str
+        Rebalance frequency label.
+    cov_lookback : int
+        Number of return observations used for covariance estimation.
+    mu_lookback : int
+        Number of return observations used for expected-return estimation.
+    annualization : float
+        Annualization factor for daily or periodic returns.
+    risk_free_rate_annual : float
+        Annual risk-free rate used in risk-aversion and reporting calculations.
+    tau : float
+        Black-Litterman prior uncertainty scale.
+    ewma_lambda : float
+        Decay parameter used when EWMA covariance is selected.
+    delta_fallback : float
+        Fallback risk-aversion value when it cannot be inferred from benchmark
+        returns.
+    delta_min, delta_max : float
+        Lower and upper bounds applied to inferred risk aversion.
+    transaction_cost_bps : float
+        Transaction-cost assumption in basis points.
+    max_weight, min_weight : float
+        Per-asset portfolio weight bounds.
+    active_weight_limit : float
+        Default absolute active-weight limit relative to the benchmark.
+    active_weight_relaxed : float
+        Relaxed active-weight limit used when the first optimization attempt is
+        infeasible.
+    max_selected_views : int
+        Maximum number of views selected at each rebalance.
+    redundancy_similarity : float
+        Exposure-cosine similarity threshold used to reject redundant views.
+    max_same_direction : int
+        Maximum number of selected views with the same broad risk orientation.
+    confidence_mode : str
+        Confidence rule, such as learned, fixed, or haircut.
+    use_learned_q : bool
+        Whether view tilts are adjusted using historical payoff evidence.
+    full_view_covariance : bool
+        Whether the full view covariance is retained when constructing omega.
+    empirical_omega_rescale : bool
+        Whether view uncertainty is blended with empirical payoff variance.
+    posterior_mu_clip : float
+        Absolute annualized bound applied to posterior expected returns.
+    te_gamma_fallback : float
+        Tracking-error penalty used in the final relaxed optimizer fallback.
+
+    Notes
+    -----
+    This object is designed to make the Black-Litterman workflow reproducible.
+    Changing these fields changes both portfolio weights and diagnostics, so
+    settings should be logged with any reported backtest.
+    """
+
     rebalance_freq: str = "ME"
     cov_lookback: int = 756
     mu_lookback: int = 252
@@ -47,6 +110,34 @@ class BLSettings:
 
 @dataclass
 class MarketState:
+    """Snapshot of market information available at one rebalance date.
+
+    A market state bundles the historical return window, signal-return window,
+    current signal table, and derived scalar state values used by view-generation
+    rules. It is passed to view functions so each rule evaluates information
+    available up to the decision date only.
+
+    Attributes
+    ----------
+    date : pandas.Timestamp
+        Rebalance or decision date represented by this state.
+    signal_table : pandas.DataFrame
+        Cross-sectional signal table, typically containing momentum, trend,
+        volatility, drawdown, and composite score fields.
+    values : dict
+        Derived market-state scalars, such as breadth, relative-performance
+        spreads, volatility states, and correlation states.
+    returns : pandas.DataFrame
+        Asset return history through ``date``.
+    signal_returns : pandas.DataFrame
+        Return history for signal assets through ``date``.
+
+    Notes
+    -----
+    The object is intentionally lightweight and immutable by convention. View
+    functions should read from it but should not mutate it in place.
+    """
+
     date: pd.Timestamp
     signal_table: pd.DataFrame
     values: dict[str, Any]
@@ -56,6 +147,61 @@ class MarketState:
 
 @dataclass
 class BLRun:
+    """Container for a complete learned-confidence Black-Litterman run.
+
+    The object stores portfolio weights, generated views, selected views,
+    view-selection diagnostics, payoff history, reliability statistics,
+    posterior-return diagnostics, confidence diagnostics, prior/posterior
+    expected returns, date-indexed covariance matrices, fallback flags, and
+    metadata needed to audit a run.
+
+    Attributes
+    ----------
+    weights : pandas.DataFrame
+        Rebalance-date portfolio weights.
+    candidate_view_log : pandas.DataFrame
+        All candidate views generated before selection.
+    selected_view_log : pandas.DataFrame
+        Views retained after confidence, redundancy, and crowding filters.
+    selection_log : pandas.DataFrame
+        View-selection diagnostics, including kept/rejected flags and reasons.
+    payoff_history : pandas.DataFrame
+        Historical payoff records used to learn view reliability.
+    reliability_summary : pandas.DataFrame
+        Aggregated reliability metrics by view family.
+    posterior_log : pandas.DataFrame
+        Diagnostics from posterior-return construction.
+    confidence_log : pandas.DataFrame
+        Per-view confidence and evidence diagnostics.
+    state_log : pandas.DataFrame
+        Market-state diagnostics at each rebalance date.
+    prior_mu : pandas.DataFrame
+        Prior expected returns by date and asset.
+    posterior_mu : pandas.DataFrame
+        Posterior expected returns by date and asset.
+    covariance_by_date : dict
+        Mapping from rebalance date to covariance matrix used on that date.
+    fallback_flags : pandas.Series
+        Indicator for optimizer or posterior fallback events by date.
+    metadata : dict
+        Additional run metadata, including assets, settings, view settings, and
+        benchmark weights.
+
+    Methods
+    -------
+    as_dict()
+        Return the run contents as a plain dictionary.
+    __getitem__(key)
+        Dictionary-style access to stored artifacts.
+
+    Notes
+    -----
+    The result object is intentionally richer than a simple weight table because
+    the workflow is evidence-driven. The logs allow the user to explain why a
+    view was selected, how confident the model was, and whether optimization
+    fell back to a benchmark-like allocation.
+    """
+
     weights: pd.DataFrame
     candidate_view_log: pd.DataFrame
     selected_view_log: pd.DataFrame
@@ -144,6 +290,45 @@ def prior_from_benchmark(
     settings: BLSettings | None = None,
     delta: float | None = None,
 ) -> tuple[pd.Series, float]:
+    """Infer Black-Litterman equilibrium prior returns from a benchmark portfolio.
+
+    The prior is computed as ``delta * Sigma * w_benchmark``. If ``delta`` is not
+    supplied, the function estimates risk aversion from benchmark excess return
+    and variance over a historical return window, then clips the estimate to the
+    configured bounds.
+
+    Parameters
+    ----------
+    cov_ann : pandas.DataFrame
+        Annualized covariance matrix indexed and columned by asset name.
+    benchmark_weights : pandas.Series
+        Benchmark or market-cap weights. The weights are reindexed to the
+        covariance assets and normalized. If the supplied vector sums to zero,
+        an equal-weight benchmark is used.
+    returns_window : pandas.DataFrame, optional
+        Historical asset returns used to infer benchmark risk aversion when
+        ``delta`` is not provided.
+    settings : BLSettings, optional
+        Black-Litterman settings controlling annualization, risk-free rate,
+        fallback risk aversion, and clipping bounds.
+    delta : float, optional
+        Explicit risk-aversion coefficient. When provided, no historical
+        inference is performed.
+
+    Returns
+    -------
+    prior : pandas.Series
+        Annualized prior expected returns indexed by asset.
+    delta : float
+        Risk-aversion coefficient used to build the prior.
+
+    Notes
+    -----
+    The prior is expressed in the same annualized return units as the covariance
+    matrix. The function is robust to missing benchmark names by reindexing and
+    filling absent assets with zero weight.
+    """
+
     settings = settings or BLSettings()
     assets = list(cov_ann.index)
     bench = pd.Series(benchmark_weights, dtype=float).reindex(assets).fillna(0.0)
@@ -176,6 +361,48 @@ def posterior_returns(
     tau: float = 0.05,
     mu_clip: float = 0.30,
 ) -> tuple[pd.Series, pd.DataFrame, dict[str, Any]]:
+    """Compute Black-Litterman posterior expected returns and covariance.
+
+    The function combines a prior expected-return vector, prior covariance
+    matrix, and linear views ``P mu = q`` with view uncertainty ``omega``. It
+    returns posterior expected returns, posterior covariance, and diagnostics
+    about view count, conditioning, clipping, and fallback status.
+
+    Parameters
+    ----------
+    prior_mu : pandas.Series
+        Annualized prior expected returns indexed by asset.
+    cov_ann : pandas.DataFrame
+        Annualized prior covariance matrix.
+    view_p : numpy.ndarray
+        View loading matrix with shape ``(n_views, n_assets)``.
+    view_q : numpy.ndarray
+        View target vector with shape ``(n_views,)``. Values are expressed in
+        annualized return-spread units compatible with ``prior_mu``.
+    omega : numpy.ndarray
+        View uncertainty covariance matrix with shape ``(n_views, n_views)``.
+    tau : float, default=0.05
+        Prior uncertainty scaling parameter.
+    mu_clip : float, default=0.30
+        Absolute bound applied to posterior expected returns.
+
+    Returns
+    -------
+    posterior_mu : pandas.Series
+        Posterior annualized expected returns indexed like ``prior_mu``.
+    posterior_cov : pandas.DataFrame
+        Posterior covariance matrix indexed and columned like ``cov_ann``.
+    diagnostics : dict
+        Diagnostics including number of views, condition number, posterior shift,
+        clipping flag, no-view flag, and failure flag.
+
+    Notes
+    -----
+    If no views are supplied, the function returns the prior unchanged. If the
+    linear solve fails, the function also returns the prior and marks the
+    diagnostic failure flag rather than raising.
+    """
+
     prior_mu = pd.Series(prior_mu).astype(float)
     cov_ann = pd.DataFrame(cov_ann, index=prior_mu.index, columns=prior_mu.index).astype(float)
     diag = {
@@ -240,6 +467,50 @@ def omega_from_confidence(
     current_date: pd.Timestamp | str | None = None,
     empirical_rescale: bool = False,
 ) -> tuple[np.ndarray, np.ndarray]:
+    """Build a Black-Litterman view-uncertainty matrix from confidence scores.
+
+    The function converts each confidence value into a view-variance scale and
+    applies it to the covariance-implied variance of each view exposure. Higher
+    confidence values produce lower uncertainty; lower confidence values produce
+    higher uncertainty. Optionally, the diagonal can be blended with empirical
+    view payoff variance.
+
+    Parameters
+    ----------
+    view_p : numpy.ndarray
+        View exposure matrix with shape ``(n_views, n_assets)``.
+    cov_ann : pandas.DataFrame or numpy.ndarray
+        Annualized asset covariance matrix.
+    confidence_values : sequence of float
+        Confidence values for each view. Values should be positive and are
+        typically bounded between zero and one.
+    tau : float, default=0.05
+        Prior uncertainty scale used in Black-Litterman.
+    active_view_rows : sequence of mappings, optional
+        View metadata used for empirical variance rescaling.
+    history : pandas.DataFrame, optional
+        Historical view payoff table.
+    current_date : pandas.Timestamp or str, optional
+        Decision date used when selecting historical evidence.
+    empirical_rescale : bool, default=False
+        If True, blend the model-implied diagonal with empirical view payoff
+        variance when enough historical observations are available.
+
+    Returns
+    -------
+    omega : numpy.ndarray
+        Positive-stabilized view uncertainty covariance matrix.
+    view_var : numpy.ndarray
+        Covariance-implied variance of each view exposure before confidence
+        scaling.
+
+    Notes
+    -----
+    The returned matrix is symmetrized and given a small diagonal jitter for
+    numerical stability. If the full rescaling step fails, a diagonal fallback
+    omega is returned.
+    """
+
     if len(confidence_values) == 0 or view_p.shape[0] == 0:
         return np.empty((0, 0)), np.array([])
     conf = np.asarray(confidence_values, dtype=float)
@@ -327,6 +598,47 @@ def posterior_weights(
     settings: BLSettings | None = None,
     constraints: Mapping[str, Any] | None = None,
 ) -> tuple[pd.Series, bool, dict[str, Any]]:
+    """Optimize portfolio weights from posterior Black-Litterman inputs.
+
+    The optimizer maximizes posterior mean-variance utility subject to benchmark
+    active-weight controls, box constraints, optional sleeve constraints, and
+    turnover costs. It attempts a sequence of increasingly relaxed optimization
+    problems before falling back to the previous or benchmark weights.
+
+    Parameters
+    ----------
+    post_mu : pandas.Series
+        Posterior annualized expected returns.
+    post_cov : pandas.DataFrame
+        Posterior annualized covariance matrix.
+    benchmark_weights : pandas.Series
+        Benchmark weights used for active constraints and fallback.
+    previous_weights : pandas.Series, optional
+        Previous rebalance weights used for turnover penalties and fallback.
+    risk_aversion : float, optional
+        Risk-aversion coefficient. If omitted, the settings fallback is used.
+    settings : BLSettings, optional
+        Optimization and constraint settings.
+    constraints : mapping, optional
+        Additional constraints such as asset-specific caps or sleeve constraints.
+
+    Returns
+    -------
+    weights : pandas.Series
+        Normalized portfolio weights indexed by asset.
+    fallback : bool
+        True if all optimization attempts failed and fallback weights were used.
+    info : dict
+        Details of the successful attempt or fallback mode, including active
+        limit, sleeve-constraint use, and tracking-error penalty.
+
+    Notes
+    -----
+    The function is deliberately defensive. It relaxes active and sleeve
+    constraints before abandoning the optimizer, which is useful in historical
+    walk-forward runs where a small number of dates may be numerically difficult.
+    """
+
     settings = settings or BLSettings()
     constraints = dict(constraints or {})
     index = list(post_mu.index)
@@ -369,6 +681,39 @@ def market_state(
     settings: BLSettings | None = None,
     view_settings: views.ViewSettings | None = None,
 ) -> MarketState:
+    """Build the market-state object used by view-generation rules.
+
+    The function truncates asset returns and signal returns through a decision
+    date, computes the current signal table and derived state values, and returns
+    a ``MarketState`` object. It never uses observations after the requested date.
+
+    Parameters
+    ----------
+    returns : pandas.DataFrame
+        Asset return panel.
+    signal_returns : pandas.DataFrame
+        Return panel used to compute cross-asset signals and state variables.
+    date : pandas.Timestamp or str
+        Decision date. The latest observations on or before this date are used.
+    roles : mapping
+        Asset-role configuration used by signal and view functions.
+    settings : BLSettings, optional
+        Black-Litterman settings, mainly for annualization.
+    view_settings : ViewSettings, optional
+        Signal and view-generation settings.
+
+    Returns
+    -------
+    MarketState
+        State object containing the decision date, signal table, derived state
+        values, and return histories through the decision date.
+
+    Notes
+    -----
+    If the decision date is before either input history starts, an empty state is
+    returned rather than raising.
+    """
+
     settings = settings or BLSettings()
     view_settings = view_settings or views.ViewSettings()
     view_settings_use = replace(view_settings, annualization=settings.annualization)
@@ -422,6 +767,59 @@ def learned_confidence_bl(
     settings: BLSettings | None = None,
     constraints: Mapping[str, Any] | None = None,
 ) -> BLRun:
+    """Run the learned-confidence Black-Litterman allocation workflow.
+
+    The workflow generates candidate views at each rebalance date, scores their
+    historical reliability, selects a diversified subset, converts selected views
+    into Black-Litterman view matrices, builds confidence-scaled view uncertainty,
+    computes posterior expected returns, and optimizes portfolio weights.
+
+    Parameters
+    ----------
+    returns : pandas.DataFrame
+        Asset return panel used for covariance estimation, prior inference,
+        payoff evaluation, and portfolio backtesting.
+    signal_returns : pandas.DataFrame
+        Return panel used by signal and view-generation rules.
+    rebalance_dates : sequence of pandas.Timestamp or str
+        Candidate rebalance dates.
+    benchmark_weights : pandas.Series or mapping
+        Benchmark weights used for prior construction, active constraints, and
+        comparison.
+    roles : mapping
+        Asset-role definitions used by the view functions.
+    view_functions : sequence of callable
+        Functions that accept ``(MarketState, roles, ViewSettings)`` and return
+        one or more view records.
+    view_settings : ViewSettings
+        Settings controlling signal construction, q caps, view horizon, and
+        family display names.
+    settings : BLSettings, optional
+        Black-Litterman settings controlling covariance, priors, confidence,
+        selection, posterior, and optimization behavior.
+    constraints : mapping, optional
+        Optional portfolio constraints such as sleeve constraints or asset caps.
+
+    Returns
+    -------
+    BLRun
+        Complete run artifact containing weights, view logs, confidence logs,
+        payoff history, posterior diagnostics, covariance cache, fallback flags,
+        and metadata.
+
+    Raises
+    ------
+    InputError
+        If fewer than two rebalance dates are supplied or input histories cannot
+        support the requested workflow.
+
+    Notes
+    -----
+    This function is intentionally audit-heavy. The returned logs are designed to
+    explain why each view was generated, selected, scaled, or rejected, and how
+    those views changed expected returns and portfolio weights.
+    """
+
     settings = settings or BLSettings()
     R = _sanitize_returns(returns, name="returns")
     S = _sanitize_returns(signal_returns, name="signal_returns")
@@ -691,6 +1089,26 @@ def view_spec_table(specs: Sequence[Mapping[str, Any]], caps: Mapping[str, float
 
 
 def latest_view_table(view_rows: Sequence[Mapping[str, Any]] | pd.DataFrame) -> pd.DataFrame:
+    """Format view records into a compact display table.
+
+    Parameters
+    ----------
+    view_rows : sequence of mappings or pandas.DataFrame
+        View records containing family, name, state, strength, q, confidence,
+        and long/short asset lists.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Human-readable table with family, view name, state, strength, raw and
+        final q values, confidence, long assets, and short assets.
+
+    Notes
+    -----
+    This helper is intended for reporting. It does not recompute views or check
+    whether the views are active or selected.
+    """
+
     df = pd.DataFrame(list(view_rows)) if not isinstance(view_rows, pd.DataFrame) else view_rows.copy()
     if df.empty:
         return pd.DataFrame(columns=["family", "name", "state", "strength", "raw_q", "final_q", "confidence", "long_assets", "short_assets"])
@@ -735,6 +1153,36 @@ def model_comparison_table(
     rf_daily: float = 0.0,
     annualization: float = 252.0,
 ) -> pd.DataFrame:
+    """Compare strategy backtests against a named benchmark.
+
+    The function combines standard performance metrics, turnover/cost statistics,
+    and active metrics relative to the benchmark into a single comparison table.
+
+    Parameters
+    ----------
+    results : mapping
+        Mapping from strategy name to backtest result object or compatible
+        dictionary.
+    benchmark_name : str
+        Name of the benchmark strategy in ``results``.
+    rf_daily : float, default=0.0
+        Daily risk-free rate used for Sharpe calculations.
+    annualization : float, default=252.0
+        Annualization factor for return and volatility metrics.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Strategy-indexed table containing net CAGR, volatility, Sharpe, maximum
+        drawdown, Calmar, turnover, cost drag, active return, tracking error,
+        information ratio, hit rate versus benchmark, correlation, and beta.
+
+    Notes
+    -----
+    Benchmark active return and tracking error are set to zero by construction.
+    Other active metrics are computed only for non-benchmark strategies.
+    """
+
     objects = {name: _as_result(result) for name, result in results.items()}
     benchmark = objects[benchmark_name]
     rows: list[dict[str, Any]] = []
@@ -771,6 +1219,34 @@ def active_summary_table(
     benchmark_name: str = "Benchmark",
     annualization: float = 252.0,
 ) -> pd.DataFrame:
+    """Summarize one strategy's active performance versus a benchmark.
+
+    Parameters
+    ----------
+    strategy_result : BacktestResult or mapping
+        Strategy backtest artifact.
+    benchmark_result : BacktestResult or mapping
+        Benchmark backtest artifact.
+    strategy_name : str, default="Learned-Confidence BL"
+        Label used for the output row.
+    benchmark_name : str, default="Benchmark"
+        Label stored in the benchmark column.
+    annualization : float, default=252.0
+        Annualization factor for active-return and tracking-error metrics.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One-row table containing active return, tracking error, information
+        ratio, hit rate, correlation, beta, active drawdown, average active
+        weight distance, and labels.
+
+    Notes
+    -----
+    Active returns are computed by aligning strategy and benchmark net returns
+    on the benchmark return index.
+    """
+
     strategy = _as_result(strategy_result)
     benchmark = _as_result(benchmark_result)
     metrics = _active_metrics(strategy, benchmark, annualization)
@@ -786,6 +1262,26 @@ def active_summary_table(
 
 
 def view_reliability_table(bl_run: Any) -> pd.DataFrame:
+    """Extract a compact view-family reliability table from a Black-Litterman run.
+
+    Parameters
+    ----------
+    bl_run : object
+        Object with a ``reliability_summary`` attribute, typically a ``BLRun``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Reliability table with available columns such as display name, candidate
+        count, selected count, selected share, hit rate, average payoff, payoff
+        volatility, payoff information ratio, average q, average absolute q, and
+        average confidence.
+
+    Notes
+    -----
+    If no reliability summary is available, an empty DataFrame is returned.
+    """
+
     reliability = getattr(bl_run, "reliability_summary", pd.DataFrame()).copy()
     if reliability.empty:
         return reliability

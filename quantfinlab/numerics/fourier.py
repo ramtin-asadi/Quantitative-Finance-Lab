@@ -276,6 +276,32 @@ def _get_kernels():
 
 
 def direct_price_numba(model_id, params, s, k, r, q, tau, flag, *, n: int = 512, u_max: float = 120.0):
+    """Price options by direct Fourier integration using Numba kernels.
+
+    The function dispatches either to a grid-specialized kernel when spot, rate,
+    dividend yield, and maturity are common across a strike vector, or to a fully
+    vectorized quote kernel otherwise.
+
+    Parameters
+    ----------
+    model_id : int
+        Numeric model identifier.
+    params : array-like
+        Model parameter vector.
+    s, k, r, q, tau : array-like
+        Spot, strike, rate, dividend yield, and maturity arrays.
+    flag : array-like
+        Option-type flags.
+    n : int, default=512
+        Number of integration grid points.
+    u_max : float, default=120.0
+        Upper integration limit.
+
+    Returns
+    -------
+    numpy.ndarray
+        Option prices aligned to the broadcast input arrays.
+    """
     fn, grid_fn, _, _ = _get_kernels()
     s_arr = np.ascontiguousarray(np.asarray(s, dtype=float).reshape(-1))
     k_arr = np.ascontiguousarray(np.asarray(k, dtype=float).reshape(-1))
@@ -317,6 +343,28 @@ def direct_price_numba(model_id, params, s, k, r, q, tau, flag, *, n: int = 512,
 
 
 def cos_price_numba(model_id, params, s, k, r, q, tau, flag, *, n_terms: int = 256, truncation_width: float = 10.0):
+    """Price options with a COS expansion using Numba kernels.
+
+    Parameters
+    ----------
+    model_id : int
+        Numeric model identifier.
+    params : array-like
+        Model parameter vector.
+    s, k, r, q, tau : array-like
+        Spot, strike, rate, dividend yield, and maturity arrays.
+    flag : array-like
+        Option-type flags.
+    n_terms : int, default=256
+        Number of COS terms.
+    truncation_width : float, default=10.0
+        Width of the COS truncation interval.
+
+    Returns
+    -------
+    numpy.ndarray
+        COS model prices.
+    """
     _, _, fn, _ = _get_kernels()
     return fn(
         int(model_id),
@@ -333,6 +381,36 @@ def cos_price_numba(model_id, params, s, k, r, q, tau, flag, *, n_terms: int = 2
 
 
 def carr_madan_fft_numba(model_id, params, spot, rate, dividend_yield, tau, *, alpha: float = 1.5, n: int = 4096, eta: float = 0.35, center_log: float | None = None):
+    """Compute a Carr-Madan FFT call-price grid with Numba kernels.
+
+    Parameters
+    ----------
+    model_id : int
+        Numeric model identifier.
+    params : array-like
+        Model parameter vector.
+    spot : float
+        Current spot price.
+    rate : float
+        Continuously compounded risk-free rate.
+    dividend_yield : float
+        Continuous dividend yield.
+    tau : float
+        Time to maturity in years.
+    alpha : float, default=1.5
+        Damping parameter.
+    n : int, default=4096
+        FFT grid size.
+    eta : float, default=0.35
+        Fourier-grid spacing.
+    center_log : float, optional
+        Log-strike center. Defaults to ``log(spot)``.
+
+    Returns
+    -------
+    tuple of numpy.ndarray
+        ``(strikes, prices)`` arrays from the FFT grid.
+    """
     _, _, _, fn = _get_kernels()
     center = float(np.log(spot) if center_log is None else center_log)
     strikes, prices = fn(

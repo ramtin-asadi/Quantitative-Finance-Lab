@@ -99,6 +99,43 @@ def family_reliability(
     *,
     protective_families: Sequence[str] = ("correlation_stress",),
 ) -> dict[str, float]:
+    """Estimate historical reliability statistics for a view family.
+
+    The function filters a payoff-history table to observations from the same
+    view family that were fully realized before the current date. It summarizes
+    hit rate, recent hit rate, average payoff, payoff volatility, payoff
+    information ratio, t-statistic, signal/payoff information coefficient, and
+    protective-state performance when applicable.
+
+    Parameters
+    ----------
+    view_family : str
+        View-family identifier.
+    history : pandas.DataFrame, optional
+        Historical payoff records. Expected columns include ``view_family``,
+        ``date``, ``payoff_end_date``, and a payoff column such as
+        ``payoff_ann`` or ``payoff``.
+    current_date : pandas.Timestamp or str
+        Decision date. Only completed historical observations strictly before
+        this date are used.
+    protective_families : sequence of str, default=("correlation_stress",)
+        Families for which stress-state reliability is also evaluated.
+
+    Returns
+    -------
+    dict
+        Reliability statistics including observation count, hit rates, average
+        payoff, payoff volatility, payoff IR, t-statistic, information
+        coefficient, sign stability, recent decay, sample score, and optional
+        stress-specific metrics.
+
+    Notes
+    -----
+    When no valid history exists, the function returns neutral/default values
+    rather than raising. This allows young view families to remain eligible with
+    conservative confidence.
+    """
+
     current_date = pd.Timestamp(current_date)
     if history is None or len(history) == 0:
         sample = pd.DataFrame()
@@ -208,6 +245,46 @@ def confidence_score(
     haircut_conf_cap: float = 0.85,
     protective_families: Sequence[str] = ("correlation_stress",),
 ) -> dict[str, Any]:
+    """Convert view reliability and market context into a bounded confidence score.
+
+    The scoring rule combines historical evidence, payoff quality, hit rates,
+    sample size, information coefficient, confluence, stress behavior, and
+    current market state. It supports fixed, learned, and haircut-style
+    confidence modes.
+
+    Parameters
+    ----------
+    stats : mapping
+        Reliability statistics, typically returned by ``family_reliability``.
+    row : mapping
+        View record containing fields such as view family, confluence score, and
+        risk orientation.
+    market_state : mapping
+        Current market-state values used to adjust confidence under stress.
+    confidence_mode : str, default="learned"
+        Confidence mode. ``"fixed"`` sets confidence to 0.50. ``"haircut"``
+        applies additional contextual haircuts. Other values use the learned
+        bounded score.
+    conf_floor, conf_cap : float
+        Lower and upper bounds for learned confidence.
+    haircut_conf_floor, haircut_conf_cap : float
+        Lower and upper bounds for haircut-mode confidence.
+    protective_families : sequence of str
+        View families that receive additional stress-state checks.
+
+    Returns
+    -------
+    dict
+        Original reliability statistics plus confidence, confidence mode,
+        haircut multiplier, risk orientation, and reliability note.
+
+    Notes
+    -----
+    The score is intentionally conservative for small samples, weak historical
+    payoff, poor recent hit rates, and protective views that fail in stress
+    states.
+    """
+
     n_obs = stats.get("n_obs", 0)
     hit_rate = stats.get("hit_rate", np.nan) if np.isfinite(stats.get("hit_rate", np.nan)) else 0.50
     recent_hit_rate = stats.get("recent_hit_rate", np.nan) if np.isfinite(stats.get("recent_hit_rate", np.nan)) else hit_rate
@@ -393,6 +470,56 @@ def select_views(
     max_same_direction: int = 3,
     protective_families: Sequence[str] = ("correlation_stress",),
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Score, filter, and select active views for one rebalance date.
+
+    Each active view is assigned reliability statistics and a selection score.
+    The function then selects a bounded number of views while applying
+    redundancy and direction-crowding gates. It also produces a detailed log of
+    kept and rejected views.
+
+    Parameters
+    ----------
+    active_views : sequence of mappings
+        Candidate view records for the current date.
+    history : pandas.DataFrame, optional
+        Historical payoff data used to estimate reliability.
+    current_date : pandas.Timestamp or str
+        Current rebalance date.
+    market_state : mapping
+        Current market-state scalars used for confidence adjustments.
+    assets : sequence of str
+        Asset universe used to compute view exposure similarity.
+    family_q_caps : mapping
+        Maximum absolute q tilt by view family.
+    confidence_mode : str, default="learned"
+        Confidence scoring mode.
+    max_selected_views : int, default=5
+        Maximum number of views to keep.
+    redundancy_similarity : float, default=0.85
+        Absolute cosine-similarity threshold above which a candidate is rejected
+        as redundant with an already selected view.
+    max_same_direction : int, default=3
+        Maximum number of selected risk-on or risk-off views unless the score is
+        very high.
+    protective_families : sequence of str
+        Families treated as protective views for reliability checks.
+
+    Returns
+    -------
+    selected : list of dict
+        Selected view records after scoring and filtering.
+    log_rows : list of dict
+        Diagnostic records for all evaluated views, including kept flags,
+        selection scores, confidence inputs, redundancy similarity, and rejection
+        reason.
+
+    Notes
+    -----
+    The selection step is deliberately not a pure top-N sort. Redundancy and
+    direction gates prevent the posterior from being dominated by multiple
+    economically similar views.
+    """
+
     evaluated: list[dict[str, Any]] = []
     for raw_row in active_views:
         row = dict(raw_row)
@@ -508,6 +635,53 @@ def view_matrix(
     use_learned_q: bool = True,
     protective_families: Sequence[str] = ("correlation_stress",),
 ) -> tuple[np.ndarray, np.ndarray, pd.DataFrame]:
+    """Convert selected view records into Black-Litterman view matrices.
+
+    The function builds each view's ``P`` row from long and short assets,
+    computes a raw q tilt from signal strength and family caps, optionally
+    adjusts q using historical payoff evidence, and returns both numerical
+    matrices and a clean diagnostic table.
+
+    Parameters
+    ----------
+    active_views : sequence of mappings
+        Selected or active view records. Each record should provide long assets,
+        short assets, view family, and signal or strength fields.
+    assets : sequence of str
+        Ordered asset universe used for the columns of the P matrix.
+    prior_mu : pandas.Series or sequence, optional
+        Prior expected returns. If supplied, q values are expressed as prior
+        spread plus final active tilt.
+    history : pandas.DataFrame, optional
+        Historical payoff data used for learned q adjustment.
+    current_date : pandas.Timestamp or str, optional
+        Decision date for historical evidence filtering.
+    family_q_caps : mapping
+        Maximum absolute q tilt by view family.
+    q_strength_scale : float, default=1.25
+        Scaling applied when converting raw signal strength into q.
+    use_learned_q : bool, default=True
+        Whether to adjust raw q using historical payoff evidence.
+    protective_families : sequence of str
+        Families treated as protective in learned-q logic.
+
+    Returns
+    -------
+    view_p : numpy.ndarray
+        View exposure matrix with shape ``(n_views, n_assets)``.
+    view_q : numpy.ndarray
+        View target vector with shape ``(n_views,)``.
+    clean_table : pandas.DataFrame
+        View diagnostics, including base spread, raw q, learned component,
+        final q tilt, final q, p-expression, and p-vector.
+
+    Notes
+    -----
+    Views lacking at least one valid long and one valid short asset are skipped.
+    The returned q values are total view targets, not only active tilts, when a
+    prior is supplied.
+    """
+
     clean_rows: list[dict[str, Any]] = []
     view_p_rows: list[np.ndarray] = []
     view_q_vals: list[float] = []

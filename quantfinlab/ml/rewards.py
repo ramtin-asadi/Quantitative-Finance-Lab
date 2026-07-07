@@ -7,12 +7,29 @@ import pandas as pd
 
 
 class DifferentialSharpe:
-    """Online Differential Sharpe Ratio (Moody & Saffell, 1998).
+    """Online Differential Sharpe reward.
 
-    Maintains exponentially weighted moving averages ``A`` (returns) and ``B``
-    (squared returns) and returns the marginal contribution of each new return to
-    the running Sharpe ratio. Optimising the cumulative DSR is equivalent to
-    optimising risk-adjusted return directly, without tracking any benchmark.
+    The object maintains exponentially weighted estimates of the first and second
+    moments of returns and returns the marginal contribution of each new return to
+    the running Sharpe ratio. It is intended for reinforcement-learning reward
+    signals where the objective should reflect risk-adjusted performance rather
+    than raw return.
+
+    Parameters
+    ----------
+    eta : float, default=0.01
+        Exponential update rate for running moments.
+
+    Attributes
+    ----------
+    eta : float
+        Update rate.
+    A : float
+        Running mean return estimate.
+    B : float
+        Running second-moment estimate.
+    initialized : bool
+        Whether the first observation has initialized the state.
     """
 
     def __init__(self, eta: float = 0.01):
@@ -22,6 +39,22 @@ class DifferentialSharpe:
         self.initialized = False
 
     def update(self, r: float) -> float:
+        """Update the Differential Sharpe state and return the marginal reward.
+
+        Parameters
+        ----------
+        r : float
+            New portfolio return.
+
+        Returns
+        -------
+        float
+            Clipped Differential Sharpe reward contribution.
+
+        Notes
+        -----
+        The first update initializes the running moments and returns zero.
+        """
         r = float(r)
         if not self.initialized:
             self.A = r
@@ -37,16 +70,32 @@ class DifferentialSharpe:
         return float(np.clip(dsr, -10.0, 10.0))
 
     def reset(self) -> None:
+        """Reset the running Differential Sharpe state.
+
+        Returns
+        -------
+        None
+            The running moments are reset to zero and the object is marked
+            uninitialized.
+        """
         self.A = 0.0
         self.B = 0.0
         self.initialized = False
 
 
 class DifferentialSortino:
-    """Differential Downside Risk reward: a DSR variant penalising only downside.
+    """Online Differential Sortino-style reward.
 
-    The variance term ``B`` accumulates squared *negative* excess returns, so the
-    signal rewards upside while only charging for downside deviation.
+    This object is a downside-risk variant of Differential Sharpe. The first moment
+    tracks returns, while the second moment tracks squared negative excess returns.
+    The reward therefore charges downside deviation rather than total variance.
+
+    Parameters
+    ----------
+    eta : float, default=0.01
+        Exponential update rate.
+    rf_daily : float, default=0.0
+        One-period risk-free rate used to define downside excess returns.
     """
 
     def __init__(self, eta: float = 0.01, rf_daily: float = 0.0):
@@ -57,6 +106,23 @@ class DifferentialSortino:
         self.initialized = False
 
     def update(self, r: float) -> float:
+        """Update the Differential Sortino state and return the marginal reward.
+
+        Parameters
+        ----------
+        r : float
+            New portfolio return.
+
+        Returns
+        -------
+        float
+            Clipped Differential downside-risk reward contribution.
+
+        Notes
+        -----
+        Upside returns contribute to the running mean without increasing the downside
+        second moment.
+        """
         r = float(r)
         downside = min(r - self.rf, 0.0)
         if not self.initialized:
@@ -73,6 +139,13 @@ class DifferentialSortino:
         return float(np.clip(ddr, -10.0, 10.0))
 
     def reset(self) -> None:
+        """Reset the running Differential Sortino state.
+
+        Returns
+        -------
+        None
+            The running mean, downside moment, and initialized flag are reset.
+        """
         self.A = 0.0
         self.B = 0.0
         self.initialized = False
@@ -141,6 +214,42 @@ def portfolio_reward(
     cost_bps: float | None = None,
     **legacy_kwargs,
 ) -> float:
+    """Return the scalar portfolio reward from detailed reward components.
+
+    This is a convenience wrapper around ``reward_components``. It accepts the same
+    economic inputs and penalty settings, computes the component dictionary, and
+    returns only the final scalar reward.
+
+    Parameters
+    ----------
+    portfolio_return : float
+        Realized portfolio return for the period.
+    benchmark_return : float, default=0.0
+        Benchmark return for active-reward modes.
+    turnover : float, default=0.0
+        One-way turnover for the period.
+    cost : float, default=0.0
+        Realized cost as a return drag.
+    weights : sequence of float, optional
+        Portfolio weights used for concentration penalties.
+    rf_period : float, default=0.0
+        Risk-free return for the period.
+    realized_vol : float, default=0.0
+        Realized portfolio volatility used in volatility penalties.
+    drawdown : float, default=0.0
+        Current portfolio drawdown.
+    beta_active, vol_low, vol_high, lambda_cost, turnover_budget,
+    lambda_turnover_extra, lambda_vol, lambda_drawdown, lambda_conc, hhi_target,
+    cost_bps
+        Reward-shaping parameters passed to ``reward_components``.
+    **legacy_kwargs
+        Additional compatibility parameters passed through.
+
+    Returns
+    -------
+    float
+        Final scalar reward.
+    """
     comp = reward_components(
         portfolio_return=portfolio_return,
         benchmark_return=benchmark_return,
@@ -208,7 +317,98 @@ def reward_components(
     decorr_penalty: float = 0.0,
     lambda_decorr: float = 0.0,
 ) -> dict[str, float]:
-    """Basis-point reward with real costs and bounded extra risk penalties."""
+    """Compute portfolio reward and diagnostic reward components.
+
+    The function supports several reward modes, including log-excess plus active
+    return, active-return scaled by tracking error, and Differential Sharpe/Sortino
+    modes. It reports the final reward along with the economic quantities and
+    penalties that produced it.
+
+    Parameters
+    ----------
+    portfolio_return : float
+        Realized portfolio return.
+    benchmark_return : float, default=0.0
+        Benchmark return.
+    turnover : float, default=0.0
+        One-way portfolio turnover.
+    cost : float, default=0.0
+        Realized transaction cost as a return drag.
+    weights : sequence of float, optional
+        Portfolio weights used for concentration diagnostics.
+    rf_period : float, default=0.0
+        Risk-free return over the reward period.
+    realized_vol : float, default=0.0
+        Realized annualized volatility estimate.
+    drawdown : float, default=0.0
+        Current drawdown.
+    beta_active : float, default=0.75
+        Weight applied to active return in the default reward mode.
+    vol_low, vol_high : float
+        Volatility band used in the default volatility penalty.
+    lambda_cost : float, default=1.25
+        Cost penalty multiplier.
+    turnover_budget : float, default=0.12
+        Turnover budget before extra turnover penalty applies.
+    lambda_turnover_extra : float, default=10.0
+        Extra turnover penalty multiplier.
+    lambda_vol : float, default=1.0
+        Volatility penalty multiplier.
+    lambda_drawdown : float, default=1.0
+        Drawdown penalty multiplier.
+    lambda_conc : float, default=10.0
+        Concentration penalty multiplier.
+    hhi_target : float, default=0.18
+        Target Herfindahl-Hirschman concentration.
+    cost_bps : float, optional
+        If supplied, realized cost is computed as ``cost_bps * turnover`` in basis
+        points.
+    lambda_turnover, lambda_concentration, max_weight
+        Legacy compatibility parameters.
+    reward_mode : str, default="active_te"
+        Reward mode. Supported families include active tracking-error modes,
+        differential Sharpe/Sortino modes, and the default log-excess mode.
+    tracking_vol : float, optional
+        Tracking-volatility estimate used in active-tracking reward mode.
+    tracking_vol_floor : float, default=0.06
+        Lower bound for tracking volatility.
+    active_reward_scale : float, default=100.0
+        Scaling applied to active tracking reward.
+    target_vol : float, default=0.15
+        Target volatility used in active-tracking and DSR modes.
+    drawdown_floor : float, default=-0.10
+        Drawdown threshold below which drawdown penalties apply.
+    beta_penalty, corr_penalty : float
+        Additional exposure/correlation penalties.
+    lambda_beta, lambda_corr : float
+        Multipliers for beta and correlation penalties.
+    dsr : float, default=0.0
+        Differential Sharpe or Sortino reward input.
+    dsr_scale : float, default=100.0
+        Scaling applied to ``dsr`` in DSR modes.
+    cash_weight : float, default=0.0
+        Cash weight used in DSR cash penalties.
+    cash_cap : float, default=0.30
+        Cash cap before cash penalty applies.
+    lambda_cash : float, default=1.0
+        Cash penalty multiplier.
+    decorr_penalty : float, default=0.0
+        Decorrelation penalty input.
+    lambda_decorr : float, default=0.0
+        Decorrelation penalty multiplier.
+
+    Returns
+    -------
+    dict
+        Dictionary containing ``reward`` and the relevant component diagnostics for
+        the selected reward mode.
+
+    Notes
+    -----
+    Most non-DSR modes are expressed in basis-point-like units. DSR modes are kept
+    closer to an order-one scale so the differential risk-adjusted signal is not
+    overwhelmed by rare crisis penalties.
+    """
     safe_return = max(float(portfolio_return), -0.999)
     safe_rf = max(float(rf_period), -0.999)
     log_excess_return = float(np.log1p(safe_return) - np.log1p(safe_rf))
@@ -364,6 +564,25 @@ def reward_component_table(
     *,
     component_rows: Mapping[str, Sequence[Mapping[str, float]]] | None = None,
 ) -> pd.DataFrame:
+    """Average reward components across strategies or result objects.
+
+    Parameters
+    ----------
+    results : mapping, optional
+        Mapping from strategy name to objects containing a ``components`` attribute
+        or mapping key.
+    component_rows : mapping, optional
+        Mapping from strategy name to an explicit sequence of component dictionaries.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Strategy-indexed table of mean numeric reward components.
+
+    Notes
+    -----
+    At least one of ``results`` or ``component_rows`` should be supplied.
+    """
     rows = []
     if component_rows is not None:
         for name, comps in component_rows.items():

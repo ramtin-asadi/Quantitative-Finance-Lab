@@ -33,6 +33,25 @@ def longest_true_streak(mask: Sequence[bool] | np.ndarray | pd.Series) -> int:
     return int(best)
 
 def kupiec_test(breach: Sequence[bool] | np.ndarray | pd.Series, *, alpha: float = 0.05) -> tuple[float, float]:
+    """Run the Kupiec unconditional coverage test.
+
+    Parameters
+    ----------
+    breach : array-like of bool
+        VaR breach indicator series.
+    alpha : float, default=0.05
+        Expected breach probability.
+
+    Returns
+    -------
+    tuple of float
+        ``(LR, p_value)`` for the unconditional coverage test.
+
+    Notes
+    -----
+    The test checks whether the observed breach frequency matches ``alpha``.
+    """
+
     a = _normalize_alpha(alpha)
     b = np.asarray(breach, dtype=bool)
     n = len(b)
@@ -51,6 +70,24 @@ def kupiec_test(breach: Sequence[bool] | np.ndarray | pd.Series, *, alpha: float
 def christoffersen_independence(
     breach: Sequence[bool] | np.ndarray | pd.Series,
 ) -> tuple[float, float]:
+    """Run the Christoffersen independence test for VaR breaches.
+
+    Parameters
+    ----------
+    breach : array-like of bool
+        VaR breach indicator series.
+
+    Returns
+    -------
+    tuple of float
+        ``(LR, p_value)`` for breach independence.
+
+    Notes
+    -----
+    The test evaluates whether breach probabilities depend on whether the previous
+    period was also a breach.
+    """
+
     b = np.asarray(breach, dtype=int)
     if len(b) < 3:
         return float("nan"), float("nan")
@@ -105,6 +142,27 @@ def breach_stats(
     lookback: int = 252,
     method: Literal["hist", "cf", "fhs"] = "hist",
 ) -> dict[str, Any]:
+    """Compute rolling-VaR breach diagnostics for one return series.
+
+    Parameters
+    ----------
+    returns : array-like
+        Return series.
+    alpha : float, default=0.05
+        Lower-tail probability.
+    lookback : int, default=252
+        Rolling VaR lookback window.
+    method : {"hist", "cf", "fhs"}, default="hist"
+        VaR model.
+
+    Returns
+    -------
+    dict
+        Dictionary containing aligned return/VaR series, breach indicators, breach
+        count and rate, coverage error, longest streak, average and median breach
+        gap, Kupiec and Christoffersen statistics, and quantile loss.
+    """
+
     a = _normalize_alpha(alpha)
     r = _to_numeric_series(returns, name="returns")
     q = rolling_var(r, alpha=a, lookback=int(lookback), method=method)
@@ -213,6 +271,35 @@ def var_backtest_table(
     methods: Sequence[str] | None = None,
     lookback: int = 252,
 ) -> pd.DataFrame:
+    """Backtest rolling VaR models for multiple return objects.
+
+    Parameters
+    ----------
+    objects : mapping or pandas.DataFrame
+        Return objects.
+    alpha : float, default=0.05
+        Lower-tail probability.
+    method : {"hist", "cf", "fhs"}, default="hist"
+        Single method used when ``methods`` is omitted.
+    methods : sequence of str, optional
+        Multiple methods to evaluate.
+    lookback : int, default=252
+        Rolling VaR lookback window.
+
+    Returns
+    -------
+    pandas.DataFrame
+        VaR backtest table with breach frequency, coverage error, breach clustering
+        tests, quantile loss, accuracy rank, accuracy score, and best-method flag
+        when multiple methods are evaluated.
+
+    Notes
+    -----
+    When several methods are evaluated, the result uses a MultiIndex of
+    ``(object, method)``. When a single method is evaluated, the result is indexed
+    only by object.
+    """
+
     a = _normalize_alpha(alpha)
     methods_norm = _normalize_var_methods(method=method, methods=methods)
     obj = _coerce_objects(objects)
@@ -264,9 +351,24 @@ def var_backtest_table(
     return _rank_var_backtest_accuracy(out)
 
 def best_var_methods(var_backtest_tbl: pd.DataFrame) -> dict[str, str]:
+    """Extract the best VaR method for each object.
+
+    Parameters
+    ----------
+    var_backtest_tbl : pandas.DataFrame
+        Output from ``var_backtest_table``.
+
+    Returns
+    -------
+    dict
+        Mapping from object name to selected VaR method.
+
+    Notes
+    -----
+    When the input has an ``is_best`` column, that flag is used. Otherwise the
+    function falls back to ``accuracy_rank`` and then to the first available method.
     """
-    Return best VaR backtest method by object from a var_backtest_table output.
-    """
+
     if var_backtest_tbl is None or var_backtest_tbl.empty:
         return {}
     idx = var_backtest_tbl.index

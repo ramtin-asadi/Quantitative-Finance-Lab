@@ -17,7 +17,28 @@ def forecast_confidence(
     min_width: float = 1e-6,
     power: float = 1.0,
 ) -> pd.Series:
-    """Convert forecast signal-to-interval-width into a 0-1 confidence score."""
+    """Convert forecast magnitude and interval width into a confidence score.
+
+    Parameters
+    ----------
+    mu : array-like
+        Forecast mean or signal.
+    width : array-like
+        Forecast interval width or uncertainty estimate.
+    min_width : float, default=1e-6
+        Lower bound for width.
+    power : float, default=1.0
+        Exponent applied to the raw confidence score.
+
+    Returns
+    -------
+    pandas.Series
+        Confidence score in ``[0, 1]`` named ``forecast_confidence``.
+
+    Notes
+    -----
+    The score increases when forecast magnitude is large relative to uncertainty.
+    """
     m = pd.Series(mu, dtype=float)
     w = pd.Series(width, dtype=float).reindex(m.index).abs().clip(lower=float(min_width))
     raw = m.abs() / (m.abs() + w)
@@ -39,11 +60,32 @@ def confidence_adjusted_mu(
     floor: float = 0.50,
     cap: float = 1.00,
 ) -> pd.Series:
-    """Softly shrink forecasts by uncertainty without crushing the signal.
+    """Shrink forecasts softly using uncertainty and model confidence diagnostics.
 
-    Project 19 uses uncertainty as a sizing input, so this helper intentionally
-    blends confidence terms instead of multiplying them.  Multiplication made
-    reasonable forecasts vanish whenever one diagnostic was pessimistic.
+    The function blends interval-width confidence, model confidence, and optional
+    extra confidence signals, then multiplies the forecast by a clipped confidence
+    multiplier. It is designed to use uncertainty as a sizing input without
+    eliminating reasonable forecasts whenever one diagnostic is pessimistic.
+
+    Parameters
+    ----------
+    mu : array-like
+        Raw forecast signal.
+    c_width : array-like
+        Confidence derived from interval width.
+    c_model : array-like
+        Model confidence score.
+    *extra_confidences : array-like
+        Additional confidence scores to average into the blend.
+    floor : float, default=0.50
+        Minimum shrinkage multiplier.
+    cap : float, default=1.00
+        Maximum shrinkage multiplier.
+
+    Returns
+    -------
+    pandas.Series
+        Confidence-adjusted forecast named ``"mu_adj"``.
     """
     m = pd.Series(mu, dtype=float)
     cw = pd.Series(c_width, dtype=float).reindex(m.index).fillna(0.0).clip(0.0, 1.0)

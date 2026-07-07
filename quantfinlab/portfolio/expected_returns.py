@@ -60,11 +60,37 @@ def momentum_score_from_returns(
     *,
     mode: Literal["12-1", "6-1", "3-0"] = "6-1",
 ) -> np.ndarray:
-    """
-    Compute Notebook 2 momentum scores.
+    """Compute cross-sectional momentum scores from a return window.
 
-    Short clean windows fall back to the historical mean, matching the notebook.
+    Supported modes are standard skip-month momentum variants. Short clean
+    windows fall back to historical mean returns, matching the notebook workflow.
+
+    Parameters
+    ----------
+    ret_window : pandas.DataFrame
+        Asset return window with observations in rows and assets in columns.
+    mode : {"12-1", "6-1", "3-0"}, default="6-1"
+        Momentum lookback convention. ``"12-1"`` uses roughly 12 months with a
+        one-month skip, ``"6-1"`` uses roughly 6 months with a one-month skip,
+        and ``"3-0"`` uses roughly 3 months with no skip.
+
+    Returns
+    -------
+    numpy.ndarray
+        Raw momentum scores ordered like the input columns.
+
+    Raises
+    ------
+    InputError
+        If an unsupported momentum mode is supplied.
+
+    Notes
+    -----
+    The scores are raw directional signals. They are typically winsorized,
+    standardized, and scaled to a target Sharpe before being used as expected
+    returns.
     """
+
     R = _sanitize_returns(ret_window)
     T = len(R)
     if T == 0:
@@ -142,7 +168,41 @@ def scale_mu_to_target_sharpe(
     mu_cap_ann: float = 0.30,
     ridge: float = 1e-8,
 ) -> np.ndarray:
-    """Scale a direction vector so its unconstrained Sharpe equals the target."""
+    """Scale an expected-return direction to a target unconstrained Sharpe ratio.
+
+    The function computes the quadratic form ``mu.T Sigma^{-1} mu`` and rescales
+    the direction vector so its implied unconstrained mean-variance Sharpe equals
+    ``target_sharpe_ann``. The scaled vector is clipped to an annualized cap.
+
+    Parameters
+    ----------
+    mu_dir : array-like
+        Directional expected-return vector.
+    cov_ann : array-like or pandas.DataFrame
+        Annualized covariance matrix.
+    target_sharpe_ann : float, default=0.80
+        Target annualized Sharpe ratio for the unconstrained direction.
+    mu_cap_ann : float, default=0.30
+        Absolute cap applied to each annualized expected return.
+    ridge : float, default=1e-8
+        Diagonal ridge used when solving the linear system.
+
+    Returns
+    -------
+    numpy.ndarray
+        Scaled and clipped annualized expected-return vector.
+
+    Raises
+    ------
+    InputError
+        If the covariance shape does not match the expected-return vector.
+
+    Notes
+    -----
+    If the direction is zero or the quadratic form is not positive, a zero vector
+    is returned.
+    """
+
     mu = np.asarray(mu_dir, dtype=float).reshape(-1)
     if mu.size == 0 or np.all(np.abs(mu) < 1e-12):
         return np.zeros_like(mu)
@@ -168,7 +228,38 @@ def build_scaled_mu_from_raw(
     winsor_hi: float = 0.95,
     ridge: float = 1e-8,
 ) -> np.ndarray:
-    """The canonical Notebook 2 raw-signal -> winsor/zscore -> scaled μ path."""
+    """Transform raw cross-sectional signals into scaled annualized expected returns.
+
+    The canonical pipeline winsorizes the raw signal, converts it into a z-score,
+    and rescales it to a target unconstrained Sharpe using the supplied covariance
+    matrix.
+
+    Parameters
+    ----------
+    raw_mu : array-like
+        Raw signal or expected-return direction.
+    cov_ann : array-like or pandas.DataFrame
+        Annualized covariance matrix.
+    target_sharpe_ann : float, default=0.80
+        Target annualized Sharpe for the unconstrained direction.
+    mu_cap_ann : float, default=0.30
+        Absolute annualized cap for each expected return.
+    winsor_lo, winsor_hi : float
+        Lower and upper quantiles used for winsorization.
+    ridge : float, default=1e-8
+        Ridge used in the scaling solve.
+
+    Returns
+    -------
+    numpy.ndarray
+        Annualized expected-return vector.
+
+    Notes
+    -----
+    This is the standard raw-signal-to-mu transformation used by the portfolio
+    walk-forward workflow.
+    """
+
     mu_dir = winsorize_and_zscore(raw_mu, p_lo=winsor_lo, p_hi=winsor_hi)
     return scale_mu_to_target_sharpe(
         mu_dir,
@@ -266,7 +357,7 @@ def bayes_stein_shrink_mu(
     ridge: float = 1e-8,
     return_phi: bool = False,
 ) -> np.ndarray | tuple[np.ndarray, float]:
-    """Bayes-Stein-style shrinkage for an already-scaled μ vector."""
+    """Bayes-Stein-style shrinkage for an already-scaled mu vector."""
     mu = np.asarray(mu_excess_ann, dtype=float).reshape(-1)
     n = len(mu)
     if n == 0:
@@ -340,6 +431,53 @@ def bayes_stein_mu(
     return_series: bool = True,
     **_,
 ):
+    """Estimate Bayes-Stein-shrunk annualized excess expected returns.
+
+    The function computes sample excess means, applies Bayes-Stein shrinkage,
+    then winsorizes/z-scores/scales the resulting direction to a target Sharpe
+    under the supplied covariance matrix.
+
+    Parameters
+    ----------
+    ret_window : pandas.DataFrame
+        Asset return window.
+    cov_ann : array-like or pandas.DataFrame, optional
+        Annualized covariance matrix. If omitted, it is estimated from the return
+        window.
+    rf_daily : float, default=0.0
+        Daily risk-free rate used when computing excess means.
+    ann_factor : float, default=252.0
+        Annualization factor for sample means.
+    annualization : float, default=252.0
+        Annualization factor for covariance estimation when ``cov_ann`` is not
+        supplied.
+    target_sharpe_ann : float, default=0.80
+        Target annualized Sharpe used for scaling.
+    mu_cap_ann : float, default=0.30
+        Absolute annualized expected-return cap.
+    winsor_lo, winsor_hi : float
+        Quantiles used to winsorize the raw direction.
+    ridge : float, default=1e-8
+        Ridge used in shrinkage and scaling operations.
+    cov_method : str, default="LedoitWolf"
+        Covariance estimator used when ``cov_ann`` is omitted.
+    return_info : bool, default=False
+        If True, also return diagnostic metadata.
+    return_series : bool, default=True
+        If True, return expected returns as a Series indexed by asset.
+
+    Returns
+    -------
+    pandas.Series, numpy.ndarray, or tuple
+        Expected-return vector, optionally paired with an information dictionary.
+
+    Notes
+    -----
+    The output is clipped and non-finite values are replaced with conservative
+    defaults. The information dictionary includes shrinkage intensity and invalid
+    value counts.
+    """
+
     R = _sanitize_returns(ret_window)
     if cov_ann is None:
         from quantfinlab.portfolio import covariance
@@ -385,6 +523,49 @@ def bayes_stein_momentum_mu(
     return_series: bool = True,
     **_,
 ):
+    """Build momentum-based expected returns with Bayes-Stein shrinkage.
+
+    The workflow computes raw momentum scores, scales them to a target Sharpe,
+    then applies Bayes-Stein-style shrinkage using the covariance matrix and
+    sample size.
+
+    Parameters
+    ----------
+    ret_window : pandas.DataFrame
+        Asset return window.
+    cov_ann : array-like or pandas.DataFrame, optional
+        Annualized covariance matrix. If omitted, it is estimated from the return
+        window.
+    mode : {"12-1", "6-1", "3-0"}, default="6-1"
+        Momentum convention used to build the raw signal.
+    target_sharpe_ann : float, default=0.80
+        Target annualized Sharpe used for scaling.
+    mu_cap_ann : float, default=0.30
+        Absolute annualized expected-return cap.
+    winsor_lo, winsor_hi : float
+        Quantiles used for winsorization.
+    ridge : float, default=1e-8
+        Ridge used in shrinkage and scaling.
+    cov_method : str, default="LedoitWolf"
+        Covariance estimator used when ``cov_ann`` is omitted.
+    annualization : float, default=252.0
+        Annualization factor for covariance estimation.
+    return_info : bool, default=False
+        If True, also return diagnostic metadata.
+    return_series : bool, default=True
+        If True, return a Series indexed by asset.
+
+    Returns
+    -------
+    pandas.Series, numpy.ndarray, or tuple
+        Annualized expected-return vector, optionally with diagnostics.
+
+    Notes
+    -----
+    This estimator combines momentum directionality with shrinkage designed to
+    reduce overconfident cross-sectional expected-return estimates.
+    """
+
     R = _sanitize_returns(ret_window)
     if cov_ann is None:
         from quantfinlab.portfolio import covariance
@@ -441,12 +622,51 @@ def build_mu_excess_ann(
     return_series: bool = True,
     **kwargs,
 ):
-    """
-    Build annualized excess expected returns using the canonical Notebook 2 pipeline.
+    """Build annualized excess expected returns from a returns window or state cache.
 
-    The first argument may be a returns window or a rebalance state containing
+    The function dispatches to the supported expected-return models and supports
+    two input forms: a raw return window or a rebalance-state mapping containing
     ``R_mu`` and ``cov_ann_map``.
+
+    Parameters
+    ----------
+    window : pandas.DataFrame or mapping
+        Return window, or a rebalance-state mapping with ``R_mu`` and
+        ``cov_ann_map``.
+    cov_ann : array-like or pandas.DataFrame, optional
+        Annualized covariance matrix. Required unless it can be extracted from a
+        state mapping.
+    mu_model : str, default="Momentum"
+        Expected-return model label. Supported labels include Momentum,
+        BayesStein, and BayesSteinMomentum.
+    cov_key : str, optional
+        Covariance key to use when ``window`` is a state mapping and ``cov_ann``
+        is omitted.
+    return_info : bool, default=False
+        If True, return diagnostic metadata with the expected returns.
+    return_series : bool, default=True
+        If True, return a Series indexed by asset.
+    **kwargs
+        Additional keyword arguments passed to the selected expected-return
+        model.
+
+    Returns
+    -------
+    pandas.Series, numpy.ndarray, or tuple
+        Annualized excess expected-return vector, optionally with diagnostics.
+
+    Raises
+    ------
+    InputError
+        If a state mapping does not contain the required return or covariance
+        entries.
+
+    Notes
+    -----
+    This is the canonical expected-return dispatcher for the walk-forward
+    portfolio engine.
     """
+
     if isinstance(window, Mapping):
         state = window
         R_mu = state.get("R_mu")
@@ -481,7 +701,36 @@ def mu_diagnostics(
     mu_models: tuple[str, ...] = ("Momentum", "BayesStein", "BayesSteinMomentum"),
     **kwargs,
 ) -> pd.DataFrame:
-    """Summarize cross-sectional μ behavior and shrinkage diagnostics over a cache."""
+    """Summarize expected-return model behavior across a rebalance-state cache.
+
+    The function evaluates selected expected-return models at each cached
+    rebalance state and reports cross-sectional dispersion, maximum absolute
+    mu, shrinkage intensity, invalid rebalance counts, and rank correlation
+    between momentum and Bayes-Stein momentum signals.
+
+    Parameters
+    ----------
+    cache : mapping
+        Mapping from rebalance date to state dictionaries.
+    cov_key : str, default="LedoitWolf"
+        Covariance model key to use for expected-return construction.
+    mu_models : tuple of str
+        Expected-return model labels to evaluate.
+    **kwargs
+        Additional arguments passed to ``build_mu_excess_ann``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Model-level diagnostic summary.
+
+    Notes
+    -----
+    Invalid or failed model evaluations are counted rather than raised, which
+    allows the diagnostic table to describe robustness across an entire
+    walk-forward sample.
+    """
+
     rows: list[dict[str, object]] = []
     rank_corrs: list[float] = []
     for dt, state in cache.items():

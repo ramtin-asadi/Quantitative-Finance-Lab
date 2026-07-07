@@ -12,6 +12,23 @@ def state_profile(
     labels: pd.Series | Sequence[int],
     outcomes: pd.DataFrame | pd.Series | None = None,
 ) -> pd.DataFrame:
+    """Profile features and optional outcomes by discrete state label.
+
+    Parameters
+    ----------
+    features : pandas.DataFrame
+        Feature table.
+    labels : pandas.Series or sequence of int
+        State labels aligned to features.
+    outcomes : pandas.DataFrame or pandas.Series, optional
+        Outcome variables to include with ``"outcome_"`` prefixes.
+
+    Returns
+    -------
+    pandas.DataFrame
+        State-indexed table with observation count, state share, and mean feature
+        or outcome values.
+    """
     if isinstance(labels, pd.Series):
         lab = labels.copy()
     else:
@@ -31,6 +48,23 @@ def state_profile(
 
 
 def sort_states_by_profile(profile: pd.DataFrame) -> list[int]:
+    """Order discrete states from more risk-on to more defensive/stress-like.
+
+    The function builds a heuristic score from standardized profile columns. Terms
+    associated with risk appetite, growth, credit, breadth, and returns increase the
+    score; volatility, correlation, dispersion, and defensive-sleeve terms reduce
+    it.
+
+    Parameters
+    ----------
+    profile : pandas.DataFrame
+        State profile table.
+
+    Returns
+    -------
+    list of int
+        State labels sorted from highest risk-on score to lowest.
+    """
     if profile.empty:
         return []
     cols = [c for c in profile.columns if c not in {"observations", "share"}]
@@ -97,6 +131,21 @@ def proba_frame(
 
 
 def transition_table(labels: pd.Series | Sequence[int], normalize: bool = True) -> pd.DataFrame:
+    """Compute a state transition matrix.
+
+    Parameters
+    ----------
+    labels : pandas.Series or sequence of int
+        State label sequence.
+    normalize : bool, default=True
+        If true, normalize rows to transition probabilities. If false, return
+        transition counts.
+
+    Returns
+    -------
+    pandas.DataFrame
+        State-by-state transition table.
+    """
     lab = pd.Series(labels).dropna().astype(int)
     states = sorted(lab.unique())
     out = pd.DataFrame(0.0, index=states, columns=states)
@@ -108,6 +157,19 @@ def transition_table(labels: pd.Series | Sequence[int], normalize: bool = True) 
 
 
 def duration_table(labels: pd.Series | Sequence[int]) -> pd.DataFrame:
+    """Summarize contiguous state episode durations.
+
+    Parameters
+    ----------
+    labels : pandas.Series or sequence of int
+        State label sequence.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with state, episode count, average duration, median duration, and
+        maximum duration.
+    """
     lab = pd.Series(labels).dropna().astype(int)
     if lab.empty:
         return pd.DataFrame(columns=["state", "episodes", "avg_duration", "median_duration", "max_duration"])
@@ -137,6 +199,26 @@ def regime_separation_score(
     outcomes: pd.DataFrame | pd.Series,
     labels: pd.Series | Sequence[int],
 ) -> float:
+    """Measure how strongly regime labels separate outcome means.
+
+    Parameters
+    ----------
+    outcomes : pandas.DataFrame or pandas.Series
+        Outcome variables.
+    labels : pandas.Series or sequence of int
+        Regime labels.
+
+    Returns
+    -------
+    float
+        Average standardized spread between the largest and smallest state mean
+        across outcomes. Returns ``NaN`` if fewer than two states are available.
+
+    Notes
+    -----
+    Larger values indicate regimes that better separate economically meaningful
+    outcomes.
+    """
     out = outcomes.to_frame() if isinstance(outcomes, pd.Series) else outcomes.copy()
     lab = labels if isinstance(labels, pd.Series) else pd.Series(labels, index=out.index if len(labels) == len(out) else None)
     joined = pd.concat([out, pd.Series(lab, name="state")], axis=1).replace([np.inf, -np.inf], np.nan).dropna()
@@ -168,6 +250,38 @@ def model_quality_row(
     aic: float | None = None,
     bic: float | None = None,
 ) -> dict[str, float | str]:
+    """Build a compact quality row for a regime or clustering model.
+
+    The function reports state count, likelihood information, silhouette score,
+    state balance, average state duration, transition frequency, posterior
+    confidence/entropy, and economic separation.
+
+    Parameters
+    ----------
+    name : str
+        Model name.
+    labels_or_x : array-like
+        Labels when ``labels`` is omitted, otherwise the feature matrix.
+    labels : pandas.Series or sequence of int, optional
+        State labels.
+    x : pandas.DataFrame or numpy.ndarray, optional
+        Feature matrix used for silhouette scoring.
+    proba : pandas.DataFrame or numpy.ndarray, optional
+        Posterior state probabilities.
+    outcomes : pandas.DataFrame or pandas.Series, optional
+        Outcome variables used for economic separation.
+    loglike : float, optional
+        Model log likelihood.
+    likelihood : float, optional
+        Alias for ``loglike``.
+    aic, bic : float, optional
+        Information criteria.
+
+    Returns
+    -------
+    dict
+        Model quality metrics.
+    """
     if labels is not None:
         if x is None:
             x = labels_or_x

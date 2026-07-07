@@ -20,6 +20,26 @@ from quantfinlab.ml.rewards import DifferentialSharpe, DifferentialSortino, rewa
 
 @dataclass
 class TrainingResult:
+    """Container for policy training or evaluation outputs.
+
+    Attributes
+    ----------
+    name : str
+        Training or evaluation run name.
+    history : pandas.DataFrame
+        Epoch-level training history. Empty for pure evaluation results.
+    validation : dict of str to float
+        Validation metrics such as return, volatility, Sharpe, drawdown, reward, and
+        exposure diagnostics.
+    weights : pandas.DataFrame
+        Policy weights over the validation or evaluation period.
+    returns : pandas.Series
+        Realized policy returns.
+    components : list of dict
+        Per-step reward component dictionaries.
+    model_path : pathlib.Path, optional
+        Checkpoint path used for saving or loading the policy.
+    """
     name: str
     history: pd.DataFrame
     validation: dict[str, float]
@@ -464,6 +484,38 @@ def evaluate_policy(
     reward_settings: Mapping[str, Any] | None = None,
     device=None,
 ) -> TrainingResult:
+    """Evaluate a policy on a state period and return validation artifacts.
+
+    The function rolls the policy through the requested state period, computes
+    policy returns and reward components, and, when daily return windows are
+    available, replays the resulting weights through the standard weight backtest
+    engine for execution-consistent net returns.
+
+    Parameters
+    ----------
+    policy : object
+        Policy object exposing the expected action/evaluation interface.
+    state : StateTables
+        State object.
+    period : tuple, optional
+        Evaluation period as ``(start, end)``. If omitted, all state dates are used.
+    reward_settings : mapping, optional
+        Reward and cost settings.
+    device : optional
+        Torch device.
+
+    Returns
+    -------
+    TrainingResult
+        Evaluation result with validation metrics, weights, realized returns, and
+        reward components.
+
+    Notes
+    -----
+    If the portfolio backtest replay fails, the function falls back to the rollout
+    period returns. When replay succeeds, reported performance uses daily net
+    returns and an annualization factor appropriate for daily data.
+    """
     from quantfinlab.backtest.portfolio import run_weights_backtest
 
     settings = dict(reward_settings or {})
@@ -553,6 +605,67 @@ def train_ppo(
     model_path: str | Path | None = None,
     device=None,
 ) -> TrainingResult:
+    """Train or load a PPO portfolio policy.
+
+    The function trains a policy with clipped Proximal Policy Optimization on
+    rollouts sampled from the training period. It computes generalized advantage
+    estimates, updates policy and value networks over minibatches, periodically
+    evaluates on the validation period, keeps the best validation checkpoint, and
+    returns the final validation artifacts.
+
+    Parameters
+    ----------
+    policy : object
+        PPO-compatible policy exposing ``evaluate_actions`` and rollout action
+        methods.
+    state : StateTables
+        State tensors and return windows.
+    returns : pandas.DataFrame, optional
+        Reserved for compatibility with training workflows.
+    train_period : tuple
+        Training period.
+    valid_period : tuple
+        Validation period.
+    reward_settings : mapping
+        Reward, cost, and evaluation settings.
+    epochs : int, default=120
+        Number of training epochs.
+    rollout_length : int, default=96
+        Number of decision steps sampled per rollout.
+    minibatch_size : int, default=128
+        PPO minibatch size.
+    ppo_epochs : int, default=5
+        Number of optimization passes over each rollout.
+    gamma : float, default=0.99
+        Discount factor.
+    gae_lambda : float, default=0.95
+        GAE smoothing parameter.
+    clip_ratio : float, default=0.20
+        PPO policy-ratio clipping width.
+    lr : float, default=3e-4
+        AdamW learning rate.
+    value_weight : float, default=0.50
+        Value loss multiplier.
+    entropy_weight : float, default=0.005
+        Entropy bonus multiplier.
+    model_path : str or pathlib.Path, optional
+        Checkpoint path. If a compatible checkpoint exists, it is loaded and the
+        policy is evaluated without retraining.
+    device : optional
+        Torch device.
+
+    Returns
+    -------
+    TrainingResult
+        Trained or loaded PPO result containing training history, validation
+        metrics, validation weights, returns, reward components, and checkpoint path.
+
+    Notes
+    -----
+    The routine samples contiguous training rollouts rather than independent rows,
+    which preserves path-dependent state variables such as previous weights,
+    turnover, drawdown, and recurrent hidden state when applicable.
+    """
     import torch
 
     dev = _torch_device(device)
@@ -819,6 +932,66 @@ def train_sac(
     model_path: str | Path | None = None,
     device=None,
 ) -> TrainingResult:
+    """Train or load a Soft Actor-Critic style portfolio policy.
+
+    The function trains an off-policy actor-critic policy using a replay buffer,
+    twin critics, entropy regularization, target critic updates, and delayed actor
+    updates. It periodically evaluates on the validation period, keeps the best
+    checkpoint, and returns validation artifacts.
+
+    Parameters
+    ----------
+    policy : object
+        SAC-compatible policy exposing actor, critic, sampling, and Q-value methods.
+    state : StateTables
+        State tensors and return windows.
+    returns : pandas.DataFrame, optional
+        Reserved for compatibility with training workflows.
+    train_period : tuple
+        Training period.
+    valid_period : tuple
+        Validation period.
+    reward_settings : mapping
+        Reward, entropy, and scaling settings.
+    epochs : int, default=140
+        Number of training epochs.
+    batch_size : int, default=128
+        Replay minibatch size.
+    replay_size : int, default=100000
+        Maximum replay-buffer length.
+    rollout_length : int, default=156
+        Number of decision steps collected per rollout.
+    gamma : float, default=0.97
+        Discount factor.
+    tau : float, default=0.005
+        Target critic soft-update rate.
+    lr_actor : float, default=3e-4
+        Actor learning rate.
+    lr_critic : float, default=3e-4
+        Critic learning rate.
+    alpha : float, default=0.05
+        Initial entropy temperature.
+    updates_per_step : int, default=2
+        Multiplier controlling critic/actor updates per epoch.
+    policy_delay : int, default=2
+        Actor/temperature update delay relative to critic updates.
+    model_path : str or pathlib.Path, optional
+        Checkpoint path. If present, the policy is loaded and evaluated.
+    device : optional
+        Torch device.
+
+    Returns
+    -------
+    TrainingResult
+        Trained or loaded SAC result containing history, validation metrics,
+        validation weights, returns, components, and checkpoint path.
+
+    Notes
+    -----
+    Rewards are optionally rescaled using ``sac_reward_scale`` from
+    ``reward_settings``. The learned entropy temperature is optimized toward
+    ``target_entropy`` when supplied, otherwise a dimension-based target is used.
+    """
     import torch
 
     dev = _torch_device(device)
@@ -975,6 +1148,21 @@ def validation_policy_table(
     *,
     benchmark_name: str = "Forecast-Gated MaxSharpe",
 ) -> pd.DataFrame:
+    """Collect validation metrics from several training results.
+
+    Parameters
+    ----------
+    results : mapping of str to TrainingResult
+        Policy training or evaluation results.
+    benchmark_name : str, default="Forecast-Gated MaxSharpe"
+        Reserved compatibility label for benchmark-aware reporting.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table indexed by policy name containing validation metrics and checkpoint
+        path when available.
+    """
     rows = []
     for name, result in results.items():
         row = dict(result.validation)
@@ -994,6 +1182,33 @@ def policy_backtest(
     cost_bps: float = 10.0,
     device=None,
 ):
+    """Backtest a policy by first converting it to a weight frame.
+
+    Parameters
+    ----------
+    policy : object
+        Trained policy.
+    state : StateTables
+        State object.
+    returns : pandas.DataFrame
+        Daily return panel used by the backtest.
+    period : tuple
+        Backtest period.
+    cost_bps : float, default=10.0
+        Transaction cost in basis points.
+    device : optional
+        Torch device.
+
+    Returns
+    -------
+    BacktestResult
+        Standard weight-backtest result using ``weight_timing="next_close"``.
+
+    Notes
+    -----
+    This function bridges learned policies and the standard portfolio backtest
+    engine, making RL results comparable to deterministic allocation strategies.
+    """
     from quantfinlab.backtest.portfolio import run_weights_backtest
     from quantfinlab.ml.environment import policy_weight_frame
 

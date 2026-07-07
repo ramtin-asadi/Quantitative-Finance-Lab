@@ -10,6 +10,78 @@ import pandas as pd
 
 @dataclass
 class StateTables:
+    """Container for reinforcement-learning state tensors and aligned market data.
+
+    The object stores the complete state representation used by portfolio policies:
+    asset-level features, global/context features, prior strategy weights, returns
+    over decision periods, daily return windows for execution-faithful rewards, and
+    metadata describing feature names and asset ordering. It is the central contract
+    between feature engineering, policy rollout, training, evaluation, and
+    backtesting.
+
+    Attributes
+    ----------
+    dates : pandas.DatetimeIndex
+        Decision dates represented by the state tensors.
+    assets : list of str
+        Risky assets in the state, excluding the cash ticker.
+    cash_ticker : str
+        Cash or defensive residual asset appended to the policy weight vector.
+    asset_state : numpy.ndarray
+        Three-dimensional array with shape ``(n_dates, n_assets, n_asset_features)``.
+    global_state : numpy.ndarray
+        Two-dimensional array with shape ``(n_dates, n_global_features)``.
+    prior_weights : numpy.ndarray
+        Prior strategy weights with shape ``(n_dates, n_assets, n_priors)``.
+    returns_period : pandas.DataFrame
+        Period return table aligned to decision dates and output columns.
+    prior_names : list of str
+        Names of prior strategy weight frames represented in ``prior_weights``.
+    asset_feature_names : list of str
+        Names of asset-level features in the third dimension of ``asset_state``.
+    global_feature_names : list of str
+        Names of global/context features.
+    portfolio_feature_names : list of str
+        Names of dynamic portfolio-state features supplied during rollout.
+    prior_weight_frames : dict
+        Original aligned prior weight frames by prior name.
+    active_benchmark : str, optional
+        Name of the active benchmark prior when available.
+    returns_daily : pandas.DataFrame, optional
+        Daily return panel used for path-faithful execution and rewards.
+    daily_windows : tuple of pandas.DataFrame
+        Daily return windows between decision dates.
+    daily_windows_np : tuple of numpy.ndarray
+        Numpy versions of ``daily_windows``.
+
+    Properties
+    ----------
+    n_dates : int
+        Number of decision dates.
+    n_assets : int
+        Number of risky assets.
+    n_asset_features : int
+        Number of asset-level features.
+    n_global_features : int
+        Number of global features.
+    n_portfolio_features : int
+        Number of dynamic portfolio-state features.
+    columns : list of str
+        Risky assets followed by the cash ticker.
+
+    Methods
+    -------
+    copy_with(asset_state=None, global_state=None, prior_weights=None)
+        Return a copy with one or more state arrays replaced.
+    period_indices(period)
+        Return integer indices for a date period or all indices when ``period`` is
+        ``None``.
+
+    Notes
+    -----
+    The ordering of ``assets`` and ``columns`` is part of the model contract. Policy
+    outputs, reward calculations, and backtests all assume the same ordering.
+    """
     dates: pd.DatetimeIndex
     assets: list[str]
     cash_ticker: str
@@ -79,6 +151,28 @@ def make_decision_dates(
     freq: str = "W-FRI",
     min_history_days: int = 756,
 ) -> pd.DatetimeIndex:
+    """Sample decision dates from a trading index after an initial history requirement.
+
+    Parameters
+    ----------
+    index : sequence or pandas.Index
+        Trading dates or date-like values.
+    freq : str, default="W-FRI"
+        Resampling frequency used to select the last available trading date in each
+        period.
+    min_history_days : int, default=756
+        Number of initial observations excluded before decisions are allowed.
+
+    Returns
+    -------
+    pandas.DatetimeIndex
+        Sorted unique decision dates that are present in the original index.
+
+    Notes
+    -----
+    The function selects actual dates from the input index rather than calendar
+    dates that may not be trading days.
+    """
     idx = pd.DatetimeIndex(pd.to_datetime(index)).sort_values().unique()
     if len(idx) == 0:
         return idx
@@ -331,6 +425,66 @@ def build_state_tables(
     benchmark_ticker: str | None = "SPY",
     active_benchmark: str = "Forecast-Gated MaxSharpe",
 ) -> StateTables:
+    """Build aligned state tensors for portfolio policy learning and evaluation.
+
+    This function converts long-form asset features, optional forecast features,
+    global macro/context features, prior strategy weights, and returns into a
+    single ``StateTables`` object. It defines the input contract for reinforcement-
+    learning and policy-evaluation routines.
+
+    Parameters
+    ----------
+    asset_features : pandas.DataFrame
+        Long-form asset feature table containing ``date`` and ``asset`` columns plus
+        numeric feature columns.
+    context_features : pandas.DataFrame, optional
+        Global context features indexed or keyed by date.
+    fci_features : pandas.DataFrame, optional
+        Financial-conditions features indexed or keyed by date.
+    regime_features : pandas.DataFrame, optional
+        Regime probability or regime state features.
+    vix_features : pandas.DataFrame, optional
+        Volatility-index features aligned to decision dates with forward fill.
+    forecast_features : pandas.DataFrame, optional
+        Long-form forecast features containing ``date`` and ``asset``. Leaky target
+        or realized-outcome columns are excluded before merging.
+    prior_weights : mapping of str to pandas.DataFrame, optional
+        Existing strategy weight frames used as priors or benchmark policies.
+    include_prior_weights : bool, default=False
+        If true, prior strategy weights are also appended as asset-level and global
+        features.
+    returns : pandas.DataFrame
+        Daily return panel used to build period returns and execution windows.
+    decision_dates : sequence
+        Candidate policy decision dates.
+    assets : sequence of str
+        Risky assets included in the policy state.
+    cash_ticker : str, default="SHY"
+        Cash or defensive residual asset.
+    benchmark_ticker : str, optional, default="SPY"
+        Benchmark ticker used by global-feature construction.
+    active_benchmark : str, default="Forecast-Gated MaxSharpe"
+        Preferred prior strategy name used as the active benchmark when present.
+
+    Returns
+    -------
+    StateTables
+        Fully aligned state object containing arrays, feature names, prior frames,
+        returns, and daily execution windows.
+
+    Raises
+    ------
+    ValueError
+        If no decision dates align to the return index or if ``asset_features`` does
+        not contain required ``date`` and ``asset`` columns.
+
+    Notes
+    -----
+    The function is careful to build date-``t`` state features. Forecast features
+    are merged only after excluding known leaky forecast columns. Prior weights are
+    aligned to decision dates and can be used as policy inputs, benchmark features,
+    or later comparison strategies.
+    """
     asset_list = list(assets)
     columns = asset_list + ([cash_ticker] if cash_ticker not in asset_list else [])
     dates_raw = pd.DatetimeIndex(pd.to_datetime(list(decision_dates))).sort_values().unique()
@@ -460,6 +614,31 @@ def portfolio_state_vector(
     rolling_portfolio_vol: float = 0.0,
     recent_portfolio_return: float = 0.0,
 ) -> np.ndarray:
+    """Build the dynamic portfolio-state vector supplied to a policy.
+
+    The vector contains previous risky weights followed by summary state variables:
+    previous risky exposure, previous turnover, current drawdown, rolling portfolio
+    volatility, and recent portfolio return.
+
+    Parameters
+    ----------
+    w_prev : sequence of float
+        Previous full weight vector. If it includes a cash asset, the final element
+        is treated as cash and excluded from the risky-weight prefix.
+    previous_turnover : float, default=0.0
+        Turnover from the previous decision.
+    current_drawdown : float, default=0.0
+        Current portfolio drawdown.
+    rolling_portfolio_vol : float, default=0.0
+        Recent realized portfolio volatility.
+    recent_portfolio_return : float, default=0.0
+        Most recent portfolio return.
+
+    Returns
+    -------
+    numpy.ndarray
+        One-dimensional float32 portfolio-state vector.
+    """
     w = np.asarray(w_prev, dtype=np.float32).reshape(-1)
     risky = float(np.clip(w[:-1].sum() if len(w) > 1 else w.sum(), 0.0, 1.0))
     tail = np.asarray(
@@ -484,6 +663,43 @@ def action_to_weights(
     active_scale: float = 0.25,
     action_mode: str = "softmax",
 ):
+    """Map a continuous policy action to long-only risky and cash weights.
+
+    The action is interpreted as asset logits plus one exposure logit. The exposure
+    logit determines total risky exposure between ``min_exposure`` and
+    ``max_exposure``. Asset logits determine the risky allocation either by softmax
+    or by active tilts around equal weight. Per-asset caps are enforced by iterative
+    cap redistribution, and residual capital is assigned to cash.
+
+    Parameters
+    ----------
+    action : array-like or torch.Tensor
+        Continuous action with length ``n_assets + 1``. The final element controls
+        total risky exposure.
+    min_exposure : float, default=0.50
+        Minimum total risky exposure.
+    max_exposure : float, default=1.00
+        Maximum total risky exposure.
+    max_weight : float, default=0.35
+        Per-risky-asset weight cap.
+    active_scale : float, default=0.25
+        Tilt magnitude used in non-softmax action modes.
+    action_mode : str, default="softmax"
+        Action interpretation. ``"softmax"`` and ``"absolute"`` use softmax
+        weights. Other modes use centered ``tanh`` tilts around equal weight.
+
+    Returns
+    -------
+    numpy.ndarray or torch.Tensor
+        Weight vector with risky assets followed by cash. The return type matches
+        the input family: tensor input returns a tensor; array-like input returns a
+        NumPy array.
+
+    Notes
+    -----
+    The function is differentiable for tensor inputs except for the iterative cap
+    logic. For NumPy inputs, it is intended for rollout and evaluation.
+    """
     mode = str(action_mode).lower().replace("-", "_")
     if hasattr(action, "detach"):
         import torch
@@ -559,6 +775,29 @@ def portfolio_step_return(
     w_prev: Sequence[float] | None = None,
     cost_bps: float = 10.0,
 ) -> tuple[float, float, float]:
+    """Compute one-period net portfolio return, turnover, and cost.
+
+    Parameters
+    ----------
+    w_new : sequence of float
+        New portfolio weights for the next return observation.
+    r_next : sequence of float
+        Next-period asset returns aligned to ``w_new``.
+    w_prev : sequence of float, optional
+        Previous weights used to compute turnover.
+    cost_bps : float, default=10.0
+        Transaction cost in basis points applied to one-way turnover.
+
+    Returns
+    -------
+    tuple of float
+        ``(net_return, turnover, cost)`` where ``cost`` is expressed as a return
+        drag.
+
+    Notes
+    -----
+    Turnover is zero when ``w_prev`` is omitted.
+    """
     w = np.asarray(w_new, dtype=float).reshape(-1)
     r = np.asarray(r_next, dtype=float).reshape(-1)
     turnover = portfolio_turnover(w, w_prev) if w_prev is not None else 0.0
@@ -574,7 +813,44 @@ def portfolio_step_path_return(
     w_prev: Sequence[float] | None = None,
     cost_bps: float = 10.0,
 ) -> tuple[float, float, float, np.ndarray, np.ndarray, np.ndarray]:
-    """Mirror ``run_weights_backtest(..., weight_timing='next_close')`` for one action window."""
+    """Apply one decision weight vector over a daily return window.
+
+    The function mirrors the mechanics of a precomputed-weight backtest with
+    ``weight_timing="next_close"`` for a single action window. It applies the
+    rebalance cost at the start of the window, compounds daily portfolio returns,
+    lets weights drift through the window, and returns the ending weights and daily
+    path diagnostics.
+
+    Parameters
+    ----------
+    w_new : sequence of float
+        New full weight vector.
+    daily_returns : pandas.DataFrame or numpy.ndarray
+        Daily return window whose columns are aligned to ``w_new``.
+    w_prev : sequence of float, optional
+        Previous full weight vector used to compute turnover.
+    cost_bps : float, default=10.0
+        Transaction cost in basis points applied to one-way turnover.
+
+    Returns
+    -------
+    tuple
+        ``(window_return, turnover, cost, ending_weights, daily_net_returns,
+        nav_path)``.
+
+    Raises
+    ------
+    ValueError
+        If ``w_new`` is empty or the daily return window has an incompatible column
+        count.
+
+    Notes
+    -----
+    This function is used to make RL rewards and evaluation closer to the final
+    backtest engine: the agent chooses weights at the decision date, pays turnover
+    costs once, and then experiences the realized daily return path until the next
+    decision.
+    """
     w = np.asarray(w_new, dtype=float).reshape(-1)
     if w.size == 0:
         raise ValueError("w_new is empty.")
@@ -658,6 +934,40 @@ def rollout_weights(
     device=None,
     initial_weights: Sequence[float] | None = None,
 ) -> pd.DataFrame:
+    """Roll a policy through a state object and collect the chosen weights.
+
+    At each decision date, the routine injects the previous weights into the asset
+    state when the ``previous_weight`` feature is present, builds the dynamic
+    portfolio-state vector, asks the policy for deterministic weights, and advances
+    the simulated portfolio state using either daily execution windows or period
+    returns.
+
+    Parameters
+    ----------
+    policy : object
+        Policy object. Recurrent policies are detected by class name prefix and are
+        called with hidden state support.
+    state : StateTables
+        State object containing features, returns, and date metadata.
+    period : tuple, optional
+        Optional ``(start, end)`` period. If omitted, all dates are used.
+    device : optional
+        Torch device used for tensor policies.
+    initial_weights : sequence of float, optional
+        Starting full weight vector. Defaults to equal risky weights and zero cash.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Weight frame indexed by policy decision date with columns equal to
+        ``state.columns``.
+
+    Notes
+    -----
+    The function updates its internal previous-weight, turnover, NAV, drawdown, and
+    recent-return state after each decision. It is therefore path-dependent, not a
+    stateless batch prediction routine.
+    """
     idx = state.period_indices(period)
     if len(idx) == 0:
         return pd.DataFrame(columns=state.columns)
@@ -725,6 +1035,29 @@ def policy_weight_frame(
     cash_ticker: str | None = None,
     device=None,
 ) -> pd.DataFrame:
+    """Return a policy weight frame with a requested asset/cash column order.
+
+    Parameters
+    ----------
+    policy : object
+        Trained or fitted policy.
+    state : StateTables
+        State object.
+    period : tuple, optional
+        Optional date period.
+    assets : sequence of str, optional
+        Risky assets to include. Defaults to ``state.assets``.
+    cash_ticker : str, optional
+        Cash column name. Defaults to ``state.cash_ticker``.
+    device : optional
+        Torch device.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Policy weights indexed by decision date and reindexed to the requested
+        columns.
+    """
     W = rollout_weights(policy, state, period=period, device=device)
     cols = list(assets or state.assets)
     cash = cash_ticker or state.cash_ticker
@@ -893,11 +1226,26 @@ def blend_policy_weights(
     *,
     blend_weights: Mapping[str, float] | None = None,
 ) -> pd.DataFrame:
-    """Blend several policy weight frames into one renormalised ensemble frame.
+    """Blend several policy weight frames into one ensemble weight frame.
 
-    With ``blend_weights=None`` the policies are averaged equally; otherwise each
-    frame is scaled by its (clipped, non-negative) blend weight before the rows
-    are renormalised to sum to one.
+    Parameters
+    ----------
+    weight_frames : mapping of str to pandas.DataFrame
+        Weight frames to blend. Empty frames are ignored.
+    blend_weights : mapping of str to float, optional
+        Non-negative policy blend weights. If omitted, valid frames are averaged
+        equally. If all supplied weights are zero, the function falls back to equal
+        weights.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Date-indexed blended weight frame with rows renormalized to sum to one.
+
+    Notes
+    -----
+    The function aligns all dates and columns across input frames before blending.
+    Missing weights are treated as zero before row normalization.
     """
     frames = {str(k): pd.DataFrame(v).copy() for k, v in weight_frames.items() if v is not None and not pd.DataFrame(v).empty}
     if not frames:

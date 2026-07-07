@@ -50,6 +50,32 @@ def performance_metrics(
     rf_daily: float = 0.0,
     annualization: float = DEFAULT_ANNUALIZATION,
 ) -> dict[str, float]:
+    """Compute standard performance metrics from returns and NAV.
+
+    Parameters
+    ----------
+    net_returns : pandas.Series
+        Net periodic returns.
+    net_values : pandas.Series
+        Net portfolio value or NAV series.
+    rf_daily : float, default=0.0
+        Periodic risk-free rate used in Sharpe and Sortino calculations.
+    annualization : float, default=252.0
+        Annualization factor for return and volatility metrics.
+
+    Returns
+    -------
+    dict
+        Metrics including CAGR, annualized volatility, Sharpe, maximum drawdown,
+        Calmar, and Sortino. Values are ``NaN`` when insufficient data are
+        available.
+
+    Notes
+    -----
+    The CAGR calculation assumes the length of ``net_returns`` represents the
+    number of periods and divides by ``annualization`` to obtain years.
+    """
+
     r = pd.Series(net_returns, copy=False).dropna().astype(float)
     v = pd.Series(net_values, copy=False).dropna().astype(float)
     if v.empty:
@@ -204,6 +230,34 @@ def build_strategy_summary(
     rf_daily: float = 0.0,
     annualization: float = DEFAULT_ANNUALIZATION,
 ) -> pd.DataFrame:
+    """Build a combined strategy summary table from backtest results.
+
+    The function joins performance metrics, trade/turnover statistics, and
+    strategy metadata parsed from strategy names or result metadata.
+
+    Parameters
+    ----------
+    results : mapping
+        Mapping from strategy name to backtest result object or compatible
+        dictionary.
+    rf_daily : float, default=0.0
+        Periodic risk-free rate used in performance metrics.
+    annualization : float, default=252.0
+        Annualization factor.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Strategy-indexed summary table with optimizer, expected-return model,
+        covariance model, performance metrics, turnover, cost drag, effective
+        number of holdings, and fallback counts where available.
+
+    Notes
+    -----
+    This table is intended for notebook and report display rather than for
+    low-level backtest execution.
+    """
+
     metrics = build_metrics_table(results, rf_daily=rf_daily, annualization=annualization)
     trade = build_trade_table(results)
     meta_rows = []
@@ -233,6 +287,31 @@ def summarize_results(
     rf_daily: float = 0.0,
     annualization: float = DEFAULT_ANNUALIZATION,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Return performance and trade summary tables for a result mapping.
+
+    Parameters
+    ----------
+    results : mapping
+        Mapping from strategy name to backtest result object or compatible
+        dictionary.
+    rf_daily : float, default=0.0
+        Periodic risk-free rate used in performance metrics.
+    annualization : float, default=252.0
+        Annualization factor.
+
+    Returns
+    -------
+    metrics : pandas.DataFrame
+        Strategy performance metrics.
+    trades : pandas.DataFrame
+        Turnover, cost, effective-number, and fallback diagnostics.
+
+    Notes
+    -----
+    This is a compact convenience wrapper around the metrics and trade-table
+    builders.
+    """
+
     return (
         build_metrics_table(results, rf_daily=rf_daily, annualization=annualization),
         build_trade_table(results),
@@ -246,6 +325,33 @@ def best_strategy_by_sharpe(
     annualization: float = DEFAULT_ANNUALIZATION,
     min_obs: int = 50,
 ) -> tuple[str, dict[str, float]]:
+    """Select the strategy with the highest Sharpe ratio.
+
+    Parameters
+    ----------
+    results : mapping
+        Mapping from strategy name to backtest result object or compatible
+        dictionary.
+    rf_daily : float, default=0.0
+        Periodic risk-free rate.
+    annualization : float, default=252.0
+        Annualization factor.
+    min_obs : int, default=50
+        Minimum number of return observations required for a valid Sharpe.
+
+    Returns
+    -------
+    best_name : str
+        Name of the best strategy.
+    sharpes : dict
+        Mapping from strategy name to Sharpe ratio.
+
+    Notes
+    -----
+    Strategies with invalid Sharpe values are treated as worse than finite
+    strategies.
+    """
+
     sharpes = {
         name: result_sharpe(res, rf_daily=rf_daily, annualization=annualization, min_obs=min_obs)
         for name, res in results.items()
@@ -366,7 +472,7 @@ def fixed_mu_covariance_comparison(
     optimizer: str = "MV",
     cov_models: Sequence[str] = COV_ORDER,
 ) -> list[str]:
-    """All covariance models for one fixed μ model and optimizer. No best-picking."""
+    """All covariance models for one fixed mu model and optimizer. No best-picking."""
     out = []
     df = filter_grid(results, optimizer=optimizer, mu_model=mu_model)
     for cov_model in cov_models:
@@ -382,7 +488,7 @@ def fixed_cov_mu_comparison(
     optimizers: Sequence[str] = ("MV", "MaxSharpe"),
     mu_models: Sequence[str] = MU_ORDER,
 ) -> list[str]:
-    """All μ models for a fixed covariance and optimizer list. No best-picking."""
+    """All mu models for a fixed covariance and optimizer list. No best-picking."""
     out = []
     df = filter_grid(results, optimizer=list(optimizers), cov_model=cov_model)
     for optimizer in optimizers:

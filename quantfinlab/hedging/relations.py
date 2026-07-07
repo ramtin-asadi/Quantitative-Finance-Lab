@@ -11,7 +11,30 @@ from quantfinlab.common.errors import InputError
 
 @dataclass(frozen=True)
 class rel:
-    """A target asset and one or more hedge assets."""
+    """Define a hedge relationship between one target asset and one or more hedges.
+
+    Attributes
+    ----------
+    name : str
+        Relationship identifier. It is normalized to lowercase.
+    target : str
+        Target asset to hedge. It is normalized to lowercase.
+    hedges : list of str
+        Hedge assets. Each name is normalized to lowercase.
+    desc : str, default=""
+        Optional human-readable description.
+    pair : tuple of str, optional
+        Optional residual-trading pair identifier.
+
+    Properties
+    ----------
+    assets : list of str
+        Target followed by hedge assets.
+    single : bool
+        True when the relationship has exactly one hedge asset.
+    hedge_label : str
+        Hedge tickers joined by ``"+"``.
+    """
 
     name: str
     target: str
@@ -51,7 +74,22 @@ def rel_tickers(rels: Iterable[rel]) -> list[str]:
 
 
 def filter_rels(rels: Sequence[rel], columns: Sequence[str]) -> tuple[list[rel], dict[str, list[str]]]:
-    """Keep relationships whose target and hedge tickers are all available."""
+    """Filter hedge relationships by available columns.
+
+    Parameters
+    ----------
+    rels : sequence of rel
+        Candidate relationships.
+    columns : sequence of str
+        Available asset columns.
+
+    Returns
+    -------
+    tuple
+        ``(kept, missing)`` where ``kept`` is a list of complete relationships and
+        ``missing`` maps relationship names to missing asset tickers.
+    """
+
     available = {str(c).strip().lower() for c in columns}
     kept: list[rel] = []
     missing: dict[str, list[str]] = {}
@@ -65,7 +103,23 @@ def filter_rels(rels: Sequence[rel], columns: Sequence[str]) -> tuple[list[rel],
 
 
 def rel_table(rels: Sequence[rel], columns: Sequence[str] | None = None) -> pd.DataFrame:
-    """Compact relationship table with optional availability flag."""
+    """Build a compact relationship table.
+
+    Parameters
+    ----------
+    rels : sequence of rel
+        Relationships to summarize.
+    columns : sequence of str, optional
+        Optional available columns used to mark whether each relationship is
+        included.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with relationship name, target, hedge list, residual-pair label, and
+        inclusion flag.
+    """
+
     available = None if columns is None else {str(c).strip().lower() for c in columns}
     rows = []
     for r in rels:
@@ -83,7 +137,27 @@ def rel_table(rels: Sequence[rel], columns: Sequence[str] | None = None) -> pd.D
 
 
 def hedge_proxy_ret(ret: pd.DataFrame, r: rel) -> pd.Series:
-    """Equal-weight hedge proxy return for diagnostics and beta reduction."""
+    """Compute an equal-weight hedge-proxy return series.
+
+    Parameters
+    ----------
+    ret : pandas.DataFrame
+        Return panel containing all hedge assets.
+    r : rel
+        Relationship defining the hedge assets.
+
+    Returns
+    -------
+    pandas.Series
+        Equal-weight average return of the hedge assets, named after the
+        relationship.
+
+    Raises
+    ------
+    InputError
+        If ``ret`` is not a DataFrame or any hedge asset is missing.
+    """
+
     if not isinstance(ret, pd.DataFrame):
         raise InputError("ret must be a pandas DataFrame.")
     panel = ret.copy()

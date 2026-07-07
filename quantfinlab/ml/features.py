@@ -50,6 +50,25 @@ def skip_return(
 
 
 def future_return(prices: pd.Series | pd.DataFrame, horizon: int = 21) -> pd.Series | pd.DataFrame:
+    """Compute forward simple returns over a fixed horizon.
+
+    Parameters
+    ----------
+    prices : pandas.Series or pandas.DataFrame
+        Price series or price panel.
+    horizon : int, default=21
+        Forward horizon in rows.
+
+    Returns
+    -------
+    pandas.Series or pandas.DataFrame
+        ``price[t+horizon] / price[t] - 1`` aligned to date ``t``.
+
+    Notes
+    -----
+    Rows near the end of the sample are missing because the forward price is not
+    available.
+    """
     px = pd.Series(prices) if not isinstance(prices, (pd.Series, pd.DataFrame)) else prices
     return px.astype(float).shift(-int(horizon)) / px.astype(float) - 1.0
 
@@ -61,7 +80,27 @@ def forward_excess_return(
     horizon: int = 21,
     rf_daily: float | None = None,
 ) -> pd.Series | pd.DataFrame:
-    """Forward log excess return over cash or a constant daily risk-free rate."""
+    """Compute forward log excess returns.
+
+    The function computes log forward returns over ``horizon`` and subtracts either
+    the matching forward cash return or a constant compounded risk-free return.
+
+    Parameters
+    ----------
+    prices : pandas.Series or pandas.DataFrame
+        Price series or panel.
+    cash_prices : pandas.Series, optional
+        Cash or benchmark price series used to compute forward excess returns.
+    horizon : int, default=21
+        Forward horizon in rows.
+    rf_daily : float, optional
+        Constant one-period risk-free rate used when ``cash_prices`` is omitted.
+
+    Returns
+    -------
+    pandas.Series or pandas.DataFrame
+        Forward log excess return aligned to the forecast date.
+    """
     px = pd.Series(prices) if not isinstance(prices, (pd.Series, pd.DataFrame)) else prices
     forward = np.log(px.astype(float).shift(-int(horizon)) / px.astype(float))
     if cash_prices is not None:
@@ -78,7 +117,27 @@ def ex_ante_vol(
     lookback: int = 63,
     horizon: int = 21,
 ) -> pd.Series | pd.DataFrame:
-    """Trailing daily volatility scaled to a forward horizon."""
+    """Estimate trailing volatility scaled to a forecast horizon.
+
+    Parameters
+    ----------
+    returns : pandas.Series or pandas.DataFrame
+        Return series or panel.
+    lookback : int, default=63
+        Rolling lookback window.
+    horizon : int, default=21
+        Forward horizon used to scale daily volatility.
+
+    Returns
+    -------
+    pandas.Series or pandas.DataFrame
+        Trailing standard deviation multiplied by ``sqrt(horizon)``.
+
+    Notes
+    -----
+    The output is an ex-ante risk estimate at the forecast date, not realized future
+    volatility.
+    """
     r = pd.Series(returns) if not isinstance(returns, (pd.Series, pd.DataFrame)) else returns
     return r.astype(float).rolling(int(lookback), min_periods=int(lookback)).std(ddof=1) * np.sqrt(int(horizon))
 
@@ -144,6 +203,31 @@ def rolling_pair_corr(
     asset_b: str | int | None = None,
     window: int = 252,
 ) -> pd.Series:
+    """Compute rolling correlation for a pair of assets or two explicit series.
+
+    Parameters
+    ----------
+    returns_or_a : pandas.DataFrame or pandas.Series
+        Return panel when using ``(returns, asset_a, asset_b)``, or the first return
+        series when using ``(series_a, series_b)``.
+    asset_a : str or pandas.Series
+        First asset name or second series.
+    asset_b : str or int, optional
+        Second asset name when the first argument is a DataFrame. When using two
+        series, this may be used as the window if it is an integer.
+    window : int, default=252
+        Rolling window.
+
+    Returns
+    -------
+    pandas.Series
+        Rolling correlation series.
+
+    Raises
+    ------
+    ValueError
+        If the argument pattern is invalid.
+    """
     if isinstance(returns_or_a, pd.DataFrame):
         if asset_b is None:
             raise ValueError("asset_b is required when the first argument is a DataFrame.")
@@ -157,6 +241,25 @@ def rolling_pair_corr(
 
 
 def rolling_avg_corr(returns: pd.DataFrame, window: int = 252) -> pd.Series:
+    """Compute average pairwise rolling correlation across a return panel.
+
+    Parameters
+    ----------
+    returns : pandas.DataFrame
+        Return panel.
+    window : int, default=252
+        Rolling correlation window.
+
+    Returns
+    -------
+    pandas.Series
+        Average pairwise rolling correlation named ``"avg_corr"``.
+
+    Notes
+    -----
+    If the panel has fewer than two columns, the function returns an all-missing
+    series indexed like the input.
+    """
     r = returns.astype(float)
     cols = list(r.columns)
     vals = []
@@ -181,6 +284,24 @@ def dispersion(prices: pd.DataFrame, window: int = 63, assets: Sequence[str] | N
 
 
 def feature_vif(x: pd.DataFrame) -> pd.DataFrame:
+    """Compute variance inflation factors for feature columns.
+
+    Parameters
+    ----------
+    x : pandas.DataFrame
+        Feature matrix.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table indexed by feature with auxiliary regression ``r2`` and ``vif``,
+        sorted by descending VIF.
+
+    Notes
+    -----
+    Rows with any missing or infinite feature values are dropped before the VIF
+    calculation. A very high VIF indicates near-collinearity with other features.
+    """
     z = x.replace([np.inf, -np.inf], np.nan).dropna().astype(float)
     rows = []
     for col in z.columns:
@@ -201,6 +322,25 @@ def pca_tables(
     x: pd.DataFrame,
     n_components: int | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Fit PCA to standardized features and return explanation/loadings tables.
+
+    Parameters
+    ----------
+    x : pandas.DataFrame
+        Feature matrix.
+    n_components : int, optional
+        Number of principal components. Defaults to the maximum possible number.
+
+    Returns
+    -------
+    tuple of pandas.DataFrame
+        ``(explained, loadings)`` where ``explained`` contains variance explained
+        per component and ``loadings`` contains feature loadings.
+
+    Notes
+    -----
+    Rows with missing or infinite values are dropped before standardization.
+    """
     z = x.replace([np.inf, -np.inf], np.nan).dropna().astype(float)
     n = min(z.shape)
     if n_components is None:
@@ -261,10 +401,38 @@ def build_asset_feature_block(
     rf_daily: float = 0.0,
     annualization: float = 252.0,
 ) -> pd.DataFrame:
-    """Build the Project 19 asset-date candidate feature block.
+    """Build a long-form asset-date feature block for cross-sectional forecasting.
 
-    The output is long-form with columns ``date`` and ``asset`` plus the
-    per-asset features used by the forecasting notebook.
+    The function computes return, momentum, volatility, downside, drawdown,
+    Sharpe, skewness, autocorrelation, volatility-of-volatility, relative-to-SPY,
+    cross-asset correlation, volume, and cross-sectional rank/z-score features for
+    each asset.
+
+    Parameters
+    ----------
+    close : pandas.DataFrame
+        Price panel.
+    volume : pandas.DataFrame, optional
+        Volume panel used for volume z-scores.
+    returns : pandas.DataFrame, optional
+        Return panel. If omitted, returns are computed from ``close``.
+    assets : sequence of str, optional
+        Assets to include. Defaults to price columns.
+    rf_daily : float, default=0.0
+        One-period risk-free rate used in rolling Sharpe calculations.
+    annualization : float, default=252.0
+        Annualization factor.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Long-form feature table with ``date`` and ``asset`` columns plus numeric
+        asset-level features.
+
+    Notes
+    -----
+    All features are trailing or contemporaneous at date ``t``. Forward target
+    columns are not created by this function.
     """
     cols = list(assets) if assets is not None else list(close.columns)
     px_all = _as_frame(close).ffill(limit=3)
@@ -389,7 +557,30 @@ def build_cross_asset_feature_block(
     cash_ticker: str = "SHY",
     benchmark_ticker: str = "SPY",
 ) -> pd.DataFrame:
-    """Build Project 16-style cross-asset and market-regime features."""
+    """Build cross-asset market-regime features from prices and returns.
+
+    The function computes breadth, dispersion, average correlation, benchmark
+    momentum, relative performance spreads, risk-versus-defensive spreads, and
+    volatility-change features.
+
+    Parameters
+    ----------
+    close : pandas.DataFrame
+        Price panel.
+    returns : pandas.DataFrame, optional
+        Return panel. If omitted, returns are computed from ``close``.
+    assets : sequence of str, optional
+        Assets to include in breadth, dispersion, and correlation calculations.
+    cash_ticker : str, default="SHY"
+        Cash or short-duration asset used in relative spreads.
+    benchmark_ticker : str, default="SPY"
+        Benchmark ticker for market momentum.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Date-indexed cross-asset feature block.
+    """
     cols = list(assets) if assets is not None else list(close.columns)
     px = _as_frame(close).ffill(limit=3)
     ret = _as_frame(returns) if returns is not None else px.pct_change(fill_method=None)
@@ -440,7 +631,37 @@ def build_fci_feature_block(
     min_history: int = 60,
     release_lag_months: int = 1,
 ) -> pd.DataFrame:
-    """Build aligned financial-condition features from available macro data."""
+    """Build aligned financial-condition features from macro and NFCI inputs.
+
+    The function converts available macro factors into condition blocks and an
+    economic FCI, applies a publication/release lag, and optionally merges NFCI
+    levels and changes. The output can be aligned to any requested index.
+
+    Parameters
+    ----------
+    macro_factors : pandas.DataFrame, optional
+        Monthly macro factor table used to build macro stress signals and condition
+        blocks.
+    nfci : pandas.DataFrame, optional
+        NFCI-style financial-condition table.
+    index : sequence or pandas.Index, optional
+        Target index to which features are forward-filled.
+    min_history : int, default=60
+        Minimum history used by macro signal and FCI transformations.
+    release_lag_months : int, default=1
+        Number of months by which macro-derived features are shifted to reflect
+        release lag.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Date-indexed financial-condition feature block.
+
+    Notes
+    -----
+    Macro-derived features are lagged before alignment so that unavailable future
+    macro releases are not used at the forecast date.
+    """
     parts: list[pd.DataFrame | pd.Series] = []
     if macro_factors is not None and not macro_factors.empty:
         from quantfinlab.macro import indicators
@@ -523,7 +744,31 @@ def assemble_forecasting_table(
     fci_features: pd.DataFrame | None = None,
     regime_features: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """Merge target/base rows with asset, cross-asset, FCI, and regime features."""
+    """Merge base target rows with asset, cross-asset, FCI, and regime features.
+
+    Parameters
+    ----------
+    base : pandas.DataFrame
+        Base long-form table containing at least ``date`` and ``asset``.
+    asset_features : pandas.DataFrame
+        Long-form asset feature table.
+    cross_features : pandas.DataFrame, optional
+        Date-level cross-asset features.
+    fci_features : pandas.DataFrame, optional
+        Date-level financial-condition features.
+    regime_features : pandas.DataFrame, optional
+        Date-level regime features.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Sorted long-form forecasting table with engineered feature upgrades added.
+
+    Notes
+    -----
+    Date-level feature blocks are merged by ``date`` after resetting the index when
+    needed.
+    """
     data = pd.DataFrame(base).copy()
     data["date"] = pd.to_datetime(data["date"])
     asset = pd.DataFrame(asset_features).copy()
@@ -546,11 +791,27 @@ def _safe_div(numerator: pd.Series, denominator: pd.Series) -> pd.Series:
 
 
 def add_forecasting_feature_upgrades(data: pd.DataFrame) -> pd.DataFrame:
-    """Add cross-sectional, relative, and regime-interaction features for Project 19.
+    """Add cross-sectional ranks, relative features, and regime interactions.
 
-    These transformations use only date-t information.  They intentionally avoid
-    target columns except for ``sigma_21``, which is a trailing risk estimate
-    computed at the forecast date.
+    The function extends a long-form forecasting table with within-date ranks,
+    risk-adjusted momentum ratios, trend spreads, relative-to-average and
+    relative-to-SPY features, and targeted macro/regime interactions.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Long-form table containing ``date``, ``asset``, and candidate feature
+        columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Copy of the input with additional engineered feature columns.
+
+    Notes
+    -----
+    The transformations use date-``t`` features only. Target columns are not used,
+    except for trailing risk estimates such as ``sigma_21`` when present.
     """
     out = pd.DataFrame(data).copy()
     if out.empty or "date" not in out.columns or "asset" not in out.columns:
@@ -647,7 +908,34 @@ def clean_feature_columns(
     min_std: float = 1e-8,
     max_abs_corr: float = 0.98,
 ) -> list[str]:
-    """Apply the first-stage Project 19 feature cleaning screen."""
+    """Apply a first-stage feature cleaning screen.
+
+    The screen removes features with excessive missingness, near-zero standard
+    deviation, and near-perfect correlation with features already retained.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Feature table.
+    feature_cols : sequence of str
+        Candidate feature columns.
+    max_missing : float, default=0.25
+        Maximum allowed missing fraction.
+    min_std : float, default=1e-8
+        Minimum required standard deviation.
+    max_abs_corr : float, default=0.98
+        Maximum absolute pairwise correlation with previously retained features.
+
+    Returns
+    -------
+    list of str
+        Retained feature column names.
+
+    Notes
+    -----
+    The correlation filter is order-dependent: earlier retained columns are kept and
+    later highly correlated columns are dropped.
+    """
     x = pd.DataFrame(data[list(feature_cols)]).apply(pd.to_numeric, errors="coerce")
     x = x.replace([np.inf, -np.inf], np.nan)
     missing = x.isna().mean()
@@ -674,7 +962,28 @@ def feature_availability_by_date(
     asset_col: str = "asset",
     target_cols: Sequence[str] | None = None,
 ) -> pd.DataFrame:
-    """Summarize daily cross-section and feature availability."""
+    """Summarize daily feature and target availability.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Long-form table.
+    feature_cols : sequence of str
+        Feature columns to evaluate.
+    date_col : str, default="date"
+        Date column.
+    asset_col : str, default="asset"
+        Asset identifier column.
+    target_cols : sequence of str, optional
+        Target columns used to measure target completeness.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Date-indexed availability table with row count, asset count, average feature
+        coverage, minimum asset-level coverage, minimum feature cross-section
+        coverage, and target completeness when requested.
+    """
     frame = pd.DataFrame(data).copy()
     if frame.empty:
         return pd.DataFrame(
@@ -730,7 +1039,38 @@ def trim_feature_table_by_availability(
     min_asset_count: int | None = None,
     min_target_complete: float = 1.0,
 ) -> tuple[pd.DataFrame, pd.Timestamp | None, pd.DataFrame]:
-    """Trim leading dates before the table is suitable for model training."""
+    """Trim leading dates before feature availability is adequate for training.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Long-form feature table.
+    feature_cols : sequence of str
+        Candidate feature columns.
+    date_col : str, default="date"
+        Date column.
+    asset_col : str, default="asset"
+        Asset identifier column.
+    target_cols : sequence of str, optional
+        Target columns used for completeness checks.
+    min_feature_coverage : float, default=0.75
+        Minimum average feature coverage required.
+    min_asset_count : int, optional
+        Minimum number of assets required per date.
+    min_target_complete : float, default=1.0
+        Minimum target completeness when target columns are supplied.
+
+    Returns
+    -------
+    tuple
+        ``(trimmed_data, first_date, availability)`` where ``first_date`` is the
+        first eligible date or ``None`` if no date passes the filter.
+
+    Notes
+    -----
+    Only leading dates are removed. Later low-coverage dates are retained for the
+    caller to handle explicitly.
+    """
     availability = feature_availability_by_date(
         data,
         feature_cols,
@@ -817,7 +1157,61 @@ def regime_probability_features(
     random_state: int = 42,
     n_jobs: int | None = None,
 ) -> pd.DataFrame:
-    """Walk-forward risk-on/neutral/defensive probabilities or blended weights."""
+    """Estimate walk-forward risk-on, neutral, and defensive regime probabilities.
+
+    The function builds a market-regime feature matrix, labels future benchmark
+    risk states from forward outcomes, fits a classifier on rolling history, and
+    returns either regime probabilities or probability-blended allocation weights.
+
+    Parameters
+    ----------
+    close : pandas.DataFrame
+        Price panel.
+    returns : pandas.DataFrame, optional
+        Return panel. If omitted, returns are computed from ``close``.
+    assets : sequence of str
+        Assets available for regime features or output weights.
+    cash_ticker : str, default="SHY"
+        Cash/defensive asset.
+    benchmark_ticker : str, default="SPY"
+        Benchmark used to define future risk states. Must exist in ``close``.
+    model : str, default="LogisticRegression"
+        Classifier family passed to the internal classifier factory.
+    horizon : int, default=21
+        Future horizon used to define regime labels.
+    train_days : int, default=1260
+        Maximum rolling training history.
+    min_train : int, default=504
+        Minimum training observations.
+    rebalance_dates : sequence, optional
+        Dates on which probabilities or weights are produced. Defaults to all
+        feature dates.
+    output : str, default="features"
+        If it starts with ``"feature"`` or ``"prob"``, return probabilities.
+        Otherwise, return blended allocation weights.
+    max_weight : float, default=0.35
+        Per-asset cap used for weight output.
+    random_state : int, default=42
+        Random seed for classifiers.
+    n_jobs : int, optional
+        Parallel jobs over rebalance dates.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Regime probability feature table or probability-blended weight table.
+
+    Raises
+    ------
+    ValueError
+        If ``benchmark_ticker`` is missing from the price panel.
+
+    Notes
+    -----
+    Training labels are built from future outcomes but, for each rebalance date,
+    only historical rows up to a horizon-adjusted cutoff are used for fitting. This
+    keeps the probability features walk-forward and leakage-safe.
+    """
     px = _as_frame(close).ffill(limit=3)
     ret = _as_frame(returns) if returns is not None else px.pct_change(fill_method=None)
     if benchmark_ticker not in px.columns:

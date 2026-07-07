@@ -169,6 +169,20 @@ def _get_lsm_numba():
 
 
 def basis_matrix(x, degree: int = 3) -> np.ndarray:
+    """Build a polynomial basis matrix.
+
+    Parameters
+    ----------
+    x : array-like
+        Input values.
+    degree : int, default=3
+        Highest polynomial degree.
+
+    Returns
+    -------
+    numpy.ndarray
+        Matrix with columns ``1, x, x**2, ..., x**degree``.
+    """
     x = np.asarray(x, dtype=float)
     cols = [np.ones_like(x)]
     for _ in range(1, int(degree) + 1):
@@ -177,6 +191,42 @@ def basis_matrix(x, degree: int = 3) -> np.ndarray:
 
 
 def lsm_train(paths: np.ndarray, strike: float, r: float, tau: float, option_type: str = "put", degree: int = 3, engine: str = "auto") -> dict:
+    """Train a Longstaff-Schwartz exercise policy on simulated paths.
+
+    The function performs backward induction for an American option. At each
+    exercise date, continuation value is estimated by regressing discounted future
+    cashflows on polynomial basis functions of log-moneyness. It supports compiled,
+    Numba, and pure NumPy engines.
+
+    Parameters
+    ----------
+    paths : numpy.ndarray
+        Simulated spot paths with shape ``(n_paths, n_steps + 1)``.
+    strike : float
+        Option strike.
+    r : float
+        Continuously compounded risk-free rate.
+    tau : float
+        Time to expiry in years.
+    option_type : str, default="put"
+        Option type.
+    degree : int, default=3
+        Polynomial degree for continuation regression.
+    engine : str, default="auto"
+        Execution engine. Supported values depend on installed compiled kernels and
+        optional Numba availability.
+
+    Returns
+    -------
+    dict
+        Training result with ``price``, ``exercise_time``, and continuation
+        ``coefficients``.
+
+    Notes
+    -----
+    The fitted coefficients define the exercise policy. For unbiased evaluation,
+    use ``lsm_value`` on independent paths or ``lsm_crossfit``.
+    """
     resolved = _resolve_engine(engine)
     flag = 1 if str(option_type).lower().startswith("c") else -1
     if resolved == "cpp":
@@ -216,6 +266,35 @@ def lsm_train(paths: np.ndarray, strike: float, r: float, tau: float, option_typ
 
 
 def lsm_value(paths: np.ndarray, strike: float, r: float, tau: float, option_type: str, coefficients: np.ndarray, engine: str = "auto") -> dict:
+    """Evaluate a trained Longstaff-Schwartz exercise policy on new paths.
+
+    Parameters
+    ----------
+    paths : numpy.ndarray
+        Simulated spot paths.
+    strike : float
+        Option strike.
+    r : float
+        Continuously compounded risk-free rate.
+    tau : float
+        Time to expiry in years.
+    option_type : str
+        Option type.
+    coefficients : numpy.ndarray
+        Continuation coefficients produced by ``lsm_train``.
+    engine : str, default="auto"
+        Execution engine.
+
+    Returns
+    -------
+    dict
+        Evaluation result with ``price`` and ``exercise_time``.
+
+    Notes
+    -----
+    Using independent evaluation paths helps reduce the upward bias that can occur
+    when training and valuing on the same simulated paths.
+    """
     resolved = _resolve_engine(engine)
     flag = 1 if str(option_type).lower().startswith("c") else -1
     if resolved == "cpp":
@@ -261,6 +340,46 @@ def lsm_crossfit(
     seed: int = 7,
     engine: str = "auto",
 ) -> dict:
+    """Train and evaluate a Longstaff-Schwartz policy on independent GBM path sets.
+
+    Parameters
+    ----------
+    s0 : float
+        Initial spot.
+    strike : float
+        Option strike.
+    r : float
+        Continuously compounded risk-free rate.
+    q : float
+        Continuous dividend yield.
+    sigma : float
+        Volatility.
+    tau : float
+        Time to expiry in years.
+    option_type : str, default="put"
+        Option type.
+    steps : int, default=50
+        Number of time steps.
+    paths : int, default=20000
+        Number of training and evaluation paths.
+    degree : int, default=3
+        Polynomial degree.
+    seed : int, default=7
+        Random seed for training paths. Evaluation paths use an offset seed.
+    engine : str, default="auto"
+        Execution engine.
+
+    Returns
+    -------
+    dict
+        Cross-fit result with training price, evaluation price, coefficients,
+        exercise times, simulation settings, and resolved engine.
+
+    Notes
+    -----
+    Cross-fitting is the preferred diagnostic mode when comparing LSM to tree or
+    PDE prices because it separates policy estimation from policy valuation.
+    """
     resolved = _resolve_engine(engine)
     child_engine = "auto" if str(engine).lower() == "auto" else resolved
     train_paths = gbm_paths(s0, r, q, sigma, tau, steps=steps, paths=paths, seed=seed, engine=child_engine)
@@ -285,6 +404,29 @@ def policy_gap(lower_price: float, reference_price: float) -> float:
 
 
 def exercise_boundary_from_policy(coefficients: np.ndarray, strike: float, option_type: str = "put", x_grid=None) -> pd.DataFrame:
+    """Extract an approximate exercise boundary from LSM continuation coefficients.
+
+    Parameters
+    ----------
+    coefficients : numpy.ndarray
+        Continuation coefficients by time step.
+    strike : float
+        Option strike.
+    option_type : str, default="put"
+        Option type.
+    x_grid : array-like, optional
+        Log-moneyness grid. Defaults to a dense grid from -0.45 to 0.45.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Table with time step and approximate exercise boundary.
+
+    Notes
+    -----
+    For puts, the boundary is the highest spot on the grid where exercise is
+    preferred. For calls, it is the lowest spot where exercise is preferred.
+    """
     coeffs = np.asarray(coefficients, dtype=float)
     if x_grid is None:
         x_grid = np.linspace(-0.45, 0.45, 401)
@@ -318,6 +460,24 @@ def lsm_regime_grid(
     sigma_bins=(0.03, 0.18, 0.28, 0.45, 2.50),
     ex_div_bins=(-1, 7, 21, 10000),
 ) -> pd.DataFrame:
+    """Select representative quotes for LSM regime analysis.
+
+    Quotes are bucketed by option type, DTE, moneyness, volatility, dividend
+    presence, and ex-dividend timing. A medoid quote is selected from each populated
+    regime cell.
+
+    Parameters
+    ----------
+    quotes : pandas.DataFrame
+        Clean American-option quote table.
+    dte_bins, moneyness_bins, sigma_bins, ex_div_bins : sequence
+        Bucket edges for regime construction.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Representative quote table with coverage counts and percentages.
+    """
     q = quotes.copy().reset_index(drop=True)
     q["dte_bucket"] = pd.cut(q["dte_days"], dte_bins, include_lowest=True)
     q["moneyness_bucket"] = pd.cut(q["moneyness"], moneyness_bins, include_lowest=True)
@@ -344,6 +504,41 @@ def lsm_regime_map(
     seed: int = 11,
     repeats: int = 1,
 ) -> pd.DataFrame:
+    """Run LSM pricing across representative option regimes.
+
+    For each regime quote, the function simulates GBM paths, trains an LSM policy,
+    evaluates it on one or more independent path sets, and records price,
+    uncertainty, and exercise-probability diagnostics.
+
+    Parameters
+    ----------
+    regime_quotes : pandas.DataFrame
+        Representative quote table.
+    paths : int, default=64000
+        Number of paths per training/evaluation run.
+    steps : int, default=40
+        Number of time steps.
+    degree : int, default=3
+        Polynomial degree for continuation regression.
+    engine : str, default="auto"
+        Execution engine.
+    seed : int, default=11
+        Base random seed.
+    repeats : int, default=1
+        Number of independent evaluation repeats.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Regime-level LSM map with price means, standard errors, confidence
+        intervals, exercise probabilities, settings, and bucket identifiers.
+
+    Notes
+    -----
+    The simulation uses the quote's spot, strike, rate, dividend yield, volatility,
+    and maturity. Coverage fields are preserved so regime-level prices can be
+    related back to quote-chain support.
+    """
     rows = []
     for i, row in regime_quotes.reset_index(drop=True).iterrows():
         resolved = _resolve_engine(engine)
@@ -437,6 +632,39 @@ def lsm_stability(
     steps: int = 40,
     engine: str = "auto",
 ) -> pd.DataFrame:
+    """Evaluate LSM price stability across path counts and basis degrees.
+
+    Parameters
+    ----------
+    s0 : float
+        Initial spot.
+    strike : float
+        Option strike.
+    r : float
+        Risk-free rate.
+    q : float
+        Dividend yield.
+    sigma : float
+        Volatility.
+    tau : float
+        Time to expiry.
+    option_type : str, default="put"
+        Option type.
+    path_counts : sequence of int, default=(16000, 64000, 128000)
+        Path counts to test.
+    degrees : sequence of int, default=(2, 3, 4)
+        Polynomial degrees to test.
+    steps : int, default=40
+        Number of time steps.
+    engine : str, default="auto"
+        Execution engine.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Stability table with evaluation price, training price, exercise
+        probability, and runtime for each configuration.
+    """
     rows = []
     for paths in path_counts:
         for degree in degrees:

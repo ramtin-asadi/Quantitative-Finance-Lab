@@ -53,6 +53,29 @@ def etf_momentum_score(
     returns: pd.DataFrame,
     assets: list[str] | tuple[str, ...] | None = None,
 ) -> pd.DataFrame:
+    """Compute cross-sectional ETF momentum scores.
+
+    The score blends 12-minus-1-month momentum with 6-month risk-adjusted momentum
+    and standardizes cross-sectionally each month.
+
+    Parameters
+    ----------
+    returns : pandas.DataFrame
+        Monthly return panel.
+    assets : list or tuple of str, optional
+        Assets to include. Defaults to all columns.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Cross-sectional z-score momentum table with the selected assets as columns.
+
+    Notes
+    -----
+    The calculation shifts returns by one month so the current month is not used in
+    the signal.
+    """
+
     assets_use = list(assets or returns.columns)
     r = returns.reindex(columns=assets_use).astype(float)
     mom_12_1 = (1.0 + r.shift(1)).rolling(11).apply(np.prod, raw=True) - 1.0
@@ -70,6 +93,31 @@ def fci_risky_weight(
     lower: float = 0.50,
     upper: float = 1.00,
 ) -> pd.Series:
+    """Map financial-condition stress to a risky-asset budget.
+
+    Parameters
+    ----------
+    fci_percentile : pandas.Series
+        Financial-conditions percentile where higher values indicate tighter or
+        more stressful conditions.
+    fci_3m_change : pandas.Series
+        Three-month change in the selected FCI.
+    lower : float, default=0.50
+        Minimum risky allocation.
+    upper : float, default=1.00
+        Maximum risky allocation.
+
+    Returns
+    -------
+    pandas.Series
+        Risky weight clipped to ``[lower, upper]``.
+
+    Notes
+    -----
+    The risky budget is reduced when FCI stress is high and when financial
+    conditions are deteriorating.
+    """
+
     stress = pd.Series(fci_percentile, dtype=float).fillna(0.0)
     slope = pd.Series(fci_3m_change, dtype=float).reindex(stress.index).fillna(0.0).clip(lower=0.0)
     risky = pd.Series(1.0, index=stress.index, dtype=float)
@@ -82,6 +130,26 @@ def defensive_weights(
     features: pd.Series,
     defensive_assets: list[str] | tuple[str, ...],
 ) -> pd.Series:
+    """Choose defensive-asset weights from macro block features.
+
+    Parameters
+    ----------
+    features : pandas.Series
+        One-date macro feature row.
+    defensive_assets : list or tuple of str
+        Candidate defensive assets.
+
+    Returns
+    -------
+    pandas.Series
+        Equal-weight defensive allocation over the selected defensive subset.
+
+    Notes
+    -----
+    The selected defensive sleeve depends on whether inflation/policy pressure or
+    growth/recession pressure dominates the feature row.
+    """
+
     assets = list(defensive_assets)
     inflation_policy = float(features.get("inflation_pressure_block", 0.0)) + float(
         features.get("policy_rate_pressure_block", 0.0)
@@ -147,6 +215,26 @@ def sector_macro_fit(
     features: pd.DataFrame,
     sectors: list[str] | tuple[str, ...],
 ) -> pd.DataFrame:
+    """Score sector assets by macro-regime fit.
+
+    The function assigns cross-sectional sector scores using financial-condition
+    stress, inflation pressure, policy-rate pressure, growth/recession risk, and
+    breadth conflict features.
+
+    Parameters
+    ----------
+    features : pandas.DataFrame
+        Macro feature table.
+    sectors : list or tuple of str
+        Sector or ETF tickers to score.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Cross-sectional z-score table indexed like ``features`` with sectors as
+        columns.
+    """
+
     sectors_use = list(sectors)
     groups = _groups(sectors_use)
     out = pd.DataFrame(0.0, index=features.index, columns=sectors_use)
@@ -204,6 +292,28 @@ def fci_gated_weights(
     *,
     return_details: bool = False,
 ) -> pd.DataFrame | tuple[pd.DataFrame, dict[str, pd.DataFrame | pd.Series]]:
+    """Build a simple FCI-gated sector/defensive allocation.
+
+    The function allocates the risky budget equally across sector assets and assigns
+    the residual budget to a macro-selected defensive sleeve.
+
+    Parameters
+    ----------
+    features : pandas.DataFrame
+        Macro feature table containing selected FCI percentile and change columns.
+    sectors : list or tuple of str
+        Risky sector assets.
+    defensive_assets : list or tuple of str
+        Defensive assets.
+    return_details : bool, default=False
+        If true, return diagnostic risky and defensive budget series.
+
+    Returns
+    -------
+    pandas.DataFrame or tuple
+        Weight table, or ``(weights, details)`` when ``return_details=True``.
+    """
+
     sectors_use = list(sectors)
     defensive_use = list(defensive_assets)
     cols = list(dict.fromkeys(sectors_use + defensive_use))
@@ -233,6 +343,40 @@ def fci_momentum_weights(
     cap: float = 0.40,
     return_details: bool = False,
 ) -> pd.DataFrame | tuple[pd.DataFrame, dict[str, pd.DataFrame | pd.Series]]:
+    """Build sector weights from momentum, macro fit, macro support, and risk penalty.
+
+    The allocator selects top-ranked sectors, applies inverse-volatility weighting
+    with a cap, scales the risky sleeve by FCI stress, and allocates residual
+    capital to a defensive sleeve.
+
+    Parameters
+    ----------
+    returns : pandas.DataFrame
+        Monthly return panel.
+    features : pandas.DataFrame
+        Macro feature table aligned to allocation dates.
+    sectors : list or tuple of str
+        Risky sector assets.
+    defensive_assets : list or tuple of str
+        Defensive assets.
+    top_n : int, default=3
+        Number of sectors selected each period.
+    cap : float, default=0.40
+        Maximum sector weight within the risky sleeve.
+    return_details : bool, default=False
+        If true, return intermediate score tables and budget series.
+
+    Returns
+    -------
+    pandas.DataFrame or tuple
+        Allocation weights, or ``(weights, details)`` when requested.
+
+    Notes
+    -----
+    The final sector score gives most weight to momentum, with smaller adjustments
+    for macro fit, macro support, and recent risk.
+    """
+
     sectors_use = [s for s in sectors if s in returns.columns]
     defensive_use = [a for a in defensive_assets if a in returns.columns]
     cols = list(dict.fromkeys(sectors_use + defensive_use))
@@ -280,6 +424,27 @@ def latest_decision_table(
     *,
     selected_fci_model: str,
 ) -> pd.DataFrame:
+    """Explain the latest macro allocation decision.
+
+    Parameters
+    ----------
+    features : pandas.DataFrame
+        Macro feature table.
+    weights : pandas.DataFrame
+        Allocation weight table.
+    details : dict
+        Detail tables returned by the allocation routine.
+    selected_fci_model : str
+        Name of the FCI model used in the allocation.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Asset-level explanation table for the latest allocation date, including FCI
+        values, dominant macro block, component scores, final weight, and a short
+        reason category.
+    """
+
     date = pd.Timestamp(weights.index.max())
     assets = list(weights.columns)
     groups = _groups(assets)

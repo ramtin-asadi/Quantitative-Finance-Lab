@@ -21,6 +21,30 @@ def capm_ols(
     y_excess: pd.Series | Sequence[float] | np.ndarray,
     x_excess: pd.Series | Sequence[float] | np.ndarray,
 ) -> tuple[float, float, float]:
+    """Estimate a one-factor CAPM regression by ordinary least squares.
+
+    The regression is ``y_excess = alpha + beta * x_excess + error`` after aligning
+    the two input series and dropping missing values.
+
+    Parameters
+    ----------
+    y_excess : array-like
+        Asset or strategy excess return series.
+    x_excess : array-like
+        Market excess return series.
+
+    Returns
+    -------
+    tuple of float
+        ``(alpha, beta, r2)``. All three values are ``NaN`` if fewer than three
+        aligned observations are available.
+
+    Notes
+    -----
+    Returns are assumed to be one-period returns in decimal units. ``alpha`` is in
+    the same one-period unit as the input returns.
+    """
+
     y = _to_numeric_series(y_excess, name="y_excess")
     x = _to_numeric_series(x_excess, name="x_excess")
     z = _align_pair(y, x)
@@ -44,6 +68,29 @@ def rolling_beta_corr(
     *,
     window: int,
 ) -> tuple[pd.Series, pd.Series]:
+    """Compute rolling market beta and correlation.
+
+    Parameters
+    ----------
+    returns : array-like
+        Asset or strategy return series.
+    market_ret : array-like
+        Market return series.
+    window : int
+        Rolling window length. Must be at least five observations.
+
+    Returns
+    -------
+    tuple of pandas.Series
+        ``(beta, corr)`` where beta is rolling covariance divided by rolling market
+        variance and corr is rolling Pearson correlation.
+
+    Raises
+    ------
+    InputError
+        If ``window < 5``.
+    """
+
     if int(window) < 5:
         raise InputError("window must be >= 5.")
     r = _to_numeric_series(returns, name="returns")
@@ -75,6 +122,37 @@ def capm_table(
     annualization: float = DEFAULT_ANNUALIZATION,
     rolling: int | Sequence[int] | None = None,
 ) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
+    """Build CAPM and active-risk diagnostics for one or more return series.
+
+    For each object, the function estimates alpha, beta, R-squared, tracking error,
+    information ratio, up/down capture, and systematic variance share. Optional
+    rolling beta/correlation tables can also be produced.
+
+    Parameters
+    ----------
+    objects : mapping or pandas.DataFrame
+        Return objects to analyze.
+    market_ret : array-like
+        Market return series.
+    rf_daily : float, default=0.0
+        One-period risk-free rate subtracted from returns before CAPM regression.
+    annualization : float, default=252.0
+        Annualization factor.
+    rolling : int or sequence of int, optional
+        Rolling windows for beta and correlation diagnostics.
+
+    Returns
+    -------
+    tuple
+        ``(capm, roll)`` where ``capm`` is a summary table indexed by object name
+        and ``roll`` maps object names to rolling diagnostic DataFrames.
+
+    Notes
+    -----
+    Tracking error and information ratio are computed from raw active returns
+    relative to the market, while alpha and beta use excess returns.
+    """
+
     obj = _coerce_objects(objects)
     m = _to_numeric_series(market_ret, name="market_ret")
     m = _to_datetime_if_possible(m)

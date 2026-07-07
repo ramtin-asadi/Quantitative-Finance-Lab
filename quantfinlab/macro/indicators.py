@@ -285,6 +285,20 @@ def macro_breadth_conflict_block(signals: pd.DataFrame) -> pd.Series:
 
 
 def condition_blocks(signals: pd.DataFrame) -> pd.DataFrame:
+    """Assemble macro condition blocks from standardized indicator signals.
+
+    Parameters
+    ----------
+    signals : pandas.DataFrame
+        Indicator signal table.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Concatenated macro block table containing inflation, policy, growth,
+        labor, housing, external trade, and breadth-conflict blocks when available.
+    """
+
     return pd.concat(
         [
             inflation_pressure_block(signals),
@@ -300,6 +314,22 @@ def condition_blocks(signals: pd.DataFrame) -> pd.DataFrame:
 
 
 def macro_block_snapshot(data: pd.DataFrame, dates: list[str | pd.Timestamp] | None = None) -> pd.DataFrame:
+    """Extract macro block values for selected month-end dates.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        DataFrame containing macro block columns.
+    dates : list of str or pandas.Timestamp, optional
+        Dates to extract. Each date is resolved to the latest available month-end
+        on or before the requested month. If omitted, the latest row is returned.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Snapshot table of available macro block columns.
+    """
+
     block_cols = [col for col in BLOCK_COLUMNS if col in data.columns]
     if not block_cols:
         return pd.DataFrame()
