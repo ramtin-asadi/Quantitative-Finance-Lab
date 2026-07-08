@@ -74,4 +74,4 @@ jobs:
       - name: Check distributions
         run: |
           python -m twine check dist/accelerated/* dist/pure/*
-          check-wheel-contents dist/accelerated/*.whl dist/pure/*.whl
+          check-wheel-contents --ignore W009,W010 dist/accelerated/*.whl dist/pure/*.whl

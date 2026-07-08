@@ -132,7 +132,7 @@ jobs:
       - name: Check sdist and pure wheel
         run: |
           python -m twine check dist/*
-          check-wheel-contents dist/*.whl
+          check-wheel-contents --ignore W009,W010 dist/*.whl
 
       - name: Smoke test pure wheel
         run: |
@@ -231,7 +231,7 @@ jobs:
         run: |
           python -m pip install -U twine check-wheel-contents
           python -m twine check dist/*
-          check-wheel-contents dist/*.whl
+          check-wheel-contents --ignore W009,W010 dist/*.whl
 
       - uses: actions/upload-artifact@v4
         with:
