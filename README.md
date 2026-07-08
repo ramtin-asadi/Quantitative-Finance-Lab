@@ -1,6 +1,8 @@
 # Quantitative Finance Lab
 
 [![Website](https://img.shields.io/badge/Website-QuantFinLab-0A66C2?logo=githubpages&logoColor=white)](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/)
+[![PyPI](https://img.shields.io/pypi/v/quantfinlab.svg)](https://pypi.org/project/quantfinlab/)
+[![Python](https://img.shields.io/pypi/pyversions/quantfinlab.svg)](https://pypi.org/project/quantfinlab/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **Quantitative Finance Lab** is a research and engineering sequence of end-to-end projects. It can be used a **self-study curriculum** that codes, and tests every model against real market data, as a **research notebook series** that experiments different topics from the most famous to more recently developing areas with clear flow (motivation, mathematics, implementation, diagnostics, discussion), and as a **reusable Python library**, `quantfinlab`, that turns the parts of each project into tested, documented, importable code instead of just the notebook cells.
@@ -17,7 +19,7 @@ In every project, we do the same thing: build the model, run it on real data wit
 notebooks/       20 notebooks, rendered into the project website
 quantfinlab/      Reusable Python library extracted from the notebooks (see quantfinlab/README.md)
 data/             Data reproducibility layer: one script per data source, no redistributed data
-tests/            pytest suite for the library (171 tests, run in CI)
+tests/            pytest suite for the library, run in CI
 cpp/              C++ pricing kernels (LSM, PDE, tree, Fourier/COS) bound to Python via pybind11
 config/           Local, non-sensitive configuration
 docs/             Rendered GitHub Pages site (built by Quarto)
@@ -112,7 +114,15 @@ See `data/README.md` for the complete script list, raw-folder checklist, and lic
 
 ## The library: `quantfinlab`
 
-`quantfinlab` is the part of this repository meant to be more reusable than individual notebooks. It is a typed, tested Python package covering fixed income, options pricing (including a compiled C++ pricing core), portfolio construction, risk reporting, volatility modeling, hedging, macro indicators, and ML/RL applications for finance. See **[`quantfinlab/README.md`](quantfinlab/README.md)** for the full module map, installation instructions, and worked code examples (mean-variance optimization, implied volatility, yield-curve loading, and more).
+`quantfinlab` is the part of this repository meant to be more reusable than individual notebooks. It is a tested Python package covering fixed income, options pricing (including a compiled C++ pricing core), portfolio construction, risk reporting, volatility modeling, hedging, macro indicators, and ML/RL applications for finance.
+
+Install the released library from PyPI:
+
+```bash
+pip install quantfinlab
+```
+
+See **[`quantfinlab/README.md`](quantfinlab/README.md)** for the full module map, optional extras, source-install instructions, and worked code examples (mean-variance optimization, implied volatility, yield-curve loading, and more).
 
 Quick example: mean-variance optimization with turnover control:
 
@@ -139,6 +149,14 @@ Full installation instructions, the complete module list, and more examples are 
 
 ## Installation
 
+For the published library only:
+
+```bash
+pip install quantfinlab
+```
+
+For the full repository, notebooks, tests, and local development:
+
 ```bash
 git clone https://github.com/ramtin-asadi/Quantitative-Finance-Lab.git
 cd Quantitative-Finance-Lab
@@ -161,7 +179,7 @@ pytest
 
 ## Status
 
-Under active development. Twenty projects are complete with library extraction, and rendered output, ongoing work is on deepening interpretation/discussion sections, completing markdowns for all projects, closing remaining test-coverage gaps, and a first tagged PyPI release of `quantfinlab`.
+Under active development. Twenty projects are complete with library extraction and rendered output, and `quantfinlab` is published on PyPI as an alpha release. Ongoing work is on deepening interpretation/discussion sections, completing markdowns for all projects, closing remaining test-coverage gaps, and improving release polish.
 
 ## Disclaimer
 

@@ -6,7 +6,25 @@ The test suite checks real model properties rather than notebook snapshots: weig
 
 ## Installation
 
-From the repository root:
+From PyPI:
+
+```bash
+pip install quantfinlab
+```
+
+For optional dependencies, install the extras you need:
+
+```bash
+pip install "quantfinlab[numerics]"   # JAX / Numba acceleration (autodiff Greeks, fast IV)
+pip install "quantfinlab[volatility]" # arch, statsmodels (GARCH, HAR)
+pip install "quantfinlab[hedging]"    # statsmodels (dynamic hedge ratios)
+pip install "quantfinlab[ml]"         # PyTorch (sequence models, RL policies)
+pip install "quantfinlab[network]"    # networkx (dependence networks)
+pip install "quantfinlab[plotting]"   # matplotlib, seaborn
+pip install "quantfinlab[all]"        # everything above
+```
+
+For development from the repository root:
 
 ```bash
 pip install -e .
@@ -22,19 +40,7 @@ pip install . --config-settings=cmake.define.quantfinlab_build_cpp=off
 
 Functions that accept `engine="auto"` prefer C++ when available, then Numba when installed, then NumPy/SciPy fallback paths where implemented. If you explicitly request `engine="cpp"` without the extension installed, `quantfinlab` raises `MissingKernelsError` with installation and fallback guidance.
 
-Most of the library works with just the core dependencies (NumPy, pandas, SciPy, cvxpy, and scikit-learn). A handful of modules need optional extras, installed as needed:
-
-```bash
-pip install -e ".[numerics]"   # JAX / Numba acceleration (autodiff Greeks, fast IV)
-pip install -e ".[volatility]" # arch, statsmodels (GARCH, HAR)
-pip install -e ".[hedging]"    # statsmodels (dynamic hedge ratios)
-pip install -e ".[ml]"         # PyTorch (sequence models, RL policies)
-pip install -e ".[network]"    # networkx (dependence networks)
-pip install -e ".[plotting]"   # matplotlib, seaborn
-pip install -e ".[all]"        # everything above
-```
-
-Optional dependencies are checked at the point of use. Functions either fall back to a pure NumPy/SciPy implementation, or raise a clear, specific error telling you which extra to install, rather than failing on package import. Tests that need optional dependencies use `pytest.importorskip` and skip cleanly rather than fail when the dependency is absent.
+Most of the library works with just the core dependencies (NumPy, pandas, SciPy, cvxpy, and scikit-learn). Optional dependencies are checked at the point of use. Functions either fall back to a pure NumPy/SciPy implementation, or raise a clear, specific error telling you which extra to install, rather than failing on package import. Tests that need optional dependencies use `pytest.importorskip` and skip cleanly rather than fail when the dependency is absent.
 
 ## Module map
 
