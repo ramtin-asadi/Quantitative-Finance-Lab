@@ -17,7 +17,7 @@ Source installs build the optional C++ extension (`quantfinlab._kernels`) automa
 To disable native kernels during a source install:
 
 ```bash
-pip install . --config-settings=cmake.define.QUANTFINLAB_BUILD_CPP=OFF
+pip install . --config-settings=cmake.define.quantfinlab_build_cpp=off
 ```
 
 Functions that accept `engine="auto"` prefer C++ when available, then Numba when installed, then NumPy/SciPy fallback paths where implemented. If you explicitly request `engine="cpp"` without the extension installed, `quantfinlab` raises `MissingKernelsError` with installation and fallback guidance.

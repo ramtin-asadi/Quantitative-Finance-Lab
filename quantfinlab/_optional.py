@@ -27,7 +27,7 @@ def get_cpp_kernels(feature: str, fallback_hint: str | None = None) -> ModuleTyp
             "platform with compiled kernels, or build from source with CMake and a C++17 "
             "compiler. For pure-Python usage, "
             f"{hint}. To intentionally build without kernels, use "
-            "`pip install . --config-settings=cmake.define.QUANTFINLAB_BUILD_CPP=OFF`."
+            "`pip install . --config-settings=cmake.define.quantfinlab_build_cpp=off`."
         ) from exc
 
 

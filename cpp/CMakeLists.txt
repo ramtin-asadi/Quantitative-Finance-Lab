@@ -2,9 +2,13 @@ cmake_minimum_required(VERSION 3.20)
 
 project(quantfinlab_kernels LANGUAGES NONE)
 
-option(QUANTFINLAB_BUILD_CPP "Build the optional QuantFinLab C++ pricing kernels" ON)
+option(quantfinlab_build_cpp "Build the optional QuantFinLab C++ pricing kernels" ON)
 
-if(QUANTFINLAB_BUILD_CPP)
+if(DEFINED QUANTFINLAB_BUILD_CPP)
+    set(quantfinlab_build_cpp "${QUANTFINLAB_BUILD_CPP}" CACHE BOOL "Build the optional QuantFinLab C++ pricing kernels" FORCE)
+endif()
+
+if(quantfinlab_build_cpp)
     enable_language(CXX)
 
     find_package(Python REQUIRED COMPONENTS Interpreter Development.Module NumPy)
