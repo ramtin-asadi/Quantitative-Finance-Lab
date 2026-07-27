@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,6 +11,7 @@ from quantfinlab.dataio.panel import (
     load_vix,
     load_yfinance_panel,
     prices_to_returns_panel,
+    read_equity_history,
     vix_feature_frame,
 )
 
@@ -94,3 +97,70 @@ def test_panel_loader_merges_multiple_files_lowercases_and_builds_vix_features(t
     assert vix.index.equals(target_index)
     assert {"vix_z_20", "vix_ma_ratio_63", "vix_pct_252"}.issubset(features.columns)
     assert np.isfinite(features.to_numpy()).all()
+
+
+def test_read_equity_history_preserves_raw_prices_and_drops_partial_last_session(
+    tmp_path,
+) -> None:
+    pa = pytest.importorskip("pyarrow")
+    pq = pytest.importorskip("pyarrow.parquet")
+
+    dates = pd.to_datetime(
+        ["2024-01-31", "2024-02-01", "2024-02-29", "2024-03-01", "2024-03-29"]
+    )
+    rows = []
+    for date_number, date in enumerate(dates):
+        for ticker_number, ticker in enumerate(("AAA", "BBB")):
+            rows.append(
+                {
+                    "date": date,
+                    "ticker": ticker,
+                    "yf_ticker": ticker,
+                    "adj_close": (
+                        np.nan
+                        if date == pd.Timestamp("2024-02-01") and ticker == "BBB"
+                        else 100.0 + 10.0 * ticker_number + date_number
+                    ),
+                    "close": 100.0 + 10.0 * ticker_number + date_number,
+                    "volume": 1_000 + 100 * ticker_number + date_number,
+                    "dividends": 0.0,
+                    "stock_splits": 0.0,
+                    "is_sp500_member": not (
+                        date == pd.Timestamp("2024-03-29") and ticker == "BBB"
+                    ),
+                    "snapshot_date": date,
+                    "industry": "TEST",
+                    "market_cap": 1_000_000.0,
+                }
+            )
+    frame = pd.DataFrame(rows)
+    table = pa.Table.from_pandas(frame, preserve_index=False)
+    table = table.replace_schema_metadata(
+        {
+            b"validation": json.dumps({"status": "pass", "failures": []}).encode(),
+            b"sec_enrichment_validation": json.dumps(
+                {"status": "pass", "failures": []}
+            ).encode(),
+        }
+    )
+    path = tmp_path / "market.parquet"
+    pq.write_table(table, path)
+
+    equity = read_equity_history(path, start="2024-01-01")
+
+    assert equity["market"]["date"].max() == pd.Timestamp("2024-03-01")
+    assert pd.isna(equity["adj_close"].loc[pd.Timestamp("2024-02-01"), "BBB"])
+    assert equity["adj_close_filled"].loc[pd.Timestamp("2024-02-01"), "BBB"] == 110.0
+    assert equity["returns"].loc[pd.Timestamp("2024-02-01"), "BBB"] == 0.0
+    assert all(dtype == np.dtype("float32") for dtype in equity["returns"].dtypes)
+    pd.testing.assert_frame_equal(
+        equity["date_map"],
+        pd.DataFrame(
+            {
+                "decision_date": pd.to_datetime(["2024-01-31", "2024-02-29"]),
+                "execution_date": pd.to_datetime(["2024-02-01", "2024-03-01"]),
+                "execution_lag_days": [1, 1],
+            }
+        ),
+    )
+    assert equity["metadata"]["validation"]["status"] == "pass"

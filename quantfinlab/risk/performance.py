@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from quantfinlab.common.errors import InputError
-from quantfinlab.risk.utils import DEFAULT_ANNUALIZATION, _coerce_objects, _to_numeric_series
+from quantfinlab.risk.utils import DEFAULT_ANNUALIZATION, _coerce_objects, _excess_returns, _to_numeric_series
 
 
 def nav_series(
@@ -53,7 +53,7 @@ def total_return(values: pd.Series | Sequence[float] | np.ndarray) -> float:
 def sortino_ratio(
     returns: pd.Series | Sequence[float] | np.ndarray,
     *,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     annualization: float = DEFAULT_ANNUALIZATION,
 ) -> float:
     """Compute the annualized Sortino ratio.
@@ -62,8 +62,8 @@ def sortino_ratio(
     ----------
     returns : array-like
         Return series.
-    rf_daily : float, default=0.0
-        One-period risk-free rate.
+    rf_daily : float or pandas.Series, default=0.0
+        One-period risk-free rate. A Series is aligned to the return dates.
     annualization : float, default=252.0
         Annualization factor.
 
@@ -75,7 +75,7 @@ def sortino_ratio(
     """
 
     r = _to_numeric_series(returns, name="returns")
-    ex = r - float(rf_daily)
+    ex = _excess_returns(r, rf_daily).dropna()
     dn = np.minimum(ex.to_numpy(dtype=float), 0.0)
     den = float(np.sqrt(np.mean(np.square(dn))))
     if den <= 1e-12:
@@ -85,7 +85,7 @@ def sortino_ratio(
 def performance_table(
     objects: Mapping[str, Any] | pd.DataFrame,
     *,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     annualization: float = DEFAULT_ANNUALIZATION,
 ) -> pd.DataFrame:
     """Build annualized performance metrics for return objects.
@@ -94,7 +94,7 @@ def performance_table(
     ----------
     objects : mapping or pandas.DataFrame
         Return objects.
-    rf_daily : float, default=0.0
+    rf_daily : float or pandas.Series, default=0.0
         One-period risk-free rate used for Sharpe and Sortino.
     annualization : float, default=252.0
         Annualization factor.
@@ -116,9 +116,11 @@ def performance_table(
         ann_ret = float(nav.iloc[-1] ** (1.0 / years) - 1.0) if years and years > 0 else float("nan")
         dvol = float(r.std(ddof=1)) if n > 1 else float("nan")
         ann_vol = dvol * math.sqrt(ann) if np.isfinite(dvol) else float("nan")
+        excess = _excess_returns(r, rf_daily).dropna()
+        sharpe_vol = dvol if np.isscalar(rf_daily) else float(excess.std(ddof=1))
         sharpe = (
-            float((r.mean() - float(rf_daily)) / dvol * math.sqrt(ann))
-            if np.isfinite(dvol) and dvol > 1e-12
+            float(excess.mean() / sharpe_vol * math.sqrt(ann))
+            if np.isfinite(sharpe_vol) and sharpe_vol > 1e-12
             else float("nan")
         )
         rows.append(

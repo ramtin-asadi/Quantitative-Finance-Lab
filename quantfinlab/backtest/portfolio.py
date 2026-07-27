@@ -10,6 +10,7 @@ from quantfinlab.common.contracts import BacktestResult, PortfolioState
 from quantfinlab.common.errors import InputError
 from quantfinlab.portfolio.constraints import normalize_weights
 from quantfinlab.portfolio.optimizers import equal_weight
+from quantfinlab.risk.utils import _risk_free_metadata
 
 
 def _sanitize_returns(returns: pd.DataFrame) -> pd.DataFrame:
@@ -120,7 +121,7 @@ def run_weights_backtest(
     cost_bps: float = 10.0,
     fixed_fee: float = 0.0,
     initial_value: float = 1.0,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     w_min: float | Mapping[str, float] | pd.Series | None = 0.0,
     w_max: float | Mapping[str, float] | pd.Series | None = None,
     long_only: bool = True,
@@ -151,7 +152,7 @@ def run_weights_backtest(
         Optional fixed fee applied per asset whose weight changes at a rebalance.
     initial_value : float, default=1.0
         Initial portfolio value.
-    rf_daily : float, default=0.0
+    rf_daily : float or pandas.Series, default=0.0
         Stored in metadata for downstream reporting.
     w_min : float, mapping, pandas.Series, or None, default=0.0
         Minimum weight constraint used when normalizing.
@@ -267,7 +268,10 @@ def run_weights_backtest(
     net_values_s = pd.Series(net_values, index=all_dates, name="net_values")
     gross_returns_s = pd.Series(gross_returns, index=all_dates, name="gross_returns")
     net_returns_s = net_values_s.pct_change().fillna(0.0)
-    weights_df = pd.DataFrame.from_dict(weight_records, orient="index").fillna(0.0)
+    weights_df = (
+        pd.DataFrame.from_dict(weight_records, orient="index")
+        .fillna(0.0).sort_index()
+    )
     turnover_s = pd.Series(turnover_records, name="turnover").sort_index()
     costs_s = pd.Series(cost_records, name="costs").sort_index()
 
@@ -282,7 +286,7 @@ def run_weights_backtest(
         fallbacks=0,
         metadata={
             "strategy_name": name,
-            "rf_daily": float(rf_daily),
+            "rf_daily": _risk_free_metadata(rf_daily),
             "cost_bps": float(cost_bps),
             "fixed_fee": float(fixed_fee),
             "weight_timing": weight_timing,
@@ -334,7 +338,7 @@ def run_rebalanced_portfolio_backtest(
     w_max: float | None = 0.25,
     long_only: bool = True,
     initial_value: float = 1.0,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
 ) -> BacktestResult:
     """Run a model-driven periodic rebalance backtest.
 
@@ -373,7 +377,7 @@ def run_rebalanced_portfolio_backtest(
         Whether negative weights are disallowed.
     initial_value : float, default=1.0
         Initial portfolio value.
-    rf_daily : float, default=0.0
+    rf_daily : float or pandas.Series, default=0.0
         Stored in metadata for downstream reporting.
 
     Returns
@@ -424,8 +428,8 @@ def run_rebalanced_portfolio_backtest(
     net_values: list[float] = []
     gross_returns: list[float] = []
     weight_records: dict[pd.Timestamp, pd.Series] = {}
-    turnover_vals: list[float] = []
-    cost_vals: list[float] = []
+    turnover_records: dict[pd.Timestamp, float] = {}
+    cost_records: dict[pd.Timestamp, float] = {}
     fallback_count = 0
 
     blend_eff = float(np.clip(blend, 0.0, 1.0))
@@ -514,9 +518,8 @@ def run_rebalanced_portfolio_backtest(
                     net_value = max(net_value - cost_value, 1e-12)
                     w = w_tar.copy()
                     weight_records[pd.Timestamp(dt)] = w_tar.astype(float)
-
-                turnover_vals.append(turnover)
-                cost_vals.append(cost_value)
+                    turnover_records[pd.Timestamp(dt)] = turnover
+                    cost_records[pd.Timestamp(dt)] = cost_value
 
         if w.empty:
             port_ret = 0.0
@@ -543,17 +546,12 @@ def run_rebalanced_portfolio_backtest(
     net_values_s = pd.Series(net_values, index=all_dates, name="net_values")
     gross_returns_s = pd.Series(gross_returns, index=all_dates, name="gross_returns")
     net_returns_s = net_values_s.pct_change().fillna(0.0)
-    weights_df = pd.DataFrame.from_dict(weight_records, orient="index").fillna(0.0)
-    turnover_s = (
-        pd.Series(turnover_vals, index=weights_df.index, name="turnover")
-        if len(weights_df)
-        else pd.Series([], dtype=float, name="turnover")
+    weights_df = (
+        pd.DataFrame.from_dict(weight_records, orient="index")
+        .fillna(0.0).sort_index()
     )
-    costs_s = (
-        pd.Series(cost_vals, index=weights_df.index, name="costs")
-        if len(weights_df)
-        else pd.Series([], dtype=float, name="costs")
-    )
+    turnover_s = pd.Series(turnover_records, name="turnover").sort_index()
+    costs_s = pd.Series(cost_records, name="costs").sort_index()
 
     return BacktestResult(
         gross_values=gross_values_s,
@@ -565,7 +563,7 @@ def run_rebalanced_portfolio_backtest(
         costs=costs_s,
         fallbacks=int(fallback_count),
         metadata={
-            "rf_daily": float(rf_daily),
+            "rf_daily": _risk_free_metadata(rf_daily),
             "cost_bps": float(cost_bps),
             "fixed_fee": float(fixed_fee),
             "blend": float(blend_eff),

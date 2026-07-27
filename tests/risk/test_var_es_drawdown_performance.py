@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from quantfinlab.risk.drawdown import (
     avg_recovery_time,
@@ -76,3 +77,14 @@ def test_drawdown_and_performance_tables_summarize_synthetic_return_panel() -> N
     assert joined.shape == (80, 2)
     assert dd_summary.loc["AAA", "max_dd"] < 0.0
     assert set(dd_top["object"]).issubset({"AAA", "BBB"})
+
+
+def test_performance_table_accepts_aligned_risk_free_series() -> None:
+    panel = return_panel(n=80, assets=("AAA", "BBB"))
+    rf = pd.Series(np.linspace(0.0, 0.0002, len(panel)), index=panel.index)
+
+    table = performance_table(panel[["AAA"]], rf_daily=rf)
+    excess = panel["AAA"] - rf
+    expected = excess.mean() / excess.std(ddof=1) * np.sqrt(252.0)
+
+    assert table.loc["AAA", "sharpe"] == pytest.approx(expected)

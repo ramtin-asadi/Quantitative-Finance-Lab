@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from quantfinlab.common.errors import InputError
+from quantfinlab.risk.utils import _excess_returns
 
 DEFAULT_ANNUALIZATION = 252.0
 MuModel = Literal["Momentum", "BayesStein", "BayesSteinMomentum"]
@@ -273,13 +274,14 @@ def build_scaled_mu_from_raw(
 def sample_mean_excess_ann_from_returns(
     ret_window: pd.DataFrame,
     *,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     annualization: float = DEFAULT_ANNUALIZATION,
 ) -> np.ndarray:
     R = _sanitize_returns(ret_window)
     if R.shape[0] == 0:
         return np.zeros(R.shape[1], dtype=float)
-    mu_daily = R.mean(axis=0).to_numpy(dtype=float) - float(rf_daily)
+    excess = _excess_returns(R, rf_daily).dropna(how="any")
+    mu_daily = excess.mean(axis=0).to_numpy(dtype=float)
     return float(annualization) * mu_daily
 
 
@@ -291,7 +293,7 @@ def _return_mu_with_phi(mu: np.ndarray, phi: float, return_phi: bool):
 def bayes_stein_mean_excess_ann(
     ret_window: pd.DataFrame,
     *,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     ann_factor: float = DEFAULT_ANNUALIZATION,
     ridge: float = 1e-8,
     return_phi: bool = False,
@@ -302,7 +304,8 @@ def bayes_stein_mean_excess_ann(
     if R.shape[0] == 0:
         return _return_mu_with_phi(np.zeros(n_cols, dtype=float), np.nan, return_phi)
 
-    x = R.to_numpy(dtype=float) - float(rf_daily)
+    excess = _excess_returns(R, rf_daily).dropna(how="any")
+    x = excess.to_numpy(dtype=float)
     M, N = x.shape
     mu_hat = float(ann_factor) * x.mean(axis=0)
 
@@ -418,7 +421,7 @@ def bayes_stein_mu(
     ret_window: pd.DataFrame,
     *,
     cov_ann: np.ndarray | pd.DataFrame | None = None,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     ann_factor: float = DEFAULT_ANNUALIZATION,
     annualization: float = DEFAULT_ANNUALIZATION,
     target_sharpe_ann: float = 0.80,
@@ -444,7 +447,7 @@ def bayes_stein_mu(
     cov_ann : array-like or pandas.DataFrame, optional
         Annualized covariance matrix. If omitted, it is estimated from the return
         window.
-    rf_daily : float, default=0.0
+    rf_daily : float or pandas.Series, default=0.0
         Daily risk-free rate used when computing excess means.
     ann_factor : float, default=252.0
         Annualization factor for sample means.

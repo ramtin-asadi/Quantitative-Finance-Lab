@@ -11,6 +11,7 @@ from quantfinlab.portfolio import (
     covariance,
     expected_returns,
     factors,
+    optimizers,
     regimes,
     walkforward,
 )
@@ -284,6 +285,79 @@ def test_walkforward_grid_runs_from_cached_covariance_and_mu_state() -> None:
     assert grid.diagnostics.loc["MV sample momentum", "Optimizer"] == "MV"
     assert len(with_frontier.backtests) == len(grid.backtests) + 1
     assert any("FrontierGrid" in name for name in with_frontier.backtests)
+
+
+def test_equal_weight_walkforward_uses_ticker_only_state() -> None:
+    returns = return_panel(n=70, assets=("AAA", "BBB", "CCC"))
+    rebalance_dates = [returns.index[30], returns.index[50]]
+    universe_by_date = {
+        date: {"tickers": ["AAA", "BBB", "CCC"]}
+        for date in rebalance_dates
+    }
+
+    cache = walkforward.build_universe_state_cache(
+        returns=returns,
+        rebalance_dates=rebalance_dates,
+        universe_by_date=universe_by_date,
+    )
+    result = walkforward.run_equal_weight_walkforward(
+        returns=returns,
+        rebalance_dates=rebalance_dates,
+        universe_by_date=universe_by_date,
+        max_weight=0.50,
+        trading_cost_bps=1.0,
+    )
+
+    assert set(cache) == set(rebalance_dates)
+    assert all(set(state) == {"tickers"} for state in cache.values())
+    assert result.metadata["optimizer"] == "EW"
+    assert result.weights.loc[rebalance_dates[0]].sum() == pytest.approx(1.0)
+    assert result.weights.loc[rebalance_dates[0]].nunique() == 1
+
+
+def test_equal_weight_walkforward_matches_the_model_state_grid() -> None:
+    returns = return_panel(n=90, assets=("AAA", "BBB", "CCC", "DDD"))
+    rebalance_dates = [returns.index[45], returns.index[65]]
+    universe_by_date = {
+        date: {"tickers": list(returns.columns)}
+        for date in rebalance_dates
+    }
+    model_cache = walkforward.build_rebalance_state_cache(
+        returns=returns,
+        rebalance_dates=rebalance_dates,
+        universe_by_date=universe_by_date,
+        cov_models={"Sample": covariance.sample_covariance},
+        mu_models={"Momentum": expected_returns.momentum_mu},
+        cov_lookback=35,
+        mu_lookback=45,
+        min_cov_observations=25,
+        min_mu_observations=25,
+    )
+    grid = walkforward.run_walkforward_grid(
+        returns=returns,
+        rebalance_dates=rebalance_dates,
+        cache=model_cache,
+        optimizers={"EW": optimizers.equal_weight},
+        strategy_specs=[{"optimizer": "EW"}],
+        max_weight=0.80,
+        trading_cost_bps=1.0,
+    )
+    direct = walkforward.run_equal_weight_walkforward(
+        returns=returns,
+        rebalance_dates=rebalance_dates,
+        universe_by_date=universe_by_date,
+        max_weight=0.80,
+        trading_cost_bps=1.0,
+    )
+
+    pd.testing.assert_series_equal(
+        direct.net_values,
+        grid.backtests["EW"].net_values,
+    )
+    pd.testing.assert_frame_equal(
+        direct.weights,
+        grid.backtests["EW"].weights,
+    )
 
 
 def test_walkforward_rejects_empty_state_and_invalid_strategy_specs() -> None:

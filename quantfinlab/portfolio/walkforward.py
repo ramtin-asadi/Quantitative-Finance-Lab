@@ -177,7 +177,7 @@ def build_rebalance_state_cache(
     annualization: float = 252.0,
     ewma_lambda: float = 0.94,
     momentum_mode: str = "6-1",
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     target_sharpe_ann: float = 0.80,
     mu_cap_ann: float = 0.30,
     winsor_lo: float = 0.05,
@@ -232,7 +232,7 @@ def build_rebalance_state_cache(
         EWMA covariance decay parameter.
     momentum_mode : str, default="6-1"
         Momentum convention for expected-return models.
-    rf_daily : float, default=0.0
+    rf_daily : float or pandas.Series, default=0.0
         Daily risk-free rate for expected-return estimation.
     target_sharpe_ann : float, default=0.80
         Target Sharpe used when scaling expected-return directions.
@@ -400,6 +400,38 @@ def build_rebalance_state_cache(
             "avg_dollar_volume": avg_dv.astype(float),
         }
 
+    return cache
+
+
+def build_universe_state_cache(
+    *,
+    returns: pd.DataFrame,
+    rebalance_dates: Sequence[pd.Timestamp | str],
+    universe_by_date: Mapping[pd.Timestamp, Any],
+) -> dict[pd.Timestamp, dict[str, Any]]:
+    """Build the ticker-only state needed by an equal-weight walk-forward run."""
+
+    if returns.empty:
+        raise InputError("returns is empty.")
+
+    return_dates = pd.DatetimeIndex(pd.to_datetime(returns.index))
+    return_tickers = {str(ticker) for ticker in returns.columns}
+    universe = {pd.Timestamp(date): value for date, value in universe_by_date.items()}
+    cache: dict[pd.Timestamp, dict[str, Any]] = {}
+
+    for raw_date in pd.to_datetime(list(rebalance_dates)):
+        date = pd.Timestamp(raw_date)
+        if date not in return_dates or date not in universe:
+            continue
+        value = universe[date]
+        tickers = value.get("tickers", value) if isinstance(value, Mapping) else value
+        tickers = [
+            str(ticker)
+            for ticker in tickers
+            if str(ticker) in return_tickers
+        ]
+        if len(tickers) >= 2:
+            cache[date] = {"tickers": tickers}
     return cache
 
 
@@ -626,7 +658,7 @@ def _strategy_weight_fn(
 def _collect_outputs(
     backtests: Mapping[str, BacktestResult],
     *,
-    rf_daily: float,
+    rf_daily: float | pd.Series,
     annualization: float,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     from quantfinlab.portfolio import selection
@@ -662,7 +694,7 @@ def run_walkforward_grid(
     solver_order: Sequence[str] | None = ("OSQP", "ECOS", "SCS"),
     optimizer_params: Mapping[str, Mapping[str, Any]] | None = None,
     blend_by_optimizer: Mapping[str, float] | None = None,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     annualization: float = 252.0,
     **cache_kwargs,
 ) -> WalkForwardGridResult:
@@ -719,7 +751,7 @@ def run_walkforward_grid(
         Per-optimizer parameter overrides.
     blend_by_optimizer : mapping, optional
         Optional smoothing/blending strength by optimizer family.
-    rf_daily : float, default=0.0
+    rf_daily : float or pandas.Series, default=0.0
         Daily risk-free rate for performance metrics.
     annualization : float, default=252.0
         Annualization factor.
@@ -878,6 +910,71 @@ def run_walkforward_grid(
     )
 
 
+def run_equal_weight_walkforward(
+    *,
+    returns: pd.DataFrame,
+    rebalance_dates: Sequence[pd.Timestamp | str],
+    universe_by_date: Mapping[pd.Timestamp, Any],
+    max_weight: float | None = 0.25,
+    min_weight: float | None = 0.0,
+    long_only: bool = True,
+    trading_cost_bps: float = 10.0,
+    rf_daily: float | pd.Series = 0.0,
+) -> BacktestResult:
+    """Run an equal-weight walk-forward backtest without estimating model state."""
+
+    cache = build_universe_state_cache(
+        returns=returns,
+        rebalance_dates=rebalance_dates,
+        universe_by_date=universe_by_date,
+    )
+    usable_dates = [
+        pd.Timestamp(date)
+        for date in rebalance_dates
+        if pd.Timestamp(date) in cache
+    ]
+    if not usable_dates:
+        raise InputError("No valid rebalance dates remain after universe alignment.")
+
+    def weight_fn(
+        date: pd.Timestamp,
+        state: Mapping[str, Any],
+        previous_weights: np.ndarray,
+    ) -> np.ndarray:
+        del date, previous_weights
+        return np.asarray(
+            optimizer_module.equal_weight(
+                state["tickers"],
+                w_min=min_weight,
+                w_max=max_weight,
+                long_only=long_only,
+            ),
+            dtype=float,
+        )
+
+    result = run_rebalanced_portfolio_backtest(
+        returns=returns,
+        rebal_dates=usable_dates,
+        cache=cache,
+        weight_fn=weight_fn,
+        cost_bps=trading_cost_bps,
+        fallback="equal",
+        blend=0.0,
+        w_min=min_weight,
+        w_max=max_weight,
+        long_only=long_only,
+        rf_daily=rf_daily,
+    )
+    return _with_metadata(
+        result,
+        {
+            "optimizer": "EW",
+            "strategy_name": "EW",
+            "rebalance_dates": usable_dates,
+        },
+    )
+
+
 def append_frontiergrid_strategy(
     grid: WalkForwardGridResult,
     *,
@@ -926,7 +1023,7 @@ def append_frontiergrid_strategy(
         w_min=metadata.get("min_weight", 0.0),
         w_max=metadata.get("max_weight", 0.25),
         long_only=bool(metadata.get("long_only", True)),
-        rf_daily=float(metadata.get("rf_daily", 0.0)),
+        rf_daily=metadata.get("rf_daily", 0.0),
     )
     res = _with_metadata(
         res,
@@ -937,7 +1034,7 @@ def append_frontiergrid_strategy(
     new_backtests[strategy_name] = res
     summary, nav, ret, turnover, costs = _collect_outputs(
         new_backtests,
-        rf_daily=float(metadata.get("rf_daily", 0.0)),
+        rf_daily=metadata.get("rf_daily", 0.0),
         annualization=float(metadata.get("annualization", 252.0)),
     )
     diag = grid.diagnostics.copy()
@@ -998,6 +1095,8 @@ __all__ = [
     "append_frontiergrid_strategy",
     "build_rebalance_state_cache",
     "build_strategy_grid",
+    "build_universe_state_cache",
     "rebalances_per_year",
+    "run_equal_weight_walkforward",
     "run_walkforward_grid",
 ]

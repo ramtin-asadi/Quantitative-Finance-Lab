@@ -12,6 +12,7 @@ from quantfinlab.risk.utils import (
     DEFAULT_ANNUALIZATION,
     _align_pair,
     _coerce_objects,
+    _excess_returns,
     _to_datetime_if_possible,
     _to_numeric_series,
 )
@@ -118,7 +119,7 @@ def capm_table(
     objects: Mapping[str, Any] | pd.DataFrame,
     *,
     market_ret: pd.Series | Sequence[float] | np.ndarray,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     annualization: float = DEFAULT_ANNUALIZATION,
     rolling: int | Sequence[int] | None = None,
 ) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
@@ -134,7 +135,7 @@ def capm_table(
         Return objects to analyze.
     market_ret : array-like
         Market return series.
-    rf_daily : float, default=0.0
+    rf_daily : float or pandas.Series, default=0.0
         One-period risk-free rate subtracted from returns before CAPM regression.
     annualization : float, default=252.0
         Annualization factor.
@@ -163,8 +164,8 @@ def capm_table(
 
     for name, r in obj.items():
         y = _to_datetime_if_possible(r)
-        y_ex = y - float(rf_daily)
-        m_ex = m - float(rf_daily)
+        y_ex = _excess_returns(y, rf_daily)
+        m_ex = _excess_returns(m, rf_daily)
         z_ex = _align_pair(y_ex, m_ex)
         alpha_d, beta, r2 = capm_ols(z_ex["y"], z_ex["x"])
         alpha_ann = (1.0 + alpha_d) ** ann - 1.0 if alpha_d > -0.999 else float("nan")

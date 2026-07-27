@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -275,3 +277,31 @@ def test_selection_tables_filter_and_rank_backtest_results() -> None:
     assert best in results
     assert set(sharpes) == set(results)
     assert "EW" in finalists
+
+
+def test_select_best_grid_strategy_filters_optimizer_and_maximizes_metric() -> None:
+    names = ["EW", "MV (Sample, Momentum)", "MV (EWMA, BayesStein)"]
+    grid = SimpleNamespace(
+        results=pd.DataFrame(
+            {
+                "Sharpe": [0.65, 0.82, 0.91],
+                "Calmar": [0.70, 1.20, 1.05],
+            },
+            index=names,
+        ),
+        diagnostics=pd.DataFrame(
+            {"Optimizer": ["EW", "MV", "MV"]},
+            index=names,
+        ),
+    )
+
+    assert (
+        selection.select_best_grid_strategy(grid, optimizer="MV")
+        == "MV (EWMA, BayesStein)"
+    )
+    assert (
+        selection.select_best_grid_strategy(grid, optimizer="MV", metric="Calmar")
+        == "MV (Sample, Momentum)"
+    )
+    with pytest.raises(InputError, match="MinVar"):
+        selection.select_best_grid_strategy(grid, optimizer="MinVar")

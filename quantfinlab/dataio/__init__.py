@@ -8,6 +8,7 @@ Filter functions are small composable steps to be chained via ``df.pipe``.
 from __future__ import annotations
 
 from .equity_ohlcv import load_ohlcv
+from .fundamentals import read_sec_facts, read_sec_metadata
 from .macro import (
     clean_monthly_index,
     load_acm_term_premium,
@@ -32,10 +33,12 @@ from .panel import (
     load_vix,
     load_yfinance_panel,
     prices_to_returns_panel,
+    read_equity_history,
     vix_feature_frame,
 )
 from .rates import (
     load_par_yield_curve,
+    risk_free_returns,
     tenor_first_valid,
     tenor_label_to_years,
 )
@@ -62,11 +65,15 @@ __all__ = [
     "load_option_chain",
     "load_optionsdx_equity_pairs",
     "load_par_yield_curve",
+    "risk_free_returns",
     "load_spx_option_pairs",
     "load_yfinance_panel",
     "macro_availability_table",
     "pair_calls_puts",
     "prices_to_returns_panel",
+    "read_equity_history",
+    "read_sec_facts",
+    "read_sec_metadata",
     "tenor_first_valid",
     "tenor_label_to_years",
 ]

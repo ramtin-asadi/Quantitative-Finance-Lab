@@ -263,6 +263,88 @@ def _rank_var_backtest_accuracy(tbl: pd.DataFrame) -> pd.DataFrame:
         out.loc[best_idx, "is_best"] = True
     return out
 
+
+def _var_backtest_table_from_details(
+    details_by_method: Mapping[str, Mapping[str, Mapping[str, Any]]],
+    *,
+    keep_method_level: bool,
+) -> pd.DataFrame:
+    rows: list[dict[str, Any]] = []
+    for method_name, details in details_by_method.items():
+        for object_name, stats in details.items():
+            rows.append(
+                {
+                    "object": str(object_name),
+                    "method": str(method_name),
+                    "breach_count": stats["count"],
+                    "breach_rate": stats["rate"],
+                    "coverage_error": stats["coverage_error"],
+                    "abs_coverage_error": stats["abs_coverage_error"],
+                    "longest_breach_streak": stats["longest_streak"],
+                    "avg_gap_days": stats["avg_gap"],
+                    "kupiec_p": stats["kupiec_p"],
+                    "christoffersen_p": stats["christ_p"],
+                    "quantile_loss": stats["quantile_loss"],
+                }
+            )
+
+    table = pd.DataFrame(rows)
+    if table.empty:
+        return pd.DataFrame(
+            columns=[
+                "breach_count",
+                "breach_rate",
+                "coverage_error",
+                "abs_coverage_error",
+                "longest_breach_streak",
+                "avg_gap_days",
+                "kupiec_p",
+                "christoffersen_p",
+                "quantile_loss",
+                "accuracy_rank",
+                "accuracy_score",
+                "is_best",
+            ]
+        )
+    if not keep_method_level:
+        table = table.drop(columns=["method"]).set_index("object").sort_index()
+        return _rank_var_backtest_accuracy(table)
+    table = table.set_index(["object", "method"]).sort_index()
+    return _rank_var_backtest_accuracy(table)
+
+
+def var_backtest_results(
+    objects: Mapping[str, Any] | pd.DataFrame,
+    *,
+    alpha: float = 0.05,
+    method: Literal["hist", "cf", "fhs"] = "hist",
+    methods: Sequence[str] | None = None,
+    lookback: int = 252,
+) -> tuple[pd.DataFrame, dict[str, dict[str, dict[str, Any]]]]:
+    """Compute the VaR backtest table and detailed paths in one pass."""
+
+    alpha_value = _normalize_alpha(alpha)
+    method_names = _normalize_var_methods(method=method, methods=methods)
+    return_objects = _coerce_objects(objects)
+    details_by_method = {
+        method_name: {
+            object_name: breach_stats(
+                values,
+                alpha=alpha_value,
+                lookback=int(lookback),
+                method=method_name,
+            )
+            for object_name, values in return_objects.items()
+        }
+        for method_name in method_names
+    }
+    table = _var_backtest_table_from_details(
+        details_by_method,
+        keep_method_level=len(method_names) > 1 or methods is not None,
+    )
+    return table, details_by_method
+
+
 def var_backtest_table(
     objects: Mapping[str, Any] | pd.DataFrame,
     *,
@@ -300,55 +382,14 @@ def var_backtest_table(
     only by object.
     """
 
-    a = _normalize_alpha(alpha)
-    methods_norm = _normalize_var_methods(method=method, methods=methods)
-    obj = _coerce_objects(objects)
-
-    rows: list[dict[str, Any]] = []
-    for m in methods_norm:
-        details = {name: breach_stats(r, alpha=a, lookback=int(lookback), method=m) for name, r in obj.items()}
-        for name, st in details.items():
-            rows.append(
-                {
-                    "object": str(name),
-                    "method": str(m),
-                    "breach_count": st["count"],
-                    "breach_rate": st["rate"],
-                    "coverage_error": st["coverage_error"],
-                    "abs_coverage_error": st["abs_coverage_error"],
-                    "longest_breach_streak": st["longest_streak"],
-                    "avg_gap_days": st["avg_gap"],
-                    "kupiec_p": st["kupiec_p"],
-                    "christoffersen_p": st["christ_p"],
-                    "quantile_loss": st["quantile_loss"],
-                }
-            )
-
-    out = pd.DataFrame(rows)
-    if out.empty:
-        return pd.DataFrame(
-            columns=[
-                "breach_count",
-                "breach_rate",
-                "coverage_error",
-                "abs_coverage_error",
-                "longest_breach_streak",
-                "avg_gap_days",
-                "kupiec_p",
-                "christoffersen_p",
-                "quantile_loss",
-                "accuracy_rank",
-                "accuracy_score",
-                "is_best",
-            ]
-        )
-
-    if len(methods_norm) == 1 and methods is None:
-        out = out.drop(columns=["method"]).set_index("object").sort_index()
-        return _rank_var_backtest_accuracy(out)
-
-    out = out.set_index(["object", "method"]).sort_index()
-    return _rank_var_backtest_accuracy(out)
+    table, _ = var_backtest_results(
+        objects,
+        alpha=alpha,
+        method=method,
+        methods=methods,
+        lookback=lookback,
+    )
+    return table
 
 def best_var_methods(var_backtest_tbl: pd.DataFrame) -> dict[str, str]:
     """Extract the best VaR method for each object.
@@ -394,5 +435,6 @@ __all__ = [
     "longest_true_streak",
     "quantile_loss",
     "var_backtest_details",
+    "var_backtest_results",
     "var_backtest_table",
 ]

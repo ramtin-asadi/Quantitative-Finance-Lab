@@ -1,6 +1,6 @@
 # Us Treasury Yields
 
-    Source: FRED fredgraph CSV endpoints for Treasury constant-maturity rates.
+    Source: U.S. Treasury daily par yield curve CSV.
 
     Script: `download.py`
 
@@ -8,8 +8,8 @@
     - `data/us_treasury_yields.csv`
 
     Source and download links:
-    - https://fred.stlouisfed.org/series/DGS10
-- https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10
+    - https://home.treasury.gov/resource-center/data-chart-center/interest-rates
+    - https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml
 
     Notes:
     Values are kept in percent units because the notebooks and dataio rate loader expect percent-style par-yield inputs.

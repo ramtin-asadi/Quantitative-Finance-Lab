@@ -1,19 +1,30 @@
 from __future__ import annotations
 
+from http.client import RemoteDisconnected
 from pathlib import Path
-from urllib.request import urlopen, Request
+from datetime import date
+from time import sleep
+from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 import pandas as pd
 
 
-ROOT = Path(__file__).resolve().parents[2]
-DATA = ROOT / "data"
+repo_root = Path(__file__).resolve().parents[2]
+data_dir = repo_root / "data"
 
 
-def read_url_csv(url: str, **kwargs) -> pd.DataFrame:
-    req = Request(url, headers={"User-Agent": "quantfinlab-data-builder/1.0"})
-    with urlopen(req, timeout=120) as response:
-        return pd.read_csv(response, **kwargs)
+def read_url_csv(url: str, attempts: int = 4, **kwargs) -> pd.DataFrame:
+    request = Request(url, headers={"User-Agent": "quantfinlab-data-builder/1.0"})
+    for attempt in range(attempts):
+        try:
+            with urlopen(request, timeout=120) as response:
+                return pd.read_csv(response, **kwargs)
+        except (RemoteDisconnected, TimeoutError, URLError):
+            if attempt == attempts - 1:
+                raise
+            sleep(2 ** attempt)
+    raise RuntimeError("download attempts exhausted")
 
 
 def clean_date_frame(frame: pd.DataFrame) -> pd.DataFrame:
@@ -26,37 +37,57 @@ def clean_date_frame(frame: pd.DataFrame) -> pd.DataFrame:
     out = out.drop_duplicates(subset=["date"], keep="last")
     return out
 
-SERIES = {
-    "DGS1MO": "1 mo",
-    "DGS2MO": "2 mo",
-    "DGS3MO": "3 mo",
-    "DGS4MO": "4 mo",
-    "DGS6MO": "6 mo",
-    "DGS1": "1 yr",
-    "DGS2": "2 yr",
-    "DGS3": "3 yr",
-    "DGS5": "5 yr",
-    "DGS7": "7 yr",
-    "DGS10": "10 yr",
-    "DGS20": "20 yr",
-    "DGS30": "30 yr",
+treasury_columns = {
+    "Date": "date",
+    "1 Mo": "1 mo",
+    "2 Mo": "2 mo",
+    "3 Mo": "3 mo",
+    "4 Mo": "4 mo",
+    "6 Mo": "6 mo",
+    "1 Yr": "1 yr",
+    "2 Yr": "2 yr",
+    "3 Yr": "3 yr",
+    "5 Yr": "5 yr",
+    "7 Yr": "7 yr",
+    "10 Yr": "10 yr",
+    "20 Yr": "20 yr",
+    "30 Yr": "30 yr",
 }
 
 
+def download_year(year: int) -> pd.DataFrame:
+    url = (
+        "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/"
+        f"daily-treasury-rates.csv/{year}/all"
+        f"?type=daily_treasury_yield_curve&field_tdr_date_value={year}&page&_format=csv"
+    )
+    frame = read_url_csv(url, na_values=["N/A", ""])
+    frame = frame.rename(columns=treasury_columns)
+    frame = clean_date_frame(frame)
+    columns = ["date"] + [column for column in treasury_columns.values() if column != "date"]
+    return frame.reindex(columns=columns)
+
+
 def main() -> int:
-    output = DATA / "us_treasury_yields.csv"
-    url = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=" + ",".join(SERIES)
-    try:
-        frame = read_url_csv(url, na_values=[".", ""])
-        frame = clean_date_frame(frame).rename(columns=SERIES)
-    except Exception as exc:
-        raise RuntimeError(f"FRED Treasury download failed: {url}") from exc
-    keep = ["date"] + [v for v in SERIES.values() if v in frame.columns]
-    frame = frame[keep]
-    for col in keep[1:]:
-        frame[col] = pd.to_numeric(frame[col], errors="coerce")
+    output = data_dir / "us_treasury_yields.csv"
+    current_year = date.today().year
+    current = download_year(current_year)
+    if output.exists():
+        history = clean_date_frame(pd.read_csv(output))
+        history = history[history["date"].dt.year < current_year]
+    else:
+        history = pd.concat(
+            [download_year(year) for year in range(1990, current_year)],
+            ignore_index=True,
+        )
+    frame = pd.concat([history, current], ignore_index=True)
+    frame = clean_date_frame(frame)
+    for column in frame.columns[1:]:
+        frame[column] = pd.to_numeric(frame[column], errors="coerce")
     frame.to_csv(output, index=False)
-    print(f"wrote {output} rows={len(frame):,} cols={len(frame.columns):,}")
+    latest = frame["3 mo"].last_valid_index()
+    latest_date = frame.loc[latest, "date"].date()
+    print(f"wrote {output} rows={len(frame):,} cols={len(frame.columns):,} latest_3m={latest_date}")
     return 0
 
 

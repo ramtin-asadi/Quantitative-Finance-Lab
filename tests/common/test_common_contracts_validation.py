@@ -6,6 +6,7 @@ import pytest
 
 from quantfinlab.common import (
     BacktestResult,
+    FundamentalReportArtifacts,
     InputError,
     PortfolioState,
     RiskReportArtifacts,
@@ -82,3 +83,18 @@ def test_normalize_weights_and_result_containers_behave_like_mappings() -> None:
         _ = simple["missing"]
     with pytest.raises(InputError, match="non-negative"):
         normalize_weights({"AAA": 1.0, "BBB": -0.5})
+
+
+def test_fundamental_report_artifacts_copy_named_groups() -> None:
+    table = pd.DataFrame({"score": [0.8]}, index=["AAA"])
+    report = FundamentalReportArtifacts(
+        tables={"snapshot": table},
+        figures={"earnings": []},
+        series={"history": pd.Series([0.7, 0.8])},
+        text={"summary": ["stable profitability"]},
+    )
+
+    assert report["figures"] == {"earnings": []}
+    assert report.as_dict()["text"] == {"summary": ["stable profitability"]}
+    with pytest.raises(KeyError):
+        _ = report["missing"]

@@ -2,6 +2,7 @@
 data/*
 !data/.gitignore
 !data/README.md
+!data/update.py
 !data/*/
 data/datasets/
 !data/*/raw/

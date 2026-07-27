@@ -14,12 +14,14 @@
 */*.zip
 */*.txt
 */*.csv
+!sp500_fundamentals/verified_ticker_cik_overrides.csv
 */*.xlsx
 */*.xls
 */*.parquet
 
 # Keep documentation and scripts
 !README.md
+!update.py
 !.gitignore
 !*/*.md
 !*/*.py

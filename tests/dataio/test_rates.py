@@ -3,7 +3,12 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from quantfinlab.dataio.rates import load_par_yield_curve, tenor_first_valid, tenor_label_to_years
+from quantfinlab.dataio.rates import (
+    load_par_yield_curve,
+    risk_free_returns,
+    tenor_first_valid,
+    tenor_label_to_years,
+)
 
 
 def test_load_par_yield_curve_normalizes_tenors_percent_and_duplicates(tmp_path) -> None:
@@ -25,3 +30,17 @@ def test_load_par_yield_curve_normalizes_tenors_percent_and_duplicates(tmp_path)
     assert curve.loc[pd.Timestamp("2024-01-02"), "1M"] == pytest.approx(0.0505)
     assert tenor_label_to_years("6M") == 0.5
     assert tenor_first_valid(curve)["10Y"] == pd.Timestamp("2024-01-02")
+
+
+def test_risk_free_returns_uses_previous_quote_and_calendar_days() -> None:
+    yields = pd.Series(
+        [0.04, 0.05],
+        index=pd.to_datetime(["2024-01-05", "2024-01-08"]),
+    )
+    dates = pd.to_datetime(["2024-01-05", "2024-01-08", "2024-01-09"])
+
+    returns = risk_free_returns(yields, dates)
+
+    assert pd.isna(returns.iloc[0])
+    assert returns.iloc[1] == pytest.approx((1.0 + 0.04 / 2.0) ** (2.0 * 3.0 / 365.25) - 1.0)
+    assert returns.iloc[2] == pytest.approx((1.0 + 0.05 / 2.0) ** (2.0 / 365.25) - 1.0)

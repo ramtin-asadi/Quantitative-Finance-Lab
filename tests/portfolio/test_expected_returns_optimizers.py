@@ -43,6 +43,16 @@ def test_expected_return_models_emit_labeled_capped_mu_vectors() -> None:
         assert float(mu.abs().max()) <= 0.25 + 1e-12
 
 
+def test_sample_mean_excess_accepts_aligned_risk_free_series() -> None:
+    returns = return_panel(n=80, assets=("AAA", "BBB", "CCC"))
+    rf = pd.Series(np.linspace(0.0, 0.0002, len(returns)), index=returns.index)
+
+    mu = expected_returns.sample_mean_excess_ann_from_returns(returns, rf_daily=rf)
+    expected = returns.sub(rf, axis=0).mean().to_numpy() * 252.0
+
+    assert np.allclose(mu, expected)
+
+
 def test_mu_diagnostics_summarizes_cache_states() -> None:
     returns = return_panel(n=170, assets=("AAA", "BBB", "CCC"))
     cov_ann = covariance.estimate_covariance(returns, method="Sample", return_df=True)

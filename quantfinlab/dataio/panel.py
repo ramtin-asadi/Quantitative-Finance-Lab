@@ -8,6 +8,7 @@ with a sorted, deduplicated ``DatetimeIndex`` and tickers as columns.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 
@@ -16,6 +17,21 @@ import pandas as pd
 
 from ..portfolio.universe import prices_to_returns
 from .schemas import get_panel_source
+
+_EQUITY_HISTORY_COLUMNS = (
+    "date",
+    "ticker",
+    "yf_ticker",
+    "adj_close",
+    "close",
+    "volume",
+    "dividends",
+    "stock_splits",
+    "is_sp500_member",
+    "snapshot_date",
+    "industry",
+    "market_cap",
+)
 
 
 def _resolve_data_file(path: str | Path, filename: str) -> Path:
@@ -42,6 +58,32 @@ def _resolve_date_column(columns: Iterable[str], expected: str) -> str | None:
         if cand in lower:
             return cols[lower.index(cand)]
     return None
+
+
+def _decode_parquet_metadata(metadata: dict[bytes, bytes] | None) -> dict[str, object]:
+    decoded: dict[str, object] = {}
+    for raw_key, raw_value in (metadata or {}).items():
+        key = raw_key.decode("utf-8", errors="replace")
+        value = raw_value.decode("utf-8", errors="replace")
+        try:
+            decoded[key] = json.loads(value)
+        except (TypeError, ValueError):
+            decoded[key] = value
+    return decoded
+
+
+def _require_validation_pass(
+    metadata: dict[str, object],
+    key: str,
+    *,
+    path: Path,
+) -> None:
+    result = metadata.get(key)
+    if not isinstance(result, dict):
+        raise ValueError(f"{path.name} has no usable {key!r} Parquet metadata.")
+    if str(result.get("status", "")).lower() != "pass":
+        failures = result.get("failures", [])
+        raise ValueError(f"{path.name} failed {key!r} validation: {failures}")
 
 
 def _load_wide_suffix(
@@ -130,6 +172,154 @@ def _load_multi_header(
             df = df.loc[:, keep]
         panels[field_lc] = df
     return panels
+
+
+def read_equity_history(
+    path: str | Path,
+    *,
+    start: str | pd.Timestamp | None = None,
+    end: str | pd.Timestamp | None = None,
+    columns: Sequence[str] | None = None,
+    drop_partial_last_date: bool = True,
+    validate: bool = True,
+) -> dict[str, object]:
+    """Read the point-in-time equity history used by fundamental projects.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        Parquet file containing long-form equity history.
+    start : str, pandas.Timestamp, or None, optional
+        Inclusive lower bound applied to the market date.
+    end : str, pandas.Timestamp, or None, optional
+        Inclusive upper bound applied to the market date.
+    columns : sequence of str or None, optional
+        Columns to read. The default is the Project 21 market schema. ``date``,
+        ``ticker``, ``adj_close``, and ``is_sp500_member`` are required.
+    drop_partial_last_date : bool, default True
+        Remove the last market date when its member count is below 90% of the
+        median count over the preceding 20 sessions.
+    validate : bool, default True
+        Require passing source and SEC-enrichment metadata, unique date/ticker
+        rows, positive prices, and nonnegative volume.
+
+    Returns
+    -------
+    dict[str, object]
+        Market rows, raw and three-session-filled price panels, simple returns,
+        month-end decision dates, their next-session execution map, and decoded
+        Parquet metadata.
+
+    Notes
+    -----
+    ``adj_close`` is never overwritten by filling. ``adj_close_filled`` is a
+    separate panel, and ``returns`` applies the same three-session fill only while
+    calculating returns. This preserves the raw-data boundary for later checks.
+    PyArrow is imported only when this reader is called.
+    """
+
+    p = Path(path)
+    if not p.exists():
+        raise ValueError(f"Equity-history file does not exist: {p}")
+
+    try:
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+    except ImportError as exc:  # pragma: no cover - depends on optional environment
+        raise ImportError("read_equity_history requires the optional 'pyarrow' package.") from exc
+
+    requested = list(dict.fromkeys(columns or _EQUITY_HISTORY_COLUMNS))
+    required = {"date", "ticker", "adj_close", "is_sp500_member"}
+    missing = sorted(required.difference(requested))
+    if missing:
+        raise ValueError(f"Equity-history columns are missing required fields: {missing}")
+
+    parquet = pq.ParquetFile(p)
+    metadata = _decode_parquet_metadata(parquet.schema_arrow.metadata)
+    if validate:
+        _require_validation_pass(metadata, "validation", path=p)
+        _require_validation_pass(metadata, "sec_enrichment_validation", path=p)
+
+    filters: list[tuple[str, str, pd.Timestamp]] = []
+    if start is not None:
+        filters.append(("date", ">=", pd.Timestamp(start)))
+    if end is not None:
+        filters.append(("date", "<=", pd.Timestamp(end)))
+    table = pq.read_table(p, columns=requested, filters=filters or None)
+    market = table.to_pandas()
+    del table
+    pa.default_memory_pool().release_unused()
+    market["date"] = pd.to_datetime(market["date"])
+    if "snapshot_date" in market:
+        market["snapshot_date"] = pd.to_datetime(market["snapshot_date"])
+    market = market.sort_values(["date", "ticker"]).reset_index(drop=True)
+    if market.empty:
+        raise ValueError(f"Equity-history filters selected no rows from {p.name}.")
+
+    if drop_partial_last_date:
+        member_counts = (
+            market.loc[market["is_sp500_member"]].groupby("date")["ticker"].nunique()
+        )
+        recent_full_count = float(member_counts.iloc[-21:-1].median())
+        partial_dates = member_counts[member_counts < 0.90 * recent_full_count].index
+        if len(partial_dates) and partial_dates[-1] == market["date"].max():
+            market = market[market["date"] < partial_dates[-1]].copy()
+
+    if validate:
+        if market.duplicated(["date", "ticker"]).any():
+            raise ValueError("Equity history contains duplicate date/ticker rows.")
+        for price_column in ("adj_close", "close"):
+            if price_column in market and not market[price_column].dropna().gt(0).all():
+                raise ValueError(f"Equity history contains nonpositive {price_column} values.")
+        if "volume" in market and not market["volume"].dropna().ge(0).all():
+            raise ValueError("Equity history contains negative volume values.")
+
+    def pivot(column: str) -> pd.DataFrame:
+        if column not in market:
+            return pd.DataFrame(index=pd.DatetimeIndex(sorted(market["date"].unique())))
+        return market.pivot(index="date", columns="ticker", values=column).sort_index()
+
+    adj_close = pivot("adj_close")
+    adj_close_filled = adj_close.ffill(limit=3)
+    close = pivot("close")
+    volume = pivot("volume")
+    returns = prices_to_returns_panel(
+        adj_close,
+        kind="simple",
+        ffill_limit=3,
+        fill_isolated_with=None,
+    ).astype("float32")
+
+    trading_dates = pd.DatetimeIndex(adj_close.index)
+    month_last_dates = (
+        pd.Series(trading_dates, index=trading_dates.to_period("M")).groupby(level=0).max()
+    )
+    decision_dates = pd.DatetimeIndex(month_last_dates.values)
+    decision_dates = decision_dates[decision_dates < trading_dates.max()]
+    execution_positions = trading_dates.searchsorted(decision_dates, side="right")
+    execution_dates = trading_dates[execution_positions]
+    date_map = pd.DataFrame(
+        {"decision_date": decision_dates, "execution_date": execution_dates}
+    )
+    if start is not None:
+        date_map = date_map[
+            date_map["decision_date"] >= pd.Timestamp(start)
+        ].reset_index(drop=True)
+    date_map["execution_lag_days"] = (
+        date_map["execution_date"] - date_map["decision_date"]
+    ).dt.days
+
+    return {
+        "market": market,
+        "adj_close": adj_close,
+        "adj_close_filled": adj_close_filled,
+        "close": close,
+        "volume": volume,
+        "returns": returns,
+        "decision_dates": pd.DatetimeIndex(date_map["decision_date"]),
+        "date_map": date_map,
+        "metadata": metadata,
+    }
 
 
 def load_yfinance_panel(
@@ -539,5 +729,6 @@ __all__ = [
     "load_vix",
     "load_yfinance_panel",
     "prices_to_returns_panel",
+    "read_equity_history",
     "vix_feature_frame",
 ]

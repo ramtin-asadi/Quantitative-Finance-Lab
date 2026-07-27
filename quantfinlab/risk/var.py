@@ -182,7 +182,23 @@ def _rolling_var_quantile(
     for i in range(int(lookback), len(r)):
         window = r.iloc[i - int(lookback) : i]
         if method_norm == "cf":
-            v, _ = cf_var_es(window, alpha=alpha, n_sim=cf_n_sim, seed=cf_seed)
+            mu = float(window.mean())
+            sd = float(window.std(ddof=1))
+            if sd <= 1e-12:
+                v = float("nan")
+            else:
+                skew = float(window.skew())
+                kurtosis = float(window.kurt())
+                normal_quantile = NormalDist().inv_cdf(alpha)
+                adjusted_quantile = (
+                    normal_quantile
+                    + (normal_quantile**2 - 1.0) * skew / 6.0
+                    + (normal_quantile**3 - 3.0 * normal_quantile) * kurtosis / 24.0
+                    - (2.0 * normal_quantile**3 - 5.0 * normal_quantile)
+                    * (skew**2)
+                    / 36.0
+                )
+                v = -(mu + sd * adjusted_quantile)
         elif method_norm == "fhs":
             v, _ = fhs_var_es(window, alpha=alpha, lam=fhs_lambda)
         q.iloc[i] = -float(v) if np.isfinite(v) else np.nan

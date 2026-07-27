@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,6 +14,7 @@ from quantfinlab.risk import (
     performance as performance_mod,
     var_backtesting,
 )
+from quantfinlab.risk.utils import _excess_returns
 
 from .curves import LAB_COLORS, choose_heatmap_cmap, set_plot_style
 
@@ -257,6 +259,7 @@ def plot_var_backtest(
     method: str = "hist",
     methods: Sequence[str] | None = None,
     name: str | None = None,
+    backtest: Mapping[str, Any] | None = None,
 ) -> plt.Axes:
     set_plot_style()
     method_norm = str(method).strip().lower()
@@ -271,7 +274,16 @@ def plot_var_backtest(
         best_map = var_backtesting.best_var_methods(table)
         chosen_method = str(best_map.get("_object", "hist"))
 
-    st = var_backtesting.breach_stats(returns, alpha=alpha, lookback=lookback, method=chosen_method)
+    st = (
+        backtest
+        if backtest is not None
+        else var_backtesting.breach_stats(
+            returns,
+            alpha=alpha,
+            lookback=lookback,
+            method=chosen_method,
+        )
+    )
     z = st["series"]
     if z.empty:
         ax.text(0.5, 0.5, "Insufficient data", ha="center", va="center")
@@ -398,7 +410,7 @@ def plot_capm_scatter(
     returns,
     market_ret,
     *,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     name: str | None = None,
     color: str | None = None,
 ) -> plt.Axes:
@@ -410,8 +422,10 @@ def plot_capm_scatter(
         ax.text(0.5, 0.5, "No CAPM data", ha="center", va="center")
         ax.axis("off")
         return ax
-    x = z["x"] - float(rf_daily)
-    y = z["y"] - float(rf_daily)
+    x = _excess_returns(z["x"], rf_daily)
+    y = _excess_returns(z["y"], rf_daily)
+    z = pd.concat([x.rename("x"), y.rename("y")], axis=1).dropna()
+    x, y = z["x"], z["y"]
     alpha, beta, r2 = capm_mod.capm_ols(y, x)
     xv = x.to_numpy(dtype=float)
     yv = y.to_numpy(dtype=float)

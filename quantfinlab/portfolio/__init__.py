@@ -97,6 +97,7 @@ from .selection import (
     calc_drawdown,
     performance_metrics,
     result_sharpe,
+    select_best_grid_strategy,
     summarize_results,
 )
 from .sizing import (
@@ -223,6 +224,7 @@ __all__ = [
     "run_rebalanced_portfolio_backtest",
     "sample_covariance",
     "scale_mu_to_target_sharpe",
+    "select_best_grid_strategy",
     "select_liquid_universe",
     "selection",
     "sizing",

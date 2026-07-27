@@ -10,6 +10,7 @@ import pandas as pd
 from quantfinlab.common.contracts import BacktestResult
 from quantfinlab.common.errors import InputError
 from quantfinlab.portfolio.attribution import effective_number_of_holdings
+from quantfinlab.risk.utils import _excess_returns
 
 DEFAULT_ANNUALIZATION = 252.0
 MU_ORDER = ("Momentum", "BayesStein", "BayesSteinMomentum")
@@ -47,7 +48,7 @@ def performance_metrics(
     net_returns: pd.Series,
     net_values: pd.Series,
     *,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     annualization: float = DEFAULT_ANNUALIZATION,
 ) -> dict[str, float]:
     """Compute standard performance metrics from returns and NAV.
@@ -58,8 +59,9 @@ def performance_metrics(
         Net periodic returns.
     net_values : pandas.Series
         Net portfolio value or NAV series.
-    rf_daily : float, default=0.0
-        Periodic risk-free rate used in Sharpe and Sortino calculations.
+    rf_daily : float or pandas.Series, default=0.0
+        Periodic risk-free rate used in Sharpe and Sortino calculations. A
+        Series is aligned to the return dates.
     annualization : float, default=252.0
         Annualization factor for return and volatility metrics.
 
@@ -83,16 +85,17 @@ def performance_metrics(
     years = len(r) / float(annualization) if len(r) > 0 else np.nan
     cagr = float(v.iloc[-1] ** (1.0 / years) - 1.0) if years and years > 0 else np.nan
     vol = float(r.std(ddof=1) * math.sqrt(float(annualization))) if len(r) > 1 else np.nan
-    excess = r - float(rf_daily)
+    excess = _excess_returns(r, rf_daily).dropna()
+    sharpe_vol = r.std(ddof=1) if np.isscalar(rf_daily) else excess.std(ddof=1)
     sharpe = (
-        float(excess.mean() / r.std(ddof=1) * math.sqrt(float(annualization)))
-        if len(r) > 1 and r.std(ddof=1) > 0
+        float(excess.mean() / sharpe_vol * math.sqrt(float(annualization)))
+        if len(excess) > 1 and sharpe_vol > 0
         else np.nan
     )
     drawdown = calc_drawdown(v)
     max_dd = float(drawdown.min()) if not drawdown.empty else np.nan
     calmar = float(cagr / abs(max_dd)) if np.isfinite(cagr) and np.isfinite(max_dd) and max_dd < 0 else np.nan
-    downside = r[r < 0]
+    downside = r[r < 0] if np.isscalar(rf_daily) else excess[excess < 0]
     sortino = (
         float(excess.mean() / downside.std(ddof=1) * math.sqrt(float(annualization)))
         if len(downside) > 1 and downside.std(ddof=1) > 0
@@ -111,7 +114,7 @@ def performance_metrics(
 def result_sharpe(
     result: BacktestResult | Mapping[str, Any],
     *,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     annualization: float = DEFAULT_ANNUALIZATION,
     min_obs: int = 50,
 ) -> float:
@@ -119,10 +122,10 @@ def result_sharpe(
     r = res.net_returns.dropna().astype(float)
     if len(r) < int(min_obs):
         return float("nan")
-    sd = float(r.std(ddof=1))
+    excess = _excess_returns(r, rf_daily).dropna()
+    sd = float(r.std(ddof=1) if np.isscalar(rf_daily) else excess.std(ddof=1))
     if sd <= 0:
         return float("nan")
-    excess = r - float(rf_daily)
     return float(excess.mean() / sd * math.sqrt(float(annualization)))
 
 
@@ -186,7 +189,7 @@ def strategy_display_label(name: str, res: BacktestResult | Mapping[str, Any] | 
 def build_metrics_table(
     results: Mapping[str, BacktestResult | Mapping[str, Any]],
     *,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     annualization: float = DEFAULT_ANNUALIZATION,
 ) -> pd.DataFrame:
     rows = []
@@ -227,7 +230,7 @@ def build_trade_table(results: Mapping[str, BacktestResult | Mapping[str, Any]])
 def build_strategy_summary(
     results: Mapping[str, BacktestResult | Mapping[str, Any]],
     *,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     annualization: float = DEFAULT_ANNUALIZATION,
 ) -> pd.DataFrame:
     """Build a combined strategy summary table from backtest results.
@@ -240,7 +243,7 @@ def build_strategy_summary(
     results : mapping
         Mapping from strategy name to backtest result object or compatible
         dictionary.
-    rf_daily : float, default=0.0
+    rf_daily : float or pandas.Series, default=0.0
         Periodic risk-free rate used in performance metrics.
     annualization : float, default=252.0
         Annualization factor.
@@ -284,7 +287,7 @@ def build_strategy_summary(
 def summarize_results(
     results: Mapping[str, BacktestResult | Mapping[str, Any]],
     *,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     annualization: float = DEFAULT_ANNUALIZATION,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Return performance and trade summary tables for a result mapping.
@@ -294,7 +297,7 @@ def summarize_results(
     results : mapping
         Mapping from strategy name to backtest result object or compatible
         dictionary.
-    rf_daily : float, default=0.0
+    rf_daily : float or pandas.Series, default=0.0
         Periodic risk-free rate used in performance metrics.
     annualization : float, default=252.0
         Annualization factor.
@@ -321,7 +324,7 @@ def summarize_results(
 def best_strategy_by_sharpe(
     results: Mapping[str, BacktestResult | Mapping[str, Any]],
     *,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     annualization: float = DEFAULT_ANNUALIZATION,
     min_obs: int = 50,
 ) -> tuple[str, dict[str, float]]:
@@ -332,7 +335,7 @@ def best_strategy_by_sharpe(
     results : mapping
         Mapping from strategy name to backtest result object or compatible
         dictionary.
-    rf_daily : float, default=0.0
+    rf_daily : float or pandas.Series, default=0.0
         Periodic risk-free rate.
     annualization : float, default=252.0
         Annualization factor.
@@ -406,6 +409,46 @@ def select_best_maxsharpe_combination(results: pd.DataFrame, *, metric: str = "S
     if df.empty:
         return None
     return df.iloc[0]
+
+
+def select_best_grid_strategy(
+    grid,
+    *,
+    optimizer: str,
+    metric: str = "Sharpe",
+) -> str:
+    """Select the strongest strategy for one optimizer in a walk-forward grid.
+
+    Parameters
+    ----------
+    grid
+        Walk-forward grid result with aligned ``results`` and ``diagnostics``
+        tables.
+    optimizer : str
+        Optimizer name recorded in the grid diagnostics.
+    metric : str, default "Sharpe"
+        Result column to maximize.
+
+    Returns
+    -------
+    str
+        Strategy name for the highest metric value.
+
+    Raises
+    ------
+    InputError
+        If the optimizer has no strategy with an observed metric value.
+    """
+
+    names = grid.diagnostics.index[
+        grid.diagnostics["Optimizer"].eq(optimizer)
+    ]
+    scores = grid.results.reindex(names)[metric].dropna()
+    if scores.empty:
+        raise InputError(
+            f"No {optimizer!r} grid strategy has an observed {metric!r} value."
+        )
+    return str(scores.idxmax())
 
 
 def append_or_select_frontiergrid(finalists: Sequence[str], results: pd.DataFrame) -> list[str]:
@@ -534,6 +577,7 @@ __all__ = [
     "parse_strategy_spec",
     "performance_metrics",
     "result_sharpe",
+    "select_best_grid_strategy",
     "select_best_maxsharpe_combination",
     "select_finalists",
     "strategy_display_label",

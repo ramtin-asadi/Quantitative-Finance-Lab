@@ -8,6 +8,7 @@ from matplotlib.dates import DateFormatter
 
 from quantfinlab.plotting.curves import LAB_COLORS, choose_heatmap_cmap, set_plot_style
 from quantfinlab.portfolio import selection
+from quantfinlab.risk.utils import _excess_returns
 
 
 def _get_ax(ax=None):
@@ -87,8 +88,10 @@ def plot_strategy_nav(
     title: str | None = None,
     labels: Sequence[str] | None = None,
     summary: pd.DataFrame | None = None,
+    apply_style: bool = True,
 ):
-    set_plot_style()
+    if apply_style:
+        set_plot_style()
     ax = _get_ax(ax)
     if nav.empty:
         ax.text(0.5, 0.5, "No NAV data", ha="center", va="center", transform=ax.transAxes)
@@ -117,8 +120,10 @@ def plot_strategy_drawdowns(
     title: str | None = None,
     labels: Sequence[str] | None = None,
     summary: pd.DataFrame | None = None,
+    apply_style: bool = True,
 ):
-    set_plot_style()
+    if apply_style:
+        set_plot_style()
     ax = _get_ax(ax)
     if nav.empty:
         ax.text(0.5, 0.5, "No NAV data", ha="center", va="center", transform=ax.transAxes)
@@ -785,8 +790,10 @@ def plot_risk_return_scatter(
     color_col: str | None = "Sharpe",
     size_col: str | None = None,
     short_labels: Mapping[str, str] | None = None,
+    apply_style: bool = True,
 ):
-    set_plot_style()
+    if apply_style:
+        set_plot_style()
     ax = _get_ax(ax)
     present = [s for s in list(strategies or grid_results.index) if s in grid_results.index]
     if not present or risk_col not in grid_results.columns or return_col not in grid_results.columns:
@@ -1535,14 +1542,23 @@ def forecast_to_weight_map(ax, data: pd.DataFrame, *, weight_frame: pd.DataFrame
     return ax
 
 
-def plot_rolling_sharpe(ax, returns: pd.DataFrame, *, window: int = 252, rf_daily: float = 0.0, title: str | None = None):
+def plot_rolling_sharpe(
+    ax,
+    returns: pd.DataFrame,
+    *,
+    window: int = 252,
+    rf_daily: float | pd.Series = 0.0,
+    title: str | None = None,
+):
     set_plot_style()
     R = pd.DataFrame(returns).astype(float)
     if R.empty:
         ax.text(0.5, 0.5, "No returns", ha="center", va="center", transform=ax.transAxes)
         ax.set_axis_off()
         return ax
-    roll = (R - float(rf_daily)).rolling(int(window)).mean() / R.rolling(int(window)).std(ddof=1)
+    excess = _excess_returns(R, rf_daily)
+    volatility = R if np.isscalar(rf_daily) else excess
+    roll = excess.rolling(int(window)).mean() / volatility.rolling(int(window)).std(ddof=1)
     roll = roll * np.sqrt(252.0)
     roll.plot(ax=ax, lw=1.1)
     ax.axhline(0.0, color=LAB_COLORS[2], lw=0.8)

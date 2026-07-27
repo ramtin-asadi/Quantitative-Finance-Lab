@@ -81,6 +81,31 @@ def test_run_rebalanced_portfolio_backtest_uses_cache_and_fallbacks() -> None:
     assert result.net_values.iloc[-1] <= result.gross_values.iloc[-1]
 
 
+def test_rebalance_artifacts_remain_chronological_when_the_universe_changes() -> None:
+    returns = return_panel(n=24, assets=("AAA", "BBB", "CCC"))
+    rebalances = [returns.index[0], returns.index[8], returns.index[16]]
+    cache = {
+        rebalances[0]: {"tickers": ["AAA", "BBB"]},
+        rebalances[1]: {"tickers": ["BBB", "CCC"]},
+        rebalances[2]: {"tickers": ["AAA", "CCC"]},
+    }
+
+    result = portfolio.run_rebalanced_portfolio_backtest(
+        returns,
+        rebalances,
+        cache,
+        lambda _date, state, _previous: np.repeat(
+            1.0 / len(state["tickers"]), len(state["tickers"])
+        ),
+        cost_bps=10.0,
+        w_max=0.80,
+    )
+
+    assert result.weights.index.is_monotonic_increasing
+    assert result.turnover.index.equals(result.weights.index)
+    assert result.costs.index.equals(result.weights.index)
+
+
 def test_strategy_grid_backtests_share_the_same_engine() -> None:
     returns = return_panel(n=20, assets=("AAA", "BBB"))
     rebalances = [returns.index[0]]

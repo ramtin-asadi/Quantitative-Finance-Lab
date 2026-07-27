@@ -194,8 +194,40 @@ def tenor_first_valid(curve: pd.DataFrame) -> pd.Series:
     return curve[tenor_cols].apply(lambda s: s.first_valid_index())
 
 
+def risk_free_returns(
+    yields_ann: pd.Series,
+    dates: pd.Index,
+    *,
+    compounding: int = 2,
+    day_count: float = 365.25,
+    max_staleness: int = 7,
+) -> pd.Series:
+    """Convert an annual yield series into date-matched holding-period returns.
+
+    Each return uses the latest yield known on the previous date in ``dates``.
+    Calendar-day gaps are compounded on the supplied annual basis, and stale
+    observations are left missing.
+    """
+
+    yields = pd.to_numeric(pd.Series(yields_ann), errors="coerce").dropna().astype(float)
+    yields.index = pd.to_datetime(yields.index)
+    yields = yields[~yields.index.duplicated(keep="last")].sort_index()
+    index = pd.DatetimeIndex(pd.to_datetime(dates))
+    starts = pd.Series(index, index=index).shift(1)
+    quote_dates = pd.Series(yields.index, index=yields.index).reindex(index, method="ffill").shift(1)
+    quoted_yields = yields.reindex(index, method="ffill").shift(1)
+    days = pd.Series(index, index=index).diff().dt.days
+    age = (starts - quote_dates).dt.days
+    valid = days.gt(0) & age.between(0, int(max_staleness))
+    periods = (1.0 + quoted_yields / int(compounding)) ** (
+        int(compounding) * days / float(day_count)
+    ) - 1.0
+    return periods.where(valid).rename("rf_daily")
+
+
 __all__ = [
     "load_par_yield_curve",
+    "risk_free_returns",
     "tenor_first_valid",
     "tenor_label_to_years",
 ]

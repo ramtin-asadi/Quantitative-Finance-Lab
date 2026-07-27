@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from quantfinlab.risk.capm import capm_ols, capm_table, rolling_beta, rolling_beta_corr
 from quantfinlab.risk.correlation import corr_matrix, rolling_corr
@@ -49,3 +50,13 @@ def test_correlation_and_distribution_tables_rank_tail_behavior() -> None:
     assert tail_ratio(panel["ALPHA"]) > 0
     assert {"skew", "excess_kurtosis", "tail_ratio_95_05"}.issubset(shape.columns)
     assert worst.loc["ALPHA", "worst_3d_avg"] >= worst.loc["ALPHA", "worst_1d_avg"] - 1e-12
+
+
+def test_capm_table_accepts_aligned_risk_free_series() -> None:
+    panel = _capm_panel()
+    rf = pd.Series(np.linspace(0.0, 0.0002, len(panel)), index=panel.index)
+
+    table, _ = capm_table(panel[["ALPHA"]], market_ret=panel["MKT"], rf_daily=rf)
+    _, beta, _ = capm_ols(panel["ALPHA"] - rf, panel["MKT"] - rf)
+
+    assert table.loc["ALPHA", "beta"] == pytest.approx(beta)

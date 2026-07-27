@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/quantfinlab.svg)](https://pypi.org/project/quantfinlab/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Quantitative Finance Lab** is a research and engineering sequence of end-to-end projects. It can be used a **self-study curriculum** that codes, and tests every model against real market data, as a **research notebook series** that experiments different topics from the most famous to more recently developing areas with clear flow (motivation, mathematics, implementation, diagnostics, discussion), and as a **reusable Python library**, `quantfinlab`, that turns the parts of each project into tested, documented, importable code instead of just the notebook cells.
+**Quantitative Finance Lab** is a series of projects. It can be used as a **self-study curriculum** that codes, and tests every model against real market data, as a **research notebook series** that experiments different topics from the most famous to more recently developing areas with clear flow (motivation, mathematics, implementation, diagnostics, discussion), and as a **reusable Python library**, `quantfinlab`, that turns the parts of each project into tested, documented, importable code instead of just the notebook cells.
 
 In every project, we do the same thing: build the model, run it on real data with realistic frictions (costs, liquidity, look-ahead controls), write the reusable version into the library, and then prove the library version works by re-running the same workflow on a **second, independent dataset** (usually a different market, asset class, or country). A model that only works on the data it was built on hasn't been tested; it's been fit. All projects use only the extracted library code for the second run in notebook's final cell, and repeated parts from earlier notebooks also use library instead of re-implementing something.
 
@@ -101,7 +101,7 @@ The rendered website is the best way to read the work. code, output, and plots a
 
 ## Data and reproducibility
 
-**The notebooks are not directly re-runnable on a fresh clone.** I order to avoid legal and copy-right problems, Large or licensed market data is never committed to this repository. But there is a `data/` folder: a reproducibility layer of scripts, and README files for guidance of downloading data, one per data source, that either download data automatically if API exists (FRED, NY Fed, Bank of Japan MOF, yfinance, Kenneth French data library, Stooq) or tell you exactly what licensed file to place where (OptionsDX option chains, Stooq bulk equity files) and scripts for processing the raw files to the files that can be exactly used in notebooks.
+**The notebooks are not directly re-runnable on a fresh clone.** To avoid legal and copy-right problems, Large or licensed market data is never committed to this repository. But there is a `data/` folder: a reproducibility layer of scripts, and README files for guidance of downloading data, one per data source, that either download data automatically if API exists (FRED, NY Fed, Bank of Japan MOF, yfinance, Kenneth French data library, Stooq) or tell you exactly what licensed file to place where (OptionsDX option chains, Stooq bulk equity files) and scripts for processing the raw files to the files that can be exactly used in notebooks.
 
 To reproduce a notebook:
 
@@ -162,13 +162,25 @@ git clone https://github.com/ramtin-asadi/Quantitative-Finance-Lab.git
 cd Quantitative-Finance-Lab
 
 python -m venv .venv
+
+# Linux/macOS
 source .venv/Scripts/activate  
+
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
 
 pip install -U pip
 pip install -e .
 ```
 
-The C++ extension (used by Projects 13 and 14) builds automatically on install via `scikit-build-core`, `pybind11`, and CMake. A working C++ compiler and CMake must be available, but no manual build step is required. Optional dependencies (JAX/Numba for acceleration, PyTorch for ML/RL, `networkx` for the network-portfolio project) are listed as extras in `pyproject.toml`. The library has working fallbacks when they're absent, so `pip install -e ".[all]"` is only needed to run every notebook end to end. for example if running projects 19 and 20 is not needs, user doesn't need to install torch. See `pyproject.toml` for the full extras list, or `quantfinlab/README.md` for the per-module dependency breakdown.
+The C++ extension (used by Projects 13 and 14) builds automatically on install via `scikit-build-core`, `pybind11`, and CMake. A working C++ compiler and CMake must be available, but no manual build step is required. 
+If using C++ kernels is not needed, library can be installed in pure python wheel:
+
+```bash
+pip install . --config-settings=cmake.define.quantfinlab_build_cpp=off
+```
+
+Optional dependencies (JAX/Numba for acceleration, PyTorch for ML/RL, `networkx` for the network-portfolio project) are listed as extras in `pyproject.toml`. The library has working fallbacks when they're absent, so `pip install -e ".[all]"` is only needed to run every notebook end to end. for example if running projects 19 and 20 is not needs, user doesn't need to install torch. See `pyproject.toml` for the full extras list, or `quantfinlab/README.md` for the per-module dependency breakdown.
 
 Run the test suite with:
 

@@ -69,6 +69,24 @@ def _align_pair(y: pd.Series, x: pd.Series) -> pd.DataFrame:
         raise InputError("Series do not overlap after alignment.")
     return z
 
+def _excess_returns(
+    returns: pd.Series | pd.DataFrame,
+    rf_daily: float | pd.Series,
+) -> pd.Series | pd.DataFrame:
+    if np.isscalar(rf_daily):
+        return returns - float(rf_daily)
+    if not isinstance(rf_daily, pd.Series):
+        raise InputError("rf_daily must be a scalar or pandas Series.")
+    rf = pd.to_numeric(rf_daily, errors="coerce").astype(float)
+    rf = _to_datetime_if_possible(rf)
+    rf = rf[~rf.index.duplicated(keep="last")].sort_index()
+    if isinstance(returns, pd.DataFrame):
+        return returns.subtract(rf.reindex(returns.index), axis=0)
+    return returns - rf.reindex(returns.index)
+
+def _risk_free_metadata(rf_daily: float | pd.Series) -> float | pd.Series:
+    return float(rf_daily) if np.isscalar(rf_daily) else rf_daily.copy()
+
 def _normalize_alpha(alpha: float) -> float:
     a = float(alpha)
     if not (0.0 < a < 0.5):

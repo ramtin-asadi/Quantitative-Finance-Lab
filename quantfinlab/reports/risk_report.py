@@ -24,8 +24,7 @@ from quantfinlab.risk.utils import (
 from quantfinlab.risk.var import var_es_table
 from quantfinlab.risk.var_backtesting import (
     best_var_methods,
-    var_backtest_details,
-    var_backtest_table,
+    var_backtest_results,
 )
 
 try:  # optional
@@ -141,7 +140,7 @@ def risk_report(
     *,
     objects: Mapping[str, Any] | pd.DataFrame,
     market_ret: pd.Series | Sequence[float] | np.ndarray | None = None,
-    rf_daily: float = 0.0,
+    rf_daily: float | pd.Series = 0.0,
     portfolios: Mapping[str, Any] | None = None,
     include: Mapping[str, bool] | None = None,
     var_settings: Mapping[str, Any] | None = None,
@@ -169,7 +168,7 @@ def risk_report(
     market_ret : pandas.Series or array-like, optional
         Market return series used for CAPM, beta, capture, and rolling-beta
         diagnostics. CAPM sections are skipped when this is not supplied.
-    rf_daily : float, default=0.0
+    rf_daily : float or pandas.Series, default=0.0
         One-period risk-free rate used for excess-return and performance
         calculations.
     portfolios : mapping, optional
@@ -343,29 +342,17 @@ def risk_report(
     if include_cfg["var_es"]:
         tables["var_es"] = var_es_table(obj, alpha=var_cfg["alpha"], methods=var_cfg["methods"])
     if include_cfg["var_backtest"]:
-        tables["var_backtest"] = var_backtest_table(
+        backtest_table, backtest_details = var_backtest_results(
             obj,
             alpha=bt_cfg["alpha"],
             methods=bt_methods,
             lookback=int(bt_cfg["lookback"]),
         )
+        tables["var_backtest"] = backtest_table
         if len(bt_methods) == 1:
-            series["var_backtest_detail"] = var_backtest_details(
-                obj,
-                alpha=bt_cfg["alpha"],
-                method=bt_methods[0],
-                lookback=int(bt_cfg["lookback"]),
-            )
+            series["var_backtest_detail"] = backtest_details[bt_methods[0]]
         else:
-            series["var_backtest_detail"] = {
-                m: var_backtest_details(
-                    obj,
-                    alpha=bt_cfg["alpha"],
-                    method=m,
-                    lookback=int(bt_cfg["lookback"]),
-                )
-                for m in bt_methods
-            }
+            series["var_backtest_detail"] = backtest_details
         series["var_backtest_best_method"] = best_var_methods(tables["var_backtest"])
     if include_cfg["stress"]:
         stress_worst_only = bool(stress_cfg.get("worst_only", True))
@@ -452,7 +439,7 @@ def risk_report(
         if bool(output_cfg["show_figures"]):
             plt.show()
 
-    if include_cfg["drawdowns"] and include_cfg.get("rolling_vol", True):
+    if include_cfg.get("rolling_vol", True):
         fig, axes = pl.auto_grid(
             len(names),
             ncols=ncols,
@@ -487,6 +474,11 @@ def risk_report(
             chosen_method = bt_plot_method
             if bt_plot_method == "best":
                 chosen_method = str(best_method_map.get(nm, bt_methods[0]))
+            details = series["var_backtest_detail"]
+            if len(bt_methods) == 1:
+                backtest = details.get(nm)
+            else:
+                backtest = details.get(chosen_method, {}).get(nm)
             pl.plot_var_backtest(
                 a,
                 obj[nm],
@@ -495,6 +487,7 @@ def risk_report(
                 method=chosen_method,
                 methods=bt_methods,
                 name=nm,
+                backtest=backtest,
             )
         pl.turn_off_unused_axes(axes, used=len(names))
         plt.tight_layout()
@@ -548,7 +541,13 @@ def risk_report(
     if include_cfg["rolling_beta"] and "capm_roll" in series:
         beta_windows = [int(v) for v in roll_cfg.get("beta_windows", [126, 252]) if int(v) > 1]
         if beta_windows:
-            fig, axes = plt.subplots(len(beta_windows), 1, figsize=(11, 3.2 * len(beta_windows)), sharex=True)
+            fig, axes = plt.subplots(
+                1,
+                len(beta_windows),
+                figsize=(5.6 * len(beta_windows), 3.8),
+                sharex=True,
+                sharey=bool(layout_cfg["sharey"]),
+            )
             axes_arr = np.asarray([axes]) if isinstance(axes, plt.Axes) else np.asarray(axes).reshape(-1)
             for a, w in zip(axes_arr, beta_windows, strict=False):
                 pl.plot_rolling_beta_compare(a, series["capm_roll"], window=int(w), metric="beta")
