@@ -8,7 +8,12 @@ import numpy as np
 import pandas as pd
 
 from quantfinlab.common.errors import InputError
-from quantfinlab.risk.utils import DEFAULT_ANNUALIZATION, _coerce_objects, _excess_returns, _to_numeric_series
+from quantfinlab.risk.utils import (
+    DEFAULT_ANNUALIZATION,
+    _coerce_objects,
+    _excess_returns,
+    _to_numeric_series,
+)
 
 
 def nav_series(

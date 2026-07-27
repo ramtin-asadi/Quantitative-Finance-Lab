@@ -28,6 +28,7 @@ book:
     - notebooks/18_rough_volatility.ipynb
     - notebooks/19_forecasting_kelly_allocation.ipynb
     - notebooks/20_rl_portfolio_allocation.ipynb
+    - notebooks/21_fundamental_analysis.ipynb
 
 format:
   html:
