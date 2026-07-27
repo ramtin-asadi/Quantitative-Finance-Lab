@@ -314,7 +314,7 @@ def test_instant_statement_values_keep_latest_and_comparable_prior() -> None:
     assert values["total_assets_prior_period_end"] == pd.Timestamp("2023-12-31")
 
 
-def test_monthly_statement_values_enforces_strict_timing_and_owns_cache(tmp_path) -> None:
+def test_monthly_statement_values_enforces_strict_timing() -> None:
     facts = _classified(
         [
             _fact(
@@ -332,16 +332,11 @@ def test_monthly_statement_values_enforces_strict_timing_and_owns_cache(tmp_path
             "cik": [1, 1],
         }
     )
-    cache = tmp_path / "monthly.parquet"
-
-    monthly = monthly_statement_values(facts, universe, cache=cache)
-    cached = monthly_statement_values(facts.iloc[:0], universe, cache=cache)
+    monthly = monthly_statement_values(facts, universe)
 
     assert monthly["decision_date"].tolist() == [pd.Timestamp("2024-06-28")]
     assert monthly.loc[0, "filed_date"] < monthly.loc[0, "decision_date"]
     assert monthly.loc[0, "total_assets"] == 120.0
-    assert cached.loc[0, "total_assets"] == 120.0
-    assert cached.loc[0, "decision_date"] == pd.Timestamp("2024-06-28")
 
 
 def test_statement_reconstruction_checks_returns_auditable_tables() -> None:
