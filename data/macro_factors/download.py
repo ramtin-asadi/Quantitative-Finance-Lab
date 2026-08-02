@@ -20,7 +20,7 @@ summary_output = data_dir / "macro_factor_summary.csv"
 issues_output = data_dir / "macro_download_issues.csv"
 
 default_start = "1990-01-01"
-default_end = "2026-01-31"
+default_end = pd.Timestamp.today().normalize().strftime("%Y-%m-%d")
 
 us_fred_series = {
     "cpi_all_items": "CPIAUCSL",

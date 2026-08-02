@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from quantfinlab.fundamentals import analysis
+from quantfinlab.fundamentals import analysis, statement_concepts
 
 
 def test_safe_ratio_uses_the_notebook_denominator_policy() -> None:
@@ -291,3 +291,88 @@ def test_red_flag_penalties_keep_unknown_flags_missing_and_weight_active_flags()
     assert pd.isna(warnings.loc[0, "warning_fin_negative_earnings"])
     assert warnings.loc[0, "warning_penalty"] == 48
     assert warnings.loc[0, "severe_warning_count"] == 8
+
+
+def test_grouped_metric_stages_are_composable_and_do_not_mutate_inputs() -> None:
+    dates = pd.date_range("2020-01-31", periods=24, freq="ME")
+    numeric_columns = {
+        "accounts_payable",
+        "accounts_payable_prior",
+        "capex",
+        "capex_q",
+        "cash",
+        "cfo",
+        "cfo_q",
+        "cfo_ttm_yoy",
+        "common_equity",
+        "common_equity_prior",
+        "cost_of_revenue",
+        "current_assets",
+        "current_liabilities",
+        "debt_current",
+        "depreciation",
+        "dividends",
+        "eps_diluted",
+        "goodwill",
+        "goodwill_prior",
+        "gross_profit",
+        "gross_profit_ttm_yoy",
+        "intangibles",
+        "intangibles_prior",
+        "interest_expense",
+        "inventory",
+        "inventory_prior",
+        "long_term_debt_noncurrent",
+        "market_cap",
+        "net_income",
+        "net_income_ttm_yoy",
+        "operating_expenses",
+        "operating_income",
+        "operating_income_ttm_yoy",
+        "ppe",
+        "pretax_income",
+        "rd_expense",
+        "receivables",
+        "receivables_prior",
+        "repurchases",
+        "retained_earnings",
+        "revenue",
+        "revenue_ttm_yoy",
+        "sga_expense",
+        "share_issuance",
+        "shares_outstanding",
+        "short_term_borrowings",
+        "tax_expense",
+        "total_assets",
+        "total_assets_prior",
+        "total_debt_reported",
+        "total_liabilities",
+    }
+    frame = pd.DataFrame(
+        {column: np.linspace(80.0, 120.0, len(dates)) for column in numeric_columns}
+    )
+    for statement_name in statement_concepts["duration"]:
+        frame[f"{statement_name}_ttm"] = np.linspace(80.0, 120.0, len(dates))
+    frame["cik"] = 1
+    frame["score_family"] = "corporate"
+    frame["decision_date"] = dates
+    frame["filed_date"] = dates - pd.Timedelta(days=30)
+    original_columns = frame.columns.copy()
+
+    result = analysis.statement_metrics(frame)
+    result = analysis.profitability_growth_metrics(result)
+    result = analysis.strength_efficiency_metrics(result)
+    result = analysis.financial_company_metrics(result)
+    result = analysis.diagnostic_model_metrics(result)
+
+    assert frame.columns.equals(original_columns)
+    assert result.index.equals(frame.index)
+    assert {
+        "free_cash_flow",
+        "roa",
+        "debt_assets",
+        "fin_roa",
+        "piotroski_f_score",
+        "warning_penalty",
+    }.issubset(result.columns)
+    assert not result.duplicated(["decision_date", "cik"]).any()

@@ -7,6 +7,8 @@ from collections.abc import Mapping
 import numpy as np
 import pandas as pd
 
+from .statements import statement_concepts
+
 
 def _numeric(values) -> pd.Series:
     if isinstance(values, pd.Series):
@@ -76,9 +78,7 @@ def tangible_equity(
     goodwill = _numeric(goodwill)
     intangibles = _numeric(intangibles)
     if approximate:
-        return (
-            equity - goodwill.fillna(0.0) - intangibles.fillna(0.0)
-        ).where(equity.notna())
+        return (equity - goodwill.fillna(0.0) - intangibles.fillna(0.0)).where(equity.notna())
     known = equity.notna() & goodwill.notna() & intangibles.notna()
     return (equity - goodwill - intangibles).where(known)
 
@@ -397,11 +397,7 @@ def cash_conversion_cycle(
     days_inventory,
     days_payable,
 ) -> pd.Series:
-    return (
-        _numeric(days_receivable)
-        + _numeric(days_inventory)
-        - _numeric(days_payable)
-    )
+    return _numeric(days_receivable) + _numeric(days_inventory) - _numeric(days_payable)
 
 
 def working_capital_to_revenue(working_capital_value, revenue) -> pd.Series:
@@ -426,11 +422,7 @@ def reinvestment_rate(
     working_capital_change,
     nopat,
 ) -> pd.Series:
-    reinvestment = (
-        _numeric(capex)
-        - _numeric(depreciation)
-        + _numeric(working_capital_change)
-    )
+    reinvestment = _numeric(capex) - _numeric(depreciation) + _numeric(working_capital_change)
     return safe_ratio(reinvestment, nopat)
 
 
@@ -562,8 +554,10 @@ def relative_variability(
     rolling_std = values.groupby(groups, sort=False).transform(
         lambda series: series.rolling(window, min_periods=min_periods).std()
     )
-    rolling_scale = values.abs().groupby(groups, sort=False).transform(
-        lambda series: series.rolling(window, min_periods=min_periods).mean()
+    rolling_scale = (
+        values.abs()
+        .groupby(groups, sort=False)
+        .transform(lambda series: series.rolling(window, min_periods=min_periods).mean())
     )
     return safe_ratio(rolling_std, rolling_scale)
 
@@ -648,9 +642,7 @@ def piotroski_score(
                 debt_assets.lt(prior_debt_assets),
             ),
             "liquidity_up": _binary_component(
-                allowed
-                & current_ratio_value.notna()
-                & prior_current_ratio.notna(),
+                allowed & current_ratio_value.notna() & prior_current_ratio.notna(),
                 current_ratio_value.gt(prior_current_ratio),
             ),
             "no_dilution": _binary_component(
@@ -662,9 +654,7 @@ def piotroski_score(
                 gross_margin_value.gt(prior_gross_margin),
             ),
             "turnover_up": _binary_component(
-                allowed
-                & asset_turnover_value.notna()
-                & prior_asset_turnover.notna(),
+                allowed & asset_turnover_value.notna() & prior_asset_turnover.notna(),
                 asset_turnover_value.gt(prior_asset_turnover),
             ),
         },
@@ -926,10 +916,7 @@ def red_flag_penalties(
             index,
         ),
         "warning_rising_debt_falling_cash": _warning(
-            corporate
-            & debt_assets.notna()
-            & prior_debt_assets.notna()
-            & cfo_growth.notna(),
+            corporate & debt_assets.notna() & prior_debt_assets.notna() & cfo_growth.notna(),
             debt_assets.gt(prior_debt_assets + 0.03) & cfo_growth.lt(0),
             index,
         ),
@@ -944,12 +931,8 @@ def red_flag_penalties(
             index,
         ),
         "warning_unsupported_payout": _warning(
-            corporate
-            & dividends.notna()
-            & cfo.notna()
-            & free_cash_flow_value.notna(),
-            dividends.gt(cfo.clip(lower=0))
-            | dividends.gt(free_cash_flow_value.clip(lower=0)),
+            corporate & dividends.notna() & cfo.notna() & free_cash_flow_value.notna(),
+            dividends.gt(cfo.clip(lower=0)) | dividends.gt(free_cash_flow_value.clip(lower=0)),
             index,
         ),
         "warning_altman_distress": _warning(
@@ -1008,9 +991,7 @@ def red_flag_penalties(
             index,
         ),
         "warning_fin_weak_payout_capital": _warning(
-            financial
-            & fin_net_payout_yield.notna()
-            & fin_equity_assets_change.notna(),
+            financial & fin_net_payout_yield.notna() & fin_equity_assets_change.notna(),
             fin_net_payout_yield.gt(0.08) & fin_equity_assets_change.lt(0),
             index,
         ),
@@ -1034,7 +1015,640 @@ def red_flag_penalties(
     return result
 
 
+def statement_metrics(frame: pd.DataFrame) -> pd.DataFrame:
+    """Add statement-derived balances, cash flow, per-share values, and annual balance changes."""
+
+    result = pd.DataFrame(frame).copy()
+
+    for statement_name in statement_concepts["duration"]:
+        result[statement_name] = result[f"{statement_name}_ttm"]
+
+    result["gross_profit"] = result["gross_profit"].combine_first(
+        result["revenue"] - result["cost_of_revenue"]
+    )
+
+    result["free_cash_flow"] = free_cash_flow(result["cfo"], result["capex"])
+
+    result["free_cash_flow_q"] = free_cash_flow(result["cfo_q"], result["capex_q"])
+
+    result["total_liabilities"] = result["total_liabilities"].combine_first(
+        result["total_assets"] - result["common_equity"]
+    )
+
+    result["total_debt"] = total_debt(
+        result["total_debt_reported"],
+        result["long_term_debt_noncurrent"],
+        result["debt_current"],
+        result["short_term_borrowings"],
+    )
+
+    current_debt = result["debt_current"].combine_first(result["short_term_borrowings"])
+
+    component_debt = (result["long_term_debt_noncurrent"] + current_debt).where(
+        result["long_term_debt_noncurrent"].notna() & current_debt.notna()
+    )
+
+    result["total_debt_source"] = np.select(
+        [result["total_debt_reported"].notna(), component_debt.notna()],
+        ["reported total", "long-term plus current"],
+        default="missing",
+    )
+
+    result["tangible_equity"] = tangible_equity(
+        result["common_equity"], result["goodwill"], result["intangibles"]
+    )
+
+    result["tangible_equity_approx"] = tangible_equity(
+        result["common_equity"], result["goodwill"], result["intangibles"], approximate=True
+    )
+
+    result["tangible_equity_source"] = np.where(
+        result["tangible_equity"].notna(), "reported components", "approximation"
+    )
+
+    result["enterprise_value"] = enterprise_value(
+        result["market_cap"], result["total_debt"], result["cash"]
+    )
+
+    result["net_debt"] = net_debt(result["total_debt"], result["cash"])
+
+    result["working_capital"] = working_capital(
+        result["current_assets"], result["current_liabilities"]
+    )
+
+    result["net_payout_amount"] = net_payout_amount(
+        result["dividends"], result["repurchases"], result["share_issuance"]
+    )
+
+    result["average_assets"] = average_balance(result["total_assets"], result["total_assets_prior"])
+
+    result["average_equity"] = average_balance(
+        result["common_equity"], result["common_equity_prior"]
+    )
+
+    prior_tangible_equity = tangible_equity(
+        result["common_equity_prior"], result["goodwill_prior"], result["intangibles_prior"]
+    )
+
+    result["average_tangible_equity"] = average_balance(
+        result["tangible_equity"], prior_tangible_equity
+    )
+
+    result["average_receivables"] = average_balance(
+        result["receivables"], result["receivables_prior"]
+    )
+
+    result["average_inventory"] = average_balance(result["inventory"], result["inventory_prior"])
+
+    result["average_payables"] = average_balance(
+        result["accounts_payable"], result["accounts_payable_prior"]
+    )
+
+    prior_debt = annual_lag(result["total_debt"], result["cik"])
+
+    result["average_debt"] = average_balance(result["total_debt"], prior_debt)
+
+    result["revenue_per_share"] = revenue_per_share(result["revenue"], result["shares_outstanding"])
+
+    result["earnings_per_share"] = earnings_per_share(
+        result["eps_diluted"], result["net_income"], shares_outstanding=result["shares_outstanding"]
+    )
+
+    result["eps_source"] = np.where(
+        result["eps_diluted"].notna(), "reported diluted EPS", "point-in-time share approximation"
+    )
+
+    result["fcf_per_share"] = fcf_per_share(result["free_cash_flow"], result["shares_outstanding"])
+
+    result["book_value_per_share"] = book_value_per_share(
+        result["common_equity"], result["shares_outstanding"]
+    )
+
+    result["tangible_book_value_per_share"] = tangible_book_value_per_share(
+        result["tangible_equity"], result["shares_outstanding"]
+    )
+
+    result["shareholder_yield"] = shareholder_yield(
+        result["net_payout_amount"], result["market_cap"]
+    )
+
+    issuer_keys = result["cik"]
+
+    result["assets_growth"] = annual_growth(result["total_assets"], issuer_keys)
+
+    result["equity_growth"] = annual_growth(result["common_equity"], issuer_keys)
+
+    result["shares_growth"] = annual_growth(result["shares_outstanding"], issuer_keys)
+
+    result["working_capital_change"] = annual_change(result["working_capital"], issuer_keys)
+
+    return result
+
+
+def profitability_growth_metrics(frame: pd.DataFrame) -> pd.DataFrame:
+    """Add profitability, cash-quality, and growth metrics."""
+
+    result = pd.DataFrame(frame).copy()
+
+    issuer_keys = result["cik"]
+
+    result["gross_margin"] = gross_margin(result["gross_profit"], result["revenue"])
+
+    result["operating_margin"] = operating_margin(result["operating_income"], result["revenue"])
+
+    result["pretax_margin"] = pretax_margin(result["pretax_income"], result["revenue"])
+
+    result["net_margin"] = net_margin(result["net_income"], result["revenue"])
+
+    result["fcf_margin"] = fcf_margin(result["free_cash_flow"], result["revenue"])
+
+    result["gross_profitability_assets"] = gross_profitability_assets(
+        result["gross_profit"], result["average_assets"]
+    )
+
+    result["roa"] = return_on_assets(result["net_income"], result["average_assets"])
+
+    result["roe"] = return_on_equity(result["net_income"], result["average_equity"])
+
+    result["return_on_tangible_equity"] = return_on_tangible_equity(
+        result["net_income"], result["average_tangible_equity"]
+    )
+
+    tax_rate = effective_tax_rate(result["tax_expense"], result["pretax_income"])
+
+    result["nopat"] = net_operating_profit_after_tax(result["operating_income"], tax_rate)
+
+    capital = invested_capital(result["average_debt"], result["average_equity"], result["cash"])
+
+    result["roic_proxy"] = return_on_invested_capital(result["nopat"], capital)
+
+    result["asset_turnover"] = asset_turnover(result["revenue"], result["average_assets"])
+
+    result["cfo_assets"] = cfo_to_assets(result["cfo"], result["average_assets"])
+
+    result["fcf_assets"] = fcf_to_assets(result["free_cash_flow"], result["average_assets"])
+
+    result["cfo_net_income"] = cfo_to_net_income(result["cfo"], result["net_income"])
+
+    result["fcf_conversion"] = fcf_conversion(result["free_cash_flow"], result["net_income"])
+
+    result["total_accruals"] = total_accruals(
+        result["net_income"], result["cfo"], result["average_assets"]
+    )
+
+    result["working_capital_accruals"] = working_capital_accruals(
+        result["working_capital_change"], result["average_assets"]
+    )
+
+    result["cash_earnings_gap"] = cash_earnings_gap(result["net_income"], result["cfo"])
+
+    result["positive_cfo_frequency"] = positive_cfo_frequency(result["cfo"], issuer_keys)
+
+    result["positive_fcf_frequency"] = positive_fcf_frequency(result["free_cash_flow"], issuer_keys)
+
+    result["revenue_growth"] = result["revenue_ttm_yoy"].combine_first(
+        annual_growth(result["revenue"], issuer_keys)
+    )
+
+    result["gross_profit_growth"] = result["gross_profit_ttm_yoy"].combine_first(
+        annual_growth(result["gross_profit"], issuer_keys)
+    )
+
+    result["operating_income_growth"] = result["operating_income_ttm_yoy"].combine_first(
+        annual_growth(result["operating_income"], issuer_keys)
+    )
+
+    result["net_income_growth"] = result["net_income_ttm_yoy"].combine_first(
+        annual_growth(result["net_income"], issuer_keys)
+    )
+
+    result["cfo_growth"] = result["cfo_ttm_yoy"].combine_first(
+        annual_growth(result["cfo"], issuer_keys)
+    )
+
+    result["fcf_growth"] = annual_growth(result["free_cash_flow"], issuer_keys)
+
+    result["eps_growth"] = annual_growth(result["earnings_per_share"], issuer_keys)
+
+    result["revenue_per_share_growth"] = annual_growth(result["revenue_per_share"], issuer_keys)
+
+    result["book_value_per_share_growth"] = annual_growth(
+        result["book_value_per_share"], issuer_keys
+    )
+
+    result["tangible_book_value_per_share_growth"] = annual_growth(
+        result["tangible_book_value_per_share"], issuer_keys
+    )
+
+    result["gross_margin_change"] = annual_change(result["gross_margin"], issuer_keys)
+
+    result["operating_margin_change"] = annual_change(result["operating_margin"], issuer_keys)
+
+    result["roa_change"] = annual_change(result["roa"], issuer_keys)
+
+    result["roe_change"] = annual_change(result["roe"], issuer_keys)
+
+    result["roic_change"] = annual_change(result["roic_proxy"], issuer_keys)
+
+    result["cash_conversion_change"] = annual_change(result["cfo_net_income"], issuer_keys)
+
+    return result
+
+
+def strength_efficiency_metrics(frame: pd.DataFrame) -> pd.DataFrame:
+    """Add financial-strength, efficiency, capital-allocation, and valuation metrics."""
+
+    result = pd.DataFrame(frame).copy()
+
+    issuer_keys = result["cik"]
+
+    result = result.copy()
+
+    result["current_ratio"] = current_ratio(result["current_assets"], result["current_liabilities"])
+
+    result["cash_ratio"] = cash_ratio(result["cash"], result["current_liabilities"])
+
+    result["debt_equity"] = debt_to_equity(result["total_debt"], result["common_equity"])
+
+    result["debt_assets"] = debt_to_assets(result["total_debt"], result["total_assets"])
+
+    result["debt_assets_prior"] = annual_lag(result["debt_assets"], issuer_keys)
+
+    result["net_debt_assets"] = net_debt_to_assets(result["net_debt"], result["total_assets"])
+
+    result["liabilities_assets"] = liabilities_to_assets(
+        result["total_liabilities"], result["total_assets"]
+    )
+
+    result["interest_coverage"] = interest_coverage(
+        result["operating_income"], result["interest_expense"]
+    )
+
+    result["cfo_debt"] = cfo_to_debt(result["cfo"], result["total_debt"])
+
+    result["fcf_debt"] = fcf_to_debt(result["free_cash_flow"], result["total_debt"])
+
+    result["cash_assets"] = cash_to_assets(result["cash"], result["total_assets"])
+
+    result["tangible_equity_assets"] = tangible_equity_to_assets(
+        result["tangible_equity"], result["total_assets"]
+    )
+
+    result["leverage_improvement"] = leverage_improvement(result["net_debt_assets"], issuer_keys)
+
+    result["receivable_turnover"] = receivables_turnover(
+        result["revenue"], result["average_receivables"]
+    )
+
+    result["days_sales_outstanding"] = days_sales_outstanding(
+        result["average_receivables"], result["revenue"]
+    )
+
+    result["inventory_turnover"] = inventory_turnover(
+        result["cost_of_revenue"], result["average_inventory"]
+    )
+
+    result["inventory_days"] = inventory_days(
+        result["average_inventory"], result["cost_of_revenue"]
+    )
+
+    result["payable_days"] = payable_days(result["average_payables"], result["cost_of_revenue"])
+
+    result["cash_conversion_cycle"] = cash_conversion_cycle(
+        result["days_sales_outstanding"], result["inventory_days"], result["payable_days"]
+    )
+
+    result["working_capital_revenue"] = working_capital_to_revenue(
+        result["working_capital"], result["revenue"]
+    )
+
+    result["capex_revenue"] = capex_to_revenue(result["capex"], result["revenue"])
+
+    result["capex_depreciation"] = capex_to_depreciation(result["capex"], result["depreciation"])
+
+    result["rd_revenue"] = research_to_revenue(result["rd_expense"], result["revenue"])
+
+    result["reinvestment_proxy"] = reinvestment_rate(
+        result["capex"], result["depreciation"], result["working_capital_change"], result["nopat"]
+    )
+
+    result["dividend_payout_ratio"] = dividend_payout_ratio(
+        result["dividends"], result["net_income"]
+    )
+
+    result["dividend_coverage_cfo"] = dividend_coverage_cfo(result["cfo"], result["dividends"])
+
+    result["dividend_coverage_fcf"] = dividend_coverage_fcf(
+        result["free_cash_flow"], result["dividends"]
+    )
+
+    result["repurchase_yield"] = repurchase_yield(result["repurchases"], result["market_cap"])
+
+    result["issuance_yield"] = issuance_yield(result["share_issuance"], result["market_cap"])
+
+    result["dividend_yield"] = dividend_yield(result["dividends"], result["market_cap"])
+
+    result["net_shareholder_yield"] = result["shareholder_yield"]
+
+    result["share_count_dilution"] = share_count_dilution(result["shares_outstanding"], issuer_keys)
+
+    result["per_share_growth_spread"] = growth_spread(
+        result["eps_growth"], result["net_income_growth"]
+    )
+
+    result["book_per_share_growth_spread"] = growth_spread(
+        result["book_value_per_share_growth"], result["equity_growth"]
+    )
+
+    result["reinvestment_quality"] = reinvestment_quality(result["reinvestment_proxy"])
+
+    result["earnings_yield"] = earnings_yield(result["net_income"], result["market_cap"])
+
+    result["price_earnings"] = price_to_earnings(result["market_cap"], result["net_income"])
+
+    result["fcf_yield"] = fcf_yield(result["free_cash_flow"], result["market_cap"])
+
+    result["price_fcf"] = price_to_fcf(result["market_cap"], result["free_cash_flow"])
+
+    result["sales_yield"] = sales_yield(result["revenue"], result["market_cap"])
+
+    result["price_sales"] = price_to_sales(result["market_cap"], result["revenue"])
+
+    result["book_to_market"] = book_to_market(result["common_equity"], result["market_cap"])
+
+    result["price_book"] = price_to_book(result["market_cap"], result["common_equity"])
+
+    result["tangible_book_to_market"] = tangible_book_to_market(
+        result["tangible_equity"], result["market_cap"]
+    )
+
+    result["price_tangible_book"] = price_to_tangible_book(
+        result["market_cap"], result["tangible_equity"]
+    )
+
+    result["ebit_ev"] = ebit_to_enterprise_value(
+        result["operating_income"], result["enterprise_value"]
+    )
+
+    result["ev_ebit"] = enterprise_value_to_ebit(
+        result["enterprise_value"], result["operating_income"]
+    )
+
+    result["ev_sales"] = enterprise_value_to_sales(result["enterprise_value"], result["revenue"])
+
+    result["sales_ev"] = sales_to_enterprise_value(result["revenue"], result["enterprise_value"])
+
+    result["ev_fcf"] = enterprise_value_to_fcf(result["enterprise_value"], result["free_cash_flow"])
+
+    return result
+
+
+def financial_company_metrics(frame: pd.DataFrame) -> pd.DataFrame:
+    """Add financial-company and DuPont metrics."""
+
+    result = pd.DataFrame(frame).copy()
+
+    issuer_keys = result["cik"]
+
+    result = result.copy()
+
+    financial_rows = result["score_family"].eq("financial")
+
+    corporate_rows = result["score_family"].eq("corporate")
+
+    result["fin_roa"] = result["roa"].where(financial_rows)
+
+    result["fin_roe"] = result["roe"].where(financial_rows)
+
+    result["fin_pretax_assets"] = pretax_return_on_assets(
+        result["pretax_income"], result["average_assets"]
+    ).where(financial_rows)
+
+    result["fin_net_margin"] = result["net_margin"].where(financial_rows)
+
+    result["fin_equity_assets"] = equity_to_assets(
+        result["common_equity"], result["total_assets"]
+    ).where(financial_rows)
+
+    result["fin_tangible_equity_assets"] = result["tangible_equity_assets"].where(financial_rows)
+
+    result["fin_liabilities_assets"] = result["liabilities_assets"].where(financial_rows)
+
+    result["fin_assets_equity"] = assets_to_equity(
+        result["total_assets"], result["common_equity"]
+    ).where(financial_rows)
+
+    result["fin_tangible_bvps"] = result["tangible_book_value_per_share"].where(financial_rows)
+
+    result["fin_revenue_growth"] = result["revenue_growth"].where(financial_rows)
+
+    result["fin_net_income_growth"] = result["net_income_growth"].where(financial_rows)
+
+    result["fin_asset_growth"] = result["assets_growth"].where(financial_rows)
+
+    result["fin_equity_growth"] = result["equity_growth"].where(financial_rows)
+
+    result["fin_bvps_growth"] = result["book_value_per_share_growth"].where(financial_rows)
+
+    result["fin_tbvps_growth"] = result["tangible_book_value_per_share_growth"].where(
+        financial_rows
+    )
+
+    result["fin_roa_change"] = result["roa_change"].where(financial_rows)
+
+    result["fin_roe_change"] = result["roe_change"].where(financial_rows)
+
+    result["fin_equity_assets_change"] = annual_change(
+        result["fin_equity_assets"], issuer_keys
+    ).where(financial_rows)
+
+    result["fin_roa_variability"] = relative_variability(result["fin_roa"], issuer_keys).where(
+        financial_rows
+    )
+
+    result["fin_roe_variability"] = relative_variability(result["fin_roe"], issuer_keys).where(
+        financial_rows
+    )
+
+    result["fin_net_income_variability"] = relative_variability(
+        result["net_income"], issuer_keys
+    ).where(financial_rows)
+
+    result["fin_positive_earnings_frequency"] = positive_earnings_frequency(
+        result["net_income"], issuer_keys
+    ).where(financial_rows)
+
+    result["positive_earnings_frequency"] = result["fin_positive_earnings_frequency"]
+
+    result["fin_operating_expense_ratio"] = operating_expense_ratio(
+        result["operating_expenses"], result["revenue"]
+    ).where(financial_rows)
+
+    result["fin_pretax_margin"] = result["pretax_margin"].where(financial_rows)
+
+    result["fin_revenue_assets"] = revenue_to_assets(
+        result["revenue"], result["average_assets"]
+    ).where(financial_rows)
+
+    result["fin_earnings_yield"] = result["earnings_yield"].where(financial_rows)
+
+    result["fin_price_book"] = result["price_book"].where(financial_rows)
+
+    result["fin_book_to_market"] = result["book_to_market"].where(financial_rows)
+
+    result["fin_price_tangible_book"] = result["price_tangible_book"].where(financial_rows)
+
+    result["fin_tangible_book_to_market"] = result["tangible_book_to_market"].where(financial_rows)
+
+    result["fin_revenue_market_cap"] = result["sales_yield"].where(financial_rows)
+
+    result["fin_dividend_yield"] = result["dividend_yield"].where(financial_rows)
+
+    result["fin_repurchase_yield"] = result["repurchase_yield"].where(financial_rows)
+
+    result["fin_issuance_yield"] = result["issuance_yield"].where(financial_rows)
+
+    result["fin_net_payout_yield"] = result["net_shareholder_yield"].where(financial_rows)
+
+    result["fin_share_dilution"] = result["share_count_dilution"].where(financial_rows)
+
+    result["dupont_net_margin"] = result["net_margin"].where(corporate_rows)
+
+    result["dupont_asset_turnover"] = result["asset_turnover"].where(corporate_rows)
+
+    result["dupont_equity_multiplier"] = equity_multiplier(
+        result["average_assets"], result["average_equity"]
+    ).where(corporate_rows)
+
+    result["dupont_roe"] = dupont_return_on_equity(
+        result["dupont_net_margin"],
+        result["dupont_asset_turnover"],
+        result["dupont_equity_multiplier"],
+    )
+
+    result["dupont_gap"] = dupont_gap(result["roe"], result["dupont_roe"])
+
+    result["cash_earnings_accrual"] = cash_earnings_gap(result["net_income"], result["cfo"])
+
+    result["cash_conversion_ratio"] = result["cfo_net_income"]
+
+    return result
+
+
+def diagnostic_model_metrics(frame: pd.DataFrame) -> pd.DataFrame:
+    """Add Piotroski, Altman, Beneish, and red-flag diagnostics."""
+
+    result = pd.DataFrame(frame).copy()
+
+    issuer_keys = result["cik"]
+    corporate_rows = result["score_family"].eq("corporate")
+
+    prior_roa = annual_lag(result["roa"], issuer_keys)
+
+    prior_current_ratio = annual_lag(result["current_ratio"], issuer_keys)
+
+    prior_gross_margin = annual_lag(result["gross_margin"], issuer_keys)
+
+    prior_asset_turnover = annual_lag(result["asset_turnover"], issuer_keys)
+
+    result["piotroski_f_score"] = piotroski_score(
+        roa=result["roa"],
+        cfo=result["cfo"],
+        net_income=result["net_income"],
+        prior_roa=prior_roa,
+        debt_assets=result["debt_assets"],
+        prior_debt_assets=result["debt_assets_prior"],
+        current_ratio_value=result["current_ratio"],
+        prior_current_ratio=prior_current_ratio,
+        share_dilution=result["share_count_dilution"],
+        gross_margin_value=result["gross_margin"],
+        prior_gross_margin=prior_gross_margin,
+        asset_turnover_value=result["asset_turnover"],
+        prior_asset_turnover=prior_asset_turnover,
+        eligible=corporate_rows,
+    )
+
+    result["altman_z"] = altman_z_score(
+        working_capital_value=result["working_capital"],
+        retained_earnings=result["retained_earnings"],
+        operating_income=result["operating_income"],
+        market_cap=result["market_cap"],
+        total_liabilities=result["total_liabilities"],
+        revenue=result["revenue"],
+        total_assets=result["total_assets"],
+        eligible=corporate_rows,
+    )
+
+    result["altman_class"] = pd.cut(
+        result["altman_z"],
+        [-np.inf, 1.81, 2.99, np.inf],
+        labels=["distress", "grey", "safe"],
+        right=False,
+    )
+
+    prior_revenue = annual_lag(result["revenue"], issuer_keys)
+
+    prior_receivables = annual_lag(result["receivables"], issuer_keys)
+
+    prior_current_assets = annual_lag(result["current_assets"], issuer_keys)
+
+    prior_ppe = annual_lag(result["ppe"], issuer_keys)
+
+    prior_total_assets = annual_lag(result["total_assets"], issuer_keys)
+
+    prior_depreciation = annual_lag(result["depreciation"], issuer_keys)
+
+    prior_sga = annual_lag(result["sga_expense"], issuer_keys)
+
+    result["beneish_m"] = beneish_m_score(
+        revenue=result["revenue"],
+        prior_revenue=prior_revenue,
+        receivables=result["receivables"],
+        prior_receivables=prior_receivables,
+        gross_margin_value=result["gross_margin"],
+        prior_gross_margin=prior_gross_margin,
+        current_assets=result["current_assets"],
+        prior_current_assets=prior_current_assets,
+        ppe=result["ppe"],
+        prior_ppe=prior_ppe,
+        total_assets=result["total_assets"],
+        prior_total_assets=prior_total_assets,
+        depreciation=result["depreciation"],
+        prior_depreciation=prior_depreciation,
+        sga_expense=result["sga_expense"],
+        prior_sga_expense=prior_sga,
+        debt_assets=result["debt_assets"],
+        prior_debt_assets=result["debt_assets_prior"],
+        net_income=result["net_income"],
+        cfo=result["cfo"],
+        eligible=corporate_rows,
+    )
+
+    result["beneish_warning"] = result["beneish_m"].gt(-1.78).where(result["beneish_m"].notna())
+
+    warning_values = red_flag_penalties(result)
+
+    result = pd.concat([result, warning_values], axis=1)
+
+    result = result.replace([np.inf, -np.inf], np.nan)
+
+    assert not result.duplicated(["decision_date", "cik"]).any()
+
+    assert (
+        result.loc[result["filed_date"].notna(), "filed_date"]
+        .lt(result.loc[result["filed_date"].notna(), "decision_date"])
+        .all()
+    )
+
+    return result
+
+
 __all__ = [
+    "diagnostic_model_metrics",
+    "financial_company_metrics",
+    "profitability_growth_metrics",
+    "statement_metrics",
+    "strength_efficiency_metrics",
     "altman_z_score",
     "annual_change",
     "annual_growth",
