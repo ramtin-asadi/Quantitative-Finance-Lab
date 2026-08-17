@@ -33,45 +33,45 @@ The rendered website is the best way to read the work. code, output, and plots a
 
 ## Projects
 
-**01. Yield Curve, Bond Pricing & Risk.** Builds discount, zero-rate, and forward curves from par-yield data and prices bonds off the resulting curve. Quantifies fixed-income risk through duration, convexity, PV01, and key-rate duration, then tests a duration-targeted bond ladder.
+**01. Yield Curve, Bond Pricing & Risk.** Building discount, zero-rate, and forward curves from par-yield data and pricing bonds from the resulting curve. Quantifying fixed-income risk through duration, convexity, PV01, and key-rate duration, then testing a duration-targeted bond ladder.
 
-**02. Portfolio Optimization (Mean–Variance Models).** Compares equal-weight, minimum-variance, mean-variance, max-Sharpe (Tangency), and frontier allocation under realistic walk-forward rebalancing. Covers liquidity-based universe selection, multiple return/covariance estimators, regularization, and transaction costs.
+**02. Portfolio Optimization (Mean–Variance Models).** Comparing equal-weight, minimum-variance, mean-variance, max-Sharpe (Tangency), and frontier allocation under realistic walk-forward rebalancing. Covers liquidity-based universe selection, multiple return/covariance estimators, regularization, and transaction costs.
 
-**03. Risk Report Engine & CAPM.** Builds an institutional-style risk report (drawdowns, VaR/ES with backtesting, stress scenarios, CAPM beta, risk contribution) and applies it to the portfolios produced in Project 02 and stocks.
+**03. Risk Report Engine & CAPM.** Building an institutional-style risk report (drawdowns, VaR/ES with backtesting, stress scenarios, CAPM beta, risk contribution) and applying it to the portfolios produced in Project 02 and stocks.
 
-**04. Black–Scholes, IV, Greeks & Hedging.** Implements Black–Scholes pricing, put-call parity checks, fast implied-volatility solvers, and analytic/autodiff Greeks, then evaluates delta and delta-vega hedging P&L under transaction costs and quote noise.
+**04. Black–Scholes, IV, Greeks & Hedging.** Implementing Black–Scholes pricing, put-call parity checks, fast implied-volatility solvers, and analytic/autodiff Greeks, then evaluating delta and delta-vega hedging P&L under transaction costs and quote noise.
 
-**05. GARCH Forecasting & Variance Risk Premium.** Forecasts realized volatility with GARCH-family models and compares the forecast to option-implied volatility to study the variance risk premium and its trading implications.
+**05. GARCH Forecasting & Variance Risk Premium.** Forecasting realized volatility with GARCH models and HAR-RV and comparing the forecast to option-implied volatility to study the variance risk premium and its trading implications.
 
-**06. Black–Litterman with Learned Confidence.** Uses equilibrium returns, views, confidence mapping, posterior expected returns, and constrained portfolio optimization. Extends classical Black–Litterman by learning the confidence assigned to each view from data rather than fixing it by hand, and evaluates the resulting allocations against a benchmark.
+**06. Black–Litterman with Learned Confidence.** Using equilibrium returns, views, confidence mapping, posterior expected returns, and portfolio optimization. Extending classical Black–Litterman by learning the confidence assigned to each view from data rather than fixing it.
 
-**07. Dynamic Hedge Ratios & Residual Trading.** Estimates time-varying hedge ratios between related instruments using static, rolling, and dynamic methods, and builds a residual-based relative-value strategy around the spread that's left over.
+**07. Dynamic Hedge Ratios & Residual Trading.** Estimating time-varying hedge ratios between related instruments using static, rolling, and dynamic methods, and building a residual-based relative-value strategy around the spread that's left over.
 
-**08. Volatility Surface & Local Volatility.** Fits arbitrage-aware implied-volatility surfaces and derives the corresponding local-volatility surface via Dupire's formula, then checks pricing consistency against quoted option prices.
+**08. Volatility Surface & Local Volatility.** Fitting arbitrage-aware implied-volatility surfaces and deriving local-volatility surface via Dupire's formula.
 
-**09. Short-Rate & Term-Structure Models.** Calibrates short-rate models to the yield curve and term-premium data, builds PCA curve shocks, uses them for scenario generation, duration overlays, and swap-style overlays.
+**09. Short-Rate & Term-Structure Models.** Calibrating short-rate models to the yield curve and term-premium data, building PCA curve shocks and using them for scenario generation, duration overlays, and swap-style overlays.
 
-**10. Tail Risk, Risk Parity & Robust Portfolios.** Builds CVaR-aware and robust (box/ellipsoid/Wasserstein) portfolio optimizers that explicitly account for estimation error and tail risk, compared against risk-parity, HRP and classical mean-variance baselines.
+**10. Tail Risk, Risk Parity & Robust Portfolios.** Building CVaR-aware, Risk parity and HRP, and robust (box/ellipsoid/Wasserstein) portfolio optimizers that explicitly account for estimation error and tail risk, compared against mean-variance baselines.
 
-**11. Stochastic Volatility & Model-Risk Relative Value.** Calibrates Heston, SABR, SVI/SSVI, Merton and Bates models to the option surface and uses the spread between model families as a model-risk-aware relative-value signal for option trading.
+**11. Stochastic Volatility & Model-Risk Relative Value.** Calibrating Heston, SABR, SVI/SSVI, Merton and Bates models to the option surface and using the spread between models as a model-risk-aware relative-value signal for option trading.
 
-**12. Macro Financial Conditions Index.** Builds a financial-conditions index from macro and market variables using transformations, standardization, dimensionality reduction or supervised components, compares to the Chicago Fed NFCI, and uses it for stress classification and allocation rules.
+**12. Macro Financial Conditions Index.** Building a financial-conditions index from macro and market variables using transformations, standardization, dimensionality reduction or supervised components, comparing to the Chicago Fed NFCI, and using it for stress classification and allocation rules.
 
-**13. American Options & Numerical Pricing.** Prices American options with binomial trees, finite-difference PDE solvers (PSOR), and Longstaff–Schwartz Monte Carlo, with the performance-critical kernels written in C++ (bound to Python via pybind11) and Numba.
+**13. American Options & Numerical Pricing.** Pricing American options with binomial trees, finite-difference PDE solvers (PSOR), and Longstaff–Schwartz Monte Carlo, with the performance-critical kernels written in C++ (bound to Python via pybind11) and Numba.
 
-**14. Fourier-Based Option Pricing.** Implements Carr–Madan FFT and COS-method pricing under Lévy/affine models (including Merton jump-diffusion, Heston and Variance Gamma) and benchmarks them for speed and accuracy against direct integration, again backed by compiled C++ and Numba kernels.
+**14. Fourier-Based Option Pricing.** Implementing Carr–Madan FFT and COS-method pricing under Lévy/affine models (including Merton jump-diffusion, Heston and Variance Gamma) and comparing them for speed and accuracy against direct integration, again used compiled C++ and Numba kernels.
 
-**15. Factor Investing.** uses Fama-French factors, industry portfolios, factor proxies and validation-weighted scoring for evaluating portfolio construction choices and factor-timing.
+**15. Factor Investing.** using Fama-French factors, industry portfolios, factor proxies and validation-weighted scoring for evaluating portfolio construction choices and factor-timing.
 
-**16. Regime-Switching Portfolio Allocation.** Detects macro and market regimes with different Econometrics and Machine learning models (Markov-switching, clustering, or classification) and adapts portfolio allocation rules conditional on the detected regime.
+**16. Regime-Switching Portfolio Allocation.** Detecting macro and market regimes with different Econometrics and Machine learning models (Markov-switching, clustering, or classification) and adapting portfolio allocation rules conditional on the detected regime.
 
-**17. Network Portfolio Construction.** Builds dependence networks (Dense, MST and PMFG) from the stock market correlation and Copula tail dependence, and uses network structure for portfolio construction using centrality measures.
+**17. Network Portfolio Construction.** Building dependence networks (Dense, MST and PMFG) from the stock market correlation and Copula tail dependence, and using network structure for portfolio construction using centrality measures.
 
-**18. Rough Volatility.** Implements rough Bergomi and rough Heston-style models, estimates the Hurst roughness parameter from realized variance, and compares rough-volatility dynamics against classical (Markovian) stochastic-volatility models.
+**18. Rough Volatility.** Implementing rough Bergomi and rough Heston-style models, estimating the Hurst roughness parameter from realized variance, and comparing rough-volatility dynamics against classical (Markovian) stochastic-volatility models.
 
-**19. ML Forecasting & Kelly Allocation.** Builds return-forecasting models (gradient-boosted trees, sequence models, probabilistic models, Neural Networks) with proper evaluation (rank metrics, pinball loss, coverage), and converts forecasts into position sizes through a fractional-Kelly allocation and a Forecast-Gated Max-Sharpe model.
+**19. ML Forecasting & Kelly Allocation.** Building return-forecasting models (gradient-boosted trees, sequence models, probabilistic models, Neural Networks) with proper evaluation (rank metrics, pinball loss, coverage), and converting forecasts into position sizes through a fractional-Kelly allocation and a Forecast-Gated Max-Sharpe model.
 
-**20. RL Portfolio Allocation.** builds reinforcement-learning environment,trains PPO, recurrent PPO, and SAC policies to allocate across the asset set directly, using a differential Sharpe ratio reward, and evaluates the learned policies against the rule-based strategies from earlier projects.
+**20. RL Portfolio Allocation.** building reinforcement-learning environment,trains PPO, recurrent PPO, and SAC policies to allocate across the asset set directly, using a differential Sharpe ratio reward, and evaluating the learned policies against the rule-based strategies from earlier projects.
 
 ## Link to each project and data used:
 
