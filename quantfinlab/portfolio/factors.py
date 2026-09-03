@@ -1,9 +1,26 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import NamedTuple
 
 import numpy as np
 import pandas as pd
+
+
+class FactorAttributionResult(NamedTuple):
+    """Tables produced by :func:`factor_attribution`."""
+
+    exposures: pd.DataFrame
+    inference: pd.DataFrame
+    attribution: pd.DataFrame
+
+
+class FamaMacBethResult(NamedTuple):
+    """Tables produced by :func:`fama_macbeth`."""
+
+    summary: pd.DataFrame
+    monthly_coefficients: pd.DataFrame
+    diagnostics: pd.DataFrame
 
 
 def month_end_prices(prices):
@@ -14,6 +31,428 @@ def excess_returns(returns, rf):
     r = pd.DataFrame(returns).astype(float)
     rf_s = pd.Series(rf, dtype=float).reindex(r.index)
     return r.subtract(rf_s, axis=0)
+
+
+def _ols_hac(y, x, maxlags=3):
+    y_values = np.asarray(y, dtype=float).reshape(-1)
+    x_values = np.asarray(x, dtype=float)
+    if x_values.ndim != 2 or len(y_values) != len(x_values):
+        raise ValueError("y and x must contain the same number of observations.")
+    if len(y_values) <= x_values.shape[1]:
+        raise ValueError("OLS requires more observations than regressors.")
+    if np.linalg.matrix_rank(x_values) < x_values.shape[1]:
+        raise ValueError("OLS design matrix is not full rank.")
+
+    params = np.linalg.lstsq(x_values, y_values, rcond=None)[0]
+    residuals = y_values - x_values @ params
+    bread = np.linalg.pinv(x_values.T @ x_values)
+    score = x_values * residuals[:, None]
+    meat = score.T @ score
+    lag_count = min(max(int(maxlags), 0), len(score) - 1)
+    for lag in range(1, lag_count + 1):
+        weight = 1.0 - lag / (lag_count + 1.0)
+        lag_covariance = score[lag:].T @ score[:-lag]
+        meat = meat + weight * (lag_covariance + lag_covariance.T)
+    covariance = bread @ meat @ bread
+    standard_errors = np.sqrt(np.clip(np.diag(covariance), 0.0, None))
+    t_values = np.divide(
+        params,
+        standard_errors,
+        out=np.full_like(params, np.nan),
+        where=standard_errors > 0.0,
+    )
+    centered = y_values - y_values.mean()
+    total_variation = float(centered @ centered)
+    r_squared = (
+        1.0 - float(residuals @ residuals) / total_variation
+        if total_variation > 0.0
+        else np.nan
+    )
+    return params, standard_errors, t_values, r_squared
+
+
+def factor_attribution(
+    portfolio_returns,
+    factor_returns,
+    risk_free=None,
+    *,
+    factor_columns=None,
+    rf_column="RF",
+    hac_lags=3,
+    periods_per_year=12.0,
+):
+    """Estimate portfolio factor exposures, HAC inference, and return attribution.
+
+    Parameters
+    ----------
+    portfolio_returns : pandas.DataFrame
+        Portfolio returns with one portfolio per column.
+    factor_returns : pandas.DataFrame
+        Factor returns indexed on the same frequency as the portfolios. The
+        risk-free return may be included in ``rf_column``.
+    risk_free : pandas.Series, scalar, or None, optional
+        Risk-free return. When omitted, ``rf_column`` is read from
+        ``factor_returns``; if that column is absent, zero is used.
+    factor_columns : sequence of str or None, optional
+        Factor columns to include. By default all columns except ``rf_column``
+        are used.
+    rf_column : str, default "RF"
+        Risk-free column name in ``factor_returns``.
+    hac_lags : int, default 3
+        Newey-West maximum lag used for coefficient inference.
+    periods_per_year : float, default 12
+        Annualization factor for alpha, factor contributions, and returns.
+
+    Returns
+    -------
+    FactorAttributionResult
+        Exposure, HAC-inference, and annualized attribution tables indexed by
+        portfolio.
+    """
+
+    portfolios = pd.DataFrame(portfolio_returns).astype(float).sort_index()
+    factors = pd.DataFrame(factor_returns).astype(float).sort_index()
+    factor_names = list(
+        factor_columns
+        if factor_columns is not None
+        else [column for column in factors if column != rf_column]
+    )
+    missing = [column for column in factor_names if column not in factors]
+    if missing:
+        raise KeyError(f"Missing factor columns: {missing}")
+    if not factor_names:
+        raise ValueError("At least one factor column is required.")
+
+    if risk_free is None:
+        risk_free_returns = (
+            factors[rf_column]
+            if rf_column in factors
+            else pd.Series(0.0, index=factors.index, name=rf_column)
+        )
+    elif np.isscalar(risk_free):
+        risk_free_returns = pd.Series(float(risk_free), index=factors.index, name=rf_column)
+    else:
+        risk_free_returns = pd.Series(risk_free, dtype=float, name=rf_column)
+
+    common_index = portfolios.index.intersection(factors.index)
+    factor_sample = pd.concat(
+        [
+            factors.loc[common_index, factor_names],
+            risk_free_returns.reindex(common_index).rename("__risk_free"),
+        ],
+        axis=1,
+    ).dropna()
+    annual_factor_premia = factor_sample[factor_names].mean() * float(periods_per_year)
+    exposure_rows = []
+    inference_rows = []
+    attribution_rows = []
+
+    for portfolio_name in portfolios:
+        sample = pd.concat(
+            [
+                portfolios[portfolio_name].rename("__portfolio_return"),
+                factors[factor_names],
+                risk_free_returns.rename("__risk_free"),
+            ],
+            axis=1,
+        ).dropna()
+        design = np.column_stack(
+            [np.ones(len(sample)), sample[factor_names].to_numpy(dtype=float)]
+        )
+        if len(sample) <= design.shape[1]:
+            continue
+        portfolio_excess = (
+            sample["__portfolio_return"] - sample["__risk_free"]
+        ).to_numpy(dtype=float)
+        params, _, t_values, r_squared = _ols_hac(
+            portfolio_excess,
+            design,
+            maxlags=hac_lags,
+        )
+        coefficients = pd.Series(params, index=["const", *factor_names])
+        coefficient_t = pd.Series(t_values, index=["const", *factor_names])
+        contributions = coefficients[factor_names] * annual_factor_premia
+        annual_alpha = coefficients["const"] * float(periods_per_year)
+        exposure_rows.append({
+            "portfolio": portfolio_name,
+            "months": len(sample),
+            "annual_alpha": annual_alpha,
+            "alpha_hac_t": coefficient_t["const"],
+            "r_squared": r_squared,
+            **{factor: coefficients[factor] for factor in factor_names},
+        })
+        inference_rows.append({
+            "portfolio": portfolio_name,
+            "alpha_hac_t": coefficient_t["const"],
+            **{f"{factor}_hac_t": coefficient_t[factor] for factor in factor_names},
+        })
+        attribution_rows.append({
+            "portfolio": portfolio_name,
+            "alpha": annual_alpha,
+            **{factor: contributions[factor] for factor in factor_names},
+            "fitted_excess_return": annual_alpha + contributions.sum(),
+            "realized_excess_return": portfolio_excess.mean() * float(periods_per_year),
+        })
+
+    exposure_columns = [
+        "months", "annual_alpha", "alpha_hac_t", "r_squared", *factor_names,
+    ]
+    inference_columns = [
+        "alpha_hac_t", *[f"{factor}_hac_t" for factor in factor_names],
+    ]
+    attribution_columns = [
+        "alpha", *factor_names, "fitted_excess_return", "realized_excess_return",
+    ]
+
+    def result_table(rows, columns):
+        if not rows:
+            return pd.DataFrame(columns=columns).rename_axis("portfolio")
+        return pd.DataFrame(rows).set_index("portfolio").reindex(columns=columns)
+
+    return FactorAttributionResult(
+        exposures=result_table(exposure_rows, exposure_columns),
+        inference=result_table(inference_rows, inference_columns),
+        attribution=result_table(attribution_rows, attribution_columns),
+    )
+
+
+def point_in_time_market_return(
+    returns,
+    issuers,
+    date_map,
+    *,
+    date_column="decision_date",
+    execution_column="execution_date",
+    asset_column="ticker",
+):
+    """Build an equal-weight market return using point-in-time membership."""
+
+    return_panel = pd.DataFrame(returns).astype(float).sort_index()
+    issuer_frame = pd.DataFrame(issuers)
+    mapping = pd.DataFrame(date_map).sort_values(date_column).reset_index(drop=True)
+    members = {
+        pd.Timestamp(date): group[asset_column].drop_duplicates().tolist()
+        for date, group in issuer_frame.groupby(date_column, sort=True)
+    }
+    market_return = pd.Series(
+        np.nan,
+        index=return_panel.index,
+        name="eligible_market_return",
+    )
+    for position, row in mapping.iterrows():
+        start = pd.Timestamp(row[execution_column])
+        stop = (
+            pd.Timestamp(mapping.loc[position + 1, execution_column])
+            if position + 1 < len(mapping)
+            else return_panel.index.max() + pd.Timedelta(days=1)
+        )
+        assets = return_panel.columns.intersection(
+            members.get(pd.Timestamp(row[date_column]), [])
+        )
+        dates = return_panel.index[
+            (return_panel.index >= start) & (return_panel.index < stop)
+        ]
+        if len(dates) and len(assets):
+            market_return.loc[dates] = return_panel.loc[dates, assets].mean(axis=1)
+    return market_return
+
+
+def fama_macbeth(
+    data,
+    *,
+    date_column,
+    return_column,
+    characteristics,
+    industry_column=None,
+    start=None,
+    min_cross_section=120,
+    min_industry_size=5,
+    winsor_limits=(0.01, 0.99),
+    minimum_residual_df=20,
+    hac_lags=3,
+    periods_per_year=12.0,
+):
+    """Run monthly Fama-MacBeth cross-sectional regressions with HAC inference.
+
+    Each monthly regression winsorizes returns and characteristics, standardizes
+    the characteristics cross-sectionally, and optionally includes industry
+    fixed effects. The time-series mean of each characteristic slope is then
+    reported with Newey-West inference.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        Long-form stock panel.
+    date_column : str
+        Decision-date column.
+    return_column : str
+        One-period-ahead return column.
+    characteristics : sequence of str
+        Cross-sectional characteristics whose premia are estimated.
+    industry_column : str or None, optional
+        Categorical industry control. Rare groups are pooled into ``Other``.
+    start : date-like or None, optional
+        Earliest decision date included.
+    min_cross_section : int, default 120
+        Minimum complete observations required before fitting a month.
+    min_industry_size : int, default 5
+        Minimum observations retained as a separate industry category.
+    winsor_limits : tuple of float or None, default (0.01, 0.99)
+        Cross-sectional clipping quantiles for returns and characteristics.
+    minimum_residual_df : int, default 20
+        Required observations beyond the number of regression columns.
+    hac_lags : int, default 3
+        Newey-West maximum lag for the time-series mean slopes.
+    periods_per_year : float, default 12
+        Annualization factor for premia and standard errors.
+
+    Returns
+    -------
+    FamaMacBethResult
+        Annualized characteristic-premium summary, monthly coefficients, and
+        monthly regression diagnostics.
+    """
+
+    frame = pd.DataFrame(data).copy()
+    characteristic_names = list(characteristics)
+    required = [date_column, return_column, *characteristic_names]
+    if industry_column is not None:
+        required.append(industry_column)
+    missing = [column for column in required if column not in frame]
+    if missing:
+        raise KeyError(f"Missing Fama-MacBeth columns: {missing}")
+    if not characteristic_names:
+        raise ValueError("At least one characteristic is required.")
+
+    frame[date_column] = pd.to_datetime(frame[date_column])
+    if start is not None:
+        frame = frame[frame[date_column].ge(pd.Timestamp(start))]
+
+    monthly_rows = []
+    diagnostic_rows = []
+    for decision_date, month in frame.groupby(date_column, sort=True):
+        cross_section = month[required[1:]].dropna().copy()
+        if len(cross_section) < int(min_cross_section):
+            continue
+        numeric_columns = [return_column, *characteristic_names]
+        cross_section[numeric_columns] = cross_section[numeric_columns].apply(
+            pd.to_numeric,
+            errors="coerce",
+        )
+        cross_section = cross_section.dropna(subset=numeric_columns)
+        if winsor_limits is not None:
+            lower_q, upper_q = winsor_limits
+            for column in numeric_columns:
+                lower, upper = cross_section[column].quantile([lower_q, upper_q])
+                cross_section[column] = cross_section[column].clip(lower, upper)
+
+        standardized = cross_section[characteristic_names]
+        standardized = standardized.subtract(standardized.mean()).divide(
+            standardized.std(ddof=0).replace(0.0, np.nan)
+        )
+        controls = pd.DataFrame(index=cross_section.index)
+        if industry_column is not None:
+            industry_counts = cross_section[industry_column].value_counts()
+            industry_group = cross_section[industry_column].where(
+                cross_section[industry_column].map(industry_counts).ge(
+                    int(min_industry_size)
+                ),
+                "Other",
+            )
+            controls = pd.get_dummies(
+                industry_group,
+                prefix="industry",
+                drop_first=True,
+                dtype=float,
+            )
+        regression = pd.concat(
+            [cross_section[[return_column]], standardized, controls],
+            axis=1,
+        ).dropna()
+        design_columns = [*characteristic_names, *controls.columns]
+        design = np.column_stack(
+            [np.ones(len(regression)), regression[design_columns].to_numpy(dtype=float)]
+        )
+        design_rank = np.linalg.matrix_rank(design)
+        if (
+            len(regression) <= design.shape[1] + int(minimum_residual_df)
+            or design_rank < design.shape[1]
+        ):
+            continue
+        coefficients = np.linalg.lstsq(
+            design,
+            regression[return_column].to_numpy(dtype=float),
+            rcond=None,
+        )[0]
+        monthly_rows.append(
+            pd.Series(
+                coefficients,
+                index=["const", *design_columns],
+                name=pd.Timestamp(decision_date),
+            )
+        )
+        diagnostic_rows.append({
+            date_column: pd.Timestamp(decision_date),
+            "cross_section": len(regression),
+            "industry_controls": len(controls.columns),
+            "design_rank": design_rank,
+            "design_columns": design.shape[1],
+        })
+
+    monthly_coefficients = pd.DataFrame(monthly_rows).sort_index()
+    diagnostics = (
+        pd.DataFrame(diagnostic_rows).set_index(date_column).sort_index()
+        if diagnostic_rows
+        else pd.DataFrame(
+            columns=[
+                "cross_section", "industry_controls", "design_rank", "design_columns",
+            ]
+        ).rename_axis(date_column)
+    )
+    summary_rows = []
+    for characteristic in characteristic_names:
+        slopes = monthly_coefficients.get(
+            characteristic,
+            pd.Series(dtype=float),
+        ).dropna()
+        if len(slopes) <= 1:
+            continue
+        params, standard_errors, t_values, _ = _ols_hac(
+            slopes.to_numpy(dtype=float),
+            np.ones((len(slopes), 1)),
+            maxlags=hac_lags,
+        )
+        annualized_premium = params[0] * float(periods_per_year)
+        annualized_standard_error = standard_errors[0] * float(periods_per_year)
+        summary_rows.append({
+            "characteristic": characteristic,
+            "annualized_premium": annualized_premium,
+            "annualized_hac_se": annualized_standard_error,
+            "hac_t": t_values[0],
+            "ci_95_low": annualized_premium - 1.96 * annualized_standard_error,
+            "ci_95_high": annualized_premium + 1.96 * annualized_standard_error,
+            "positive_months": slopes.gt(0.0).mean(),
+            "months": len(slopes),
+            "average_cross_section": diagnostics["cross_section"].mean(),
+            "average_industry_controls": diagnostics["industry_controls"].mean(),
+        })
+    summary_columns = [
+        "annualized_premium", "annualized_hac_se", "hac_t", "ci_95_low",
+        "ci_95_high", "positive_months", "months", "average_cross_section",
+        "average_industry_controls",
+    ]
+    summary = (
+        pd.DataFrame(summary_rows)
+        .set_index("characteristic")
+        .reindex(columns=summary_columns)
+        if summary_rows
+        else pd.DataFrame(columns=summary_columns).rename_axis("characteristic")
+    )
+    return FamaMacBethResult(
+        summary=summary,
+        monthly_coefficients=monthly_coefficients,
+        diagnostics=diagnostics,
+    )
 
 
 def rolling_factor_fit(y, x, window=60):
@@ -737,16 +1176,21 @@ def portfolio_factor_exposure(weights, beta):
 
 
 __all__ = [
+    "FactorAttributionResult",
+    "FamaMacBethResult",
     "benchmark_weight_schedule",
     "blend_factor_states",
     "combine_scores",
     "cross_section_z",
     "equal_weight_schedule",
     "excess_returns",
+    "factor_attribution",
     "factor_proxy_spreads",
     "factor_scores",
     "factor_state",
+    "fama_macbeth",
     "month_end_prices",
+    "point_in_time_market_return",
     "portfolio_factor_exposure",
     "rank_ic_table",
     "residual_strength",

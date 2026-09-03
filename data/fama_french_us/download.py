@@ -69,12 +69,18 @@ def main() -> int:
     factors = load_dataset(
         "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_5_Factors_2x3_CSV.zip"
     )
+    momentum = load_dataset(
+        "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Momentum_Factor_CSV.zip"
+    )
+    momentum = momentum.rename(columns={momentum.columns[1]: "MOM"})
     industries = load_dataset(
         "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/12_Industry_Portfolios_CSV.zip"
     )
     factors.to_csv(DATA / "fama_french_us_5_factors.csv", index=False)
+    momentum.to_csv(DATA / "fama_french_us_momentum.csv", index=False)
     industries.to_csv(DATA / "fama_french_us_12_industries.csv", index=False)
     print(f"wrote {DATA / 'fama_french_us_5_factors.csv'} rows={len(factors):,}")
+    print(f"wrote {DATA / 'fama_french_us_momentum.csv'} rows={len(momentum):,}")
     print(f"wrote {DATA / 'fama_french_us_12_industries.csv'} rows={len(industries):,}")
     return 0
 

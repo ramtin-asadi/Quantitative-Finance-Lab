@@ -29,6 +29,8 @@ book:
     - notebooks/19_forecasting_kelly_allocation.ipynb
     - notebooks/20_rl_portfolio_allocation.ipynb
     - notebooks/21_fundamental_analysis.ipynb
+    - notebooks/22_credit_risk.ipynb
+    - notebooks/23_macro_nowcasting.ipynb
 
 format:
   html:

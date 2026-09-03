@@ -5,7 +5,10 @@ We don't redistribute data used in every project, but we included guides and hel
 Script-downloadable sources include FRED U.S. Treasury yields, FRED NFCI,
 Japan MOF JGB yields, NY Fed ACM term premia, yfinance OHLCV/ETF data,
 historical S&P 500 membership, SEC Company Facts, macro factors from
-FRED/StatCan/Bank of Canada, and Kenneth French factor files. The HKEX
+FRED/StatCan/Bank of Canada, Kenneth French factor files, Treasury HQM/TNC
+curves, Federal Reserve EBP, FRED-MD/QD and ALFRED vintages, Philadelphia Fed
+real-time/SPF data, GDPNow, the Atlanta Fed MPT, the NY Fed CMDI, Statistics
+Canada real-time cubes, and Bank of Canada market/survey data. The HKEX
 stock-name workbook is downloaded inside the Stooq HKEX processor so the Hong
 Kong panel uses security names as its asset columns.
 
@@ -27,8 +30,10 @@ Most folders do not need manual raw files because their scripts download from pu
 | `chicago_fed_nfci/raw/` | Nothing. `download.py` downloads FRED `NFCI` directly. | https://fred.stlouisfed.org/series/NFCI |
 | `sp500_market/raw/` | Normally nothing. The script downloads and caches the historical constituent CSV. If GitHub access fails, save the linked CSV here as `sp500_historical_components.csv`. | https://github.com/fja05680/sp500 |
 | `sp500_fundamentals/raw/` | Normally nothing. Optionally add ignored `ticker_cik_overrides.csv` only for ticker-CIK links independently verified against an SEC filing. | https://www.sec.gov/search-filings/edgar-application-programming-interfaces |
+| `finra_credit/raw/` | FINRA monthly `HISTORIC_SPREPORTS-YYYYMM.zip` files. Use `download_archives.py` to fetch every public archive, or place browser-downloaded ZIPs here unchanged. | https://www.finra.org/finra-data/browse-catalog/structured-product-activity-reports-and-tables/historic-reports |
 
-Do not put archived files into these raw folders. The build/download scripts do not use archive folders as an input fallback.
+Do not put generic backup/archive folders under `raw/`. The named FINRA monthly
+ZIPs are the one intentional archive input listed above.
 
 Rebuild all generated data files from the repository root:
 
@@ -57,6 +62,22 @@ python data/fama_french_developed_ex_us/download.py
 python data/sp500_market/download.py --no-sec-enrichment
 python data/sp500_fundamentals/download.py
 python data/sp500_market/download.py --enrich-only
+python data/sec_credit/download.py
+python data/sec_credit/build.py
+python data/treasury_credit_curves/download.py
+python data/fed_credit/download.py
+python data/finra_credit/download_archives.py
+python data/finra_credit/download_api.py
+python data/finra_credit/build.py
+python data/fred_md_qd/download.py
+python data/alfred_realtime/download.py
+python data/philly_realtime/download.py
+python data/gdpnow/download.py
+python data/spf/download.py
+python data/atlanta_mpt/download.py
+python data/macro_high_frequency/download.py
+python data/nyfed_cmdi/download.py
+python data/canada_macro_nowcast/download.py
 ```
 
 OptionsDX scripts require the corresponding monthly raw files to be present in their `raw/` folders. The files need purchasing but the files we use are 0$ and just need creating an account on website.
@@ -72,6 +93,67 @@ fundamentals parquet already exists.
 The SEC stages require `EDGAR_IDENTITY` to contain a name and contact email.
 This is an SEC identifying User-Agent, not an API key or account credential.
 See `data/sp500_market/README.md` and `data/sp500_fundamentals/README.md`.
+
+## Project 22 credit data
+
+The four core source folders are `sec_credit/`, `treasury_credit_curves/`,
+`fed_credit/`, and `finra_credit/`. The supporting `nyfed_cmdi/` folder adds the
+weekly market-wide, investment-grade, and high-yield Corporate Bond Market
+Distress Index history.
+
+`sec_credit/download.py` locally screens the existing all-filer Company Facts
+cache for issuers with usable 2012-present US-GAAP credit history. It downloads
+current Submissions JSON only for those candidates, removes financial and
+non-operating filers from authoritative SEC metadata, and only then follows
+their older history segments. It also reviews Item 1.03 primary documents. It
+never downloads the nightly `submissions.zip`, which was about 1.56 GB on
+2026-08-29. `sec_credit/build.py` combines filing metadata and selected raw
+facts into one long `data/sec_credit.parquet`, using `record_type` to distinguish
+`fact` and `filing` rows and `is_sp500_issuer` to retain the P21/Merton subset.
+The existing Company Facts cache is reused in place; neither SEC bulk ZIP is
+copied or redownloaded.
+
+`treasury_credit_curves/download.py` writes the full HQM corporate and TNC
+nominal Treasury spot/par history to `data/treasury_credit_curves.parquet`.
+`fed_credit/download.py` writes the permanent Federal Reserve excess-bond-
+premium history to `data/fed_credit.parquet`.
+
+FINRA's historical structured-product ZIPs are public and account-free. Fetch
+all of them with `finra_credit/download_archives.py`, or place browser downloads
+unchanged under `data/finra_credit/raw/`. Corporate breadth/sentiment,
+capped-volume, current structured tables, and the small agency/Treasury controls
+require a free FINRA Developer Public Credential. Endpoint-level API files stay
+in the ignored cache; `finra_credit/build.py` writes only four consolidated
+ready tables. See `data/finra_credit/README.md` for credentials and schemas.
+
+`sec_credit/update.py` keeps filing events current immediately and detects only
+10-K/10-Q accessions absent from retained issuer caches. Since the SEC per-CIK
+Company Facts endpoint returns full issuer history, accounting refreshes use a
+persistent, bounded 100-CIK backlog by default instead of creating a multi-GB
+"incremental" run. The batch size is configurable.
+
+## Project 23 real-time macro data
+
+The seven U.S. source folders are `fred_md_qd/`, `alfred_realtime/`,
+`philly_realtime/`, `gdpnow/`, `spf/`, `atlanta_mpt/`, and
+`macro_high_frequency/`. Their builders preserve source-native vintages,
+release values, forecasts, probabilities, and levels. They do not calculate
+factors, surprises, revision errors, resampled features, or nowcasts; those
+belong in the notebook.
+
+Each folder has its own `update.py`. FRED-MD/QD adds only newly listed immutable
+snapshots; ALFRED requests only vintage dates after each series checkpoint;
+high-frequency FRED series request a 90-day overlap; provider-replaced
+workbooks use HTTP validators and local caches. Source-specific schemas and
+timing caveats are documented in each folder README.
+
+`canada_macro_nowcast/` builds the future library repeat without duplicating
+the U.S. PIT inputs. It combines 15 selected StatsCan real-time tables, raw
+non-revised CPI history, forward-only successor-table snapshots, Bank of
+Canada daily rates/FX and the complete zero-coupon curve, raw BOS questions,
+and every public MPS release into no more than five ready files. Its updater
+appends only unseen StatsCan release vectors and does not manufacture
+post-archive history from today's revised tables.
 
 After the three-stage bootstrap has succeeded once, maintain both files with:
 
