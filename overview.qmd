@@ -15,7 +15,7 @@ Each project is designed to show more than a final result. The goal is to demons
 - implement the method in Python against real market data.
 - evaluate assumptions and diagnostics.
 - interpret the results.
-- extract the reusable parts into the `quantfinlab` package and prove they generalize by re-running the workflow on an independent second market/ data.
+- extract the reusable parts into `quantfinlab` and repeat the workflow, usually on an independent second market or dataset.
 
 The repository is therefore a research notebook collection, a software-engineering exercise, and a reproducibility exercise, all at once.
 
@@ -29,7 +29,7 @@ The central design principle is:
 
 A notebook is used when the goal is exploration, derivation, diagnostics, or interpretation. Library code is used once the logic is stable enough to support another dataset, another market, or a later project. The secondary-market step at the end of most notebooks exists specifically to falsify the claim of reusability.
 
-`quantfinlab` is not presented as a general-purpose finance library that does everything, it's a focused package for exactly the workflows developed in these projects, and every claim of reuse in this repository is backed by a second run on different data.
+`quantfinlab` is a focused package for the workflows developed in these projects. A repeat on different data tests transfer; a repeat on the same source universe checks implementation reproducibility. The project list identifies which kind of repeat each notebook uses.
 
 ---
 
@@ -53,13 +53,13 @@ The project compares methods, checks assumptions, and studies model behavior usi
 Results are interpreted, not only displayed. See [Interpretation standard](#interpretation-standard) below.
 
 ### 6. Library implementation
-The closing section of all notebooks applies the reusable `quantfinlab` components extracted from the project to a second, independent dataset or market, using library code only. No notebook-side logic that wasn't already promoted to the library. This section is the actual evidence that the project's logic generalizes beyond the one dataset it was built on.
+The closing code cell uses the extracted `quantfinlab` components through visible calls. Most projects apply them to a second dataset or market; Projects 21 and 22 reproduce the same point-in-time U.S. universe, while Project 23 transfers to Canada. Model calculations belong in the library; dataset selection and the sequence of calls remain visible.
 
 ---
 
 ## Current project areas
 
-The implemented projects currently span eight areas.
+The 23 implemented projects span the following areas. Individual notebooks are listed on the [home page](index.qmd#projects) and in the repository README.
 
 ### Fixed income
 Yield curve construction, discount factors, forward rates, bond pricing, duration, convexity, PV01, key-rate duration, short-rate/term-structure models, and duration-targeted laddering. *(Projects 01, 09)*
@@ -77,7 +77,16 @@ Black–Scholes pricing, put-call parity, quote filtering, implied-volatility so
 American option pricing via binomial trees, PSOR finite-difference PDE solvers, and Longstaff–Schwartz Monte Carlo; Fourier/COS-method pricing under affine and jump-diffusion models with the performance-critical kernels written in C++ and bound to Python via pybind11. *(Projects 13, 14)*
 
 ### Macro and financial conditions
-Financial-conditions index construction from macro and market variables via PCA/factor methods, and macro-aware regime detection. *(Projects 12, 16)*
+
+Financial-conditions indexes, macro-aware regime detection, release-vintage GDP/inflation/labor nowcasting, component bridges, grouped mixed-frequency factors, MIDAS, Minnesota BVAR, Kalman news and monetary-policy forecasts. *(Projects 12, 16, 23)*
+
+### Fundamental equity research
+
+Point-in-time SEC statement reconstruction, profitability and cash-flow analysis, corporate and financial-company diagnostics, peer-relative scoring, stock selection and issuer reporting. *(Project 21)*
+
+### Corporate and structured credit
+
+Bankruptcy and distress labels, statistical and Merton default risk, market credit premiums, CDS valuation, correlated issuer portfolios, Gaussian and Student-t copulas, tranche losses and structured-credit stress comparisons. *(Project 22)*
 
 ### Networks
 Dependence-network construction (MST, PMFG) over equity data, and network-structure-derived portfolio signals like centrality measures. *(Project 17)*
@@ -98,6 +107,9 @@ Examples include:
 - options pricing, implied-volatility, Greeks, and surface/calibration routines, including the C++-backed numerical kernels;
 - risk metrics and reporting functions (VaR/ES, drawdown, CAPM, attribution)
 - volatility forecasting and hedging utilities
+- point-in-time statements, accounting diagnostics and fundamental scoring
+- default forecasting, credit valuation, copula losses and tranche calculations
+- release-aware macro transforms, bridge/state-space models and policy forecasts
 - dependence-network construction and network-based portfolio signals
 - ML/RL components — features, evaluation metrics, sequence models, RL environments and policies
 - a data-loading layer (`quantfinlab.dataio`) that normalizes every external data source into a consistent schema
@@ -133,6 +145,10 @@ Projects use consistent evaluation language where possible, by domain.
 **Options work**: quote filters, parity checks, solver success rates, pricing residuals, Greek consistency, calibration error, uncertainty bands, and hedging P&L attribution.
 
 **ML/RL work**: out-of-sample rank correlation, pinball loss, prediction-interval coverage, and policy evaluation against rule-based baselines rather than against the training objective alone.
+
+**Fundamental and credit work**: filing availability, statement coverage, peer-relative rank performance, censored outcomes, probability calibration, event capture, spread repricing and loss concentration.
+
+**Macro nowcasting**: first-release targets, as-of information sets, common-period forecast errors, revision sensitivity, density coverage, model-based news and aligned policy-rate horizons.
 
 ---
 

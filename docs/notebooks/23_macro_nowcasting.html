@@ -2,23 +2,17 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>23. Real-Time Macro &amp; Monetary Policy Nowcasting – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
+code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: 1.5em;}
-div.column{flex: auto;}
-@media screen {
-div.columns{gap: min(4vw, 1.5em);}
-div.column{overflow-x: auto;}
-}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -74,14 +68,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/22_credit_risk.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-675469a854bf6193ac016c33f4a5ba11.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-084988aa8524b7526ff0ffa8f0afd15c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
 <link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
 <link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
@@ -8775,6 +8770,1464 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<div id="library-repeat-canada" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-12T15:52:11.770481Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-12T15:52:11.770481Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-12T16:00:45.504641Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-12T16:00:45.504641Z&quot;}}" data-tags="[&quot;library-repeat&quot;]" data-execution_count="1">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> joblib <span class="im">import</span> Memory</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> cycler <span class="im">import</span> cycler</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.stats <span class="im">import</span> norm</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.common.cache <span class="im">import</span> cache_key</span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.dataio.realtime <span class="im">import</span> read_statscan_vintages, read_alfred</span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.dataio.macro <span class="im">import</span> read_macro_forecasts, read_boc_market</span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.macro <span class="im">import</span> realtime, transforms, bridge, inflation, midas, dfm, bvar, policy, evaluation</span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.ml.combination <span class="im">import</span> forecast_weights, combine_forecasts</span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.ml.probabilistic <span class="im">import</span> draw_summary, gaussian_crps, gaussian_nll, interval_coverage</span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.fixed_income.overnight <span class="im">import</span> reference_window, compound_overnight</span>
+<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting <span class="im">import</span> macro <span class="im">as</span> macro_plots</span>
+<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a>palette <span class="op">=</span> [<span class="st">"#069AF3"</span>, <span class="st">"#FE420F"</span>, <span class="st">"#00008B"</span>, <span class="st">"#008080"</span>, <span class="st">"#CC79A7"</span>, <span class="st">"#9614fa"</span>,</span>
+<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a>           <span class="st">"#DC143C"</span>, <span class="st">"#7BC8F6"</span>, <span class="st">"#0072B2"</span>, <span class="st">"#04D8B2"</span>, <span class="st">"#800080"</span>, <span class="st">"#FF8072"</span>]</span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"axes.prop_cycle"</span>] <span class="op">=</span> cycler(color<span class="op">=</span>palette)</span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({<span class="st">"figure.figsize"</span>: (<span class="dv">6</span>, <span class="dv">3</span>), <span class="st">"figure.dpi"</span>: <span class="dv">200</span>, <span class="st">"savefig.dpi"</span>: <span class="dv">300</span>,</span>
+<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"axes.grid"</span>: <span class="va">True</span>, <span class="st">"grid.alpha"</span>: <span class="fl">.20</span>, <span class="st">"axes.spines.top"</span>: <span class="va">False</span>,</span>
+<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"axes.spines.right"</span>: <span class="va">False</span>, <span class="st">"axes.titlesize"</span>: <span class="dv">12</span>, <span class="st">"axes.labelsize"</span>: <span class="dv">12</span>,</span>
+<span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"xtick.labelsize"</span>: <span class="dv">9</span>, <span class="st">"ytick.labelsize"</span>: <span class="dv">9</span>, <span class="st">"legend.fontsize"</span>: <span class="dv">7</span>})</span>
+<span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> Path(<span class="st">"../data"</span>)</span>
+<span id="cb39-28"><a href="#cb39-28" aria-hidden="true" tabindex="-1"></a>source <span class="op">=</span> data <span class="op">/</span> <span class="st">"canada_statscan_realtime.parquet"</span></span>
+<span id="cb39-29"><a href="#cb39-29" aria-hidden="true" tabindex="-1"></a>definitions <span class="op">=</span> {</span>
+<span id="cb39-30"><a href="#cb39-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"monthly_gdp"</span>: (<span class="st">"36-10-0491"</span>, <span class="st">"Canada | Seasonally adjusted at annual rates | Chained (2017) dollars | All industries [T001]"</span>),</span>
+<span id="cb39-31"><a href="#cb39-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"manufacturing_gdp"</span>: (<span class="st">"36-10-0491"</span>, <span class="st">"Canada | Seasonally adjusted at annual rates | Chained (2017) dollars | Manufacturing [31-33]"</span>),</span>
+<span id="cb39-32"><a href="#cb39-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"employment"</span>: (<span class="st">"14-10-0331"</span>, <span class="st">"Canada | Employment for all employees | Industrial aggregate excluding unclassified businesses [11-91N]"</span>),</span>
+<span id="cb39-33"><a href="#cb39-33" aria-hidden="true" tabindex="-1"></a>    <span class="st">"earnings"</span>: (<span class="st">"14-10-0331"</span>, <span class="st">"Canada | Average weekly earnings including overtime for all employees | Industrial aggregate excluding unclassified businesses [11-91N]"</span>),</span>
+<span id="cb39-34"><a href="#cb39-34" aria-hidden="true" tabindex="-1"></a>    <span class="st">"manufacturing_sales"</span>: (<span class="st">"16-10-0014"</span>, <span class="st">"Canada | Sales of goods manufactured (shipments) | Total, durable and non-durable goods"</span>),</span>
+<span id="cb39-35"><a href="#cb39-35" aria-hidden="true" tabindex="-1"></a>    <span class="st">"manufacturing_orders"</span>: (<span class="st">"16-10-0014"</span>, <span class="st">"Canada | New orders | Total, durable and non-durable goods"</span>),</span>
+<span id="cb39-36"><a href="#cb39-36" aria-hidden="true" tabindex="-1"></a>    <span class="st">"manufacturing_inventories"</span>: (<span class="st">"16-10-0014"</span>, <span class="st">"Canada | Inventories | Total, durable and non-durable goods"</span>),</span>
+<span id="cb39-37"><a href="#cb39-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"wholesale_volume"</span>: (<span class="st">"20-10-0005"</span>, <span class="st">"Canada | Wholesale sales Chained Fisher volume index (scaled to equal 100 in 2012) | Wholesale trade [41]"</span>),</span>
+<span id="cb39-38"><a href="#cb39-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"retail_volume"</span>: (<span class="st">"20-10-0082"</span>, <span class="st">"Canada | Retail trade [44-45] | Retail sales at 2012 constant prices (Unchained Laspeyres Index)"</span>),</span>
+<span id="cb39-39"><a href="#cb39-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"goods_exports"</span>: (<span class="st">"12-10-0165"</span>, <span class="st">"Canada | Export | Balance of payments | Seasonally adjusted | Total of all merchandise"</span>),</span>
+<span id="cb39-40"><a href="#cb39-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"goods_imports"</span>: (<span class="st">"12-10-0165"</span>, <span class="st">"Canada | Import | Balance of payments | Seasonally adjusted | Total of all merchandise"</span>),</span>
+<span id="cb39-41"><a href="#cb39-41" aria-hidden="true" tabindex="-1"></a>    <span class="st">"core_trim"</span>: (<span class="st">"18-10-0259"</span>, <span class="st">"Canada | Measure of core inflation based on a trimmed mean approach, CPI-trim (year-over-year percent change)"</span>),</span>
+<span id="cb39-42"><a href="#cb39-42" aria-hidden="true" tabindex="-1"></a>    <span class="st">"core_median"</span>: (<span class="st">"18-10-0259"</span>, <span class="st">"Canada | Measure of core inflation based on a weighted median approach, CPI-median (year-over-year percent change)"</span>),</span>
+<span id="cb39-43"><a href="#cb39-43" aria-hidden="true" tabindex="-1"></a>    <span class="st">"core_common"</span>: (<span class="st">"18-10-0259"</span>, <span class="st">"Canada | Measure of core inflation based on a factor model, CPI-common (year-over-year percent change)"</span>)}</span>
+<span id="cb39-44"><a href="#cb39-44" aria-hidden="true" tabindex="-1"></a>components <span class="op">=</span> {<span class="st">"consumption"</span>: <span class="st">"Household final consumption expenditure"</span>, <span class="st">"residential"</span>: <span class="st">"Residential structures"</span>,</span>
+<span id="cb39-45"><a href="#cb39-45" aria-hidden="true" tabindex="-1"></a>              <span class="st">"business"</span>: <span class="st">"Non-residential structures, machinery and equipment"</span>, <span class="st">"ip"</span>: <span class="st">"Intellectual property products"</span>,</span>
+<span id="cb39-46"><a href="#cb39-46" aria-hidden="true" tabindex="-1"></a>              <span class="st">"exports"</span>: <span class="st">"Exports of goods and services"</span>, <span class="st">"imports"</span>: <span class="st">"Less: imports of goods and services"</span>,</span>
+<span id="cb39-47"><a href="#cb39-47" aria-hidden="true" tabindex="-1"></a>              <span class="st">"government"</span>: <span class="st">"General governments final consumption expenditure"</span>, <span class="st">"real_gdp"</span>: <span class="st">"Gross domestic product at market prices"</span>}</span>
+<span id="cb39-48"><a href="#cb39-48" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, estimate <span class="kw">in</span> components.items():</span>
+<span id="cb39-49"><a href="#cb39-49" aria-hidden="true" tabindex="-1"></a>    definitions[name] <span class="op">=</span> (<span class="st">"36-10-0431"</span>, <span class="ss">f"Canada | Chained (2017) dollars | Seasonally adjusted at annual rates | </span><span class="sc">{</span>estimate<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb39-50"><a href="#cb39-50" aria-hidden="true" tabindex="-1"></a>    definitions[<span class="ss">f"nominal_</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> (<span class="st">"36-10-0431"</span>, <span class="ss">f"Canada | Current prices | Seasonally adjusted at annual rates | </span><span class="sc">{</span>estimate<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb39-51"><a href="#cb39-51" aria-hidden="true" tabindex="-1"></a>selected <span class="op">=</span> {name: {<span class="st">"table_id"</span>: table, <span class="st">"series_title"</span>: title} <span class="cf">for</span> name, (table, title) <span class="kw">in</span> definitions.items()}</span>
+<span id="cb39-52"><a href="#cb39-52" aria-hidden="true" tabindex="-1"></a>vintages <span class="op">=</span> read_statscan_vintages(source, selected, start<span class="op">=</span><span class="st">"1995-01-01"</span>)</span>
+<span id="cb39-53"><a href="#cb39-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-54"><a href="#cb39-54" aria-hidden="true" tabindex="-1"></a>cpi_definitions <span class="op">=</span> {name: {<span class="st">"table_id"</span>: <span class="st">"18-10-0004"</span>, <span class="st">"series_title"</span>: <span class="ss">f"Canada | </span><span class="sc">{</span>title<span class="sc">}</span><span class="ss">"</span>}</span>
+<span id="cb39-55"><a href="#cb39-55" aria-hidden="true" tabindex="-1"></a>                   <span class="cf">for</span> name, title <span class="kw">in</span> {<span class="st">"headline_cpi"</span>: <span class="st">"All-items"</span>, <span class="st">"core_cpi"</span>: <span class="st">"All-items excluding food and energy"</span>,</span>
+<span id="cb39-56"><a href="#cb39-56" aria-hidden="true" tabindex="-1"></a>                                       <span class="st">"food_cpi"</span>: <span class="st">"Food"</span>, <span class="st">"energy_cpi"</span>: <span class="st">"Energy"</span>}.items()}</span>
+<span id="cb39-57"><a href="#cb39-57" aria-hidden="true" tabindex="-1"></a>cpi <span class="op">=</span> read_statscan_vintages(data <span class="op">/</span> <span class="st">"canada_statscan_current.parquet"</span>, cpi_definitions, start<span class="op">=</span><span class="st">"1995-01-01"</span>)</span>
+<span id="cb39-58"><a href="#cb39-58" aria-hidden="true" tabindex="-1"></a>cpi_calendar <span class="op">=</span> realtime.first_releases(vintages[vintages[<span class="st">"series_id"</span>].eq(<span class="st">"core_trim"</span>)], max_delay<span class="op">=</span><span class="dv">100</span>).set_index(<span class="st">"observation_date"</span>)[<span class="st">"available_at"</span>]</span>
+<span id="cb39-59"><a href="#cb39-59" aria-hidden="true" tabindex="-1"></a>cpi[<span class="st">"available_at"</span>] <span class="op">=</span> cpi[<span class="st">"observation_date"</span>].<span class="bu">map</span>(cpi_calendar)</span>
+<span id="cb39-60"><a href="#cb39-60" aria-hidden="true" tabindex="-1"></a>cpi[<span class="st">"timing"</span>] <span class="op">=</span> np.where(cpi[<span class="st">"available_at"</span>].notna(), <span class="st">"CPI release matched to core vintage"</span>, <span class="st">"next-month-end availability bound"</span>)</span>
+<span id="cb39-61"><a href="#cb39-61" aria-hidden="true" tabindex="-1"></a>cpi[<span class="st">"available_at"</span>] <span class="op">=</span> cpi[<span class="st">"available_at"</span>].fillna(cpi[<span class="st">"observation_date"</span>] <span class="op">+</span> pd.offsets.MonthEnd(<span class="dv">2</span>))</span>
+<span id="cb39-62"><a href="#cb39-62" aria-hidden="true" tabindex="-1"></a>vintages <span class="op">=</span> pd.concat([vintages, cpi], ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb39-63"><a href="#cb39-63" aria-hidden="true" tabindex="-1"></a>us <span class="op">=</span> read_alfred(data <span class="op">/</span> <span class="st">"alfred_realtime.parquet"</span>, series<span class="op">=</span>[<span class="st">"INDPRO"</span>, <span class="st">"RSAFS"</span>, <span class="st">"IPMAN"</span>, <span class="st">"PAYEMS"</span>, <span class="st">"UNRATE"</span>, <span class="st">"ICSA"</span>, <span class="st">"CCSA"</span>, <span class="st">"PCEC96"</span>], start<span class="op">=</span><span class="st">"1995-01-01"</span>)</span>
+<span id="cb39-64"><a href="#cb39-64" aria-hidden="true" tabindex="-1"></a>us[<span class="st">"series_id"</span>] <span class="op">=</span> <span class="st">"us_"</span> <span class="op">+</span> us[<span class="st">"series_id"</span>]</span>
+<span id="cb39-65"><a href="#cb39-65" aria-hidden="true" tabindex="-1"></a>bos <span class="op">=</span> read_macro_forecasts(data <span class="op">/</span> <span class="st">"canada_boc_bos.csv"</span>)</span>
+<span id="cb39-66"><a href="#cb39-66" aria-hidden="true" tabindex="-1"></a>bos <span class="op">=</span> bos[bos[<span class="st">"series_id"</span>].isin([<span class="st">"FUTURESALES"</span>, <span class="st">"INVESTMACHEQUIP"</span>, <span class="st">"EMPLOY"</span>, <span class="st">"CREDIT"</span>, <span class="st">"INPUTS"</span>, <span class="st">"OUTPUTS"</span>])</span>
+<span id="cb39-67"><a href="#cb39-67" aria-hidden="true" tabindex="-1"></a>           <span class="op">&amp;</span> bos[<span class="st">"release_date"</span>].notna()].rename(columns<span class="op">=</span>{<span class="st">"observation_quarter"</span>: <span class="st">"observation_date"</span>, <span class="st">"release_date"</span>: <span class="st">"available_at"</span>})</span>
+<span id="cb39-68"><a href="#cb39-68" aria-hidden="true" tabindex="-1"></a>bos[<span class="st">"series_id"</span>] <span class="op">=</span> <span class="st">"bos_"</span> <span class="op">+</span> bos[<span class="st">"series_id"</span>]</span>
+<span id="cb39-69"><a href="#cb39-69" aria-hidden="true" tabindex="-1"></a>boc <span class="op">=</span> read_boc_market(data <span class="op">/</span> <span class="st">"canada_boc_market.parquet"</span>)</span>
+<span id="cb39-70"><a href="#cb39-70" aria-hidden="true" tabindex="-1"></a>boc_daily <span class="op">=</span> boc.pivot(index<span class="op">=</span><span class="st">"date"</span>, columns<span class="op">=</span><span class="st">"series_id"</span>, values<span class="op">=</span><span class="st">"value"</span>).sort_index()</span>
+<span id="cb39-71"><a href="#cb39-71" aria-hidden="true" tabindex="-1"></a>controls <span class="op">=</span> boc[boc[<span class="st">"series_id"</span>].isin([<span class="st">"target_overnight"</span>, <span class="st">"usd_cad"</span>, <span class="st">"goc_2y"</span>, <span class="st">"goc_5y"</span>, <span class="st">"goc_10y"</span>, <span class="st">"corra"</span>])].rename(columns<span class="op">=</span>{<span class="st">"date"</span>: <span class="st">"observation_date"</span>})</span>
+<span id="cb39-72"><a href="#cb39-72" aria-hidden="true" tabindex="-1"></a>controls[<span class="st">"available_at"</span>] <span class="op">=</span> controls[<span class="st">"observation_date"</span>]</span>
+<span id="cb39-73"><a href="#cb39-73" aria-hidden="true" tabindex="-1"></a>controls[<span class="st">"series_id"</span>] <span class="op">=</span> controls[<span class="st">"series_id"</span>].replace({<span class="st">"target_overnight"</span>: <span class="st">"policy"</span>})</span>
+<span id="cb39-74"><a href="#cb39-74" aria-hidden="true" tabindex="-1"></a>information <span class="op">=</span> pd.concat([vintages, us, bos, controls], ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb39-75"><a href="#cb39-75" aria-hidden="true" tabindex="-1"></a>quarterly_names <span class="op">=</span> <span class="bu">list</span>(components) <span class="op">+</span> [<span class="ss">f"nominal_</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> name <span class="kw">in</span> components]</span>
+<span id="cb39-76"><a href="#cb39-76" aria-hidden="true" tabindex="-1"></a>monthly_names <span class="op">=</span> [name <span class="cf">for</span> name <span class="kw">in</span> definitions <span class="cf">if</span> name <span class="kw">not</span> <span class="kw">in</span> quarterly_names]</span>
+<span id="cb39-77"><a href="#cb39-77" aria-hidden="true" tabindex="-1"></a>monthly_names <span class="op">+=</span> <span class="bu">list</span>(cpi_definitions) <span class="op">+</span> [<span class="ss">f"us_</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> name <span class="kw">in</span> [<span class="st">"INDPRO"</span>, <span class="st">"RSAFS"</span>, <span class="st">"IPMAN"</span>, <span class="st">"PAYEMS"</span>, <span class="st">"UNRATE"</span>, <span class="st">"ICSA"</span>, <span class="st">"CCSA"</span>, <span class="st">"PCEC96"</span>]]</span>
+<span id="cb39-78"><a href="#cb39-78" aria-hidden="true" tabindex="-1"></a>monthly_names <span class="op">+=</span> <span class="bu">list</span>(bos[<span class="st">"series_id"</span>].unique()) <span class="op">+</span> [<span class="st">"policy"</span>, <span class="st">"usd_cad"</span>, <span class="st">"goc_2y"</span>, <span class="st">"goc_5y"</span>, <span class="st">"goc_10y"</span>]</span>
+<span id="cb39-79"><a href="#cb39-79" aria-hidden="true" tabindex="-1"></a>information <span class="op">=</span> information[information[<span class="st">"series_id"</span>].isin(monthly_names)][</span>
+<span id="cb39-80"><a href="#cb39-80" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"series_id"</span>, <span class="st">"observation_date"</span>, <span class="st">"available_at"</span>, <span class="st">"valid_to"</span>, <span class="st">"value"</span>]].reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb39-81"><a href="#cb39-81" aria-hidden="true" tabindex="-1"></a>frequencies <span class="op">=</span> {name: <span class="st">"Q"</span> <span class="cf">for</span> name <span class="kw">in</span> bos[<span class="st">"series_id"</span>].unique()}</span>
+<span id="cb39-82"><a href="#cb39-82" aria-hidden="true" tabindex="-1"></a>codes <span class="op">=</span> {name: <span class="dv">5</span> <span class="cf">for</span> name <span class="kw">in</span> monthly_names}</span>
+<span id="cb39-83"><a href="#cb39-83" aria-hidden="true" tabindex="-1"></a>codes.update({name: <span class="dv">1</span> <span class="cf">for</span> name <span class="kw">in</span> [<span class="st">"core_trim"</span>, <span class="st">"core_median"</span>, <span class="st">"core_common"</span>, <span class="op">*</span>frequencies]})</span>
+<span id="cb39-84"><a href="#cb39-84" aria-hidden="true" tabindex="-1"></a>codes.update({name: <span class="dv">2</span> <span class="cf">for</span> name <span class="kw">in</span> [<span class="st">"policy"</span>, <span class="st">"goc_2y"</span>, <span class="st">"goc_5y"</span>, <span class="st">"goc_10y"</span>, <span class="st">"us_UNRATE"</span>]})</span>
+<span id="cb39-85"><a href="#cb39-85" aria-hidden="true" tabindex="-1"></a>codes.update({name: <span class="dv">6</span> <span class="cf">for</span> name <span class="kw">in</span> cpi_definitions})</span>
+<span id="cb39-86"><a href="#cb39-86" aria-hidden="true" tabindex="-1"></a>key <span class="op">=</span> cache_key([source, data <span class="op">/</span> <span class="st">"canada_statscan_current.parquet"</span>, data <span class="op">/</span> <span class="st">"alfred_realtime.parquet"</span>,</span>
+<span id="cb39-87"><a href="#cb39-87" aria-hidden="true" tabindex="-1"></a>                  data <span class="op">/</span> <span class="st">"canada_boc_market.parquet"</span>, data <span class="op">/</span> <span class="st">"canada_boc_bos.csv"</span>],</span>
+<span id="cb39-88"><a href="#cb39-88" aria-hidden="true" tabindex="-1"></a>                 {<span class="st">"calculation"</span>: <span class="st">"canada-nowcasting-library-1"</span>, <span class="st">"series"</span>: selected, <span class="st">"codes"</span>: codes, <span class="st">"seed"</span>: <span class="dv">23</span>})</span>
+<span id="cb39-89"><a href="#cb39-89" aria-hidden="true" tabindex="-1"></a>cache <span class="op">=</span> Path(<span class="st">"../workspace/library_repeat/cache"</span>) <span class="op">/</span> key</span>
+<span id="cb39-90"><a href="#cb39-90" aria-hidden="true" tabindex="-1"></a>memory <span class="op">=</span> Memory(cache, verbose<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb39-91"><a href="#cb39-91" aria-hidden="true" tabindex="-1"></a>snapshot <span class="op">=</span> realtime.monthly_snapshot</span>
+<span id="cb39-92"><a href="#cb39-92" aria-hidden="true" tabindex="-1"></a>release_growth <span class="op">=</span> memory.cache(realtime.release_growth)</span>
+<span id="cb39-93"><a href="#cb39-93" aria-hidden="true" tabindex="-1"></a>fit_factors <span class="op">=</span> memory.cache(dfm.fit_dfm)</span>
+<span id="cb39-94"><a href="#cb39-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-95"><a href="#cb39-95" aria-hidden="true" tabindex="-1"></a>targets <span class="op">=</span> {<span class="st">"real_gdp"</span>: (<span class="st">"Q"</span>, <span class="dv">1</span>, <span class="dv">100</span>, <span class="st">"percent"</span>), <span class="st">"headline_cpi"</span>: (<span class="st">"M"</span>, <span class="dv">12</span>, <span class="dv">100</span>, <span class="st">"percent"</span>),</span>
+<span id="cb39-96"><a href="#cb39-96" aria-hidden="true" tabindex="-1"></a>           <span class="st">"core_trim"</span>: (<span class="st">"M"</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="st">"level"</span>), <span class="st">"core_median"</span>: (<span class="st">"M"</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="st">"level"</span>),</span>
+<span id="cb39-97"><a href="#cb39-97" aria-hidden="true" tabindex="-1"></a>           <span class="st">"employment"</span>: (<span class="st">"M"</span>, <span class="dv">12</span>, <span class="dv">100</span>, <span class="st">"percent"</span>), <span class="st">"earnings"</span>: (<span class="st">"M"</span>, <span class="dv">12</span>, <span class="dv">100</span>, <span class="st">"percent"</span>)}</span>
+<span id="cb39-98"><a href="#cb39-98" aria-hidden="true" tabindex="-1"></a>truth_parts <span class="op">=</span> []</span>
+<span id="cb39-99"><a href="#cb39-99" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, (frequency, periods, scale, method) <span class="kw">in</span> targets.items():</span>
+<span id="cb39-100"><a href="#cb39-100" aria-hidden="true" tabindex="-1"></a>    source_values <span class="op">=</span> vintages[vintages[<span class="st">"series_id"</span>].eq(name)]</span>
+<span id="cb39-101"><a href="#cb39-101" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> release_growth(source_values, periods<span class="op">=</span>periods, frequency<span class="op">=</span>frequency, scale<span class="op">=</span>scale,</span>
+<span id="cb39-102"><a href="#cb39-102" aria-hidden="true" tabindex="-1"></a>                             method<span class="op">=</span>method, max_delay<span class="op">=</span><span class="dv">180</span> <span class="cf">if</span> frequency <span class="op">==</span> <span class="st">"Q"</span> <span class="cf">else</span> <span class="dv">100</span>,</span>
+<span id="cb39-103"><a href="#cb39-103" aria-hidden="true" tabindex="-1"></a>                             annualization<span class="op">=</span><span class="dv">4</span> <span class="cf">if</span> frequency <span class="op">==</span> <span class="st">"Q"</span> <span class="cf">else</span> <span class="dv">1</span>)</span>
+<span id="cb39-104"><a href="#cb39-104" aria-hidden="true" tabindex="-1"></a>    latest_levels <span class="op">=</span> realtime.vintage_asof(source_values, source_values[<span class="st">"available_at"</span>].<span class="bu">max</span>(), wide<span class="op">=</span><span class="va">True</span>)[name]</span>
+<span id="cb39-105"><a href="#cb39-105" aria-hidden="true" tabindex="-1"></a>    latest_growth <span class="op">=</span> transforms.growth_rate(latest_levels, periods<span class="op">=</span>periods, scale<span class="op">=</span>scale, method<span class="op">=</span>method,</span>
+<span id="cb39-106"><a href="#cb39-106" aria-hidden="true" tabindex="-1"></a>                                            annualization<span class="op">=</span><span class="dv">4</span> <span class="cf">if</span> frequency <span class="op">==</span> <span class="st">"Q"</span> <span class="cf">else</span> <span class="dv">1</span>)</span>
+<span id="cb39-107"><a href="#cb39-107" aria-hidden="true" tabindex="-1"></a>    values[<span class="st">"latest"</span>] <span class="op">=</span> values[<span class="st">"observation_date"</span>].<span class="bu">map</span>(latest_growth)</span>
+<span id="cb39-108"><a href="#cb39-108" aria-hidden="true" tabindex="-1"></a>    values[<span class="st">"target"</span>] <span class="op">=</span> name</span>
+<span id="cb39-109"><a href="#cb39-109" aria-hidden="true" tabindex="-1"></a>    values[<span class="st">"exact_release"</span>] <span class="op">=</span> values[<span class="st">"observation_date"</span>].isin(cpi_calendar.index) <span class="cf">if</span> name <span class="op">==</span> <span class="st">"headline_cpi"</span> <span class="cf">else</span> <span class="va">True</span></span>
+<span id="cb39-110"><a href="#cb39-110" aria-hidden="true" tabindex="-1"></a>    values[<span class="st">"unit"</span>] <span class="op">=</span> <span class="st">"Annualized q/q (%)"</span> <span class="cf">if</span> frequency <span class="op">==</span> <span class="st">"Q"</span> <span class="cf">else</span> <span class="st">"Year-over-year (%)"</span></span>
+<span id="cb39-111"><a href="#cb39-111" aria-hidden="true" tabindex="-1"></a>    truth_parts.append(values)</span>
+<span id="cb39-112"><a href="#cb39-112" aria-hidden="true" tabindex="-1"></a>truth <span class="op">=</span> pd.concat(truth_parts, ignore_index<span class="op">=</span><span class="va">True</span>).dropna(subset<span class="op">=</span>[<span class="st">"first"</span>]).sort_values([<span class="st">"target"</span>, <span class="st">"observation_date"</span>])</span>
+<span id="cb39-113"><a href="#cb39-113" aria-hidden="true" tabindex="-1"></a>days <span class="op">=</span> {name: [<span class="dv">1</span>, <span class="dv">7</span>, <span class="dv">15</span>, <span class="dv">30</span>, <span class="dv">45</span>, <span class="dv">60</span>] <span class="cf">if</span> name <span class="op">==</span> <span class="st">"real_gdp"</span> <span class="cf">else</span> [<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">20</span>] <span class="cf">for</span> name <span class="kw">in</span> targets}</span>
+<span id="cb39-114"><a href="#cb39-114" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> evaluation.forecast_origins(truth[truth[<span class="st">"exact_release"</span>]], days, start<span class="op">=</span><span class="st">"2015-01-01"</span>)</span>
+<span id="cb39-115"><a href="#cb39-115" aria-hidden="true" tabindex="-1"></a>score_start <span class="op">=</span> pd.Timestamp(<span class="st">"2019-01-01"</span>)</span>
+<span id="cb39-116"><a href="#cb39-116" aria-hidden="true" tabindex="-1"></a>gdp_grid <span class="op">=</span> grid[grid[<span class="st">"target"</span>].eq(<span class="st">"real_gdp"</span>)]</span>
+<span id="cb39-117"><a href="#cb39-117" aria-hidden="true" tabindex="-1"></a>component_truth <span class="op">=</span> []</span>
+<span id="cb39-118"><a href="#cb39-118" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name <span class="kw">in</span> components:</span>
+<span id="cb39-119"><a href="#cb39-119" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> release_growth(vintages[vintages[<span class="st">"series_id"</span>].eq(name)], periods<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb39-120"><a href="#cb39-120" aria-hidden="true" tabindex="-1"></a>                             frequency<span class="op">=</span><span class="st">"Q"</span>, scale<span class="op">=</span><span class="dv">100</span>, method<span class="op">=</span><span class="st">"percent"</span>, annualization<span class="op">=</span><span class="dv">4</span>, max_delay<span class="op">=</span><span class="dv">180</span>)</span>
+<span id="cb39-121"><a href="#cb39-121" aria-hidden="true" tabindex="-1"></a>    component_truth.append(values.assign(component<span class="op">=</span>name))</span>
+<span id="cb39-122"><a href="#cb39-122" aria-hidden="true" tabindex="-1"></a>component_truth <span class="op">=</span> pd.concat(component_truth).pivot(index<span class="op">=</span><span class="st">"observation_date"</span>, columns<span class="op">=</span><span class="st">"component"</span>, values<span class="op">=</span><span class="st">"first"</span>)</span>
+<span id="cb39-123"><a href="#cb39-123" aria-hidden="true" tabindex="-1"></a>blocks <span class="op">=</span> {<span class="st">"consumption"</span>: [<span class="st">"monthly_gdp"</span>, <span class="st">"wholesale_volume"</span>, <span class="st">"retail_volume"</span>, <span class="st">"us_RSAFS"</span>],</span>
+<span id="cb39-124"><a href="#cb39-124" aria-hidden="true" tabindex="-1"></a>          <span class="st">"residential"</span>: [<span class="st">"monthly_gdp"</span>, <span class="st">"policy"</span>, <span class="st">"goc_5y"</span>],</span>
+<span id="cb39-125"><a href="#cb39-125" aria-hidden="true" tabindex="-1"></a>          <span class="st">"business"</span>: [<span class="st">"manufacturing_sales"</span>, <span class="st">"manufacturing_orders"</span>, <span class="st">"us_IPMAN"</span>],</span>
+<span id="cb39-126"><a href="#cb39-126" aria-hidden="true" tabindex="-1"></a>          <span class="st">"ip"</span>: [<span class="st">"monthly_gdp"</span>, <span class="st">"us_INDPRO"</span>], <span class="st">"exports"</span>: [<span class="st">"goods_exports"</span>, <span class="st">"us_INDPRO"</span>, <span class="st">"usd_cad"</span>],</span>
+<span id="cb39-127"><a href="#cb39-127" aria-hidden="true" tabindex="-1"></a>          <span class="st">"imports"</span>: [<span class="st">"goods_imports"</span>, <span class="st">"manufacturing_sales"</span>, <span class="st">"usd_cad"</span>],</span>
+<span id="cb39-128"><a href="#cb39-128" aria-hidden="true" tabindex="-1"></a>          <span class="st">"government"</span>: [<span class="st">"employment"</span>, <span class="st">"monthly_gdp"</span>],</span>
+<span id="cb39-129"><a href="#cb39-129" aria-hidden="true" tabindex="-1"></a>          <span class="st">"common_activity"</span>: [<span class="st">"monthly_gdp"</span>, <span class="st">"manufacturing_inventories"</span>, <span class="st">"us_INDPRO"</span>, <span class="st">"us_PAYEMS"</span>]}</span>
+<span id="cb39-130"><a href="#cb39-130" aria-hidden="true" tabindex="-1"></a>gdp_rows <span class="op">=</span> []</span>
+<span id="cb39-131"><a href="#cb39-131" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> row <span class="kw">in</span> gdp_grid.itertuples():</span>
+<span id="cb39-132"><a href="#cb39-132" aria-hidden="true" tabindex="-1"></a>    known <span class="op">=</span> snapshot(information, row.evaluation_date, frequencies<span class="op">=</span>frequencies, series<span class="op">=</span>monthly_names, start<span class="op">=</span><span class="st">"1997-01-01"</span>)</span>
+<span id="cb39-133"><a href="#cb39-133" aria-hidden="true" tabindex="-1"></a>    record <span class="op">=</span> row._asdict()</span>
+<span id="cb39-134"><a href="#cb39-134" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name <span class="kw">in</span> <span class="bu">dict</span>.fromkeys(name <span class="cf">for</span> block <span class="kw">in</span> blocks.values() <span class="cf">for</span> name <span class="kw">in</span> block):</span>
+<span id="cb39-135"><a href="#cb39-135" aria-hidden="true" tabindex="-1"></a>        signal <span class="op">=</span> bridge.quarterly_signal(known[name].dropna(), row.observation_date.to_period(<span class="st">"Q"</span>),</span>
+<span id="cb39-136"><a href="#cb39-136" aria-hidden="true" tabindex="-1"></a>                                          difference<span class="op">=</span>name <span class="kw">in</span> [<span class="st">"policy"</span>, <span class="st">"goc_5y"</span>])</span>
+<span id="cb39-137"><a href="#cb39-137" aria-hidden="true" tabindex="-1"></a>        record[name], record[<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">_known"</span>] <span class="op">=</span> signal[<span class="st">"signal"</span>], signal[<span class="st">"observed_months"</span>]</span>
+<span id="cb39-138"><a href="#cb39-138" aria-hidden="true" tabindex="-1"></a>    nominal <span class="op">=</span> realtime.vintage_asof(vintages, row.evaluation_date, series<span class="op">=</span>[<span class="ss">f"nominal_</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> name <span class="kw">in</span> components], wide<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb39-139"><a href="#cb39-139" aria-hidden="true" tabindex="-1"></a>    nominal <span class="op">=</span> nominal[nominal.index <span class="op">&lt;</span> row.observation_date].dropna().iloc[<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb39-140"><a href="#cb39-140" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> component <span class="kw">in</span> blocks:</span>
+<span id="cb39-141"><a href="#cb39-141" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> component <span class="op">!=</span> <span class="st">"common_activity"</span>:</span>
+<span id="cb39-142"><a href="#cb39-142" aria-hidden="true" tabindex="-1"></a>            record[<span class="ss">f"w_</span><span class="sc">{</span>component<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> nominal[<span class="ss">f"nominal_</span><span class="sc">{</span>component<span class="sc">}</span><span class="ss">"</span>] <span class="op">/</span> nominal[<span class="st">"nominal_real_gdp"</span>] <span class="op">*</span> (<span class="op">-</span><span class="dv">1</span> <span class="cf">if</span> component <span class="op">==</span> <span class="st">"imports"</span> <span class="cf">else</span> <span class="dv">1</span>)</span>
+<span id="cb39-143"><a href="#cb39-143" aria-hidden="true" tabindex="-1"></a>    gdp_rows.append(record)</span>
+<span id="cb39-144"><a href="#cb39-144" aria-hidden="true" tabindex="-1"></a>gdp_design <span class="op">=</span> pd.DataFrame(gdp_rows).merge(component_truth, on<span class="op">=</span><span class="st">"observation_date"</span>, suffixes<span class="op">=</span>(<span class="st">""</span>, <span class="st">"_component"</span>))</span>
+<span id="cb39-145"><a href="#cb39-145" aria-hidden="true" tabindex="-1"></a>gdp_design[<span class="st">"common_activity"</span>] <span class="op">=</span> gdp_design[<span class="st">"actual"</span>] <span class="op">-</span> <span class="bu">sum</span>(</span>
+<span id="cb39-146"><a href="#cb39-146" aria-hidden="true" tabindex="-1"></a>    gdp_design[<span class="ss">f"w_</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span>] <span class="op">*</span> gdp_design[name] <span class="cf">for</span> name <span class="kw">in</span> blocks <span class="cf">if</span> name <span class="op">!=</span> <span class="st">"common_activity"</span>)</span>
+<span id="cb39-147"><a href="#cb39-147" aria-hidden="true" tabindex="-1"></a>gdp_design[<span class="st">"w_common_activity"</span>] <span class="op">=</span> <span class="fl">1.0</span></span>
+<span id="cb39-148"><a href="#cb39-148" aria-hidden="true" tabindex="-1"></a>bridge_rows, contribution_rows <span class="op">=</span> [], []</span>
+<span id="cb39-149"><a href="#cb39-149" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> row <span class="kw">in</span> gdp_design.itertuples(index<span class="op">=</span><span class="va">False</span>):</span>
+<span id="cb39-150"><a href="#cb39-150" aria-hidden="true" tabindex="-1"></a>    current <span class="op">=</span> pd.Series(row._asdict())</span>
+<span id="cb39-151"><a href="#cb39-151" aria-hidden="true" tabindex="-1"></a>    train <span class="op">=</span> gdp_design[gdp_design[<span class="st">"horizon"</span>].eq(row.horizon) <span class="op">&amp;</span> gdp_design[<span class="st">"release_date"</span>].lt(row.evaluation_date)]</span>
+<span id="cb39-152"><a href="#cb39-152" aria-hidden="true" tabindex="-1"></a>    contributions, variances <span class="op">=</span> {}, []</span>
+<span id="cb39-153"><a href="#cb39-153" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> component, names <span class="kw">in</span> blocks.items():</span>
+<span id="cb39-154"><a href="#cb39-154" aria-hidden="true" tabindex="-1"></a>        prediction, sigma, _ <span class="op">=</span> bridge.bridge_nowcast(train, current, [<span class="op">*</span>names, <span class="op">*</span>[<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">_known"</span> <span class="cf">for</span> name <span class="kw">in</span> names]], component, alpha<span class="op">=</span><span class="dv">5</span>, minimum<span class="op">=</span><span class="dv">20</span>)</span>
+<span id="cb39-155"><a href="#cb39-155" aria-hidden="true" tabindex="-1"></a>        contributions[component] <span class="op">=</span> current[<span class="ss">f"w_</span><span class="sc">{</span>component<span class="sc">}</span><span class="ss">"</span>] <span class="op">*</span> prediction</span>
+<span id="cb39-156"><a href="#cb39-156" aria-hidden="true" tabindex="-1"></a>        variances.append((current[<span class="ss">f"w_</span><span class="sc">{</span>component<span class="sc">}</span><span class="ss">"</span>] <span class="op">*</span> sigma) <span class="op">**</span> <span class="dv">2</span>)</span>
+<span id="cb39-157"><a href="#cb39-157" aria-hidden="true" tabindex="-1"></a>    bridge_rows.append({<span class="st">"target"</span>: <span class="st">"real_gdp"</span>, <span class="st">"observation_date"</span>: row.observation_date, <span class="st">"release_date"</span>: row.release_date,</span>
+<span id="cb39-158"><a href="#cb39-158" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"evaluation_date"</span>: row.evaluation_date, <span class="st">"horizon"</span>: row.horizon, <span class="st">"actual"</span>: row.actual,</span>
+<span id="cb39-159"><a href="#cb39-159" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"model"</span>: <span class="st">"Component bridge"</span>, <span class="st">"mean"</span>: <span class="bu">sum</span>(contributions.values()), <span class="st">"sigma"</span>: np.sqrt(np.nansum(variances))})</span>
+<span id="cb39-160"><a href="#cb39-160" aria-hidden="true" tabindex="-1"></a>    contribution_rows.append({<span class="st">"observation_date"</span>: row.observation_date, <span class="st">"horizon"</span>: row.horizon, <span class="op">**</span>contributions})</span>
+<span id="cb39-161"><a href="#cb39-161" aria-hidden="true" tabindex="-1"></a>forecasts <span class="op">=</span> [pd.DataFrame(bridge_rows)]</span>
+<span id="cb39-162"><a href="#cb39-162" aria-hidden="true" tabindex="-1"></a>contributions <span class="op">=</span> pd.DataFrame(contribution_rows)</span>
+<span id="cb39-163"><a href="#cb39-163" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-164"><a href="#cb39-164" aria-hidden="true" tabindex="-1"></a>factor_names <span class="op">=</span> [<span class="st">"global"</span>, <span class="st">"activity"</span>, <span class="st">"labor"</span>, <span class="st">"inflation"</span>, <span class="st">"financial"</span>]</span>
+<span id="cb39-165"><a href="#cb39-165" aria-hidden="true" tabindex="-1"></a>groups <span class="op">=</span> {}</span>
+<span id="cb39-166"><a href="#cb39-166" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name <span class="kw">in</span> monthly_names:</span>
+<span id="cb39-167"><a href="#cb39-167" aria-hidden="true" tabindex="-1"></a>    group <span class="op">=</span> <span class="st">"inflation"</span> <span class="cf">if</span> name <span class="kw">in</span> [<span class="op">*</span>cpi_definitions, <span class="st">"core_trim"</span>, <span class="st">"core_median"</span>, <span class="st">"core_common"</span>, <span class="st">"bos_INPUTS"</span>, <span class="st">"bos_OUTPUTS"</span>] <span class="cf">else</span> <span class="st">"activity"</span></span>
+<span id="cb39-168"><a href="#cb39-168" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> name <span class="kw">in</span> [<span class="st">"employment"</span>, <span class="st">"earnings"</span>, <span class="st">"us_PAYEMS"</span>, <span class="st">"us_UNRATE"</span>, <span class="st">"us_ICSA"</span>, <span class="st">"us_CCSA"</span>, <span class="st">"bos_EMPLOY"</span>]:</span>
+<span id="cb39-169"><a href="#cb39-169" aria-hidden="true" tabindex="-1"></a>        group <span class="op">=</span> <span class="st">"labor"</span></span>
+<span id="cb39-170"><a href="#cb39-170" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> name <span class="kw">in</span> [<span class="st">"policy"</span>, <span class="st">"usd_cad"</span>, <span class="st">"goc_2y"</span>, <span class="st">"goc_5y"</span>, <span class="st">"goc_10y"</span>, <span class="st">"bos_CREDIT"</span>]:</span>
+<span id="cb39-171"><a href="#cb39-171" aria-hidden="true" tabindex="-1"></a>        group <span class="op">=</span> <span class="st">"financial"</span></span>
+<span id="cb39-172"><a href="#cb39-172" aria-hidden="true" tabindex="-1"></a>    groups[name] <span class="op">=</span> [<span class="st">"global"</span>, group]</span>
+<span id="cb39-173"><a href="#cb39-173" aria-hidden="true" tabindex="-1"></a>groups[<span class="st">"real_gdp"</span>] <span class="op">=</span> [<span class="st">"global"</span>, <span class="st">"activity"</span>]</span>
+<span id="cb39-174"><a href="#cb39-174" aria-hidden="true" tabindex="-1"></a>orders <span class="op">=</span> {<span class="st">"global"</span>: <span class="dv">2</span>, <span class="st">"activity"</span>: <span class="dv">1</span>, <span class="st">"labor"</span>: <span class="dv">1</span>, <span class="st">"inflation"</span>: <span class="dv">1</span>, <span class="st">"financial"</span>: <span class="dv">1</span>}</span>
+<span id="cb39-175"><a href="#cb39-175" aria-hidden="true" tabindex="-1"></a>anchors <span class="op">=</span> {<span class="st">"global"</span>: <span class="st">"monthly_gdp"</span>, <span class="st">"activity"</span>: <span class="st">"monthly_gdp"</span>, <span class="st">"labor"</span>: <span class="st">"employment"</span>, <span class="st">"inflation"</span>: <span class="st">"core_trim"</span>, <span class="st">"financial"</span>: <span class="st">"goc_5y"</span>}</span>
+<span id="cb39-176"><a href="#cb39-176" aria-hidden="true" tabindex="-1"></a>factor_fits, states, systems, baseline_rows, factor_rows, var_rows <span class="op">=</span> {}, {}, {}, [], [], []</span>
+<span id="cb39-177"><a href="#cb39-177" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> row <span class="kw">in</span> grid[grid[<span class="st">"release_date"</span>].ge(score_start)].itertuples(index<span class="op">=</span><span class="va">False</span>):</span>
+<span id="cb39-178"><a href="#cb39-178" aria-hidden="true" tabindex="-1"></a>    date <span class="op">=</span> row.evaluation_date</span>
+<span id="cb39-179"><a href="#cb39-179" aria-hidden="true" tabindex="-1"></a>    target_history <span class="op">=</span> truth[truth[<span class="st">"target"</span>].eq(row.target) <span class="op">&amp;</span> truth[<span class="st">"release_date"</span>].lt(date)].sort_values(<span class="st">"observation_date"</span>)</span>
+<span id="cb39-180"><a href="#cb39-180" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> target_history.empty:</span>
+<span id="cb39-181"><a href="#cb39-181" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span></span>
+<span id="cb39-182"><a href="#cb39-182" aria-hidden="true" tabindex="-1"></a>    record <span class="op">=</span> {<span class="st">"target"</span>: row.target, <span class="st">"observation_date"</span>: row.observation_date, <span class="st">"release_date"</span>: row.release_date,</span>
+<span id="cb39-183"><a href="#cb39-183" aria-hidden="true" tabindex="-1"></a>              <span class="st">"evaluation_date"</span>: date, <span class="st">"horizon"</span>: row.horizon, <span class="st">"actual"</span>: row.actual}</span>
+<span id="cb39-184"><a href="#cb39-184" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> model, prediction <span class="kw">in</span> evaluation.baseline_forecast(target_history[<span class="st">"first"</span>], quarterly<span class="op">=</span>row.target <span class="op">==</span> <span class="st">"real_gdp"</span>).items():</span>
+<span id="cb39-185"><a href="#cb39-185" aria-hidden="true" tabindex="-1"></a>        baseline_rows.append({<span class="op">**</span>record, <span class="st">"model"</span>: model, <span class="st">"mean"</span>: prediction, <span class="st">"sigma"</span>: target_history[<span class="st">"first"</span>].tail(<span class="dv">60</span>).std(ddof<span class="op">=</span><span class="dv">1</span>)})</span>
+<span id="cb39-186"><a href="#cb39-186" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(target_history) <span class="op">&lt;</span> (<span class="dv">20</span> <span class="cf">if</span> row.target <span class="op">==</span> <span class="st">"real_gdp"</span> <span class="cf">else</span> <span class="dv">36</span>):</span>
+<span id="cb39-187"><a href="#cb39-187" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span></span>
+<span id="cb39-188"><a href="#cb39-188" aria-hidden="true" tabindex="-1"></a>    regime <span class="op">=</span> pd.Timestamp(<span class="dv">2017</span> <span class="op">+</span> <span class="dv">2</span> <span class="op">*</span> ((date.year <span class="op">-</span> <span class="dv">2017</span>) <span class="op">//</span> <span class="dv">2</span>), <span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb39-189"><a href="#cb39-189" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> regime <span class="kw">not</span> <span class="kw">in</span> factor_fits:</span>
+<span id="cb39-190"><a href="#cb39-190" aria-hidden="true" tabindex="-1"></a>        raw <span class="op">=</span> snapshot(information, regime, frequencies<span class="op">=</span>frequencies, series<span class="op">=</span>monthly_names, start<span class="op">=</span><span class="st">"1997-01-01"</span>)</span>
+<span id="cb39-191"><a href="#cb39-191" aria-hidden="true" tabindex="-1"></a>        transformed <span class="op">=</span> transforms.fred_transform(raw, codes)</span>
+<span id="cb39-192"><a href="#cb39-192" aria-hidden="true" tabindex="-1"></a>        usable <span class="op">=</span> transformed.columns[transformed.notna().<span class="bu">sum</span>().ge(<span class="dv">48</span>)].tolist()</span>
+<span id="cb39-193"><a href="#cb39-193" aria-hidden="true" tabindex="-1"></a>        quarterly <span class="op">=</span> truth[truth[<span class="st">"target"</span>].eq(<span class="st">"real_gdp"</span>) <span class="op">&amp;</span> truth[<span class="st">"release_date"</span>].le(regime)].set_index(<span class="st">"observation_date"</span>)[[<span class="st">"first"</span>]].rename(columns<span class="op">=</span>{<span class="st">"first"</span>: <span class="st">"real_gdp"</span>})</span>
+<span id="cb39-194"><a href="#cb39-194" aria-hidden="true" tabindex="-1"></a>        factor_fits[regime] <span class="op">=</span> fit_factors(transformed[usable], quarterly,</span>
+<span id="cb39-195"><a href="#cb39-195" aria-hidden="true" tabindex="-1"></a>                                         factors<span class="op">=</span>{name: groups[name] <span class="cf">for</span> name <span class="kw">in</span> [<span class="op">*</span>usable, <span class="st">"real_gdp"</span>]}, orders<span class="op">=</span>orders, anchors<span class="op">=</span>anchors)</span>
+<span id="cb39-196"><a href="#cb39-196" aria-hidden="true" tabindex="-1"></a>    fit <span class="op">=</span> factor_fits[regime]</span>
+<span id="cb39-197"><a href="#cb39-197" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> date <span class="kw">not</span> <span class="kw">in</span> states:</span>
+<span id="cb39-198"><a href="#cb39-198" aria-hidden="true" tabindex="-1"></a>        raw <span class="op">=</span> snapshot(information, date, frequencies<span class="op">=</span>frequencies, series<span class="op">=</span>monthly_names, start<span class="op">=</span><span class="st">"1997-01-01"</span>)</span>
+<span id="cb39-199"><a href="#cb39-199" aria-hidden="true" tabindex="-1"></a>        transformed <span class="op">=</span> transforms.fred_transform(raw, codes)</span>
+<span id="cb39-200"><a href="#cb39-200" aria-hidden="true" tabindex="-1"></a>        quarterly <span class="op">=</span> truth[truth[<span class="st">"target"</span>].eq(<span class="st">"real_gdp"</span>) <span class="op">&amp;</span> truth[<span class="st">"release_date"</span>].le(date)].set_index(<span class="st">"observation_date"</span>)[[<span class="st">"first"</span>]].rename(columns<span class="op">=</span>{<span class="st">"first"</span>: <span class="st">"real_gdp"</span>})</span>
+<span id="cb39-201"><a href="#cb39-201" aria-hidden="true" tabindex="-1"></a>        states[date] <span class="op">=</span> {<span class="st">"factors"</span>: dfm.filter_dfm(fit, transformed, quarterly)[<span class="st">"factors"</span>]}</span>
+<span id="cb39-202"><a href="#cb39-202" aria-hidden="true" tabindex="-1"></a>    factors <span class="op">=</span> states[date][<span class="st">"factors"</span>]</span>
+<span id="cb39-203"><a href="#cb39-203" aria-hidden="true" tabindex="-1"></a>    train <span class="op">=</span> dfm.factor_history(factors, target_history, frequency<span class="op">=</span>targets[row.target][<span class="dv">0</span>])</span>
+<span id="cb39-204"><a href="#cb39-204" aria-hidden="true" tabindex="-1"></a>    current <span class="op">=</span> dfm.factor_point(factors, row.observation_date, frequency<span class="op">=</span>targets[row.target][<span class="dv">0</span>])</span>
+<span id="cb39-205"><a href="#cb39-205" aria-hidden="true" tabindex="-1"></a>    current[<span class="st">"last_release"</span>] <span class="op">=</span> target_history[<span class="st">"first"</span>].iloc[<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb39-206"><a href="#cb39-206" aria-hidden="true" tabindex="-1"></a>    prediction <span class="op">=</span> dfm.factor_forecast(train, current, [<span class="op">*</span>factor_names, <span class="st">"last_release"</span>], <span class="st">"first"</span>)</span>
+<span id="cb39-207"><a href="#cb39-207" aria-hidden="true" tabindex="-1"></a>    factor_rows.append({<span class="op">**</span>record, <span class="st">"model"</span>: <span class="st">"Grouped DFM"</span>, <span class="st">"mean"</span>: prediction[<span class="st">"mean"</span>], <span class="st">"sigma"</span>: prediction[<span class="st">"sigma"</span>]})</span>
+<span id="cb39-208"><a href="#cb39-208" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> date <span class="kw">not</span> <span class="kw">in</span> systems:</span>
+<span id="cb39-209"><a href="#cb39-209" aria-hidden="true" tabindex="-1"></a>        monthly <span class="op">=</span> truth[truth[<span class="st">"release_date"</span>].le(date) <span class="op">&amp;</span> truth[<span class="st">"target"</span>].ne(<span class="st">"real_gdp"</span>)].pivot(index<span class="op">=</span><span class="st">"observation_date"</span>, columns<span class="op">=</span><span class="st">"target"</span>, values<span class="op">=</span><span class="st">"first"</span>)</span>
+<span id="cb39-210"><a href="#cb39-210" aria-hidden="true" tabindex="-1"></a>        policy_monthly <span class="op">=</span> boc_daily.loc[:date, <span class="st">"target_overnight"</span>].resample(<span class="st">"MS"</span>).mean().rename(<span class="st">"policy"</span>)</span>
+<span id="cb39-211"><a href="#cb39-211" aria-hidden="true" tabindex="-1"></a>        monthly <span class="op">=</span> factors[[<span class="st">"activity"</span>]].join(monthly).join(policy_monthly).dropna()</span>
+<span id="cb39-212"><a href="#cb39-212" aria-hidden="true" tabindex="-1"></a>        gaps <span class="op">=</span> monthly.index.to_period(<span class="st">"M"</span>).asi8</span>
+<span id="cb39-213"><a href="#cb39-213" aria-hidden="true" tabindex="-1"></a>        first <span class="op">=</span> np.r_[<span class="dv">0</span>, np.flatnonzero(np.diff(gaps) <span class="op">!=</span> <span class="dv">1</span>) <span class="op">+</span> <span class="dv">1</span>][<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb39-214"><a href="#cb39-214" aria-hidden="true" tabindex="-1"></a>        monthly <span class="op">=</span> monthly.iloc[first:]</span>
+<span id="cb39-215"><a href="#cb39-215" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(monthly) <span class="op">&gt;=</span> <span class="dv">40</span>:</span>
+<span id="cb39-216"><a href="#cb39-216" aria-hidden="true" tabindex="-1"></a>            fitted <span class="op">=</span> bvar.fit_bvar(monthly, persistent<span class="op">=</span>[<span class="st">"policy"</span>])</span>
+<span id="cb39-217"><a href="#cb39-217" aria-hidden="true" tabindex="-1"></a>            paths <span class="op">=</span> bvar.bvar_paths(fitted, steps<span class="op">=</span><span class="dv">18</span>, draws<span class="op">=</span><span class="dv">300</span>, rng<span class="op">=</span>np.random.default_rng(<span class="dv">23</span>))</span>
+<span id="cb39-218"><a href="#cb39-218" aria-hidden="true" tabindex="-1"></a>            systems[date] <span class="op">=</span> fitted, paths</span>
+<span id="cb39-219"><a href="#cb39-219" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> date <span class="kw">in</span> systems:</span>
+<span id="cb39-220"><a href="#cb39-220" aria-hidden="true" tabindex="-1"></a>        fitted, paths <span class="op">=</span> systems[date]</span>
+<span id="cb39-221"><a href="#cb39-221" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> row.target <span class="op">==</span> <span class="st">"real_gdp"</span>:</span>
+<span id="cb39-222"><a href="#cb39-222" aria-hidden="true" tabindex="-1"></a>            draws <span class="op">=</span> bvar.quarterly_bridge_draws(fitted, paths, factors[<span class="st">"activity"</span>], target_history,</span>
+<span id="cb39-223"><a href="#cb39-223" aria-hidden="true" tabindex="-1"></a>                                                row.observation_date.to_period(<span class="st">"Q"</span>), rng<span class="op">=</span>np.random.default_rng(<span class="dv">23</span>))</span>
+<span id="cb39-224"><a href="#cb39-224" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb39-225"><a href="#cb39-225" aria-hidden="true" tabindex="-1"></a>            step <span class="op">=</span> <span class="bu">max</span>(<span class="dv">1</span>, (row.observation_date.to_period(<span class="st">"M"</span>) <span class="op">-</span> fitted[<span class="st">"z"</span>].index.<span class="bu">max</span>().to_period(<span class="st">"M"</span>)).n)</span>
+<span id="cb39-226"><a href="#cb39-226" aria-hidden="true" tabindex="-1"></a>            draws <span class="op">=</span> paths[:, <span class="bu">min</span>(step, paths.shape[<span class="dv">1</span>]) <span class="op">-</span> <span class="dv">1</span>, fitted[<span class="st">"columns"</span>].index(row.target)]</span>
+<span id="cb39-227"><a href="#cb39-227" aria-hidden="true" tabindex="-1"></a>        var_rows.append({<span class="op">**</span>record, <span class="st">"model"</span>: <span class="st">"Minnesota BVAR"</span>, <span class="op">**</span>draw_summary(draws)})</span>
+<span id="cb39-228"><a href="#cb39-228" aria-hidden="true" tabindex="-1"></a>baselines <span class="op">=</span> pd.DataFrame(baseline_rows).sort_values(<span class="st">"release_date"</span>)</span>
+<span id="cb39-229"><a href="#cb39-229" aria-hidden="true" tabindex="-1"></a>errors <span class="op">=</span> baselines[<span class="st">"mean"</span>] <span class="op">-</span> baselines[<span class="st">"actual"</span>]</span>
+<span id="cb39-230"><a href="#cb39-230" aria-hidden="true" tabindex="-1"></a>baselines[<span class="st">"sigma"</span>] <span class="op">=</span> errors.groupby([baselines[<span class="st">"target"</span>], baselines[<span class="st">"horizon"</span>], baselines[<span class="st">"model"</span>]]).transform(</span>
+<span id="cb39-231"><a href="#cb39-231" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span> x: x.expanding(min_periods<span class="op">=</span><span class="dv">12</span>).std(ddof<span class="op">=</span><span class="dv">1</span>).shift(<span class="dv">1</span>))</span>
+<span id="cb39-232"><a href="#cb39-232" aria-hidden="true" tabindex="-1"></a>forecasts.extend([baselines, pd.DataFrame(factor_rows), pd.DataFrame(var_rows)])</span>
+<span id="cb39-233"><a href="#cb39-233" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-234"><a href="#cb39-234" aria-hidden="true" tabindex="-1"></a>high_frequency <span class="op">=</span> read_macro_forecasts(data <span class="op">/</span> <span class="st">"macro_high_frequency.parquet"</span>)</span>
+<span id="cb39-235"><a href="#cb39-235" aria-hidden="true" tabindex="-1"></a>high_frequency <span class="op">=</span> high_frequency.pivot(index<span class="op">=</span><span class="st">"date"</span>, columns<span class="op">=</span><span class="st">"series_id"</span>, values<span class="op">=</span><span class="st">"value"</span>).sort_index()</span>
+<span id="cb39-236"><a href="#cb39-236" aria-hidden="true" tabindex="-1"></a>oil <span class="op">=</span> high_frequency[<span class="st">"DCOILBRENTEU"</span>].dropna()</span>
+<span id="cb39-237"><a href="#cb39-237" aria-hidden="true" tabindex="-1"></a>gas <span class="op">=</span> high_frequency[<span class="st">"GASREGW"</span>].dropna()</span>
+<span id="cb39-238"><a href="#cb39-238" aria-hidden="true" tabindex="-1"></a>fx <span class="op">=</span> boc_daily[<span class="st">"usd_cad"</span>].dropna()</span>
+<span id="cb39-239"><a href="#cb39-239" aria-hidden="true" tabindex="-1"></a>oil <span class="op">=</span> oil <span class="op">*</span> fx.reindex(oil.index, method<span class="op">=</span><span class="st">"ffill"</span>)</span>
+<span id="cb39-240"><a href="#cb39-240" aria-hidden="true" tabindex="-1"></a>gas <span class="op">=</span> gas <span class="op">*</span> fx.reindex(gas.index, method<span class="op">=</span><span class="st">"ffill"</span>)</span>
+<span id="cb39-241"><a href="#cb39-241" aria-hidden="true" tabindex="-1"></a>weekly_oil <span class="op">=</span> <span class="dv">100</span> <span class="op">*</span> np.log(oil.resample(<span class="st">"W-FRI"</span>).last()).diff()</span>
+<span id="cb39-242"><a href="#cb39-242" aria-hidden="true" tabindex="-1"></a>weekly_gas <span class="op">=</span> <span class="dv">100</span> <span class="op">*</span> np.log(gas.resample(<span class="st">"W-FRI"</span>).last()).diff()</span>
+<span id="cb39-243"><a href="#cb39-243" aria-hidden="true" tabindex="-1"></a>component_history <span class="op">=</span> []</span>
+<span id="cb39-244"><a href="#cb39-244" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, label <span class="kw">in</span> [(<span class="st">"core_cpi"</span>, <span class="st">"core"</span>), (<span class="st">"food_cpi"</span>, <span class="st">"food"</span>), (<span class="st">"energy_cpi"</span>, <span class="st">"energy"</span>), (<span class="st">"headline_cpi"</span>, <span class="st">"headline"</span>)]:</span>
+<span id="cb39-245"><a href="#cb39-245" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> release_growth(vintages[vintages[<span class="st">"series_id"</span>].eq(name)], periods<span class="op">=</span><span class="dv">12</span>,</span>
+<span id="cb39-246"><a href="#cb39-246" aria-hidden="true" tabindex="-1"></a>                             scale<span class="op">=</span><span class="dv">100</span>, method<span class="op">=</span><span class="st">"percent"</span>, max_delay<span class="op">=</span><span class="dv">100</span>)</span>
+<span id="cb39-247"><a href="#cb39-247" aria-hidden="true" tabindex="-1"></a>    component_history.append(values[[<span class="st">"observation_date"</span>, <span class="st">"release_date"</span>, <span class="st">"first"</span>]].rename(columns<span class="op">=</span>{<span class="st">"first"</span>: label}))</span>
+<span id="cb39-248"><a href="#cb39-248" aria-hidden="true" tabindex="-1"></a>components_monthly <span class="op">=</span> component_history[<span class="dv">0</span>]</span>
+<span id="cb39-249"><a href="#cb39-249" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> values <span class="kw">in</span> component_history[<span class="dv">1</span>:]:</span>
+<span id="cb39-250"><a href="#cb39-250" aria-hidden="true" tabindex="-1"></a>    components_monthly <span class="op">=</span> components_monthly.merge(values, on<span class="op">=</span>[<span class="st">"observation_date"</span>, <span class="st">"release_date"</span>])</span>
+<span id="cb39-251"><a href="#cb39-251" aria-hidden="true" tabindex="-1"></a>energy_design <span class="op">=</span> []</span>
+<span id="cb39-252"><a href="#cb39-252" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> row <span class="kw">in</span> components_monthly.itertuples():</span>
+<span id="cb39-253"><a href="#cb39-253" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> h <span class="kw">in</span> days[<span class="st">"headline_cpi"</span>]:</span>
+<span id="cb39-254"><a href="#cb39-254" aria-hidden="true" tabindex="-1"></a>        date <span class="op">=</span> row.release_date <span class="op">-</span> pd.offsets.BDay(h)</span>
+<span id="cb39-255"><a href="#cb39-255" aria-hidden="true" tabindex="-1"></a>        energy_design.append({<span class="st">"observation_date"</span>: row.observation_date, <span class="st">"horizon"</span>: h,</span>
+<span id="cb39-256"><a href="#cb39-256" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"gas_signal"</span>: inflation.market_growth(gas, date, row.observation_date, periods<span class="op">=</span><span class="dv">12</span>, scale<span class="op">=</span><span class="dv">100</span>),</span>
+<span id="cb39-257"><a href="#cb39-257" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"oil_signal"</span>: inflation.market_growth(oil, date, row.observation_date, periods<span class="op">=</span><span class="dv">12</span>, scale<span class="op">=</span><span class="dv">100</span>)})</span>
+<span id="cb39-258"><a href="#cb39-258" aria-hidden="true" tabindex="-1"></a>energy_design <span class="op">=</span> pd.DataFrame(energy_design)</span>
+<span id="cb39-259"><a href="#cb39-259" aria-hidden="true" tabindex="-1"></a>component_rows, bridge_inflation_rows, lag_rows <span class="op">=</span> [], [], []</span>
+<span id="cb39-260"><a href="#cb39-260" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> row <span class="kw">in</span> grid[grid[<span class="st">"release_date"</span>].ge(score_start)].itertuples(index<span class="op">=</span><span class="va">False</span>):</span>
+<span id="cb39-261"><a href="#cb39-261" aria-hidden="true" tabindex="-1"></a>    record <span class="op">=</span> {<span class="st">"target"</span>: row.target, <span class="st">"observation_date"</span>: row.observation_date, <span class="st">"release_date"</span>: row.release_date,</span>
+<span id="cb39-262"><a href="#cb39-262" aria-hidden="true" tabindex="-1"></a>              <span class="st">"evaluation_date"</span>: row.evaluation_date, <span class="st">"horizon"</span>: row.horizon, <span class="st">"actual"</span>: row.actual}</span>
+<span id="cb39-263"><a href="#cb39-263" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> row.target <span class="op">==</span> <span class="st">"headline_cpi"</span>:</span>
+<span id="cb39-264"><a href="#cb39-264" aria-hidden="true" tabindex="-1"></a>        history <span class="op">=</span> components_monthly[components_monthly[<span class="st">"release_date"</span>].lt(row.evaluation_date)].copy()</span>
+<span id="cb39-265"><a href="#cb39-265" aria-hidden="true" tabindex="-1"></a>        history[<span class="st">"last_energy"</span>] <span class="op">=</span> history[<span class="st">"energy"</span>].shift(<span class="dv">1</span>)</span>
+<span id="cb39-266"><a href="#cb39-266" aria-hidden="true" tabindex="-1"></a>        train <span class="op">=</span> history.merge(energy_design[energy_design[<span class="st">"horizon"</span>].eq(row.horizon)], on<span class="op">=</span><span class="st">"observation_date"</span>)</span>
+<span id="cb39-267"><a href="#cb39-267" aria-hidden="true" tabindex="-1"></a>        current <span class="op">=</span> pd.Series({<span class="st">"last_energy"</span>: history[<span class="st">"energy"</span>].iloc[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb39-268"><a href="#cb39-268" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"gas_signal"</span>: inflation.market_growth(gas, row.evaluation_date, row.observation_date, periods<span class="op">=</span><span class="dv">12</span>, scale<span class="op">=</span><span class="dv">100</span>),</span>
+<span id="cb39-269"><a href="#cb39-269" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"oil_signal"</span>: inflation.market_growth(oil, row.evaluation_date, row.observation_date, periods<span class="op">=</span><span class="dv">12</span>, scale<span class="op">=</span><span class="dv">100</span>)})</span>
+<span id="cb39-270"><a href="#cb39-270" aria-hidden="true" tabindex="-1"></a>        result <span class="op">=</span> inflation.inflation_components(history, train, current, energy<span class="op">=</span><span class="st">"energy"</span>, prior<span class="op">=</span>(<span class="fl">.70</span>, <span class="fl">.17</span>, <span class="fl">.13</span>))</span>
+<span id="cb39-271"><a href="#cb39-271" aria-hidden="true" tabindex="-1"></a>        past <span class="op">=</span> pd.DataFrame(component_rows)</span>
+<span id="cb39-272"><a href="#cb39-272" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(past):</span>
+<span id="cb39-273"><a href="#cb39-273" aria-hidden="true" tabindex="-1"></a>            past <span class="op">=</span> past[past[<span class="st">"horizon"</span>].eq(row.horizon) <span class="op">&amp;</span> past[<span class="st">"release_date"</span>].lt(row.evaluation_date)]</span>
+<span id="cb39-274"><a href="#cb39-274" aria-hidden="true" tabindex="-1"></a>        sigma <span class="op">=</span> (past[<span class="st">"mean"</span>] <span class="op">-</span> past[<span class="st">"actual"</span>]).tail(<span class="dv">60</span>).std(ddof<span class="op">=</span><span class="dv">1</span>) <span class="cf">if</span> <span class="bu">len</span>(past) <span class="op">&gt;=</span> <span class="dv">12</span> <span class="cf">else</span> history[<span class="st">"headline"</span>].tail(<span class="dv">36</span>).std(ddof<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb39-275"><a href="#cb39-275" aria-hidden="true" tabindex="-1"></a>        component_rows.append({<span class="op">**</span>record, <span class="st">"model"</span>: <span class="st">"CPI components"</span>, <span class="st">"mean"</span>: result[<span class="st">"mean"</span>],</span>
+<span id="cb39-276"><a href="#cb39-276" aria-hidden="true" tabindex="-1"></a>                               <span class="st">"sigma"</span>: sigma,</span>
+<span id="cb39-277"><a href="#cb39-277" aria-hidden="true" tabindex="-1"></a>                               <span class="op">**</span>result[<span class="st">"components"</span>].to_dict(),</span>
+<span id="cb39-278"><a href="#cb39-278" aria-hidden="true" tabindex="-1"></a>                               <span class="op">**</span>{<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">_contribution"</span>: result[<span class="st">"components"</span>][name] <span class="op">*</span> result[<span class="st">"weights"</span>][name]</span>
+<span id="cb39-279"><a href="#cb39-279" aria-hidden="true" tabindex="-1"></a>                                  <span class="cf">for</span> name <span class="kw">in</span> [<span class="st">"core"</span>, <span class="st">"food"</span>, <span class="st">"energy"</span>]}})</span>
+<span id="cb39-280"><a href="#cb39-280" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> row.target <span class="kw">in</span> [<span class="st">"core_trim"</span>, <span class="st">"core_median"</span>]:</span>
+<span id="cb39-281"><a href="#cb39-281" aria-hidden="true" tabindex="-1"></a>        known <span class="op">=</span> realtime.vintage_asof(vintages, row.evaluation_date, series<span class="op">=</span>[<span class="st">"headline_cpi"</span>, <span class="st">"core_cpi"</span>], wide<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb39-282"><a href="#cb39-282" aria-hidden="true" tabindex="-1"></a>        change <span class="op">=</span> transforms.growth_rate(known, periods<span class="op">=</span><span class="dv">12</span>, method<span class="op">=</span><span class="st">"percent"</span>)</span>
+<span id="cb39-283"><a href="#cb39-283" aria-hidden="true" tabindex="-1"></a>        history <span class="op">=</span> truth[truth[<span class="st">"target"</span>].eq(row.target) <span class="op">&amp;</span> truth[<span class="st">"release_date"</span>].lt(row.evaluation_date)].copy()</span>
+<span id="cb39-284"><a href="#cb39-284" aria-hidden="true" tabindex="-1"></a>        train <span class="op">=</span> history.merge(components_monthly[[<span class="st">"observation_date"</span>, <span class="st">"core"</span>, <span class="st">"headline"</span>]], on<span class="op">=</span><span class="st">"observation_date"</span>)</span>
+<span id="cb39-285"><a href="#cb39-285" aria-hidden="true" tabindex="-1"></a>        train[<span class="st">"core_lag"</span>] <span class="op">=</span> train[<span class="st">"core"</span>].shift(<span class="dv">1</span>)</span>
+<span id="cb39-286"><a href="#cb39-286" aria-hidden="true" tabindex="-1"></a>        train[<span class="st">"headline_lag"</span>] <span class="op">=</span> train[<span class="st">"headline"</span>].shift(<span class="dv">1</span>)</span>
+<span id="cb39-287"><a href="#cb39-287" aria-hidden="true" tabindex="-1"></a>        train[<span class="st">"last_release"</span>] <span class="op">=</span> train[<span class="st">"first"</span>].shift(<span class="dv">1</span>)</span>
+<span id="cb39-288"><a href="#cb39-288" aria-hidden="true" tabindex="-1"></a>        train[<span class="st">"current_available"</span>] <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb39-289"><a href="#cb39-289" aria-hidden="true" tabindex="-1"></a>        current <span class="op">=</span> pd.Series({<span class="st">"core_lag"</span>: change[<span class="st">"core_cpi"</span>].dropna().iloc[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb39-290"><a href="#cb39-290" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"headline_lag"</span>: change[<span class="st">"headline_cpi"</span>].dropna().iloc[<span class="op">-</span><span class="dv">1</span>],</span>
+<span id="cb39-291"><a href="#cb39-291" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"last_release"</span>: history[<span class="st">"first"</span>].iloc[<span class="op">-</span><span class="dv">1</span>], <span class="st">"current_available"</span>: <span class="va">False</span>})</span>
+<span id="cb39-292"><a href="#cb39-292" aria-hidden="true" tabindex="-1"></a>        fit <span class="op">=</span> inflation.fit_inflation_bridge(train, current, features<span class="op">=</span>[<span class="st">"core_lag"</span>, <span class="st">"headline_lag"</span>, <span class="st">"last_release"</span>], target<span class="op">=</span><span class="st">"first"</span>)</span>
+<span id="cb39-293"><a href="#cb39-293" aria-hidden="true" tabindex="-1"></a>        prediction <span class="op">=</span> inflation.inflation_forecast(fit, current)</span>
+<span id="cb39-294"><a href="#cb39-294" aria-hidden="true" tabindex="-1"></a>        bridge_inflation_rows.append({<span class="op">**</span>record, <span class="st">"model"</span>: <span class="st">"Inflation bridge"</span>, <span class="op">**</span>prediction})</span>
+<span id="cb39-295"><a href="#cb39-295" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> row.target <span class="kw">in</span> [<span class="st">"headline_cpi"</span>, <span class="st">"employment"</span>, <span class="st">"real_gdp"</span>]:</span>
+<span id="cb39-296"><a href="#cb39-296" aria-hidden="true" tabindex="-1"></a>        record <span class="op">=</span> record.copy()</span>
+<span id="cb39-297"><a href="#cb39-297" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> row.target <span class="op">==</span> <span class="st">"headline_cpi"</span>:</span>
+<span id="cb39-298"><a href="#cb39-298" aria-hidden="true" tabindex="-1"></a>            signals <span class="op">=</span> {<span class="st">"oil"</span>: midas.release_lags(weekly_oil, row.evaluation_date, <span class="dv">12</span>),</span>
+<span id="cb39-299"><a href="#cb39-299" aria-hidden="true" tabindex="-1"></a>                       <span class="st">"gas"</span>: midas.release_lags(weekly_gas, row.evaluation_date, <span class="dv">12</span>)}</span>
+<span id="cb39-300"><a href="#cb39-300" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> row.target <span class="op">==</span> <span class="st">"employment"</span>:</span>
+<span id="cb39-301"><a href="#cb39-301" aria-hidden="true" tabindex="-1"></a>            claims <span class="op">=</span> realtime.vintage_asof(us, row.evaluation_date, series<span class="op">=</span>[<span class="st">"us_ICSA"</span>], wide<span class="op">=</span><span class="va">True</span>)[<span class="st">"us_ICSA"</span>].dropna()</span>
+<span id="cb39-302"><a href="#cb39-302" aria-hidden="true" tabindex="-1"></a>            signals <span class="op">=</span> {<span class="st">"claims"</span>: midas.release_lags(<span class="dv">100</span> <span class="op">*</span> np.log(claims).diff(), row.evaluation_date, <span class="dv">12</span>)}</span>
+<span id="cb39-303"><a href="#cb39-303" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> row.evaluation_date <span class="kw">in</span> states:</span>
+<span id="cb39-304"><a href="#cb39-304" aria-hidden="true" tabindex="-1"></a>            signals <span class="op">=</span> {<span class="st">"activity"</span>: midas.release_lags(states[row.evaluation_date][<span class="st">"factors"</span>][<span class="st">"activity"</span>], row.evaluation_date, <span class="dv">6</span>)}</span>
+<span id="cb39-305"><a href="#cb39-305" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb39-306"><a href="#cb39-306" aria-hidden="true" tabindex="-1"></a>            signals <span class="op">=</span> {}</span>
+<span id="cb39-307"><a href="#cb39-307" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> name, values <span class="kw">in</span> signals.items():</span>
+<span id="cb39-308"><a href="#cb39-308" aria-hidden="true" tabindex="-1"></a>            record.update({<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>lag<span class="sc">}</span><span class="ss">"</span>: value <span class="cf">for</span> lag, value <span class="kw">in</span> <span class="bu">enumerate</span>(values)})</span>
+<span id="cb39-309"><a href="#cb39-309" aria-hidden="true" tabindex="-1"></a>        lag_rows.append(record)</span>
+<span id="cb39-310"><a href="#cb39-310" aria-hidden="true" tabindex="-1"></a>lags <span class="op">=</span> pd.DataFrame(lag_rows)</span>
+<span id="cb39-311"><a href="#cb39-311" aria-hidden="true" tabindex="-1"></a>midas_rows <span class="op">=</span> []</span>
+<span id="cb39-312"><a href="#cb39-312" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> target, names <span class="kw">in</span> {<span class="st">"headline_cpi"</span>: {<span class="st">"oil"</span>: <span class="dv">12</span>, <span class="st">"gas"</span>: <span class="dv">12</span>}, <span class="st">"employment"</span>: {<span class="st">"claims"</span>: <span class="dv">12</span>}, <span class="st">"real_gdp"</span>: {<span class="st">"activity"</span>: <span class="dv">6</span>}}.items():</span>
+<span id="cb39-313"><a href="#cb39-313" aria-hidden="true" tabindex="-1"></a>    design <span class="op">=</span> lags[lags[<span class="st">"target"</span>].eq(target)].sort_values(<span class="st">"release_date"</span>)</span>
+<span id="cb39-314"><a href="#cb39-314" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> {}</span>
+<span id="cb39-315"><a href="#cb39-315" aria-hidden="true" tabindex="-1"></a>    shape_cutoff <span class="op">=</span> pd.Timestamp(<span class="st">"2021-01-01"</span>)</span>
+<span id="cb39-316"><a href="#cb39-316" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name, length <span class="kw">in</span> names.items():</span>
+<span id="cb39-317"><a href="#cb39-317" aria-hidden="true" tabindex="-1"></a>        columns <span class="op">=</span> [<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>lag<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> lag <span class="kw">in</span> <span class="bu">range</span>(length)]</span>
+<span id="cb39-318"><a href="#cb39-318" aria-hidden="true" tabindex="-1"></a>        train <span class="op">=</span> design[design[<span class="st">"release_date"</span>].lt(shape_cutoff)].dropna(subset<span class="op">=</span>columns)</span>
+<span id="cb39-319"><a href="#cb39-319" aria-hidden="true" tabindex="-1"></a>        shape, _ <span class="op">=</span> midas.fit_beta_shape(train[columns].to_numpy(), train[<span class="st">"actual"</span>].to_numpy())</span>
+<span id="cb39-320"><a href="#cb39-320" aria-hidden="true" tabindex="-1"></a>        weights[name] <span class="op">=</span> midas.beta_weights(length, <span class="op">*</span>shape)</span>
+<span id="cb39-321"><a href="#cb39-321" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> row <span class="kw">in</span> design[design[<span class="st">"evaluation_date"</span>].ge(shape_cutoff)].itertuples(index<span class="op">=</span><span class="va">False</span>):</span>
+<span id="cb39-322"><a href="#cb39-322" aria-hidden="true" tabindex="-1"></a>        train <span class="op">=</span> design[design[<span class="st">"horizon"</span>].eq(row.horizon) <span class="op">&amp;</span> design[<span class="st">"release_date"</span>].lt(row.evaluation_date)].copy()</span>
+<span id="cb39-323"><a href="#cb39-323" aria-hidden="true" tabindex="-1"></a>        train[<span class="st">"last_release"</span>] <span class="op">=</span> train[<span class="st">"actual"</span>].shift(<span class="dv">1</span>)</span>
+<span id="cb39-324"><a href="#cb39-324" aria-hidden="true" tabindex="-1"></a>        columns <span class="op">=</span> [<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>lag<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> name, length <span class="kw">in</span> names.items() <span class="cf">for</span> lag <span class="kw">in</span> <span class="bu">range</span>(length)]</span>
+<span id="cb39-325"><a href="#cb39-325" aria-hidden="true" tabindex="-1"></a>        train <span class="op">=</span> train.dropna(subset<span class="op">=</span>[<span class="st">"actual"</span>, <span class="st">"last_release"</span>, <span class="op">*</span>columns])</span>
+<span id="cb39-326"><a href="#cb39-326" aria-hidden="true" tabindex="-1"></a>        minimum <span class="op">=</span> <span class="dv">12</span> <span class="cf">if</span> target <span class="op">==</span> <span class="st">"real_gdp"</span> <span class="cf">else</span> <span class="dv">36</span></span>
+<span id="cb39-327"><a href="#cb39-327" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(train) <span class="op">&gt;=</span> minimum <span class="kw">and</span> <span class="bu">all</span>(pd.notna(<span class="bu">getattr</span>(row, column)) <span class="cf">for</span> column <span class="kw">in</span> columns):</span>
+<span id="cb39-328"><a href="#cb39-328" aria-hidden="true" tabindex="-1"></a>            fitted <span class="op">=</span> midas.fit_midas({name: train[[<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>lag<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> lag <span class="kw">in</span> <span class="bu">range</span>(length)]].to_numpy() <span class="cf">for</span> name, length <span class="kw">in</span> names.items()},</span>
+<span id="cb39-329"><a href="#cb39-329" aria-hidden="true" tabindex="-1"></a>                                      train[<span class="st">"actual"</span>], controls<span class="op">=</span>train[[<span class="st">"last_release"</span>]], weights<span class="op">=</span>weights, minimum<span class="op">=</span>minimum)</span>
+<span id="cb39-330"><a href="#cb39-330" aria-hidden="true" tabindex="-1"></a>            current <span class="op">=</span> {name: np.array([[<span class="bu">getattr</span>(row, <span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>lag<span class="sc">}</span><span class="ss">"</span>) <span class="cf">for</span> lag <span class="kw">in</span> <span class="bu">range</span>(length)]]) <span class="cf">for</span> name, length <span class="kw">in</span> names.items()}</span>
+<span id="cb39-331"><a href="#cb39-331" aria-hidden="true" tabindex="-1"></a>            prediction <span class="op">=</span> midas.midas_forecast(fitted, current, controls<span class="op">=</span>pd.DataFrame({<span class="st">"last_release"</span>: [train[<span class="st">"actual"</span>].iloc[<span class="op">-</span><span class="dv">1</span>]]}))[<span class="dv">0</span>]</span>
+<span id="cb39-332"><a href="#cb39-332" aria-hidden="true" tabindex="-1"></a>            midas_rows.append({<span class="st">"target"</span>: target, <span class="st">"observation_date"</span>: row.observation_date, <span class="st">"release_date"</span>: row.release_date,</span>
+<span id="cb39-333"><a href="#cb39-333" aria-hidden="true" tabindex="-1"></a>                               <span class="st">"evaluation_date"</span>: row.evaluation_date, <span class="st">"horizon"</span>: row.horizon, <span class="st">"actual"</span>: row.actual,</span>
+<span id="cb39-334"><a href="#cb39-334" aria-hidden="true" tabindex="-1"></a>                               <span class="st">"model"</span>: <span class="st">"MIDAS"</span>, <span class="st">"mean"</span>: prediction, <span class="st">"sigma"</span>: fitted[<span class="st">"regression"</span>].sigma})</span>
+<span id="cb39-335"><a href="#cb39-335" aria-hidden="true" tabindex="-1"></a>forecasts.extend([pd.DataFrame(component_rows), pd.DataFrame(bridge_inflation_rows), pd.DataFrame(midas_rows)])</span>
+<span id="cb39-336"><a href="#cb39-336" aria-hidden="true" tabindex="-1"></a>forecasts <span class="op">=</span> pd.concat(forecasts, ignore_index<span class="op">=</span><span class="va">True</span>).dropna(subset<span class="op">=</span>[<span class="st">"mean"</span>])</span>
+<span id="cb39-337"><a href="#cb39-337" aria-hidden="true" tabindex="-1"></a>forecasts <span class="op">=</span> forecasts[forecasts[<span class="st">"release_date"</span>].ge(score_start)].sort_values([<span class="st">"release_date"</span>, <span class="st">"target"</span>, <span class="st">"horizon"</span>, <span class="st">"model"</span>])</span>
+<span id="cb39-338"><a href="#cb39-338" aria-hidden="true" tabindex="-1"></a>averages, weight_rows <span class="op">=</span> [], []</span>
+<span id="cb39-339"><a href="#cb39-339" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (target, observation_date, date, h), candidates <span class="kw">in</span> forecasts.groupby([<span class="st">"target"</span>, <span class="st">"observation_date"</span>, <span class="st">"evaluation_date"</span>, <span class="st">"horizon"</span>], sort<span class="op">=</span><span class="va">True</span>):</span>
+<span id="cb39-340"><a href="#cb39-340" aria-hidden="true" tabindex="-1"></a>    candidates <span class="op">=</span> candidates[candidates[<span class="st">"model"</span>].ne(<span class="st">"Rolling mean"</span>)]</span>
+<span id="cb39-341"><a href="#cb39-341" aria-hidden="true" tabindex="-1"></a>    history <span class="op">=</span> forecasts[forecasts[<span class="st">"target"</span>].eq(target) <span class="op">&amp;</span> forecasts[<span class="st">"horizon"</span>].eq(h)]</span>
+<span id="cb39-342"><a href="#cb39-342" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> truth[truth[<span class="st">"target"</span>].eq(target) <span class="op">&amp;</span> truth[<span class="st">"release_date"</span>].lt(date)][<span class="st">"first"</span>].tail(<span class="dv">60</span>)</span>
+<span id="cb39-343"><a href="#cb39-343" aria-hidden="true" tabindex="-1"></a>    scale <span class="op">=</span> <span class="bu">max</span>(<span class="fl">1.4826</span> <span class="op">*</span> (values <span class="op">-</span> values.median()).<span class="bu">abs</span>().median(), values.std(ddof<span class="op">=</span><span class="dv">1</span>) <span class="op">/</span> <span class="dv">3</span>, <span class="fl">1e-6</span>)</span>
+<span id="cb39-344"><a href="#cb39-344" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> forecast_weights(history, date, scale<span class="op">=</span>scale)</span>
+<span id="cb39-345"><a href="#cb39-345" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">=</span> weights.reindex(candidates[<span class="st">"model"</span>]).dropna()</span>
+<span id="cb39-346"><a href="#cb39-346" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> weights.empty:</span>
+<span id="cb39-347"><a href="#cb39-347" aria-hidden="true" tabindex="-1"></a>        fallback <span class="op">=</span> candidates.loc[candidates[<span class="st">"model"</span>].isin([<span class="st">"Last release"</span>, <span class="st">"AR(1)"</span>]), <span class="st">"model"</span>]</span>
+<span id="cb39-348"><a href="#cb39-348" aria-hidden="true" tabindex="-1"></a>        weights <span class="op">=</span> pd.Series(<span class="dv">1</span> <span class="op">/</span> <span class="bu">len</span>(fallback), index<span class="op">=</span>fallback)</span>
+<span id="cb39-349"><a href="#cb39-349" aria-hidden="true" tabindex="-1"></a>    weights <span class="op">/=</span> weights.<span class="bu">sum</span>()</span>
+<span id="cb39-350"><a href="#cb39-350" aria-hidden="true" tabindex="-1"></a>    candidates <span class="op">=</span> candidates.set_index(<span class="st">"model"</span>).loc[weights.index]</span>
+<span id="cb39-351"><a href="#cb39-351" aria-hidden="true" tabindex="-1"></a>    mean <span class="op">=</span> candidates[<span class="st">"mean"</span>].clip(values.median() <span class="op">-</span> <span class="dv">8</span> <span class="op">*</span> scale, values.median() <span class="op">+</span> <span class="dv">8</span> <span class="op">*</span> scale)</span>
+<span id="cb39-352"><a href="#cb39-352" aria-hidden="true" tabindex="-1"></a>    sigma <span class="op">=</span> candidates[<span class="st">"sigma"</span>].fillna(scale).clip(lower<span class="op">=</span><span class="fl">.1</span> <span class="op">*</span> scale)</span>
+<span id="cb39-353"><a href="#cb39-353" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> combine_forecasts(mean, sigma, weights)</span>
+<span id="cb39-354"><a href="#cb39-354" aria-hidden="true" tabindex="-1"></a>    averages.append({<span class="st">"target"</span>: target, <span class="st">"observation_date"</span>: observation_date, <span class="st">"evaluation_date"</span>: date,</span>
+<span id="cb39-355"><a href="#cb39-355" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"release_date"</span>: candidates[<span class="st">"release_date"</span>].iloc[<span class="dv">0</span>], <span class="st">"horizon"</span>: h,</span>
+<span id="cb39-356"><a href="#cb39-356" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"actual"</span>: candidates[<span class="st">"actual"</span>].iloc[<span class="dv">0</span>], <span class="st">"model"</span>: <span class="st">"Adaptive average"</span>, <span class="op">**</span>result,</span>
+<span id="cb39-357"><a href="#cb39-357" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"q10"</span>: result[<span class="st">"mean"</span>] <span class="op">+</span> norm.ppf(<span class="fl">.1</span>) <span class="op">*</span> result[<span class="st">"sigma"</span>],</span>
+<span id="cb39-358"><a href="#cb39-358" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"q90"</span>: result[<span class="st">"mean"</span>] <span class="op">+</span> norm.ppf(<span class="fl">.9</span>) <span class="op">*</span> result[<span class="st">"sigma"</span>]})</span>
+<span id="cb39-359"><a href="#cb39-359" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name, weight <span class="kw">in</span> weights.items():</span>
+<span id="cb39-360"><a href="#cb39-360" aria-hidden="true" tabindex="-1"></a>        weight_rows.append({<span class="st">"target"</span>: target, <span class="st">"observation_date"</span>: observation_date,</span>
+<span id="cb39-361"><a href="#cb39-361" aria-hidden="true" tabindex="-1"></a>                            <span class="st">"evaluation_date"</span>: date, <span class="st">"horizon"</span>: h, <span class="st">"model"</span>: name, <span class="st">"weight"</span>: weight})</span>
+<span id="cb39-362"><a href="#cb39-362" aria-hidden="true" tabindex="-1"></a>forecasts <span class="op">=</span> pd.concat([forecasts, pd.DataFrame(averages)], ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb39-363"><a href="#cb39-363" aria-hidden="true" tabindex="-1"></a>weights <span class="op">=</span> pd.DataFrame(weight_rows)</span>
+<span id="cb39-364"><a href="#cb39-364" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-365"><a href="#cb39-365" aria-hidden="true" tabindex="-1"></a>policy_rows, corra_rows <span class="op">=</span> [], []</span>
+<span id="cb39-366"><a href="#cb39-366" aria-hidden="true" tabindex="-1"></a>system_dates <span class="op">=</span> pd.Series(<span class="bu">sorted</span>(systems)).groupby(pd.DatetimeIndex(<span class="bu">sorted</span>(systems)).to_period(<span class="st">"M"</span>)).<span class="bu">max</span>()</span>
+<span id="cb39-367"><a href="#cb39-367" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> date <span class="kw">in</span> system_dates:</span>
+<span id="cb39-368"><a href="#cb39-368" aria-hidden="true" tabindex="-1"></a>    fitted, paths <span class="op">=</span> systems[date]</span>
+<span id="cb39-369"><a href="#cb39-369" aria-hidden="true" tabindex="-1"></a>    monthly <span class="op">=</span> fitted[<span class="st">"z"</span>] <span class="op">*</span> fitted[<span class="st">"scale"</span>] <span class="op">+</span> fitted[<span class="st">"center"</span>]</span>
+<span id="cb39-370"><a href="#cb39-370" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> h <span class="kw">in</span> [<span class="dv">3</span>, <span class="dv">6</span>, <span class="dv">12</span>]:</span>
+<span id="cb39-371"><a href="#cb39-371" aria-hidden="true" tabindex="-1"></a>        target_month <span class="op">=</span> date.to_period(<span class="st">"M"</span>) <span class="op">+</span> h</span>
+<span id="cb39-372"><a href="#cb39-372" aria-hidden="true" tabindex="-1"></a>        target_date <span class="op">=</span> target_month.to_timestamp()</span>
+<span id="cb39-373"><a href="#cb39-373" aria-hidden="true" tabindex="-1"></a>        actual <span class="op">=</span> boc_daily.loc[boc_daily.index.to_period(<span class="st">"M"</span>) <span class="op">==</span> target_month, <span class="st">"target_overnight"</span>].mean()</span>
+<span id="cb39-374"><a href="#cb39-374" aria-hidden="true" tabindex="-1"></a>        step <span class="op">=</span> (target_month <span class="op">-</span> monthly.index.<span class="bu">max</span>().to_period(<span class="st">"M"</span>)).n</span>
+<span id="cb39-375"><a href="#cb39-375" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="dv">0</span> <span class="op">&lt;</span> step <span class="op">&lt;=</span> paths.shape[<span class="dv">1</span>]:</span>
+<span id="cb39-376"><a href="#cb39-376" aria-hidden="true" tabindex="-1"></a>            rule <span class="op">=</span> policy.fit_policy_rule(monthly, features<span class="op">=</span>[<span class="st">"activity"</span>, <span class="st">"core_trim"</span>, <span class="st">"employment"</span>, <span class="st">"policy"</span>], horizon<span class="op">=</span>h)</span>
+<span id="cb39-377"><a href="#cb39-377" aria-hidden="true" tabindex="-1"></a>            prediction <span class="op">=</span> policy.policy_forecast(rule, monthly.iloc[[<span class="op">-</span><span class="dv">1</span>]])</span>
+<span id="cb39-378"><a href="#cb39-378" aria-hidden="true" tabindex="-1"></a>            draws <span class="op">=</span> paths[:, step <span class="op">-</span> <span class="dv">1</span>, fitted[<span class="st">"columns"</span>].index(<span class="st">"policy"</span>)]</span>
+<span id="cb39-379"><a href="#cb39-379" aria-hidden="true" tabindex="-1"></a>            policy_rows.append({<span class="st">"origin"</span>: date, <span class="st">"target_date"</span>: target_date, <span class="st">"horizon"</span>: h,</span>
+<span id="cb39-380"><a href="#cb39-380" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"actual"</span>: actual, <span class="st">"BVAR"</span>: draws.mean(), <span class="st">"Policy rule"</span>: prediction[<span class="st">"mean"</span>][<span class="dv">0</span>],</span>
+<span id="cb39-381"><a href="#cb39-381" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"Random walk"</span>: monthly[<span class="st">"policy"</span>].iloc[<span class="op">-</span><span class="dv">1</span>]})</span>
+<span id="cb39-382"><a href="#cb39-382" aria-hidden="true" tabindex="-1"></a>    next_quarter <span class="op">=</span> date.to_period(<span class="st">"Q"</span>) <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb39-383"><a href="#cb39-383" aria-hidden="true" tabindex="-1"></a>    start, end <span class="op">=</span> reference_window(pd.date_range(next_quarter.start_time,</span>
+<span id="cb39-384"><a href="#cb39-384" aria-hidden="true" tabindex="-1"></a>                                                 next_quarter.start_time <span class="op">+</span> pd.offsets.MonthEnd(<span class="dv">0</span>), freq<span class="op">=</span><span class="st">"W-WED"</span>)[<span class="dv">2</span>])</span>
+<span id="cb39-385"><a href="#cb39-385" aria-hidden="true" tabindex="-1"></a>    fixings <span class="op">=</span> boc_daily[<span class="st">"corra"</span>].dropna() <span class="op">/</span> <span class="dv">100</span></span>
+<span id="cb39-386"><a href="#cb39-386" aria-hidden="true" tabindex="-1"></a>    calendar <span class="op">=</span> fixings.index[(fixings.index <span class="op">&gt;=</span> start) <span class="op">&amp;</span> (fixings.index <span class="op">&lt;</span> end)]</span>
+<span id="cb39-387"><a href="#cb39-387" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> end <span class="op">&lt;=</span> fixings.index.<span class="bu">max</span>() <span class="kw">and</span> <span class="bu">len</span>(calendar) <span class="kw">and</span> calendar[<span class="dv">0</span>] <span class="op">==</span> start:</span>
+<span id="cb39-388"><a href="#cb39-388" aria-hidden="true" tabindex="-1"></a>        months <span class="op">=</span> pd.date_range(monthly.index.<span class="bu">max</span>() <span class="op">+</span> pd.offsets.MonthBegin(<span class="dv">1</span>), periods<span class="op">=</span>paths.shape[<span class="dv">1</span>], freq<span class="op">=</span><span class="st">"MS"</span>)</span>
+<span id="cb39-389"><a href="#cb39-389" aria-hidden="true" tabindex="-1"></a>        basis <span class="op">=</span> ((boc_daily[<span class="st">"corra"</span>] <span class="op">-</span> boc_daily[<span class="st">"target_overnight"</span>]).loc[:date].dropna().tail(<span class="dv">60</span>).median()) <span class="op">/</span> <span class="dv">100</span></span>
+<span id="cb39-390"><a href="#cb39-390" aria-hidden="true" tabindex="-1"></a>        draws <span class="op">=</span> policy.policy_window_draws(paths[:, :, fitted[<span class="st">"columns"</span>].index(<span class="st">"policy"</span>)] <span class="op">/</span> <span class="dv">100</span>,</span>
+<span id="cb39-391"><a href="#cb39-391" aria-hidden="true" tabindex="-1"></a>                                           months, fixings, as_of<span class="op">=</span>date, start<span class="op">=</span>start, end<span class="op">=</span>end,</span>
+<span id="cb39-392"><a href="#cb39-392" aria-hidden="true" tabindex="-1"></a>                                           calendar<span class="op">=</span>calendar, basis<span class="op">=</span>basis, day_count<span class="op">=</span><span class="dv">365</span>)</span>
+<span id="cb39-393"><a href="#cb39-393" aria-hidden="true" tabindex="-1"></a>        actual <span class="op">=</span> compound_overnight(fixings.reindex(calendar).to_numpy(), calendar, end, day_count<span class="op">=</span><span class="dv">365</span>)</span>
+<span id="cb39-394"><a href="#cb39-394" aria-hidden="true" tabindex="-1"></a>        corra_rows.append({<span class="st">"origin"</span>: date, <span class="st">"start"</span>: start, <span class="st">"end"</span>: end, <span class="st">"actual"</span>: actual <span class="op">*</span> <span class="dv">100</span>,</span>
+<span id="cb39-395"><a href="#cb39-395" aria-hidden="true" tabindex="-1"></a>                           <span class="st">"BVAR"</span>: draws.mean() <span class="op">*</span> <span class="dv">100</span>, <span class="st">"Random walk"</span>: fixings.loc[:date].iloc[<span class="op">-</span><span class="dv">1</span>] <span class="op">*</span> <span class="dv">100</span>})</span>
+<span id="cb39-396"><a href="#cb39-396" aria-hidden="true" tabindex="-1"></a>policy_history <span class="op">=</span> pd.DataFrame(policy_rows).dropna(subset<span class="op">=</span>[<span class="st">"actual"</span>])</span>
+<span id="cb39-397"><a href="#cb39-397" aria-hidden="true" tabindex="-1"></a>corra_history <span class="op">=</span> pd.DataFrame(corra_rows).sort_values(<span class="st">"origin"</span>).drop_duplicates(<span class="st">"start"</span>, keep<span class="op">=</span><span class="st">"last"</span>)</span>
+<span id="cb39-398"><a href="#cb39-398" aria-hidden="true" tabindex="-1"></a>policy_scores <span class="op">=</span> []</span>
+<span id="cb39-399"><a href="#cb39-399" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> h, group <span class="kw">in</span> policy_history.groupby(<span class="st">"horizon"</span>):</span>
+<span id="cb39-400"><a href="#cb39-400" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> model <span class="kw">in</span> [<span class="st">"BVAR"</span>, <span class="st">"Policy rule"</span>, <span class="st">"Random walk"</span>]:</span>
+<span id="cb39-401"><a href="#cb39-401" aria-hidden="true" tabindex="-1"></a>        error <span class="op">=</span> group[model] <span class="op">-</span> group[<span class="st">"actual"</span>]</span>
+<span id="cb39-402"><a href="#cb39-402" aria-hidden="true" tabindex="-1"></a>        policy_scores.append({<span class="st">"comparison"</span>: <span class="ss">f"Policy mean, </span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">m"</span>, <span class="st">"model"</span>: model, <span class="st">"n"</span>: <span class="bu">len</span>(error),</span>
+<span id="cb39-403"><a href="#cb39-403" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"RMSE"</span>: np.sqrt(np.mean(error <span class="op">**</span> <span class="dv">2</span>)), <span class="st">"MAE"</span>: error.<span class="bu">abs</span>().mean()})</span>
+<span id="cb39-404"><a href="#cb39-404" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> model <span class="kw">in</span> [<span class="st">"BVAR"</span>, <span class="st">"Random walk"</span>]:</span>
+<span id="cb39-405"><a href="#cb39-405" aria-hidden="true" tabindex="-1"></a>    error <span class="op">=</span> corra_history[model] <span class="op">-</span> corra_history[<span class="st">"actual"</span>]</span>
+<span id="cb39-406"><a href="#cb39-406" aria-hidden="true" tabindex="-1"></a>    policy_scores.append({<span class="st">"comparison"</span>: <span class="st">"Three-month compounded CORRA"</span>, <span class="st">"model"</span>: model, <span class="st">"n"</span>: <span class="bu">len</span>(error),</span>
+<span id="cb39-407"><a href="#cb39-407" aria-hidden="true" tabindex="-1"></a>                          <span class="st">"RMSE"</span>: np.sqrt(np.mean(error <span class="op">**</span> <span class="dv">2</span>)), <span class="st">"MAE"</span>: error.<span class="bu">abs</span>().mean()})</span>
+<span id="cb39-408"><a href="#cb39-408" aria-hidden="true" tabindex="-1"></a>policy_scores <span class="op">=</span> pd.DataFrame(policy_scores)</span>
+<span id="cb39-409"><a href="#cb39-409" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-410"><a href="#cb39-410" aria-hidden="true" tabindex="-1"></a>mps <span class="op">=</span> read_macro_forecasts(data <span class="op">/</span> <span class="st">"canada_boc_mps.csv"</span>)</span>
+<span id="cb39-411"><a href="#cb39-411" aria-hidden="true" tabindex="-1"></a>survey <span class="op">=</span> mps[mps[<span class="st">"question"</span>].<span class="bu">str</span>.startswith(<span class="st">"1.7"</span>) <span class="op">&amp;</span> mps[<span class="st">"row_label"</span>].eq(<span class="st">"Median of responses"</span>)</span>
+<span id="cb39-412"><a href="#cb39-412" aria-hidden="true" tabindex="-1"></a>             <span class="op">&amp;</span> mps[<span class="st">"column_label"</span>].<span class="bu">str</span>.contains(<span class="st">"End of"</span>)].copy()</span>
+<span id="cb39-413"><a href="#cb39-413" aria-hidden="true" tabindex="-1"></a>survey[<span class="st">"year"</span>] <span class="op">=</span> survey[<span class="st">"column_label"</span>].<span class="bu">str</span>.extract(<span class="vs">r"End of </span><span class="kw">(</span><span class="dv">\d</span><span class="op">{4}</span><span class="kw">)</span><span class="vs">"</span>).astype(<span class="bu">int</span>)</span>
+<span id="cb39-414"><a href="#cb39-414" aria-hidden="true" tabindex="-1"></a>survey_rows <span class="op">=</span> []</span>
+<span id="cb39-415"><a href="#cb39-415" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> row <span class="kw">in</span> survey.itertuples():</span>
+<span id="cb39-416"><a href="#cb39-416" aria-hidden="true" tabindex="-1"></a>    eligible <span class="op">=</span> system_dates[system_dates.le(row.release_date)]</span>
+<span id="cb39-417"><a href="#cb39-417" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> eligible.empty:</span>
+<span id="cb39-418"><a href="#cb39-418" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span></span>
+<span id="cb39-419"><a href="#cb39-419" aria-hidden="true" tabindex="-1"></a>    date <span class="op">=</span> eligible.iloc[<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb39-420"><a href="#cb39-420" aria-hidden="true" tabindex="-1"></a>    fitted, paths <span class="op">=</span> systems[date]</span>
+<span id="cb39-421"><a href="#cb39-421" aria-hidden="true" tabindex="-1"></a>    month <span class="op">=</span> pd.Period(<span class="ss">f"</span><span class="sc">{</span>row<span class="sc">.</span>year<span class="sc">}</span><span class="ss">-12"</span>, freq<span class="op">=</span><span class="st">"M"</span>)</span>
+<span id="cb39-422"><a href="#cb39-422" aria-hidden="true" tabindex="-1"></a>    step <span class="op">=</span> (month <span class="op">-</span> fitted[<span class="st">"z"</span>].index.<span class="bu">max</span>().to_period(<span class="st">"M"</span>)).n</span>
+<span id="cb39-423"><a href="#cb39-423" aria-hidden="true" tabindex="-1"></a>    actual <span class="op">=</span> truth[truth[<span class="st">"target"</span>].eq(<span class="st">"headline_cpi"</span>) <span class="op">&amp;</span> truth[<span class="st">"observation_date"</span>].eq(month.to_timestamp())]</span>
+<span id="cb39-424"><a href="#cb39-424" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="dv">0</span> <span class="op">&lt;</span> step <span class="op">&lt;=</span> paths.shape[<span class="dv">1</span>] <span class="kw">and</span> <span class="kw">not</span> actual.empty:</span>
+<span id="cb39-425"><a href="#cb39-425" aria-hidden="true" tabindex="-1"></a>        survey_rows.append({<span class="st">"release_date"</span>: row.release_date, <span class="st">"origin"</span>: date, <span class="st">"target_date"</span>: month.to_timestamp(),</span>
+<span id="cb39-426"><a href="#cb39-426" aria-hidden="true" tabindex="-1"></a>                            <span class="st">"actual"</span>: actual[<span class="st">"first"</span>].iloc[<span class="dv">0</span>], <span class="st">"MPS median"</span>: row.value_numeric,</span>
+<span id="cb39-427"><a href="#cb39-427" aria-hidden="true" tabindex="-1"></a>                            <span class="st">"BVAR"</span>: paths[:, step <span class="op">-</span> <span class="dv">1</span>, fitted[<span class="st">"columns"</span>].index(<span class="st">"headline_cpi"</span>)].mean()})</span>
+<span id="cb39-428"><a href="#cb39-428" aria-hidden="true" tabindex="-1"></a>survey_comparison <span class="op">=</span> pd.DataFrame(survey_rows)</span>
+<span id="cb39-429"><a href="#cb39-429" aria-hidden="true" tabindex="-1"></a>survey_scores <span class="op">=</span> []</span>
+<span id="cb39-430"><a href="#cb39-430" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> model <span class="kw">in</span> [<span class="st">"MPS median"</span>, <span class="st">"BVAR"</span>]:</span>
+<span id="cb39-431"><a href="#cb39-431" aria-hidden="true" tabindex="-1"></a>    error <span class="op">=</span> survey_comparison[model] <span class="op">-</span> survey_comparison[<span class="st">"actual"</span>]</span>
+<span id="cb39-432"><a href="#cb39-432" aria-hidden="true" tabindex="-1"></a>    survey_scores.append({<span class="st">"comparison"</span>: <span class="st">"Year-end CPI; MPS public-release comparison"</span>, <span class="st">"model"</span>: model,</span>
+<span id="cb39-433"><a href="#cb39-433" aria-hidden="true" tabindex="-1"></a>                          <span class="st">"n"</span>: <span class="bu">len</span>(error), <span class="st">"RMSE"</span>: np.sqrt(np.mean(error <span class="op">**</span> <span class="dv">2</span>)), <span class="st">"MAE"</span>: error.<span class="bu">abs</span>().mean()})</span>
+<span id="cb39-434"><a href="#cb39-434" aria-hidden="true" tabindex="-1"></a>policy_scores <span class="op">=</span> pd.concat([policy_scores, pd.DataFrame(survey_scores)], ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb39-435"><a href="#cb39-435" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-436"><a href="#cb39-436" aria-hidden="true" tabindex="-1"></a>after_date <span class="op">=</span> <span class="bu">max</span>(states)</span>
+<span id="cb39-437"><a href="#cb39-437" aria-hidden="true" tabindex="-1"></a>before_date <span class="op">=</span> <span class="bu">max</span>(date <span class="cf">for</span> date <span class="kw">in</span> states <span class="cf">if</span> date <span class="op">&lt;=</span> after_date <span class="op">-</span> pd.Timedelta(days<span class="op">=</span><span class="dv">30</span>)</span>
+<span id="cb39-438"><a href="#cb39-438" aria-hidden="true" tabindex="-1"></a>                   <span class="kw">and</span> date.year <span class="op">//</span> <span class="dv">2</span> <span class="op">==</span> after_date.year <span class="op">//</span> <span class="dv">2</span>)</span>
+<span id="cb39-439"><a href="#cb39-439" aria-hidden="true" tabindex="-1"></a>regime <span class="op">=</span> pd.Timestamp(<span class="dv">2017</span> <span class="op">+</span> <span class="dv">2</span> <span class="op">*</span> ((after_date.year <span class="op">-</span> <span class="dv">2017</span>) <span class="op">//</span> <span class="dv">2</span>), <span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb39-440"><a href="#cb39-440" aria-hidden="true" tabindex="-1"></a>fit <span class="op">=</span> factor_fits[regime]</span>
+<span id="cb39-441"><a href="#cb39-441" aria-hidden="true" tabindex="-1"></a>impact_date <span class="op">=</span> after_date.to_period(<span class="st">"Q"</span>).end_time.to_period(<span class="st">"M"</span>).to_timestamp()</span>
+<span id="cb39-442"><a href="#cb39-442" aria-hidden="true" tabindex="-1"></a>news_states <span class="op">=</span> []</span>
+<span id="cb39-443"><a href="#cb39-443" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> date <span class="kw">in</span> [before_date, after_date]:</span>
+<span id="cb39-444"><a href="#cb39-444" aria-hidden="true" tabindex="-1"></a>    raw <span class="op">=</span> snapshot(information, date, frequencies<span class="op">=</span>frequencies, series<span class="op">=</span>monthly_names, start<span class="op">=</span><span class="st">"1997-01-01"</span>)</span>
+<span id="cb39-445"><a href="#cb39-445" aria-hidden="true" tabindex="-1"></a>    quarterly <span class="op">=</span> truth[truth[<span class="st">"target"</span>].eq(<span class="st">"real_gdp"</span>) <span class="op">&amp;</span> truth[<span class="st">"release_date"</span>].le(date)].set_index(<span class="st">"observation_date"</span>)[[<span class="st">"first"</span>]].rename(columns<span class="op">=</span>{<span class="st">"first"</span>: <span class="st">"real_gdp"</span>})</span>
+<span id="cb39-446"><a href="#cb39-446" aria-hidden="true" tabindex="-1"></a>    news_states.append(dfm.filter_dfm(fit, transforms.fred_transform(raw, codes), quarterly, end<span class="op">=</span>impact_date)[<span class="st">"result"</span>])</span>
+<span id="cb39-447"><a href="#cb39-447" aria-hidden="true" tabindex="-1"></a>news <span class="op">=</span> dfm.dfm_news(news_states[<span class="dv">0</span>], news_states[<span class="dv">1</span>], variable<span class="op">=</span><span class="st">"real_gdp"</span>,</span>
+<span id="cb39-448"><a href="#cb39-448" aria-hidden="true" tabindex="-1"></a>                     impact_date<span class="op">=</span>impact_date, location<span class="op">=</span>fit.quarterly_location[<span class="st">"real_gdp"</span>], scale<span class="op">=</span>fit.quarterly_scale[<span class="st">"real_gdp"</span>])</span>
+<span id="cb39-449"><a href="#cb39-449" aria-hidden="true" tabindex="-1"></a>news_summary <span class="op">=</span> news[<span class="st">"impacts"</span>].set_index([<span class="st">"impact date"</span>, <span class="st">"impacted variable"</span>])</span>
+<span id="cb39-450"><a href="#cb39-450" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-451"><a href="#cb39-451" aria-hidden="true" tabindex="-1"></a>release_rows <span class="op">=</span> []</span>
+<span id="cb39-452"><a href="#cb39-452" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> target, model <span class="kw">in</span> [(<span class="st">"headline_cpi"</span>, <span class="st">"CPI components"</span>), (<span class="st">"employment"</span>, <span class="st">"MIDAS"</span>), (<span class="st">"earnings"</span>, <span class="st">"AR(1)"</span>)]:</span>
+<span id="cb39-453"><a href="#cb39-453" aria-hidden="true" tabindex="-1"></a>    sample <span class="op">=</span> forecasts[forecasts[<span class="st">"target"</span>].eq(target) <span class="op">&amp;</span> forecasts[<span class="st">"model"</span>].eq(model)</span>
+<span id="cb39-454"><a href="#cb39-454" aria-hidden="true" tabindex="-1"></a>                        <span class="op">&amp;</span> forecasts[<span class="st">"horizon"</span>].eq(<span class="dv">1</span>)].sort_values(<span class="st">"release_date"</span>).copy()</span>
+<span id="cb39-455"><a href="#cb39-455" aria-hidden="true" tabindex="-1"></a>    sample[<span class="st">"news"</span>] <span class="op">=</span> evaluation.release_surprises(sample[<span class="st">"actual"</span>].reset_index(drop<span class="op">=</span><span class="va">True</span>), sample[<span class="st">"mean"</span>].reset_index(drop<span class="op">=</span><span class="va">True</span>), minimum<span class="op">=</span><span class="dv">24</span>, cap<span class="op">=</span><span class="dv">5</span>).to_numpy()</span>
+<span id="cb39-456"><a href="#cb39-456" aria-hidden="true" tabindex="-1"></a>    release_rows.append(sample[[<span class="st">"observation_date"</span>, <span class="st">"release_date"</span>, <span class="st">"news"</span>]].rename(columns<span class="op">=</span>{<span class="st">"news"</span>: target}))</span>
+<span id="cb39-457"><a href="#cb39-457" aria-hidden="true" tabindex="-1"></a>employment_news <span class="op">=</span> release_rows[<span class="dv">1</span>].merge(release_rows[<span class="dv">2</span>], on<span class="op">=</span>[<span class="st">"observation_date"</span>, <span class="st">"release_date"</span>])</span>
+<span id="cb39-458"><a href="#cb39-458" aria-hidden="true" tabindex="-1"></a>yield_history <span class="op">=</span> boc_daily[[<span class="st">"goc_2y"</span>, <span class="st">"goc_5y"</span>, <span class="st">"goc_10y"</span>]].dropna() <span class="op">/</span> <span class="dv">100</span></span>
+<span id="cb39-459"><a href="#cb39-459" aria-hidden="true" tabindex="-1"></a>reaction <span class="op">=</span> pd.concat([</span>
+<span id="cb39-460"><a href="#cb39-460" aria-hidden="true" tabindex="-1"></a>    evaluation.release_response(release_rows[<span class="dv">0</span>], yield_history, drivers<span class="op">=</span>[<span class="st">"headline_cpi"</span>]).assign(release<span class="op">=</span><span class="st">"CPI"</span>),</span>
+<span id="cb39-461"><a href="#cb39-461" aria-hidden="true" tabindex="-1"></a>    evaluation.release_response(employment_news, yield_history, drivers<span class="op">=</span>[<span class="st">"employment"</span>, <span class="st">"earnings"</span>]).assign(release<span class="op">=</span><span class="st">"SEPH bundle"</span>)])</span>
+<span id="cb39-462"><a href="#cb39-462" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-463"><a href="#cb39-463" aria-hidden="true" tabindex="-1"></a>matched <span class="op">=</span> []</span>
+<span id="cb39-464"><a href="#cb39-464" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (target, h), group <span class="kw">in</span> forecasts.groupby([<span class="st">"target"</span>, <span class="st">"horizon"</span>]):</span>
+<span id="cb39-465"><a href="#cb39-465" aria-hidden="true" tabindex="-1"></a>    wide <span class="op">=</span> group.pivot(index<span class="op">=</span><span class="st">"observation_date"</span>, columns<span class="op">=</span><span class="st">"model"</span>, values<span class="op">=</span><span class="st">"mean"</span>)</span>
+<span id="cb39-466"><a href="#cb39-466" aria-hidden="true" tabindex="-1"></a>    common <span class="op">=</span> wide.dropna().index</span>
+<span id="cb39-467"><a href="#cb39-467" aria-hidden="true" tabindex="-1"></a>    matched.append(group[group[<span class="st">"observation_date"</span>].isin(common)])</span>
+<span id="cb39-468"><a href="#cb39-468" aria-hidden="true" tabindex="-1"></a>matched <span class="op">=</span> pd.concat(matched, ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb39-469"><a href="#cb39-469" aria-hidden="true" tabindex="-1"></a>scores <span class="op">=</span> evaluation.nowcast_scores(matched)</span>
+<span id="cb39-470"><a href="#cb39-470" aria-hidden="true" tabindex="-1"></a>score_table <span class="op">=</span> scores.pivot(index<span class="op">=</span>[<span class="st">"target"</span>, <span class="st">"horizon"</span>], columns<span class="op">=</span><span class="st">"model"</span>, values<span class="op">=</span><span class="st">"RMSE"</span>)</span>
+<span id="cb39-471"><a href="#cb39-471" aria-hidden="true" tabindex="-1"></a>coverage <span class="op">=</span> truth.groupby(<span class="st">"target"</span>).agg(first_observation<span class="op">=</span>(<span class="st">"observation_date"</span>, <span class="st">"min"</span>),</span>
+<span id="cb39-472"><a href="#cb39-472" aria-hidden="true" tabindex="-1"></a>                                       last_observation<span class="op">=</span>(<span class="st">"observation_date"</span>, <span class="st">"max"</span>), releases<span class="op">=</span>(<span class="st">"first"</span>, <span class="st">"size"</span>), unit<span class="op">=</span>(<span class="st">"unit"</span>, <span class="st">"first"</span>))</span>
+<span id="cb39-473"><a href="#cb39-473" aria-hidden="true" tabindex="-1"></a>coverage[<span class="st">"scored_first_release"</span>] <span class="op">=</span> matched.groupby(<span class="st">"target"</span>)[<span class="st">"release_date"</span>].<span class="bu">min</span>()</span>
+<span id="cb39-474"><a href="#cb39-474" aria-hidden="true" tabindex="-1"></a>coverage[<span class="st">"scored_last_release"</span>] <span class="op">=</span> matched.groupby(<span class="st">"target"</span>)[<span class="st">"release_date"</span>].<span class="bu">max</span>()</span>
+<span id="cb39-475"><a href="#cb39-475" aria-hidden="true" tabindex="-1"></a>coverage[<span class="st">"scored_observations"</span>] <span class="op">=</span> matched.groupby(<span class="st">"target"</span>)[<span class="st">"observation_date"</span>].nunique()</span>
+<span id="cb39-476"><a href="#cb39-476" aria-hidden="true" tabindex="-1"></a>latest <span class="op">=</span> forecasts[forecasts[<span class="st">"horizon"</span>].eq(<span class="dv">1</span>)].sort_values(<span class="st">"evaluation_date"</span>).groupby([<span class="st">"target"</span>, <span class="st">"model"</span>]).tail(<span class="dv">1</span>)</span>
+<span id="cb39-477"><a href="#cb39-477" aria-hidden="true" tabindex="-1"></a>latest <span class="op">=</span> latest.pivot(index<span class="op">=</span>[<span class="st">"target"</span>, <span class="st">"observation_date"</span>, <span class="st">"evaluation_date"</span>], columns<span class="op">=</span><span class="st">"model"</span>, values<span class="op">=</span><span class="st">"mean"</span>)</span>
+<span id="cb39-478"><a href="#cb39-478" aria-hidden="true" tabindex="-1"></a>density_rows <span class="op">=</span> []</span>
+<span id="cb39-479"><a href="#cb39-479" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> target, group <span class="kw">in</span> forecasts[forecasts[<span class="st">"model"</span>].eq(<span class="st">"Minnesota BVAR"</span>)].groupby(<span class="st">"target"</span>):</span>
+<span id="cb39-480"><a href="#cb39-480" aria-hidden="true" tabindex="-1"></a>    group <span class="op">=</span> group.dropna(subset<span class="op">=</span>[<span class="st">"actual"</span>, <span class="st">"mean"</span>, <span class="st">"sigma"</span>, <span class="st">"q10"</span>, <span class="st">"q90"</span>])</span>
+<span id="cb39-481"><a href="#cb39-481" aria-hidden="true" tabindex="-1"></a>    density_rows.append({<span class="st">"target"</span>: target, <span class="st">"NLL"</span>: gaussian_nll(group[<span class="st">"actual"</span>], group[<span class="st">"mean"</span>], group[<span class="st">"sigma"</span>] <span class="op">**</span> <span class="dv">2</span>),</span>
+<span id="cb39-482"><a href="#cb39-482" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"Gaussian CRPS"</span>: np.mean(gaussian_crps(group[<span class="st">"actual"</span>], group[<span class="st">"mean"</span>], group[<span class="st">"sigma"</span>])),</span>
+<span id="cb39-483"><a href="#cb39-483" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"80</span><span class="sc">% c</span><span class="st">overage"</span>: interval_coverage(group[<span class="st">"actual"</span>], group[<span class="st">"q10"</span>], group[<span class="st">"q90"</span>]),</span>
+<span id="cb39-484"><a href="#cb39-484" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"interval width"</span>: (group[<span class="st">"q90"</span>] <span class="op">-</span> group[<span class="st">"q10"</span>]).mean()})</span>
+<span id="cb39-485"><a href="#cb39-485" aria-hidden="true" tabindex="-1"></a>density <span class="op">=</span> pd.DataFrame(density_rows).set_index(<span class="st">"target"</span>)</span>
+<span id="cb39-486"><a href="#cb39-486" aria-hidden="true" tabindex="-1"></a>response_table <span class="op">=</span> reaction[reaction[<span class="st">"market"</span>].eq(<span class="st">"goc_2y"</span>)].copy()</span>
+<span id="cb39-487"><a href="#cb39-487" aria-hidden="true" tabindex="-1"></a>response_table.index <span class="op">=</span> response_table[<span class="st">"release"</span>] <span class="op">+</span> <span class="st">" / "</span> <span class="op">+</span> response_table[<span class="st">"driver"</span>]</span>
+<span id="cb39-488"><a href="#cb39-488" aria-hidden="true" tabindex="-1"></a>diagnostics <span class="op">=</span> pd.concat({<span class="st">"Density"</span>: density, <span class="st">"2Y yield response"</span>: response_table[[<span class="st">"beta"</span>, <span class="st">"se"</span>, <span class="st">"p_value"</span>, <span class="st">"events"</span>]]})</span>
+<span id="cb39-489"><a href="#cb39-489" aria-hidden="true" tabindex="-1"></a>display(coverage,</span>
+<span id="cb39-490"><a href="#cb39-490" aria-hidden="true" tabindex="-1"></a>        score_table.style.<span class="bu">format</span>(precision<span class="op">=</span><span class="dv">3</span>, na_rep<span class="op">=</span><span class="st">"—"</span>).set_caption(<span class="st">"RMSE on common observations within each target and horizon"</span>),</span>
+<span id="cb39-491"><a href="#cb39-491" aria-hidden="true" tabindex="-1"></a>        latest.style.<span class="bu">format</span>(precision<span class="op">=</span><span class="dv">3</span>, na_rep<span class="op">=</span><span class="st">"—"</span>).set_caption(<span class="st">"Last historical evaluation; one business day before release"</span>),</span>
+<span id="cb39-492"><a href="#cb39-492" aria-hidden="true" tabindex="-1"></a>        news_summary.<span class="bu">round</span>(<span class="dv">4</span>), policy_scores.set_index([<span class="st">"comparison"</span>, <span class="st">"model"</span>]).<span class="bu">round</span>(<span class="dv">3</span>),</span>
+<span id="cb39-493"><a href="#cb39-493" aria-hidden="true" tabindex="-1"></a>        diagnostics.style.<span class="bu">format</span>(precision<span class="op">=</span><span class="dv">4</span>, na_rep<span class="op">=</span><span class="st">"—"</span>).set_caption(<span class="st">"BVAR densities: all available origins; yield response: close-to-close"</span>))</span>
+<span id="cb39-494"><a href="#cb39-494" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-495"><a href="#cb39-495" aria-hidden="true" tabindex="-1"></a>loadings <span class="op">=</span> dfm.factor_loadings(fit)</span>
+<span id="cb39-496"><a href="#cb39-496" aria-hidden="true" tabindex="-1"></a>labels <span class="op">=</span> {<span class="st">"monthly_gdp"</span>: <span class="st">"Monthly GDP"</span>, <span class="st">"manufacturing_gdp"</span>: <span class="st">"Manufacturing GDP"</span>,</span>
+<span id="cb39-497"><a href="#cb39-497" aria-hidden="true" tabindex="-1"></a>          <span class="st">"manufacturing_sales"</span>: <span class="st">"Manufacturing sales"</span>, <span class="st">"manufacturing_orders"</span>: <span class="st">"Manufacturing orders"</span>,</span>
+<span id="cb39-498"><a href="#cb39-498" aria-hidden="true" tabindex="-1"></a>          <span class="st">"core_trim"</span>: <span class="st">"CPI-trim"</span>, <span class="st">"core_median"</span>: <span class="st">"CPI-median"</span>, <span class="st">"core_common"</span>: <span class="st">"CPI-common"</span>,</span>
+<span id="cb39-499"><a href="#cb39-499" aria-hidden="true" tabindex="-1"></a>          <span class="st">"employment"</span>: <span class="st">"SEPH employment"</span>, <span class="st">"earnings"</span>: <span class="st">"SEPH earnings"</span>, <span class="st">"us_PAYEMS"</span>: <span class="st">"US payroll"</span>,</span>
+<span id="cb39-500"><a href="#cb39-500" aria-hidden="true" tabindex="-1"></a>          <span class="st">"us_UNRATE"</span>: <span class="st">"US unemployment"</span>, <span class="st">"us_ICSA"</span>: <span class="st">"US initial claims"</span>, <span class="st">"us_CCSA"</span>: <span class="st">"US continuing claims"</span>,</span>
+<span id="cb39-501"><a href="#cb39-501" aria-hidden="true" tabindex="-1"></a>          <span class="st">"us_RSAFS"</span>: <span class="st">"US retail sales"</span>, <span class="st">"us_INDPRO"</span>: <span class="st">"US industrial production"</span>, <span class="st">"us_IPMAN"</span>: <span class="st">"US manufacturing"</span>,</span>
+<span id="cb39-502"><a href="#cb39-502" aria-hidden="true" tabindex="-1"></a>          <span class="st">"goc_2y"</span>: <span class="st">"Canada 2Y yield"</span>, <span class="st">"goc_5y"</span>: <span class="st">"Canada 5Y yield"</span>, <span class="st">"goc_10y"</span>: <span class="st">"Canada 10Y yield"</span>,</span>
+<span id="cb39-503"><a href="#cb39-503" aria-hidden="true" tabindex="-1"></a>          <span class="st">"bos_INPUTS"</span>: <span class="st">"BOS: input prices"</span>, <span class="st">"bos_OUTPUTS"</span>: <span class="st">"BOS: selling prices"</span>,</span>
+<span id="cb39-504"><a href="#cb39-504" aria-hidden="true" tabindex="-1"></a>          <span class="st">"bos_EMPLOY"</span>: <span class="st">"BOS: future employment"</span>, <span class="st">"bos_INVESTMACHEQUIP"</span>: <span class="st">"BOS: investment"</span>,</span>
+<span id="cb39-505"><a href="#cb39-505" aria-hidden="true" tabindex="-1"></a>          <span class="st">"bos_FUTURESALES"</span>: <span class="st">"BOS: future sales"</span>, <span class="st">"bos_CREDIT"</span>: <span class="st">"BOS: credit conditions"</span>}</span>
+<span id="cb39-506"><a href="#cb39-506" aria-hidden="true" tabindex="-1"></a>loadings <span class="op">=</span> loadings.rename(index<span class="op">=</span>labels)</span>
+<span id="cb39-507"><a href="#cb39-507" aria-hidden="true" tabindex="-1"></a>news_details <span class="op">=</span> news[<span class="st">"details"</span>].copy()</span>
+<span id="cb39-508"><a href="#cb39-508" aria-hidden="true" tabindex="-1"></a>news_details[<span class="st">"updated variable"</span>] <span class="op">=</span> news_details[<span class="st">"updated variable"</span>].replace(labels)</span>
+<span id="cb39-509"><a href="#cb39-509" aria-hidden="true" tabindex="-1"></a>gdp <span class="op">=</span> forecasts[forecasts[<span class="st">"target"</span>].eq(<span class="st">"real_gdp"</span>) <span class="op">&amp;</span> forecasts[<span class="st">"horizon"</span>].eq(<span class="dv">7</span>)</span>
+<span id="cb39-510"><a href="#cb39-510" aria-hidden="true" tabindex="-1"></a>                <span class="op">&amp;</span> forecasts[<span class="st">"model"</span>].isin([<span class="st">"Component bridge"</span>, <span class="st">"Grouped DFM"</span>, <span class="st">"Minnesota BVAR"</span>, <span class="st">"AR(1)"</span>])]</span>
+<span id="cb39-511"><a href="#cb39-511" aria-hidden="true" tabindex="-1"></a>weight_history <span class="op">=</span> weights[weights[<span class="st">"target"</span>].eq(<span class="st">"real_gdp"</span>) <span class="op">&amp;</span> weights[<span class="st">"horizon"</span>].eq(<span class="dv">30</span>)].pivot(</span>
+<span id="cb39-512"><a href="#cb39-512" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span><span class="st">"evaluation_date"</span>, columns<span class="op">=</span><span class="st">"model"</span>, values<span class="op">=</span><span class="st">"weight"</span>)</span>
+<span id="cb39-513"><a href="#cb39-513" aria-hidden="true" tabindex="-1"></a>inflation_history <span class="op">=</span> pd.DataFrame(component_rows)</span>
+<span id="cb39-514"><a href="#cb39-514" aria-hidden="true" tabindex="-1"></a>inflation_history <span class="op">=</span> inflation_history[inflation_history[<span class="st">"horizon"</span>].eq(<span class="dv">1</span>)].set_index(<span class="st">"observation_date"</span>)[[<span class="st">"actual"</span>, <span class="st">"mean"</span>, <span class="st">"core_contribution"</span>, <span class="st">"food_contribution"</span>, <span class="st">"energy_contribution"</span>]]</span>
+<span id="cb39-515"><a href="#cb39-515" aria-hidden="true" tabindex="-1"></a>inflation_history.columns <span class="op">=</span> [<span class="st">"Headline CPI"</span>, <span class="st">"Component forecast"</span>, <span class="st">"Core contribution"</span>, <span class="st">"Food contribution"</span>, <span class="st">"Energy contribution"</span>]</span>
+<span id="cb39-516"><a href="#cb39-516" aria-hidden="true" tabindex="-1"></a>last_policy_date <span class="op">=</span> <span class="bu">max</span>(systems)</span>
+<span id="cb39-517"><a href="#cb39-517" aria-hidden="true" tabindex="-1"></a>fitted, paths <span class="op">=</span> systems[last_policy_date]</span>
+<span id="cb39-518"><a href="#cb39-518" aria-hidden="true" tabindex="-1"></a>future_months <span class="op">=</span> pd.date_range(fitted[<span class="st">"z"</span>].index.<span class="bu">max</span>() <span class="op">+</span> pd.offsets.MonthBegin(<span class="dv">1</span>), periods<span class="op">=</span>paths.shape[<span class="dv">1</span>], freq<span class="op">=</span><span class="st">"MS"</span>)</span>
+<span id="cb39-519"><a href="#cb39-519" aria-hidden="true" tabindex="-1"></a>policy_path <span class="op">=</span> paths[:, :, fitted[<span class="st">"columns"</span>].index(<span class="st">"policy"</span>)]</span>
+<span id="cb39-520"><a href="#cb39-520" aria-hidden="true" tabindex="-1"></a>policy_plot <span class="op">=</span> pd.DataFrame({<span class="st">"mean"</span>: policy_path.mean(axis<span class="op">=</span><span class="dv">0</span>), <span class="st">"q10"</span>: np.quantile(policy_path, <span class="fl">.1</span>, axis<span class="op">=</span><span class="dv">0</span>),</span>
+<span id="cb39-521"><a href="#cb39-521" aria-hidden="true" tabindex="-1"></a>                            <span class="st">"q90"</span>: np.quantile(policy_path, <span class="fl">.9</span>, axis<span class="op">=</span><span class="dv">0</span>)}, index<span class="op">=</span>future_months)</span>
+<span id="cb39-522"><a href="#cb39-522" aria-hidden="true" tabindex="-1"></a>policy_plot[<span class="st">"actual"</span>] <span class="op">=</span> boc_daily[<span class="st">"target_overnight"</span>].resample(<span class="st">"MS"</span>).mean().reindex(future_months)</span>
+<span id="cb39-523"><a href="#cb39-523" aria-hidden="true" tabindex="-1"></a>policy_plot <span class="op">=</span> policy_plot[policy_plot.index.to_period(<span class="st">"M"</span>) <span class="op">&gt;</span> last_policy_date.to_period(<span class="st">"M"</span>)].head(<span class="dv">12</span>)</span>
+<span id="cb39-524"><a href="#cb39-524" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">4</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">16</span>, <span class="dv">20</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb39-525"><a href="#cb39-525" aria-hidden="true" tabindex="-1"></a>macro_plots.plot_nowcast(gdp, ax<span class="op">=</span>axes[<span class="dv">0</span>, <span class="dv">0</span>], title<span class="op">=</span><span class="st">"Canadian GDP: seven business days before release"</span>)</span>
+<span id="cb39-526"><a href="#cb39-526" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">0</span>].set_yscale(<span class="st">"symlog"</span>, linthresh<span class="op">=</span><span class="dv">3</span>, linscale<span class="op">=</span><span class="fl">.8</span>)</span>
+<span id="cb39-527"><a href="#cb39-527" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">0</span>].set_yticks([<span class="op">-</span><span class="dv">100</span>, <span class="op">-</span><span class="dv">40</span>, <span class="op">-</span><span class="dv">10</span>, <span class="op">-</span><span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">10</span>, <span class="dv">40</span>], labels<span class="op">=</span>[<span class="st">"−100"</span>, <span class="st">"−40"</span>, <span class="st">"−10"</span>, <span class="st">"−3"</span>, <span class="st">"0"</span>, <span class="st">"3"</span>, <span class="st">"10"</span>, <span class="st">"40"</span>])</span>
+<span id="cb39-528"><a href="#cb39-528" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>, <span class="dv">0</span>].set_ylabel(<span class="st">"Annualized q/q % (symmetric log)"</span>)</span>
+<span id="cb39-529"><a href="#cb39-529" aria-hidden="true" tabindex="-1"></a>macro_plots.plot_nowcast_scores(scores[scores[<span class="st">"target"</span>].eq(<span class="st">"real_gdp"</span>)], ax<span class="op">=</span>axes[<span class="dv">0</span>, <span class="dv">1</span>])</span>
+<span id="cb39-530"><a href="#cb39-530" aria-hidden="true" tabindex="-1"></a>macro_plots.plot_revisions(truth[truth[<span class="st">"target"</span>].eq(<span class="st">"real_gdp"</span>)], ax<span class="op">=</span>axes[<span class="dv">1</span>, <span class="dv">0</span>])</span>
+<span id="cb39-531"><a href="#cb39-531" aria-hidden="true" tabindex="-1"></a>macro_plots.plot_factor_loadings(loadings.fillna(<span class="dv">0</span>), ax<span class="op">=</span>axes[<span class="dv">1</span>, <span class="dv">1</span>])</span>
+<span id="cb39-532"><a href="#cb39-532" aria-hidden="true" tabindex="-1"></a>macro_plots.plot_inflation_components(inflation_history, ax<span class="op">=</span>axes[<span class="dv">2</span>, <span class="dv">0</span>], unit<span class="op">=</span><span class="st">"Percentage points (y/y)"</span>)</span>
+<span id="cb39-533"><a href="#cb39-533" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">2</span>, <span class="dv">0</span>].set_title(<span class="st">"Headline inflation and component contributions"</span>)</span>
+<span id="cb39-534"><a href="#cb39-534" aria-hidden="true" tabindex="-1"></a>macro_plots.plot_forecast_weights(weight_history, ax<span class="op">=</span>axes[<span class="dv">2</span>, <span class="dv">1</span>])</span>
+<span id="cb39-535"><a href="#cb39-535" aria-hidden="true" tabindex="-1"></a>macro_plots.plot_news_impacts(news_details, ax<span class="op">=</span>axes[<span class="dv">3</span>, <span class="dv">0</span>])</span>
+<span id="cb39-536"><a href="#cb39-536" aria-hidden="true" tabindex="-1"></a>macro_plots.plot_policy_path(policy_plot, ax<span class="op">=</span>axes[<span class="dv">3</span>, <span class="dv">1</span>], title<span class="op">=</span><span class="ss">f"BoC outlook at </span><span class="sc">{</span>last_policy_date<span class="sc">:</span><span class="op">%</span>Y<span class="op">-%</span>m<span class="op">-%</span>d<span class="sc">}</span><span class="ch">\n</span><span class="ss">Last complete BVAR month: </span><span class="sc">{</span>fitted[<span class="st">'z'</span>]<span class="sc">.</span>index<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:</span><span class="op">%</span>Y<span class="op">-%</span>m<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb39-537"><a href="#cb39-537" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="st">"Canada: real-time macro and monetary policy · library repeat"</span>, fontsize<span class="op">=</span><span class="dv">16</span>)</span>
+<span id="cb39-538"><a href="#cb39-538" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">first_observation</th>
+<th data-quarto-table-cell-role="th">last_observation</th>
+<th data-quarto-table-cell-role="th">releases</th>
+<th data-quarto-table-cell-role="th">unit</th>
+<th data-quarto-table-cell-role="th">scored_first_release</th>
+<th data-quarto-table-cell-role="th">scored_last_release</th>
+<th data-quarto-table-cell-role="th">scored_observations</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">target</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">core_median</th>
+<td>2016-10-01</td>
+<td>2026-03-01</td>
+<td>114</td>
+<td>Year-over-year (%)</td>
+<td>2020-04-22</td>
+<td>2026-04-20</td>
+<td>73</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">core_trim</th>
+<td>2016-10-01</td>
+<td>2026-03-01</td>
+<td>114</td>
+<td>Year-over-year (%)</td>
+<td>2020-04-22</td>
+<td>2026-04-20</td>
+<td>73</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">earnings</th>
+<td>2015-01-01</td>
+<td>2026-05-01</td>
+<td>137</td>
+<td>Year-over-year (%)</td>
+<td>2020-04-30</td>
+<td>2026-07-30</td>
+<td>76</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">employment</th>
+<td>2015-01-01</td>
+<td>2026-05-01</td>
+<td>137</td>
+<td>Year-over-year (%)</td>
+<td>2022-02-24</td>
+<td>2026-07-30</td>
+<td>54</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">headline_cpi</th>
+<td>1996-01-01</td>
+<td>2026-07-01</td>
+<td>367</td>
+<td>Year-over-year (%)</td>
+<td>2022-02-16</td>
+<td>2026-04-20</td>
+<td>51</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">real_gdp</th>
+<td>2012-07-01</td>
+<td>2026-01-01</td>
+<td>55</td>
+<td>Annualized q/q (%)</td>
+<td>2022-05-31</td>
+<td>2026-05-29</td>
+<td>17</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<style type="text/css">
+</style>
+
+<div id="T_7b8f2" class="quarto-float quarto-figure quarto-figure-center anchored" data-quarto-postprocess="true">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="T_7b8f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;25.1: RMSE on common observations within each target and horizon
+</figcaption>
+<div aria-describedby="T_7b8f2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table id="T_7b8f2" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th class="blank" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="index_name level0" data-quarto-table-cell-role="th">model</th>
+<th id="T_7b8f2_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">AR(1)</th>
+<th id="T_7b8f2_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">Adaptive average</th>
+<th id="T_7b8f2_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">CPI components</th>
+<th id="T_7b8f2_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">Component bridge</th>
+<th id="T_7b8f2_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">Grouped DFM</th>
+<th id="T_7b8f2_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">Inflation bridge</th>
+<th id="T_7b8f2_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">Last release</th>
+<th id="T_7b8f2_level0_col7" class="col_heading level0 col7" data-quarto-table-cell-role="th">MIDAS</th>
+<th id="T_7b8f2_level0_col8" class="col_heading level0 col8" data-quarto-table-cell-role="th">Minnesota BVAR</th>
+<th id="T_7b8f2_level0_col9" class="col_heading level0 col9" data-quarto-table-cell-role="th">Rolling mean</th>
+</tr>
+<tr class="even">
+<th class="index_name level0" data-quarto-table-cell-role="th">target</th>
+<th class="index_name level1" data-quarto-table-cell-role="th">horizon</th>
+<th class="blank col0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col1" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col2" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col3" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col4" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col5" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col6" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col7" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col8" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col9" data-quarto-table-cell-role="th">&nbsp;</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th rowspan="4" id="T_7b8f2_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">core_median</th>
+<th id="T_7b8f2_level1_row0" class="row_heading level1 row0" data-quarto-table-cell-role="th">1</th>
+<td id="T_7b8f2_row0_col0" class="data row0 col0">0.212</td>
+<td id="T_7b8f2_row0_col1" class="data row0 col1">0.367</td>
+<td id="T_7b8f2_row0_col2" class="data row0 col2">—</td>
+<td id="T_7b8f2_row0_col3" class="data row0 col3">—</td>
+<td id="T_7b8f2_row0_col4" class="data row0 col4">0.523</td>
+<td id="T_7b8f2_row0_col5" class="data row0 col5">0.200</td>
+<td id="T_7b8f2_row0_col6" class="data row0 col6">0.201</td>
+<td id="T_7b8f2_row0_col7" class="data row0 col7">—</td>
+<td id="T_7b8f2_row0_col8" class="data row0 col8">0.390</td>
+<td id="T_7b8f2_row0_col9" class="data row0 col9">0.996</td>
+</tr>
+<tr class="even">
+<th id="T_7b8f2_level1_row1" class="row_heading level1 row1" data-quarto-table-cell-role="th">5</th>
+<td id="T_7b8f2_row1_col0" class="data row1 col0">0.212</td>
+<td id="T_7b8f2_row1_col1" class="data row1 col1">0.367</td>
+<td id="T_7b8f2_row1_col2" class="data row1 col2">—</td>
+<td id="T_7b8f2_row1_col3" class="data row1 col3">—</td>
+<td id="T_7b8f2_row1_col4" class="data row1 col4">0.522</td>
+<td id="T_7b8f2_row1_col5" class="data row1 col5">0.200</td>
+<td id="T_7b8f2_row1_col6" class="data row1 col6">0.201</td>
+<td id="T_7b8f2_row1_col7" class="data row1 col7">—</td>
+<td id="T_7b8f2_row1_col8" class="data row1 col8">0.390</td>
+<td id="T_7b8f2_row1_col9" class="data row1 col9">0.996</td>
+</tr>
+<tr class="odd">
+<th id="T_7b8f2_level1_row2" class="row_heading level1 row2" data-quarto-table-cell-role="th">10</th>
+<td id="T_7b8f2_row2_col0" class="data row2 col0">0.212</td>
+<td id="T_7b8f2_row2_col1" class="data row2 col1">0.367</td>
+<td id="T_7b8f2_row2_col2" class="data row2 col2">—</td>
+<td id="T_7b8f2_row2_col3" class="data row2 col3">—</td>
+<td id="T_7b8f2_row2_col4" class="data row2 col4">0.522</td>
+<td id="T_7b8f2_row2_col5" class="data row2 col5">0.200</td>
+<td id="T_7b8f2_row2_col6" class="data row2 col6">0.201</td>
+<td id="T_7b8f2_row2_col7" class="data row2 col7">—</td>
+<td id="T_7b8f2_row2_col8" class="data row2 col8">0.390</td>
+<td id="T_7b8f2_row2_col9" class="data row2 col9">0.996</td>
+</tr>
+<tr class="even">
+<th id="T_7b8f2_level1_row3" class="row_heading level1 row3" data-quarto-table-cell-role="th">20</th>
+<td id="T_7b8f2_row3_col0" class="data row3 col0">0.282</td>
+<td id="T_7b8f2_row3_col1" class="data row3 col1">0.423</td>
+<td id="T_7b8f2_row3_col2" class="data row3 col2">—</td>
+<td id="T_7b8f2_row3_col3" class="data row3 col3">—</td>
+<td id="T_7b8f2_row3_col4" class="data row3 col4">0.550</td>
+<td id="T_7b8f2_row3_col5" class="data row3 col5">0.252</td>
+<td id="T_7b8f2_row3_col6" class="data row3 col6">0.279</td>
+<td id="T_7b8f2_row3_col7" class="data row3 col7">—</td>
+<td id="T_7b8f2_row3_col8" class="data row3 col8">0.499</td>
+<td id="T_7b8f2_row3_col9" class="data row3 col9">1.035</td>
+</tr>
+<tr class="odd">
+<th rowspan="4" id="T_7b8f2_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">core_trim</th>
+<th id="T_7b8f2_level1_row4" class="row_heading level1 row4" data-quarto-table-cell-role="th">1</th>
+<td id="T_7b8f2_row4_col0" class="data row4 col0">0.214</td>
+<td id="T_7b8f2_row4_col1" class="data row4 col1">0.247</td>
+<td id="T_7b8f2_row4_col2" class="data row4 col2">—</td>
+<td id="T_7b8f2_row4_col3" class="data row4 col3">—</td>
+<td id="T_7b8f2_row4_col4" class="data row4 col4">0.362</td>
+<td id="T_7b8f2_row4_col5" class="data row4 col5">0.207</td>
+<td id="T_7b8f2_row4_col6" class="data row4 col6">0.206</td>
+<td id="T_7b8f2_row4_col7" class="data row4 col7">—</td>
+<td id="T_7b8f2_row4_col8" class="data row4 col8">0.392</td>
+<td id="T_7b8f2_row4_col9" class="data row4 col9">1.131</td>
+</tr>
+<tr class="even">
+<th id="T_7b8f2_level1_row5" class="row_heading level1 row5" data-quarto-table-cell-role="th">5</th>
+<td id="T_7b8f2_row5_col0" class="data row5 col0">0.214</td>
+<td id="T_7b8f2_row5_col1" class="data row5 col1">0.247</td>
+<td id="T_7b8f2_row5_col2" class="data row5 col2">—</td>
+<td id="T_7b8f2_row5_col3" class="data row5 col3">—</td>
+<td id="T_7b8f2_row5_col4" class="data row5 col4">0.360</td>
+<td id="T_7b8f2_row5_col5" class="data row5 col5">0.207</td>
+<td id="T_7b8f2_row5_col6" class="data row5 col6">0.206</td>
+<td id="T_7b8f2_row5_col7" class="data row5 col7">—</td>
+<td id="T_7b8f2_row5_col8" class="data row5 col8">0.392</td>
+<td id="T_7b8f2_row5_col9" class="data row5 col9">1.131</td>
+</tr>
+<tr class="odd">
+<th id="T_7b8f2_level1_row6" class="row_heading level1 row6" data-quarto-table-cell-role="th">10</th>
+<td id="T_7b8f2_row6_col0" class="data row6 col0">0.214</td>
+<td id="T_7b8f2_row6_col1" class="data row6 col1">0.246</td>
+<td id="T_7b8f2_row6_col2" class="data row6 col2">—</td>
+<td id="T_7b8f2_row6_col3" class="data row6 col3">—</td>
+<td id="T_7b8f2_row6_col4" class="data row6 col4">0.360</td>
+<td id="T_7b8f2_row6_col5" class="data row6 col5">0.207</td>
+<td id="T_7b8f2_row6_col6" class="data row6 col6">0.206</td>
+<td id="T_7b8f2_row6_col7" class="data row6 col7">—</td>
+<td id="T_7b8f2_row6_col8" class="data row6 col8">0.392</td>
+<td id="T_7b8f2_row6_col9" class="data row6 col9">1.131</td>
+</tr>
+<tr class="even">
+<th id="T_7b8f2_level1_row7" class="row_heading level1 row7" data-quarto-table-cell-role="th">20</th>
+<td id="T_7b8f2_row7_col0" class="data row7 col0">0.312</td>
+<td id="T_7b8f2_row7_col1" class="data row7 col1">0.317</td>
+<td id="T_7b8f2_row7_col2" class="data row7 col2">—</td>
+<td id="T_7b8f2_row7_col3" class="data row7 col3">—</td>
+<td id="T_7b8f2_row7_col4" class="data row7 col4">0.414</td>
+<td id="T_7b8f2_row7_col5" class="data row7 col5">0.279</td>
+<td id="T_7b8f2_row7_col6" class="data row7 col6">0.310</td>
+<td id="T_7b8f2_row7_col7" class="data row7 col7">—</td>
+<td id="T_7b8f2_row7_col8" class="data row7 col8">0.515</td>
+<td id="T_7b8f2_row7_col9" class="data row7 col9">1.175</td>
+</tr>
+<tr class="odd">
+<th rowspan="4" id="T_7b8f2_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">earnings</th>
+<th id="T_7b8f2_level1_row8" class="row_heading level1 row8" data-quarto-table-cell-role="th">1</th>
+<td id="T_7b8f2_row8_col0" class="data row8 col0">1.202</td>
+<td id="T_7b8f2_row8_col1" class="data row8 col1">1.163</td>
+<td id="T_7b8f2_row8_col2" class="data row8 col2">—</td>
+<td id="T_7b8f2_row8_col3" class="data row8 col3">—</td>
+<td id="T_7b8f2_row8_col4" class="data row8 col4">1.419</td>
+<td id="T_7b8f2_row8_col5" class="data row8 col5">—</td>
+<td id="T_7b8f2_row8_col6" class="data row8 col6">1.200</td>
+<td id="T_7b8f2_row8_col7" class="data row8 col7">—</td>
+<td id="T_7b8f2_row8_col8" class="data row8 col8">1.246</td>
+<td id="T_7b8f2_row8_col9" class="data row8 col9">2.386</td>
+</tr>
+<tr class="even">
+<th id="T_7b8f2_level1_row9" class="row_heading level1 row9" data-quarto-table-cell-role="th">5</th>
+<td id="T_7b8f2_row9_col0" class="data row9 col0">1.202</td>
+<td id="T_7b8f2_row9_col1" class="data row9 col1">1.163</td>
+<td id="T_7b8f2_row9_col2" class="data row9 col2">—</td>
+<td id="T_7b8f2_row9_col3" class="data row9 col3">—</td>
+<td id="T_7b8f2_row9_col4" class="data row9 col4">1.419</td>
+<td id="T_7b8f2_row9_col5" class="data row9 col5">—</td>
+<td id="T_7b8f2_row9_col6" class="data row9 col6">1.200</td>
+<td id="T_7b8f2_row9_col7" class="data row9 col7">—</td>
+<td id="T_7b8f2_row9_col8" class="data row9 col8">1.247</td>
+<td id="T_7b8f2_row9_col9" class="data row9 col9">2.386</td>
+</tr>
+<tr class="odd">
+<th id="T_7b8f2_level1_row10" class="row_heading level1 row10" data-quarto-table-cell-role="th">10</th>
+<td id="T_7b8f2_row10_col0" class="data row10 col0">1.202</td>
+<td id="T_7b8f2_row10_col1" class="data row10 col1">1.167</td>
+<td id="T_7b8f2_row10_col2" class="data row10 col2">—</td>
+<td id="T_7b8f2_row10_col3" class="data row10 col3">—</td>
+<td id="T_7b8f2_row10_col4" class="data row10 col4">1.443</td>
+<td id="T_7b8f2_row10_col5" class="data row10 col5">—</td>
+<td id="T_7b8f2_row10_col6" class="data row10 col6">1.200</td>
+<td id="T_7b8f2_row10_col7" class="data row10 col7">—</td>
+<td id="T_7b8f2_row10_col8" class="data row10 col8">1.245</td>
+<td id="T_7b8f2_row10_col9" class="data row10 col9">2.386</td>
+</tr>
+<tr class="even">
+<th id="T_7b8f2_level1_row11" class="row_heading level1 row11" data-quarto-table-cell-role="th">20</th>
+<td id="T_7b8f2_row11_col0" class="data row11 col0">1.405</td>
+<td id="T_7b8f2_row11_col1" class="data row11 col1">1.329</td>
+<td id="T_7b8f2_row11_col2" class="data row11 col2">—</td>
+<td id="T_7b8f2_row11_col3" class="data row11 col3">—</td>
+<td id="T_7b8f2_row11_col4" class="data row11 col4">1.650</td>
+<td id="T_7b8f2_row11_col5" class="data row11 col5">—</td>
+<td id="T_7b8f2_row11_col6" class="data row11 col6">1.404</td>
+<td id="T_7b8f2_row11_col7" class="data row11 col7">—</td>
+<td id="T_7b8f2_row11_col8" class="data row11 col8">1.255</td>
+<td id="T_7b8f2_row11_col9" class="data row11 col9">2.433</td>
+</tr>
+<tr class="odd">
+<th rowspan="4" id="T_7b8f2_level0_row12" class="row_heading level0 row12" data-quarto-table-cell-role="th">employment</th>
+<th id="T_7b8f2_level1_row12" class="row_heading level1 row12" data-quarto-table-cell-role="th">1</th>
+<td id="T_7b8f2_row12_col0" class="data row12 col0">0.558</td>
+<td id="T_7b8f2_row12_col1" class="data row12 col1">0.559</td>
+<td id="T_7b8f2_row12_col2" class="data row12 col2">—</td>
+<td id="T_7b8f2_row12_col3" class="data row12 col3">—</td>
+<td id="T_7b8f2_row12_col4" class="data row12 col4">0.694</td>
+<td id="T_7b8f2_row12_col5" class="data row12 col5">—</td>
+<td id="T_7b8f2_row12_col6" class="data row12 col6">0.556</td>
+<td id="T_7b8f2_row12_col7" class="data row12 col7">0.695</td>
+<td id="T_7b8f2_row12_col8" class="data row12 col8">1.067</td>
+<td id="T_7b8f2_row12_col9" class="data row12 col9">3.371</td>
+</tr>
+<tr class="even">
+<th id="T_7b8f2_level1_row13" class="row_heading level1 row13" data-quarto-table-cell-role="th">5</th>
+<td id="T_7b8f2_row13_col0" class="data row13 col0">0.558</td>
+<td id="T_7b8f2_row13_col1" class="data row13 col1">0.559</td>
+<td id="T_7b8f2_row13_col2" class="data row13 col2">—</td>
+<td id="T_7b8f2_row13_col3" class="data row13 col3">—</td>
+<td id="T_7b8f2_row13_col4" class="data row13 col4">0.691</td>
+<td id="T_7b8f2_row13_col5" class="data row13 col5">—</td>
+<td id="T_7b8f2_row13_col6" class="data row13 col6">0.556</td>
+<td id="T_7b8f2_row13_col7" class="data row13 col7">0.692</td>
+<td id="T_7b8f2_row13_col8" class="data row13 col8">1.068</td>
+<td id="T_7b8f2_row13_col9" class="data row13 col9">3.371</td>
+</tr>
+<tr class="odd">
+<th id="T_7b8f2_level1_row14" class="row_heading level1 row14" data-quarto-table-cell-role="th">10</th>
+<td id="T_7b8f2_row14_col0" class="data row14 col0">0.558</td>
+<td id="T_7b8f2_row14_col1" class="data row14 col1">0.560</td>
+<td id="T_7b8f2_row14_col2" class="data row14 col2">—</td>
+<td id="T_7b8f2_row14_col3" class="data row14 col3">—</td>
+<td id="T_7b8f2_row14_col4" class="data row14 col4">0.698</td>
+<td id="T_7b8f2_row14_col5" class="data row14 col5">—</td>
+<td id="T_7b8f2_row14_col6" class="data row14 col6">0.556</td>
+<td id="T_7b8f2_row14_col7" class="data row14 col7">0.693</td>
+<td id="T_7b8f2_row14_col8" class="data row14 col8">1.063</td>
+<td id="T_7b8f2_row14_col9" class="data row14 col9">3.371</td>
+</tr>
+<tr class="even">
+<th id="T_7b8f2_level1_row15" class="row_heading level1 row15" data-quarto-table-cell-role="th">20</th>
+<td id="T_7b8f2_row15_col0" class="data row15 col0">0.606</td>
+<td id="T_7b8f2_row15_col1" class="data row15 col1">0.639</td>
+<td id="T_7b8f2_row15_col2" class="data row15 col2">—</td>
+<td id="T_7b8f2_row15_col3" class="data row15 col3">—</td>
+<td id="T_7b8f2_row15_col4" class="data row15 col4">0.791</td>
+<td id="T_7b8f2_row15_col5" class="data row15 col5">—</td>
+<td id="T_7b8f2_row15_col6" class="data row15 col6">0.623</td>
+<td id="T_7b8f2_row15_col7" class="data row15 col7">0.743</td>
+<td id="T_7b8f2_row15_col8" class="data row15 col8">1.039</td>
+<td id="T_7b8f2_row15_col9" class="data row15 col9">3.310</td>
+</tr>
+<tr class="odd">
+<th rowspan="4" id="T_7b8f2_level0_row16" class="row_heading level0 row16" data-quarto-table-cell-role="th">headline_cpi</th>
+<th id="T_7b8f2_level1_row16" class="row_heading level1 row16" data-quarto-table-cell-role="th">1</th>
+<td id="T_7b8f2_row16_col0" class="data row16 col0">0.474</td>
+<td id="T_7b8f2_row16_col1" class="data row16 col1">0.452</td>
+<td id="T_7b8f2_row16_col2" class="data row16 col2">0.643</td>
+<td id="T_7b8f2_row16_col3" class="data row16 col3">—</td>
+<td id="T_7b8f2_row16_col4" class="data row16 col4">0.419</td>
+<td id="T_7b8f2_row16_col5" class="data row16 col5">—</td>
+<td id="T_7b8f2_row16_col6" class="data row16 col6">0.456</td>
+<td id="T_7b8f2_row16_col7" class="data row16 col7">0.443</td>
+<td id="T_7b8f2_row16_col8" class="data row16 col8">0.670</td>
+<td id="T_7b8f2_row16_col9" class="data row16 col9">2.233</td>
+</tr>
+<tr class="even">
+<th id="T_7b8f2_level1_row17" class="row_heading level1 row17" data-quarto-table-cell-role="th">5</th>
+<td id="T_7b8f2_row17_col0" class="data row17 col0">0.474</td>
+<td id="T_7b8f2_row17_col1" class="data row17 col1">0.452</td>
+<td id="T_7b8f2_row17_col2" class="data row17 col2">0.643</td>
+<td id="T_7b8f2_row17_col3" class="data row17 col3">—</td>
+<td id="T_7b8f2_row17_col4" class="data row17 col4">0.423</td>
+<td id="T_7b8f2_row17_col5" class="data row17 col5">—</td>
+<td id="T_7b8f2_row17_col6" class="data row17 col6">0.456</td>
+<td id="T_7b8f2_row17_col7" class="data row17 col7">0.460</td>
+<td id="T_7b8f2_row17_col8" class="data row17 col8">0.670</td>
+<td id="T_7b8f2_row17_col9" class="data row17 col9">2.233</td>
+</tr>
+<tr class="odd">
+<th id="T_7b8f2_level1_row18" class="row_heading level1 row18" data-quarto-table-cell-role="th">10</th>
+<td id="T_7b8f2_row18_col0" class="data row18 col0">0.474</td>
+<td id="T_7b8f2_row18_col1" class="data row18 col1">0.453</td>
+<td id="T_7b8f2_row18_col2" class="data row18 col2">0.643</td>
+<td id="T_7b8f2_row18_col3" class="data row18 col3">—</td>
+<td id="T_7b8f2_row18_col4" class="data row18 col4">0.426</td>
+<td id="T_7b8f2_row18_col5" class="data row18 col5">—</td>
+<td id="T_7b8f2_row18_col6" class="data row18 col6">0.456</td>
+<td id="T_7b8f2_row18_col7" class="data row18 col7">0.476</td>
+<td id="T_7b8f2_row18_col8" class="data row18 col8">0.670</td>
+<td id="T_7b8f2_row18_col9" class="data row18 col9">2.233</td>
+</tr>
+<tr class="even">
+<th id="T_7b8f2_level1_row19" class="row_heading level1 row19" data-quarto-table-cell-role="th">20</th>
+<td id="T_7b8f2_row19_col0" class="data row19 col0">0.662</td>
+<td id="T_7b8f2_row19_col1" class="data row19 col1">0.623</td>
+<td id="T_7b8f2_row19_col2" class="data row19 col2">0.781</td>
+<td id="T_7b8f2_row19_col3" class="data row19 col3">—</td>
+<td id="T_7b8f2_row19_col4" class="data row19 col4">0.595</td>
+<td id="T_7b8f2_row19_col5" class="data row19 col5">—</td>
+<td id="T_7b8f2_row19_col6" class="data row19 col6">0.649</td>
+<td id="T_7b8f2_row19_col7" class="data row19 col7">0.630</td>
+<td id="T_7b8f2_row19_col8" class="data row19 col8">0.796</td>
+<td id="T_7b8f2_row19_col9" class="data row19 col9">2.288</td>
+</tr>
+<tr class="odd">
+<th rowspan="6" id="T_7b8f2_level0_row20" class="row_heading level0 row20" data-quarto-table-cell-role="th">real_gdp</th>
+<th id="T_7b8f2_level1_row20" class="row_heading level1 row20" data-quarto-table-cell-role="th">1</th>
+<td id="T_7b8f2_row20_col0" class="data row20 col0">1.816</td>
+<td id="T_7b8f2_row20_col1" class="data row20 col1">2.298</td>
+<td id="T_7b8f2_row20_col2" class="data row20 col2">—</td>
+<td id="T_7b8f2_row20_col3" class="data row20 col3">2.803</td>
+<td id="T_7b8f2_row20_col4" class="data row20 col4">1.573</td>
+<td id="T_7b8f2_row20_col5" class="data row20 col5">—</td>
+<td id="T_7b8f2_row20_col6" class="data row20 col6">2.358</td>
+<td id="T_7b8f2_row20_col7" class="data row20 col7">2.378</td>
+<td id="T_7b8f2_row20_col8" class="data row20 col8">1.693</td>
+<td id="T_7b8f2_row20_col9" class="data row20 col9">2.470</td>
+</tr>
+<tr class="even">
+<th id="T_7b8f2_level1_row21" class="row_heading level1 row21" data-quarto-table-cell-role="th">7</th>
+<td id="T_7b8f2_row21_col0" class="data row21 col0">1.816</td>
+<td id="T_7b8f2_row21_col1" class="data row21 col1">2.298</td>
+<td id="T_7b8f2_row21_col2" class="data row21 col2">—</td>
+<td id="T_7b8f2_row21_col3" class="data row21 col3">2.778</td>
+<td id="T_7b8f2_row21_col4" class="data row21 col4">1.577</td>
+<td id="T_7b8f2_row21_col5" class="data row21 col5">—</td>
+<td id="T_7b8f2_row21_col6" class="data row21 col6">2.358</td>
+<td id="T_7b8f2_row21_col7" class="data row21 col7">2.389</td>
+<td id="T_7b8f2_row21_col8" class="data row21 col8">1.693</td>
+<td id="T_7b8f2_row21_col9" class="data row21 col9">2.470</td>
+</tr>
+<tr class="odd">
+<th id="T_7b8f2_level1_row22" class="row_heading level1 row22" data-quarto-table-cell-role="th">15</th>
+<td id="T_7b8f2_row22_col0" class="data row22 col0">1.816</td>
+<td id="T_7b8f2_row22_col1" class="data row22 col1">2.280</td>
+<td id="T_7b8f2_row22_col2" class="data row22 col2">—</td>
+<td id="T_7b8f2_row22_col3" class="data row22 col3">2.865</td>
+<td id="T_7b8f2_row22_col4" class="data row22 col4">1.587</td>
+<td id="T_7b8f2_row22_col5" class="data row22 col5">—</td>
+<td id="T_7b8f2_row22_col6" class="data row22 col6">2.358</td>
+<td id="T_7b8f2_row22_col7" class="data row22 col7">2.373</td>
+<td id="T_7b8f2_row22_col8" class="data row22 col8">1.752</td>
+<td id="T_7b8f2_row22_col9" class="data row22 col9">2.470</td>
+</tr>
+<tr class="even">
+<th id="T_7b8f2_level1_row23" class="row_heading level1 row23" data-quarto-table-cell-role="th">30</th>
+<td id="T_7b8f2_row23_col0" class="data row23 col0">1.816</td>
+<td id="T_7b8f2_row23_col1" class="data row23 col1">2.423</td>
+<td id="T_7b8f2_row23_col2" class="data row23 col2">—</td>
+<td id="T_7b8f2_row23_col3" class="data row23 col3">3.497</td>
+<td id="T_7b8f2_row23_col4" class="data row23 col4">1.547</td>
+<td id="T_7b8f2_row23_col5" class="data row23 col5">—</td>
+<td id="T_7b8f2_row23_col6" class="data row23 col6">2.358</td>
+<td id="T_7b8f2_row23_col7" class="data row23 col7">2.294</td>
+<td id="T_7b8f2_row23_col8" class="data row23 col8">1.769</td>
+<td id="T_7b8f2_row23_col9" class="data row23 col9">2.470</td>
+</tr>
+<tr class="odd">
+<th id="T_7b8f2_level1_row24" class="row_heading level1 row24" data-quarto-table-cell-role="th">45</th>
+<td id="T_7b8f2_row24_col0" class="data row24 col0">1.816</td>
+<td id="T_7b8f2_row24_col1" class="data row24 col1">2.895</td>
+<td id="T_7b8f2_row24_col2" class="data row24 col2">—</td>
+<td id="T_7b8f2_row24_col3" class="data row24 col3">3.423</td>
+<td id="T_7b8f2_row24_col4" class="data row24 col4">1.447</td>
+<td id="T_7b8f2_row24_col5" class="data row24 col5">—</td>
+<td id="T_7b8f2_row24_col6" class="data row24 col6">2.358</td>
+<td id="T_7b8f2_row24_col7" class="data row24 col7">2.268</td>
+<td id="T_7b8f2_row24_col8" class="data row24 col8">1.747</td>
+<td id="T_7b8f2_row24_col9" class="data row24 col9">2.470</td>
+</tr>
+<tr class="even">
+<th id="T_7b8f2_level1_row25" class="row_heading level1 row25" data-quarto-table-cell-role="th">60</th>
+<td id="T_7b8f2_row25_col0" class="data row25 col0">1.816</td>
+<td id="T_7b8f2_row25_col1" class="data row25 col1">3.094</td>
+<td id="T_7b8f2_row25_col2" class="data row25 col2">—</td>
+<td id="T_7b8f2_row25_col3" class="data row25 col3">3.661</td>
+<td id="T_7b8f2_row25_col4" class="data row25 col4">1.802</td>
+<td id="T_7b8f2_row25_col5" class="data row25 col5">—</td>
+<td id="T_7b8f2_row25_col6" class="data row25 col6">2.358</td>
+<td id="T_7b8f2_row25_col7" class="data row25 col7">2.245</td>
+<td id="T_7b8f2_row25_col8" class="data row25 col8">1.742</td>
+<td id="T_7b8f2_row25_col9" class="data row25 col9">2.470</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<style type="text/css">
+</style>
+
+<div id="T_1a31f" class="quarto-float quarto-figure quarto-figure-center anchored" data-quarto-postprocess="true">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="T_1a31f-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;25.2: Last historical evaluation; one business day before release
+</figcaption>
+<div aria-describedby="T_1a31f-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table id="T_1a31f" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th class="blank" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="index_name level0" data-quarto-table-cell-role="th">model</th>
+<th id="T_1a31f_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">AR(1)</th>
+<th id="T_1a31f_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">Adaptive average</th>
+<th id="T_1a31f_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">CPI components</th>
+<th id="T_1a31f_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">Component bridge</th>
+<th id="T_1a31f_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">Grouped DFM</th>
+<th id="T_1a31f_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">Inflation bridge</th>
+<th id="T_1a31f_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">Last release</th>
+<th id="T_1a31f_level0_col7" class="col_heading level0 col7" data-quarto-table-cell-role="th">MIDAS</th>
+<th id="T_1a31f_level0_col8" class="col_heading level0 col8" data-quarto-table-cell-role="th">Minnesota BVAR</th>
+<th id="T_1a31f_level0_col9" class="col_heading level0 col9" data-quarto-table-cell-role="th">Rolling mean</th>
+</tr>
+<tr class="even">
+<th class="index_name level0" data-quarto-table-cell-role="th">target</th>
+<th class="index_name level1" data-quarto-table-cell-role="th">observation_date</th>
+<th class="index_name level2" data-quarto-table-cell-role="th">evaluation_date</th>
+<th class="blank col0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col1" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col2" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col3" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col4" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col5" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col6" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col7" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col8" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col9" data-quarto-table-cell-role="th">&nbsp;</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th id="T_1a31f_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">core_median</th>
+<th id="T_1a31f_level1_row0" class="row_heading level1 row0" data-quarto-table-cell-role="th">2026-03-01 00:00:00</th>
+<th id="T_1a31f_level2_row0" class="row_heading level2 row0" data-quarto-table-cell-role="th">2026-04-17 00:00:00</th>
+<td id="T_1a31f_row0_col0" class="data row0 col0">2.309</td>
+<td id="T_1a31f_row0_col1" class="data row0 col1">2.322</td>
+<td id="T_1a31f_row0_col2" class="data row0 col2">—</td>
+<td id="T_1a31f_row0_col3" class="data row0 col3">—</td>
+<td id="T_1a31f_row0_col4" class="data row0 col4">2.350</td>
+<td id="T_1a31f_row0_col5" class="data row0 col5">2.282</td>
+<td id="T_1a31f_row0_col6" class="data row0 col6">2.300</td>
+<td id="T_1a31f_row0_col7" class="data row0 col7">—</td>
+<td id="T_1a31f_row0_col8" class="data row0 col8">2.373</td>
+<td id="T_1a31f_row0_col9" class="data row0 col9">2.729</td>
+</tr>
+<tr class="even">
+<th id="T_1a31f_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">core_trim</th>
+<th id="T_1a31f_level1_row1" class="row_heading level1 row1" data-quarto-table-cell-role="th">2026-03-01 00:00:00</th>
+<th id="T_1a31f_level2_row1" class="row_heading level2 row1" data-quarto-table-cell-role="th">2026-04-17 00:00:00</th>
+<td id="T_1a31f_row1_col0" class="data row1 col0">2.312</td>
+<td id="T_1a31f_row1_col1" class="data row1 col1">2.308</td>
+<td id="T_1a31f_row1_col2" class="data row1 col2">—</td>
+<td id="T_1a31f_row1_col3" class="data row1 col3">—</td>
+<td id="T_1a31f_row1_col4" class="data row1 col4">2.312</td>
+<td id="T_1a31f_row1_col5" class="data row1 col5">2.281</td>
+<td id="T_1a31f_row1_col6" class="data row1 col6">2.300</td>
+<td id="T_1a31f_row1_col7" class="data row1 col7">—</td>
+<td id="T_1a31f_row1_col8" class="data row1 col8">2.338</td>
+<td id="T_1a31f_row1_col9" class="data row1 col9">2.788</td>
+</tr>
+<tr class="odd">
+<th id="T_1a31f_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">earnings</th>
+<th id="T_1a31f_level1_row2" class="row_heading level1 row2" data-quarto-table-cell-role="th">2026-05-01 00:00:00</th>
+<th id="T_1a31f_level2_row2" class="row_heading level2 row2" data-quarto-table-cell-role="th">2026-07-29 00:00:00</th>
+<td id="T_1a31f_row2_col0" class="data row2 col0">3.771</td>
+<td id="T_1a31f_row2_col1" class="data row2 col1">3.746</td>
+<td id="T_1a31f_row2_col2" class="data row2 col2">—</td>
+<td id="T_1a31f_row2_col3" class="data row2 col3">—</td>
+<td id="T_1a31f_row2_col4" class="data row2 col4">3.720</td>
+<td id="T_1a31f_row2_col5" class="data row2 col5">—</td>
+<td id="T_1a31f_row2_col6" class="data row2 col6">3.850</td>
+<td id="T_1a31f_row2_col7" class="data row2 col7">—</td>
+<td id="T_1a31f_row2_col8" class="data row2 col8">3.632</td>
+<td id="T_1a31f_row2_col9" class="data row2 col9">3.915</td>
+</tr>
+<tr class="even">
+<th id="T_1a31f_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">employment</th>
+<th id="T_1a31f_level1_row3" class="row_heading level1 row3" data-quarto-table-cell-role="th">2026-05-01 00:00:00</th>
+<th id="T_1a31f_level2_row3" class="row_heading level2 row3" data-quarto-table-cell-role="th">2026-07-29 00:00:00</th>
+<td id="T_1a31f_row3_col0" class="data row3 col0">0.717</td>
+<td id="T_1a31f_row3_col1" class="data row3 col1">0.866</td>
+<td id="T_1a31f_row3_col2" class="data row3 col2">—</td>
+<td id="T_1a31f_row3_col3" class="data row3 col3">—</td>
+<td id="T_1a31f_row3_col4" class="data row3 col4">1.162</td>
+<td id="T_1a31f_row3_col5" class="data row3 col5">—</td>
+<td id="T_1a31f_row3_col6" class="data row3 col6">0.654</td>
+<td id="T_1a31f_row3_col7" class="data row3 col7">0.893</td>
+<td id="T_1a31f_row3_col8" class="data row3 col8">0.907</td>
+<td id="T_1a31f_row3_col9" class="data row3 col9">0.444</td>
+</tr>
+<tr class="odd">
+<th id="T_1a31f_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">headline_cpi</th>
+<th id="T_1a31f_level1_row4" class="row_heading level1 row4" data-quarto-table-cell-role="th">2026-03-01 00:00:00</th>
+<th id="T_1a31f_level2_row4" class="row_heading level2 row4" data-quarto-table-cell-role="th">2026-04-17 00:00:00</th>
+<td id="T_1a31f_row4_col0" class="data row4 col0">1.799</td>
+<td id="T_1a31f_row4_col1" class="data row4 col1">2.148</td>
+<td id="T_1a31f_row4_col2" class="data row4 col2">2.672</td>
+<td id="T_1a31f_row4_col3" class="data row4 col3">—</td>
+<td id="T_1a31f_row4_col4" class="data row4 col4">1.931</td>
+<td id="T_1a31f_row4_col5" class="data row4 col5">—</td>
+<td id="T_1a31f_row4_col6" class="data row4 col6">1.779</td>
+<td id="T_1a31f_row4_col7" class="data row4 col7">2.580</td>
+<td id="T_1a31f_row4_col8" class="data row4 col8">2.134</td>
+<td id="T_1a31f_row4_col9" class="data row4 col9">2.164</td>
+</tr>
+<tr class="even">
+<th id="T_1a31f_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">real_gdp</th>
+<th id="T_1a31f_level1_row5" class="row_heading level1 row5" data-quarto-table-cell-role="th">2026-01-01 00:00:00</th>
+<th id="T_1a31f_level2_row5" class="row_heading level2 row5" data-quarto-table-cell-role="th">2026-05-28 00:00:00</th>
+<td id="T_1a31f_row5_col0" class="data row5 col0">2.366</td>
+<td id="T_1a31f_row5_col1" class="data row5 col1">1.567</td>
+<td id="T_1a31f_row5_col2" class="data row5 col2">—</td>
+<td id="T_1a31f_row5_col3" class="data row5 col3">0.318</td>
+<td id="T_1a31f_row5_col4" class="data row5 col4">1.923</td>
+<td id="T_1a31f_row5_col5" class="data row5 col5">—</td>
+<td id="T_1a31f_row5_col6" class="data row5 col6">-0.604</td>
+<td id="T_1a31f_row5_col7" class="data row5 col7">1.825</td>
+<td id="T_1a31f_row5_col8" class="data row5 col8">1.504</td>
+<td id="T_1a31f_row5_col9" class="data row5 col9">1.080</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">estimate (prev)</th>
+<th data-quarto-table-cell-role="th">impact of revisions</th>
+<th data-quarto-table-cell-role="th">impact of news</th>
+<th data-quarto-table-cell-role="th">total impact</th>
+<th data-quarto-table-cell-role="th">estimate (new)</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">impact date</th>
+<th data-quarto-table-cell-role="th">impacted variable</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">2026-09</th>
+<th data-quarto-table-cell-role="th">real_gdp</th>
+<td>2.1561</td>
+<td>0.1231</td>
+<td>0.6846</td>
+<td>0.8077</td>
+<td>2.9638</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">n</th>
+<th data-quarto-table-cell-role="th">RMSE</th>
+<th data-quarto-table-cell-role="th">MAE</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">comparison</th>
+<th data-quarto-table-cell-role="th">model</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th rowspan="3" data-quarto-table-cell-role="th" data-valign="top">Policy mean, 3m</th>
+<th data-quarto-table-cell-role="th">BVAR</th>
+<td>75</td>
+<td>0.985</td>
+<td>0.777</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">Policy rule</th>
+<td>75</td>
+<td>1.752</td>
+<td>0.835</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">Random walk</th>
+<td>75</td>
+<td>0.861</td>
+<td>0.554</td>
+</tr>
+<tr class="even">
+<th rowspan="3" data-quarto-table-cell-role="th" data-valign="top">Policy mean, 6m</th>
+<th data-quarto-table-cell-role="th">BVAR</th>
+<td>72</td>
+<td>1.380</td>
+<td>1.057</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">Policy rule</th>
+<td>72</td>
+<td>3.028</td>
+<td>1.625</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">Random walk</th>
+<td>72</td>
+<td>1.288</td>
+<td>0.889</td>
+</tr>
+<tr class="odd">
+<th rowspan="3" data-quarto-table-cell-role="th" data-valign="top">Policy mean, 12m</th>
+<th data-quarto-table-cell-role="th">BVAR</th>
+<td>66</td>
+<td>2.069</td>
+<td>1.500</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">Policy rule</th>
+<td>66</td>
+<td>2.444</td>
+<td>1.808</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">Random walk</th>
+<td>66</td>
+<td>2.055</td>
+<td>1.597</td>
+</tr>
+<tr class="even">
+<th rowspan="2" data-quarto-table-cell-role="th" data-valign="top">Three-month compounded CORRA</th>
+<th data-quarto-table-cell-role="th">BVAR</th>
+<td>25</td>
+<td>0.941</td>
+<td>0.758</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">Random walk</th>
+<td>25</td>
+<td>0.403</td>
+<td>0.234</td>
+</tr>
+<tr class="even">
+<th rowspan="2" data-quarto-table-cell-role="th" data-valign="top">Year-end CPI; MPS public-release comparison</th>
+<th data-quarto-table-cell-role="th">MPS median</th>
+<td>14</td>
+<td>0.400</td>
+<td>0.365</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">BVAR</th>
+<td>14</td>
+<td>0.442</td>
+<td>0.355</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<style type="text/css">
+</style>
+
+<div id="T_c703f" class="quarto-float quarto-figure quarto-figure-center anchored" data-quarto-postprocess="true">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="T_c703f-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;25.3: BVAR densities: all available origins; yield response: close-to-close
+</figcaption>
+<div aria-describedby="T_c703f-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table id="T_c703f" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th class="blank" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th id="T_c703f_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">NLL</th>
+<th id="T_c703f_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">Gaussian CRPS</th>
+<th id="T_c703f_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">80% coverage</th>
+<th id="T_c703f_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">interval width</th>
+<th id="T_c703f_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">beta</th>
+<th id="T_c703f_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">se</th>
+<th id="T_c703f_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">p_value</th>
+<th id="T_c703f_level0_col7" class="col_heading level0 col7" data-quarto-table-cell-role="th">events</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th rowspan="6" id="T_c703f_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">Density</th>
+<th id="T_c703f_level1_row0" class="row_heading level1 row0" data-quarto-table-cell-role="th">core_median</th>
+<td id="T_c703f_row0_col0" class="data row0 col0">1.1880</td>
+<td id="T_c703f_row0_col1" class="data row0 col1">0.2421</td>
+<td id="T_c703f_row0_col2" class="data row0 col2">0.5498</td>
+<td id="T_c703f_row0_col3" class="data row0 col3">0.5906</td>
+<td id="T_c703f_row0_col4" class="data row0 col4">—</td>
+<td id="T_c703f_row0_col5" class="data row0 col5">—</td>
+<td id="T_c703f_row0_col6" class="data row0 col6">—</td>
+<td id="T_c703f_row0_col7" class="data row0 col7">—</td>
+</tr>
+<tr class="even">
+<th id="T_c703f_level1_row1" class="row_heading level1 row1" data-quarto-table-cell-role="th">core_trim</th>
+<td id="T_c703f_row1_col0" class="data row1 col0">0.7958</td>
+<td id="T_c703f_row1_col1" class="data row1 col1">0.2419</td>
+<td id="T_c703f_row1_col2" class="data row1 col2">0.6495</td>
+<td id="T_c703f_row1_col3" class="data row1 col3">0.7982</td>
+<td id="T_c703f_row1_col4" class="data row1 col4">—</td>
+<td id="T_c703f_row1_col5" class="data row1 col5">—</td>
+<td id="T_c703f_row1_col6" class="data row1 col6">—</td>
+<td id="T_c703f_row1_col7" class="data row1 col7">—</td>
+</tr>
+<tr class="odd">
+<th id="T_c703f_level1_row2" class="row_heading level1 row2" data-quarto-table-cell-role="th">earnings</th>
+<td id="T_c703f_row2_col0" class="data row2 col0">1.6396</td>
+<td id="T_c703f_row2_col1" class="data row2 col1">0.6356</td>
+<td id="T_c703f_row2_col2" class="data row2 col2">0.8914</td>
+<td id="T_c703f_row2_col3" class="data row2 col3">3.0499</td>
+<td id="T_c703f_row2_col4" class="data row2 col4">—</td>
+<td id="T_c703f_row2_col5" class="data row2 col5">—</td>
+<td id="T_c703f_row2_col6" class="data row2 col6">—</td>
+<td id="T_c703f_row2_col7" class="data row2 col7">—</td>
+</tr>
+<tr class="even">
+<th id="T_c703f_level1_row3" class="row_heading level1 row3" data-quarto-table-cell-role="th">employment</th>
+<td id="T_c703f_row3_col0" class="data row3 col0">4.6103</td>
+<td id="T_c703f_row3_col1" class="data row3 col1">1.5629</td>
+<td id="T_c703f_row3_col2" class="data row3 col2">0.8947</td>
+<td id="T_c703f_row3_col3" class="data row3 col3">7.4700</td>
+<td id="T_c703f_row3_col4" class="data row3 col4">—</td>
+<td id="T_c703f_row3_col5" class="data row3 col5">—</td>
+<td id="T_c703f_row3_col6" class="data row3 col6">—</td>
+<td id="T_c703f_row3_col7" class="data row3 col7">—</td>
+</tr>
+<tr class="odd">
+<th id="T_c703f_level1_row4" class="row_heading level1 row4" data-quarto-table-cell-role="th">headline_cpi</th>
+<td id="T_c703f_row4_col0" class="data row4 col0">1.5271</td>
+<td id="T_c703f_row4_col1" class="data row4 col1">0.4959</td>
+<td id="T_c703f_row4_col2" class="data row4 col2">0.7457</td>
+<td id="T_c703f_row4_col3" class="data row4 col3">1.8056</td>
+<td id="T_c703f_row4_col4" class="data row4 col4">—</td>
+<td id="T_c703f_row4_col5" class="data row4 col5">—</td>
+<td id="T_c703f_row4_col6" class="data row4 col6">—</td>
+<td id="T_c703f_row4_col7" class="data row4 col7">—</td>
+</tr>
+<tr class="even">
+<th id="T_c703f_level1_row5" class="row_heading level1 row5" data-quarto-table-cell-role="th">real_gdp</th>
+<td id="T_c703f_row5_col0" class="data row5 col0">16.0671</td>
+<td id="T_c703f_row5_col1" class="data row5 col1">6.1154</td>
+<td id="T_c703f_row5_col2" class="data row5 col2">0.8859</td>
+<td id="T_c703f_row5_col3" class="data row5 col3">23.8807</td>
+<td id="T_c703f_row5_col4" class="data row5 col4">—</td>
+<td id="T_c703f_row5_col5" class="data row5 col5">—</td>
+<td id="T_c703f_row5_col6" class="data row5 col6">—</td>
+<td id="T_c703f_row5_col7" class="data row5 col7">—</td>
+</tr>
+<tr class="odd">
+<th rowspan="3" id="T_c703f_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">2Y yield response</th>
+<th id="T_c703f_level1_row6" class="row_heading level1 row6" data-quarto-table-cell-role="th">CPI / headline_cpi</th>
+<td id="T_c703f_row6_col0" class="data row6 col0">—</td>
+<td id="T_c703f_row6_col1" class="data row6 col1">—</td>
+<td id="T_c703f_row6_col2" class="data row6 col2">—</td>
+<td id="T_c703f_row6_col3" class="data row6 col3">—</td>
+<td id="T_c703f_row6_col4" class="data row6 col4">0.7170</td>
+<td id="T_c703f_row6_col5" class="data row6 col5">0.8172</td>
+<td id="T_c703f_row6_col6" class="data row6 col6">0.3803</td>
+<td id="T_c703f_row6_col7" class="data row6 col7">64.0000</td>
+</tr>
+<tr class="even">
+<th id="T_c703f_level1_row7" class="row_heading level1 row7" data-quarto-table-cell-role="th">SEPH bundle / employment</th>
+<td id="T_c703f_row7_col0" class="data row7 col0">—</td>
+<td id="T_c703f_row7_col1" class="data row7 col1">—</td>
+<td id="T_c703f_row7_col2" class="data row7 col2">—</td>
+<td id="T_c703f_row7_col3" class="data row7 col3">—</td>
+<td id="T_c703f_row7_col4" class="data row7 col4">-0.0209</td>
+<td id="T_c703f_row7_col5" class="data row7 col5">1.9530</td>
+<td id="T_c703f_row7_col6" class="data row7 col6">0.9915</td>
+<td id="T_c703f_row7_col7" class="data row7 col7">30.0000</td>
+</tr>
+<tr class="odd">
+<th id="T_c703f_level1_row8" class="row_heading level1 row8" data-quarto-table-cell-role="th">SEPH bundle / earnings</th>
+<td id="T_c703f_row8_col0" class="data row8 col0">—</td>
+<td id="T_c703f_row8_col1" class="data row8 col1">—</td>
+<td id="T_c703f_row8_col2" class="data row8 col2">—</td>
+<td id="T_c703f_row8_col3" class="data row8 col3">—</td>
+<td id="T_c703f_row8_col4" class="data row8 col4">0.4115</td>
+<td id="T_c703f_row8_col5" class="data row8 col5">1.5774</td>
+<td id="T_c703f_row8_col6" class="data row8 col6">0.7942</td>
+<td id="T_c703f_row8_col7" class="data row8 col7">30.0000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="23_macro_nowcasting_files/figure-html/cell-40-output-7.png" class="lightbox" data-gallery="quarto-lightbox-gallery-26"><img src="23_macro_nowcasting_files/figure-html/cell-40-output-7.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+</div>
 
 
 
@@ -8895,16 +10348,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
     function toggleCodeHandler(show) {
       return function(e) {
-        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
-        for (let i=0; i<cellDetails.length; i++) {
-          const details = cellDetails[i];
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
           if (show) {
             details.open = true;
           } else {
             details.removeAttribute("open");
           }
         }
-        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
         const fromCls = show ? "hidden" : "unhidden";
         const toCls = show ? "unhidden" : "hidden";
         for (let i=0; i<cellCodeDivs.length; i++) {

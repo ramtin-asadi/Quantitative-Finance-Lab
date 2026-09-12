@@ -2,23 +2,17 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>22. Corporate Credit Risk, Market Pricing and Structured Credit – Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
+code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: 1.5em;}
-div.column{flex: auto;}
-@media screen {
-div.columns{gap: min(4vw, 1.5em);}
-div.column{overflow-x: auto;}
-}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -75,14 +69,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../notebooks/21_fundamental_analysis.html" rel="prev">
 <script src="../site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="../site_libs/quarto-html/anchor.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-675469a854bf6193ac016c33f4a5ba11.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../site_libs/bootstrap/bootstrap-084988aa8524b7526ff0ffa8f0afd15c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script src="../site_libs/quarto-contrib/glightbox/glightbox.min.js"></script>
 <link href="../site_libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
 <link href="../site_libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
@@ -4231,6 +4226,1123 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<div id="library-repeat-credit" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-09-12T15:45:21.055961Z&quot;,&quot;iopub.status.busy&quot;:&quot;2026-09-12T15:45:21.052436Z&quot;,&quot;iopub.status.idle&quot;:&quot;2026-09-12T15:48:24.228875Z&quot;,&quot;shell.execute_reply&quot;:&quot;2026-09-12T15:48:24.227876Z&quot;}}" data-tags="[&quot;library-repeat&quot;]" data-execution_count="1">
+<details class="code-fold">
+<summary>Show code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> IPython.display <span class="im">import</span> display</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> cycler <span class="im">import</span> cycler</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.common.cache <span class="im">import</span> cache_key</span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.credit <span class="im">import</span> events, features, models, structural, curves, pricing, portfolio, structured, market</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.dataio <span class="im">import</span> read_equity_history, read_sec_filings, read_credit_facts</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.dataio.credit <span class="im">import</span> read_credit_market, read_structured_credit</span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.dataio.rates <span class="im">import</span> read_credit_curves</span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.dataio.fundamentals <span class="im">import</span> read_statement_values</span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.fundamentals <span class="im">import</span> (classify_duration_facts, monthly_statement_values,</span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>                                     safe_ratio, ohlson_score, zmijewski_score)</span>
+<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.fixed_income.discounting <span class="im">import</span> discount_from_zero</span>
+<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.ml.classifiers <span class="im">import</span> probability_scores</span>
+<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.numerics.copulas <span class="im">import</span> gaussian_copula, student_t_copula</span>
+<span id="cb41-19"><a href="#cb41-19" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.portfolio.covariance <span class="im">import</span> oas_covariance, ledoit_wolf_covariance</span>
+<span id="cb41-20"><a href="#cb41-20" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> quantfinlab.plotting <span class="im">import</span> credit <span class="im">as</span> credit_plots</span>
+<span id="cb41-21"><a href="#cb41-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-22"><a href="#cb41-22" aria-hidden="true" tabindex="-1"></a>palette <span class="op">=</span> [<span class="st">"#069AF3"</span>, <span class="st">"#FE420F"</span>, <span class="st">"#00008B"</span>, <span class="st">"#008080"</span>, <span class="st">"#CC79A7"</span>, <span class="st">"#9614fa"</span>,</span>
+<span id="cb41-23"><a href="#cb41-23" aria-hidden="true" tabindex="-1"></a>           <span class="st">"#DC143C"</span>, <span class="st">"#7BC8F6"</span>, <span class="st">"#0072B2"</span>, <span class="st">"#04D8B2"</span>, <span class="st">"#800080"</span>, <span class="st">"#FF8072"</span>]</span>
+<span id="cb41-24"><a href="#cb41-24" aria-hidden="true" tabindex="-1"></a>plt.rcParams[<span class="st">"axes.prop_cycle"</span>] <span class="op">=</span> cycler(color<span class="op">=</span>palette)</span>
+<span id="cb41-25"><a href="#cb41-25" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({<span class="st">"figure.figsize"</span>: (<span class="dv">6</span>, <span class="dv">3</span>), <span class="st">"figure.dpi"</span>: <span class="dv">200</span>, <span class="st">"savefig.dpi"</span>: <span class="dv">300</span>,</span>
+<span id="cb41-26"><a href="#cb41-26" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"axes.grid"</span>: <span class="va">True</span>, <span class="st">"grid.alpha"</span>: <span class="fl">.20</span>, <span class="st">"axes.spines.top"</span>: <span class="va">False</span>,</span>
+<span id="cb41-27"><a href="#cb41-27" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"axes.spines.right"</span>: <span class="va">False</span>, <span class="st">"axes.titlesize"</span>: <span class="dv">12</span>, <span class="st">"axes.labelsize"</span>: <span class="dv">12</span>,</span>
+<span id="cb41-28"><a href="#cb41-28" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"xtick.labelsize"</span>: <span class="dv">9</span>, <span class="st">"ytick.labelsize"</span>: <span class="dv">9</span>, <span class="st">"legend.fontsize"</span>: <span class="dv">7</span>})</span>
+<span id="cb41-29"><a href="#cb41-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-30"><a href="#cb41-30" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> Path(<span class="st">"../data"</span>)</span>
+<span id="cb41-31"><a href="#cb41-31" aria-hidden="true" tabindex="-1"></a>start <span class="op">=</span> pd.Timestamp(<span class="st">"2012-01-01"</span>)</span>
+<span id="cb41-32"><a href="#cb41-32" aria-hidden="true" tabindex="-1"></a>oos <span class="op">=</span> pd.Timestamp(<span class="st">"2019-01-01"</span>)</span>
+<span id="cb41-33"><a href="#cb41-33" aria-hidden="true" tabindex="-1"></a>horizons <span class="op">=</span> (<span class="dv">3</span>, <span class="dv">6</span>, <span class="dv">12</span>, <span class="dv">24</span>)</span>
+<span id="cb41-34"><a href="#cb41-34" aria-hidden="true" tabindex="-1"></a>R <span class="op">=</span> <span class="fl">0.40</span></span>
+<span id="cb41-35"><a href="#cb41-35" aria-hidden="true" tabindex="-1"></a>key <span class="op">=</span> cache_key([data <span class="op">/</span> <span class="st">"sec_credit.parquet"</span>],</span>
+<span id="cb41-36"><a href="#cb41-36" aria-hidden="true" tabindex="-1"></a>                 {<span class="st">"calculation"</span>: <span class="st">"credit-library-1"</span>, <span class="st">"start"</span>: start, <span class="st">"oos"</span>: oos,</span>
+<span id="cb41-37"><a href="#cb41-37" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"horizons"</span>: horizons, <span class="st">"seed"</span>: <span class="dv">22</span>, <span class="st">"concepts"</span>: features.credit_concepts})</span>
+<span id="cb41-38"><a href="#cb41-38" aria-hidden="true" tabindex="-1"></a>cache <span class="op">=</span> Path(<span class="st">"../workspace/library_repeat/cache"</span>) <span class="op">/</span> key</span>
+<span id="cb41-39"><a href="#cb41-39" aria-hidden="true" tabindex="-1"></a>cache.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb41-40"><a href="#cb41-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-41"><a href="#cb41-41" aria-hidden="true" tabindex="-1"></a>filings <span class="op">=</span> read_sec_filings(data <span class="op">/</span> <span class="st">"sec_credit.parquet"</span>)</span>
+<span id="cb41-42"><a href="#cb41-42" aria-hidden="true" tabindex="-1"></a>history <span class="op">=</span> events.risk_set(filings, start<span class="op">=</span>start)</span>
+<span id="cb41-43"><a href="#cb41-43" aria-hidden="true" tabindex="-1"></a>last <span class="op">=</span> filings[<span class="st">"accepted_at"</span>].<span class="bu">max</span>().to_period(<span class="st">"M"</span>).to_timestamp(<span class="st">"M"</span>)</span>
+<span id="cb41-44"><a href="#cb41-44" aria-hidden="true" tabindex="-1"></a>dates <span class="op">=</span> pd.date_range(start <span class="op">+</span> pd.offsets.MonthEnd(<span class="dv">0</span>), last, freq<span class="op">=</span><span class="st">"ME"</span>)</span>
+<span id="cb41-45"><a href="#cb41-45" aria-hidden="true" tabindex="-1"></a>months <span class="op">=</span> events.issuer_months(history, dates, statements<span class="op">=</span><span class="va">True</span>)[[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>]]</span>
+<span id="cb41-46"><a href="#cb41-46" aria-hidden="true" tabindex="-1"></a>concepts <span class="op">=</span> [concept <span class="cf">for</span> section <span class="kw">in</span> features.credit_concepts.values()</span>
+<span id="cb41-47"><a href="#cb41-47" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> alternatives <span class="kw">in</span> section.values() <span class="cf">for</span> concept <span class="kw">in</span> alternatives]</span>
+<span id="cb41-48"><a href="#cb41-48" aria-hidden="true" tabindex="-1"></a>statements <span class="op">=</span> []</span>
+<span id="cb41-49"><a href="#cb41-49" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> first <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, <span class="bu">len</span>(history), <span class="dv">1000</span>):</span>
+<span id="cb41-50"><a href="#cb41-50" aria-hidden="true" tabindex="-1"></a>    ciks <span class="op">=</span> history.iloc[first:first <span class="op">+</span> <span class="dv">1000</span>][<span class="st">"cik"</span>]</span>
+<span id="cb41-51"><a href="#cb41-51" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> cache <span class="op">/</span> <span class="ss">f"statements_</span><span class="sc">{</span>first<span class="sc">}</span><span class="ss">.parquet"</span></span>
+<span id="cb41-52"><a href="#cb41-52" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> path.exists():</span>
+<span id="cb41-53"><a href="#cb41-53" aria-hidden="true" tabindex="-1"></a>        values <span class="op">=</span> read_statement_values(path, instant_fields<span class="op">=</span>features.credit_concepts[<span class="st">"instant"</span>])</span>
+<span id="cb41-54"><a href="#cb41-54" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb41-55"><a href="#cb41-55" aria-hidden="true" tabindex="-1"></a>        facts <span class="op">=</span> read_credit_facts(data <span class="op">/</span> <span class="st">"sec_credit.parquet"</span>, ciks<span class="op">=</span>ciks, concepts<span class="op">=</span>concepts)</span>
+<span id="cb41-56"><a href="#cb41-56" aria-hidden="true" tabindex="-1"></a>        facts <span class="op">=</span> classify_duration_facts(facts, concepts<span class="op">=</span>features.credit_concepts)</span>
+<span id="cb41-57"><a href="#cb41-57" aria-hidden="true" tabindex="-1"></a>        values <span class="op">=</span> monthly_statement_values(</span>
+<span id="cb41-58"><a href="#cb41-58" aria-hidden="true" tabindex="-1"></a>            facts, months[months[<span class="st">"cik"</span>].isin(ciks)], availability_col<span class="op">=</span><span class="st">"accepted_at"</span>)</span>
+<span id="cb41-59"><a href="#cb41-59" aria-hidden="true" tabindex="-1"></a>        keep <span class="op">=</span> [name <span class="cf">for</span> name <span class="kw">in</span> values <span class="cf">if</span> name <span class="kw">in</span> {<span class="st">"cik"</span>, <span class="st">"decision_date"</span>, <span class="st">"filed_date"</span>, <span class="st">"latest_quarter_end"</span>,</span>
+<span id="cb41-60"><a href="#cb41-60" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"latest_duration_end"</span>, <span class="st">"latest_balance_end"</span>, <span class="st">"latest_period_end"</span>}</span>
+<span id="cb41-61"><a href="#cb41-61" aria-hidden="true" tabindex="-1"></a>                 <span class="kw">or</span> name <span class="kw">in</span> features.credit_concepts[<span class="st">"instant"</span>] <span class="kw">or</span> name.endswith((<span class="st">"_ttm"</span>, <span class="st">"_ttm_yoy"</span>, <span class="st">"_ttm_method"</span>))]</span>
+<span id="cb41-62"><a href="#cb41-62" aria-hidden="true" tabindex="-1"></a>        values <span class="op">=</span> values[keep].copy()</span>
+<span id="cb41-63"><a href="#cb41-63" aria-hidden="true" tabindex="-1"></a>        <span class="kw">del</span> facts</span>
+<span id="cb41-64"><a href="#cb41-64" aria-hidden="true" tabindex="-1"></a>        values.to_parquet(path, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb41-65"><a href="#cb41-65" aria-hidden="true" tabindex="-1"></a>    statements.append(values)</span>
+<span id="cb41-66"><a href="#cb41-66" aria-hidden="true" tabindex="-1"></a>accounting <span class="op">=</span> pd.concat(statements, ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb41-67"><a href="#cb41-67" aria-hidden="true" tabindex="-1"></a><span class="kw">del</span> statements, values</span>
+<span id="cb41-68"><a href="#cb41-68" aria-hidden="true" tabindex="-1"></a>credit <span class="op">=</span> events.statement_sample(accounting, history, dates)</span>
+<span id="cb41-69"><a href="#cb41-69" aria-hidden="true" tabindex="-1"></a>credit <span class="op">=</span> features.credit_ratios(credit)</span>
+<span id="cb41-70"><a href="#cb41-70" aria-hidden="true" tabindex="-1"></a>credit <span class="op">=</span> pd.concat([credit, features.ratio_changes(credit)], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb41-71"><a href="#cb41-71" aria-hidden="true" tabindex="-1"></a>counts <span class="op">=</span> events.filing_counts(filings, credit)</span>
+<span id="cb41-72"><a href="#cb41-72" aria-hidden="true" tabindex="-1"></a>credit <span class="op">=</span> pd.concat([credit, counts.drop(columns<span class="op">=</span>[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>])], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb41-73"><a href="#cb41-73" aria-hidden="true" tabindex="-1"></a>credit[<span class="st">"distress_index"</span>] <span class="op">=</span> features.distress_index(credit)</span>
+<span id="cb41-74"><a href="#cb41-74" aria-hidden="true" tabindex="-1"></a>credit <span class="op">=</span> pd.concat([credit, features.credit_controls(credit[<span class="st">"decision_date"</span>], credit[<span class="st">"sec_sic"</span>])], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb41-75"><a href="#cb41-75" aria-hidden="true" tabindex="-1"></a>credit <span class="op">=</span> pd.concat([credit, events.event_labels(credit)], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb41-76"><a href="#cb41-76" aria-hidden="true" tabindex="-1"></a>credit[<span class="st">"origin"</span>] <span class="op">=</span> (credit[<span class="st">"decision_date"</span>].dt.year <span class="op">-</span> start.year) <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> credit[<span class="st">"decision_date"</span>].dt.month <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb41-77"><a href="#cb41-77" aria-hidden="true" tabindex="-1"></a>sample <span class="op">=</span> credit[credit[<span class="st">"total_assets"</span>].notna()</span>
+<span id="cb41-78"><a href="#cb41-78" aria-hidden="true" tabindex="-1"></a>                <span class="op">&amp;</span> credit[features.accounting_features].notna().<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>).ge(<span class="dv">5</span>)].copy()</span>
+<span id="cb41-79"><a href="#cb41-79" aria-hidden="true" tabindex="-1"></a>sample[<span class="st">"state"</span>] <span class="op">=</span> events.distress_states(sample)</span>
+<span id="cb41-80"><a href="#cb41-80" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-81"><a href="#cb41-81" aria-hidden="true" tabindex="-1"></a>cpi <span class="op">=</span> pd.read_csv(data <span class="op">/</span> <span class="st">"us_macro_factors.csv"</span>, parse_dates<span class="op">=</span>[<span class="st">"date"</span>]).set_index(<span class="st">"date"</span>)[<span class="st">"cpi_all_items"</span>]</span>
+<span id="cb41-82"><a href="#cb41-82" aria-hidden="true" tabindex="-1"></a>NI <span class="op">=</span> sample[<span class="st">"net_income_ttm"</span>]</span>
+<span id="cb41-83"><a href="#cb41-83" aria-hidden="true" tabindex="-1"></a>NI0 <span class="op">=</span> sample.groupby(<span class="st">"cik"</span>)[<span class="st">"net_income_ttm"</span>].shift(<span class="dv">12</span>)</span>
+<span id="cb41-84"><a href="#cb41-84" aria-hidden="true" tabindex="-1"></a>TA <span class="op">=</span> sample[<span class="st">"total_assets"</span>]</span>
+<span id="cb41-85"><a href="#cb41-85" aria-hidden="true" tabindex="-1"></a>sample[<span class="st">"ohlson_o"</span>] <span class="op">=</span> ohlson_score(</span>
+<span id="cb41-86"><a href="#cb41-86" aria-hidden="true" tabindex="-1"></a>    size<span class="op">=</span>TA.div(<span class="fl">1e6</span>).div(sample[<span class="st">"decision_date"</span>].<span class="bu">map</span>(cpi) <span class="op">/</span> <span class="dv">100</span>).where(TA.gt(<span class="dv">0</span>)),</span>
+<span id="cb41-87"><a href="#cb41-87" aria-hidden="true" tabindex="-1"></a>    liabilities_assets<span class="op">=</span>safe_ratio(sample[<span class="st">"total_liabilities"</span>], TA),</span>
+<span id="cb41-88"><a href="#cb41-88" aria-hidden="true" tabindex="-1"></a>    working_capital_assets<span class="op">=</span>safe_ratio(sample[<span class="st">"wc"</span>], TA),</span>
+<span id="cb41-89"><a href="#cb41-89" aria-hidden="true" tabindex="-1"></a>    current_liabilities_assets<span class="op">=</span>safe_ratio(sample[<span class="st">"current_liabilities"</span>], sample[<span class="st">"current_assets"</span>]),</span>
+<span id="cb41-90"><a href="#cb41-90" aria-hidden="true" tabindex="-1"></a>    net_income_assets<span class="op">=</span>safe_ratio(NI, TA), funds_liabilities<span class="op">=</span>safe_ratio(sample[<span class="st">"cfo_ttm"</span>], sample[<span class="st">"total_liabilities"</span>]),</span>
+<span id="cb41-91"><a href="#cb41-91" aria-hidden="true" tabindex="-1"></a>    negative_equity<span class="op">=</span>sample[<span class="st">"total_liabilities"</span>].gt(TA).astype(<span class="bu">float</span>).where(sample[[<span class="st">"total_liabilities"</span>, <span class="st">"total_assets"</span>]].notna().<span class="bu">all</span>(axis<span class="op">=</span><span class="dv">1</span>)),</span>
+<span id="cb41-92"><a href="#cb41-92" aria-hidden="true" tabindex="-1"></a>    two_losses<span class="op">=</span>(NI.lt(<span class="dv">0</span>) <span class="op">&amp;</span> NI0.lt(<span class="dv">0</span>)).astype(<span class="bu">float</span>).where(NI.notna() <span class="op">&amp;</span> NI0.notna()),</span>
+<span id="cb41-93"><a href="#cb41-93" aria-hidden="true" tabindex="-1"></a>    income_change<span class="op">=</span>safe_ratio(NI <span class="op">-</span> NI0, NI.<span class="bu">abs</span>() <span class="op">+</span> NI0.<span class="bu">abs</span>()))</span>
+<span id="cb41-94"><a href="#cb41-94" aria-hidden="true" tabindex="-1"></a>sample[<span class="st">"zmijewski_x"</span>] <span class="op">=</span> zmijewski_score(safe_ratio(NI, TA), safe_ratio(sample[<span class="st">"total_liabilities"</span>], TA), sample[<span class="st">"current_ratio"</span>])</span>
+<span id="cb41-95"><a href="#cb41-95" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-96"><a href="#cb41-96" aria-hidden="true" tabindex="-1"></a>refits <span class="op">=</span> pd.date_range(oos, last, freq<span class="op">=</span><span class="st">"YS"</span>)</span>
+<span id="cb41-97"><a href="#cb41-97" aria-hidden="true" tabindex="-1"></a>forecast <span class="op">=</span> sample[sample[<span class="st">"decision_date"</span>].ge(oos)][</span>
+<span id="cb41-98"><a href="#cb41-98" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"decision_date"</span>, <span class="st">"cik"</span>, <span class="op">*</span>[name <span class="cf">for</span> h <span class="kw">in</span> horizons <span class="cf">for</span> name <span class="kw">in</span> [<span class="ss">f"event_</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">m"</span>, <span class="ss">f"observed_event_</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">m"</span>]]]].copy()</span>
+<span id="cb41-99"><a href="#cb41-99" aria-hidden="true" tabindex="-1"></a>fits <span class="op">=</span> {}</span>
+<span id="cb41-100"><a href="#cb41-100" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> method, names <span class="kw">in</span> [(<span class="st">"logit"</span>, features.linear_features), (<span class="st">"spline"</span>, features.model_features),</span>
+<span id="cb41-101"><a href="#cb41-101" aria-hidden="true" tabindex="-1"></a>                       (<span class="st">"lightgbm"</span>, features.model_features)]:</span>
+<span id="cb41-102"><a href="#cb41-102" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> cache <span class="op">/</span> <span class="ss">f"hazard_</span><span class="sc">{</span>method<span class="sc">}</span><span class="ss">.parquet"</span></span>
+<span id="cb41-103"><a href="#cb41-103" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> path.exists():</span>
+<span id="cb41-104"><a href="#cb41-104" aria-hidden="true" tabindex="-1"></a>        predictions <span class="op">=</span> pd.read_parquet(path)</span>
+<span id="cb41-105"><a href="#cb41-105" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb41-106"><a href="#cb41-106" aria-hidden="true" tabindex="-1"></a>        predictions, choices <span class="op">=</span> models.default_forecasts(</span>
+<span id="cb41-107"><a href="#cb41-107" aria-hidden="true" tabindex="-1"></a>            sample, <span class="st">"event_1m"</span>, names, method<span class="op">=</span>method, refit_dates<span class="op">=</span>refits, n_jobs<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb41-108"><a href="#cb41-108" aria-hidden="true" tabindex="-1"></a>        predictions.to_parquet(path, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb41-109"><a href="#cb41-109" aria-hidden="true" tabindex="-1"></a>    forecast <span class="op">=</span> forecast.merge(predictions[[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>, <span class="st">"p"</span>]].rename(</span>
+<span id="cb41-110"><a href="#cb41-110" aria-hidden="true" tabindex="-1"></a>        columns<span class="op">=</span>{<span class="st">"p"</span>: <span class="ss">f"h_</span><span class="sc">{</span>method<span class="sc">}</span><span class="ss">"</span>}), on<span class="op">=</span>[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>], how<span class="op">=</span><span class="st">"left"</span>)</span>
+<span id="cb41-111"><a href="#cb41-111" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> method, h <span class="kw">in</span> [(<span class="st">"lightgbm"</span>, <span class="dv">12</span>), (<span class="st">"logit"</span>, <span class="dv">12</span>), <span class="op">*</span>[(<span class="st">"spline"</span>, h) <span class="cf">for</span> h <span class="kw">in</span> horizons],</span>
+<span id="cb41-112"><a href="#cb41-112" aria-hidden="true" tabindex="-1"></a>                   <span class="op">*</span>[(<span class="st">"lightgbm"</span>, h) <span class="cf">for</span> h <span class="kw">in</span> [<span class="dv">3</span>, <span class="dv">6</span>, <span class="dv">24</span>]]]:</span>
+<span id="cb41-113"><a href="#cb41-113" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> cache <span class="op">/</span> <span class="ss">f"direct_</span><span class="sc">{</span>method<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">.parquet"</span></span>
+<span id="cb41-114"><a href="#cb41-114" aria-hidden="true" tabindex="-1"></a>    choice_path <span class="op">=</span> cache <span class="op">/</span> <span class="st">"direct_choices.parquet"</span></span>
+<span id="cb41-115"><a href="#cb41-115" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> path.exists():</span>
+<span id="cb41-116"><a href="#cb41-116" aria-hidden="true" tabindex="-1"></a>        predictions <span class="op">=</span> pd.read_parquet(path)</span>
+<span id="cb41-117"><a href="#cb41-117" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb41-118"><a href="#cb41-118" aria-hidden="true" tabindex="-1"></a>        choices <span class="op">=</span> pd.read_parquet(choice_path) <span class="cf">if</span> method <span class="op">==</span> <span class="st">"lightgbm"</span> <span class="kw">and</span> h <span class="op">!=</span> <span class="dv">12</span> <span class="cf">else</span> <span class="va">None</span></span>
+<span id="cb41-119"><a href="#cb41-119" aria-hidden="true" tabindex="-1"></a>        predictions, decisions <span class="op">=</span> models.default_forecasts(</span>
+<span id="cb41-120"><a href="#cb41-120" aria-hidden="true" tabindex="-1"></a>            sample, <span class="ss">f"event_</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">m"</span>, features.model_features, method<span class="op">=</span>method, horizon<span class="op">=</span>h,</span>
+<span id="cb41-121"><a href="#cb41-121" aria-hidden="true" tabindex="-1"></a>            spacing<span class="op">=</span>h, refit_dates<span class="op">=</span>refits, choices<span class="op">=</span>choices, n_jobs<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb41-122"><a href="#cb41-122" aria-hidden="true" tabindex="-1"></a>        predictions.to_parquet(path, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb41-123"><a href="#cb41-123" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> method <span class="op">==</span> <span class="st">"lightgbm"</span> <span class="kw">and</span> h <span class="op">==</span> <span class="dv">12</span>:</span>
+<span id="cb41-124"><a href="#cb41-124" aria-hidden="true" tabindex="-1"></a>            decisions.to_parquet(choice_path, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb41-125"><a href="#cb41-125" aria-hidden="true" tabindex="-1"></a>    forecast <span class="op">=</span> forecast.merge(predictions[[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>, <span class="st">"p"</span>]].rename(</span>
+<span id="cb41-126"><a href="#cb41-126" aria-hidden="true" tabindex="-1"></a>        columns<span class="op">=</span>{<span class="st">"p"</span>: <span class="ss">f"pd</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>method<span class="sc">}</span><span class="ss">"</span>}), on<span class="op">=</span>[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>], how<span class="op">=</span><span class="st">"left"</span>)</span>
+<span id="cb41-127"><a href="#cb41-127" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> h <span class="kw">in</span> horizons:</span>
+<span id="cb41-128"><a href="#cb41-128" aria-hidden="true" tabindex="-1"></a>    forecast[<span class="ss">f"pd</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">_frozen"</span>] <span class="op">=</span> <span class="dv">1</span> <span class="op">-</span> (<span class="dv">1</span> <span class="op">-</span> forecast[<span class="st">"h_lightgbm"</span>]) <span class="op">**</span> h</span>
+<span id="cb41-129"><a href="#cb41-129" aria-hidden="true" tabindex="-1"></a>    forecast[<span class="ss">f"pd</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> forecast[[<span class="ss">f"pd</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">_spline"</span>, <span class="ss">f"pd</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">_lightgbm"</span>, <span class="ss">f"pd</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">_frozen"</span>]].mean(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb41-130"><a href="#cb41-130" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> suffix <span class="kw">in</span> [<span class="st">"spline"</span>, <span class="st">"lightgbm"</span>, <span class="st">""</span>]:</span>
+<span id="cb41-131"><a href="#cb41-131" aria-hidden="true" tabindex="-1"></a>    columns <span class="op">=</span> [<span class="ss">f"pd</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>suffix<span class="sc">}</span><span class="ss">"</span> <span class="cf">if</span> suffix <span class="cf">else</span> <span class="ss">f"pd</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> h <span class="kw">in</span> horizons]</span>
+<span id="cb41-132"><a href="#cb41-132" aria-hidden="true" tabindex="-1"></a>    forecast[columns] <span class="op">=</span> np.maximum.accumulate(forecast[columns].to_numpy(), axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb41-133"><a href="#cb41-133" aria-hidden="true" tabindex="-1"></a>forecast[<span class="st">"pd12_l2"</span>] <span class="op">=</span> <span class="dv">1</span> <span class="op">-</span> (<span class="dv">1</span> <span class="op">-</span> forecast[<span class="st">"h_logit"</span>]) <span class="op">**</span> <span class="dv">12</span></span>
+<span id="cb41-134"><a href="#cb41-134" aria-hidden="true" tabindex="-1"></a>forecast[<span class="st">"pd12_gam"</span>] <span class="op">=</span> <span class="dv">1</span> <span class="op">-</span> (<span class="dv">1</span> <span class="op">-</span> forecast[<span class="st">"h_spline"</span>]) <span class="op">**</span> <span class="dv">12</span></span>
+<span id="cb41-135"><a href="#cb41-135" aria-hidden="true" tabindex="-1"></a>naive <span class="op">=</span> {}</span>
+<span id="cb41-136"><a href="#cb41-136" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> date <span class="kw">in</span> refits:</span>
+<span id="cb41-137"><a href="#cb41-137" aria-hidden="true" tabindex="-1"></a>    train <span class="op">=</span> models.matured(sample, date, <span class="dv">1</span>, <span class="st">"event_1m"</span>)</span>
+<span id="cb41-138"><a href="#cb41-138" aria-hidden="true" tabindex="-1"></a>    naive[date.year] <span class="op">=</span> <span class="dv">1</span> <span class="op">-</span> (<span class="dv">1</span> <span class="op">-</span> train[<span class="st">"event_1m"</span>].mean()) <span class="op">**</span> <span class="dv">12</span></span>
+<span id="cb41-139"><a href="#cb41-139" aria-hidden="true" tabindex="-1"></a>forecast[<span class="st">"pd12_naive"</span>] <span class="op">=</span> forecast[<span class="st">"decision_date"</span>].dt.year.<span class="bu">map</span>(naive)</span>
+<span id="cb41-140"><a href="#cb41-140" aria-hidden="true" tabindex="-1"></a>forecast <span class="op">=</span> forecast.merge(sample[[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>, <span class="st">"ohlson_o"</span>, <span class="st">"zmijewski_x"</span>, <span class="st">"debt_assets"</span>]], on<span class="op">=</span>[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>])</span>
+<span id="cb41-141"><a href="#cb41-141" aria-hidden="true" tabindex="-1"></a>scores <span class="op">=</span> []</span>
+<span id="cb41-142"><a href="#cb41-142" aria-hidden="true" tabindex="-1"></a>comparisons <span class="op">=</span> {<span class="st">"Expanding event rate"</span>: <span class="st">"pd12_naive"</span>, <span class="st">"L2 hazard"</span>: <span class="st">"pd12_l2"</span>, <span class="st">"Spline hazard"</span>: <span class="st">"pd12_gam"</span>, <span class="st">"LightGBM hazard"</span>: <span class="st">"pd12_frozen"</span>,</span>
+<span id="cb41-143"><a href="#cb41-143" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Direct logit"</span>: <span class="st">"pd12_logit"</span>, <span class="st">"Direct spline"</span>: <span class="st">"pd12_spline"</span>, <span class="st">"Direct LightGBM"</span>: <span class="st">"pd12_lightgbm"</span>,</span>
+<span id="cb41-144"><a href="#cb41-144" aria-hidden="true" tabindex="-1"></a>               <span class="st">"Ensemble"</span>: <span class="st">"pd12"</span>, <span class="st">"Ohlson proxy"</span>: <span class="st">"ohlson_o"</span>, <span class="st">"Zmijewski"</span>: <span class="st">"zmijewski_x"</span>}</span>
+<span id="cb41-145"><a href="#cb41-145" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, column <span class="kw">in</span> comparisons.items():</span>
+<span id="cb41-146"><a href="#cb41-146" aria-hidden="true" tabindex="-1"></a>    known <span class="op">=</span> forecast[forecast[<span class="st">"decision_date"</span>].le(last <span class="op">-</span> pd.offsets.MonthEnd(<span class="dv">12</span>)) <span class="op">&amp;</span> forecast[<span class="st">"observed_event_12m"</span>]]</span>
+<span id="cb41-147"><a href="#cb41-147" aria-hidden="true" tabindex="-1"></a>    scores.append({<span class="st">"model"</span>: name, <span class="st">"horizon"</span>: <span class="dv">12</span>, <span class="op">**</span>probability_scores(</span>
+<span id="cb41-148"><a href="#cb41-148" aria-hidden="true" tabindex="-1"></a>        known[<span class="st">"event_12m"</span>], known[column], ranking_only<span class="op">=</span>name <span class="kw">in</span> [<span class="st">"Ohlson proxy"</span>, <span class="st">"Zmijewski"</span>])})</span>
+<span id="cb41-149"><a href="#cb41-149" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> h <span class="kw">in</span> [<span class="dv">3</span>, <span class="dv">6</span>, <span class="dv">24</span>]:</span>
+<span id="cb41-150"><a href="#cb41-150" aria-hidden="true" tabindex="-1"></a>    known <span class="op">=</span> forecast[forecast[<span class="st">"decision_date"</span>].le(last <span class="op">-</span> pd.offsets.MonthEnd(h)) <span class="op">&amp;</span> forecast[<span class="ss">f"observed_event_</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">m"</span>]]</span>
+<span id="cb41-151"><a href="#cb41-151" aria-hidden="true" tabindex="-1"></a>    scores.append({<span class="st">"model"</span>: <span class="st">"Ensemble"</span>, <span class="st">"horizon"</span>: h, <span class="op">**</span>probability_scores(known[<span class="ss">f"event_</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">m"</span>], known[<span class="ss">f"pd</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">"</span>])})</span>
+<span id="cb41-152"><a href="#cb41-152" aria-hidden="true" tabindex="-1"></a>scores <span class="op">=</span> pd.DataFrame(scores).set_index([<span class="st">"model"</span>, <span class="st">"horizon"</span>])</span>
+<span id="cb41-153"><a href="#cb41-153" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-154"><a href="#cb41-154" aria-hidden="true" tabindex="-1"></a>transitions <span class="op">=</span> []</span>
+<span id="cb41-155"><a href="#cb41-155" aria-hidden="true" tabindex="-1"></a>choices <span class="op">=</span> pd.read_parquet(cache <span class="op">/</span> <span class="st">"direct_choices.parquet"</span>)</span>
+<span id="cb41-156"><a href="#cb41-156" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> state, target, spacing <span class="kw">in</span> [(<span class="st">"healthy"</span>, <span class="st">"broad_12m"</span>, <span class="dv">12</span>), (<span class="st">"distressed"</span>, <span class="st">"event_12m"</span>, <span class="dv">3</span>)]:</span>
+<span id="cb41-157"><a href="#cb41-157" aria-hidden="true" tabindex="-1"></a>    population <span class="op">=</span> sample[sample[<span class="st">"state"</span>].eq(state)]</span>
+<span id="cb41-158"><a href="#cb41-158" aria-hidden="true" tabindex="-1"></a>    paths <span class="op">=</span> []</span>
+<span id="cb41-159"><a href="#cb41-159" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> method <span class="kw">in</span> [<span class="st">"logit"</span>, <span class="st">"lightgbm"</span>]:</span>
+<span id="cb41-160"><a href="#cb41-160" aria-hidden="true" tabindex="-1"></a>        path <span class="op">=</span> cache <span class="op">/</span> <span class="ss">f"</span><span class="sc">{</span>state<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>method<span class="sc">}</span><span class="ss">.parquet"</span></span>
+<span id="cb41-161"><a href="#cb41-161" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> path.exists():</span>
+<span id="cb41-162"><a href="#cb41-162" aria-hidden="true" tabindex="-1"></a>            predictions <span class="op">=</span> pd.read_parquet(path)</span>
+<span id="cb41-163"><a href="#cb41-163" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb41-164"><a href="#cb41-164" aria-hidden="true" tabindex="-1"></a>            predictions, _ <span class="op">=</span> models.default_forecasts(</span>
+<span id="cb41-165"><a href="#cb41-165" aria-hidden="true" tabindex="-1"></a>                population, target, features.model_features, method<span class="op">=</span>method, horizon<span class="op">=</span><span class="dv">12</span>,</span>
+<span id="cb41-166"><a href="#cb41-166" aria-hidden="true" tabindex="-1"></a>                spacing<span class="op">=</span>spacing, refit_dates<span class="op">=</span>refits, choices<span class="op">=</span>choices <span class="cf">if</span> method <span class="op">==</span> <span class="st">"lightgbm"</span> <span class="cf">else</span> <span class="va">None</span>, n_jobs<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb41-167"><a href="#cb41-167" aria-hidden="true" tabindex="-1"></a>            predictions.to_parquet(path, index<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb41-168"><a href="#cb41-168" aria-hidden="true" tabindex="-1"></a>        paths.append(predictions.set_index([<span class="st">"decision_date"</span>, <span class="st">"cik"</span>])[<span class="st">"p"</span>])</span>
+<span id="cb41-169"><a href="#cb41-169" aria-hidden="true" tabindex="-1"></a>    prediction <span class="op">=</span> pd.concat(paths, axis<span class="op">=</span><span class="dv">1</span>).mean(axis<span class="op">=</span><span class="dv">1</span>).rename(<span class="st">"p"</span>).reset_index()</span>
+<span id="cb41-170"><a href="#cb41-170" aria-hidden="true" tabindex="-1"></a>    known <span class="op">=</span> population.merge(prediction, on<span class="op">=</span>[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>])</span>
+<span id="cb41-171"><a href="#cb41-171" aria-hidden="true" tabindex="-1"></a>    known <span class="op">=</span> known[known[<span class="st">"decision_date"</span>].le(last <span class="op">-</span> pd.offsets.MonthEnd(<span class="dv">12</span>)) <span class="op">&amp;</span> known[<span class="ss">f"observed_</span><span class="sc">{</span>target<span class="sc">}</span><span class="ss">"</span>]]</span>
+<span id="cb41-172"><a href="#cb41-172" aria-hidden="true" tabindex="-1"></a>    transitions.append({<span class="st">"model"</span>: <span class="ss">f"</span><span class="sc">{</span>state<span class="sc">}</span><span class="ss"> transition"</span>, <span class="op">**</span>probability_scores(known[target], known[<span class="st">"p"</span>])})</span>
+<span id="cb41-173"><a href="#cb41-173" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-174"><a href="#cb41-174" aria-hidden="true" tabindex="-1"></a>landmark <span class="op">=</span> sample[sample[<span class="st">"decision_date"</span>].eq(<span class="st">"2016-12-31"</span>)].copy()</span>
+<span id="cb41-175"><a href="#cb41-175" aria-hidden="true" tabindex="-1"></a>status <span class="op">=</span> landmark[<span class="st">"strict_date"</span>].gt(<span class="st">"2016-12-31"</span>) <span class="op">&amp;</span> landmark[<span class="st">"strict_date"</span>].le(landmark[<span class="st">"last_observed"</span>])</span>
+<span id="cb41-176"><a href="#cb41-176" aria-hidden="true" tabindex="-1"></a>landmark <span class="op">=</span> pd.concat([landmark[status], landmark[<span class="op">~</span>status].sample(<span class="bu">min</span>(<span class="dv">2000</span>, (<span class="op">~</span>status).<span class="bu">sum</span>()), random_state<span class="op">=</span><span class="dv">22</span>)]).sort_values(<span class="st">"cik"</span>)</span>
+<span id="cb41-177"><a href="#cb41-177" aria-hidden="true" tabindex="-1"></a>status <span class="op">=</span> landmark[<span class="st">"strict_date"</span>].gt(<span class="st">"2016-12-31"</span>) <span class="op">&amp;</span> landmark[<span class="st">"strict_date"</span>].le(landmark[<span class="st">"last_observed"</span>])</span>
+<span id="cb41-178"><a href="#cb41-178" aria-hidden="true" tabindex="-1"></a>duration <span class="op">=</span> (landmark[<span class="st">"last_observed"</span>].where(<span class="op">~</span>status, landmark[<span class="st">"strict_date"</span>]) <span class="op">-</span> pd.Timestamp(<span class="st">"2016-12-31"</span>)).dt.days.div(<span class="fl">30.4375</span>).clip(lower<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb41-179"><a href="#cb41-179" aria-hidden="true" tabindex="-1"></a>cox_names <span class="op">=</span> [<span class="st">"liabilities_assets"</span>, <span class="st">"debt_assets"</span>, <span class="st">"interest_coverage"</span>, <span class="st">"cfo_debt"</span>, <span class="st">"cash_assets"</span>, <span class="st">"current_ratio"</span>,</span>
+<span id="cb41-180"><a href="#cb41-180" aria-hidden="true" tabindex="-1"></a>             <span class="st">"fcf_assets"</span>, <span class="st">"roa"</span>, <span class="st">"operating_margin"</span>, <span class="st">"sales_assets"</span>, <span class="st">"accruals"</span>, <span class="st">"distress_index"</span>]</span>
+<span id="cb41-181"><a href="#cb41-181" aria-hidden="true" tabindex="-1"></a>cox <span class="op">=</span> models.fit_cox(landmark[cox_names], duration, status)</span>
+<span id="cb41-182"><a href="#cb41-182" aria-hidden="true" tabindex="-1"></a>transitions.append({<span class="st">"model"</span>: <span class="st">"Landmark Cox PH (in-sample)"</span>, <span class="st">"Harrell C"</span>: models.harrell_c(duration, status, cox[<span class="st">"risk"</span>])})</span>
+<span id="cb41-183"><a href="#cb41-183" aria-hidden="true" tabindex="-1"></a>train <span class="op">=</span> models.matured(sample, pd.Timestamp(<span class="st">"2016-12-31"</span>), <span class="dv">1</span>, <span class="st">"event_1m"</span>)</span>
+<span id="cb41-184"><a href="#cb41-184" aria-hidden="true" tabindex="-1"></a>hazard <span class="op">=</span> models.fit_logit(train[features.linear_features], train[<span class="st">"event_1m"</span>])</span>
+<span id="cb41-185"><a href="#cb41-185" aria-hidden="true" tabindex="-1"></a>transitions.append({<span class="st">"model"</span>: <span class="st">"Pre-landmark L2 hazard"</span>, <span class="st">"Harrell C"</span>: models.harrell_c(</span>
+<span id="cb41-186"><a href="#cb41-186" aria-hidden="true" tabindex="-1"></a>    duration, status, models.predict_default(hazard, landmark))})</span>
+<span id="cb41-187"><a href="#cb41-187" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-188"><a href="#cb41-188" aria-hidden="true" tabindex="-1"></a>equity <span class="op">=</span> read_equity_history(data <span class="op">/</span> <span class="st">"sp500_market_data.parquet"</span>, start<span class="op">=</span><span class="st">"2011-01-01"</span>,</span>
+<span id="cb41-189"><a href="#cb41-189" aria-hidden="true" tabindex="-1"></a>                             columns<span class="op">=</span>[<span class="st">"date"</span>, <span class="st">"ticker"</span>, <span class="st">"adj_close"</span>, <span class="st">"close"</span>, <span class="st">"volume"</span>, <span class="st">"is_sp500_member"</span>,</span>
+<span id="cb41-190"><a href="#cb41-190" aria-hidden="true" tabindex="-1"></a>                                      <span class="st">"snapshot_date"</span>, <span class="st">"industry"</span>, <span class="st">"market_cap"</span>])</span>
+<span id="cb41-191"><a href="#cb41-191" aria-hidden="true" tabindex="-1"></a>members <span class="op">=</span> events.market_members(equity[<span class="st">"market"</span>], filings)</span>
+<span id="cb41-192"><a href="#cb41-192" aria-hidden="true" tabindex="-1"></a>returns <span class="op">=</span> equity[<span class="st">"returns"</span>].loc[:, pd.Index(members[<span class="st">"ticker"</span>].unique()).intersection(equity[<span class="st">"returns"</span>].columns)]</span>
+<span id="cb41-193"><a href="#cb41-193" aria-hidden="true" tabindex="-1"></a>volatility <span class="op">=</span> structural.equity_volatility(returns)</span>
+<span id="cb41-194"><a href="#cb41-194" aria-hidden="true" tabindex="-1"></a>rates <span class="op">=</span> read_credit_curves(data <span class="op">/</span> <span class="st">"treasury_credit_curves.parquet"</span>)</span>
+<span id="cb41-195"><a href="#cb41-195" aria-hidden="true" tabindex="-1"></a>rates[<span class="st">"decision_date"</span>] <span class="op">=</span> rates[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)</span>
+<span id="cb41-196"><a href="#cb41-196" aria-hidden="true" tabindex="-1"></a>spot <span class="op">=</span> rates[rates[<span class="st">"rate_type"</span>].eq(<span class="st">"spot"</span>) <span class="op">&amp;</span> rates[<span class="st">"observation_type"</span>].eq(<span class="st">"end_of_month"</span>)]</span>
+<span id="cb41-197"><a href="#cb41-197" aria-hidden="true" tabindex="-1"></a>tnc <span class="op">=</span> spot[spot[<span class="st">"curve_family"</span>].eq(<span class="st">"TNC"</span>)].pivot(index<span class="op">=</span><span class="st">"decision_date"</span>, columns<span class="op">=</span><span class="st">"maturity_years"</span>, values<span class="op">=</span><span class="st">"rate"</span>)</span>
+<span id="cb41-198"><a href="#cb41-198" aria-hidden="true" tabindex="-1"></a>hqm <span class="op">=</span> spot[spot[<span class="st">"curve_family"</span>].eq(<span class="st">"HQM"</span>)].pivot(index<span class="op">=</span><span class="st">"decision_date"</span>, columns<span class="op">=</span><span class="st">"maturity_years"</span>, values<span class="op">=</span><span class="st">"rate"</span>)</span>
+<span id="cb41-199"><a href="#cb41-199" aria-hidden="true" tabindex="-1"></a>spread <span class="op">=</span> hqm <span class="op">-</span> tnc</span>
+<span id="cb41-200"><a href="#cb41-200" aria-hidden="true" tabindex="-1"></a>merton <span class="op">=</span> sample.merge(members[[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>, <span class="st">"ticker"</span>, <span class="st">"market_cap"</span>]].rename(</span>
+<span id="cb41-201"><a href="#cb41-201" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span>{<span class="st">"ticker"</span>: <span class="st">"market_ticker"</span>, <span class="st">"market_cap"</span>: <span class="st">"E"</span>}), on<span class="op">=</span>[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>])</span>
+<span id="cb41-202"><a href="#cb41-202" aria-hidden="true" tabindex="-1"></a>merton <span class="op">=</span> merton.merge(volatility[[<span class="st">"decision_date"</span>, <span class="st">"ticker"</span>, <span class="st">"sigma_E"</span>]],</span>
+<span id="cb41-203"><a href="#cb41-203" aria-hidden="true" tabindex="-1"></a>                       left_on<span class="op">=</span>[<span class="st">"decision_date"</span>, <span class="st">"market_ticker"</span>], right_on<span class="op">=</span>[<span class="st">"decision_date"</span>, <span class="st">"ticker"</span>], suffixes<span class="op">=</span>(<span class="st">""</span>, <span class="st">"_price"</span>))</span>
+<span id="cb41-204"><a href="#cb41-204" aria-hidden="true" tabindex="-1"></a>merton[<span class="st">"r"</span>] <span class="op">=</span> merton[<span class="st">"decision_date"</span>].<span class="bu">map</span>(tnc[<span class="fl">1.0</span>])</span>
+<span id="cb41-205"><a href="#cb41-205" aria-hidden="true" tabindex="-1"></a>merton[<span class="st">"D"</span>] <span class="op">=</span> merton[<span class="st">"total_liabilities"</span>]</span>
+<span id="cb41-206"><a href="#cb41-206" aria-hidden="true" tabindex="-1"></a>merton <span class="op">=</span> merton[merton[<span class="st">"E"</span>].gt(<span class="dv">0</span>) <span class="op">&amp;</span> merton[<span class="st">"D"</span>].gt(<span class="dv">0</span>) <span class="op">&amp;</span> merton[<span class="st">"sigma_E"</span>].gt(<span class="dv">0</span>) <span class="op">&amp;</span> merton[<span class="st">"r"</span>].notna()].reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb41-207"><a href="#cb41-207" aria-hidden="true" tabindex="-1"></a>solution <span class="op">=</span> structural.merton_assets(merton[<span class="st">"E"</span>], merton[<span class="st">"sigma_E"</span>], merton[<span class="st">"D"</span>], merton[<span class="st">"r"</span>])</span>
+<span id="cb41-208"><a href="#cb41-208" aria-hidden="true" tabindex="-1"></a>merton[<span class="st">"merton_score"</span>] <span class="op">=</span> <span class="op">-</span>solution[<span class="st">"d2"</span>]</span>
+<span id="cb41-209"><a href="#cb41-209" aria-hidden="true" tabindex="-1"></a>merton[<span class="st">"merton_score_sq"</span>] <span class="op">=</span> merton[<span class="st">"merton_score"</span>] <span class="op">**</span> <span class="dv">2</span></span>
+<span id="cb41-210"><a href="#cb41-210" aria-hidden="true" tabindex="-1"></a>merton_predictions, _ <span class="op">=</span> models.default_forecasts(</span>
+<span id="cb41-211"><a href="#cb41-211" aria-hidden="true" tabindex="-1"></a>    merton[merton[<span class="st">"state"</span>].eq(<span class="st">"healthy"</span>)], <span class="st">"broad_12m"</span>, [<span class="st">"merton_score"</span>, <span class="st">"merton_score_sq"</span>],</span>
+<span id="cb41-212"><a href="#cb41-212" aria-hidden="true" tabindex="-1"></a>    horizon<span class="op">=</span><span class="dv">12</span>, spacing<span class="op">=</span><span class="dv">12</span>, refit_dates<span class="op">=</span>refits)</span>
+<span id="cb41-213"><a href="#cb41-213" aria-hidden="true" tabindex="-1"></a>merton_common <span class="op">=</span> merton_predictions.rename(columns<span class="op">=</span>{<span class="st">"p"</span>: <span class="st">"pd_merton"</span>}).merge(</span>
+<span id="cb41-214"><a href="#cb41-214" aria-hidden="true" tabindex="-1"></a>    forecast[[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>, <span class="st">"pd12"</span>]], on<span class="op">=</span>[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>])</span>
+<span id="cb41-215"><a href="#cb41-215" aria-hidden="true" tabindex="-1"></a>known <span class="op">=</span> merton_common[merton_common[<span class="st">"observed_broad_12m"</span>] <span class="op">&amp;</span> merton_common[<span class="st">"decision_date"</span>].le(last <span class="op">-</span> pd.offsets.MonthEnd(<span class="dv">12</span>))]</span>
+<span id="cb41-216"><a href="#cb41-216" aria-hidden="true" tabindex="-1"></a>transitions.append({<span class="st">"model"</span>: <span class="st">"Merton (broad distress)"</span>, <span class="op">**</span>probability_scores(known[<span class="st">"broad_12m"</span>], known[<span class="st">"pd_merton"</span>])})</span>
+<span id="cb41-217"><a href="#cb41-217" aria-hidden="true" tabindex="-1"></a>transitions.append({<span class="st">"model"</span>: <span class="st">"Accounting rank on broad distress"</span>, <span class="op">**</span>probability_scores(known[<span class="st">"broad_12m"</span>], known[<span class="st">"pd12"</span>])})</span>
+<span id="cb41-218"><a href="#cb41-218" aria-hidden="true" tabindex="-1"></a>transitions <span class="op">=</span> pd.DataFrame(transitions).set_index(<span class="st">"model"</span>)</span>
+<span id="cb41-219"><a href="#cb41-219" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-220"><a href="#cb41-220" aria-hidden="true" tabindex="-1"></a>risk <span class="op">=</span> forecast.merge(sample[[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>, <span class="st">"debt"</span>, <span class="st">"entity_name"</span>, <span class="st">"sec_industry"</span>]], on<span class="op">=</span>[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>])</span>
+<span id="cb41-221"><a href="#cb41-221" aria-hidden="true" tabindex="-1"></a>risk <span class="op">=</span> risk.merge(members[[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>, <span class="st">"ticker"</span>, <span class="st">"market_cap"</span>]].assign(is_member<span class="op">=</span><span class="va">True</span>),</span>
+<span id="cb41-222"><a href="#cb41-222" aria-hidden="true" tabindex="-1"></a>                   on<span class="op">=</span>[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>], how<span class="op">=</span><span class="st">"left"</span>)</span>
+<span id="cb41-223"><a href="#cb41-223" aria-hidden="true" tabindex="-1"></a>risk[<span class="st">"is_member"</span>] <span class="op">=</span> risk[<span class="st">"is_member"</span>].eq(<span class="va">True</span>)</span>
+<span id="cb41-224"><a href="#cb41-224" aria-hidden="true" tabindex="-1"></a>risk <span class="op">=</span> risk[risk[<span class="st">"debt"</span>].gt(<span class="dv">0</span>)].copy()</span>
+<span id="cb41-225"><a href="#cb41-225" aria-hidden="true" tabindex="-1"></a>risk[<span class="st">"loss"</span>] <span class="op">=</span> <span class="dv">100</span> <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> R) <span class="op">*</span> risk[<span class="st">"pd12_l2"</span>]</span>
+<span id="cb41-226"><a href="#cb41-226" aria-hidden="true" tabindex="-1"></a>losses <span class="op">=</span> market.aggregate_credit_loss(risk, <span class="st">"loss"</span>)</span>
+<span id="cb41-227"><a href="#cb41-227" aria-hidden="true" tabindex="-1"></a>member_losses <span class="op">=</span> market.aggregate_credit_loss(risk[risk[<span class="st">"is_member"</span>]], <span class="st">"loss"</span>)</span>
+<span id="cb41-228"><a href="#cb41-228" aria-hidden="true" tabindex="-1"></a>fed <span class="op">=</span> read_credit_market(data <span class="op">/</span> <span class="st">"fed_credit.parquet"</span>)</span>
+<span id="cb41-229"><a href="#cb41-229" aria-hidden="true" tabindex="-1"></a>fed[<span class="st">"decision_date"</span>] <span class="op">=</span> fed[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)</span>
+<span id="cb41-230"><a href="#cb41-230" aria-hidden="true" tabindex="-1"></a>premium <span class="op">=</span> fed.set_index(<span class="st">"decision_date"</span>)[[<span class="st">"gz_spread"</span>, <span class="st">"ebp"</span>]].join(losses, how<span class="op">=</span><span class="st">"inner"</span>)</span>
+<span id="cb41-231"><a href="#cb41-231" aria-hidden="true" tabindex="-1"></a>premium[<span class="st">"default_component"</span>] <span class="op">=</span> premium[<span class="st">"gz_spread"</span>] <span class="op">-</span> premium[<span class="st">"ebp"</span>]</span>
+<span id="cb41-232"><a href="#cb41-232" aria-hidden="true" tabindex="-1"></a>premium[<span class="st">"mapped_loss"</span>] <span class="op">=</span> market.loss_spread_history(premium, [<span class="st">"loss"</span>], <span class="st">"default_component"</span>)</span>
+<span id="cb41-233"><a href="#cb41-233" aria-hidden="true" tabindex="-1"></a>premium[<span class="st">"public_excess_credit_premium"</span>] <span class="op">=</span> market.excess_credit_premium(premium[<span class="st">"gz_spread"</span>], premium[<span class="st">"mapped_loss"</span>])</span>
+<span id="cb41-234"><a href="#cb41-234" aria-hidden="true" tabindex="-1"></a>premium_validation <span class="op">=</span> market.premium_validation(premium, <span class="st">"public_excess_credit_premium"</span>)</span>
+<span id="cb41-235"><a href="#cb41-235" aria-hidden="true" tabindex="-1"></a>finra <span class="op">=</span> read_credit_market(data <span class="op">/</span> <span class="st">"finra_credit_market.parquet"</span>)</span>
+<span id="cb41-236"><a href="#cb41-236" aria-hidden="true" tabindex="-1"></a>breadth <span class="op">=</span> market.credit_breadth(finra)</span>
+<span id="cb41-237"><a href="#cb41-237" aria-hidden="true" tabindex="-1"></a>sentiment <span class="op">=</span> market.customer_imbalance(finra)</span>
+<span id="cb41-238"><a href="#cb41-238" aria-hidden="true" tabindex="-1"></a>activity <span class="op">=</span> breadth.merge(sentiment[[<span class="st">"date"</span>, <span class="st">"security_category"</span>, <span class="st">"customer_imbalance"</span>]], on<span class="op">=</span>[<span class="st">"date"</span>, <span class="st">"security_category"</span>], how<span class="op">=</span><span class="st">"outer"</span>)</span>
+<span id="cb41-239"><a href="#cb41-239" aria-hidden="true" tabindex="-1"></a>activity[<span class="st">"decision_date"</span>] <span class="op">=</span> activity[<span class="st">"date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)</span>
+<span id="cb41-240"><a href="#cb41-240" aria-hidden="true" tabindex="-1"></a>activity <span class="op">=</span> activity[activity[<span class="st">"security_category"</span>].isin([<span class="st">"investment grade"</span>, <span class="st">"high yield"</span>])]</span>
+<span id="cb41-241"><a href="#cb41-241" aria-hidden="true" tabindex="-1"></a>activity[<span class="st">"grade"</span>] <span class="op">=</span> activity[<span class="st">"security_category"</span>].<span class="bu">map</span>({<span class="st">"investment grade"</span>: <span class="st">"ig"</span>, <span class="st">"high yield"</span>: <span class="st">"hy"</span>})</span>
+<span id="cb41-242"><a href="#cb41-242" aria-hidden="true" tabindex="-1"></a>activity <span class="op">=</span> activity.groupby([<span class="st">"decision_date"</span>, <span class="st">"grade"</span>])[[<span class="st">"advance_decline"</span>, <span class="st">"high_low"</span>, <span class="st">"customer_imbalance"</span>,</span>
+<span id="cb41-243"><a href="#cb41-243" aria-hidden="true" tabindex="-1"></a>                                                       <span class="st">"total_volume"</span>, <span class="st">"total_trades"</span>]].mean().unstack()</span>
+<span id="cb41-244"><a href="#cb41-244" aria-hidden="true" tabindex="-1"></a>activity.columns <span class="op">=</span> [<span class="ss">f"</span><span class="sc">{</span>grade<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> name, grade <span class="kw">in</span> activity.columns]</span>
+<span id="cb41-245"><a href="#cb41-245" aria-hidden="true" tabindex="-1"></a>cmdi <span class="op">=</span> read_credit_market(data <span class="op">/</span> <span class="st">"nyfed_cmdi.parquet"</span>).set_index(<span class="st">"date"</span>)[[<span class="st">"market_cmdi"</span>, <span class="st">"ig_cmdi"</span>, <span class="st">"hy_cmdi"</span>]].resample(<span class="st">"ME"</span>).last()</span>
+<span id="cb41-246"><a href="#cb41-246" aria-hidden="true" tabindex="-1"></a>market_results <span class="op">=</span> premium.join(cmdi, how<span class="op">=</span><span class="st">"inner"</span>).join(activity, how<span class="op">=</span><span class="st">"inner"</span>)</span>
+<span id="cb41-247"><a href="#cb41-247" aria-hidden="true" tabindex="-1"></a>market_results[<span class="st">"premium_change"</span>] <span class="op">=</span> market_results[<span class="st">"public_excess_credit_premium"</span>].diff()</span>
+<span id="cb41-248"><a href="#cb41-248" aria-hidden="true" tabindex="-1"></a>market_results[<span class="st">"cmdi_change"</span>] <span class="op">=</span> market_results[<span class="st">"market_cmdi"</span>].diff()</span>
+<span id="cb41-249"><a href="#cb41-249" aria-hidden="true" tabindex="-1"></a>finra_names <span class="op">=</span> [<span class="ss">f"</span><span class="sc">{</span>grade<span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> name <span class="kw">in</span> [<span class="st">"advance_decline"</span>, <span class="st">"high_low"</span>, <span class="st">"customer_imbalance"</span>] <span class="cf">for</span> grade <span class="kw">in</span> [<span class="st">"ig"</span>, <span class="st">"hy"</span>]]</span>
+<span id="cb41-250"><a href="#cb41-250" aria-hidden="true" tabindex="-1"></a>finra_relationship <span class="op">=</span> market_results[[<span class="st">"premium_change"</span>, <span class="st">"cmdi_change"</span>, <span class="op">*</span>finra_names]].corr().loc[</span>
+<span id="cb41-251"><a href="#cb41-251" aria-hidden="true" tabindex="-1"></a>    finra_names, [<span class="st">"premium_change"</span>, <span class="st">"cmdi_change"</span>]]</span>
+<span id="cb41-252"><a href="#cb41-252" aria-hidden="true" tabindex="-1"></a>cmdi_comparison <span class="op">=</span> premium.join(cmdi, how<span class="op">=</span><span class="st">"inner"</span>)</span>
+<span id="cb41-253"><a href="#cb41-253" aria-hidden="true" tabindex="-1"></a>cmdi_names <span class="op">=</span> [<span class="st">"public_excess_credit_premium"</span>, <span class="st">"ebp"</span>, <span class="st">"market_cmdi"</span>, <span class="st">"ig_cmdi"</span>, <span class="st">"hy_cmdi"</span>]</span>
+<span id="cb41-254"><a href="#cb41-254" aria-hidden="true" tabindex="-1"></a>cmdi_relationship <span class="op">=</span> pd.concat({<span class="st">"Level"</span>: cmdi_comparison[cmdi_names].corr(),</span>
+<span id="cb41-255"><a href="#cb41-255" aria-hidden="true" tabindex="-1"></a>                               <span class="st">"Change"</span>: cmdi_comparison[cmdi_names].diff().corr()})[[<span class="st">"public_excess_credit_premium"</span>, <span class="st">"ebp"</span>]]</span>
+<span id="cb41-256"><a href="#cb41-256" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-257"><a href="#cb41-257" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> np.array([<span class="fl">1.</span>, <span class="fl">3.</span>, <span class="fl">5.</span>, <span class="fl">7.</span>, <span class="fl">10.</span>])</span>
+<span id="cb41-258"><a href="#cb41-258" aria-hidden="true" tabindex="-1"></a>market_hazards <span class="op">=</span> []</span>
+<span id="cb41-259"><a href="#cb41-259" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> date <span class="kw">in</span> spread.index.intersection(tnc.index):</span>
+<span id="cb41-260"><a href="#cb41-260" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> spread.loc[date, T].to_numpy()</span>
+<span id="cb41-261"><a href="#cb41-261" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> tnc.loc[date, T].to_numpy()</span>
+<span id="cb41-262"><a href="#cb41-262" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> np.isfinite(np.r_[s, r]).<span class="bu">all</span>() <span class="kw">and</span> np.<span class="bu">all</span>(s <span class="op">&gt;</span> <span class="dv">0</span>):</span>
+<span id="cb41-263"><a href="#cb41-263" aria-hidden="true" tabindex="-1"></a>        fit <span class="op">=</span> curves.bootstrap_hazards(s, T, discount_from_zero(T, r), R<span class="op">=</span>R,</span>
+<span id="cb41-264"><a href="#cb41-264" aria-hidden="true" tabindex="-1"></a>                                       quote_kind<span class="op">=</span><span class="st">"yield_spread_proxy"</span>, on_failure<span class="op">=</span><span class="st">"boundary"</span>)</span>
+<span id="cb41-265"><a href="#cb41-265" aria-hidden="true" tabindex="-1"></a>        market_hazards.append({<span class="st">"date"</span>: date, <span class="st">"pd5"</span>: curves.default_probability(<span class="dv">5</span>, T, fit[<span class="st">"hazards"</span>])[<span class="dv">0</span>],</span>
+<span id="cb41-266"><a href="#cb41-266" aria-hidden="true" tabindex="-1"></a>                               <span class="st">"repricing_bp"</span>: np.<span class="bu">max</span>(np.<span class="bu">abs</span>(fit[<span class="st">"error_bp"</span>]))})</span>
+<span id="cb41-267"><a href="#cb41-267" aria-hidden="true" tabindex="-1"></a>market_hazards <span class="op">=</span> pd.DataFrame(market_hazards).set_index(<span class="st">"date"</span>)</span>
+<span id="cb41-268"><a href="#cb41-268" aria-hidden="true" tabindex="-1"></a>as_of <span class="op">=</span> <span class="bu">max</span>(<span class="bu">set</span>(tnc.index) <span class="op">&amp;</span> <span class="bu">set</span>(premium.index[premium[<span class="st">"default_component"</span>].gt(<span class="dv">0</span>)])</span>
+<span id="cb41-269"><a href="#cb41-269" aria-hidden="true" tabindex="-1"></a>             <span class="op">&amp;</span> <span class="bu">set</span>(risk.loc[risk[<span class="st">"is_member"</span>], <span class="st">"decision_date"</span>]))</span>
+<span id="cb41-270"><a href="#cb41-270" aria-hidden="true" tabindex="-1"></a>issuers <span class="op">=</span> risk[risk[<span class="st">"decision_date"</span>].eq(as_of) <span class="op">&amp;</span> risk[<span class="st">"is_member"</span>]].dropna(</span>
+<span id="cb41-271"><a href="#cb41-271" aria-hidden="true" tabindex="-1"></a>    subset<span class="op">=</span>[<span class="ss">f"pd</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> h <span class="kw">in</span> horizons]).sort_values(<span class="st">"debt"</span>).drop_duplicates(<span class="st">"cik"</span>, keep<span class="op">=</span><span class="st">"last"</span>).copy()</span>
+<span id="cb41-272"><a href="#cb41-272" aria-hidden="true" tabindex="-1"></a>knots <span class="op">=</span> np.array([<span class="fl">.25</span>, <span class="fl">.5</span>, <span class="fl">1.</span>, <span class="fl">2.</span>, <span class="fl">5.</span>, <span class="fl">7.</span>, <span class="fl">10.</span>])</span>
+<span id="cb41-273"><a href="#cb41-273" aria-hidden="true" tabindex="-1"></a>lambda_p <span class="op">=</span> curves.hazards_from_pd(issuers[[<span class="ss">f"pd</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> h <span class="kw">in</span> horizons]], knots[:<span class="dv">4</span>])</span>
+<span id="cb41-274"><a href="#cb41-274" aria-hidden="true" tabindex="-1"></a>tail <span class="op">=</span> <span class="op">-</span>np.log1p(<span class="op">-</span>issuers[<span class="st">"pd24"</span>].to_numpy()) <span class="op">/</span> <span class="dv">2</span></span>
+<span id="cb41-275"><a href="#cb41-275" aria-hidden="true" tabindex="-1"></a>lambda_p <span class="op">=</span> np.column_stack([lambda_p, tail, tail, tail])</span>
+<span id="cb41-276"><a href="#cb41-276" aria-hidden="true" tabindex="-1"></a>discount <span class="op">=</span> discount_from_zero(knots, np.interp(knots, tnc.columns, tnc.loc[as_of]))</span>
+<span id="cb41-277"><a href="#cb41-277" aria-hidden="true" tabindex="-1"></a>calibration <span class="op">=</span> pricing.fit_hazard_multiplier(lambda_p, knots, discount,</span>
+<span id="cb41-278"><a href="#cb41-278" aria-hidden="true" tabindex="-1"></a>                                           premium.loc[as_of, <span class="st">"default_component"</span>] <span class="op">/</span> <span class="dv">100</span>, issuers[<span class="st">"debt"</span>], R<span class="op">=</span>R)</span>
+<span id="cb41-279"><a href="#cb41-279" aria-hidden="true" tabindex="-1"></a>lambda_q <span class="op">=</span> calibration[<span class="st">"lambda_q"</span>]</span>
+<span id="cb41-280"><a href="#cb41-280" aria-hidden="true" tabindex="-1"></a>issuers[<span class="st">"pd5_physical"</span>] <span class="op">=</span> curves.default_probability(<span class="dv">5</span>, knots, lambda_p).ravel()</span>
+<span id="cb41-281"><a href="#cb41-281" aria-hidden="true" tabindex="-1"></a>issuers[<span class="st">"pd5_risk_neutral"</span>] <span class="op">=</span> curves.default_probability(<span class="dv">5</span>, knots, lambda_q).ravel()</span>
+<span id="cb41-282"><a href="#cb41-282" aria-hidden="true" tabindex="-1"></a>issuers[<span class="st">"relative_risk"</span>] <span class="op">=</span> tail <span class="op">/</span> np.average(tail, weights<span class="op">=</span>issuers[<span class="st">"debt"</span>])</span>
+<span id="cb41-283"><a href="#cb41-283" aria-hidden="true" tabindex="-1"></a>cds <span class="op">=</span> []</span>
+<span id="cb41-284"><a href="#cb41-284" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> T <span class="kw">in</span> [<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">7</span>, <span class="dv">10</span>]:</span>
+<span id="cb41-285"><a href="#cb41-285" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> pricing.cds_spread(lambda_q, knots, discount, T, R<span class="op">=</span>R)</span>
+<span id="cb41-286"><a href="#cb41-286" aria-hidden="true" tabindex="-1"></a>    pv01 <span class="op">=</span> pricing.risky_pv01(lambda_q, knots, discount, T, R<span class="op">=</span>R, notional<span class="op">=</span><span class="dv">10_000_000</span>)</span>
+<span id="cb41-287"><a href="#cb41-287" aria-hidden="true" tabindex="-1"></a>    cds.append(pd.DataFrame({<span class="st">"cik"</span>: issuers[<span class="st">"cik"</span>].to_numpy(), <span class="st">"ticker"</span>: issuers[<span class="st">"ticker"</span>].to_numpy(),</span>
+<span id="cb41-288"><a href="#cb41-288" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"maturity"</span>: T, <span class="st">"spread_bp"</span>: <span class="fl">1e4</span> <span class="op">*</span> s, <span class="st">"risky_PV01"</span>: pv01,</span>
+<span id="cb41-289"><a href="#cb41-289" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"JTD"</span>: <span class="dv">10_000_000</span> <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> R),</span>
+<span id="cb41-290"><a href="#cb41-290" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"R30_spread_bp"</span>: <span class="fl">1e4</span> <span class="op">*</span> pricing.cds_spread(lambda_q, knots, discount, T, R<span class="op">=</span><span class="fl">.3</span>),</span>
+<span id="cb41-291"><a href="#cb41-291" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"R50_spread_bp"</span>: <span class="fl">1e4</span> <span class="op">*</span> pricing.cds_spread(lambda_q, knots, discount, T, R<span class="op">=</span><span class="fl">.5</span>),</span>
+<span id="cb41-292"><a href="#cb41-292" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"hazard150_spread_bp"</span>: <span class="fl">1e4</span> <span class="op">*</span> pricing.cds_spread(<span class="fl">1.5</span> <span class="op">*</span> lambda_q, knots, discount, T, R<span class="op">=</span>R)}))</span>
+<span id="cb41-293"><a href="#cb41-293" aria-hidden="true" tabindex="-1"></a>cds <span class="op">=</span> pd.concat(cds, ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb41-294"><a href="#cb41-294" aria-hidden="true" tabindex="-1"></a>cs01 <span class="op">=</span> {}</span>
+<span id="cb41-295"><a href="#cb41-295" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> cik, quotes <span class="kw">in</span> cds.groupby(<span class="st">"cik"</span>):</span>
+<span id="cb41-296"><a href="#cb41-296" aria-hidden="true" tabindex="-1"></a>    quotes <span class="op">=</span> quotes.sort_values(<span class="st">"maturity"</span>)</span>
+<span id="cb41-297"><a href="#cb41-297" aria-hidden="true" tabindex="-1"></a>    cs01[cik] <span class="op">=</span> pricing.cds_cs01(quotes[<span class="st">"spread_bp"</span>].to_numpy() <span class="op">/</span> <span class="fl">1e4</span>, quotes[<span class="st">"maturity"</span>], discount,</span>
+<span id="cb41-298"><a href="#cb41-298" aria-hidden="true" tabindex="-1"></a>                                 <span class="dv">5</span>, coupon<span class="op">=</span>quotes.loc[quotes[<span class="st">"maturity"</span>].eq(<span class="dv">5</span>), <span class="st">"spread_bp"</span>].iloc[<span class="dv">0</span>] <span class="op">/</span> <span class="fl">1e4</span>,</span>
+<span id="cb41-299"><a href="#cb41-299" aria-hidden="true" tabindex="-1"></a>                                 R<span class="op">=</span>R, notional<span class="op">=</span><span class="dv">10_000_000</span>)</span>
+<span id="cb41-300"><a href="#cb41-300" aria-hidden="true" tabindex="-1"></a>issuers[<span class="st">"CS01_5y"</span>] <span class="op">=</span> issuers[<span class="st">"cik"</span>].<span class="bu">map</span>(cs01)</span>
+<span id="cb41-301"><a href="#cb41-301" aria-hidden="true" tabindex="-1"></a>issuers[<span class="st">"decile"</span>] <span class="op">=</span> pd.qcut(issuers[<span class="st">"relative_risk"</span>].rank(method<span class="op">=</span><span class="st">"first"</span>), <span class="dv">10</span>, labels<span class="op">=</span><span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">11</span>))</span>
+<span id="cb41-302"><a href="#cb41-302" aria-hidden="true" tabindex="-1"></a>issuers[<span class="st">"cds5_bp"</span>] <span class="op">=</span> issuers[<span class="st">"cik"</span>].<span class="bu">map</span>(cds[cds[<span class="st">"maturity"</span>].eq(<span class="dv">5</span>)].set_index(<span class="st">"cik"</span>)[<span class="st">"spread_bp"</span>])</span>
+<span id="cb41-303"><a href="#cb41-303" aria-hidden="true" tabindex="-1"></a>deciles <span class="op">=</span> issuers.groupby(<span class="st">"decile"</span>, observed<span class="op">=</span><span class="va">True</span>)[[<span class="st">"pd5_physical"</span>, <span class="st">"pd5_risk_neutral"</span>, <span class="st">"relative_risk"</span>, <span class="st">"cds5_bp"</span>, <span class="st">"CS01_5y"</span>]].median()</span>
+<span id="cb41-304"><a href="#cb41-304" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-305"><a href="#cb41-305" aria-hidden="true" tabindex="-1"></a>return_counts <span class="op">=</span> returns.loc[as_of <span class="op">-</span> pd.DateOffset(years<span class="op">=</span><span class="dv">5</span>):as_of].notna().<span class="bu">sum</span>()</span>
+<span id="cb41-306"><a href="#cb41-306" aria-hidden="true" tabindex="-1"></a>issuers[<span class="st">"return_count"</span>] <span class="op">=</span> issuers[<span class="st">"ticker"</span>].<span class="bu">map</span>(return_counts)</span>
+<span id="cb41-307"><a href="#cb41-307" aria-hidden="true" tabindex="-1"></a>book <span class="op">=</span> issuers[issuers[<span class="st">"return_count"</span>].ge(<span class="dv">756</span>)].sort_values([<span class="st">"market_cap"</span>, <span class="st">"ticker"</span>], ascending<span class="op">=</span>[<span class="va">False</span>, <span class="va">True</span>]).head(<span class="dv">125</span>).copy()</span>
+<span id="cb41-308"><a href="#cb41-308" aria-hidden="true" tabindex="-1"></a>book[<span class="st">"exposure"</span>] <span class="op">=</span> <span class="fl">1_000_000.</span></span>
+<span id="cb41-309"><a href="#cb41-309" aria-hidden="true" tabindex="-1"></a>covariance <span class="op">=</span> oas_covariance(returns.loc[as_of <span class="op">-</span> pd.DateOffset(years<span class="op">=</span><span class="dv">5</span>):as_of, book[<span class="st">"ticker"</span>]], return_df<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb41-310"><a href="#cb41-310" aria-hidden="true" tabindex="-1"></a>covariance_lw <span class="op">=</span> ledoit_wolf_covariance(returns.loc[as_of <span class="op">-</span> pd.DateOffset(years<span class="op">=</span><span class="dv">5</span>):as_of, book[<span class="st">"ticker"</span>]], return_df<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb41-311"><a href="#cb41-311" aria-hidden="true" tabindex="-1"></a>rho <span class="op">=</span> covariance <span class="op">/</span> np.outer(np.sqrt(np.diag(covariance)), np.sqrt(np.diag(covariance)))</span>
+<span id="cb41-312"><a href="#cb41-312" aria-hidden="true" tabindex="-1"></a>book <span class="op">=</span> book.set_index(<span class="st">"ticker"</span>).loc[rho.index].reset_index()</span>
+<span id="cb41-313"><a href="#cb41-313" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> book[<span class="st">"pd5_physical"</span>].to_numpy()</span>
+<span id="cb41-314"><a href="#cb41-314" aria-hidden="true" tabindex="-1"></a>E <span class="op">=</span> book[<span class="st">"exposure"</span>].to_numpy()</span>
+<span id="cb41-315"><a href="#cb41-315" aria-hidden="true" tabindex="-1"></a>draws <span class="op">=</span> {<span class="st">"Independent"</span>: np.random.default_rng(<span class="dv">22</span>).random((<span class="dv">100_000</span>, <span class="bu">len</span>(book))),</span>
+<span id="cb41-316"><a href="#cb41-316" aria-hidden="true" tabindex="-1"></a>         <span class="st">"Gaussian"</span>: gaussian_copula(rho, <span class="dv">60_000</span>, seed<span class="op">=</span><span class="dv">37</span>),</span>
+<span id="cb41-317"><a href="#cb41-317" aria-hidden="true" tabindex="-1"></a>         <span class="st">"Student-t (5)"</span>: student_t_copula(rho, <span class="dv">60_000</span>, nu<span class="op">=</span><span class="dv">5</span>, seed<span class="op">=</span><span class="dv">37</span>)}</span>
+<span id="cb41-318"><a href="#cb41-318" aria-hidden="true" tabindex="-1"></a>loss_draws <span class="op">=</span> {name: portfolio.portfolio_losses(U, p, E, recovery<span class="op">=</span>R) <span class="cf">for</span> name, U <span class="kw">in</span> draws.items()}</span>
+<span id="cb41-319"><a href="#cb41-319" aria-hidden="true" tabindex="-1"></a>rho_lw <span class="op">=</span> covariance_lw.loc[rho.index, rho.index]</span>
+<span id="cb41-320"><a href="#cb41-320" aria-hidden="true" tabindex="-1"></a>rho_lw <span class="op">=</span> rho_lw <span class="op">/</span> np.outer(np.sqrt(np.diag(rho_lw)), np.sqrt(np.diag(rho_lw)))</span>
+<span id="cb41-321"><a href="#cb41-321" aria-hidden="true" tabindex="-1"></a>loss_draws[<span class="st">"Gaussian, Ledoit-Wolf"</span>] <span class="op">=</span> portfolio.portfolio_losses(gaussian_copula(rho_lw, <span class="dv">60_000</span>, seed<span class="op">=</span><span class="dv">37</span>), p, E, recovery<span class="op">=</span>R)</span>
+<span id="cb41-322"><a href="#cb41-322" aria-hidden="true" tabindex="-1"></a>loss_summary <span class="op">=</span> pd.DataFrame({name: portfolio.loss_summary(loss, notional<span class="op">=</span>E.<span class="bu">sum</span>()) <span class="cf">for</span> name, loss <span class="kw">in</span> loss_draws.items()}).T</span>
+<span id="cb41-323"><a href="#cb41-323" aria-hidden="true" tabindex="-1"></a>concentration <span class="op">=</span> portfolio.credit_concentration(E, p, book[<span class="st">"sec_industry"</span>], recovery<span class="op">=</span>R)</span>
+<span id="cb41-324"><a href="#cb41-324" aria-hidden="true" tabindex="-1"></a>tranches <span class="op">=</span> [(<span class="st">"Equity"</span>, <span class="dv">0</span>, <span class="fl">.03</span>), (<span class="st">"Junior mezzanine"</span>, <span class="fl">.03</span>, <span class="fl">.07</span>), (<span class="st">"Senior mezzanine"</span>, <span class="fl">.07</span>, <span class="fl">.15</span>),</span>
+<span id="cb41-325"><a href="#cb41-325" aria-hidden="true" tabindex="-1"></a>             (<span class="st">"Senior"</span>, <span class="fl">.15</span>, <span class="fl">.30</span>), (<span class="st">"Super senior"</span>, <span class="fl">.30</span>, <span class="dv">1</span>)]</span>
+<span id="cb41-326"><a href="#cb41-326" aria-hidden="true" tabindex="-1"></a>book_lambdas <span class="op">=</span> pd.DataFrame(lambda_p, index<span class="op">=</span>issuers[<span class="st">"cik"</span>]).loc[book[<span class="st">"cik"</span>]].to_numpy()</span>
+<span id="cb41-327"><a href="#cb41-327" aria-hidden="true" tabindex="-1"></a>tranche_results <span class="op">=</span> []</span>
+<span id="cb41-328"><a href="#cb41-328" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> year <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">6</span>):</span>
+<span id="cb41-329"><a href="#cb41-329" aria-hidden="true" tabindex="-1"></a>    probabilities <span class="op">=</span> curves.default_probability(year, knots, book_lambdas).ravel()</span>
+<span id="cb41-330"><a href="#cb41-330" aria-hidden="true" tabindex="-1"></a>    losses <span class="op">=</span> portfolio.portfolio_losses(draws[<span class="st">"Student-t (5)"</span>], probabilities, E, recovery<span class="op">=</span>R) <span class="op">/</span> E.<span class="bu">sum</span>()</span>
+<span id="cb41-331"><a href="#cb41-331" aria-hidden="true" tabindex="-1"></a>    tranche_results.append(structured.tranche_summary(losses, tranches).assign(year<span class="op">=</span>year).reset_index())</span>
+<span id="cb41-332"><a href="#cb41-332" aria-hidden="true" tabindex="-1"></a>tranche_results <span class="op">=</span> pd.concat(tranche_results, ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb41-333"><a href="#cb41-333" aria-hidden="true" tabindex="-1"></a>stress <span class="op">=</span> []</span>
+<span id="cb41-334"><a href="#cb41-334" aria-hidden="true" tabindex="-1"></a>dependence <span class="op">=</span> {}</span>
+<span id="cb41-335"><a href="#cb41-335" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, (name, family, nu, multiplier) <span class="kw">in</span> <span class="bu">enumerate</span>([</span>
+<span id="cb41-336"><a href="#cb41-336" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"Gaussian, 0.75 rho"</span>, <span class="st">"gaussian"</span>, <span class="dv">5</span>, <span class="fl">.75</span>), (<span class="st">"Gaussian, rho"</span>, <span class="st">"gaussian"</span>, <span class="dv">5</span>, <span class="fl">1.</span>),</span>
+<span id="cb41-337"><a href="#cb41-337" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"t(7), rho"</span>, <span class="st">"t"</span>, <span class="dv">7</span>, <span class="fl">1.</span>), (<span class="st">"t(4), 1.25 rho"</span>, <span class="st">"t"</span>, <span class="dv">4</span>, <span class="fl">1.25</span>)]):</span>
+<span id="cb41-338"><a href="#cb41-338" aria-hidden="true" tabindex="-1"></a>    correlation <span class="op">=</span> np.eye(<span class="bu">len</span>(rho)) <span class="op">+</span> multiplier <span class="op">*</span> (rho.to_numpy() <span class="op">-</span> np.eye(<span class="bu">len</span>(rho)))</span>
+<span id="cb41-339"><a href="#cb41-339" aria-hidden="true" tabindex="-1"></a>    dependence[name] <span class="op">=</span> (gaussian_copula(correlation, <span class="dv">20_000</span>, seed<span class="op">=</span><span class="dv">220</span> <span class="op">+</span> i) <span class="cf">if</span> family <span class="op">==</span> <span class="st">"gaussian"</span></span>
+<span id="cb41-340"><a href="#cb41-340" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">else</span> student_t_copula(correlation, <span class="dv">20_000</span>, nu<span class="op">=</span>nu, seed<span class="op">=</span><span class="dv">220</span> <span class="op">+</span> i))</span>
+<span id="cb41-341"><a href="#cb41-341" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> scenario, multiplier <span class="kw">in</span> {<span class="st">"Half hazard"</span>: <span class="fl">.5</span>, <span class="st">"Base"</span>: <span class="fl">1.</span>, <span class="st">"Double hazard"</span>: <span class="fl">2.</span>, <span class="st">"Triple hazard"</span>: <span class="fl">3.</span>,</span>
+<span id="cb41-342"><a href="#cb41-342" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"2008 spread ratio"</span>: spread.loc[<span class="st">"2008-11-30"</span>, <span class="dv">5</span>] <span class="op">/</span> spread.loc[as_of, <span class="dv">5</span>],</span>
+<span id="cb41-343"><a href="#cb41-343" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"2020 spread ratio"</span>: spread.loc[<span class="st">"2020-03-31"</span>, <span class="dv">5</span>] <span class="op">/</span> spread.loc[as_of, <span class="dv">5</span>]}.items():</span>
+<span id="cb41-344"><a href="#cb41-344" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> recovery <span class="kw">in</span> [<span class="fl">.2</span>, <span class="fl">.4</span>, <span class="fl">.6</span>]:</span>
+<span id="cb41-345"><a href="#cb41-345" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> name, U <span class="kw">in</span> dependence.items():</span>
+<span id="cb41-346"><a href="#cb41-346" aria-hidden="true" tabindex="-1"></a>            losses <span class="op">=</span> portfolio.portfolio_losses(U, <span class="dv">1</span> <span class="op">-</span> (<span class="dv">1</span> <span class="op">-</span> p) <span class="op">**</span> multiplier, E, recovery<span class="op">=</span>recovery)</span>
+<span id="cb41-347"><a href="#cb41-347" aria-hidden="true" tabindex="-1"></a>            stress.append({<span class="st">"scenario"</span>: scenario, <span class="st">"recovery"</span>: recovery, <span class="st">"dependence"</span>: name,</span>
+<span id="cb41-348"><a href="#cb41-348" aria-hidden="true" tabindex="-1"></a>                           <span class="op">**</span>portfolio.loss_summary(losses, notional<span class="op">=</span>E.<span class="bu">sum</span>()).to_dict(),</span>
+<span id="cb41-349"><a href="#cb41-349" aria-hidden="true" tabindex="-1"></a>                           <span class="st">"equity_EL"</span>: structured.tranche_loss(losses <span class="op">/</span> E.<span class="bu">sum</span>(), <span class="dv">0</span>, <span class="fl">.03</span>).mean(),</span>
+<span id="cb41-350"><a href="#cb41-350" aria-hidden="true" tabindex="-1"></a>                           <span class="st">"mezzanine_EL"</span>: structured.tranche_loss(losses <span class="op">/</span> E.<span class="bu">sum</span>(), <span class="fl">.03</span>, <span class="fl">.07</span>).mean(),</span>
+<span id="cb41-351"><a href="#cb41-351" aria-hidden="true" tabindex="-1"></a>                           <span class="st">"senior_EL"</span>: structured.tranche_loss(losses <span class="op">/</span> E.<span class="bu">sum</span>(), <span class="fl">.15</span>, <span class="fl">.30</span>).mean()})</span>
+<span id="cb41-352"><a href="#cb41-352" aria-hidden="true" tabindex="-1"></a>stress <span class="op">=</span> pd.DataFrame(stress)</span>
+<span id="cb41-353"><a href="#cb41-353" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-354"><a href="#cb41-354" aria-hidden="true" tabindex="-1"></a>reports <span class="op">=</span> read_structured_credit(data <span class="op">/</span> <span class="st">"finra_structured_pricing.parquet"</span>, sheet<span class="op">=</span><span class="st">"CBO-CDO-CLO"</span>, start<span class="op">=</span><span class="st">"2024-12-09"</span>)</span>
+<span id="cb41-355"><a href="#cb41-355" aria-hidden="true" tabindex="-1"></a>reports <span class="op">=</span> structured.structured_categories(reports)</span>
+<span id="cb41-356"><a href="#cb41-356" aria-hidden="true" tabindex="-1"></a>prices <span class="op">=</span> reports[reports[<span class="st">"metric"</span>].eq(<span class="st">"AVERAGE PRICE"</span>) <span class="op">&amp;</span> reports[<span class="st">"value"</span>].gt(<span class="dv">0</span>)].groupby(</span>
+<span id="cb41-357"><a href="#cb41-357" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"report_date"</span>, <span class="st">"category"</span>, <span class="st">"vintage"</span>], as_index<span class="op">=</span><span class="va">False</span>)[<span class="st">"value"</span>].mean()</span>
+<span id="cb41-358"><a href="#cb41-358" aria-hidden="true" tabindex="-1"></a>prices[<span class="st">"date"</span>] <span class="op">=</span> prices[<span class="st">"report_date"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp(<span class="st">"M"</span>)</span>
+<span id="cb41-359"><a href="#cb41-359" aria-hidden="true" tabindex="-1"></a>price_history <span class="op">=</span> prices.groupby([<span class="st">"date"</span>, <span class="st">"category"</span>])[<span class="st">"value"</span>].median().unstack()</span>
+<span id="cb41-360"><a href="#cb41-360" aria-hidden="true" tabindex="-1"></a>vintages <span class="op">=</span> prices.groupby([<span class="st">"category"</span>, <span class="st">"vintage"</span>])[<span class="st">"value"</span>].agg([<span class="st">"count"</span>, <span class="st">"mean"</span>, <span class="st">"min"</span>, <span class="st">"last"</span>])</span>
+<span id="cb41-361"><a href="#cb41-361" aria-hidden="true" tabindex="-1"></a>trading <span class="op">=</span> read_structured_credit(data <span class="op">/</span> <span class="st">"finra_structured_activity.parquet"</span>)</span>
+<span id="cb41-362"><a href="#cb41-362" aria-hidden="true" tabindex="-1"></a>trading <span class="op">=</span> structured.trading_activity(trading[trading[<span class="st">"row_label"</span>].eq(<span class="st">"CBO/CDO/CLO"</span>)])</span>
+<span id="cb41-363"><a href="#cb41-363" aria-hidden="true" tabindex="-1"></a>errata <span class="op">=</span> read_credit_market(data <span class="op">/</span> <span class="st">"finra_structured_errata.parquet"</span>)</span>
+<span id="cb41-364"><a href="#cb41-364" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> errata[errata[<span class="st">"sub_asset_class"</span>].<span class="bu">str</span>.contains(<span class="st">"CBO/CDO/CLO"</span>, case<span class="op">=</span><span class="va">False</span>, na<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb41-365"><a href="#cb41-365" aria-hidden="true" tabindex="-1"></a>              <span class="op">&amp;</span> errata[<span class="st">"trade_date"</span>].ge(<span class="st">"2024-12-09"</span>)].empty</span>
+<span id="cb41-366"><a href="#cb41-366" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-367"><a href="#cb41-367" aria-hidden="true" tabindex="-1"></a>direct_train <span class="op">=</span> models.matured(sample, last <span class="op">+</span> pd.offsets.MonthEnd(<span class="dv">1</span>), <span class="dv">12</span>, <span class="st">"event_12m"</span>)</span>
+<span id="cb41-368"><a href="#cb41-368" aria-hidden="true" tabindex="-1"></a>direct_train <span class="op">=</span> direct_train[direct_train[<span class="st">"origin"</span>].mod(<span class="dv">12</span>).eq(<span class="dv">0</span>)]</span>
+<span id="cb41-369"><a href="#cb41-369" aria-hidden="true" tabindex="-1"></a>choice <span class="op">=</span> choices.sort_values(<span class="st">"cutoff"</span>).iloc[<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb41-370"><a href="#cb41-370" aria-hidden="true" tabindex="-1"></a>tree <span class="op">=</span> models.fit_lightgbm(direct_train[features.model_features], direct_train[<span class="st">"event_12m"</span>],</span>
+<span id="cb41-371"><a href="#cb41-371" aria-hidden="true" tabindex="-1"></a>                           spec<span class="op">=</span>models.boosting_specs[<span class="bu">int</span>(choice[<span class="st">"spec"</span>])], trees<span class="op">=</span><span class="bu">int</span>(choice[<span class="st">"trees"</span>]), n_jobs<span class="op">=</span><span class="dv">4</span>)</span>
+<span id="cb41-372"><a href="#cb41-372" aria-hidden="true" tabindex="-1"></a>explain <span class="op">=</span> direct_train.sample(<span class="bu">min</span>(<span class="dv">5000</span>, <span class="bu">len</span>(direct_train)), random_state<span class="op">=</span><span class="dv">22</span>)</span>
+<span id="cb41-373"><a href="#cb41-373" aria-hidden="true" tabindex="-1"></a>shap <span class="op">=</span> models.default_contributions(tree, explain).drop(columns<span class="op">=</span><span class="st">"base_value"</span>)</span>
+<span id="cb41-374"><a href="#cb41-374" aria-hidden="true" tabindex="-1"></a>drivers <span class="op">=</span> shap.<span class="bu">abs</span>().mean().rename(<span class="st">"mean absolute SHAP"</span>).nlargest(<span class="dv">10</span>).to_frame()</span>
+<span id="cb41-375"><a href="#cb41-375" aria-hidden="true" tabindex="-1"></a>case_key <span class="op">=</span> forecast[forecast[<span class="st">"decision_date"</span>].eq(forecast[<span class="st">"decision_date"</span>].<span class="bu">max</span>())].nlargest(<span class="dv">1</span>, <span class="st">"pd12"</span>)[[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>]]</span>
+<span id="cb41-376"><a href="#cb41-376" aria-hidden="true" tabindex="-1"></a>case <span class="op">=</span> sample.merge(case_key, on<span class="op">=</span>[<span class="st">"decision_date"</span>, <span class="st">"cik"</span>])</span>
+<span id="cb41-377"><a href="#cb41-377" aria-hidden="true" tabindex="-1"></a>drivers[<span class="st">"case SHAP"</span>] <span class="op">=</span> models.default_contributions(tree, case).iloc[<span class="dv">0</span>].drop(<span class="st">"base_value"</span>)</span>
+<span id="cb41-378"><a href="#cb41-378" aria-hidden="true" tabindex="-1"></a>train <span class="op">=</span> models.matured(sample, last <span class="op">+</span> pd.offsets.MonthEnd(<span class="dv">1</span>), <span class="dv">1</span>, <span class="st">"event_1m"</span>)</span>
+<span id="cb41-379"><a href="#cb41-379" aria-hidden="true" tabindex="-1"></a>linear_fit <span class="op">=</span> models.fit_logit(train[features.linear_features], train[<span class="st">"event_1m"</span>])</span>
+<span id="cb41-380"><a href="#cb41-380" aria-hidden="true" tabindex="-1"></a>drivers[<span class="st">"L2 coefficient"</span>] <span class="op">=</span> pd.Series(linear_fit.model.coef_[<span class="dv">0</span>], index<span class="op">=</span>linear_fit.columns)</span>
+<span id="cb41-381"><a href="#cb41-381" aria-hidden="true" tabindex="-1"></a>spline_fit <span class="op">=</span> models.fit_spline(direct_train[features.model_features], direct_train[<span class="st">"event_12m"</span>])</span>
+<span id="cb41-382"><a href="#cb41-382" aria-hidden="true" tabindex="-1"></a>cfo <span class="op">=</span> np.linspace(direct_train[<span class="st">"cfo_debt"</span>].quantile(<span class="fl">.02</span>), direct_train[<span class="st">"cfo_debt"</span>].quantile(<span class="fl">.98</span>), <span class="dv">120</span>)</span>
+<span id="cb41-383"><a href="#cb41-383" aria-hidden="true" tabindex="-1"></a>spline_points <span class="op">=</span> pd.concat([direct_train[features.model_features].median().to_frame().T] <span class="op">*</span> <span class="bu">len</span>(cfo), ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb41-384"><a href="#cb41-384" aria-hidden="true" tabindex="-1"></a>spline_points[<span class="st">"cfo_debt"</span>] <span class="op">=</span> cfo</span>
+<span id="cb41-385"><a href="#cb41-385" aria-hidden="true" tabindex="-1"></a>spline_response <span class="op">=</span> pd.DataFrame({<span class="st">"cfo_debt"</span>: cfo, <span class="st">"pd12"</span>: models.predict_default(spline_fit, spline_points)})</span>
+<span id="cb41-386"><a href="#cb41-386" aria-hidden="true" tabindex="-1"></a>market_summary <span class="op">=</span> finra_relationship[[<span class="st">"premium_change"</span>]].rename(columns<span class="op">=</span>{<span class="st">"premium_change"</span>: <span class="st">"Value"</span>})</span>
+<span id="cb41-387"><a href="#cb41-387" aria-hidden="true" tabindex="-1"></a>market_summary[<span class="st">"Meaning"</span>] <span class="op">=</span> <span class="st">"Correlation with monthly premium change"</span></span>
+<span id="cb41-388"><a href="#cb41-388" aria-hidden="true" tabindex="-1"></a>market_summary.loc[<span class="st">"Fed EBP"</span>, [<span class="st">"Value"</span>, <span class="st">"Meaning"</span>]] <span class="op">=</span> [premium_validation[<span class="st">"correlation"</span>], <span class="st">"Correlation with premium level"</span>]</span>
+<span id="cb41-389"><a href="#cb41-389" aria-hidden="true" tabindex="-1"></a>market_summary.loc[<span class="st">"Premium RMSE"</span>, [<span class="st">"Value"</span>, <span class="st">"Meaning"</span>]] <span class="op">=</span> [premium_validation[<span class="st">"RMSE"</span>], <span class="st">"Percentage points versus Fed EBP"</span>]</span>
+<span id="cb41-390"><a href="#cb41-390" aria-hidden="true" tabindex="-1"></a>market_summary.loc[<span class="st">"EBP regression slope"</span>, [<span class="st">"Value"</span>, <span class="st">"Meaning"</span>]] <span class="op">=</span> [premium_validation[<span class="st">"slope"</span>], <span class="st">"EBP regressed on public premium"</span>]</span>
+<span id="cb41-391"><a href="#cb41-391" aria-hidden="true" tabindex="-1"></a>market_summary.loc[<span class="st">"Risk-price multiplier"</span>, [<span class="st">"Value"</span>, <span class="st">"Meaning"</span>]] <span class="op">=</span> [calibration[<span class="st">"kappa"</span>], <span class="st">"kappa; dimensionless"</span>]</span>
+<span id="cb41-392"><a href="#cb41-392" aria-hidden="true" tabindex="-1"></a>market_summary.loc[<span class="st">"Spread calibration error"</span>, [<span class="st">"Value"</span>, <span class="st">"Meaning"</span>]] <span class="op">=</span> [calibration[<span class="st">"error_bp"</span>], <span class="st">"Basis points"</span>]</span>
+<span id="cb41-393"><a href="#cb41-393" aria-hidden="true" tabindex="-1"></a>market_summary.loc[<span class="st">"Portfolio notional"</span>, [<span class="st">"Value"</span>, <span class="st">"Meaning"</span>]] <span class="op">=</span> [E.<span class="bu">sum</span>() <span class="op">/</span> <span class="fl">1e6</span>, <span class="st">"USD millions"</span>]</span>
+<span id="cb41-394"><a href="#cb41-394" aria-hidden="true" tabindex="-1"></a>portfolio_table <span class="op">=</span> pd.concat({<span class="st">"Portfolio"</span>: loss_summary,</span>
+<span id="cb41-395"><a href="#cb41-395" aria-hidden="true" tabindex="-1"></a>                            <span class="st">"Tranche (5Y)"</span>: tranche_results[tranche_results[<span class="st">"year"</span>].eq(<span class="dv">5</span>)].set_index(<span class="st">"tranche"</span>)[[<span class="st">"expected_loss"</span>, <span class="st">"impairment"</span>]],</span>
+<span id="cb41-396"><a href="#cb41-396" aria-hidden="true" tabindex="-1"></a>                            <span class="st">"Stress, R=40%"</span>: stress[stress[<span class="st">"recovery"</span>].eq(<span class="fl">.4</span>) <span class="op">&amp;</span> stress[<span class="st">"dependence"</span>].eq(<span class="st">"t(4), 1.25 rho"</span>)].set_index(<span class="st">"scenario"</span>).drop(columns<span class="op">=</span>[<span class="st">"recovery"</span>, <span class="st">"dependence"</span>])})</span>
+<span id="cb41-397"><a href="#cb41-397" aria-hidden="true" tabindex="-1"></a>portfolio_table <span class="op">=</span> portfolio_table[[<span class="st">"expected_loss"</span>, <span class="st">"unexpected_loss"</span>, <span class="st">"var_99%"</span>, <span class="st">"es_99%"</span>, <span class="st">"impairment"</span>]]</span>
+<span id="cb41-398"><a href="#cb41-398" aria-hidden="true" tabindex="-1"></a>portfolio_table.columns <span class="op">=</span> [<span class="st">"EL"</span>, <span class="st">"Loss volatility"</span>, <span class="st">"99% VaR"</span>, <span class="st">"99</span><span class="sc">% E</span><span class="st">S"</span>, <span class="st">"Impairment probability"</span>]</span>
+<span id="cb41-399"><a href="#cb41-399" aria-hidden="true" tabindex="-1"></a>drivers <span class="op">=</span> drivers.rename(columns<span class="op">=</span>{<span class="st">"mean absolute SHAP"</span>: <span class="st">"Mean |SHAP| (log odds)"</span>,</span>
+<span id="cb41-400"><a href="#cb41-400" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">"case SHAP"</span>: <span class="ss">f"CIK </span><span class="sc">{</span><span class="bu">int</span>(case[<span class="st">'cik'</span>].iloc[<span class="dv">0</span>])<span class="sc">}</span><span class="ss"> SHAP"</span>,</span>
+<span id="cb41-401"><a href="#cb41-401" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">"L2 coefficient"</span>: <span class="st">"Monthly L2 coefficient"</span>})</span>
+<span id="cb41-402"><a href="#cb41-402" aria-hidden="true" tabindex="-1"></a>deciles <span class="op">=</span> deciles.rename(columns<span class="op">=</span>{<span class="st">"pd5_physical"</span>: <span class="st">"Physical PD (5Y)"</span>, <span class="st">"pd5_risk_neutral"</span>: <span class="st">"Risk-neutral PD (5Y)"</span>,</span>
+<span id="cb41-403"><a href="#cb41-403" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">"relative_risk"</span>: <span class="st">"Relative hazard"</span>, <span class="st">"cds5_bp"</span>: <span class="st">"CDS (bp)"</span>,</span>
+<span id="cb41-404"><a href="#cb41-404" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">"CS01_5y"</span>: <span class="st">"5Y CS01 ($/bp; $10m)"</span>})</span>
+<span id="cb41-405"><a href="#cb41-405" aria-hidden="true" tabindex="-1"></a>display(scores.style.<span class="bu">format</span>(precision<span class="op">=</span><span class="dv">4</span>, na_rep<span class="op">=</span><span class="st">"—"</span>),</span>
+<span id="cb41-406"><a href="#cb41-406" aria-hidden="true" tabindex="-1"></a>        transitions.style.<span class="bu">format</span>(precision<span class="op">=</span><span class="dv">4</span>, na_rep<span class="op">=</span><span class="st">"—"</span>),</span>
+<span id="cb41-407"><a href="#cb41-407" aria-hidden="true" tabindex="-1"></a>        drivers.style.<span class="bu">format</span>(precision<span class="op">=</span><span class="dv">4</span>, na_rep<span class="op">=</span><span class="st">"—"</span>),</span>
+<span id="cb41-408"><a href="#cb41-408" aria-hidden="true" tabindex="-1"></a>        market_summary.style.<span class="bu">format</span>({<span class="st">"Value"</span>: <span class="st">"</span><span class="sc">{:,.4f}</span><span class="st">"</span>}),</span>
+<span id="cb41-409"><a href="#cb41-409" aria-hidden="true" tabindex="-1"></a>        deciles.style.<span class="bu">format</span>({<span class="st">"Physical PD (5Y)"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"Risk-neutral PD (5Y)"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>,</span>
+<span id="cb41-410"><a href="#cb41-410" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"Relative hazard"</span>: <span class="st">"</span><span class="sc">{:.3f}</span><span class="st">"</span>, <span class="st">"CDS (bp)"</span>: <span class="st">"</span><span class="sc">{:.1f}</span><span class="st">"</span>, <span class="st">"5Y CS01 ($/bp; $10m)"</span>: <span class="st">"</span><span class="sc">{:,.1f}</span><span class="st">"</span>}),</span>
+<span id="cb41-411"><a href="#cb41-411" aria-hidden="true" tabindex="-1"></a>        portfolio_table.style.<span class="bu">format</span>(<span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, na_rep<span class="op">=</span><span class="st">"—"</span>))</span>
+<span id="cb41-412"><a href="#cb41-412" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-413"><a href="#cb41-413" aria-hidden="true" tabindex="-1"></a>known <span class="op">=</span> forecast[forecast[<span class="st">"decision_date"</span>].le(last <span class="op">-</span> pd.offsets.MonthEnd(<span class="dv">12</span>)) <span class="op">&amp;</span> forecast[<span class="st">"observed_event_12m"</span>]]</span>
+<span id="cb41-414"><a href="#cb41-414" aria-hidden="true" tabindex="-1"></a>latest <span class="op">=</span> merton_common[merton_common[<span class="st">"decision_date"</span>].eq(merton_common[<span class="st">"decision_date"</span>].<span class="bu">max</span>())]</span>
+<span id="cb41-415"><a href="#cb41-415" aria-hidden="true" tabindex="-1"></a>representatives <span class="op">=</span> []</span>
+<span id="cb41-416"><a href="#cb41-416" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> decile <span class="kw">in</span> [<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">7</span>, <span class="dv">10</span>]:</span>
+<span id="cb41-417"><a href="#cb41-417" aria-hidden="true" tabindex="-1"></a>    group <span class="op">=</span> issuers[issuers[<span class="st">"decile"</span>].eq(decile)]</span>
+<span id="cb41-418"><a href="#cb41-418" aria-hidden="true" tabindex="-1"></a>    representatives.append(group.loc[(group[<span class="st">"relative_risk"</span>] <span class="op">-</span> group[<span class="st">"relative_risk"</span>].median()).<span class="bu">abs</span>().idxmin(), <span class="st">"ticker"</span>])</span>
+<span id="cb41-419"><a href="#cb41-419" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">4</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">16</span>, <span class="dv">19</span>), constrained_layout<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb41-420"><a href="#cb41-420" aria-hidden="true" tabindex="-1"></a>credit_plots.plot_default_capture(known, <span class="st">"event_12m"</span>, {<span class="st">"Ensemble"</span>: <span class="st">"pd12"</span>, <span class="st">"LightGBM"</span>: <span class="st">"pd12_lightgbm"</span>, <span class="st">"L2 hazard"</span>: <span class="st">"pd12_l2"</span>}, ax<span class="op">=</span>axes[<span class="dv">0</span>, <span class="dv">0</span>])</span>
+<span id="cb41-421"><a href="#cb41-421" aria-hidden="true" tabindex="-1"></a>credit_plots.plot_pd_calibration(known, <span class="st">"event_12m"</span>, {<span class="st">"Ensemble"</span>: <span class="st">"pd12"</span>, <span class="st">"Frozen hazard"</span>: <span class="st">"pd12_frozen"</span>}, ax<span class="op">=</span>axes[<span class="dv">0</span>, <span class="dv">1</span>])</span>
+<span id="cb41-422"><a href="#cb41-422" aria-hidden="true" tabindex="-1"></a>credit_plots.plot_structural_ranks(latest, ax<span class="op">=</span>axes[<span class="dv">1</span>, <span class="dv">0</span>])</span>
+<span id="cb41-423"><a href="#cb41-423" aria-hidden="true" tabindex="-1"></a>credit_plots.plot_credit_premium(premium, ax<span class="op">=</span>axes[<span class="dv">1</span>, <span class="dv">1</span>])</span>
+<span id="cb41-424"><a href="#cb41-424" aria-hidden="true" tabindex="-1"></a>credit_plots.plot_cds_curves(cds, names<span class="op">=</span>representatives, ax<span class="op">=</span>axes[<span class="dv">2</span>, <span class="dv">0</span>])</span>
+<span id="cb41-425"><a href="#cb41-425" aria-hidden="true" tabindex="-1"></a>credit_plots.plot_credit_losses(loss_draws, notional<span class="op">=</span>E.<span class="bu">sum</span>(), ax<span class="op">=</span>axes[<span class="dv">2</span>, <span class="dv">1</span>])</span>
+<span id="cb41-426"><a href="#cb41-426" aria-hidden="true" tabindex="-1"></a>credit_plots.plot_tranche_losses(tranche_results, ax<span class="op">=</span>axes[<span class="dv">3</span>, <span class="dv">0</span>])</span>
+<span id="cb41-427"><a href="#cb41-427" aria-hidden="true" tabindex="-1"></a>credit_plots.plot_structured_prices(price_history, ax<span class="op">=</span>axes[<span class="dv">3</span>, <span class="dv">1</span>])</span>
+<span id="cb41-428"><a href="#cb41-428" aria-hidden="true" tabindex="-1"></a>fig.suptitle(<span class="ss">f"U.S. corporate credit · library repeat · </span><span class="sc">{</span>as_of<span class="sc">:</span><span class="op">%</span>B <span class="op">%</span>Y<span class="sc">}</span><span class="ss">"</span>, fontsize<span class="op">=</span><span class="dv">16</span>)</span>
+<span id="cb41-429"><a href="#cb41-429" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-display">
+<style type="text/css">
+</style>
+
+<table id="T_8e855" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th class="blank" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th id="T_8e855_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">rows</th>
+<th id="T_8e855_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">positives</th>
+<th id="T_8e855_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">ROC-AUC</th>
+<th id="T_8e855_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">PR-AUC</th>
+<th id="T_8e855_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">Brier</th>
+<th id="T_8e855_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">log loss</th>
+<th id="T_8e855_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">top 10% capture</th>
+</tr>
+<tr class="even">
+<th class="index_name level0" data-quarto-table-cell-role="th">model</th>
+<th class="index_name level1" data-quarto-table-cell-role="th">horizon</th>
+<th class="blank col0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col1" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col2" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col3" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col4" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col5" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col6" data-quarto-table-cell-role="th">&nbsp;</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th id="T_8e855_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">Expanding event rate</th>
+<th id="T_8e855_level1_row0" class="row_heading level1 row0" data-quarto-table-cell-role="th">12</th>
+<td id="T_8e855_row0_col0" class="data row0 col0">328267</td>
+<td id="T_8e855_row0_col1" class="data row0 col1">2531</td>
+<td id="T_8e855_row0_col2" class="data row0 col2">0.4099</td>
+<td id="T_8e855_row0_col3" class="data row0 col3">0.0063</td>
+<td id="T_8e855_row0_col4" class="data row0 col4">0.0077</td>
+<td id="T_8e855_row0_col5" class="data row0 col5">0.0460</td>
+<td id="T_8e855_row0_col6" class="data row0 col6">0.0162</td>
+</tr>
+<tr class="even">
+<th id="T_8e855_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">L2 hazard</th>
+<th id="T_8e855_level1_row1" class="row_heading level1 row1" data-quarto-table-cell-role="th">12</th>
+<td id="T_8e855_row1_col0" class="data row1 col0">328267</td>
+<td id="T_8e855_row1_col1" class="data row1 col1">2531</td>
+<td id="T_8e855_row1_col2" class="data row1 col2">0.8501</td>
+<td id="T_8e855_row1_col3" class="data row1 col3">0.0587</td>
+<td id="T_8e855_row1_col4" class="data row1 col4">0.0076</td>
+<td id="T_8e855_row1_col5" class="data row1 col5">0.0388</td>
+<td id="T_8e855_row1_col6" class="data row1 col6">0.5496</td>
+</tr>
+<tr class="odd">
+<th id="T_8e855_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">Spline hazard</th>
+<th id="T_8e855_level1_row2" class="row_heading level1 row2" data-quarto-table-cell-role="th">12</th>
+<td id="T_8e855_row2_col0" class="data row2 col0">328267</td>
+<td id="T_8e855_row2_col1" class="data row2 col1">2531</td>
+<td id="T_8e855_row2_col2" class="data row2 col2">0.8433</td>
+<td id="T_8e855_row2_col3" class="data row2 col3">0.0674</td>
+<td id="T_8e855_row2_col4" class="data row2 col4">0.0076</td>
+<td id="T_8e855_row2_col5" class="data row2 col5">0.0385</td>
+<td id="T_8e855_row2_col6" class="data row2 col6">0.5508</td>
+</tr>
+<tr class="even">
+<th id="T_8e855_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">LightGBM hazard</th>
+<th id="T_8e855_level1_row3" class="row_heading level1 row3" data-quarto-table-cell-role="th">12</th>
+<td id="T_8e855_row3_col0" class="data row3 col0">328267</td>
+<td id="T_8e855_row3_col1" class="data row3 col1">2531</td>
+<td id="T_8e855_row3_col2" class="data row3 col2">0.8379</td>
+<td id="T_8e855_row3_col3" class="data row3 col3">0.0953</td>
+<td id="T_8e855_row3_col4" class="data row3 col4">0.0077</td>
+<td id="T_8e855_row3_col5" class="data row3 col5">0.0392</td>
+<td id="T_8e855_row3_col6" class="data row3 col6">0.5863</td>
+</tr>
+<tr class="odd">
+<th id="T_8e855_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">Direct logit</th>
+<th id="T_8e855_level1_row4" class="row_heading level1 row4" data-quarto-table-cell-role="th">12</th>
+<td id="T_8e855_row4_col0" class="data row4 col0">328267</td>
+<td id="T_8e855_row4_col1" class="data row4 col1">2531</td>
+<td id="T_8e855_row4_col2" class="data row4 col2">0.8448</td>
+<td id="T_8e855_row4_col3" class="data row4 col3">0.0580</td>
+<td id="T_8e855_row4_col4" class="data row4 col4">0.0075</td>
+<td id="T_8e855_row4_col5" class="data row4 col5">0.0383</td>
+<td id="T_8e855_row4_col6" class="data row4 col6">0.5610</td>
+</tr>
+<tr class="even">
+<th id="T_8e855_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">Direct spline</th>
+<th id="T_8e855_level1_row5" class="row_heading level1 row5" data-quarto-table-cell-role="th">12</th>
+<td id="T_8e855_row5_col0" class="data row5 col0">328267</td>
+<td id="T_8e855_row5_col1" class="data row5 col1">2531</td>
+<td id="T_8e855_row5_col2" class="data row5 col2">0.8701</td>
+<td id="T_8e855_row5_col3" class="data row5 col3">0.0684</td>
+<td id="T_8e855_row5_col4" class="data row5 col4">0.0075</td>
+<td id="T_8e855_row5_col5" class="data row5 col5">0.0369</td>
+<td id="T_8e855_row5_col6" class="data row5 col6">0.5946</td>
+</tr>
+<tr class="odd">
+<th id="T_8e855_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">Direct LightGBM</th>
+<th id="T_8e855_level1_row6" class="row_heading level1 row6" data-quarto-table-cell-role="th">12</th>
+<td id="T_8e855_row6_col0" class="data row6 col0">328267</td>
+<td id="T_8e855_row6_col1" class="data row6 col1">2531</td>
+<td id="T_8e855_row6_col2" class="data row6 col2">0.8859</td>
+<td id="T_8e855_row6_col3" class="data row6 col3">0.0728</td>
+<td id="T_8e855_row6_col4" class="data row6 col4">0.0083</td>
+<td id="T_8e855_row6_col5" class="data row6 col5">0.0387</td>
+<td id="T_8e855_row6_col6" class="data row6 col6">0.6089</td>
+</tr>
+<tr class="even">
+<th id="T_8e855_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">Ensemble</th>
+<th id="T_8e855_level1_row7" class="row_heading level1 row7" data-quarto-table-cell-role="th">12</th>
+<td id="T_8e855_row7_col0" class="data row7 col0">328267</td>
+<td id="T_8e855_row7_col1" class="data row7 col1">2531</td>
+<td id="T_8e855_row7_col2" class="data row7 col2">0.8975</td>
+<td id="T_8e855_row7_col3" class="data row7 col3">0.1032</td>
+<td id="T_8e855_row7_col4" class="data row7 col4">0.0073</td>
+<td id="T_8e855_row7_col5" class="data row7 col5">0.0348</td>
+<td id="T_8e855_row7_col6" class="data row7 col6">0.6535</td>
+</tr>
+<tr class="odd">
+<th id="T_8e855_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">Ohlson proxy</th>
+<th id="T_8e855_level1_row8" class="row_heading level1 row8" data-quarto-table-cell-role="th">12</th>
+<td id="T_8e855_row8_col0" class="data row8 col0">236795</td>
+<td id="T_8e855_row8_col1" class="data row8 col1">2072</td>
+<td id="T_8e855_row8_col2" class="data row8 col2">0.6700</td>
+<td id="T_8e855_row8_col3" class="data row8 col3">0.0121</td>
+<td id="T_8e855_row8_col4" class="data row8 col4">—</td>
+<td id="T_8e855_row8_col5" class="data row8 col5">—</td>
+<td id="T_8e855_row8_col6" class="data row8 col6">0.0671</td>
+</tr>
+<tr class="even">
+<th id="T_8e855_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">Zmijewski</th>
+<th id="T_8e855_level1_row9" class="row_heading level1 row9" data-quarto-table-cell-role="th">12</th>
+<td id="T_8e855_row9_col0" class="data row9 col0">258351</td>
+<td id="T_8e855_row9_col1" class="data row9 col1">2174</td>
+<td id="T_8e855_row9_col2" class="data row9 col2">0.7127</td>
+<td id="T_8e855_row9_col3" class="data row9 col3">0.0140</td>
+<td id="T_8e855_row9_col4" class="data row9 col4">—</td>
+<td id="T_8e855_row9_col5" class="data row9 col5">—</td>
+<td id="T_8e855_row9_col6" class="data row9 col6">0.0727</td>
+</tr>
+<tr class="odd">
+<th rowspan="3" id="T_8e855_level0_row10" class="row_heading level0 row10" data-quarto-table-cell-role="th">Ensemble</th>
+<th id="T_8e855_level1_row10" class="row_heading level1 row10" data-quarto-table-cell-role="th">3</th>
+<td id="T_8e855_row10_col0" class="data row10 col0">379375</td>
+<td id="T_8e855_row10_col1" class="data row10 col1">700</td>
+<td id="T_8e855_row10_col2" class="data row10 col2">0.9374</td>
+<td id="T_8e855_row10_col3" class="data row10 col3">0.0594</td>
+<td id="T_8e855_row10_col4" class="data row10 col4">0.0018</td>
+<td id="T_8e855_row10_col5" class="data row10 col5">0.0098</td>
+<td id="T_8e855_row10_col6" class="data row10 col6">0.7943</td>
+</tr>
+<tr class="even">
+<th id="T_8e855_level1_row11" class="row_heading level1 row11" data-quarto-table-cell-role="th">6</th>
+<td id="T_8e855_row11_col0" class="data row11 col0">362120</td>
+<td id="T_8e855_row11_col1" class="data row11 col1">1355</td>
+<td id="T_8e855_row11_col2" class="data row11 col2">0.9195</td>
+<td id="T_8e855_row11_col3" class="data row11 col3">0.0728</td>
+<td id="T_8e855_row11_col4" class="data row11 col4">0.0037</td>
+<td id="T_8e855_row11_col5" class="data row11 col5">0.0186</td>
+<td id="T_8e855_row11_col6" class="data row11 col6">0.7498</td>
+</tr>
+<tr class="odd">
+<th id="T_8e855_level1_row12" class="row_heading level1 row12" data-quarto-table-cell-role="th">24</th>
+<td id="T_8e855_row12_col0" class="data row12 col0">263353</td>
+<td id="T_8e855_row12_col1" class="data row12 col1">4175</td>
+<td id="T_8e855_row12_col2" class="data row12 col2">0.8679</td>
+<td id="T_8e855_row12_col3" class="data row12 col3">0.1380</td>
+<td id="T_8e855_row12_col4" class="data row12 col4">0.0146</td>
+<td id="T_8e855_row12_col5" class="data row12 col5">0.0645</td>
+<td id="T_8e855_row12_col6" class="data row12 col6">0.5593</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cell-output cell-output-display">
+<style type="text/css">
+</style>
+
+<table id="T_d0995" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th id="T_d0995_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">rows</th>
+<th id="T_d0995_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">positives</th>
+<th id="T_d0995_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">ROC-AUC</th>
+<th id="T_d0995_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">PR-AUC</th>
+<th id="T_d0995_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">Brier</th>
+<th id="T_d0995_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">log loss</th>
+<th id="T_d0995_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">top 10% capture</th>
+<th id="T_d0995_level0_col7" class="col_heading level0 col7" data-quarto-table-cell-role="th">Harrell C</th>
+</tr>
+<tr class="even">
+<th class="index_name level0" data-quarto-table-cell-role="th">model</th>
+<th class="blank col0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col1" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col2" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col3" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col4" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col5" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col6" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col7" data-quarto-table-cell-role="th">&nbsp;</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th id="T_d0995_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">healthy transition</th>
+<td id="T_d0995_row0_col0" class="data row0 col0">307632.0000</td>
+<td id="T_d0995_row0_col1" class="data row0 col1">6370.0000</td>
+<td id="T_d0995_row0_col2" class="data row0 col2">0.7900</td>
+<td id="T_d0995_row0_col3" class="data row0 col3">0.0920</td>
+<td id="T_d0995_row0_col4" class="data row0 col4">0.0196</td>
+<td id="T_d0995_row0_col5" class="data row0 col5">0.0887</td>
+<td id="T_d0995_row0_col6" class="data row0 col6">0.4254</td>
+<td id="T_d0995_row0_col7" class="data row0 col7">—</td>
+</tr>
+<tr class="even">
+<th id="T_d0995_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">distressed transition</th>
+<td id="T_d0995_row1_col0" class="data row1 col0">21908.0000</td>
+<td id="T_d0995_row1_col1" class="data row1 col1">429.0000</td>
+<td id="T_d0995_row1_col2" class="data row1 col2">0.7735</td>
+<td id="T_d0995_row1_col3" class="data row1 col3">0.0771</td>
+<td id="T_d0995_row1_col4" class="data row1 col4">0.0189</td>
+<td id="T_d0995_row1_col5" class="data row1 col5">0.0872</td>
+<td id="T_d0995_row1_col6" class="data row1 col6">0.4452</td>
+<td id="T_d0995_row1_col7" class="data row1 col7">—</td>
+</tr>
+<tr class="odd">
+<th id="T_d0995_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">Landmark Cox PH (in-sample)</th>
+<td id="T_d0995_row2_col0" class="data row2 col0">—</td>
+<td id="T_d0995_row2_col1" class="data row2 col1">—</td>
+<td id="T_d0995_row2_col2" class="data row2 col2">—</td>
+<td id="T_d0995_row2_col3" class="data row2 col3">—</td>
+<td id="T_d0995_row2_col4" class="data row2 col4">—</td>
+<td id="T_d0995_row2_col5" class="data row2 col5">—</td>
+<td id="T_d0995_row2_col6" class="data row2 col6">—</td>
+<td id="T_d0995_row2_col7" class="data row2 col7">0.6228</td>
+</tr>
+<tr class="even">
+<th id="T_d0995_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">Pre-landmark L2 hazard</th>
+<td id="T_d0995_row3_col0" class="data row3 col0">—</td>
+<td id="T_d0995_row3_col1" class="data row3 col1">—</td>
+<td id="T_d0995_row3_col2" class="data row3 col2">—</td>
+<td id="T_d0995_row3_col3" class="data row3 col3">—</td>
+<td id="T_d0995_row3_col4" class="data row3 col4">—</td>
+<td id="T_d0995_row3_col5" class="data row3 col5">—</td>
+<td id="T_d0995_row3_col6" class="data row3 col6">—</td>
+<td id="T_d0995_row3_col7" class="data row3 col7">0.6860</td>
+</tr>
+<tr class="odd">
+<th id="T_d0995_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">Merton (broad distress)</th>
+<td id="T_d0995_row4_col0" class="data row4 col0">11609.0000</td>
+<td id="T_d0995_row4_col1" class="data row4 col1">70.0000</td>
+<td id="T_d0995_row4_col2" class="data row4 col2">0.7461</td>
+<td id="T_d0995_row4_col3" class="data row4 col3">0.0168</td>
+<td id="T_d0995_row4_col4" class="data row4 col4">0.0060</td>
+<td id="T_d0995_row4_col5" class="data row4 col5">0.0362</td>
+<td id="T_d0995_row4_col6" class="data row4 col6">0.3714</td>
+<td id="T_d0995_row4_col7" class="data row4 col7">—</td>
+</tr>
+<tr class="even">
+<th id="T_d0995_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">Accounting rank on broad distress</th>
+<td id="T_d0995_row5_col0" class="data row5 col0">11609.0000</td>
+<td id="T_d0995_row5_col1" class="data row5 col1">70.0000</td>
+<td id="T_d0995_row5_col2" class="data row5 col2">0.6801</td>
+<td id="T_d0995_row5_col3" class="data row5 col3">0.0094</td>
+<td id="T_d0995_row5_col4" class="data row5 col4">0.0061</td>
+<td id="T_d0995_row5_col5" class="data row5 col5">0.0402</td>
+<td id="T_d0995_row5_col6" class="data row5 col6">0.1143</td>
+<td id="T_d0995_row5_col7" class="data row5 col7">—</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cell-output cell-output-display">
+<style type="text/css">
+</style>
+
+<table id="T_f3128" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th id="T_f3128_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">Mean |SHAP| (log odds)</th>
+<th id="T_f3128_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">CIK 1776738 SHAP</th>
+<th id="T_f3128_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">Monthly L2 coefficient</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th id="T_f3128_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">log_assets</th>
+<td id="T_f3128_row0_col0" class="data row0 col0">0.5357</td>
+<td id="T_f3128_row0_col1" class="data row0 col1">1.1325</td>
+<td id="T_f3128_row0_col2" class="data row0 col2">0.3781</td>
+</tr>
+<tr class="even">
+<th id="T_f3128_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">fcf_assets</th>
+<td id="T_f3128_row1_col0" class="data row1 col0">0.2257</td>
+<td id="T_f3128_row1_col1" class="data row1 col1">0.2650</td>
+<td id="T_f3128_row1_col2" class="data row1 col2">0.0367</td>
+</tr>
+<tr class="odd">
+<th id="T_f3128_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">wc_assets</th>
+<td id="T_f3128_row2_col0" class="data row2 col0">0.2009</td>
+<td id="T_f3128_row2_col1" class="data row2 col1">0.1559</td>
+<td id="T_f3128_row2_col2" class="data row2 col2">0.0607</td>
+</tr>
+<tr class="even">
+<th id="T_f3128_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">current_ratio</th>
+<td id="T_f3128_row3_col0" class="data row3 col0">0.1908</td>
+<td id="T_f3128_row3_col1" class="data row3 col1">0.1487</td>
+<td id="T_f3128_row3_col2" class="data row3 col2">-0.2198</td>
+</tr>
+<tr class="odd">
+<th id="T_f3128_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">liabilities_assets</th>
+<td id="T_f3128_row4_col0" class="data row4 col0">0.1709</td>
+<td id="T_f3128_row4_col1" class="data row4 col1">0.4106</td>
+<td id="T_f3128_row4_col2" class="data row4 col2">-0.1051</td>
+</tr>
+<tr class="even">
+<th id="T_f3128_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">operating_margin</th>
+<td id="T_f3128_row5_col0" class="data row5 col0">0.1668</td>
+<td id="T_f3128_row5_col1" class="data row5 col1">0.0966</td>
+<td id="T_f3128_row5_col2" class="data row5 col2">0.0970</td>
+</tr>
+<tr class="odd">
+<th id="T_f3128_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">asset_growth</th>
+<td id="T_f3128_row6_col0" class="data row6 col0">0.1515</td>
+<td id="T_f3128_row6_col1" class="data row6 col1">0.2598</td>
+<td id="T_f3128_row6_col2" class="data row6 col2">-0.0864</td>
+</tr>
+<tr class="even">
+<th id="T_f3128_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">statement_age</th>
+<td id="T_f3128_row7_col0" class="data row7 col0">0.1415</td>
+<td id="T_f3128_row7_col1" class="data row7 col1">1.0240</td>
+<td id="T_f3128_row7_col2" class="data row7 col2">0.3488</td>
+</tr>
+<tr class="odd">
+<th id="T_f3128_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">interest_coverage</th>
+<td id="T_f3128_row8_col0" class="data row8 col0">0.1343</td>
+<td id="T_f3128_row8_col1" class="data row8 col1">0.1931</td>
+<td id="T_f3128_row8_col2" class="data row8 col2">0.0067</td>
+</tr>
+<tr class="even">
+<th id="T_f3128_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">cash_assets</th>
+<td id="T_f3128_row9_col0" class="data row9 col0">0.1317</td>
+<td id="T_f3128_row9_col1" class="data row9 col1">-0.0518</td>
+<td id="T_f3128_row9_col2" class="data row9 col2">-0.1629</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cell-output cell-output-display">
+<style type="text/css">
+</style>
+
+<table id="T_b01ee" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th id="T_b01ee_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">Value</th>
+<th id="T_b01ee_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th id="T_b01ee_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">ig_advance_decline</th>
+<td id="T_b01ee_row0_col0" class="data row0 col0">-0.1047</td>
+<td id="T_b01ee_row0_col1" class="data row0 col1">Correlation with monthly premium change</td>
+</tr>
+<tr class="even">
+<th id="T_b01ee_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">hy_advance_decline</th>
+<td id="T_b01ee_row1_col0" class="data row1 col0">-0.3909</td>
+<td id="T_b01ee_row1_col1" class="data row1 col1">Correlation with monthly premium change</td>
+</tr>
+<tr class="odd">
+<th id="T_b01ee_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">ig_high_low</th>
+<td id="T_b01ee_row2_col0" class="data row2 col0">-0.0336</td>
+<td id="T_b01ee_row2_col1" class="data row2 col1">Correlation with monthly premium change</td>
+</tr>
+<tr class="even">
+<th id="T_b01ee_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">hy_high_low</th>
+<td id="T_b01ee_row3_col0" class="data row3 col0">-0.3220</td>
+<td id="T_b01ee_row3_col1" class="data row3 col1">Correlation with monthly premium change</td>
+</tr>
+<tr class="odd">
+<th id="T_b01ee_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">ig_customer_imbalance</th>
+<td id="T_b01ee_row4_col0" class="data row4 col0">0.0196</td>
+<td id="T_b01ee_row4_col1" class="data row4 col1">Correlation with monthly premium change</td>
+</tr>
+<tr class="even">
+<th id="T_b01ee_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">hy_customer_imbalance</th>
+<td id="T_b01ee_row5_col0" class="data row5 col0">-0.5448</td>
+<td id="T_b01ee_row5_col1" class="data row5 col1">Correlation with monthly premium change</td>
+</tr>
+<tr class="odd">
+<th id="T_b01ee_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">Fed EBP</th>
+<td id="T_b01ee_row6_col0" class="data row6 col0">0.7731</td>
+<td id="T_b01ee_row6_col1" class="data row6 col1">Correlation with premium level</td>
+</tr>
+<tr class="even">
+<th id="T_b01ee_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">Premium RMSE</th>
+<td id="T_b01ee_row7_col0" class="data row7 col0">0.3762</td>
+<td id="T_b01ee_row7_col1" class="data row7 col1">Percentage points versus Fed EBP</td>
+</tr>
+<tr class="odd">
+<th id="T_b01ee_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">EBP regression slope</th>
+<td id="T_b01ee_row8_col0" class="data row8 col0">0.5829</td>
+<td id="T_b01ee_row8_col1" class="data row8 col1">EBP regressed on public premium</td>
+</tr>
+<tr class="even">
+<th id="T_b01ee_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">Risk-price multiplier</th>
+<td id="T_b01ee_row9_col0" class="data row9 col0">13.4398</td>
+<td id="T_b01ee_row9_col1" class="data row9 col1">kappa; dimensionless</td>
+</tr>
+<tr class="odd">
+<th id="T_b01ee_level0_row10" class="row_heading level0 row10" data-quarto-table-cell-role="th">Spread calibration error</th>
+<td id="T_b01ee_row10_col0" class="data row10 col0">0.0000</td>
+<td id="T_b01ee_row10_col1" class="data row10 col1">Basis points</td>
+</tr>
+<tr class="even">
+<th id="T_b01ee_level0_row11" class="row_heading level0 row11" data-quarto-table-cell-role="th">Portfolio notional</th>
+<td id="T_b01ee_row11_col0" class="data row11 col0">125.0000</td>
+<td id="T_b01ee_row11_col1" class="data row11 col1">USD millions</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cell-output cell-output-display">
+<style type="text/css">
+</style>
+
+<table id="T_4322b" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th id="T_4322b_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">Physical PD (5Y)</th>
+<th id="T_4322b_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">Risk-neutral PD (5Y)</th>
+<th id="T_4322b_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">Relative hazard</th>
+<th id="T_4322b_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">CDS (bp)</th>
+<th id="T_4322b_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">5Y CS01 ($/bp; $10m)</th>
+</tr>
+<tr class="even">
+<th class="index_name level0" data-quarto-table-cell-role="th">decile</th>
+<th class="blank col0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col1" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col2" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col3" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col4" data-quarto-table-cell-role="th">&nbsp;</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th id="T_4322b_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">1</th>
+<td id="T_4322b_row0_col0" class="data row0 col0">0.10%</td>
+<td id="T_4322b_row0_col1" class="data row0 col1">1.39%</td>
+<td id="T_4322b_row0_col2" class="data row0 col2">0.146</td>
+<td id="T_4322b_row0_col3" class="data row0 col3">16.7</td>
+<td id="T_4322b_row0_col4" class="data row0 col4">4,458.7</td>
+</tr>
+<tr class="even">
+<th id="T_4322b_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2</th>
+<td id="T_4322b_row1_col0" class="data row1 col0">0.18%</td>
+<td id="T_4322b_row1_col1" class="data row1 col1">2.43%</td>
+<td id="T_4322b_row1_col2" class="data row1 col2">0.257</td>
+<td id="T_4322b_row1_col3" class="data row1 col3">29.5</td>
+<td id="T_4322b_row1_col4" class="data row1 col4">4,435.4</td>
+</tr>
+<tr class="odd">
+<th id="T_4322b_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">3</th>
+<td id="T_4322b_row2_col0" class="data row2 col0">0.25%</td>
+<td id="T_4322b_row2_col1" class="data row2 col1">3.26%</td>
+<td id="T_4322b_row2_col2" class="data row2 col2">0.346</td>
+<td id="T_4322b_row2_col3" class="data row2 col3">39.6</td>
+<td id="T_4322b_row2_col4" class="data row2 col4">4,418.2</td>
+</tr>
+<tr class="even">
+<th id="T_4322b_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">4</th>
+<td id="T_4322b_row3_col0" class="data row3 col0">0.32%</td>
+<td id="T_4322b_row3_col1" class="data row3 col1">4.22%</td>
+<td id="T_4322b_row3_col2" class="data row3 col2">0.451</td>
+<td id="T_4322b_row3_col3" class="data row3 col3">51.7</td>
+<td id="T_4322b_row3_col4" class="data row3 col4">4,397.9</td>
+</tr>
+<tr class="odd">
+<th id="T_4322b_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">5</th>
+<td id="T_4322b_row4_col0" class="data row4 col0">0.39%</td>
+<td id="T_4322b_row4_col1" class="data row4 col1">5.11%</td>
+<td id="T_4322b_row4_col2" class="data row4 col2">0.549</td>
+<td id="T_4322b_row4_col3" class="data row4 col3">62.8</td>
+<td id="T_4322b_row4_col4" class="data row4 col4">4,376.6</td>
+</tr>
+<tr class="even">
+<th id="T_4322b_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">6</th>
+<td id="T_4322b_row5_col0" class="data row5 col0">0.47%</td>
+<td id="T_4322b_row5_col1" class="data row5 col1">6.18%</td>
+<td id="T_4322b_row5_col2" class="data row5 col2">0.668</td>
+<td id="T_4322b_row5_col3" class="data row5 col3">76.5</td>
+<td id="T_4322b_row5_col4" class="data row5 col4">4,353.0</td>
+</tr>
+<tr class="odd">
+<th id="T_4322b_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">7</th>
+<td id="T_4322b_row6_col0" class="data row6 col0">0.58%</td>
+<td id="T_4322b_row6_col1" class="data row6 col1">7.56%</td>
+<td id="T_4322b_row6_col2" class="data row6 col2">0.821</td>
+<td id="T_4322b_row6_col3" class="data row6 col3">94.0</td>
+<td id="T_4322b_row6_col4" class="data row6 col4">4,325.0</td>
+</tr>
+<tr class="even">
+<th id="T_4322b_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">8</th>
+<td id="T_4322b_row7_col0" class="data row7 col0">0.74%</td>
+<td id="T_4322b_row7_col1" class="data row7 col1">9.46%</td>
+<td id="T_4322b_row7_col2" class="data row7 col2">1.039</td>
+<td id="T_4322b_row7_col3" class="data row7 col3">119.1</td>
+<td id="T_4322b_row7_col4" class="data row7 col4">4,284.1</td>
+</tr>
+<tr class="odd">
+<th id="T_4322b_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">9</th>
+<td id="T_4322b_row8_col0" class="data row8 col0">1.04%</td>
+<td id="T_4322b_row8_col1" class="data row8 col1">13.15%</td>
+<td id="T_4322b_row8_col2" class="data row8 col2">1.475</td>
+<td id="T_4322b_row8_col3" class="data row8 col3">168.7</td>
+<td id="T_4322b_row8_col4" class="data row8 col4">4,198.2</td>
+</tr>
+<tr class="even">
+<th id="T_4322b_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">10</th>
+<td id="T_4322b_row9_col0" class="data row9 col0">1.88%</td>
+<td id="T_4322b_row9_col1" class="data row9 col1">22.50%</td>
+<td id="T_4322b_row9_col2" class="data row9 col2">2.665</td>
+<td id="T_4322b_row9_col3" class="data row9 col3">303.2</td>
+<td id="T_4322b_row9_col4" class="data row9 col4">3,999.2</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cell-output cell-output-display">
+<style type="text/css">
+</style>
+
+<table id="T_473fb" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th class="blank" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th id="T_473fb_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">EL</th>
+<th id="T_473fb_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">Loss volatility</th>
+<th id="T_473fb_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">99% VaR</th>
+<th id="T_473fb_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">99% ES</th>
+<th id="T_473fb_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">Impairment probability</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th rowspan="4" id="T_473fb_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">Portfolio</th>
+<th id="T_473fb_level1_row0" class="row_heading level1 row0" data-quarto-table-cell-role="th">Independent</th>
+<td id="T_473fb_row0_col0" class="data row0 col0">0.27%</td>
+<td id="T_473fb_row0_col1" class="data row0 col1">0.36%</td>
+<td id="T_473fb_row0_col2" class="data row0 col2">1.44%</td>
+<td id="T_473fb_row0_col3" class="data row0 col3">1.51%</td>
+<td id="T_473fb_row0_col4" class="data row0 col4">—</td>
+</tr>
+<tr class="even">
+<th id="T_473fb_level1_row1" class="row_heading level1 row1" data-quarto-table-cell-role="th">Gaussian</th>
+<td id="T_473fb_row1_col0" class="data row1 col0">0.27%</td>
+<td id="T_473fb_row1_col1" class="data row1 col1">0.74%</td>
+<td id="T_473fb_row1_col2" class="data row1 col2">3.36%</td>
+<td id="T_473fb_row1_col3" class="data row1 col3">5.09%</td>
+<td id="T_473fb_row1_col4" class="data row1 col4">—</td>
+</tr>
+<tr class="odd">
+<th id="T_473fb_level1_row2" class="row_heading level1 row2" data-quarto-table-cell-role="th">Student-t (5)</th>
+<td id="T_473fb_row2_col0" class="data row2 col0">0.27%</td>
+<td id="T_473fb_row2_col1" class="data row2 col1">1.34%</td>
+<td id="T_473fb_row2_col2" class="data row2 col2">5.76%</td>
+<td id="T_473fb_row2_col3" class="data row2 col3">10.53%</td>
+<td id="T_473fb_row2_col4" class="data row2 col4">—</td>
+</tr>
+<tr class="even">
+<th id="T_473fb_level1_row3" class="row_heading level1 row3" data-quarto-table-cell-role="th">Gaussian, Ledoit-Wolf</th>
+<td id="T_473fb_row3_col0" class="data row3 col0">0.27%</td>
+<td id="T_473fb_row3_col1" class="data row3 col1">0.73%</td>
+<td id="T_473fb_row3_col2" class="data row3 col2">3.36%</td>
+<td id="T_473fb_row3_col3" class="data row3 col3">5.04%</td>
+<td id="T_473fb_row3_col4" class="data row3 col4">—</td>
+</tr>
+<tr class="odd">
+<th rowspan="5" id="T_473fb_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">Tranche (5Y)</th>
+<th id="T_473fb_level1_row4" class="row_heading level1 row4" data-quarto-table-cell-role="th">Equity</th>
+<td id="T_473fb_row4_col0" class="data row4 col0">5.90%</td>
+<td id="T_473fb_row4_col1" class="data row4 col1">—</td>
+<td id="T_473fb_row4_col2" class="data row4 col2">—</td>
+<td id="T_473fb_row4_col3" class="data row4 col3">—</td>
+<td id="T_473fb_row4_col4" class="data row4 col4">13.74%</td>
+</tr>
+<tr class="even">
+<th id="T_473fb_level1_row5" class="row_heading level1 row5" data-quarto-table-cell-role="th">Junior mezzanine</th>
+<td id="T_473fb_row5_col0" class="data row5 col0">1.33%</td>
+<td id="T_473fb_row5_col1" class="data row5 col1">—</td>
+<td id="T_473fb_row5_col2" class="data row5 col2">—</td>
+<td id="T_473fb_row5_col3" class="data row5 col3">—</td>
+<td id="T_473fb_row5_col4" class="data row5 col4">2.21%</td>
+</tr>
+<tr class="odd">
+<th id="T_473fb_level1_row6" class="row_heading level1 row6" data-quarto-table-cell-role="th">Senior mezzanine</th>
+<td id="T_473fb_row6_col0" class="data row6 col0">0.39%</td>
+<td id="T_473fb_row6_col1" class="data row6 col1">—</td>
+<td id="T_473fb_row6_col2" class="data row6 col2">—</td>
+<td id="T_473fb_row6_col3" class="data row6 col3">—</td>
+<td id="T_473fb_row6_col4" class="data row6 col4">0.78%</td>
+</tr>
+<tr class="even">
+<th id="T_473fb_level1_row7" class="row_heading level1 row7" data-quarto-table-cell-role="th">Senior</th>
+<td id="T_473fb_row7_col0" class="data row7 col0">0.06%</td>
+<td id="T_473fb_row7_col1" class="data row7 col1">—</td>
+<td id="T_473fb_row7_col2" class="data row7 col2">—</td>
+<td id="T_473fb_row7_col3" class="data row7 col3">—</td>
+<td id="T_473fb_row7_col4" class="data row7 col4">0.17%</td>
+</tr>
+<tr class="odd">
+<th id="T_473fb_level1_row8" class="row_heading level1 row8" data-quarto-table-cell-role="th">Super senior</th>
+<td id="T_473fb_row8_col0" class="data row8 col0">0.00%</td>
+<td id="T_473fb_row8_col1" class="data row8 col1">—</td>
+<td id="T_473fb_row8_col2" class="data row8 col2">—</td>
+<td id="T_473fb_row8_col3" class="data row8 col3">—</td>
+<td id="T_473fb_row8_col4" class="data row8 col4">0.01%</td>
+</tr>
+<tr class="even">
+<th rowspan="6" id="T_473fb_level0_row9" class="row_heading level0 row9" data-quarto-table-cell-role="th">Stress, R=40%</th>
+<th id="T_473fb_level1_row9" class="row_heading level1 row9" data-quarto-table-cell-role="th">Half hazard</th>
+<td id="T_473fb_row9_col0" class="data row9 col0">0.13%</td>
+<td id="T_473fb_row9_col1" class="data row9 col1">1.05%</td>
+<td id="T_473fb_row9_col2" class="data row9 col2">3.36%</td>
+<td id="T_473fb_row9_col3" class="data row9 col3">8.21%</td>
+<td id="T_473fb_row9_col4" class="data row9 col4">—</td>
+</tr>
+<tr class="odd">
+<th id="T_473fb_level1_row10" class="row_heading level1 row10" data-quarto-table-cell-role="th">Base</th>
+<td id="T_473fb_row10_col0" class="data row10 col0">0.27%</td>
+<td id="T_473fb_row10_col1" class="data row10 col1">1.53%</td>
+<td id="T_473fb_row10_col2" class="data row10 col2">6.24%</td>
+<td id="T_473fb_row10_col3" class="data row10 col3">12.38%</td>
+<td id="T_473fb_row10_col4" class="data row10 col4">—</td>
+</tr>
+<tr class="even">
+<th id="T_473fb_level1_row11" class="row_heading level1 row11" data-quarto-table-cell-role="th">Double hazard</th>
+<td id="T_473fb_row11_col0" class="data row11 col0">0.55%</td>
+<td id="T_473fb_row11_col1" class="data row11 col1">2.27%</td>
+<td id="T_473fb_row11_col2" class="data row11 col2">11.04%</td>
+<td id="T_473fb_row11_col3" class="data row11 col3">17.75%</td>
+<td id="T_473fb_row11_col4" class="data row11 col4">—</td>
+</tr>
+<tr class="odd">
+<th id="T_473fb_level1_row12" class="row_heading level1 row12" data-quarto-table-cell-role="th">Triple hazard</th>
+<td id="T_473fb_row12_col0" class="data row12 col0">0.82%</td>
+<td id="T_473fb_row12_col1" class="data row12 col1">2.80%</td>
+<td id="T_473fb_row12_col2" class="data row12 col2">14.40%</td>
+<td id="T_473fb_row12_col3" class="data row12 col3">21.36%</td>
+<td id="T_473fb_row12_col4" class="data row12 col4">—</td>
+</tr>
+<tr class="even">
+<th id="T_473fb_level1_row13" class="row_heading level1 row13" data-quarto-table-cell-role="th">2008 spread ratio</th>
+<td id="T_473fb_row13_col0" class="data row13 col0">2.85%</td>
+<td id="T_473fb_row13_col1" class="data row13 col1">5.26%</td>
+<td id="T_473fb_row13_col2" class="data row13 col2">26.40%</td>
+<td id="T_473fb_row13_col3" class="data row13 col3">33.41%</td>
+<td id="T_473fb_row13_col4" class="data row13 col4">—</td>
+</tr>
+<tr class="odd">
+<th id="T_473fb_level1_row14" class="row_heading level1 row14" data-quarto-table-cell-role="th">2020 spread ratio</th>
+<td id="T_473fb_row14_col0" class="data row14 col0">0.93%</td>
+<td id="T_473fb_row14_col1" class="data row14 col1">3.00%</td>
+<td id="T_473fb_row14_col2" class="data row14 col2">15.36%</td>
+<td id="T_473fb_row14_col3" class="data row14 col3">22.65%</td>
+<td id="T_473fb_row14_col4" class="data row14 col4">—</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><a href="22_credit_risk_files/figure-html/cell-42-output-7.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16"><img src="22_credit_risk_files/figure-html/cell-42-output-7.png" class="img-fluid figure-img"></a></p>
+</figure>
+</div>
+</div>
+</div>
 
 
 
@@ -4354,16 +5466,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     }
     function toggleCodeHandler(show) {
       return function(e) {
-        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
-        for (let i=0; i<cellDetails.length; i++) {
-          const details = cellDetails[i];
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
           if (show) {
             details.open = true;
           } else {
             details.removeAttribute("open");
           }
         }
-        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
         const fromCls = show ? "hidden" : "unhidden";
         const toCls = show ? "unhidden" : "hidden";
         for (let i=0; i<cellCodeDivs.length; i++) {

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from . import analysis, scoring
 from .analysis import (
+    altman_z_double_prime,
     altman_z_score,
     annual_change,
     annual_growth,
@@ -67,6 +68,7 @@ from .analysis import (
     net_margin,
     net_operating_profit_after_tax,
     net_payout_amount,
+    ohlson_score,
     operating_expense_ratio,
     operating_margin,
     payable_days,
@@ -113,6 +115,7 @@ from .analysis import (
     working_capital,
     working_capital_accruals,
     working_capital_to_revenue,
+    zmijewski_score,
 )
 from .scoring import (
     adaptive_family_score,
@@ -146,6 +149,9 @@ from .statements import (
 )
 
 __all__ = [
+    "altman_z_double_prime",
+    "ohlson_score",
+    "zmijewski_score",
     "adaptive_family_score",
     "altman_z_score",
     "analysis",

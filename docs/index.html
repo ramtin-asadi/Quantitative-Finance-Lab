@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.10.18">
+<meta name="generator" content="quarto-1.8.27">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -11,16 +11,10 @@
 
 <title>Quantitative Finance Lab</title>
 <style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
+code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: 1.5em;}
-div.column{flex: auto;}
-@media screen {
-div.columns{gap: min(4vw, 1.5em);}
-div.column{overflow-x: auto;}
-}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -76,14 +70,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="./overview.html" rel="next">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-675469a854bf6193ac016c33f4a5ba11.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-90886b51582bb869f7b9cea9d78be50d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-084988aa8524b7526ff0ffa8f0afd15c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-adcea035c583100f67ba587c8eb7f60c.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -598,6 +593,45 @@ Note
 </section>
 </div>
 </div>
+<div class="columns">
+<div class="column" style="width:50%;">
+<section id="fundamental-equity-research-scoring-and-reporting" class="level3">
+<h3 class="anchored" data-anchor-id="fundamental-equity-research-scoring-and-reporting">21. Fundamental Equity Research, Scoring and Reporting</h3>
+<ul>
+<li>Reconstruct quarterly and trailing statements from point-in-time SEC filings</li>
+<li>Analyze profitability, cash quality, financial strength and valuation with company-type-specific diagnostics</li>
+<li>Compare fixed and adaptive peer-relative scores, stock selections and portfolio allocations</li>
+<li>Produce issuer reports and reproduce the historical S&amp;P 500 workflow with library calls</li>
+</ul>
+<p><a href="notebooks/21_fundamental_analysis.html">Open Project 21</a></p>
+</section>
+</div><div class="column" style="width:50%;">
+<section id="corporate-credit-risk-market-pricing-and-structured-credit" class="level3">
+<h3 class="anchored" data-anchor-id="corporate-credit-risk-market-pricing-and-structured-credit">22. Corporate Credit Risk, Market Pricing and Structured Credit</h3>
+<ul>
+<li>Construct censored bankruptcy and distress targets from SEC filing histories</li>
+<li>Compare logit, spline, LightGBM, direct-horizon and Merton risk estimates</li>
+<li>Connect expected credit loss to market spreads, Fed EBP, FINRA activity and synthetic CDS</li>
+<li>Simulate issuer portfolios, copula dependence, tranche losses and joint credit stresses</li>
+</ul>
+<p><a href="notebooks/22_credit_risk.html">Open Project 22</a></p>
+</section>
+</div>
+</div>
+<div class="columns">
+<div class="column" style="width:50%;">
+<section id="real-time-macro-and-monetary-policy-nowcasting" class="level3">
+<h3 class="anchored" data-anchor-id="real-time-macro-and-monetary-policy-nowcasting">23. Real-Time Macro and Monetary Policy Nowcasting</h3>
+<ul>
+<li>Build as-of information sets and first-release GDP, inflation and labor targets</li>
+<li>Compare component bridges, grouped mixed-frequency factors, MIDAS, Minnesota BVAR and forecast combinations</li>
+<li>Attribute Kalman news and evaluate professional forecasts and aligned overnight-rate distributions</li>
+<li>Repeat the models on Canadian releases, Bank of Canada data and international inputs</li>
+</ul>
+<p><a href="notebooks/23_macro_nowcasting.html">Open Project 23</a></p>
+</section>
+</div>
+</div>
 <hr>
 </section>
 <section id="data" class="level2">
@@ -612,7 +646,7 @@ Note
 </section>
 <section id="the-library" class="level2">
 <h2 class="anchored" data-anchor-id="the-library">The library</h2>
-<p>Reusable logic from every project lives in <strong><code>quantfinlab</code></strong>, a typed, tested Python package covering fixed income, options pricing (with a compiled C++ pricing core for the numerically heavy methods), portfolio construction, risk reporting, volatility modeling, hedging, macro indicators, and ML/RL Applications for finance. It ships with 171 tests covering everything from optimizer invariants to the C++ kernels, all passing in CI. Full documentation, the module map, and worked code examples are in <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md"><code>quantfinlab/README.md</code></a> on GitHub.</p>
+<p>Reusable logic from every project lives in <strong><code>quantfinlab</code></strong>, a typed, tested Python package covering fixed income, options pricing (with a compiled C++ pricing core for the numerically heavy methods), portfolio construction, risk reporting, volatility modeling, hedging, fundamental equity research, corporate credit, real-time macro and ML/RL applications for finance. Tests cover model properties from optimizer invariants and pricing kernels to statement reconstruction and release timing. Full documentation, the module map, and worked examples are in <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md"><code>quantfinlab/README.md</code></a> on GitHub.</p>
 <hr>
 </section>
 <section id="disclaimer" class="level2">
@@ -741,16 +775,16 @@ Note
     }
     function toggleCodeHandler(show) {
       return function(e) {
-        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
-        for (let i=0; i<cellDetails.length; i++) {
-          const details = cellDetails[i];
+        const detailsSrc = window.document.querySelectorAll(".cell > details > .sourceCode");
+        for (let i=0; i<detailsSrc.length; i++) {
+          const details = detailsSrc[i].parentElement;
           if (show) {
             details.open = true;
           } else {
             details.removeAttribute("open");
           }
         }
-        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
+        const cellCodeDivs = window.document.querySelectorAll(".cell > .sourceCode");
         const fromCls = show ? "hidden" : "unhidden";
         const toCls = show ? "unhidden" : "hidden";
         for (let i=0; i<cellCodeDivs.length; i++) {
@@ -1403,28 +1437,69 @@ Note
 <span id="cb1-292"><a href="#cb1-292" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-293"><a href="#cb1-293" aria-hidden="true" tabindex="-1"></a>::::</span>
 <span id="cb1-294"><a href="#cb1-294" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-295"><a href="#cb1-295" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-295"><a href="#cb1-295" aria-hidden="true" tabindex="-1"></a>:::: {.columns}</span>
 <span id="cb1-296"><a href="#cb1-296" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-297"><a href="#cb1-297" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data {#data}</span></span>
-<span id="cb1-298"><a href="#cb1-298" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-299"><a href="#cb1-299" aria-hidden="true" tabindex="-1"></a>**The notebooks cannot be re-run directly on a fresh clone. Data has to be prepared first.** No large or licensed market data is committed to the repository. Instead, the repository ships a <span class="in">`data/`</span> reproducibility layer: one small, readable script per data source, plus a <span class="in">`README.md`</span> documenting exactly what each one does and where its data comes from.</span>
-<span id="cb1-300"><a href="#cb1-300" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-301"><a href="#cb1-301" aria-hidden="true" tabindex="-1"></a>Two kinds of sources are handled differently:</span>
-<span id="cb1-302"><a href="#cb1-302" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-303"><a href="#cb1-303" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Scripted/automatic sources**: FRED (US Treasury yields, NFCI), the NY Fed (ACM term premia), Japan's Ministry of Finance (JGB yields), yfinance (equities, ETFs, BTC), the Kenneth French data library (factor returns) download themselves when you run the corresponding script, for example <span class="in">`python data/us_treasury_yields/download.py`</span>.</span>
-<span id="cb1-304"><a href="#cb1-304" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Manual/licensed sources**: OptionsDX option chains (SPX, SPY, QQQ, BTC/Deribit) and Stooq's bulk equity archives require you to obtain the files yourself from the linked source (free registration in OptionsDX's case) and place them in the matching <span class="in">`data/&lt;source&gt;/raw/`</span> folder; a <span class="in">`build.py`</span> script then turns them into the clean file each notebook expects.</span>
-<span id="cb1-305"><a href="#cb1-305" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-306"><a href="#cb1-306" aria-hidden="true" tabindex="-1"></a>The complete list of sources, what to put where, and citation requirements per source live in <span class="in">`data/README.md`</span> in the repository. Every number in every notebook has a scripted path back to where it came from.</span>
+<span id="cb1-297"><a href="#cb1-297" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
+<span id="cb1-298"><a href="#cb1-298" aria-hidden="true" tabindex="-1"></a><span class="fu">### 21. Fundamental Equity Research, Scoring and Reporting</span></span>
+<span id="cb1-299"><a href="#cb1-299" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-300"><a href="#cb1-300" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Reconstruct quarterly and trailing statements from point-in-time SEC filings</span>
+<span id="cb1-301"><a href="#cb1-301" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Analyze profitability, cash quality, financial strength and valuation with company-type-specific diagnostics</span>
+<span id="cb1-302"><a href="#cb1-302" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare fixed and adaptive peer-relative scores, stock selections and portfolio allocations</span>
+<span id="cb1-303"><a href="#cb1-303" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Produce issuer reports and reproduce the historical S&amp;P 500 workflow with library calls</span>
+<span id="cb1-304"><a href="#cb1-304" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-305"><a href="#cb1-305" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 21</span><span class="co">](notebooks/21_fundamental_analysis.html)</span></span>
+<span id="cb1-306"><a href="#cb1-306" aria-hidden="true" tabindex="-1"></a>:::</span>
 <span id="cb1-307"><a href="#cb1-307" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-308"><a href="#cb1-308" aria-hidden="true" tabindex="-1"></a><span class="fu">## The library</span></span>
-<span id="cb1-309"><a href="#cb1-309" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-310"><a href="#cb1-310" aria-hidden="true" tabindex="-1"></a>Reusable logic from every project lives in **`quantfinlab`**, a typed, tested Python package covering fixed income, options pricing (with a compiled C++ pricing core for the numerically heavy methods), portfolio construction, risk reporting, volatility modeling, hedging, macro indicators, and ML/RL Applications for finance. It ships with 171 tests covering everything from optimizer invariants to the C++ kernels, all passing in CI. Full documentation, the module map, and worked code examples are in <span class="co">[</span><span class="ot">`quantfinlab/README.md`</span><span class="co">](https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md)</span> on GitHub.</span>
-<span id="cb1-311"><a href="#cb1-311" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-312"><a href="#cb1-312" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-313"><a href="#cb1-313" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-314"><a href="#cb1-314" aria-hidden="true" tabindex="-1"></a><span class="fu">## Disclaimer</span></span>
+<span id="cb1-308"><a href="#cb1-308" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
+<span id="cb1-309"><a href="#cb1-309" aria-hidden="true" tabindex="-1"></a><span class="fu">### 22. Corporate Credit Risk, Market Pricing and Structured Credit</span></span>
+<span id="cb1-310"><a href="#cb1-310" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-311"><a href="#cb1-311" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Construct censored bankruptcy and distress targets from SEC filing histories</span>
+<span id="cb1-312"><a href="#cb1-312" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare logit, spline, LightGBM, direct-horizon and Merton risk estimates</span>
+<span id="cb1-313"><a href="#cb1-313" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Connect expected credit loss to market spreads, Fed EBP, FINRA activity and synthetic CDS</span>
+<span id="cb1-314"><a href="#cb1-314" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Simulate issuer portfolios, copula dependence, tranche losses and joint credit stresses</span>
 <span id="cb1-315"><a href="#cb1-315" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-316"><a href="#cb1-316" aria-hidden="true" tabindex="-1"></a>This repository is for **research and educational purposes**. Nothing here is investment advice, and results may vary by dataset, assumptions, costs, constraints, and implementation details.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-316"><a href="#cb1-316" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 22</span><span class="co">](notebooks/22_credit_risk.html)</span></span>
+<span id="cb1-317"><a href="#cb1-317" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-318"><a href="#cb1-318" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-319"><a href="#cb1-319" aria-hidden="true" tabindex="-1"></a>::::</span>
+<span id="cb1-320"><a href="#cb1-320" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-321"><a href="#cb1-321" aria-hidden="true" tabindex="-1"></a>:::: {.columns}</span>
+<span id="cb1-322"><a href="#cb1-322" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-323"><a href="#cb1-323" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
+<span id="cb1-324"><a href="#cb1-324" aria-hidden="true" tabindex="-1"></a><span class="fu">### 23. Real-Time Macro and Monetary Policy Nowcasting</span></span>
+<span id="cb1-325"><a href="#cb1-325" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-326"><a href="#cb1-326" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build as-of information sets and first-release GDP, inflation and labor targets</span>
+<span id="cb1-327"><a href="#cb1-327" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare component bridges, grouped mixed-frequency factors, MIDAS, Minnesota BVAR and forecast combinations</span>
+<span id="cb1-328"><a href="#cb1-328" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Attribute Kalman news and evaluate professional forecasts and aligned overnight-rate distributions</span>
+<span id="cb1-329"><a href="#cb1-329" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Repeat the models on Canadian releases, Bank of Canada data and international inputs</span>
+<span id="cb1-330"><a href="#cb1-330" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-331"><a href="#cb1-331" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 23</span><span class="co">](notebooks/23_macro_nowcasting.html)</span></span>
+<span id="cb1-332"><a href="#cb1-332" aria-hidden="true" tabindex="-1"></a>:::</span>
+<span id="cb1-333"><a href="#cb1-333" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-334"><a href="#cb1-334" aria-hidden="true" tabindex="-1"></a>::::</span>
+<span id="cb1-335"><a href="#cb1-335" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-336"><a href="#cb1-336" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-337"><a href="#cb1-337" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-338"><a href="#cb1-338" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data {#data}</span></span>
+<span id="cb1-339"><a href="#cb1-339" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-340"><a href="#cb1-340" aria-hidden="true" tabindex="-1"></a>**The notebooks cannot be re-run directly on a fresh clone. Data has to be prepared first.** No large or licensed market data is committed to the repository. Instead, the repository ships a <span class="in">`data/`</span> reproducibility layer: one small, readable script per data source, plus a <span class="in">`README.md`</span> documenting exactly what each one does and where its data comes from.</span>
+<span id="cb1-341"><a href="#cb1-341" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-342"><a href="#cb1-342" aria-hidden="true" tabindex="-1"></a>Two kinds of sources are handled differently:</span>
+<span id="cb1-343"><a href="#cb1-343" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-344"><a href="#cb1-344" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Scripted/automatic sources**: FRED (US Treasury yields, NFCI), the NY Fed (ACM term premia), Japan's Ministry of Finance (JGB yields), yfinance (equities, ETFs, BTC), the Kenneth French data library (factor returns) download themselves when you run the corresponding script, for example <span class="in">`python data/us_treasury_yields/download.py`</span>.</span>
+<span id="cb1-345"><a href="#cb1-345" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Manual/licensed sources**: OptionsDX option chains (SPX, SPY, QQQ, BTC/Deribit) and Stooq's bulk equity archives require you to obtain the files yourself from the linked source (free registration in OptionsDX's case) and place them in the matching <span class="in">`data/&lt;source&gt;/raw/`</span> folder; a <span class="in">`build.py`</span> script then turns them into the clean file each notebook expects.</span>
+<span id="cb1-346"><a href="#cb1-346" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-347"><a href="#cb1-347" aria-hidden="true" tabindex="-1"></a>The complete list of sources, what to put where, and citation requirements per source live in <span class="in">`data/README.md`</span> in the repository. Every number in every notebook has a scripted path back to where it came from.</span>
+<span id="cb1-348"><a href="#cb1-348" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-349"><a href="#cb1-349" aria-hidden="true" tabindex="-1"></a><span class="fu">## The library</span></span>
+<span id="cb1-350"><a href="#cb1-350" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-351"><a href="#cb1-351" aria-hidden="true" tabindex="-1"></a>Reusable logic from every project lives in **`quantfinlab`**, a typed, tested Python package covering fixed income, options pricing (with a compiled C++ pricing core for the numerically heavy methods), portfolio construction, risk reporting, volatility modeling, hedging, fundamental equity research, corporate credit, real-time macro and ML/RL applications for finance. Tests cover model properties from optimizer invariants and pricing kernels to statement reconstruction and release timing. Full documentation, the module map, and worked examples are in <span class="co">[</span><span class="ot">`quantfinlab/README.md`</span><span class="co">](https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md)</span> on GitHub.</span>
+<span id="cb1-352"><a href="#cb1-352" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-353"><a href="#cb1-353" aria-hidden="true" tabindex="-1"></a>---</span>
+<span id="cb1-354"><a href="#cb1-354" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-355"><a href="#cb1-355" aria-hidden="true" tabindex="-1"></a><span class="fu">## Disclaimer</span></span>
+<span id="cb1-356"><a href="#cb1-356" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-357"><a href="#cb1-357" aria-hidden="true" tabindex="-1"></a>This repository is for **research and educational purposes**. Nothing here is investment advice, and results may vary by dataset, assumptions, costs, constraints, and implementation details.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 

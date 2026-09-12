@@ -612,14 +612,25 @@ def monthly_statement_values(
     *,
     cache: str | Path | None = None,
     force: bool = False,
+    availability_col: str = "filed_date",
 ) -> pd.DataFrame:
     """Reconstruct the latest strictly available statement values each month.
 
     ``facts`` must already have passed through :func:`classify_duration_facts`.
     The returned frame contains statement values only; merge it with
     ``monthly_universe`` to attach prices, industries, and issuer labels.
+
+    ``availability_col`` defaults to the original filing-day behavior. Another
+    field, such as an SEC acceptance timestamp, becomes the statement-availability
+    date carried in the returned ``filed_date`` field. Use a separate cache or
+    ``force=True`` when changing the availability convention.
     """
 
+    if availability_col != "filed_date":
+        facts = facts.copy()
+        facts["filed_date"] = pd.to_datetime(facts[availability_col])
+        if facts["filed_date"].isna().any():
+            raise ValueError("Statement availability dates must be present.")
     cache_path = Path(cache) if cache is not None else None
     if cache_path is not None and cache_path.exists() and not force:
         return pd.read_parquet(cache_path)

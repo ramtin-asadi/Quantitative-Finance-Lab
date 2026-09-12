@@ -27,6 +27,7 @@ from .common.errors import (
 __version__ = "0.6.0"
 
 _PUBLIC_MODULES = {
+    "credit",
     "backtest",
     "common",
     "dataio",
@@ -56,6 +57,7 @@ def __dir__() -> list[str]:
 
 
 __all__ = [
+    "credit",
     "BacktestError",
     "BacktestResult",
     "Bond",

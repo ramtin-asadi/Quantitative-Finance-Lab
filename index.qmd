@@ -292,6 +292,47 @@ The goal is to build a series that is both **research-grade** (well explained) a
 
 ::::
 
+:::: {.columns}
+
+::: {.column width="50%"}
+### 21. Fundamental Equity Research, Scoring and Reporting
+
+- Reconstruct quarterly and trailing statements from point-in-time SEC filings
+- Analyze profitability, cash quality, financial strength and valuation with company-type-specific diagnostics
+- Compare fixed and adaptive peer-relative scores, stock selections and portfolio allocations
+- Produce issuer reports and reproduce the historical S&P 500 workflow with library calls
+
+[Open Project 21](notebooks/21_fundamental_analysis.html)
+:::
+
+::: {.column width="50%"}
+### 22. Corporate Credit Risk, Market Pricing and Structured Credit
+
+- Construct censored bankruptcy and distress targets from SEC filing histories
+- Compare logit, spline, LightGBM, direct-horizon and Merton risk estimates
+- Connect expected credit loss to market spreads, Fed EBP, FINRA activity and synthetic CDS
+- Simulate issuer portfolios, copula dependence, tranche losses and joint credit stresses
+
+[Open Project 22](notebooks/22_credit_risk.html)
+:::
+
+::::
+
+:::: {.columns}
+
+::: {.column width="50%"}
+### 23. Real-Time Macro and Monetary Policy Nowcasting
+
+- Build as-of information sets and first-release GDP, inflation and labor targets
+- Compare component bridges, grouped mixed-frequency factors, MIDAS, Minnesota BVAR and forecast combinations
+- Attribute Kalman news and evaluate professional forecasts and aligned overnight-rate distributions
+- Repeat the models on Canadian releases, Bank of Canada data and international inputs
+
+[Open Project 23](notebooks/23_macro_nowcasting.html)
+:::
+
+::::
+
 ---
 
 ## Data {#data}
@@ -307,7 +348,7 @@ The complete list of sources, what to put where, and citation requirements per s
 
 ## The library
 
-Reusable logic from every project lives in **`quantfinlab`**, a typed, tested Python package covering fixed income, options pricing (with a compiled C++ pricing core for the numerically heavy methods), portfolio construction, risk reporting, volatility modeling, hedging, macro indicators, and ML/RL Applications for finance. It ships with 171 tests covering everything from optimizer invariants to the C++ kernels, all passing in CI. Full documentation, the module map, and worked code examples are in [`quantfinlab/README.md`](https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md) on GitHub.
+Reusable logic from every project lives in **`quantfinlab`**, a typed, tested Python package covering fixed income, options pricing (with a compiled C++ pricing core for the numerically heavy methods), portfolio construction, risk reporting, volatility modeling, hedging, fundamental equity research, corporate credit, real-time macro and ML/RL applications for finance. Tests cover model properties from optimizer invariants and pricing kernels to statement reconstruction and release timing. Full documentation, the module map, and worked examples are in [`quantfinlab/README.md`](https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md) on GitHub.
 
 ---
 

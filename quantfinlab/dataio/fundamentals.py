@@ -228,6 +228,7 @@ def read_sec_facts(
     period_start: str | pd.Timestamp | None = None,
     columns: Sequence[str] | None = None,
     validate: bool = True,
+    record_type: str | None = None,
 ) -> pd.DataFrame:
     """Read a filtered, normalized slice of point-in-time SEC facts.
 
@@ -247,6 +248,9 @@ def read_sec_facts(
         Fact columns to materialize. Defaults to the Project 21 fact boundary.
     validate : bool, default True
         Require passing source metadata before scanning facts.
+    record_type : str or None, optional
+        Restrict a combined facts/filings file to one record type. The default
+        leaves the original fundamentals-only reader behavior unchanged.
 
     Returns
     -------
@@ -291,6 +295,8 @@ def read_sec_facts(
     if concepts is not None:
         concept_values = [str(concept) for concept in concepts]
         add_filter(ds.field("concept").isin(concept_values))
+    if record_type is not None:
+        add_filter(ds.field("record_type") == record_type)
     if ciks is not None:
         cik_values = [int(cik) for cik in ciks]
         add_filter(ds.field("cik").isin(cik_values))
@@ -329,4 +335,15 @@ def read_sec_facts(
     return facts
 
 
-__all__ = ["read_sec_facts", "read_sec_metadata"]
+def read_statement_values(path: str | Path, *, instant_fields) -> pd.DataFrame:
+    """Read the compact monthly statement boundary, omitting reconstruction intermediates."""
+    import pyarrow.parquet as pq
+    names = pq.ParquetFile(path).schema_arrow.names
+    dates = {"cik", "decision_date", "filed_date", "latest_quarter_end", "latest_duration_end",
+             "latest_balance_end", "latest_period_end"}
+    columns = [name for name in names if name in dates or name in instant_fields
+               or name.endswith(("_ttm", "_ttm_yoy", "_ttm_method"))]
+    return pd.read_parquet(path, columns=columns)
+
+
+__all__ = ["read_sec_facts", "read_sec_metadata", "read_statement_values"]

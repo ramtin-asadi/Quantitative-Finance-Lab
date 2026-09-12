@@ -1,6 +1,6 @@
 # quantfinlab Library
 
-`quantfinlab` is the reusable Python library extracted from the [Quantitative Finance Lab](https://github.com/ramtin-asadi/Quantitative-Finance-Lab) project series. It is not a general-purpose finance library. It is a focused package covering the methods developed across the twenty projects: fixed income, options pricing, portfolio construction, risk reporting, volatility modeling, hedging, macro indicators, dependence networks, and ML/RL components for finance.
+`quantfinlab` is the reusable Python library extracted from the [Quantitative Finance Lab](https://github.com/ramtin-asadi/Quantitative-Finance-Lab) project series. It is not a general-purpose finance library. It is a focused package covering the methods developed across the 23 projects: fixed income, options pricing, portfolio construction, risk reporting, volatility modeling, hedging, fundamental equity research, corporate credit, real-time macro, dependence networks, and ML/RL components for finance.
 
 The test suite checks real model properties rather than notebook snapshots: weights summing to one, CVaR behavior, curve/discount consistency, American option engine fallbacks, implied-volatility diagnostics, and PSD matrix reconstruction. The current package checks pass with a clean `ruff` lint pass.
 
@@ -12,7 +12,7 @@ From PyPI:
 pip install quantfinlab
 ```
 
-For optional dependencies, install the extras you need:
+For optional dependencies, install the extras you need. The source checkout defines:
 
 ```bash
 pip install "quantfinlab[numerics]"   # JAX / Numba acceleration (autodiff Greeks, fast IV)
@@ -20,6 +20,9 @@ pip install "quantfinlab[volatility]" # arch, statsmodels (GARCH, HAR)
 pip install "quantfinlab[hedging]"    # statsmodels (dynamic hedge ratios)
 pip install "quantfinlab[ml]"         # PyTorch (sequence models, RL policies)
 pip install "quantfinlab[network]"    # networkx (dependence networks)
+pip install "quantfinlab[data]"       # PyArrow / DuckDB source readers
+pip install "quantfinlab[credit]"     # LightGBM / statsmodels default models and source readers
+pip install "quantfinlab[macro]"      # statsmodels state-space models and source readers
 pip install "quantfinlab[plotting]"   # matplotlib, seaborn
 pip install "quantfinlab[all]"        # everything above
 ```
@@ -46,21 +49,23 @@ Most of the library works with just the core dependencies (NumPy, pandas, SciPy,
 
 | Module | Covers |
 |---|---|
-| `quantfinlab.dataio` | Source-normalized data loading: yield curves, equity/ETF panels, option chains, macro series, every loader returns a stable schema regardless of the underlying data vendor. See [Data loading](#data-loading) below. |
-| `quantfinlab.fixed_income` | Curve bootstrapping, discounting, forward rates, bond pricing and cashflows, duration/convexity/key-rate duration, short-rate/term-structure models, swaps, scenario generation, duration-targeted laddering. |
+| `quantfinlab.dataio` | Source-normalized data loading: yield curves, equity/ETF panels, option chains, SEC facts and filings, macro vintages and surveys; each source family returns a stable schema regardless of the underlying data vendor. See [Data loading](#data-loading) below. |
+| `quantfinlab.fixed_income` | Curve bootstrapping, discounting, forward rates, bond pricing and cashflows, duration/convexity/key-rate duration, short-rate/term-structure models, swaps, scenario generation, duration-targeted laddering, overnight-rate compounding. |
 | `quantfinlab.options` | Black–Scholes/Black-76 pricing, put-call parity, quote cleaning, implied volatility (Newton-bisection and "Let's Be Rational"-style solvers, with an optional Numba backend), analytic and autodiff Greeks (optional JAX), American option pricing (tree/PDE/LSM, C++ and numba backed), Fourier/COS pricing, Heston/SABR/SVI/SSVI/rough-volatility/Merton/variance-gamma models, local volatility, and model-risk diagnostics. |
 | `quantfinlab.portfolio` | Expected-return models, covariance estimation (sample/Ledoit-Wolf/OAS/EWMA), mean-variance/min-variance/max-Sharpe/ridge optimizers, constraints, transaction costs, walk-forward backtesting harness, Black-Litterman (with learned-confidence views and factor/regime conditioning), HRP/NCO clustering allocation, risk parity, CVaR and robust (box/ellipsoid/Wasserstein) optimization, factor construction, regime models, dependence-network construction and network-based signals, universe selection and position sizing. |
 | `quantfinlab.risk` | VaR/expected shortfall (historical, Cornish-Fisher, filtered historical simulation), VaR backtesting, drawdown analysis, performance metrics, CAPM beta, correlation diagnostics, stress testing, risk contribution/attribution. |
 | `quantfinlab.volatility` | Realized-volatility estimators, GARCH/HAR forecasting, rough-volatility estimation, variance risk premium analysis. |
 | `quantfinlab.hedging` | Dynamic hedge-ratio estimation, hedge policies, residual-spread construction, hedging performance metrics. |
-| `quantfinlab.macro` | Macro indicator construction (financial-conditions index, NFCI-style PCA), macro-conditioned allocation models. |
-| `quantfinlab.ml` | Feature engineering, forecasting evaluation (rank metrics, pinball loss, coverage), probabilistic/uncertainty models, sequence models (e.g. TCN-based forecasters), regime classifiers, RL environments, reward shaping (differential Sharpe ratio), and RL policies (PPO, recurrent PPO, SAC). |
+| `quantfinlab.macro` | Financial-conditions indicators and allocation; vintage/as-of transforms, completed-month GDP bridges, inflation components, MIDAS, grouped mixed-frequency DFM and Kalman news, monthly Minnesota BVAR, policy forecasts and release evaluation. |
+| `quantfinlab.fundamentals` | Point-in-time statement reconstruction, accounting ratios, corporate/financial-company diagnostics, peer scoring, stock selection and score validation. |
+| `quantfinlab.credit` | Filing-based default labels, logit/spline/LightGBM default models, Merton inversion, intensity curves, CDS valuation, credit portfolios and tranche losses. |
+| `quantfinlab.ml` | Feature engineering, forecasting evaluation (rank metrics, pinball loss, coverage), probabilistic/uncertainty models, release-aware validation and forecast combinations, sequence models (e.g. TCN-based forecasters), regime classifiers, RL environments, reward shaping (differential Sharpe ratio), and RL policies (PPO, recurrent PPO, SAC). |
 | `quantfinlab.backtest` | Shared backtesting engines for portfolios, fixed income, hedging, and options strategies, with cost models and overlay support. |
-| `quantfinlab.reports` | risk report generation, combining outputs from `risk`, `portfolio`, and `plotting` into a single executive summary. |
-| `quantfinlab.numerics` | Finite-difference schemes, Fourier transforms, interpolation, Monte Carlo path generation. Shared numerical primitives used across `options` and `calibration`. |
+| `quantfinlab.reports` | Risk and fundamental equity reports, combining outputs from `risk`, `portfolio`, and `plotting` into a single executive summary. |
+| `quantfinlab.numerics` | Finite-difference schemes, Fourier transforms, interpolation, Monte Carlo path generation, Gaussian and Student-t copulas. Shared numerical primitives used across pricing, portfolios and risk. |
 | `quantfinlab.calibration` | Model calibration. American option numerics, FFT/COS calibration, jump-diffusion model fitting, LSM regression. |
-| `quantfinlab.plotting` | Consistent plotting utilities per domain (curves, options, portfolio, risk, volatility, macro, regimes, ML, hedging, fixed income) and explanatory diagrams. |
-| `quantfinlab.common` | Shared contracts/dataclasses (`Curve`, `Bond`, `PortfolioState`, `BacktestResult`, ...), error types, date utilities, and input validation used across every other module. |
+| `quantfinlab.plotting` | Consistent plotting utilities per domain (curves, options, portfolio, risk, volatility, macro, regimes, ML, hedging, fixed income, fundamentals, credit) and explanatory diagrams. |
+| `quantfinlab.common` | Shared contracts/dataclasses (`Curve`, `Bond`, `PortfolioState`, `BacktestResult`, ...), error types, date utilities, cache identities, and input validation used across every other module. |
 
 The optional C++ pricing kernels (`cpp/`, exposed as `quantfinlab._kernels`) implement the LSM regression solver, the PSOR finite-difference PDE solver, the binomial tree, Monte Carlo paths, and the Fourier/COS pricer. They are written in C++ and bound via pybind11 for speed; pure-Python installs keep the public APIs importable and use automatic fallbacks where those methods exist.
 
@@ -81,7 +86,7 @@ panel = load_yfinance_panel(
 close, volume = panel["close"], panel["volume"]
 ```
 
-Every loader in `dataio` normalizes to the same shape. par-yield curves come back as a `DatetimeIndex`-sorted DataFrame with standard tenor columns (`1M`...`30Y`) in decimal form. equities and prices come back as `{field: DataFrame}` with tickers as columns, numeric-coerced, deduplicated, sorted. This is what makes the "secondary market" repeat at the end of most notebooks possible with no extra glue code. swap the `path`/`source`, get the same schema back.
+Loaders normalize each source family to a consistent shape. par-yield curves come back as a `DatetimeIndex`-sorted DataFrame with standard tenor columns (`1M`...`30Y`) in decimal form. equities and prices come back as `{field: DataFrame}` with tickers as columns, numeric-coerced, deduplicated, sorted. This is what makes the "secondary market" repeat at the end of most notebooks possible with no extra glue code. swap the `path`/`source`, get the same schema back. SEC readers retain filing versions and availability dates; real-time macro readers retain observation dates separately from publication or snapshot dates. A vintage label is not automatically an exact release timestamp.
 
 ## Examples
 
@@ -151,6 +156,35 @@ report = risk_report.risk_report(
 ```
 
 This produces the same VaR/ES, drawdown, CAPM, and risk-contribution summary used throughout Project 03 and applied to every backtest in later projects — one call instead of re-deriving the report each time.
+
+
+### Default probabilities and CDS pricing
+
+```python
+from quantfinlab.credit.curves import hazards_from_pd
+from quantfinlab.credit.pricing import cds_spread
+from quantfinlab.fixed_income.discounting import discount_from_zero
+
+T = [0.25, 0.5, 1.0, 2.0]
+lambda_q = hazards_from_pd([0.003, 0.006, 0.015, 0.035], T)
+discount = discount_from_zero(T, [0.035, 0.034, 0.033, 0.032])
+spread = cds_spread(lambda_q, T, discount, 2.0, R=0.4)
+```
+
+Rates, probabilities and recoveries are decimals; maturities are years. Pricing requires a risk-neutral hazard assumption, distinct from an empirical default forecast. The CDS functions use explicit cash-flow approximations, not the ISDA standard model; `cds_cs01` bumps spreads and recalibrates the hazard curve, while `risky_pv01` measures annuity sensitivity.
+
+### A historical macro information set
+
+```python
+from quantfinlab.dataio.realtime import read_alfred
+from quantfinlab.macro.realtime import vintage_asof, release_growth
+
+releases = read_alfred("data/alfred_realtime.parquet", series=["INDPRO"])
+known = vintage_asof(releases, "2020-04-15", wide=True)
+first_growth = release_growth(releases, periods=1, scale=1200, max_delay=100)
+```
+
+Growth uses numerator and denominator from the same release vintage. Archive backfill is not automatically first-release truth; `max_delay` is a bound measured from the reference period's start. State-space news, factor-augmented forecasts and the monthly BVAR with a separate quarterly bridge remain distinct APIs; their assumptions and return values are documented in the functions.
 
 ## Testing
 

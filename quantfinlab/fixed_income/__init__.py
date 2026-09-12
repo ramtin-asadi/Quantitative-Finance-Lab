@@ -9,6 +9,7 @@ from . import (
     duration_overlay,
     forwards,
     ladder,
+    overnight,
     risk,
     scenarios,
     smoothers,
@@ -55,6 +56,7 @@ from .discounting import (
     curves_by_valuation_date,
     discount_curve_table,
     discount_factor_from_rate,
+    discount_from_zero,
     make_discount_lookup,
     map_curve_rates_to_dates_and_taus,
     par_curve_table,
@@ -100,6 +102,8 @@ from .tenors import (
 )
 
 __all__ = [
+    "overnight",
+    "discount_from_zero",
     "DEFAULT_HOLDOUTS",
     "DEFAULT_ISSUE_MATURITIES",
     "DEFAULT_METHODS",

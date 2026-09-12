@@ -241,7 +241,107 @@ def plot_latest_scores(
     return ax
 
 
+def plot_nowcast(data, *, date="observation_date", ax=None, title="Real-time nowcast",
+                  unit="Annualized growth (%)"):
+    """Target history and independently computed model predictions."""
+    ax = _get_ax(ax)
+    actual = data.drop_duplicates(date).sort_values(date)
+    ax.plot(actual[date], actual["actual"], color="0.25", linewidth=1.2, label="First release")
+    for model, group in data.groupby("model", sort=False):
+        group = group.sort_values(date)
+        ax.plot(group[date], group["mean"], label=model)
+    ax.axhline(0, color="0.45", linewidth=0.6)
+    ax.set(title=title, xlabel="", ylabel=unit)
+    ax.legend()
+    return ax
+
+
+def plot_nowcast_scores(scores, *, ax=None, metric="RMSE", title="GDP forecast error by release horizon"):
+    """Compare model accuracy on the caller's common evaluation sample."""
+    ax = _get_ax(ax)
+    for model, group in scores.groupby("model", sort=False):
+        group = group.sort_values("horizon")
+        ax.plot(group["horizon"], group[metric], marker="o", label=model)
+    ax.set(title=title, xlabel="Business days before release", ylabel=metric)
+    ax.legend()
+    return ax
+
+
+def plot_revisions(data, *, ax=None, title="First-to-latest GDP revisions"):
+    """Revision differences with zero retained; values remain in target units."""
+    ax = _get_ax(ax)
+    x = data.sort_values("observation_date")
+    ax.bar(x["observation_date"], x["latest"] - x["first"], width=55)
+    ax.axhline(0, color="0.45", linewidth=0.8)
+    ax.set(title=title, xlabel="", ylabel="Revision (percentage points)")
+    return ax
+
+
+def plot_factor_loadings(loadings, *, ax=None, top=12):
+    """Representative loadings from every factor, with a shared symmetric color scale."""
+    ax = _get_ax(ax)
+    leaders = [name for column in loadings for name in loadings[column].abs().nlargest(2).index]
+    ranked = loadings.abs().max(axis=1).sort_values(ascending=False).index
+    names = list(dict.fromkeys([*leaders, *ranked]))[:top]
+    x = loadings.loc[names]
+    limit = max(x.abs().max().max(), 1e-8)
+    image = ax.imshow(x, aspect="auto", cmap="RdBu_r", vmin=-limit, vmax=limit)
+    ax.set_xticks(range(len(x.columns)), x.columns)
+    ax.set_yticks(range(len(x)), x.index)
+    ax.grid(False)
+    ax.set_title("Grouped macro factor loadings")
+    ax.figure.colorbar(image, ax=ax, fraction=0.04, pad=0.02, label="Standardized loading")
+    return ax
+
+
+def plot_inflation_components(data, *, ax=None, unit="Year-over-year (%)"):
+    """Inflation component paths and aggregate, supplied in common growth units."""
+    ax = _get_ax(ax)
+    for column in data:
+        ax.plot(data.index, data[column], label=str(column))
+    ax.axhline(0, color="0.45", linewidth=0.6)
+    ax.set(title="Inflation components and aggregate", xlabel="", ylabel=unit)
+    ax.legend()
+    return ax
+
+
+def plot_forecast_weights(weights, *, ax=None):
+    """Past-error forecast weights through time, with explicit model identities."""
+    ax = _get_ax(ax)
+    ax.stackplot(weights.index, weights.fillna(0).to_numpy().T, labels=weights.columns, alpha=0.85)
+    ax.set(title="Adaptive forecast weights", xlabel="", ylabel="Weight", ylim=(0, 1))
+    ax.legend(loc="upper left")
+    return ax
+
+
+def plot_news_impacts(details, *, ax=None, top=10):
+    """Native Kalman news impacts; inputs must explain the stated state-space estimate."""
+    ax = _get_ax(ax)
+    x = details.groupby("updated variable")["impact"].sum()
+    x = x.reindex(x.abs().nlargest(top).index).sort_values()
+    ax.barh(x.index, x.values)
+    ax.axvline(0, color="0.45", linewidth=0.8)
+    ax.set(title="Kalman GDP news impacts", xlabel="GDP growth impact (percentage points)")
+    return ax
+
+
+def plot_policy_path(data, *, ax=None, title="Policy-rate forecast", unit="Rate (%)"):
+    """Posterior policy path and empirical central 80% interval, with optional survey points."""
+    ax = _get_ax(ax)
+    ax.plot(data.index, data["mean"], marker="o", label="Model mean")
+    if {"q10", "q90"}.issubset(data.columns):
+        ax.fill_between(data.index, data["q10"], data["q90"], alpha=0.18, label="80% model interval")
+    for name, label in [("actual", "Realized rate"), ("survey", "Survey median response")]:
+        if name in data:
+            ax.plot(data.index, data[name], marker="s", linestyle="--", label=label)
+    ax.set(title=title, xlabel="", ylabel=unit)
+    ax.legend()
+    return ax
+
+
 __all__ = [
+    "plot_nowcast", "plot_nowcast_scores", "plot_revisions", "plot_factor_loadings",
+    "plot_inflation_components", "plot_forecast_weights", "plot_news_impacts", "plot_policy_path",
     "plot_block_correlation",
     "plot_defensive_cyclical_spread",
     "plot_fci_model_scores",

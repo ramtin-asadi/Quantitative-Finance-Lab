@@ -452,6 +452,22 @@ def discount_factor_from_rate(
     return _wrap_like(out, tau, rate)
 
 
+def discount_from_zero(maturities, rates):
+    """Callable discount curve using linear interpolation of continuous zero rates.
+
+    Flat endpoint rate extrapolation matches the credit notebook convention.
+    This accepts zero rates, not par yields.
+    """
+    T, r = np.asarray(maturities, dtype=float), np.asarray(rates, dtype=float)
+    if T.ndim != 1 or r.shape != T.shape or len(T) == 0 or np.any(np.diff(T) <= 0):
+        raise ValueError("Zero-rate maturities must be nonempty and strictly increasing.")
+    if not np.isfinite(T + r).all():
+        raise ValueError("Zero-curve knots must be finite.")
+    def discount(t):
+        return discount_factor_from_rate(np.interp(t, T, r), t)
+    return discount
+
+
 def continuous_rate_from_discount_factor(
     df: float | np.ndarray | pd.Series,
     tau: float | np.ndarray | pd.Series,
@@ -1055,6 +1071,7 @@ def resolve_asof(index: pd.Index, asof: pd.Timestamp | str | None = None) -> pd.
     return resolved
 
 __all__ = [
+    "discount_from_zero",
     "attach_discount_columns",
     "constant_rate_series",
     "continuous_rate_from_discount_factor",

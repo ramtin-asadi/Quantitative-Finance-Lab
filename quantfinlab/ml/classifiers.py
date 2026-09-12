@@ -168,4 +168,25 @@ def rf_importance(
     return out.set_index("feature", drop=False)
 
 
-__all__ = ["classifier_scores", "rf_importance"]
+def probability_scores(y, p, *, ranking_only: bool = False) -> dict:
+    """Rare-event discrimination, probability error and top-decile event capture."""
+    from sklearn.metrics import average_precision_score, brier_score_loss, roc_auc_score
+
+    sample = pd.DataFrame({"y": np.asarray(y), "p": np.asarray(p)}).dropna()
+    if not sample["y"].isin([0, 1]).all():
+        raise ValueError("Outcomes must be binary.")
+    sample = sample.sort_values("p", ascending=False)
+    y, p = sample["y"].astype(int), sample["p"]
+    if not ranking_only and not p.between(0, 1).all():
+        raise ValueError("Predicted probabilities must lie in [0, 1].")
+    both = y.nunique() == 2
+    n = max(1, int(0.1 * len(y)))
+    return {"rows": len(y), "positives": int(y.sum()),
+            "ROC-AUC": roc_auc_score(y, p) if both else np.nan,
+            "PR-AUC": average_precision_score(y, p) if y.sum() else np.nan,
+            "Brier": np.nan if ranking_only else brier_score_loss(y, p),
+            "log loss": np.nan if ranking_only else log_loss(y, p.clip(1e-8, 1 - 1e-8), labels=[0, 1]),
+            "top 10% capture": y.iloc[:n].sum() / y.sum() if y.sum() else np.nan}
+
+
+__all__ = ["classifier_scores", "rf_importance", "probability_scores"]

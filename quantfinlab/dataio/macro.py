@@ -195,4 +195,38 @@ __all__ = [
     "load_macro_factors",
     "load_nfci",
     "macro_availability_table",
+    "read_macro_forecasts",
+    "read_boc_market",
+    "read_mpt_bins",
 ]
+
+
+def read_macro_forecasts(path: str | Path) -> pd.DataFrame:
+    """Read saved GDPNow, SPF or survey records without conflating reference periods."""
+    data = pd.read_parquet(path) if Path(path).suffix == ".parquet" else pd.read_csv(path)
+    for name in ["date", "release_date", "deadline_date", "observation_date", "observation_quarter", "survey_quarter"]:
+        if name in data:
+            data[name] = pd.to_datetime(data[name])
+    return data
+
+
+def read_boc_market(path: str | Path, *, series=None) -> pd.DataFrame:
+    """BoC Valet market observations; exclude the separately stored zero-coupon curve."""
+    data = pd.read_parquet(path, filters=[("dataset", "!=", "government_zero_coupon_curve")])
+    if series is not None:
+        data = data[data["series_id"].isin(series)]
+    data["date"] = pd.to_datetime(data["date"])
+    return data.sort_values(["date", "series_id"]).reset_index(drop=True)
+
+
+def read_mpt_bins(path: str | Path) -> pd.DataFrame:
+    """Parse actual MPT bins in decimal rates, retaining bounds and reported mass."""
+    data = pd.read_parquet(path)
+    source = data[data["field"].str.match(r"Prob: -?\d+bps - -?\d+bps")].copy()
+    bounds = source["field"].str.extract(r"Prob: (-?\d+)bps - (-?\d+)bps").astype(float) / 10000
+    source["lower"], source["upper"] = bounds[0], bounds[1]
+    source["rate"] = bounds.mean(axis=1)
+    source["probability"] = source["value"] / 100
+    source["date"] = pd.to_datetime(source["date"])
+    source["reference_start"] = pd.to_datetime(source["reference_start"])
+    return source[["date", "reference_start", "lower", "upper", "rate", "probability"]]

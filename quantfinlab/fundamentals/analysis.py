@@ -1643,7 +1643,41 @@ def diagnostic_model_metrics(frame: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
+def altman_z_double_prime(*, working_capital_value, retained_earnings, operating_income,
+                          book_equity, total_liabilities, total_assets, eligible=None) -> pd.Series:
+    """Four-factor Altman Z-double-prime, without the emerging-market constant."""
+    parts = pd.DataFrame({"wc": safe_ratio(working_capital_value, total_assets),
+                          "re": safe_ratio(retained_earnings, total_assets),
+                          "ebit": safe_ratio(operating_income, total_assets),
+                          "equity": safe_ratio(book_equity, total_liabilities)})
+    score = 6.56 * parts["wc"] + 3.26 * parts["re"] + 6.72 * parts["ebit"] + 1.05 * parts["equity"]
+    valid = parts.notna().all(axis=1)
+    if eligible is not None:
+        valid &= eligible
+    return score.where(valid)
+
+
+def ohlson_score(*, size, liabilities_assets, working_capital_assets, current_liabilities_assets,
+                  net_income_assets, funds_liabilities, negative_equity, two_losses, income_change):
+    """O-score from explicitly defined inputs, including the chosen size deflator.
+
+    ``size`` is positive, price-level-adjusted assets in millions before logging.
+    Passing CPI-scaled size and CFO/liabilities reproduces the notebook's proxy
+    variant; those substitutions must remain identified by the caller.
+    """
+    return (-1.32 - 0.407 * np.log(size) + 6.03 * liabilities_assets
+            - 1.43 * working_capital_assets + 0.0757 * current_liabilities_assets
+            - 1.72 * negative_equity - 2.37 * net_income_assets - 1.83 * funds_liabilities
+            + 0.285 * two_losses - 0.521 * income_change)
+
+
+def zmijewski_score(net_income_assets, liabilities_assets, current_ratio_value):
+    """Zmijewski linear index (larger means higher distress), not a calibrated PD."""
+    return -4.336 - 4.513 * net_income_assets + 5.679 * liabilities_assets - 0.004 * current_ratio_value
+
+
 __all__ = [
+    "altman_z_double_prime", "ohlson_score", "zmijewski_score",
     "diagnostic_model_metrics",
     "financial_company_metrics",
     "profitability_growth_metrics",

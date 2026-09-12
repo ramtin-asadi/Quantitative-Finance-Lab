@@ -4,6 +4,21 @@ import numpy as np
 import pandas as pd
 
 
+def draw_summary(draws) -> dict:
+    """Empirical mean, dispersion and central 50/80% intervals from forecast draws."""
+    values = np.asarray(draws, dtype=float)
+    q10, q25, q75, q90 = np.quantile(values, [.10, .25, .75, .90])
+    return {"mean": values.mean(), "sigma": values.std(ddof=1),
+            "q10": q10, "q25": q25, "q75": q75, "q90": q90}
+
+
+def gaussian_crps(actual, mean, sigma):
+    """Gaussian CRPS in the target's units, retaining one score per observation."""
+    from scipy.stats import norm
+    sigma = np.maximum(np.asarray(sigma, dtype=float), 1e-8)
+    z = (np.asarray(actual) - np.asarray(mean)) / sigma
+    return sigma * (z * (2 * norm.cdf(z) - 1) + 2 * norm.pdf(z) - 1 / np.sqrt(np.pi))
+
 def pinball_loss(y_true, y_pred, tau: float) -> float:
     """Compute quantile pinball loss.
 
@@ -416,6 +431,8 @@ def calibration_table(y, q_low, q_high, *, n_bins: int = 5) -> pd.DataFrame:
 
 
 __all__ = [
+    "draw_summary",
+    "gaussian_crps",
     "calibration_table",
     "apply_rolling_conformal",
     "conformal_quantiles",

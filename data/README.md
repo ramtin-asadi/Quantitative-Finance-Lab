@@ -94,68 +94,18 @@ The SEC stages require `EDGAR_IDENTITY` to contain a name and contact email.
 This is an SEC identifying User-Agent, not an API key or account credential.
 See `data/sp500_market/README.md` and `data/sp500_fundamentals/README.md`.
 
-## Project 22 credit data
+## Source dependencies and timing
 
-The four core source folders are `sec_credit/`, `treasury_credit_curves/`,
-`fed_credit/`, and `finra_credit/`. The supporting `nyfed_cmdi/` folder adds the
-weekly market-wide, investment-grade, and high-yield Corporate Bond Market
-Distress Index history.
+- [SEC credit](sec_credit/README.md) reuses the Company Facts cache from [S&P fundamentals](sp500_fundamentals/README.md), then downloads targeted submissions and filing histories. It does not download either bulk ZIP again. Facts and filing events share one parquet, distinguished by `record_type`.
+- [FINRA](finra_credit/README.md) structured-product archives are public and account-free. Corporate API tables require a free Developer Public Credential; authentication setup and the consolidated output schemas are documented in that folder.
+- Real-time macro sources preserve observation periods, release dates and vintages separately. [FRED-MD/QD](fred_md_qd/README.md), [ALFRED](alfred_realtime/README.md) and [Philadelphia](philly_realtime/README.md) have different timing conventions; their source READMEs explain which dates can define an as-of information set.
+- [Canadian macro data](canada_macro_nowcast/README.md) combines StatsCan releases with Bank of Canada market and survey data. Archived real-time tables remain historical archives; successor tables create forward snapshots, not reconstructed historical vintages.
 
-`sec_credit/download.py` locally screens the existing all-filer Company Facts
-cache for issuers with usable 2012-present US-GAAP credit history. It downloads
-current Submissions JSON only for those candidates, removes financial and
-non-operating filers from authoritative SEC metadata, and only then follows
-their older history segments. It also reviews Item 1.03 primary documents. It
-never downloads the nightly `submissions.zip`, which was about 1.56 GB on
-2026-08-29. `sec_credit/build.py` combines filing metadata and selected raw
-facts into one long `data/sec_credit.parquet`, using `record_type` to distinguish
-`fact` and `filing` rows and `is_sp500_issuer` to retain the P21/Merton subset.
-The existing Company Facts cache is reused in place; neither SEC bulk ZIP is
-copied or redownloaded.
+Builders retain source observations and provenance. Features, factors, surprises, forecasts and portfolio calculations belong in notebooks or the library.
 
-`treasury_credit_curves/download.py` writes the full HQM corporate and TNC
-nominal Treasury spot/par history to `data/treasury_credit_curves.parquet`.
-`fed_credit/download.py` writes the permanent Federal Reserve excess-bond-
-premium history to `data/fed_credit.parquet`.
+## Updates
 
-FINRA's historical structured-product ZIPs are public and account-free. Fetch
-all of them with `finra_credit/download_archives.py`, or place browser downloads
-unchanged under `data/finra_credit/raw/`. Corporate breadth/sentiment,
-capped-volume, current structured tables, and the small agency/Treasury controls
-require a free FINRA Developer Public Credential. Endpoint-level API files stay
-in the ignored cache; `finra_credit/build.py` writes only four consolidated
-ready tables. See `data/finra_credit/README.md` for credentials and schemas.
-
-`sec_credit/update.py` keeps filing events current immediately and detects only
-10-K/10-Q accessions absent from retained issuer caches. Since the SEC per-CIK
-Company Facts endpoint returns full issuer history, accounting refreshes use a
-persistent, bounded 100-CIK backlog by default instead of creating a multi-GB
-"incremental" run. The batch size is configurable.
-
-## Project 23 real-time macro data
-
-The seven U.S. source folders are `fred_md_qd/`, `alfred_realtime/`,
-`philly_realtime/`, `gdpnow/`, `spf/`, `atlanta_mpt/`, and
-`macro_high_frequency/`. Their builders preserve source-native vintages,
-release values, forecasts, probabilities, and levels. They do not calculate
-factors, surprises, revision errors, resampled features, or nowcasts; those
-belong in the notebook.
-
-Each folder has its own `update.py`. FRED-MD/QD adds only newly listed immutable
-snapshots; ALFRED requests only vintage dates after each series checkpoint;
-high-frequency FRED series request a 90-day overlap; provider-replaced
-workbooks use HTTP validators and local caches. Source-specific schemas and
-timing caveats are documented in each folder README.
-
-`canada_macro_nowcast/` builds the future library repeat without duplicating
-the U.S. PIT inputs. It combines 15 selected StatsCan real-time tables, raw
-non-revised CPI history, forward-only successor-table snapshots, Bank of
-Canada daily rates/FX and the complete zero-coupon curve, raw BOS questions,
-and every public MPS release into no more than five ready files. Its updater
-appends only unseen StatsCan release vectors and does not manufacture
-post-archive history from today's revised tables.
-
-After the three-stage bootstrap has succeeded once, maintain both files with:
+After the three-stage bootstrap, update the S&P market and fundamentals pair with:
 
 ```powershell
 $env:EDGAR_IDENTITY = "Your Name your.email@example.com"
@@ -171,7 +121,10 @@ final single-file parquet is still validated and atomically rewritten; the
 large source archive and unaffected issuer caches are neither downloaded nor
 reparsed.
 
-Source and terms cautions:
+Other sources with an `update.py` maintain their own checkpoints and caches. Immutable archives are appended; revised provider files use cached downloads or a bounded overlap. SEC credit accounting updates use a configurable issuer backlog because the per-CIK endpoint returns full issuer history. See each source README for update scope and expected downloads.
+
+## Source and terms cautions
+
 
 - Stooq bulk files come from https://stooq.com/db/h/ and should be used according to Stooq terms. Do not commit or redistribute the raw bulk archive.
 - OptionsDX option-chain files come from product pages such as https://www.optionsdx.com/product/spx-option-chain/ and are paid/manual data. Do not redistribute raw files.

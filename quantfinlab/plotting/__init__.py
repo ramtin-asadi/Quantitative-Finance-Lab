@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from . import (
+    credit,
     curves,
     diagrams,
     fixed_income,
@@ -178,6 +179,7 @@ from .volatility import (
 plot_bsm_comp_graph = plot_computation_dag
 
 __all__ = [
+    "credit",
     "LAB_COLORS",
     "apply_portfolio_subplot_layout",
     "auto_grid",

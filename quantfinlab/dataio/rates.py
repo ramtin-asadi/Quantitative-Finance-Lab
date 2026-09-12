@@ -18,6 +18,21 @@ from ..fixed_income.bootstrap import normalize_par_yields
 from ..fixed_income.tenors import TENOR_PATTERN, tenor_to_years
 from .schemas import get_rate_source
 
+
+def read_credit_curves(path: str | Path) -> pd.DataFrame:
+    """Treasury HQM/TNC source curves with explicit type and decimal yields."""
+    data = pd.read_parquet(path)
+    data["date"] = pd.to_datetime(data["date"])
+    data["rate"] = data["yield_percent"] / 100
+    return data
+
+
+def read_boc_zero_curve(path: str | Path) -> pd.DataFrame:
+    """BoC zero-coupon yields, already in decimal units, indexed by date and maturity."""
+    data = pd.read_parquet(path, filters=[("dataset", "==", "government_zero_coupon_curve")])
+    data["date"] = pd.to_datetime(data["date"])
+    return data.pivot(index="date", columns="maturity_years", values="value").sort_index()
+
 _TENOR_NORMALIZE_REPLACEMENTS = (
     ("MONTHS", "M"),
     ("MONTH", "M"),
@@ -226,6 +241,8 @@ def risk_free_returns(
 
 
 __all__ = [
+    "read_credit_curves",
+    "read_boc_zero_curve",
     "load_par_yield_curve",
     "risk_free_returns",
     "tenor_first_valid",

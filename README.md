@@ -7,7 +7,7 @@
 
 **Quantitative Finance Lab** is a series of projects. It can be used as a **self-study curriculum** that codes, and tests every model against real market data, as a **research notebook series** that experiments different topics from the most famous to more recently developing areas with clear flow (motivation, mathematics, implementation, diagnostics, discussion), and as a **reusable Python library**, `quantfinlab`, that turns the parts of each project into tested, documented, importable code instead of just the notebook cells.
 
-In every project, we do the same thing: build the model, run it on real data with realistic frictions (costs, liquidity, look-ahead controls), write the reusable version into the library, and then prove the library version works by re-running the same workflow on a **second, independent dataset** (usually a different market, asset class, or country). A model that only works on the data it was built on hasn't been tested; it's been fit. All projects use only the extracted library code for the second run in notebook's final cell, and repeated parts from earlier notebooks also use library instead of re-implementing something.
+In every project, we build the model, run it on real data with relevant frictions and timing controls, extract reusable components into the library, and finish with a visible library-only repeat. Most repeats use a **second dataset**, usually a different market, asset class, or country. When a project repeats the same source universe, that checks implementation reproducibility rather than independent-market validation. Repeated parts from earlier notebooks also use the library instead of re-implementing them.
 
 - Every notebook explains the mathematics before the code, with derivations.
 - Every reusable component lives in `quantfinlab`, has type hints, has tests, and is importable outside the notebook that created it (like `from quantfinlab.options import bsm`)
@@ -16,7 +16,7 @@ In every project, we do the same thing: build the model, run it on real data wit
 ## Repository structure
 
 ```text
-notebooks/       20 notebooks, rendered into the project website
+notebooks/       23 notebooks, rendered into the project website
 quantfinlab/      Reusable Python library extracted from the notebooks (see quantfinlab/README.md)
 data/             Data reproducibility layer: one script per data source, no redistributed data
 tests/            pytest suite for the library, run in CI
@@ -73,9 +73,15 @@ The rendered website is the best way to read the work. code, output, and plots a
 
 **20. RL Portfolio Allocation.** building reinforcement-learning environment,trains PPO, recurrent PPO, and SAC policies to allocate across the asset set directly, using a differential Sharpe ratio reward, and evaluating the learned policies against the rule-based strategies from earlier projects.
 
+**21. Fundamental Equity Research, Scoring and Reporting.** Reconstructing point-in-time SEC statements, measuring profitability, cash quality, financial strength and valuation, and building peer-relative corporate and financial-company scores. Evaluating stock selection, portfolio construction and issuer reports on the historical S&P 500 universe.
+
+**22. Corporate Credit Risk, Market Pricing and Structured Credit.** Estimating filing-based bankruptcy and distress risk with hazard, direct-horizon and Merton models. Connecting issuer risk to market credit premiums, synthetic CDS, correlated portfolio losses and tranche stress, with Federal Reserve and FINRA benchmarks.
+
+**23. Real-Time Macro and Monetary Policy Nowcasting.** Using release vintages to forecast GDP, inflation and labor with component bridges, grouped mixed-frequency factors, MIDAS, Minnesota BVAR and forecast combinations. Studying Kalman news, professional forecasts and aligned overnight-rate distributions, then repeating the workflow on Canada.
+
 ## Link to each project and data used:
 
-| # | Project | Primary data | Secondary (library-only repeat) | Link |
+| # | Project | Primary data | Library-only repeat | Link |
 |---|---|---|---|---|
 | 01 | Yield Curve, Bond Pricing & Risk | US Treasury par yields (FRED) | Japan JGB par yields (MOF) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/01_yield_curve_bond_pricing_and_risk.html) |
 | 02 | Portfolio Optimization (Mean–Variance) | NASDAQ US equities (Stooq) | Hong Kong equities (HKEX) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/02_portfolio_optimization_MV_models.html) |
@@ -97,6 +103,9 @@ The rendered website is the best way to read the work. code, output, and plots a
 | 18 | Rough Volatility (rBergomi / rough Heston) | Equity index options (SPX) | BTC options (Deribit) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/18_rough_volatility.html) |
 | 19 | ML Forecasting & Kelly Allocation | cross-asset ETFs and macro factors | US Sector ETFs | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/19_forecasting_kelly_allocation.html) |
 | 20 | RL Portfolio Allocation | cross-asset ETFs and macro factors | US Sector ETFs | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/20_rl_portfolio_allocation.html) |
+| 21 | Fundamental Equity Research, Scoring and Reporting | PIT S&P 500 market history + SEC fundamentals | Same PIT S&P universe (library reproduction) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/21_fundamental_analysis.html) |
+| 22 | Corporate Credit Risk, Market Pricing and Structured Credit | SEC credit filings/facts, PIT S&P equity, Treasury curves, Fed EBP, FINRA and NY Fed CMDI | Same U.S. credit sources (library reproduction) | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/22_credit_risk.html) |
+| 23 | Real-Time Macro and Monetary Policy Nowcasting | FRED-MD/QD, ALFRED, Philadelphia vintages, GDPNow, SPF, Atlanta MPT and high-frequency inputs | StatsCan real-time data, Bank of Canada markets/surveys and as-of U.S. inputs | [Open](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/notebooks/23_macro_nowcasting.html) |
 
 
 ## Data and reproducibility
@@ -114,7 +123,7 @@ See `data/README.md` for the complete script list, raw-folder checklist, and lic
 
 ## The library: `quantfinlab`
 
-`quantfinlab` is the part of this repository meant to be more reusable than individual notebooks. It is a tested Python package covering fixed income, options pricing (including a compiled C++ pricing core), portfolio construction, risk reporting, volatility modeling, hedging, macro indicators, and ML/RL applications for finance.
+`quantfinlab` is the part of this repository meant to be more reusable than individual notebooks. It is a tested Python package covering fixed income, options pricing (including a compiled C++ pricing core), portfolio construction, risk reporting, volatility modeling, hedging, fundamental equity research, corporate credit, real-time macro and ML/RL applications for finance.
 
 Install the released library from PyPI:
 
@@ -191,7 +200,7 @@ pytest
 
 ## Status
 
-Under active development. Twenty projects are complete with library extraction and rendered output, and `quantfinlab` is published on PyPI as an alpha release. Ongoing work is on deepening interpretation/discussion sections, completing markdowns for all projects, closing remaining test-coverage gaps, and improving release polish.
+Under active development. The source tree contains 23 project notebooks and their reusable library components. The website and PyPI alpha releases are published separately from source changes. Ongoing work includes interpretation, documentation, test coverage and release polish.
 
 ## Disclaimer
 
