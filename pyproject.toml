@@ -107,6 +107,7 @@ plotting = [
 ]
 
 all = [
+    "quantfinlab[analyst]",
     "quantfinlab[credit]",
     "quantfinlab[macro]",
     "quantfinlab[numerics]",

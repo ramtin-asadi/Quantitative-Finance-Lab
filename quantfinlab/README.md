@@ -191,7 +191,7 @@ Growth uses numerator and denominator from the same release vintage. Archive bac
 ## Testing
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev,analyst]"
 pytest
 ```
 

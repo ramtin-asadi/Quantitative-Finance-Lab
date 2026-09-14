@@ -196,7 +196,7 @@ Optional dependencies (JAX/Numba for acceleration, PyTorch for ML/RL, `networkx`
 Run the test suite with:
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[dev,analyst]"
 pytest
 ```
 
