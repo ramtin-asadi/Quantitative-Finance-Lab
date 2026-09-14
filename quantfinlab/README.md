@@ -1,6 +1,6 @@
 # quantfinlab Library
 
-`quantfinlab` is the reusable Python library extracted from the [Quantitative Finance Lab](https://github.com/ramtin-asadi/Quantitative-Finance-Lab) project series. It is not a general-purpose finance library. It is a focused package covering the methods developed across the 23 projects: fixed income, options pricing, portfolio construction, risk reporting, volatility modeling, hedging, fundamental equity research, corporate credit, real-time macro, dependence networks, and ML/RL components for finance.
+`quantfinlab` is the reusable Python library extracted from the [Quantitative Finance Lab](https://github.com/ramtin-asadi/Quantitative-Finance-Lab) project series. It covers the methods developed across 24 projects: fixed income, options pricing, portfolio construction, risk reporting, volatility modeling, hedging, fundamental equity research, corporate credit, real-time macro, dependence networks, ML/RL and financial analysis with a local LLM.
 
 The test suite checks real model properties rather than notebook snapshots: weights summing to one, CVaR behavior, curve/discount consistency, American option engine fallbacks, implied-volatility diagnostics, and PSD matrix reconstruction. The current package checks pass with a clean `ruff` lint pass.
 
@@ -23,6 +23,7 @@ pip install "quantfinlab[network]"    # networkx (dependence networks)
 pip install "quantfinlab[data]"       # PyArrow / DuckDB source readers
 pip install "quantfinlab[credit]"     # LightGBM / statsmodels default models and source readers
 pip install "quantfinlab[macro]"      # statsmodels state-space models and source readers
+pip install "quantfinlab[analyst]"    # document retrieval and local financial analysis
 pip install "quantfinlab[plotting]"   # matplotlib, seaborn
 pip install "quantfinlab[all]"        # everything above
 ```
@@ -64,6 +65,7 @@ Most of the library works with just the core dependencies (NumPy, pandas, SciPy,
 | `quantfinlab.reports` | Risk and fundamental equity reports, combining outputs from `risk`, `portfolio`, and `plotting` into a single executive summary. |
 | `quantfinlab.numerics` | Finite-difference schemes, Fourier transforms, interpolation, Monte Carlo path generation, Gaussian and Student-t copulas. Shared numerical primitives used across pricing, portfolios and risk. |
 | `quantfinlab.calibration` | Model calibration. American option numerics, FFT/COS calibration, jump-diffusion model fitting, LSM regression. |
+| `quantfinlab.analyst` | Official documents, FTS5 retrieval, financial contexts, cached local GGUF inference and readable company, macro, market and daily reports. |
 | `quantfinlab.plotting` | Consistent plotting utilities per domain (curves, options, portfolio, risk, volatility, macro, regimes, ML, hedging, fixed income, fundamentals, credit) and explanatory diagrams. |
 | `quantfinlab.common` | Shared contracts/dataclasses (`Curve`, `Bond`, `PortfolioState`, `BacktestResult`, ...), error types, date utilities, cache identities, and input validation used across every other module. |
 

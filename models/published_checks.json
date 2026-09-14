@@ -1,0 +1,32 @@
+{
+  "adapter": {
+    "count": 30,
+    "automatic_checks_passed": true,
+    "first_attempt_passes": 30,
+    "report_sha256": "fdd4386729c2b78f27033b3456b83249fe8dcd390eb17d9e9057cf35e6b71183",
+    "generation": {
+      "do_sample": false,
+      "repetition_penalty": 1.0,
+      "max_new_tokens": 1536,
+      "max_time": 180,
+      "check_version": "p24-checks-v3"
+    },
+    "revision": "c930e9aab099b4c958660aa17b98f51f93f425c1",
+    "source_url": "https://huggingface.co/ramtinasadi/Quantfinlab-Qwen3.5-2B-Financial-Analysis-LoRA/resolve/c930e9aab099b4c958660aa17b98f51f93f425c1/acceptance_summary.json"
+  },
+  "gguf": {
+    "count": 5,
+    "automatic_checks_passed": true,
+    "first_attempt_passes": 5,
+    "report_sha256": "76462f8b1cd5d5dcc3cbd6ae6eb9a9b9fda6da2266fa56c0feb19495a3f29849",
+    "generation": {
+      "do_sample": false,
+      "repetition_penalty": 1.0,
+      "max_new_tokens": 1536,
+      "max_time": 180,
+      "check_version": "p24-checks-v3"
+    },
+    "revision": "29d95a458dc412074a43868d91cb95ef56e04fdd",
+    "source_url": "https://huggingface.co/ramtinasadi/Quantfinlab-Qwen3.5-2B-Financial-Analysis-GGUF/resolve/29d95a458dc412074a43868d91cb95ef56e04fdd/acceptance_summary.json"
+  }
+}

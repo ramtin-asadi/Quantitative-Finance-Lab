@@ -1,0 +1,20 @@
+{
+  "display_name": "Qwen3.5-2B Quantfinlab Financial Analyst",
+  "base_model": "Qwen/Qwen3.5-2B",
+  "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+  "adapter_repo": "ramtinasadi/Quantfinlab-Qwen3.5-2B-Financial-Analysis-LoRA",
+  "gguf_repo": "ramtinasadi/Quantfinlab-Qwen3.5-2B-Financial-Analysis-GGUF",
+  "filename": "Quantfinlab-Qwen3.5-2B-Financial-Analysis-Q4_K_M.gguf",
+  "sha256": "d3d4a145333f96ee60f2f8b62d2776965ac49f89c827917440eab683411e777c",
+  "revision": "29d95a458dc412074a43868d91cb95ef56e04fdd",
+  "size_bytes": 1312164224,
+  "llama_revision": "737e0980fef1c2d573afedc8b00f7caf30617652",
+  "llama_release": "b10932",
+  "context_tokens": 24576,
+  "gpu_offload_required": true,
+  "kv_offload": false,
+  "parallel_sequences": 1,
+  "prompt_version": "analyst-v5",
+  "enable_thinking": false,
+  "status": "published_automatic_checks_passed"
+}

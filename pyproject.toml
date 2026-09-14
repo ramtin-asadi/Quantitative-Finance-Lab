@@ -46,6 +46,18 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+analyst = [
+    "quantfinlab[data]",
+    "pydantic>=2.10,<3",
+    "beautifulsoup4>=4.12,<5",
+    "requests>=2.32,<3",
+    "lxml>=5,<7",
+    "huggingface-hub>=0.34,<2",
+    "tokenizers>=0.22,<0.24",
+    "pypdf>=5,<7",
+    "psutil>=5.9,<8",
+]
+
 data = [
     "pyarrow>=14.0.0,<24.0.0",
     "duckdb>=1.0.0,<2.0.0",
@@ -253,6 +265,8 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 pythonpath = ["."]
 markers = [
+    "live_network: manually enabled live source checks",
+    "local_llm: manually enabled local GPU/model checks",
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "cpp: tests requiring the optional C++ extension",
     "ml: tests requiring optional machine-learning dependencies",

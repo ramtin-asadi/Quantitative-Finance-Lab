@@ -1,0 +1,8 @@
+local/
+*.gguf
+*.safetensors
+*.bin
+checkpoints/
+merged/
+outputs/
+*.zip

@@ -57,9 +57,11 @@ The closing code cell uses the extracted `quantfinlab` components through visibl
 
 ---
 
+Project 24 has three layers: step-by-step calculations and evidence handling, explicit composition of atomic library functions, and a final analysis facade. Its final cells answer new financial questions with the same tuned local model, retrieved evidence and calculated context. It has no second-country repeat or alternative-model comparison.
+
 ## Current project areas
 
-The 23 implemented projects span the following areas. Individual notebooks are listed on the [home page](index.qmd#projects) and in the repository README.
+The 24 projects span the following areas. Individual notebooks are listed on the [home page](index.qmd#projects) and in the repository README.
 
 ### Fixed income
 Yield curve construction, discount factors, forward rates, bond pricing, duration, convexity, PV01, key-rate duration, short-rate/term-structure models, and duration-targeted laddering. *(Projects 01, 09)*

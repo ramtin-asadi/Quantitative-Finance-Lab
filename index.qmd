@@ -331,6 +331,17 @@ The goal is to build a series that is both **research-grade** (well explained) a
 [Open Project 23](notebooks/23_macro_nowcasting.html)
 :::
 
+::: {.column width="50%"}
+### 24. Financial Analysis with LLM
+
+- Retrieve official releases and selected SEC disclosures with publication cutoffs
+- Combine financial changes, risk, rates and cross-asset context from the existing library
+- Run one cached Qwen3.5-2B GGUF locally with calibrated GPU offload
+- Produce readable, cited company, macro, event and daily analyses
+
+[Open Project 24](notebooks/24_financial_analysis_with_llm.html)
+:::
+
 ::::
 
 ---

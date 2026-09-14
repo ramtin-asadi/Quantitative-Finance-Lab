@@ -103,6 +103,22 @@ See `data/sp500_market/README.md` and `data/sp500_fundamentals/README.md`.
 
 Builders retain source observations and provenance. Features, factors, surprises, forecasts and portfolio calculations belong in notebooks or the library.
 
+## Text evidence for Project 24
+
+These source folders add text and event discovery alongside the existing structured datasets:
+
+| Folder | Scope |
+| --- | --- |
+| `sec_documents` | Requested issuers, comparable periodic filings, relevant recent 8-Ks and selected exhibits |
+| `fed_documents` | Monetary-policy releases, minutes, speeches and testimony |
+| `bls_releases` | Employment Situation, CPI, PPI and JOLTS |
+| `bea_releases` | GDP and Personal Income and Outlays |
+| `eia_energy` | Weekly petroleum highlights |
+| `cftc_cot` | Futures positioning, retaining position date separately from availability |
+| `gdelt_news` | Bounded headline/link discovery with URL and headline deduplication |
+
+Each folder has its own downloader, updater and README. Raw files remain in ignored source caches. Normalized documents are partitioned under `workspace/financial_analyst/documents`; chunks are indexed with SQLite FTS5. Historical analysis enforces publication/acceptance availability. Where publication timing cannot be verified, the first observation is retained instead of backdating the record. Existing numerical datasets remain in their original locations.
+
 ## Updates
 
 After the three-stage bootstrap, update the S&P market and fundamentals pair with:

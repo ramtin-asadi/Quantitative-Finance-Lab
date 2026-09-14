@@ -7,16 +7,16 @@
 
 **Quantitative Finance Lab** is a series of projects. It can be used as a **self-study curriculum** that codes, and tests every model against real market data, as a **research notebook series** that experiments different topics from the most famous to more recently developing areas with clear flow (motivation, mathematics, implementation, diagnostics, discussion), and as a **reusable Python library**, `quantfinlab`, that turns the parts of each project into tested, documented, importable code instead of just the notebook cells.
 
-In every project, we build the model, run it on real data with relevant frictions and timing controls, extract reusable components into the library, and finish with a visible library-only repeat. Most repeats use a **second dataset**, usually a different market, asset class, or country. When a project repeats the same source universe, that checks implementation reproducibility rather than independent-market validation. Repeated parts from earlier notebooks also use the library instead of re-implementing them.
+In the numerical projects, we build the model, run it on real data with relevant frictions and timing controls, extract reusable components into the library, and finish with a visible library-only repeat. Most repeats use a **second dataset**, usually a different market, asset class, or country. When a project repeats the same source universe, that checks implementation reproducibility rather than independent-market validation. Repeated parts from earlier notebooks also use the library instead of re-implementing them.
 
-- Every notebook explains the mathematics before the code, with derivations.
+- The numerical notebooks develop the mathematics before the code. Project 24 exposes calculations and evidence handling, composes atomic library functions, and closes with high-level analysis calls.
 - Every reusable component lives in `quantfinlab`, has type hints, has tests, and is importable outside the notebook that created it (like `from quantfinlab.options import bsm`)
 - Every dataset used has a documented, scripted path back to its source (see [Data](#data-and-reproducibility) below).
 
 ## Repository structure
 
 ```text
-notebooks/       23 notebooks, rendered into the project website
+notebooks/       24 notebooks, rendered into the project website
 quantfinlab/      Reusable Python library extracted from the notebooks (see quantfinlab/README.md)
 data/             Data reproducibility layer: one script per data source, no redistributed data
 tests/            pytest suite for the library, run in CI
@@ -78,6 +78,8 @@ The rendered website is the best way to read the work. code, output, and plots a
 **22. Corporate Credit Risk, Market Pricing and Structured Credit.** Estimating filing-based bankruptcy and distress risk with hazard, direct-horizon and Merton models. Connecting issuer risk to market credit premiums, synthetic CDS, correlated portfolio losses and tranche stress, with Federal Reserve and FINRA benchmarks.
 
 **23. Real-Time Macro and Monetary Policy Nowcasting.** Using release vintages to forecast GDP, inflation and labor with component bridges, grouped mixed-frequency factors, MIDAS, Minnesota BVAR and forecast combinations. Studying Kalman news, professional forecasts and aligned overnight-rate distributions, then repeating the workflow on Canada.
+
+**24. Financial Analysis with LLM.** Combining official text, selective company filings, FTS5 retrieval and financial calculations from earlier projects with one locally cached Qwen3.5-2B GGUF. Produces cited company, macro, event, cross-asset and daily reports with readable answers, validation and persistent caching. See [model and runtime documentation](models/README.md).
 
 ## Link to each project and data used:
 
