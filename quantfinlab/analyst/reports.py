@@ -91,14 +91,35 @@ class AnalysisReport:
 
     def _repr_html_(self):
         escape = html.escape
+        card_style = ("max-width:920px;line-height:1.65;margin:1rem 0;padding:1.15rem 1.3rem;"
+                      "border:1px solid #2d3339;border-radius:12px;background:#111416;color:#e7ece9;"
+                      "box-shadow:0 8px 24px rgba(0,0,0,.2);font-family:Inter,ui-sans-serif,system-ui,sans-serif")
         if self.analysis is None:
-            return "<p><strong>No supported analysis could be produced.</strong></p><p>" + escape("; ".join(self.errors)) + "</p>"
+            return (f'<article style="{card_style};border-color:#8a6428">'
+                    '<div style="font-size:.72rem;font-weight:700;letter-spacing:.08em;color:#e9b866">QUANTFINLAB ANALYST</div>'
+                    '<p><strong>No supported analysis could be produced.</strong></p><p>'
+                    + escape("; ".join(self.errors)) + "</p></article>")
         answer = self.analysis
         observations = unique_passages([claim.statement for claim in answer.claims if claim.kind == "fact"])
         interpretations = unique_passages([claim.statement for claim in answer.claims if claim.kind == "interpretation"])
-        paragraphs = ["<p>" + escape(" ".join(observations) if observations else answer.conclusion) + "</p>"]
+        header = ('<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem">'
+                  '<span style="display:flex;gap:.65rem;align-items:center">'
+                  '<span style="display:inline-flex;align-items:center;justify-content:center;width:2rem;height:2rem;'
+                  'border-radius:8px;background:#10a37f;color:#071a15;font-size:1rem;font-weight:800">Q</span>'
+                  '<span><strong style="display:block;font-size:.95rem">QuantFinLab Analyst</strong>'
+                  '<small style="color:#8d9993">local model response</small></span></span>'
+                  f'<span style="font-size:.68rem;letter-spacing:.07em;color:#78cdb7">{escape(self.task.replace("_", " ").upper())}</span></div>'
+                  '<div style="background:#202427;border:1px solid #30363b;border-radius:9px;padding:.65rem .8rem;margin-bottom:1rem">'
+                  '<small style="display:block;color:#8d9993;font-weight:650;letter-spacing:.04em;margin-bottom:.2rem">USER QUERY</small>'
+                  f'{escape(self.question)}</div>')
+        paragraphs = ['<div style="background:#171b1d;border:1px solid #252b2e;border-radius:9px;'
+                      'padding:.8rem .95rem;margin-bottom:.75rem"><small style="display:block;color:#78cdb7;'
+                      'font-weight:650;letter-spacing:.04em;margin-bottom:.25rem">EVIDENCE-BACKED RESPONSE</small>'
+                      + escape(" ".join(observations) if observations else answer.conclusion) + "</div>"]
         if interpretations:
-            paragraphs.append("<p><strong>Model interpretation:</strong> " + escape(" ".join(interpretations)) + "</p>")
+            paragraphs.append('<div style="background:rgba(16,163,127,.13);border-left:3px solid #10a37f;border-radius:7px;'
+                              'padding:.75rem .9rem;margin-bottom:.85rem"><strong>Model interpretation</strong><br>'
+                              + escape(" ".join(interpretations)) + "</div>")
         references = {row["evidence_id"]: i for i, row in enumerate(self.sources, 1)}
         details = []
         for claim in answer.claims:
@@ -109,23 +130,28 @@ class AnalysisReport:
             title = escape(row.get("title", row.get("source", "Evidence")))
             url = row.get("source_url", "")
             if urlparse(url).scheme in {"https", "http"}:
-                title = f'<a href="{escape(url, quote=True)}" target="_blank" rel="noopener noreferrer">{title}</a>'
+                title = f'<a style="color:#78cdb7" href="{escape(url, quote=True)}" target="_blank" rel="noopener noreferrer">{title}</a>'
             sources.append(f"<li>{title}<br><small>Available {escape(row['available_at'])}</small></li>")
         status = "Automatic checks passed; interpretation needs review" if self.validated else "Incomplete answer"
         stamp = f"As of {self.as_of} · {answer.materiality.capitalize()} materiality · {status}"
         if self.cached:
             stamp += " · Saved answer reused"
-        warnings = "<p><strong>Validation issues:</strong> " + escape("; ".join(self.errors)) + "</p>" if self.errors else ""
+        warnings = '<p style="color:#f2b7b5"><strong>Validation issues:</strong> ' + escape("; ".join(self.errors)) + "</p>" if self.errors else ""
         freshness = self.diagnostics.get("freshness", [])
         freshness_html = "<p><small>" + escape("; ".join(freshness)) + "</small></p>" if freshness else ""
         generated = "".join("<p>" + escape(passage) + "</p>" for passage in
                             unique_passages([answer.conclusion, answer.what_changed, answer.why_it_matters]))
-        return ('<article style="max-width:920px;line-height:1.65">' + "".join(paragraphs)
-                + f"<details><summary>Supporting evidence ({len(details)} claims)</summary><ul>" + "".join(details) + "</ul></details>"
-                + "<p><em>Uncertainty:</em> " + escape(" ".join(unique_passages(answer.uncertainty))) + "</p>"
-                + "<details><summary>Sources and availability</summary><ol>" + "".join(sources) + "</ol></details>"
-                + "<details><summary>Full generated summary</summary>" + generated + "</details>"
-                + freshness_html + warnings + "<p><small>" + escape(stamp) + "</small></p></article>")
+        return (f'<article style="{card_style}">' + header + "".join(paragraphs)
+                + f'<details style="margin:.55rem 0;color:#cbd4cf"><summary style="cursor:pointer;font-weight:600">Supporting evidence ({len(details)} claims)</summary><ul>' + "".join(details) + "</ul></details>"
+                + '<div style="background:rgba(217,160,67,.12);border-left:3px solid #d9a043;border-radius:7px;'
+                'padding:.7rem .85rem;margin:.85rem 0"><strong>Uncertainty</strong><br>'
+                + escape(" ".join(unique_passages(answer.uncertainty))) + "</div>"
+                + '<details style="margin:.55rem 0;color:#cbd4cf"><summary style="cursor:pointer;font-weight:600">Sources and availability</summary><ol>' + "".join(sources) + "</ol></details>"
+                + '<details style="margin:.55rem 0;color:#cbd4cf"><summary style="cursor:pointer;font-weight:600">Full generated summary</summary>' + generated + "</details>"
+                + freshness_html + warnings + '<div style="display:flex;flex-wrap:wrap;gap:.4rem;border-top:1px solid #2b3235;'
+                'margin-top:.95rem;padding-top:.7rem;color:#8d9993;font-size:.76rem">'
+                + "".join(f'<span style="background:#202427;border-radius:999px;padding:.18rem .5rem">{escape(part.strip())}</span>'
+                          for part in stamp.split("·")) + "</div></article>")
 
     def __str__(self):
         return self.to_markdown()
