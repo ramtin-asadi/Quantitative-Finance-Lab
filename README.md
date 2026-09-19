@@ -79,7 +79,7 @@ The rendered website is the best way to read the work. code, output, and plots a
 
 **23. Real-Time Macro and Monetary Policy Nowcasting.** Using release vintages to forecast GDP, inflation and labor with component bridges, grouped mixed-frequency factors, MIDAS, Minnesota BVAR and forecast combinations. Studying Kalman news, professional forecasts and aligned overnight-rate distributions, then repeating the workflow on Canada.
 
-**24. Financial Analysis with LLM.** Combining official text, selective company filings, FTS5 retrieval and financial calculations from earlier projects with one locally cached Qwen3.5-2B GGUF. Produces cited company, macro, event, cross-asset and daily reports with readable answers, validation and persistent caching. See [model and runtime documentation](models/README.md).
+**24. Building a financial analyst with LLM, Fine tuning and retrieval.** Combining official text, selective company filings, FTS5 retrieval and financial calculations from earlier projects with one locally cached Qwen3.5-2B GGUF. Produces cited company, macro, event, cross-asset and daily reports with readable answers, validation and persistent caching. See [model and runtime documentation](models/README.md).
 
 ## Link to each project and data used:
 

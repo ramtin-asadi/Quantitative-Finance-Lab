@@ -332,7 +332,7 @@ The goal is to build a series that is both **research-grade** (well explained) a
 :::
 
 ::: {.column width="50%"}
-### 24. Financial Analysis with LLM
+### 24. Building a financial analyst with LLM, Fine tuning and retrieval
 
 - Retrieve official releases and selected SEC disclosures with publication cutoffs
 - Combine financial changes, risk, rates and cross-asset context from the existing library

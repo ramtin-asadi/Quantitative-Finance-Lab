@@ -1,4 +1,4 @@
-# Financial Analysis with LLM
+# FBuilding a financial analyst with LLM, Fine tuning, LoRA and retrieval
 
 Project 24 uses a tuned **Qwen3.5-2B** model to interpret financial evidence retrieved and calculated by Quantfinlab. It connects company disclosures, official macro releases, market conditions and selected news. Python handles financial calculations, source selection and availability checks; the model writes the interpretation.
 
