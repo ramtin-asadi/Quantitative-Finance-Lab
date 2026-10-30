@@ -3,7 +3,7 @@
 We don't redistribute data used in every project, but we included guides and helpers for remaking all the data files that are used in notebooks. Final files are produced directly under `data/` by one script per source folder. Raw/manual vendor files stay under the relevant `raw/` directory.
 
 Script-downloadable sources include FRED U.S. Treasury yields, FRED NFCI,
-Japan MOF JGB yields, NY Fed ACM term premia, yfinance OHLCV/ETF data,
+Japan MOF JGB yields, NY Fed ACM term premia and SOFR Index, yfinance OHLCV/ETF data,
 historical S&P 500 membership, SEC Company Facts, macro factors from
 FRED/StatCan/Bank of Canada, Kenneth French factor files, Treasury HQM/TNC
 curves, Federal Reserve EBP, FRED-MD/QD and ALFRED vintages, Philadelphia Fed
@@ -42,6 +42,7 @@ python data/us_treasury_yields/download.py
 python data/japan_mof_yields/download.py
 python data/chicago_fed_nfci/download.py
 python data/acm_term_premium/download.py
+python data/sofr/download.py
 python data/stooq_nasdaq/build.py
 python data/stooq_hkex/build.py
 python data/underlying_yfinance/download.py
