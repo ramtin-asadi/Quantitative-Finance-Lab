@@ -202,7 +202,7 @@ pytest
 
 ## Status
 
-Under active development. The source tree contains 23 project notebooks and their reusable library components. The website and PyPI alpha releases are published separately from source changes. Ongoing work includes interpretation, documentation, test coverage and release polish.
+Under active development. The source tree contains 24 project notebooks and their reusable library components. The website and PyPI alpha releases are published separately from source changes. Ongoing work includes interpretation, documentation, test coverage and release polish.
 
 ## Disclaimer
 

@@ -57,9 +57,8 @@ def fetch_fred(
 ) -> pd.DataFrame:
     frames = []
     session = requests.Session()
-    session.headers.update(
-        {"User-Agent": "quantitative-finance-lab/1.0"}
-    )
+    # Keep Requests' standard headers: the custom User-Agent causes the FRED
+    # graph endpoint to time out even when the same URL otherwise succeeds.
     retry = Retry(
         total=1,
         connect=1,

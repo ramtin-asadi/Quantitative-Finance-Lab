@@ -6,6 +6,15 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [0.9.0] - 2026-11-11
+
+- Added fundamental equity statement analysis, scoring and reporting.
+- Added corporate credit risk models, pricing and portfolio analysis.
+- Added real-time macro nowcasting, vintage-aware readers and policy forecasts.
+- Added local LLM financial analysis with document retrieval and cached inference.
+- Expanded optional dependencies, tests and documentation for projects 21–24.
+- Fixed FRED downloads by preserving Requests' default headers.
+
 ## [0.6.0] - 2026-07-08
 
 - Prepared the library for its first PyPI alpha release.

@@ -24,7 +24,7 @@ from .common.errors import (
     QuantFinLabError,
 )
 
-__version__ = "0.6.0"
+__version__ = "0.9.0"
 
 _PUBLIC_MODULES = {
     "credit",
