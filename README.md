@@ -1,7 +1,7 @@
 # Quantitative Finance Lab
 
 [![Website](https://img.shields.io/badge/Website-QuantFinLab-0A66C2?logo=githubpages&logoColor=white)](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/)
-[![PyPI](https://img.shields.io/pypi/v/quantfinlab.svg)](https://pypi.org/project/quantfinlab/)
+[![PyPI](https://img.shields.io/pypi/v/quantfinlab.svg?cacheSeconds=300)](https://pypi.org/project/quantfinlab/)
 [![Python](https://img.shields.io/pypi/pyversions/quantfinlab.svg)](https://pypi.org/project/quantfinlab/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 

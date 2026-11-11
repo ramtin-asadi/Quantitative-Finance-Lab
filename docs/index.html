@@ -1,71 +1,5 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
-
-<meta charset="utf-8">
-<meta name="generator" content="quarto-1.11.9">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-
-<meta name="author" content="Ramtin Asadi">
-<meta name="description" content="A research lab of reproducible quant-finance projects (notes, math, experiments) backed by a growing Python package: quantfinlab.">
-
-<title>Quantitative Finance Lab</title>
-<style>
-/* Default styles provided by pandoc.
-** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
-*/
-span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: 1.5em;}
-div.column{flex: auto;}
-@media screen {
-div.columns{gap: min(4vw, 1.5em);}
-div.column{overflow-x: auto;}
-}
-div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-ul.task-list{list-style: none;}
-ul.task-list li input[type="checkbox"] {
-  width: 0.8em;
-  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
-  vertical-align: middle;
-}
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
-</style>
-
-
+<html lang="en"><head>
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="site_libs/quarto-nav/headroom.min.js"></script>
 <script src="site_libs/clipboard/clipboard.min.js"></script>
@@ -73,1546 +7,411 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="site_libs/quarto-search/fuse.min.js"></script>
 <script src="site_libs/quarto-search/quarto-search.js"></script>
 <meta name="quarto:offset" content="./">
-<link href="./overview.html" rel="next">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-c7d479195bd1f038a8a2b8ce9119bf4d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-2405ab3bfa47786a070b730ba34ce168.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
-<script id="quarto-search-options" type="application/json">{
-  "location": "sidebar",
-  "copy-button": false,
-  "collapse-after": 3,
-  "panel-placement": "start",
-  "type": "textbox",
-  "limit": 50,
-  "keyboard-shortcut": [
-    "f",
-    "/",
-    "s"
-  ],
-  "show-item-context": false,
-  "language": {
-    "search-no-results-text": "No results",
-    "search-matching-documents-text": "matching documents",
-    "search-copy-link-title": "Copy link to search",
-    "search-hide-matches-text": "Hide additional matches",
-    "search-more-match-text": "more match in this document",
-    "search-more-matches-text": "more matches in this document",
-    "search-clear-button-title": "Clear",
-    "search-text-placeholder": "",
-    "search-detached-cancel-button-title": "Cancel",
-    "search-submit-button-title": "Submit",
-    "search-label": "Search"
-  }
-}</script>
-
-
-</head>
-
-<body class="nav-sidebar floating quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
-
-<div id="quarto-search-results"></div>
-  <header id="quarto-header" class="headroom fixed-top">
-  <nav class="quarto-secondary-nav" aria-label="Toolbar">
-    <div class="container-fluid d-flex">
-      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
-        <i class="bi bi-layout-text-sidebar-reverse"></i>
-      </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html"><span class="chapter-title">Home</span></a></li></ol></nav>
-        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
-        </a>
-      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
-        <i class="bi bi-search"></i>
-      </button>
-    </div>
-  </nav>
-</header>
-<!-- content -->
-<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-full">
-<!-- sidebar -->
-  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Site">
-    <div class="pt-lg-2 mt-2 text-left sidebar-header">
-    <div class="sidebar-title mb-0 py-0">
-      <a href="./">Quantitative Finance Lab</a> 
-    </div>
-      </div>
-        <div class="mt-2 flex-shrink-0 align-items-center">
-        <div class="sidebar-search">
-        <div id="quarto-search" class="" title="Search"></div>
+<link href="site_libs/bootstrap/bootstrap-f50f86c02f5447ab75fe98f9f5bf7524.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light"><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="description" content="24 quantitative finance research projects, connected through five tracks, a project roadmap, reproducible notebooks and the quantfinlab Python library.">
+    <title>Quantitative Finance Lab</title>
+    <link rel="icon" type="image/svg+xml" href="config/website/homepage/mark.svg">
+    <link rel="preload" href="config/website/homepage/fonts/source-serif.woff2" as="font" type="font/woff2" crossorigin="">
+        <link rel="stylesheet" href="config/website/homepage/styles.css">
+        <script defer="" src="config/website/homepage/app.js"></script>
+  </head>
+  <body class="qfl-home fullcontent quarto-light">
+    <a class="skip-link" href="#tracks">Skip to research tracks</a>
+    <header class="site-header wrap">
+      <a class="wordmark" href="#top" aria-label="Quantitative Finance Lab home">QUANTITATIVE FINANCE LAB</a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#tracks">Research tracks</a>
+        <a href="#roadmap">Roadmap</a>
+        <a href="#projects">Projects</a>
+        <a href="#library">Library</a>
+        <a class="github-link" href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+    <main id="top"><header id="title-block-header" class="quarto-title-block"></header>
+      <section class="hero wrap" aria-labelledby="hero-title">
+        <div class="hero-art" aria-label="An illustrative fan of simulated market paths and their possible outcomes">
+          <div class="surface-stage" id="surface-stage"></div>
         </div>
+        <p class="hero-label">Research notebooks &amp; Python library</p>
+        <h1 id="hero-title">Quantitative Finance Lab</h1>
+        <p class="hero-description">
+          24 projects in quantitative finance, from mathematical foundations<br class="desktop-break">
+          to reproducible experiments and reusable Python.
+        </p>
+        <div class="hero-actions">
+          <a class="button" href="#tracks">Explore the projects <span aria-hidden="true">↓</span></a><a class="text-link" href="overview.html">About the lab <span aria-hidden="true">↗</span></a>
         </div>
-    <div class="sidebar-menu-container"> 
-    <ul class="list-unstyled mt-1">
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./index.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">Home</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./overview.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Overview</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/01_yield_curve_bond_pricing_and_risk.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">1. Fixed Income and Yield Curve Construction</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/02_portfolio_optimization_MV_models.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">2. Portfolio Optimization with Mean-Variance Models</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/03_risk_report_engine_and_CAPM.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">3. Risk Analysis and CAPM</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/04_BSM_IV_greeks_hedging.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">4. Black-Scholes, Implied Volatility, Greeks and Hedging</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/05_GARCH_forecasting_VRP.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">5. Volatility Forecasting with GARCH and Variance Risk Premium</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/06_portfolio_black_littreman.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">6. Black-Litterman with Learned Confidence</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/07_dynamic_hedge_ratios.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">7. Dynamic Hedge Ratios and Residual Trading</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/08_vol_surface_local_vol.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">8. Volatility Surface and Local Volatility</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/09_term_structure_models.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">9. Term Structure Models, Curve Factors, and Swap-Based Duration Overlays</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/10_portfolio_tail_parity_robust.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">10. Portfolio Optimization: Tail Risk, Risk Parity and Robust Models</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/11_stochastic_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">11. Stochastic Volatility Models and Model-Risk-Aware Option Relative Value</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/12_financial_conditions_index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">12. Macro Financial Conditions Index and Macro-Regime Allocation</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/13_american_option_numerics.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">13. American Options and Numerical Pricing Methods</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/14_fourier_option_pricing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">14. Fourier-Based Methods for Option Pricing</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/15_factor_investing.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">15. Factor Investing and Fama-French Allocation</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/16_regime_switching_portfolio.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">16. Regime Switching Portfolio Selection</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/17_network_portfolio.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">17. Network-Aware Portfolio Construction</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/18_rough_volatility.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">18. Rough Volatility for Option Pricing</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/19_forecasting_kelly_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/20_rl_portfolio_allocation.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">20. Reinforcement Learning for Portfolio Allocation</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/21_fundamental_analysis.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">21. Fundamental Equity Research, Scoring and Reporting</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/22_credit_risk.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">22. Corporate Credit Risk, Market Pricing and Structured Credit</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/23_macro_nowcasting.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">23. Real-Time Macroeconomic and Monetary Policy Nowcasting</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./notebooks/24_financial_analysis_with_llm.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">24. Building a financial analyst with LLM, Fine tuning and retrieval</span></a>
-  </div>
-</li>
-    </ul>
-    </div>
-</nav>
-<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
-<!-- margin-sidebar -->
-    
-<!-- main -->
-<main class="content column-page-right" id="quarto-document-content" tabindex="-1">
-
-<header id="title-block-header" class="quarto-title-block default">
-<div class="quarto-title">
-<div class="quarto-title-block"><div><h1 class="title">Quantitative Finance Lab</h1><button type="button" class="btn code-tools-button" id="quarto-code-tools-source"><i class="bi"></i> Code</button></div></div>
-<p class="subtitle lead">Project-based research &amp; a reusable Python library for quantitative finance</p>
-</div>
-
-<div>
-  <div class="description">
-    A research lab of reproducible quant-finance projects (notes, math, experiments) backed by a growing Python package: quantfinlab.
-  </div>
-</div>
-
-
-<div class="quarto-title-meta column-page-right">
-
-    <div>
-    <div class="quarto-title-meta-heading">Author</div>
-    <div class="quarto-title-meta-contents">
-             <p>Ramtin Asadi </p>
+      </section>
+      <section class="tracks-section wrap" id="tracks" aria-labelledby="tracks-heading">
+        <div class="section-heading">
+          <h2 id="tracks-heading">Choose a research track.</h2>
+          <p>
+            Five starting points. A shared set of questions, methods and
+            tools.<br class="desktop-break">
+            Choose a track to see the projects inside.
+          </p>
+        </div>
+        <div id="track-cards" class="track-grid" role="tablist" aria-label="Research tracks"></div>
+        <div id="track-panel" class="track-panel" role="tabpanel" tabindex="0" aria-labelledby="track-rates"></div>
+      </section>
+      <section class="roadmap-section" id="roadmap" aria-labelledby="roadmap-heading">
+        <div class="wrap">
+          <div class="section-heading">
+            <h2 id="roadmap-heading">How the projects connect.</h2>
+            <p>
+              Follow a track from left to right, or cross over when an idea
+              connects.<br class="desktop-break">
+              A suggested reading route, rather than a list of prerequisites.
+            </p>
           </div>
-  </div>
+          <div class="roadmap-frame">
+            <div class="map-toolbar">
+              <div class="map-legend" id="map-legend" aria-label="Highlight a roadmap track"></div>
+              <span class="map-key"><span class="map-key-dash"></span> Related methods</span>
+            </div>
+            <div class="map-scroll" tabindex="0" role="region" aria-label="Project roadmap. Scroll horizontally on smaller screens.">
+              <div id="project-map"></div>
+            </div>
+            <div class="map-footer">
+              <span>Choose a project to open the notebook
+                <span aria-hidden="true">↗</span></span><span class="map-scroll-hint">Scroll to see the full map
+                <span aria-hidden="true">↔</span></span><span>Foundations <span aria-hidden="true">⟶</span> Further
+                investigations</span>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="projects-section wrap" id="projects" aria-labelledby="projects-heading">
+        <div class="section-heading">
+          <h2 id="projects-heading">The project collection.</h2>
+          <p>
+            All 24 notebooks, in their original order.<br class="desktop-break">
+            Open a project outline to see the methods and experiments inside.
+          </p>
+        </div>
+        <div class="directory-controls">
+          <label class="search-field"><svg viewbox="0 0 24 24" width="19" height="19" fill="none" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.5"></circle>
+              <path d="m16 16 5 5" stroke="currentColor" stroke-width="1.5"></path></svg><span class="sr-only">Search project titles and methods</span><input id="project-search" type="search" placeholder="Search projects or methods" autocomplete="off"></label>
+          <label class="filter-field"><span class="sr-only">Filter projects by track</span><select id="project-filter">
+              <option value="all">All research tracks</option>
+            </select></label>
+          <div class="results-count" id="results-count" aria-live="polite">
+            24 projects
+          </div>
+        </div>
+    <div id="project-directory" class="project-directory">
+    <section id="fixed-income-and-yield-curve-construction" class="level3 project-seed" data-project-id="1">
+    <h3 data-anchor-id="fixed-income-and-yield-curve-construction">1. Fixed Income and Yield Curve Construction</h3>
+    <ul>
+    <li>Bootstrap US and Japan Treasury curves from par yields into discount, zero-rate, and forward-rate curves</li>
+    <li>Price fixed-coupon bonds and rolling synthetic bond issuance from curve inputs</li>
+    <li>Measure duration, convexity, PV01, and key-rate duration exposures</li>
+    <li>Build duration-targeted bond portfolios with reusable fixed-income utilities</li>
+    </ul>
+    <p><a href="notebooks/01_yield_curve_bond_pricing_and_risk.html">Open Project 01</a></p>
+    </section>
+    <section id="portfolio-optimization-with-mean-variance-models" class="level3 project-seed" data-project-id="2">
+    <h3 data-anchor-id="portfolio-optimization-with-mean-variance-models">2. Portfolio Optimization with Mean-Variance Models</h3>
+    <ul>
+    <li>Select a liquid Nasdaq stock universe with realistic history and liquidity filters</li>
+    <li>Estimate expected returns with momentum, Bayes-Stein shrinkage, and Bayes-Stein momentum</li>
+    <li>Compare sample, Ledoit-Wolf, OAS, and EWMA covariance estimators inside constrained optimizers</li>
+    <li>Backtest min-variance, mean-variance, and max-Sharpe portfolios with turnover, drawdown, and risk diagnostics</li>
+    </ul>
+    <p><a href="notebooks/02_portfolio_optimization_MV_models.html">Open Project 02</a></p>
+    </section>
+    <section id="risk-analysis-and-capm" class="level3 project-seed" data-project-id="3">
+    <h3 data-anchor-id="risk-analysis-and-capm">3. Risk Analysis and CAPM</h3>
+    <ul>
+    <li>Build a reusable risk report for assets, strategies, and portfolios</li>
+    <li>Compute performance, distribution shape, drawdowns, VaR, expected shortfall, and stress windows</li>
+    <li>Estimate CAPM alpha, beta, rolling exposure, and benchmark-relative behavior</li>
+    <li>Add risk contribution and diversification diagnostics reused across later projects</li>
+    </ul>
+    <p><a href="notebooks/03_risk_report_engine_and_CAPM.html">Open Project 03</a></p>
+    </section>
+    <section id="black-scholes-implied-volatility-greeks-and-hedging" class="level3 project-seed" data-project-id="4">
+    <h3 data-anchor-id="black-scholes-implied-volatility-greeks-and-hedging">4. Black-Scholes, Implied Volatility, Greeks and Hedging</h3>
+    <ul>
+    <li>Build option payoffs, risk-neutral pricing intuition, and the Black-Scholes-Merton model</li>
+    <li>Clean SPX option chains and invert implied volatility with robust solver diagnostics</li>
+    <li>Compute Greeks with analytic, autodiff, and finite-difference validation</li>
+    <li>Test delta and delta-vega hedging with P&amp;L attribution, transaction costs, and a BTC options repeat</li>
+    </ul>
+    <p><a href="notebooks/04_BSM_IV_greeks_hedging.html">Open Project 04</a></p>
+    </section>
+    <section id="volatility-forecasting-with-garch-and-variance-risk-premium" class="level3 project-seed" data-project-id="5">
+    <h3 data-anchor-id="volatility-forecasting-with-garch-and-variance-risk-premium">5. Volatility Forecasting with GARCH and Variance Risk Premium</h3>
+    <ul>
+    <li>Forecast realized volatility with GARCH, GJR-GARCH, EGARCH, and HAR-RV models</li>
+    <li>Build a clean 30-day ATM implied-volatility panel from SPX option chains</li>
+    <li>Estimate the variance risk premium as an implied-versus-realized variance spread</li>
+    <li>Translate VRP signals into straddle overlays with performance, risk, and diagnostic checks</li>
+    </ul>
+    <p><a href="notebooks/05_GARCH_forecasting_VRP.html">Open Project 05</a></p>
+    </section>
+    <section id="black-litterman-with-learned-confidence" class="level3 project-seed" data-project-id="6">
+    <h3 data-anchor-id="black-litterman-with-learned-confidence">6. Black-Litterman with Learned Confidence</h3>
+    <ul>
+    <li>Build ETF strategic benchmarks, covariance estimates, and market-implied priors</li>
+    <li>Encode active views and learn confidence from realized historical view payoff reliability</li>
+    <li>Convert Black-Litterman posterior returns into active weights with tracking-error controls</li>
+    <li>Evaluate active portfolios against benchmarks and repeat the workflow on sector ETFs through the library</li>
+    </ul>
+    <p><a href="notebooks/06_portfolio_black_littreman.html">Open Project 06</a></p>
+    </section>
+    <section id="dynamic-hedge-ratios-and-residual-trading" class="level3 project-seed" data-project-id="7">
+    <h3 data-anchor-id="dynamic-hedge-ratios-and-residual-trading">7. Dynamic Hedge Ratios and Residual Trading</h3>
+    <ul>
+    <li>Estimate static, rolling, ridge, and Kalman/state-space hedge ratios</li>
+    <li>Diagnose hedgeability across equity, commodity, currency, and ETF relationships</li>
+    <li>Measure hedged books with volatility, expected shortfall, drawdown, beta, turnover, and cost drag</li>
+    <li>Test residual spreads with ADF, Engle-Granger, half-life, z-score rules, no-trade bands, and robustness repeats</li>
+    </ul>
+    <p><a href="notebooks/07_dynamic_hedge_ratios.html">Open Project 07</a></p>
+    </section>
+    <section id="volatility-surface-and-local-volatility" class="level3 project-seed" data-project-id="8">
+    <h3 data-anchor-id="volatility-surface-and-local-volatility">8. Volatility Surface and Local Volatility</h3>
+    <ul>
+    <li>Construct a clean SPX option surface from forwards, rates, paired quotes, and bid-ask-aware IV</li>
+    <li>Fit raw PCHIP and smoother log-total-variance B-spline volatility surfaces</li>
+    <li>Derive Dupire local volatility with no-arbitrage, stress, and surface-quality diagnostics</li>
+    <li>Build historical surface features, PCA surface dynamics, surface-aware Greeks, and a BTC options repeat</li>
+    </ul>
+    <p><a href="notebooks/08_vol_surface_local_vol.html">Open Project 08</a></p>
+    </section>
+    <section id="term-structure-models-curve-factors-and-swap-based-duration-overlays" class="level3 project-seed" data-project-id="9">
+    <h3 data-anchor-id="term-structure-models-curve-factors-and-swap-based-duration-overlays">9. Term Structure Models, Curve Factors, and Swap-Based Duration Overlays</h3>
+    <ul>
+    <li>Reuse Treasury curve data to build monthly zero-rate panels, SOFR returns, and curve factors</li>
+    <li>Calibrate Vasicek, CIR, HW1F, and G2-style term-structure models with diagnostic checks</li>
+    <li>Decompose curve moves with PCA level, slope, and curvature factors plus term-premium proxies</li>
+    <li>Convert curve views into duration-ladder and fixed-for-floating swap overlay backtests</li>
+    </ul>
+    <p><a href="notebooks/09_term_structure_models.html">Open Project 09</a></p>
+    </section>
+    <section id="portfolio-optimization-tail-risk-risk-parity-and-robust-models" class="level3 project-seed" data-project-id="10">
+    <h3 data-anchor-id="portfolio-optimization-tail-risk-risk-parity-and-robust-models">10. Portfolio Optimization: Tail Risk, Risk Parity and Robust Models</h3>
+    <ul>
+    <li>Compare tail-risk, CVaR, risk-parity, HRP, robust, and Wasserstein-DRO portfolio objectives</li>
+    <li>Stress optimizer sensitivity to expected-return, covariance, and scenario assumptions</li>
+    <li>Study mean-variance, Black-Litterman, CVaR, ellipsoid-robust, and distributionally robust allocations</li>
+    <li>Evaluate drawdowns, costs, turnover, risk contributions, and secondary library replication</li>
+    </ul>
+    <p><a href="notebooks/10_portfolio_tail_parity_robust.html">Open Project 10</a></p>
+    </section>
+    <section id="stochastic-volatility-models-and-model-risk-aware-option-relative-value" class="level3 project-seed" data-project-id="11">
+    <h3 data-anchor-id="stochastic-volatility-models-and-model-risk-aware-option-relative-value">11. Stochastic Volatility Models and Model-Risk-Aware Option Relative Value</h3>
+    <ul>
+    <li>Build a clean SPX option modeling panel from the earlier option-chain and IV stack</li>
+    <li>Fit SVI, SSVI, SABR, Merton, Heston, and Bates-style smile and stochastic-volatility models</li>
+    <li>Compare fit quality, residuals, weighted IV errors, runtime, parameter warnings, and model stability</li>
+    <li>Trade model-risk-aware option relative value with hedging attribution, controls, and secondary market repeats</li>
+    </ul>
+    <p><a href="notebooks/11_stochastic_volatility.html">Open Project 11</a></p>
+    </section>
+    <section id="macro-financial-conditions-index-and-macro-regime-allocation" class="level3 project-seed" data-project-id="12">
+    <h3 data-anchor-id="macro-financial-conditions-index-and-macro-regime-allocation">12. Macro Financial Conditions Index and Macro-Regime Allocation</h3>
+    <ul>
+    <li>Transform macro series into stress-oriented monthly features across inflation, policy, growth, labor, housing, trade, and breadth</li>
+    <li>Build economic-weighted, PCA, PLS, stress-probability, and blended financial-conditions indexes</li>
+    <li>Validate FCI signals against future equity stress, volatility, and drawdowns</li>
+    <li>Apply macro-regime signals to sector rotation and risk scaling with performance, drawdown, and library replication</li>
+    </ul>
+    <p><a href="notebooks/12_financial_conditions_index.html">Open Project 12</a></p>
+    </section>
+    <section id="american-options-and-numerical-pricing-methods" class="level3 project-seed" data-project-id="13">
+    <h3 data-anchor-id="american-options-and-numerical-pricing-methods">13. American Options and Numerical Pricing Methods</h3>
+    <ul>
+    <li>Price American options with Cox-Ross-Rubinstein trees, finite differences, PDE logic, and Longstaff-Schwartz Monte Carlo</li>
+    <li>Build a SPY American-option panel with dividends, rates, spreads, and early-exercise inputs</li>
+    <li>Study convergence, PSOR, exercise boundaries, assignment risk, and model disagreement</li>
+    <li>Compare Python, Numba, and C++ engines and repeat the workflow through reusable library tools</li>
+    </ul>
+    <p><a href="notebooks/13_american_option_numerics.html">Open Project 13</a></p>
+    </section>
+    <section id="fourier-based-methods-for-option-pricing" class="level3 project-seed" data-project-id="14">
+    <h3 data-anchor-id="fourier-based-methods-for-option-pricing">14. Fourier-Based Methods for Option Pricing</h3>
+    <ul>
+    <li>Price options from characteristic functions instead of closed-form formulas, trees, or simulated paths</li>
+    <li>Implement direct Fourier integration, Carr-Madan FFT, and COS pricing methods</li>
+    <li>Compare BSM, Merton, Variance Gamma, Heston, and Bates pricing and calibration behavior</li>
+    <li>Diagnose SPX and BTC fit, convergence, runtime, jump risk, stochastic volatility, and reusable library implementation</li>
+    </ul>
+    <p><a href="notebooks/14_fourier_option_pricing.html">Open Project 14</a></p>
+    </section>
+    <section id="factor-investing-and-fama-french-allocation" class="level3 project-seed" data-project-id="15">
+    <h3 data-anchor-id="factor-investing-and-fama-french-allocation">15. Factor Investing and Fama-French Allocation</h3>
+    <ul>
+    <li>Build Fama-French factor, sector ETF, industry portfolio, and broad ETF return panels</li>
+    <li>Estimate full-sample and rolling factor exposures for sectors and tradable ETFs</li>
+    <li>Convert factor states, residual alpha, and validation-weighted scores into allocation signals</li>
+    <li>Test factor-timing and sector-rotation portfolios with risk, turnover, drawdown, and library diagnostics</li>
+    </ul>
+    <p><a href="notebooks/15_factor_investing.html">Open Project 15</a></p>
+    </section>
+    <section id="regime-switching-portfolio-selection" class="level3 project-seed" data-project-id="16">
+    <h3 data-anchor-id="regime-switching-portfolio-selection">16. Regime Switching Portfolio Selection</h3>
+    <ul>
+    <li>Build cross-asset, macro, FCI, breadth, volatility, drawdown, and correlation features</li>
+    <li>Define realized future regimes from forward risk-versus-defensive outcomes</li>
+    <li>Compare clustering, Markov-switching, hidden Markov, and supervised classification models</li>
+    <li>Convert regime probabilities into state-conditioned sleeves and repeat the workflow on sector ETFs</li>
+    </ul>
+    <p><a href="notebooks/16_regime_switching_portfolio.html">Open Project 16</a></p>
+    </section>
+    <section id="network-aware-portfolio-construction" class="level3 project-seed" data-project-id="17">
+    <h3 data-anchor-id="network-aware-portfolio-construction">17. Network-Aware Portfolio Construction</h3>
+    <ul>
+    <li>Turn a rolling NASDAQ stock universe into correlation and tail-dependence networks</li>
+    <li>Compare dense graphs with filtered MST and PMFG market structures</li>
+    <li>Measure centrality, clustering, graph roles, and dependence concentration</li>
+    <li>Use network scores as portfolio signals with diversification, turnover, and stress diagnostics</li>
+    </ul>
+    <p><a href="notebooks/17_network_portfolio.html">Open Project 17</a></p>
+    </section>
+    <section id="rough-volatility-for-option-pricing" class="level3 project-seed" data-project-id="18">
+    <h3 data-anchor-id="rough-volatility-for-option-pricing">18. Rough Volatility for Option Pricing</h3>
+    <ul>
+    <li>Estimate physical roughness from log realized variance and moment-scaling diagnostics</li>
+    <li>Compare rough-kernel variance forecasts with HAR and GARCH-style benchmarks</li>
+    <li>Study option-implied roughness through short-maturity skew power laws</li>
+    <li>Simulate and calibrate rBergomi and rough-Heston-style models for pricing, calibration, and hedge sensitivity</li>
+    </ul>
+    <p><a href="notebooks/18_rough_volatility.html">Open Project 18</a></p>
+    </section>
+    <section id="machine-learning-and-neural-forecasting-for-uncertainty-aware-kelly-allocation" class="level3 project-seed" data-project-id="19">
+    <h3 data-anchor-id="machine-learning-and-neural-forecasting-for-uncertainty-aware-kelly-allocation">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</h3>
+    <ul>
+    <li>Build 21-day cross-asset forward alpha targets and date-asset feature panels</li>
+    <li>Train tabular, neural sequence, and probabilistic forecasting models</li>
+    <li>Evaluate rank IC, bucket spreads, pinball loss, coverage, calibration, and uncertainty diagnostics</li>
+    <li>Convert forecasts into fractional Kelly and forecast-gated MaxSharpe allocations with sector ETF transfer</li>
+    </ul>
+    <p><a href="notebooks/19_forecasting_kelly_allocation.html">Open Project 19</a></p>
+    </section>
+    <section id="reinforcement-learning-for-portfolio-allocation" class="level3 project-seed" data-project-id="20">
+    <h3 data-anchor-id="reinforcement-learning-for-portfolio-allocation">20. Reinforcement Learning for Portfolio Allocation</h3>
+    <ul>
+    <li>Build a weekly RL portfolio environment with costs, drawdown, volatility, prior weights, and market-state features</li>
+    <li>Define a continuous action-to-weight map that always produces valid long-only portfolio allocations</li>
+    <li>Train PPO, recurrent PPO, and SAC policies with a differential-Sharpe reward and risk penalties</li>
+    <li>Compare RL policies against forecast-gated, Kelly, and regime-aware baselines plus a sector ETF library transfer</li>
+    </ul>
+    <p><a href="notebooks/20_rl_portfolio_allocation.html">Open Project 20</a></p>
+    </section>
+    <section id="fundamental-equity-research-scoring-and-reporting" class="level3 project-seed" data-project-id="21">
+    <h3 data-anchor-id="fundamental-equity-research-scoring-and-reporting">21. Fundamental Equity Research, Scoring and Reporting</h3>
+    <ul>
+    <li>Reconstruct quarterly and trailing statements from point-in-time SEC filings</li>
+    <li>Analyze profitability, cash quality, financial strength and valuation with company-type-specific diagnostics</li>
+    <li>Compare fixed and adaptive peer-relative scores, stock selections and portfolio allocations</li>
+    <li>Produce issuer reports and reproduce the historical S&amp;P 500 workflow with library calls</li>
+    </ul>
+    <p><a href="notebooks/21_fundamental_analysis.html">Open Project 21</a></p>
+    </section>
+    <section id="corporate-credit-risk-market-pricing-and-structured-credit" class="level3 project-seed" data-project-id="22">
+    <h3 data-anchor-id="corporate-credit-risk-market-pricing-and-structured-credit">22. Corporate Credit Risk, Market Pricing and Structured Credit</h3>
+    <ul>
+    <li>Construct censored bankruptcy and distress targets from SEC filing histories</li>
+    <li>Compare logit, spline, LightGBM, direct-horizon and Merton risk estimates</li>
+    <li>Connect expected credit loss to market spreads, Fed EBP, FINRA activity and synthetic CDS</li>
+    <li>Simulate issuer portfolios, copula dependence, tranche losses and joint credit stresses</li>
+    </ul>
+    <p><a href="notebooks/22_credit_risk.html">Open Project 22</a></p>
+    </section>
+    <section id="real-time-macro-and-monetary-policy-nowcasting" class="level3 project-seed" data-project-id="23">
+    <h3 data-anchor-id="real-time-macro-and-monetary-policy-nowcasting">23. Real-Time Macro and Monetary Policy Nowcasting</h3>
+    <ul>
+    <li>Build as-of information sets and first-release GDP, inflation and labor targets</li>
+    <li>Compare component bridges, grouped mixed-frequency factors, MIDAS, Minnesota BVAR and forecast combinations</li>
+    <li>Attribute Kalman news and evaluate professional forecasts and aligned overnight-rate distributions</li>
+    <li>Repeat the models on Canadian releases, Bank of Canada data and international inputs</li>
+    </ul>
+    <p><a href="notebooks/23_macro_nowcasting.html">Open Project 23</a></p>
+    </section>
+    <section id="building-a-financial-analyst-with-llm-fine-tuning-and-retrieval" class="level3 project-seed" data-project-id="24">
+    <h3 data-anchor-id="building-a-financial-analyst-with-llm-fine-tuning-and-retrieval">24. Building a financial analyst with LLM, Fine tuning and retrieval</h3>
+    <ul>
+    <li>Retrieve official releases and selected SEC disclosures with publication cutoffs</li>
+    <li>Combine financial changes, risk, rates and cross-asset context from the existing library</li>
+    <li>Run one cached Qwen3.5-2B GGUF locally with calibrated GPU offload</li>
+    <li>Produce readable, cited company, macro, event and daily analyses</li>
+    </ul>
+    <p><a href="notebooks/24_financial_analysis_with_llm.html">Open Project 24</a></p>
+    </section>
+    </div>
+    <div id="empty-state" class="empty-state" hidden="">
+          <h3>No matching projects.</h3>
+          <p>Try another method, project number, or track.</p>
+          <button id="reset-search" class="button" type="button">
+            Show all projects <span aria-hidden="true">↗</span>
+          </button>
+        </div>
+        <noscript><p>
+            This interactive preview needs JavaScript.
+            <a href="index.html">Read the original homepage and all 24 projects.</a>
+          </p></noscript>
+      </section>
+      <section class="practice-section wrap" id="library" aria-labelledby="practice-heading">
+        <div class="practice-intro">
+          <h2 id="practice-heading">
+            Built in notebooks.<br>Reusable in Python.
+          </h2>
+          <p>
+            The experiments become tools. <code>quantfinlab</code> brings the
+            reusable methods together in a typed, tested Python library — from
+            curve construction and pricing to portfolios, credit, macro and
+            financial analysis.
+          </p>
+          <a class="text-link" href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md" target="_blank" rel="noreferrer">Read the library documentation
+            <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="library-note">
+          <div class="code-label">
+            quantfinlab <span>Python 3.11–3.12</span>
+          </div>
+          <code class="install-command"><span>$</span> pip install quantfinlab</code>
+          <div class="library-modules">
+            <span>fixed_income</span><span>options</span><span>portfolio</span><span>risk</span><span>fundamentals</span><span>credit</span><span>macro</span><span>analyst</span>
+          </div>
+          <a href="https://pypi.org/project/quantfinlab/" target="_blank" rel="noreferrer">View on PyPI <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+      <aside class="data-note wrap" id="data" aria-labelledby="data-heading">
+        <div>
+          <h2 id="data-heading">Start with the data.</h2>
+          <p>
+            The notebooks need their data prepared before they can run. Each
+            source has a script and documentation; large and licensed market
+            datasets are not redistributed.
+          </p>
+        </div>
+        <a class="text-link" href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data" target="_blank" rel="noreferrer">Data &amp; reproducibility <span aria-hidden="true">↗</span></a>
+      </aside>
+    </main>
+    <footer class="site-footer wrap">
+      <div class="footer-main">
+        <a class="wordmark" href="#top">QUANTITATIVE FINANCE LAB</a>
+        <div class="footer-links">
+          <a href="overview.html">About</a><a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab" target="_blank" rel="noreferrer">GitHub ↗</a><a href="#top">Back to top ↑</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>Ramtin Asadi · Open source / MIT</span><span>Research and education. Nothing here is investment advice.</span>
+      </div>
+    </footer>
+    
     
   
-    
-  </div>
-  
-
-
-</header>
-
-
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Note
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>This site is the published companion to the GitHub repository:<br>
-<code>https://github.com/ramtin-asadi/Quantitative-Finance-Lab</code></p>
-</div>
-</div>
-<p><strong>Quantitative-Finance-Lab</strong> is a sequence of research projects in quantitative finance, each built end-to-end: financial motivation, mathematical derivation, real-data implementation, diagnostics, and honest interpretation. It is meant to be used as three things: A self-study curriculum that forces every model to be implemented and tested rather than just read about, a research notebook series, and a real software library (<code>quantfinlab</code>) that can be reusable for parts of the notebook that created it.</p>
-<ul>
-<li><strong>Clear narrative</strong>: intuition to math to implementation</li>
-<li><strong>Reproducible experiments</strong>: consistent metrics, plots, and comparisons</li>
-<li><strong>Library-first engineering</strong>: reusable components are extracted into <strong><code>quantfinlab</code></strong></li>
-</ul>
-<p>The goal is to build a series that is both <strong>research-grade</strong> (well explained) and <strong>engineering-grade</strong> (reusable, testable, maintainable).</p>
-<hr>
-<section id="start-here" class="level2">
-<h2 class="anchored" data-anchor-id="start-here">Start here</h2>
-<ul>
-<li>Read the <strong><a href="./overview.html">Overview</a></strong> for how projects are structured, what the notebook-to-library workflow means, and the evaluation conventions used throughout.</li>
-<li>Read <strong><a href="#data">Data</a></strong> below before trying to run anything locally — the notebooks are not directly re-runnable on a fresh clone without first preparing data.</li>
-<li>Then open a project notebook and read it top to bottom; the final section of most notebooks re-runs the same workflow on a second market using only <code>quantfinlab</code>.</li>
-<li>The library itself is documented in <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md"><code>quantfinlab/README.md</code></a> on GitHub, with the full module map and code examples.</li>
-</ul>
-<hr>
-</section>
-<section id="projects" class="level2">
-<h2 class="anchored" data-anchor-id="projects">Projects</h2>
-<div class="columns">
-<div class="column" style="width:50%;">
-<section id="fixed-income-and-yield-curve-construction" class="level3">
-<h3 class="anchored" data-anchor-id="fixed-income-and-yield-curve-construction">1. Fixed Income and Yield Curve Construction</h3>
-<ul>
-<li>Bootstrap US and Japan Treasury curves from par yields into discount, zero-rate, and forward-rate curves</li>
-<li>Price fixed-coupon bonds and rolling synthetic bond issuance from curve inputs</li>
-<li>Measure duration, convexity, PV01, and key-rate duration exposures</li>
-<li>Build duration-targeted bond portfolios with reusable fixed-income utilities</li>
-</ul>
-<p><a href="notebooks/01_yield_curve_bond_pricing_and_risk.html">Open Project 01</a></p>
-</section>
-</div><div class="column" style="width:50%;">
-<section id="portfolio-optimization-with-mean-variance-models" class="level3">
-<h3 class="anchored" data-anchor-id="portfolio-optimization-with-mean-variance-models">2. Portfolio Optimization with Mean-Variance Models</h3>
-<ul>
-<li>Select a liquid Nasdaq stock universe with realistic history and liquidity filters</li>
-<li>Estimate expected returns with momentum, Bayes-Stein shrinkage, and Bayes-Stein momentum</li>
-<li>Compare sample, Ledoit-Wolf, OAS, and EWMA covariance estimators inside constrained optimizers</li>
-<li>Backtest min-variance, mean-variance, and max-Sharpe portfolios with turnover, drawdown, and risk diagnostics</li>
-</ul>
-<p><a href="notebooks/02_portfolio_optimization_MV_models.html">Open Project 02</a></p>
-</section>
-</div>
-</div>
-<div class="columns">
-<div class="column" style="width:50%;">
-<section id="risk-analysis-and-capm" class="level3">
-<h3 class="anchored" data-anchor-id="risk-analysis-and-capm">3. Risk Analysis and CAPM</h3>
-<ul>
-<li>Build a reusable risk report for assets, strategies, and portfolios</li>
-<li>Compute performance, distribution shape, drawdowns, VaR, expected shortfall, and stress windows</li>
-<li>Estimate CAPM alpha, beta, rolling exposure, and benchmark-relative behavior</li>
-<li>Add risk contribution and diversification diagnostics reused across later projects</li>
-</ul>
-<p><a href="notebooks/03_risk_report_engine_and_CAPM.html">Open Project 03</a></p>
-</section>
-</div><div class="column" style="width:50%;">
-<section id="black-scholes-implied-volatility-greeks-and-hedging" class="level3">
-<h3 class="anchored" data-anchor-id="black-scholes-implied-volatility-greeks-and-hedging">4. Black-Scholes, Implied Volatility, Greeks and Hedging</h3>
-<ul>
-<li>Build option payoffs, risk-neutral pricing intuition, and the Black-Scholes-Merton model</li>
-<li>Clean SPX option chains and invert implied volatility with robust solver diagnostics</li>
-<li>Compute Greeks with analytic, autodiff, and finite-difference validation</li>
-<li>Test delta and delta-vega hedging with P&amp;L attribution, transaction costs, and a BTC options repeat</li>
-</ul>
-<p><a href="notebooks/04_BSM_IV_greeks_hedging.html">Open Project 04</a></p>
-</section>
-</div>
-</div>
-<div class="columns">
-<div class="column" style="width:50%;">
-<section id="volatility-forecasting-with-garch-and-variance-risk-premium" class="level3">
-<h3 class="anchored" data-anchor-id="volatility-forecasting-with-garch-and-variance-risk-premium">5. Volatility Forecasting with GARCH and Variance Risk Premium</h3>
-<ul>
-<li>Forecast realized volatility with GARCH, GJR-GARCH, EGARCH, and HAR-RV models</li>
-<li>Build a clean 30-day ATM implied-volatility panel from SPX option chains</li>
-<li>Estimate the variance risk premium as an implied-versus-realized variance spread</li>
-<li>Translate VRP signals into straddle overlays with performance, risk, and diagnostic checks</li>
-</ul>
-<p><a href="notebooks/05_GARCH_forecasting_VRP.html">Open Project 05</a></p>
-</section>
-</div><div class="column" style="width:50%;">
-<section id="black-litterman-with-learned-confidence" class="level3">
-<h3 class="anchored" data-anchor-id="black-litterman-with-learned-confidence">6. Black-Litterman with Learned Confidence</h3>
-<ul>
-<li>Build ETF strategic benchmarks, covariance estimates, and market-implied priors</li>
-<li>Encode active views and learn confidence from realized historical view payoff reliability</li>
-<li>Convert Black-Litterman posterior returns into active weights with tracking-error controls</li>
-<li>Evaluate active portfolios against benchmarks and repeat the workflow on sector ETFs through the library</li>
-</ul>
-<p><a href="notebooks/06_portfolio_black_littreman.html">Open Project 06</a></p>
-</section>
-</div>
-</div>
-<div class="columns">
-<div class="column" style="width:50%;">
-<section id="dynamic-hedge-ratios-and-residual-trading" class="level3">
-<h3 class="anchored" data-anchor-id="dynamic-hedge-ratios-and-residual-trading">7. Dynamic Hedge Ratios and Residual Trading</h3>
-<ul>
-<li>Estimate static, rolling, ridge, and Kalman/state-space hedge ratios</li>
-<li>Diagnose hedgeability across equity, commodity, currency, and ETF relationships</li>
-<li>Measure hedged books with volatility, expected shortfall, drawdown, beta, turnover, and cost drag</li>
-<li>Test residual spreads with ADF, Engle-Granger, half-life, z-score rules, no-trade bands, and robustness repeats</li>
-</ul>
-<p><a href="notebooks/07_dynamic_hedge_ratios.html">Open Project 07</a></p>
-</section>
-</div><div class="column" style="width:50%;">
-<section id="volatility-surface-and-local-volatility" class="level3">
-<h3 class="anchored" data-anchor-id="volatility-surface-and-local-volatility">8. Volatility Surface and Local Volatility</h3>
-<ul>
-<li>Construct a clean SPX option surface from forwards, rates, paired quotes, and bid-ask-aware IV</li>
-<li>Fit raw PCHIP and smoother log-total-variance B-spline volatility surfaces</li>
-<li>Derive Dupire local volatility with no-arbitrage, stress, and surface-quality diagnostics</li>
-<li>Build historical surface features, PCA surface dynamics, surface-aware Greeks, and a BTC options repeat</li>
-</ul>
-<p><a href="notebooks/08_vol_surface_local_vol.html">Open Project 08</a></p>
-</section>
-</div>
-</div>
-<div class="columns">
-<div class="column" style="width:50%;">
-<section id="term-structure-models-curve-factors-and-swap-based-duration-overlays" class="level3">
-<h3 class="anchored" data-anchor-id="term-structure-models-curve-factors-and-swap-based-duration-overlays">9. Term Structure Models, Curve Factors, and Swap-Based Duration Overlays</h3>
-<ul>
-<li>Reuse Treasury curve data to build monthly zero-rate panels, SOFR returns, and curve factors</li>
-<li>Calibrate Vasicek, CIR, HW1F, and G2-style term-structure models with diagnostic checks</li>
-<li>Decompose curve moves with PCA level, slope, and curvature factors plus term-premium proxies</li>
-<li>Convert curve views into duration-ladder and fixed-for-floating swap overlay backtests</li>
-</ul>
-<p><a href="notebooks/09_term_structure_models.html">Open Project 09</a></p>
-</section>
-</div><div class="column" style="width:50%;">
-<section id="portfolio-optimization-tail-risk-risk-parity-and-robust-models" class="level3">
-<h3 class="anchored" data-anchor-id="portfolio-optimization-tail-risk-risk-parity-and-robust-models">10. Portfolio Optimization: Tail Risk, Risk Parity and Robust Models</h3>
-<ul>
-<li>Compare tail-risk, CVaR, risk-parity, HRP, robust, and Wasserstein-DRO portfolio objectives</li>
-<li>Stress optimizer sensitivity to expected-return, covariance, and scenario assumptions</li>
-<li>Study mean-variance, Black-Litterman, CVaR, ellipsoid-robust, and distributionally robust allocations</li>
-<li>Evaluate drawdowns, costs, turnover, risk contributions, and secondary library replication</li>
-</ul>
-<p><a href="notebooks/10_portfolio_tail_parity_robust.html">Open Project 10</a></p>
-</section>
-</div>
-</div>
-<div class="columns">
-<div class="column" style="width:50%;">
-<section id="stochastic-volatility-models-and-model-risk-aware-option-relative-value" class="level3">
-<h3 class="anchored" data-anchor-id="stochastic-volatility-models-and-model-risk-aware-option-relative-value">11. Stochastic Volatility Models and Model-Risk-Aware Option Relative Value</h3>
-<ul>
-<li>Build a clean SPX option modeling panel from the earlier option-chain and IV stack</li>
-<li>Fit SVI, SSVI, SABR, Merton, Heston, and Bates-style smile and stochastic-volatility models</li>
-<li>Compare fit quality, residuals, weighted IV errors, runtime, parameter warnings, and model stability</li>
-<li>Trade model-risk-aware option relative value with hedging attribution, controls, and secondary market repeats</li>
-</ul>
-<p><a href="notebooks/11_stochastic_volatility.html">Open Project 11</a></p>
-</section>
-</div><div class="column" style="width:50%;">
-<section id="macro-financial-conditions-index-and-macro-regime-allocation" class="level3">
-<h3 class="anchored" data-anchor-id="macro-financial-conditions-index-and-macro-regime-allocation">12. Macro Financial Conditions Index and Macro-Regime Allocation</h3>
-<ul>
-<li>Transform macro series into stress-oriented monthly features across inflation, policy, growth, labor, housing, trade, and breadth</li>
-<li>Build economic-weighted, PCA, PLS, stress-probability, and blended financial-conditions indexes</li>
-<li>Validate FCI signals against future equity stress, volatility, and drawdowns</li>
-<li>Apply macro-regime signals to sector rotation and risk scaling with performance, drawdown, and library replication</li>
-</ul>
-<p><a href="notebooks/12_financial_conditions_index.html">Open Project 12</a></p>
-</section>
-</div>
-</div>
-<div class="columns">
-<div class="column" style="width:50%;">
-<section id="american-options-and-numerical-pricing-methods" class="level3">
-<h3 class="anchored" data-anchor-id="american-options-and-numerical-pricing-methods">13. American Options and Numerical Pricing Methods</h3>
-<ul>
-<li>Price American options with Cox-Ross-Rubinstein trees, finite differences, PDE logic, and Longstaff-Schwartz Monte Carlo</li>
-<li>Build a SPY American-option panel with dividends, rates, spreads, and early-exercise inputs</li>
-<li>Study convergence, PSOR, exercise boundaries, assignment risk, and model disagreement</li>
-<li>Compare Python, Numba, and C++ engines and repeat the workflow through reusable library tools</li>
-</ul>
-<p><a href="notebooks/13_american_option_numerics.html">Open Project 13</a></p>
-</section>
-</div><div class="column" style="width:50%;">
-<section id="fourier-based-methods-for-option-pricing" class="level3">
-<h3 class="anchored" data-anchor-id="fourier-based-methods-for-option-pricing">14. Fourier-Based Methods for Option Pricing</h3>
-<ul>
-<li>Price options from characteristic functions instead of closed-form formulas, trees, or simulated paths</li>
-<li>Implement direct Fourier integration, Carr-Madan FFT, and COS pricing methods</li>
-<li>Compare BSM, Merton, Variance Gamma, Heston, and Bates pricing and calibration behavior</li>
-<li>Diagnose SPX and BTC fit, convergence, runtime, jump risk, stochastic volatility, and reusable library implementation</li>
-</ul>
-<p><a href="notebooks/14_fourier_option_pricing.html">Open Project 14</a></p>
-</section>
-</div>
-</div>
-<div class="columns">
-<div class="column" style="width:50%;">
-<section id="factor-investing-and-fama-french-allocation" class="level3">
-<h3 class="anchored" data-anchor-id="factor-investing-and-fama-french-allocation">15. Factor Investing and Fama-French Allocation</h3>
-<ul>
-<li>Build Fama-French factor, sector ETF, industry portfolio, and broad ETF return panels</li>
-<li>Estimate full-sample and rolling factor exposures for sectors and tradable ETFs</li>
-<li>Convert factor states, residual alpha, and validation-weighted scores into allocation signals</li>
-<li>Test factor-timing and sector-rotation portfolios with risk, turnover, drawdown, and library diagnostics</li>
-</ul>
-<p><a href="notebooks/15_factor_investing.html">Open Project 15</a></p>
-</section>
-</div><div class="column" style="width:50%;">
-<section id="regime-switching-portfolio-selection" class="level3">
-<h3 class="anchored" data-anchor-id="regime-switching-portfolio-selection">16. Regime Switching Portfolio Selection</h3>
-<ul>
-<li>Build cross-asset, macro, FCI, breadth, volatility, drawdown, and correlation features</li>
-<li>Define realized future regimes from forward risk-versus-defensive outcomes</li>
-<li>Compare clustering, Markov-switching, hidden Markov, and supervised classification models</li>
-<li>Convert regime probabilities into state-conditioned sleeves and repeat the workflow on sector ETFs</li>
-</ul>
-<p><a href="notebooks/16_regime_switching_portfolio.html">Open Project 16</a></p>
-</section>
-</div>
-</div>
-<div class="columns">
-<div class="column" style="width:50%;">
-<section id="network-aware-portfolio-construction" class="level3">
-<h3 class="anchored" data-anchor-id="network-aware-portfolio-construction">17. Network-Aware Portfolio Construction</h3>
-<ul>
-<li>Turn a rolling NASDAQ stock universe into correlation and tail-dependence networks</li>
-<li>Compare dense graphs with filtered MST and PMFG market structures</li>
-<li>Measure centrality, clustering, graph roles, and dependence concentration</li>
-<li>Use network scores as portfolio signals with diversification, turnover, and stress diagnostics</li>
-</ul>
-<p><a href="notebooks/17_network_portfolio.html">Open Project 17</a></p>
-</section>
-</div><div class="column" style="width:50%;">
-<section id="rough-volatility-for-option-pricing" class="level3">
-<h3 class="anchored" data-anchor-id="rough-volatility-for-option-pricing">18. Rough Volatility for Option Pricing</h3>
-<ul>
-<li>Estimate physical roughness from log realized variance and moment-scaling diagnostics</li>
-<li>Compare rough-kernel variance forecasts with HAR and GARCH-style benchmarks</li>
-<li>Study option-implied roughness through short-maturity skew power laws</li>
-<li>Simulate and calibrate rBergomi and rough-Heston-style models for pricing, calibration, and hedge sensitivity</li>
-</ul>
-<p><a href="notebooks/18_rough_volatility.html">Open Project 18</a></p>
-</section>
-</div>
-</div>
-<div class="columns">
-<div class="column" style="width:50%;">
-<section id="machine-learning-and-neural-forecasting-for-uncertainty-aware-kelly-allocation" class="level3">
-<h3 class="anchored" data-anchor-id="machine-learning-and-neural-forecasting-for-uncertainty-aware-kelly-allocation">19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</h3>
-<ul>
-<li>Build 21-day cross-asset forward alpha targets and date-asset feature panels</li>
-<li>Train tabular, neural sequence, and probabilistic forecasting models</li>
-<li>Evaluate rank IC, bucket spreads, pinball loss, coverage, calibration, and uncertainty diagnostics</li>
-<li>Convert forecasts into fractional Kelly and forecast-gated MaxSharpe allocations with sector ETF transfer</li>
-</ul>
-<p><a href="notebooks/19_forecasting_kelly_allocation.html">Open Project 19</a></p>
-</section>
-</div><div class="column" style="width:50%;">
-<section id="reinforcement-learning-for-portfolio-allocation" class="level3">
-<h3 class="anchored" data-anchor-id="reinforcement-learning-for-portfolio-allocation">20. Reinforcement Learning for Portfolio Allocation</h3>
-<ul>
-<li>Build a weekly RL portfolio environment with costs, drawdown, volatility, prior weights, and market-state features</li>
-<li>Define a continuous action-to-weight map that always produces valid long-only portfolio allocations</li>
-<li>Train PPO, recurrent PPO, and SAC policies with a differential-Sharpe reward and risk penalties</li>
-<li>Compare RL policies against forecast-gated, Kelly, and regime-aware baselines plus a sector ETF library transfer</li>
-</ul>
-<p><a href="notebooks/20_rl_portfolio_allocation.html">Open Project 20</a></p>
-</section>
-</div>
-</div>
-<div class="columns">
-<div class="column" style="width:50%;">
-<section id="fundamental-equity-research-scoring-and-reporting" class="level3">
-<h3 class="anchored" data-anchor-id="fundamental-equity-research-scoring-and-reporting">21. Fundamental Equity Research, Scoring and Reporting</h3>
-<ul>
-<li>Reconstruct quarterly and trailing statements from point-in-time SEC filings</li>
-<li>Analyze profitability, cash quality, financial strength and valuation with company-type-specific diagnostics</li>
-<li>Compare fixed and adaptive peer-relative scores, stock selections and portfolio allocations</li>
-<li>Produce issuer reports and reproduce the historical S&amp;P 500 workflow with library calls</li>
-</ul>
-<p><a href="notebooks/21_fundamental_analysis.html">Open Project 21</a></p>
-</section>
-</div><div class="column" style="width:50%;">
-<section id="corporate-credit-risk-market-pricing-and-structured-credit" class="level3">
-<h3 class="anchored" data-anchor-id="corporate-credit-risk-market-pricing-and-structured-credit">22. Corporate Credit Risk, Market Pricing and Structured Credit</h3>
-<ul>
-<li>Construct censored bankruptcy and distress targets from SEC filing histories</li>
-<li>Compare logit, spline, LightGBM, direct-horizon and Merton risk estimates</li>
-<li>Connect expected credit loss to market spreads, Fed EBP, FINRA activity and synthetic CDS</li>
-<li>Simulate issuer portfolios, copula dependence, tranche losses and joint credit stresses</li>
-</ul>
-<p><a href="notebooks/22_credit_risk.html">Open Project 22</a></p>
-</section>
-</div>
-</div>
-<div class="columns">
-<div class="column" style="width:50%;">
-<section id="real-time-macro-and-monetary-policy-nowcasting" class="level3">
-<h3 class="anchored" data-anchor-id="real-time-macro-and-monetary-policy-nowcasting">23. Real-Time Macro and Monetary Policy Nowcasting</h3>
-<ul>
-<li>Build as-of information sets and first-release GDP, inflation and labor targets</li>
-<li>Compare component bridges, grouped mixed-frequency factors, MIDAS, Minnesota BVAR and forecast combinations</li>
-<li>Attribute Kalman news and evaluate professional forecasts and aligned overnight-rate distributions</li>
-<li>Repeat the models on Canadian releases, Bank of Canada data and international inputs</li>
-</ul>
-<p><a href="notebooks/23_macro_nowcasting.html">Open Project 23</a></p>
-</section>
-</div><div class="column" style="width:50%;">
-<section id="building-a-financial-analyst-with-llm-fine-tuning-and-retrieval" class="level3">
-<h3 class="anchored" data-anchor-id="building-a-financial-analyst-with-llm-fine-tuning-and-retrieval">24. Building a financial analyst with LLM, Fine tuning and retrieval</h3>
-<ul>
-<li>Retrieve official releases and selected SEC disclosures with publication cutoffs</li>
-<li>Combine financial changes, risk, rates and cross-asset context from the existing library</li>
-<li>Run one cached Qwen3.5-2B GGUF locally with calibrated GPU offload</li>
-<li>Produce readable, cited company, macro, event and daily analyses</li>
-</ul>
-<p><a href="notebooks/24_financial_analysis_with_llm.html">Open Project 24</a></p>
-</section>
-</div>
-</div>
-<hr>
-</section>
-<section id="data" class="level2">
-<h2 class="anchored" data-anchor-id="data">Data</h2>
-<p><strong>The notebooks cannot be re-run directly on a fresh clone. Data has to be prepared first.</strong> No large or licensed market data is committed to the repository. Instead, the repository ships a <code>data/</code> reproducibility layer: one small, readable script per data source, plus a <code>README.md</code> documenting exactly what each one does and where its data comes from.</p>
-<p>Two kinds of sources are handled differently:</p>
-<ul>
-<li><strong>Scripted/automatic sources</strong>: FRED (US Treasury yields, NFCI), the NY Fed (ACM term premia), Japan’s Ministry of Finance (JGB yields), yfinance (equities, ETFs, BTC), the Kenneth French data library (factor returns) download themselves when you run the corresponding script, for example <code>python data/us_treasury_yields/download.py</code>.</li>
-<li><strong>Manual/licensed sources</strong>: OptionsDX option chains (SPX, SPY, QQQ, BTC/Deribit) and Stooq’s bulk equity archives require you to obtain the files yourself from the linked source (free registration in OptionsDX’s case) and place them in the matching <code>data/&lt;source&gt;/raw/</code> folder; a <code>build.py</code> script then turns them into the clean file each notebook expects.</li>
-</ul>
-<p>The complete list of sources, what to put where, and citation requirements per source live in <code>data/README.md</code> in the repository. Every number in every notebook has a scripted path back to where it came from.</p>
-</section>
-<section id="the-library" class="level2">
-<h2 class="anchored" data-anchor-id="the-library">The library</h2>
-<p>Reusable logic from every project lives in <strong><code>quantfinlab</code></strong>, a typed, tested Python package covering fixed income, options pricing (with a compiled C++ pricing core for the numerically heavy methods), portfolio construction, risk reporting, volatility modeling, hedging, fundamental equity research, corporate credit, real-time macro and ML/RL applications for finance. Tests cover model properties from optimizer invariants and pricing kernels to statement reconstruction and release timing. Full documentation, the module map, and worked examples are in <a href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md"><code>quantfinlab/README.md</code></a> on GitHub.</p>
-<hr>
-</section>
-<section id="disclaimer" class="level2">
-<h2 class="anchored" data-anchor-id="disclaimer">Disclaimer</h2>
-<p>This repository is for <strong>research and educational purposes</strong>. Nothing here is investment advice, and results may vary by dataset, assumptions, costs, constraints, and implementation details.</p>
-
-
-<!-- -->
-
-</section>
-
-</main> <!-- /main -->
-<script>
-(function () {
-  function setCodeFolds(open) {
-    document.querySelectorAll("details.code-fold").forEach(function (details) {
-      details.open = open;
-    });
-  }
-
-  function handleCodeToolsClick(event) {
-    var showAll = event.target.closest("#quarto-show-all-code");
-    var hideAll = event.target.closest("#quarto-hide-all-code");
-
-    if (!showAll && !hideAll) {
-      return;
-    }
-
-    window.setTimeout(function () {
-      setCodeFolds(Boolean(showAll));
-    }, 0);
-  }
-
-  document.addEventListener("click", handleCodeToolsClick, true);
-})();
-</script>
-<script id="quarto-html-after-body" type="application/javascript">
-  window.document.addEventListener("DOMContentLoaded", function (event) {
-    const icon = "";
-    const anchorJS = new window.AnchorJS();
-    anchorJS.options = {
-      placement: 'right',
-      icon: icon
-    };
-    anchorJS.add('.anchored');
-    const isCodeAnnotation = (el) => {
-      for (const clz of el.classList) {
-        if (clz.startsWith('code-annotation-')) {                     
-          return true;
-        }
-      }
-      return false;
-    }
-    const onCopySuccess = function(e) {
-      // button target
-      const button = e.trigger;
-      // don't keep focus
-      button.blur();
-      // flash "checked"
-      button.classList.add('code-copy-button-checked');
-      var currentTitle = button.getAttribute("title");
-      button.setAttribute("title", "Copied!");
-      let tooltip;
-      if (window.bootstrap) {
-        button.setAttribute("data-bs-toggle", "tooltip");
-        button.setAttribute("data-bs-placement", "left");
-        button.setAttribute("data-bs-title", "Copied!");
-        tooltip = new bootstrap.Tooltip(button, 
-          { trigger: "manual", 
-            customClass: "code-copy-button-tooltip",
-            offset: [0, -8]});
-        tooltip.show();    
-      }
-      setTimeout(function() {
-        if (tooltip) {
-          tooltip.hide();
-          button.removeAttribute("data-bs-title");
-          button.removeAttribute("data-bs-toggle");
-          button.removeAttribute("data-bs-placement");
-        }
-        button.setAttribute("title", currentTitle);
-        button.classList.remove('code-copy-button-checked');
-      }, 1000);
-      // clear code selection
-      e.clearSelection();
-    }
-    const getTextToCopy = function(trigger) {
-      const outerScaffold = trigger.parentElement.cloneNode(true);
-      const codeEl = outerScaffold.querySelector('code');
-      for (const childEl of codeEl.children) {
-        if (isCodeAnnotation(childEl)) {
-          childEl.remove();
-        }
-      }
-      return codeEl.innerText;
-    }
-    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
-      text: getTextToCopy
-    });
-    clipboard.on('success', onCopySuccess);
-    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
-        text: getTextToCopy,
-        container: window.document.getElementById('quarto-embedded-source-code-modal')
-      });
-      clipboardModal.on('success', onCopySuccess);
-    }
-    const viewSource = window.document.getElementById('quarto-view-source') ||
-                       window.document.getElementById('quarto-code-tools-source');
-    if (viewSource) {
-      const sourceUrl = viewSource.getAttribute("data-quarto-source-url");
-      viewSource.addEventListener("click", function(e) {
-        if (sourceUrl) {
-          // rstudio viewer pane
-          if (/\bcapabilities=\b/.test(window.location)) {
-            window.open(sourceUrl);
-          } else {
-            window.location.href = sourceUrl;
-          }
-        } else {
-          const modal = new bootstrap.Modal(document.getElementById('quarto-embedded-source-code-modal'));
-          modal.show();
-        }
-        return false;
-      });
-    }
-    function toggleCodeHandler(show) {
-      return function(e) {
-        const cellDetails = window.document.querySelectorAll(".cell details.code-fold");
-        for (let i=0; i<cellDetails.length; i++) {
-          const details = cellDetails[i];
-          if (show) {
-            details.open = true;
-          } else {
-            details.removeAttribute("open");
-          }
-        }
-        const cellCodeDivs = window.document.querySelectorAll(".cell div.sourceCode.cell-code");
-        const fromCls = show ? "hidden" : "unhidden";
-        const toCls = show ? "unhidden" : "hidden";
-        for (let i=0; i<cellCodeDivs.length; i++) {
-          const codeDiv = cellCodeDivs[i];
-          if (codeDiv.classList.contains(fromCls)) {
-            codeDiv.classList.remove(fromCls);
-            codeDiv.classList.add(toCls);
-          } 
-        }
-        return false;
-      }
-    }
-    const hideAllCode = window.document.getElementById("quarto-hide-all-code");
-    if (hideAllCode) {
-      hideAllCode.addEventListener("click", toggleCodeHandler(false));
-    }
-    const showAllCode = window.document.getElementById("quarto-show-all-code");
-    if (showAllCode) {
-      showAllCode.addEventListener("click", toggleCodeHandler(true));
-    }
-      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
-      var mailtoRegex = new RegExp(/^mailto:/);
-        var filterRegex = new RegExp('/' + window.location.host + '/');
-      var isInternal = (href) => {
-          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
-      }
-      // Inspect non-navigation links and adorn them if external
-      window.quartoDecorateExternalLinks = function (root) {
-     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
-      for (var i=0; i<links.length; i++) {
-        const link = links[i];
-        if (!isInternal(link.href)) {
-          // undo the damage that might have been done by quarto-nav.js in the case of
-          // links that we want to consider external
-          if (link.dataset.originalHref !== undefined) {
-            link.href = link.dataset.originalHref;
-          }
-          if (!link.classList.contains('no-external-icon')) {
-          }
-        }
-      }
-      };
-      window.quartoDecorateExternalLinks(window.document);
-    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
-    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
-    const hideOnEscAndFocusOut = {
-      name: 'hideOnEscAndFocusOut',
-      defaultValue: true,
-      fn(instance) {
-        const dismiss = () => {
-          // A show scheduled by the trigger delay would otherwise reopen it
-          instance.clearDelayTimeouts();
-          instance.hide();
-        };
-        const onKeyDown = (event) => {
-          if (event.key !== 'Escape') {
-            return;
-          }
-          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
-          // except an open reveal.js slide menu, which Esc should close too.
-          // The menu handles keys only when its keyboard option is on.
-          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
-            window.Reveal.getConfig().menu?.keyboard !== false;
-          if (!menuHandlesEsc) {
-            event.stopPropagation();
-          }
-          if (instance.popper.contains(window.document.activeElement)) {
-            // Disabled while refocusing so the focus trigger does not reopen it
-            instance.disable();
-            instance.reference.focus();
-            instance.enable();
-          }
-          dismiss();
-        };
-        const onFocusOut = (event) => {
-          const target = event.relatedTarget;
-          if (target && !instance.reference.contains(target) &&
-              !instance.popper.contains(target)) {
-            dismiss();
-          }
-        };
-        // On the trigger too: a click trigger (code-annotations: select) has no
-        // blur handling. Attached for the instance's lifetime so leaving the
-        // trigger also cancels a show still pending on the trigger delay.
-        instance.reference.addEventListener('focusout', onFocusOut);
-        return {
-          onShow() {
-            window.document.addEventListener('keydown', onKeyDown, true);
-            instance.popper.addEventListener('focusout', onFocusOut);
-          },
-          onHide() {
-            window.document.removeEventListener('keydown', onKeyDown, true);
-            instance.popper.removeEventListener('focusout', onFocusOut);
-          },
-          onDestroy() {
-            instance.reference.removeEventListener('focusout', onFocusOut);
-          },
-        };
-      },
-    };
-    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
-      const config = {
-        allowHTML: true,
-        maxWidth: 500,
-        delay: 100,
-        arrow: false,
-        appendTo: function(el) {
-            return el.parentElement;
-        },
-        interactive: true,
-        interactiveBorder: 10,
-        theme: 'quarto',
-        placement: 'bottom-start',
-        plugins: [hideOnEscAndFocusOut],
-      };
-      if (contentFn) {
-        config.content = contentFn;
-      }
-      if (onTriggerFn) {
-        config.onTrigger = onTriggerFn;
-      }
-      if (onUntriggerFn) {
-        config.onUntrigger = onUntriggerFn;
-      }
-      window.tippy(el, config); 
-    }
-    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-    for (var i=0; i<noterefs.length; i++) {
-      const ref = noterefs[i];
-      tippyHover(ref, function() {
-        // use id or data attribute instead here
-        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-        try { href = new URL(href).hash; } catch {}
-        const id = href.replace(/^#\/?/, "");
-        const note = window.document.getElementById(id);
-        if (note) {
-          return note.innerHTML;
-        } else {
-          return "";
-        }
-      });
-    }
-    const xrefs = window.document.querySelectorAll('a.quarto-xref');
-    const processXRef = (id, note) => {
-      // Strip column container classes
-      const stripColumnClz = (el) => {
-        el.classList.remove("page-full", "page-columns");
-        if (el.children) {
-          for (const child of el.children) {
-            stripColumnClz(child);
-          }
-        }
-      }
-      stripColumnClz(note)
-      if (id === null || id.startsWith('sec-')) {
-        // Special case sections, only their first couple elements
-        const container = document.createElement("div");
-        if (note.children && note.children.length > 2) {
-          container.appendChild(note.children[0].cloneNode(true));
-          for (let i = 1; i < note.children.length; i++) {
-            const child = note.children[i];
-            if (child.tagName === "P" && child.innerText === "") {
-              continue;
-            } else {
-              container.appendChild(child.cloneNode(true));
-              break;
-            }
-          }
-          if (window.Quarto?.typesetMath) {
-            window.Quarto.typesetMath(container);
-          }
-          return container.innerHTML
-        } else {
-          if (window.Quarto?.typesetMath) {
-            window.Quarto.typesetMath(note);
-          }
-          return note.innerHTML;
-        }
-      } else {
-        // Remove any anchor links if they are present
-        const anchorLink = note.querySelector('a.anchorjs-link');
-        if (anchorLink) {
-          anchorLink.remove();
-        }
-        if (window.Quarto?.typesetMath) {
-          window.Quarto.typesetMath(note);
-        }
-        if (note.classList.contains("callout")) {
-          return note.outerHTML;
-        } else {
-          return note.innerHTML;
-        }
-      }
-    }
-    for (var i=0; i<xrefs.length; i++) {
-      const xref = xrefs[i];
-      tippyHover(xref, undefined, function(instance) {
-        instance.disable();
-        let url = xref.getAttribute('href');
-        let hash = undefined; 
-        if (url.startsWith('#')) {
-          hash = url;
-        } else {
-          try { hash = new URL(url).hash; } catch {}
-        }
-        if (hash) {
-          const id = hash.replace(/^#\/?/, "");
-          const note = window.document.getElementById(id);
-          if (note !== null) {
-            try {
-              const html = processXRef(id, note.cloneNode(true));
-              instance.setContent(html);
-            } finally {
-              instance.enable();
-              instance.show();
-            }
-          } else {
-            // See if we can fetch this
-            fetch(url.split('#')[0])
-            .then(res => res.text())
-            .then(html => {
-              const parser = new DOMParser();
-              const htmlDoc = parser.parseFromString(html, "text/html");
-              const note = htmlDoc.getElementById(id);
-              if (note !== null) {
-                const html = processXRef(id, note);
-                instance.setContent(html);
-              } 
-            }).finally(() => {
-              instance.enable();
-              instance.show();
-            });
-          }
-        } else {
-          // See if we can fetch a full url (with no hash to target)
-          // This is a special case and we should probably do some content thinning / targeting
-          fetch(url)
-          .then(res => res.text())
-          .then(html => {
-            const parser = new DOMParser();
-            const htmlDoc = parser.parseFromString(html, "text/html");
-            const note = htmlDoc.querySelector('main.content');
-            if (note !== null) {
-              // This should only happen for chapter cross references
-              // (since there is no id in the URL)
-              // remove the first header
-              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
-                note.children[0].remove();
-              }
-              const html = processXRef(null, note);
-              instance.setContent(html);
-            } 
-          }).finally(() => {
-            instance.enable();
-            instance.show();
-          });
-        }
-      }, function(instance) {
-      });
-    }
-        let selectedAnnoteEl;
-        const selectorForAnnotation = ( cell, annotation) => {
-          let cellAttr = 'data-code-cell="' + cell + '"';
-          let lineAttr = 'data-code-annotation="' +  annotation + '"';
-          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
-          return selector;
-        }
-        const selectCodeLines = (annoteEl) => {
-          const doc = window.document;
-          const targetCell = annoteEl.getAttribute("data-target-cell");
-          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
-          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
-          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
-          const lineIds = lines.map((line) => {
-            return targetCell + "-" + line;
-          })
-          // Each band is positioned against its own containing block, which is
-          // not the offsetParent of the lines, so place it from client rects.
-          const placeBand = (band, firstEl, lastEl, codeBlock) => {
-            const container = band.offsetParent;
-            if (container === null) {
-              return;
-            }
-            const containerRect = container.getBoundingClientRect();
-            // Reveal.js scales slides with a transform, so convert client
-            // pixels back to the CSS pixels of the container.
-            const scale = containerRect.height / container.offsetHeight || 1;
-            const firstRect = firstEl.getBoundingClientRect();
-            const lastRect = lastEl.getBoundingClientRect();
-            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
-            const height = (lastRect.bottom - firstRect.top) / scale;
-            band.style.top = top - 2 + "px";
-            band.style.height = height + 4 + "px";
-            if (codeBlock) {
-              // Without the copy button wrapper, the containing block is wider
-              // than the code block, so span the code block explicitly.
-              const blockRect = codeBlock.getBoundingClientRect();
-              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
-              band.style.width = blockRect.width / scale + "px";
-            }
-          };
-          if (lineIds.length > 0) {
-            const el = window.document.getElementById(lineIds[0]);
-            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
-            const parent = el.parentElement.parentElement;
-            // cook up a div (if necessary) and position it
-            let div = window.document.getElementById("code-annotation-line-highlight");
-            if (div === null) {
-              div = window.document.createElement("div");
-              div.setAttribute("id", "code-annotation-line-highlight");
-              div.style.position = 'absolute';
-              parent.appendChild(div);
-            }
-            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
-            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
-            if (gutterDiv === null) {
-              gutterDiv = window.document.createElement("div");
-              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
-              gutterDiv.style.position = 'absolute';
-              const codeCell = window.document.getElementById(targetCell);
-              const gutter = codeCell.querySelector('.code-annotation-gutter');
-              gutter.appendChild(gutterDiv);
-            }
-            placeBand(gutterDiv, el, lastEl);
-            selectedAnnoteEl = annoteEl;
-          }
-        };
-        const unselectCodeLines = () => {
-          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
-          elementsIds.forEach((elId) => {
-            const div = window.document.getElementById(elId);
-            if (div) {
-              div.remove();
-            }
-          });
-          selectedAnnoteEl = undefined;
-        };
-          // Handle positioning of the toggle
-      window.addEventListener(
-        "resize",
-        throttle(() => {
-          elRect = undefined;
-          if (selectedAnnoteEl) {
-            selectCodeLines(selectedAnnoteEl);
-          }
-        }, 10)
-      );
-      function throttle(fn, ms) {
-      let throttle = false;
-      let timer;
-        return (...args) => {
-          if(!throttle) { // first call gets through
-              fn.apply(this, args);
-              throttle = true;
-          } else { // all the others get throttled
-              if(timer) clearTimeout(timer); // cancel #2
-              timer = setTimeout(() => {
-                fn.apply(this, args);
-                timer = throttle = false;
-              }, ms);
-          }
-        };
-      }
-        // Attach click handler to the DT
-        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
-        for (const annoteDlNode of annoteDls) {
-          annoteDlNode.addEventListener('click', (event) => {
-            const clickedEl = event.target;
-            if (clickedEl !== selectedAnnoteEl) {
-              unselectCodeLines();
-              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
-              if (activeEl) {
-                activeEl.classList.remove('code-annotation-active');
-              }
-              selectCodeLines(clickedEl);
-              clickedEl.classList.add('code-annotation-active');
-            } else {
-              // Unselect the line
-              unselectCodeLines();
-              clickedEl.classList.remove('code-annotation-active');
-            }
-          });
-        }
-    const findCites = (el) => {
-      const parentEl = el.parentElement;
-      if (parentEl) {
-        const cites = parentEl.dataset.cites;
-        if (cites) {
-          return {
-            el,
-            cites: cites.split(' ')
-          };
-        } else {
-          return findCites(el.parentElement)
-        }
-      } else {
-        return undefined;
-      }
-    };
-    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-    for (var i=0; i<bibliorefs.length; i++) {
-      const ref = bibliorefs[i];
-      const citeInfo = findCites(ref);
-      if (citeInfo) {
-        tippyHover(citeInfo.el, function() {
-          var popup = window.document.createElement('div');
-          citeInfo.cites.forEach(function(cite) {
-            var citeDiv = window.document.createElement('div');
-            citeDiv.classList.add('hanging-indent');
-            citeDiv.classList.add('csl-entry');
-            var biblioDiv = window.document.getElementById('ref-' + cite);
-            if (biblioDiv) {
-              citeDiv.innerHTML = biblioDiv.innerHTML;
-            }
-            popup.appendChild(citeDiv);
-          });
-          return popup.innerHTML;
-        });
-      }
-    }
-  });
-  </script>
-  <script type="application/javascript">
-  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
-  </script>
-<nav class="page-navigation column-page-right" aria-label="Page">
-  <div class="nav-page nav-page-previous">
-  </div>
-  <div class="nav-page nav-page-next">
-      <a href="./overview.html" class="pagination-link" aria-label="Overview">
-        <span class="nav-page-text"><span class="chapter-title">Overview</span></span> <i class="bi bi-arrow-right-short"></i>
-      </a>
-  </div>
-</nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="an">title:</span><span class="co"> "Home"</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="an">subtitle:</span><span class="co"> "Project-based research &amp; a reusable Python library for quantitative finance"</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="an">description:</span><span class="co"> "A research lab of reproducible quant-finance projects (notes, math, experiments) backed by a growing Python package: quantfinlab."</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="an">toc:</span><span class="co"> false</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="an">page-layout:</span><span class="co"> full</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co">---</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>:::{.callout-note}</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>This site is the published companion to the GitHub repository:  </span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="in">`https://github.com/ramtin-asadi/Quantitative-Finance-Lab`</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>**Quantitative-Finance-Lab** is a sequence of research projects in quantitative finance, each built end-to-end: financial motivation, mathematical derivation, real-data implementation, diagnostics, and honest interpretation. It is meant to be used as three things: A self-study curriculum that forces every model to be implemented and tested rather than just read about, a research notebook series, and a real software library (<span class="in">`quantfinlab`</span>) that can be reusable for parts of the notebook that created it.</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Clear narrative**: intuition to math to implementation</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Reproducible experiments**: consistent metrics, plots, and comparisons</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Library-first engineering**: reusable components are extracted into **`quantfinlab`**</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>The goal is to build a series that is both **research-grade** (well explained) and **engineering-grade** (reusable, testable, maintainable).</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="fu">## Start here</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Read the **[Overview](overview.qmd)** for how projects are structured, what the notebook-to-library workflow means, and the evaluation conventions used throughout.</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Read **[Data](#data)** below before trying to run anything locally — the notebooks are not directly re-runnable on a fresh clone without first preparing data.</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Then open a project notebook and read it top to bottom; the final section of most notebooks re-runs the same workflow on a second market using only <span class="in">`quantfinlab`</span>.</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>The library itself is documented in <span class="co">[</span><span class="ot">`quantfinlab/README.md`</span><span class="co">](https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md)</span> on GitHub, with the full module map and code examples.</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="fu">## Projects</span></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>:::: {.columns}</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="fu">### 1. Fixed Income and Yield Curve Construction</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Bootstrap US and Japan Treasury curves from par yields into discount, zero-rate, and forward-rate curves</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Price fixed-coupon bonds and rolling synthetic bond issuance from curve inputs</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Measure duration, convexity, PV01, and key-rate duration exposures</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build duration-targeted bond portfolios with reusable fixed-income utilities</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 01</span><span class="co">](notebooks/01_yield_curve_bond_pricing_and_risk.html)</span></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a><span class="fu">### 2. Portfolio Optimization with Mean-Variance Models</span></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Select a liquid Nasdaq stock universe with realistic history and liquidity filters</span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Estimate expected returns with momentum, Bayes-Stein shrinkage, and Bayes-Stein momentum</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare sample, Ledoit-Wolf, OAS, and EWMA covariance estimators inside constrained optimizers</span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Backtest min-variance, mean-variance, and max-Sharpe portfolios with turnover, drawdown, and risk diagnostics</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 02</span><span class="co">](notebooks/02_portfolio_optimization_MV_models.html)</span></span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>::::</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>:::: {.columns}</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="fu">### 3. Risk Analysis and CAPM</span></span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build a reusable risk report for assets, strategies, and portfolios</span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compute performance, distribution shape, drawdowns, VaR, expected shortfall, and stress windows</span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Estimate CAPM alpha, beta, rolling exposure, and benchmark-relative behavior</span>
-<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Add risk contribution and diversification diagnostics reused across later projects</span>
-<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-71"><a href="#cb1-71" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 03</span><span class="co">](notebooks/03_risk_report_engine_and_CAPM.html)</span></span>
-<span id="cb1-72"><a href="#cb1-72" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-73"><a href="#cb1-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-74"><a href="#cb1-74" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-75"><a href="#cb1-75" aria-hidden="true" tabindex="-1"></a><span class="fu">### 4. Black-Scholes, Implied Volatility, Greeks and Hedging</span></span>
-<span id="cb1-76"><a href="#cb1-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-77"><a href="#cb1-77" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build option payoffs, risk-neutral pricing intuition, and the Black-Scholes-Merton model</span>
-<span id="cb1-78"><a href="#cb1-78" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Clean SPX option chains and invert implied volatility with robust solver diagnostics</span>
-<span id="cb1-79"><a href="#cb1-79" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compute Greeks with analytic, autodiff, and finite-difference validation</span>
-<span id="cb1-80"><a href="#cb1-80" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Test delta and delta-vega hedging with P&amp;L attribution, transaction costs, and a BTC options repeat</span>
-<span id="cb1-81"><a href="#cb1-81" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-82"><a href="#cb1-82" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 04</span><span class="co">](notebooks/04_BSM_IV_greeks_hedging.html)</span></span>
-<span id="cb1-83"><a href="#cb1-83" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-84"><a href="#cb1-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-85"><a href="#cb1-85" aria-hidden="true" tabindex="-1"></a>::::</span>
-<span id="cb1-86"><a href="#cb1-86" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-87"><a href="#cb1-87" aria-hidden="true" tabindex="-1"></a>:::: {.columns}</span>
-<span id="cb1-88"><a href="#cb1-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-89"><a href="#cb1-89" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-90"><a href="#cb1-90" aria-hidden="true" tabindex="-1"></a><span class="fu">### 5. Volatility Forecasting with GARCH and Variance Risk Premium</span></span>
-<span id="cb1-91"><a href="#cb1-91" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-92"><a href="#cb1-92" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Forecast realized volatility with GARCH, GJR-GARCH, EGARCH, and HAR-RV models</span>
-<span id="cb1-93"><a href="#cb1-93" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build a clean 30-day ATM implied-volatility panel from SPX option chains</span>
-<span id="cb1-94"><a href="#cb1-94" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Estimate the variance risk premium as an implied-versus-realized variance spread</span>
-<span id="cb1-95"><a href="#cb1-95" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Translate VRP signals into straddle overlays with performance, risk, and diagnostic checks</span>
-<span id="cb1-96"><a href="#cb1-96" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-97"><a href="#cb1-97" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 05</span><span class="co">](notebooks/05_GARCH_forecasting_VRP.html)</span></span>
-<span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-99"><a href="#cb1-99" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-100"><a href="#cb1-100" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-101"><a href="#cb1-101" aria-hidden="true" tabindex="-1"></a><span class="fu">### 6. Black-Litterman with Learned Confidence</span></span>
-<span id="cb1-102"><a href="#cb1-102" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-103"><a href="#cb1-103" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build ETF strategic benchmarks, covariance estimates, and market-implied priors</span>
-<span id="cb1-104"><a href="#cb1-104" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Encode active views and learn confidence from realized historical view payoff reliability</span>
-<span id="cb1-105"><a href="#cb1-105" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Convert Black-Litterman posterior returns into active weights with tracking-error controls</span>
-<span id="cb1-106"><a href="#cb1-106" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Evaluate active portfolios against benchmarks and repeat the workflow on sector ETFs through the library</span>
-<span id="cb1-107"><a href="#cb1-107" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-108"><a href="#cb1-108" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 06</span><span class="co">](notebooks/06_portfolio_black_littreman.html)</span></span>
-<span id="cb1-109"><a href="#cb1-109" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-110"><a href="#cb1-110" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-111"><a href="#cb1-111" aria-hidden="true" tabindex="-1"></a>::::</span>
-<span id="cb1-112"><a href="#cb1-112" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-113"><a href="#cb1-113" aria-hidden="true" tabindex="-1"></a>:::: {.columns}</span>
-<span id="cb1-114"><a href="#cb1-114" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-115"><a href="#cb1-115" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-116"><a href="#cb1-116" aria-hidden="true" tabindex="-1"></a><span class="fu">### 7. Dynamic Hedge Ratios and Residual Trading</span></span>
-<span id="cb1-117"><a href="#cb1-117" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-118"><a href="#cb1-118" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Estimate static, rolling, ridge, and Kalman/state-space hedge ratios</span>
-<span id="cb1-119"><a href="#cb1-119" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Diagnose hedgeability across equity, commodity, currency, and ETF relationships</span>
-<span id="cb1-120"><a href="#cb1-120" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Measure hedged books with volatility, expected shortfall, drawdown, beta, turnover, and cost drag</span>
-<span id="cb1-121"><a href="#cb1-121" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Test residual spreads with ADF, Engle-Granger, half-life, z-score rules, no-trade bands, and robustness repeats</span>
-<span id="cb1-122"><a href="#cb1-122" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-123"><a href="#cb1-123" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 07</span><span class="co">](notebooks/07_dynamic_hedge_ratios.html)</span></span>
-<span id="cb1-124"><a href="#cb1-124" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-125"><a href="#cb1-125" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-126"><a href="#cb1-126" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-127"><a href="#cb1-127" aria-hidden="true" tabindex="-1"></a><span class="fu">### 8. Volatility Surface and Local Volatility</span></span>
-<span id="cb1-128"><a href="#cb1-128" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-129"><a href="#cb1-129" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Construct a clean SPX option surface from forwards, rates, paired quotes, and bid-ask-aware IV</span>
-<span id="cb1-130"><a href="#cb1-130" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Fit raw PCHIP and smoother log-total-variance B-spline volatility surfaces</span>
-<span id="cb1-131"><a href="#cb1-131" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Derive Dupire local volatility with no-arbitrage, stress, and surface-quality diagnostics</span>
-<span id="cb1-132"><a href="#cb1-132" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build historical surface features, PCA surface dynamics, surface-aware Greeks, and a BTC options repeat</span>
-<span id="cb1-133"><a href="#cb1-133" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-134"><a href="#cb1-134" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 08</span><span class="co">](notebooks/08_vol_surface_local_vol.html)</span></span>
-<span id="cb1-135"><a href="#cb1-135" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-136"><a href="#cb1-136" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-137"><a href="#cb1-137" aria-hidden="true" tabindex="-1"></a>::::</span>
-<span id="cb1-138"><a href="#cb1-138" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-139"><a href="#cb1-139" aria-hidden="true" tabindex="-1"></a>:::: {.columns}</span>
-<span id="cb1-140"><a href="#cb1-140" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-141"><a href="#cb1-141" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-142"><a href="#cb1-142" aria-hidden="true" tabindex="-1"></a><span class="fu">### 9. Term Structure Models, Curve Factors, and Swap-Based Duration Overlays</span></span>
-<span id="cb1-143"><a href="#cb1-143" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-144"><a href="#cb1-144" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Reuse Treasury curve data to build monthly zero-rate panels, SOFR returns, and curve factors</span>
-<span id="cb1-145"><a href="#cb1-145" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Calibrate Vasicek, CIR, HW1F, and G2-style term-structure models with diagnostic checks</span>
-<span id="cb1-146"><a href="#cb1-146" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Decompose curve moves with PCA level, slope, and curvature factors plus term-premium proxies</span>
-<span id="cb1-147"><a href="#cb1-147" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Convert curve views into duration-ladder and fixed-for-floating swap overlay backtests</span>
-<span id="cb1-148"><a href="#cb1-148" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-149"><a href="#cb1-149" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 09</span><span class="co">](notebooks/09_term_structure_models.html)</span></span>
-<span id="cb1-150"><a href="#cb1-150" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-151"><a href="#cb1-151" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-152"><a href="#cb1-152" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-153"><a href="#cb1-153" aria-hidden="true" tabindex="-1"></a><span class="fu">### 10. Portfolio Optimization: Tail Risk, Risk Parity and Robust Models</span></span>
-<span id="cb1-154"><a href="#cb1-154" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-155"><a href="#cb1-155" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare tail-risk, CVaR, risk-parity, HRP, robust, and Wasserstein-DRO portfolio objectives</span>
-<span id="cb1-156"><a href="#cb1-156" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Stress optimizer sensitivity to expected-return, covariance, and scenario assumptions</span>
-<span id="cb1-157"><a href="#cb1-157" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Study mean-variance, Black-Litterman, CVaR, ellipsoid-robust, and distributionally robust allocations</span>
-<span id="cb1-158"><a href="#cb1-158" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Evaluate drawdowns, costs, turnover, risk contributions, and secondary library replication</span>
-<span id="cb1-159"><a href="#cb1-159" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-160"><a href="#cb1-160" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 10</span><span class="co">](notebooks/10_portfolio_tail_parity_robust.html)</span></span>
-<span id="cb1-161"><a href="#cb1-161" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-162"><a href="#cb1-162" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-163"><a href="#cb1-163" aria-hidden="true" tabindex="-1"></a>::::</span>
-<span id="cb1-164"><a href="#cb1-164" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-165"><a href="#cb1-165" aria-hidden="true" tabindex="-1"></a>:::: {.columns}</span>
-<span id="cb1-166"><a href="#cb1-166" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-167"><a href="#cb1-167" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-168"><a href="#cb1-168" aria-hidden="true" tabindex="-1"></a><span class="fu">### 11. Stochastic Volatility Models and Model-Risk-Aware Option Relative Value</span></span>
-<span id="cb1-169"><a href="#cb1-169" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-170"><a href="#cb1-170" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build a clean SPX option modeling panel from the earlier option-chain and IV stack</span>
-<span id="cb1-171"><a href="#cb1-171" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Fit SVI, SSVI, SABR, Merton, Heston, and Bates-style smile and stochastic-volatility models</span>
-<span id="cb1-172"><a href="#cb1-172" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare fit quality, residuals, weighted IV errors, runtime, parameter warnings, and model stability</span>
-<span id="cb1-173"><a href="#cb1-173" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Trade model-risk-aware option relative value with hedging attribution, controls, and secondary market repeats</span>
-<span id="cb1-174"><a href="#cb1-174" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-175"><a href="#cb1-175" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 11</span><span class="co">](notebooks/11_stochastic_volatility.html)</span></span>
-<span id="cb1-176"><a href="#cb1-176" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-177"><a href="#cb1-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-178"><a href="#cb1-178" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-179"><a href="#cb1-179" aria-hidden="true" tabindex="-1"></a><span class="fu">### 12. Macro Financial Conditions Index and Macro-Regime Allocation</span></span>
-<span id="cb1-180"><a href="#cb1-180" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-181"><a href="#cb1-181" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Transform macro series into stress-oriented monthly features across inflation, policy, growth, labor, housing, trade, and breadth</span>
-<span id="cb1-182"><a href="#cb1-182" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build economic-weighted, PCA, PLS, stress-probability, and blended financial-conditions indexes</span>
-<span id="cb1-183"><a href="#cb1-183" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Validate FCI signals against future equity stress, volatility, and drawdowns</span>
-<span id="cb1-184"><a href="#cb1-184" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Apply macro-regime signals to sector rotation and risk scaling with performance, drawdown, and library replication</span>
-<span id="cb1-185"><a href="#cb1-185" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-186"><a href="#cb1-186" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 12</span><span class="co">](notebooks/12_financial_conditions_index.html)</span></span>
-<span id="cb1-187"><a href="#cb1-187" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-188"><a href="#cb1-188" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-189"><a href="#cb1-189" aria-hidden="true" tabindex="-1"></a>::::</span>
-<span id="cb1-190"><a href="#cb1-190" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-191"><a href="#cb1-191" aria-hidden="true" tabindex="-1"></a>:::: {.columns}</span>
-<span id="cb1-192"><a href="#cb1-192" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-193"><a href="#cb1-193" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-194"><a href="#cb1-194" aria-hidden="true" tabindex="-1"></a><span class="fu">### 13. American Options and Numerical Pricing Methods</span></span>
-<span id="cb1-195"><a href="#cb1-195" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-196"><a href="#cb1-196" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Price American options with Cox-Ross-Rubinstein trees, finite differences, PDE logic, and Longstaff-Schwartz Monte Carlo</span>
-<span id="cb1-197"><a href="#cb1-197" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build a SPY American-option panel with dividends, rates, spreads, and early-exercise inputs</span>
-<span id="cb1-198"><a href="#cb1-198" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Study convergence, PSOR, exercise boundaries, assignment risk, and model disagreement</span>
-<span id="cb1-199"><a href="#cb1-199" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare Python, Numba, and C++ engines and repeat the workflow through reusable library tools</span>
-<span id="cb1-200"><a href="#cb1-200" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-201"><a href="#cb1-201" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 13</span><span class="co">](notebooks/13_american_option_numerics.html)</span></span>
-<span id="cb1-202"><a href="#cb1-202" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-203"><a href="#cb1-203" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-204"><a href="#cb1-204" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-205"><a href="#cb1-205" aria-hidden="true" tabindex="-1"></a><span class="fu">### 14. Fourier-Based Methods for Option Pricing</span></span>
-<span id="cb1-206"><a href="#cb1-206" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-207"><a href="#cb1-207" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Price options from characteristic functions instead of closed-form formulas, trees, or simulated paths</span>
-<span id="cb1-208"><a href="#cb1-208" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Implement direct Fourier integration, Carr-Madan FFT, and COS pricing methods</span>
-<span id="cb1-209"><a href="#cb1-209" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare BSM, Merton, Variance Gamma, Heston, and Bates pricing and calibration behavior</span>
-<span id="cb1-210"><a href="#cb1-210" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Diagnose SPX and BTC fit, convergence, runtime, jump risk, stochastic volatility, and reusable library implementation</span>
-<span id="cb1-211"><a href="#cb1-211" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-212"><a href="#cb1-212" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 14</span><span class="co">](notebooks/14_fourier_option_pricing.html)</span></span>
-<span id="cb1-213"><a href="#cb1-213" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-214"><a href="#cb1-214" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-215"><a href="#cb1-215" aria-hidden="true" tabindex="-1"></a>::::</span>
-<span id="cb1-216"><a href="#cb1-216" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-217"><a href="#cb1-217" aria-hidden="true" tabindex="-1"></a>:::: {.columns}</span>
-<span id="cb1-218"><a href="#cb1-218" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-219"><a href="#cb1-219" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-220"><a href="#cb1-220" aria-hidden="true" tabindex="-1"></a><span class="fu">### 15. Factor Investing and Fama-French Allocation</span></span>
-<span id="cb1-221"><a href="#cb1-221" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-222"><a href="#cb1-222" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build Fama-French factor, sector ETF, industry portfolio, and broad ETF return panels</span>
-<span id="cb1-223"><a href="#cb1-223" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Estimate full-sample and rolling factor exposures for sectors and tradable ETFs</span>
-<span id="cb1-224"><a href="#cb1-224" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Convert factor states, residual alpha, and validation-weighted scores into allocation signals</span>
-<span id="cb1-225"><a href="#cb1-225" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Test factor-timing and sector-rotation portfolios with risk, turnover, drawdown, and library diagnostics</span>
-<span id="cb1-226"><a href="#cb1-226" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-227"><a href="#cb1-227" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 15</span><span class="co">](notebooks/15_factor_investing.html)</span></span>
-<span id="cb1-228"><a href="#cb1-228" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-229"><a href="#cb1-229" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-230"><a href="#cb1-230" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-231"><a href="#cb1-231" aria-hidden="true" tabindex="-1"></a><span class="fu">### 16. Regime Switching Portfolio Selection</span></span>
-<span id="cb1-232"><a href="#cb1-232" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-233"><a href="#cb1-233" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build cross-asset, macro, FCI, breadth, volatility, drawdown, and correlation features</span>
-<span id="cb1-234"><a href="#cb1-234" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Define realized future regimes from forward risk-versus-defensive outcomes</span>
-<span id="cb1-235"><a href="#cb1-235" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare clustering, Markov-switching, hidden Markov, and supervised classification models</span>
-<span id="cb1-236"><a href="#cb1-236" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Convert regime probabilities into state-conditioned sleeves and repeat the workflow on sector ETFs</span>
-<span id="cb1-237"><a href="#cb1-237" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-238"><a href="#cb1-238" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 16</span><span class="co">](notebooks/16_regime_switching_portfolio.html)</span></span>
-<span id="cb1-239"><a href="#cb1-239" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-240"><a href="#cb1-240" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-241"><a href="#cb1-241" aria-hidden="true" tabindex="-1"></a>::::</span>
-<span id="cb1-242"><a href="#cb1-242" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-243"><a href="#cb1-243" aria-hidden="true" tabindex="-1"></a>:::: {.columns}</span>
-<span id="cb1-244"><a href="#cb1-244" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-245"><a href="#cb1-245" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-246"><a href="#cb1-246" aria-hidden="true" tabindex="-1"></a><span class="fu">### 17. Network-Aware Portfolio Construction</span></span>
-<span id="cb1-247"><a href="#cb1-247" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-248"><a href="#cb1-248" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Turn a rolling NASDAQ stock universe into correlation and tail-dependence networks</span>
-<span id="cb1-249"><a href="#cb1-249" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare dense graphs with filtered MST and PMFG market structures</span>
-<span id="cb1-250"><a href="#cb1-250" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Measure centrality, clustering, graph roles, and dependence concentration</span>
-<span id="cb1-251"><a href="#cb1-251" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Use network scores as portfolio signals with diversification, turnover, and stress diagnostics</span>
-<span id="cb1-252"><a href="#cb1-252" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-253"><a href="#cb1-253" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 17</span><span class="co">](notebooks/17_network_portfolio.html)</span></span>
-<span id="cb1-254"><a href="#cb1-254" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-255"><a href="#cb1-255" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-256"><a href="#cb1-256" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-257"><a href="#cb1-257" aria-hidden="true" tabindex="-1"></a><span class="fu">### 18. Rough Volatility for Option Pricing</span></span>
-<span id="cb1-258"><a href="#cb1-258" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-259"><a href="#cb1-259" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Estimate physical roughness from log realized variance and moment-scaling diagnostics</span>
-<span id="cb1-260"><a href="#cb1-260" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare rough-kernel variance forecasts with HAR and GARCH-style benchmarks</span>
-<span id="cb1-261"><a href="#cb1-261" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Study option-implied roughness through short-maturity skew power laws</span>
-<span id="cb1-262"><a href="#cb1-262" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Simulate and calibrate rBergomi and rough-Heston-style models for pricing, calibration, and hedge sensitivity</span>
-<span id="cb1-263"><a href="#cb1-263" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-264"><a href="#cb1-264" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 18</span><span class="co">](notebooks/18_rough_volatility.html)</span></span>
-<span id="cb1-265"><a href="#cb1-265" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-266"><a href="#cb1-266" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-267"><a href="#cb1-267" aria-hidden="true" tabindex="-1"></a>::::</span>
-<span id="cb1-268"><a href="#cb1-268" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-269"><a href="#cb1-269" aria-hidden="true" tabindex="-1"></a>:::: {.columns}</span>
-<span id="cb1-270"><a href="#cb1-270" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-271"><a href="#cb1-271" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-272"><a href="#cb1-272" aria-hidden="true" tabindex="-1"></a><span class="fu">### 19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation</span></span>
-<span id="cb1-273"><a href="#cb1-273" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-274"><a href="#cb1-274" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build 21-day cross-asset forward alpha targets and date-asset feature panels</span>
-<span id="cb1-275"><a href="#cb1-275" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Train tabular, neural sequence, and probabilistic forecasting models</span>
-<span id="cb1-276"><a href="#cb1-276" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Evaluate rank IC, bucket spreads, pinball loss, coverage, calibration, and uncertainty diagnostics</span>
-<span id="cb1-277"><a href="#cb1-277" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Convert forecasts into fractional Kelly and forecast-gated MaxSharpe allocations with sector ETF transfer</span>
-<span id="cb1-278"><a href="#cb1-278" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-279"><a href="#cb1-279" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 19</span><span class="co">](notebooks/19_forecasting_kelly_allocation.html)</span></span>
-<span id="cb1-280"><a href="#cb1-280" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-281"><a href="#cb1-281" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-282"><a href="#cb1-282" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-283"><a href="#cb1-283" aria-hidden="true" tabindex="-1"></a><span class="fu">### 20. Reinforcement Learning for Portfolio Allocation</span></span>
-<span id="cb1-284"><a href="#cb1-284" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-285"><a href="#cb1-285" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build a weekly RL portfolio environment with costs, drawdown, volatility, prior weights, and market-state features</span>
-<span id="cb1-286"><a href="#cb1-286" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Define a continuous action-to-weight map that always produces valid long-only portfolio allocations</span>
-<span id="cb1-287"><a href="#cb1-287" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Train PPO, recurrent PPO, and SAC policies with a differential-Sharpe reward and risk penalties</span>
-<span id="cb1-288"><a href="#cb1-288" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare RL policies against forecast-gated, Kelly, and regime-aware baselines plus a sector ETF library transfer</span>
-<span id="cb1-289"><a href="#cb1-289" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-290"><a href="#cb1-290" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 20</span><span class="co">](notebooks/20_rl_portfolio_allocation.html)</span></span>
-<span id="cb1-291"><a href="#cb1-291" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-292"><a href="#cb1-292" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-293"><a href="#cb1-293" aria-hidden="true" tabindex="-1"></a>::::</span>
-<span id="cb1-294"><a href="#cb1-294" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-295"><a href="#cb1-295" aria-hidden="true" tabindex="-1"></a>:::: {.columns}</span>
-<span id="cb1-296"><a href="#cb1-296" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-297"><a href="#cb1-297" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-298"><a href="#cb1-298" aria-hidden="true" tabindex="-1"></a><span class="fu">### 21. Fundamental Equity Research, Scoring and Reporting</span></span>
-<span id="cb1-299"><a href="#cb1-299" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-300"><a href="#cb1-300" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Reconstruct quarterly and trailing statements from point-in-time SEC filings</span>
-<span id="cb1-301"><a href="#cb1-301" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Analyze profitability, cash quality, financial strength and valuation with company-type-specific diagnostics</span>
-<span id="cb1-302"><a href="#cb1-302" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare fixed and adaptive peer-relative scores, stock selections and portfolio allocations</span>
-<span id="cb1-303"><a href="#cb1-303" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Produce issuer reports and reproduce the historical S&amp;P 500 workflow with library calls</span>
-<span id="cb1-304"><a href="#cb1-304" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-305"><a href="#cb1-305" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 21</span><span class="co">](notebooks/21_fundamental_analysis.html)</span></span>
-<span id="cb1-306"><a href="#cb1-306" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-307"><a href="#cb1-307" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-308"><a href="#cb1-308" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-309"><a href="#cb1-309" aria-hidden="true" tabindex="-1"></a><span class="fu">### 22. Corporate Credit Risk, Market Pricing and Structured Credit</span></span>
-<span id="cb1-310"><a href="#cb1-310" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-311"><a href="#cb1-311" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Construct censored bankruptcy and distress targets from SEC filing histories</span>
-<span id="cb1-312"><a href="#cb1-312" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare logit, spline, LightGBM, direct-horizon and Merton risk estimates</span>
-<span id="cb1-313"><a href="#cb1-313" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Connect expected credit loss to market spreads, Fed EBP, FINRA activity and synthetic CDS</span>
-<span id="cb1-314"><a href="#cb1-314" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Simulate issuer portfolios, copula dependence, tranche losses and joint credit stresses</span>
-<span id="cb1-315"><a href="#cb1-315" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-316"><a href="#cb1-316" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 22</span><span class="co">](notebooks/22_credit_risk.html)</span></span>
-<span id="cb1-317"><a href="#cb1-317" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-318"><a href="#cb1-318" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-319"><a href="#cb1-319" aria-hidden="true" tabindex="-1"></a>::::</span>
-<span id="cb1-320"><a href="#cb1-320" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-321"><a href="#cb1-321" aria-hidden="true" tabindex="-1"></a>:::: {.columns}</span>
-<span id="cb1-322"><a href="#cb1-322" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-323"><a href="#cb1-323" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-324"><a href="#cb1-324" aria-hidden="true" tabindex="-1"></a><span class="fu">### 23. Real-Time Macro and Monetary Policy Nowcasting</span></span>
-<span id="cb1-325"><a href="#cb1-325" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-326"><a href="#cb1-326" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Build as-of information sets and first-release GDP, inflation and labor targets</span>
-<span id="cb1-327"><a href="#cb1-327" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Compare component bridges, grouped mixed-frequency factors, MIDAS, Minnesota BVAR and forecast combinations</span>
-<span id="cb1-328"><a href="#cb1-328" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Attribute Kalman news and evaluate professional forecasts and aligned overnight-rate distributions</span>
-<span id="cb1-329"><a href="#cb1-329" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Repeat the models on Canadian releases, Bank of Canada data and international inputs</span>
-<span id="cb1-330"><a href="#cb1-330" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-331"><a href="#cb1-331" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 23</span><span class="co">](notebooks/23_macro_nowcasting.html)</span></span>
-<span id="cb1-332"><a href="#cb1-332" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-333"><a href="#cb1-333" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-334"><a href="#cb1-334" aria-hidden="true" tabindex="-1"></a>::: {.column width="50%"}</span>
-<span id="cb1-335"><a href="#cb1-335" aria-hidden="true" tabindex="-1"></a><span class="fu">### 24. Building a financial analyst with LLM, Fine tuning and retrieval</span></span>
-<span id="cb1-336"><a href="#cb1-336" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-337"><a href="#cb1-337" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Retrieve official releases and selected SEC disclosures with publication cutoffs</span>
-<span id="cb1-338"><a href="#cb1-338" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Combine financial changes, risk, rates and cross-asset context from the existing library</span>
-<span id="cb1-339"><a href="#cb1-339" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Run one cached Qwen3.5-2B GGUF locally with calibrated GPU offload</span>
-<span id="cb1-340"><a href="#cb1-340" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>Produce readable, cited company, macro, event and daily analyses</span>
-<span id="cb1-341"><a href="#cb1-341" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-342"><a href="#cb1-342" aria-hidden="true" tabindex="-1"></a><span class="co">[</span><span class="ot">Open Project 24</span><span class="co">](notebooks/24_financial_analysis_with_llm.html)</span></span>
-<span id="cb1-343"><a href="#cb1-343" aria-hidden="true" tabindex="-1"></a>:::</span>
-<span id="cb1-344"><a href="#cb1-344" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-345"><a href="#cb1-345" aria-hidden="true" tabindex="-1"></a>::::</span>
-<span id="cb1-346"><a href="#cb1-346" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-347"><a href="#cb1-347" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-348"><a href="#cb1-348" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-349"><a href="#cb1-349" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data {#data}</span></span>
-<span id="cb1-350"><a href="#cb1-350" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-351"><a href="#cb1-351" aria-hidden="true" tabindex="-1"></a>**The notebooks cannot be re-run directly on a fresh clone. Data has to be prepared first.** No large or licensed market data is committed to the repository. Instead, the repository ships a <span class="in">`data/`</span> reproducibility layer: one small, readable script per data source, plus a <span class="in">`README.md`</span> documenting exactly what each one does and where its data comes from.</span>
-<span id="cb1-352"><a href="#cb1-352" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-353"><a href="#cb1-353" aria-hidden="true" tabindex="-1"></a>Two kinds of sources are handled differently:</span>
-<span id="cb1-354"><a href="#cb1-354" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-355"><a href="#cb1-355" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Scripted/automatic sources**: FRED (US Treasury yields, NFCI), the NY Fed (ACM term premia), Japan's Ministry of Finance (JGB yields), yfinance (equities, ETFs, BTC), the Kenneth French data library (factor returns) download themselves when you run the corresponding script, for example <span class="in">`python data/us_treasury_yields/download.py`</span>.</span>
-<span id="cb1-356"><a href="#cb1-356" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Manual/licensed sources**: OptionsDX option chains (SPX, SPY, QQQ, BTC/Deribit) and Stooq's bulk equity archives require you to obtain the files yourself from the linked source (free registration in OptionsDX's case) and place them in the matching <span class="in">`data/&lt;source&gt;/raw/`</span> folder; a <span class="in">`build.py`</span> script then turns them into the clean file each notebook expects.</span>
-<span id="cb1-357"><a href="#cb1-357" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-358"><a href="#cb1-358" aria-hidden="true" tabindex="-1"></a>The complete list of sources, what to put where, and citation requirements per source live in <span class="in">`data/README.md`</span> in the repository. Every number in every notebook has a scripted path back to where it came from.</span>
-<span id="cb1-359"><a href="#cb1-359" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-360"><a href="#cb1-360" aria-hidden="true" tabindex="-1"></a><span class="fu">## The library</span></span>
-<span id="cb1-361"><a href="#cb1-361" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-362"><a href="#cb1-362" aria-hidden="true" tabindex="-1"></a>Reusable logic from every project lives in **`quantfinlab`**, a typed, tested Python package covering fixed income, options pricing (with a compiled C++ pricing core for the numerically heavy methods), portfolio construction, risk reporting, volatility modeling, hedging, fundamental equity research, corporate credit, real-time macro and ML/RL applications for finance. Tests cover model properties from optimizer invariants and pricing kernels to statement reconstruction and release timing. Full documentation, the module map, and worked examples are in <span class="co">[</span><span class="ot">`quantfinlab/README.md`</span><span class="co">](https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md)</span> on GitHub.</span>
-<span id="cb1-363"><a href="#cb1-363" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-364"><a href="#cb1-364" aria-hidden="true" tabindex="-1"></a>---</span>
-<span id="cb1-365"><a href="#cb1-365" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-366"><a href="#cb1-366" aria-hidden="true" tabindex="-1"></a><span class="fu">## Disclaimer</span></span>
-<span id="cb1-367"><a href="#cb1-367" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-368"><a href="#cb1-368" aria-hidden="true" tabindex="-1"></a>This repository is for **research and educational purposes**. Nothing here is investment advice, and results may vary by dataset, assumptions, costs, constraints, and implementation details.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
-</div></div></div></div></div>
-</div> <!-- /content -->
-
-
-
 
 </body></html>

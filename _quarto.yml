@@ -1,6 +1,11 @@
 project:
   type: book
   output-dir: docs
+  resources:
+    - config/website/homepage/*.css
+    - config/website/homepage/*.js
+    - config/website/homepage/*.svg
+    - config/website/homepage/fonts/**
 
 book:
   title: "Quantitative Finance Lab"

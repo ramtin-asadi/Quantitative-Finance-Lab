@@ -1,40 +1,201 @@
 ---
 title: "Home"
-subtitle: "Project-based research & a reusable Python library for quantitative finance"
-description: "A research lab of reproducible quant-finance projects (notes, math, experiments) backed by a growing Python package: quantfinlab."
+pagetitle: "Quantitative Finance Lab"
+description: "24 quantitative finance research projects, connected through five tracks, a project roadmap, reproducible notebooks and the quantfinlab Python library."
 toc: false
-page-layout: full
+sidebar: false
+navbar: false
+page-navigation: false
+page-layout: custom
+title-block-style: none
+format:
+  html:
+    minimal: true
+    theme: none
+    body-classes: qfl-home
+    anchor-sections: false
+    code-tools: false
+    css: config/website/homepage/styles.css
+    template: config/website/homepage/template.html
 ---
 
-:::{.callout-note}
-This site is the published companion to the GitHub repository:  
-`https://github.com/ramtin-asadi/Quantitative-Finance-Lab`
-:::
+```{=html}
+<a class="skip-link" href="#tracks">Skip to research tracks</a>
+<header class="site-header wrap">
+  <a class="wordmark" href="#top" aria-label="Quantitative Finance Lab home"
+    >QUANTITATIVE FINANCE LAB</a
+  >
+  <nav class="main-nav" aria-label="Main navigation">
+    <a href="#tracks">Research tracks</a>
+    <a href="#roadmap">Roadmap</a>
+    <a href="#projects">Projects</a>
+    <a href="#library">Library</a>
+    <a
+      class="github-link"
+      href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab"
+      target="_blank"
+      rel="noreferrer"
+      >GitHub <span aria-hidden="true">↗</span></a
+    >
+  </nav>
+</header>
+<main id="top">
+  <section class="hero wrap" aria-labelledby="hero-title">
+    <div
+      class="hero-art"
+    aria-label="An illustrative fan of simulated market paths and their possible outcomes"
+    >
+      <div class="surface-stage" id="surface-stage"></div>
+    </div>
+    <p class="hero-label">Research notebooks & Python library</p>
+    <h1 id="hero-title">Quantitative Finance Lab</h1>
+    <p class="hero-description">
+      24 projects in quantitative finance, from mathematical foundations<br
+        class="desktop-break"
+      />
+      to reproducible experiments and reusable Python.
+    </p>
+    <div class="hero-actions">
+      <a class="button" href="#tracks"
+        >Explore the projects <span aria-hidden="true">↓</span></a
+      ><a class="text-link" href="overview.html"
+        >About the lab <span aria-hidden="true">↗</span></a
+      >
+    </div>
+  </section>
+  <section
+    class="tracks-section wrap"
+    id="tracks"
+    aria-labelledby="tracks-heading"
+  >
+    <div class="section-heading">
+      <h2 id="tracks-heading">Choose a research track.</h2>
+      <p>
+        Five starting points. A shared set of questions, methods and
+        tools.<br class="desktop-break" />
+        Choose a track to see the projects inside.
+      </p>
+    </div>
+    <div
+      id="track-cards"
+      class="track-grid"
+      role="tablist"
+      aria-label="Research tracks"
+    ></div>
+    <div
+      id="track-panel"
+      class="track-panel"
+      role="tabpanel"
+      tabindex="0"
+      aria-labelledby="track-rates"
+    ></div>
+  </section>
+  <section
+    class="roadmap-section"
+    id="roadmap"
+    aria-labelledby="roadmap-heading"
+  >
+    <div class="wrap">
+      <div class="section-heading">
+        <h2 id="roadmap-heading">How the projects connect.</h2>
+        <p>
+          Follow a track from left to right, or cross over when an idea
+          connects.<br class="desktop-break" />
+          A suggested reading route, rather than a list of prerequisites.
+        </p>
+      </div>
+      <div class="roadmap-frame">
+        <div class="map-toolbar">
+          <div
+            class="map-legend"
+            id="map-legend"
+            aria-label="Highlight a roadmap track"
+          ></div>
+          <span class="map-key"
+            ><span class="map-key-dash"></span> Related methods</span
+          >
+        </div>
+        <div
+          class="map-scroll"
+          tabindex="0"
+          role="region"
+          aria-label="Project roadmap. Scroll horizontally on smaller screens."
+        >
+          <div id="project-map"></div>
+        </div>
+        <div class="map-footer">
+          <span
+            >Choose a project to open the notebook
+            <span aria-hidden="true">↗</span></span
+          ><span class="map-scroll-hint"
+            >Scroll to see the full map
+            <span aria-hidden="true">↔</span></span
+          ><span
+            >Foundations <span aria-hidden="true">⟶</span> Further
+            investigations</span
+          >
+        </div>
+      </div>
+    </div>
+  </section>
+  <section
+    class="projects-section wrap"
+    id="projects"
+    aria-labelledby="projects-heading"
+  >
+    <div class="section-heading">
+      <h2 id="projects-heading">The project collection.</h2>
+      <p>
+        All 24 notebooks, in their original order.<br
+          class="desktop-break"
+        />
+        Open a project outline to see the methods and experiments inside.
+      </p>
+    </div>
+    <div class="directory-controls">
+      <label class="search-field"
+        ><svg
+          viewBox="0 0 24 24"
+          width="19"
+          height="19"
+          fill="none"
+          aria-hidden="true"
+        >
+          <circle
+            cx="10.5"
+            cy="10.5"
+            r="6.5"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+          <path
+            d="m16 16 5 5"
+            stroke="currentColor"
+            stroke-width="1.5"
+          /></svg
+        ><span class="sr-only">Search project titles and methods</span
+        ><input
+          id="project-search"
+          type="search"
+          placeholder="Search projects or methods"
+          autocomplete="off"
+      /></label>
+      <label class="filter-field"
+        ><span class="sr-only">Filter projects by track</span
+        ><select id="project-filter">
+          <option value="all">All research tracks</option>
+        </select></label
+      >
+      <div class="results-count" id="results-count" aria-live="polite">
+        24 projects
+      </div>
+    </div>
+```
 
-**Quantitative-Finance-Lab** is a sequence of research projects in quantitative finance, each built end-to-end: financial motivation, mathematical derivation, real-data implementation, diagnostics, and honest interpretation. It is meant to be used as three things: A self-study curriculum that forces every model to be implemented and tested rather than just read about, a research notebook series, and a real software library (`quantfinlab`) that can be reusable for parts of the notebook that created it.
+::: {#project-directory .project-directory}
 
-- **Clear narrative**: intuition to math to implementation
-- **Reproducible experiments**: consistent metrics, plots, and comparisons
-- **Library-first engineering**: reusable components are extracted into **`quantfinlab`**
+::: {.project-seed data-project-id="1"}
 
-The goal is to build a series that is both **research-grade** (well explained) and **engineering-grade** (reusable, testable, maintainable).
-
----
-
-## Start here
-
-- Read the **[Overview](overview.qmd)** for how projects are structured, what the notebook-to-library workflow means, and the evaluation conventions used throughout.
-- Read **[Data](#data)** below before trying to run anything locally — the notebooks are not directly re-runnable on a fresh clone without first preparing data.
-- Then open a project notebook and read it top to bottom; the final section of most notebooks re-runs the same workflow on a second market using only `quantfinlab`.
-- The library itself is documented in [`quantfinlab/README.md`](https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md) on GitHub, with the full module map and code examples.
-
----
-
-## Projects
-
-:::: {.columns}
-
-::: {.column width="50%"}
 ### 1. Fixed Income and Yield Curve Construction
 
 - Bootstrap US and Japan Treasury curves from par yields into discount, zero-rate, and forward-rate curves
@@ -43,9 +204,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Build duration-targeted bond portfolios with reusable fixed-income utilities
 
 [Open Project 01](notebooks/01_yield_curve_bond_pricing_and_risk.html)
+
 :::
 
-::: {.column width="50%"}
+::: {.project-seed data-project-id="2"}
+
 ### 2. Portfolio Optimization with Mean-Variance Models
 
 - Select a liquid Nasdaq stock universe with realistic history and liquidity filters
@@ -54,13 +217,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Backtest min-variance, mean-variance, and max-Sharpe portfolios with turnover, drawdown, and risk diagnostics
 
 [Open Project 02](notebooks/02_portfolio_optimization_MV_models.html)
+
 :::
 
-::::
+::: {.project-seed data-project-id="3"}
 
-:::: {.columns}
-
-::: {.column width="50%"}
 ### 3. Risk Analysis and CAPM
 
 - Build a reusable risk report for assets, strategies, and portfolios
@@ -69,9 +230,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Add risk contribution and diversification diagnostics reused across later projects
 
 [Open Project 03](notebooks/03_risk_report_engine_and_CAPM.html)
+
 :::
 
-::: {.column width="50%"}
+::: {.project-seed data-project-id="4"}
+
 ### 4. Black-Scholes, Implied Volatility, Greeks and Hedging
 
 - Build option payoffs, risk-neutral pricing intuition, and the Black-Scholes-Merton model
@@ -80,13 +243,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Test delta and delta-vega hedging with P&L attribution, transaction costs, and a BTC options repeat
 
 [Open Project 04](notebooks/04_BSM_IV_greeks_hedging.html)
+
 :::
 
-::::
+::: {.project-seed data-project-id="5"}
 
-:::: {.columns}
-
-::: {.column width="50%"}
 ### 5. Volatility Forecasting with GARCH and Variance Risk Premium
 
 - Forecast realized volatility with GARCH, GJR-GARCH, EGARCH, and HAR-RV models
@@ -95,9 +256,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Translate VRP signals into straddle overlays with performance, risk, and diagnostic checks
 
 [Open Project 05](notebooks/05_GARCH_forecasting_VRP.html)
+
 :::
 
-::: {.column width="50%"}
+::: {.project-seed data-project-id="6"}
+
 ### 6. Black-Litterman with Learned Confidence
 
 - Build ETF strategic benchmarks, covariance estimates, and market-implied priors
@@ -106,13 +269,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Evaluate active portfolios against benchmarks and repeat the workflow on sector ETFs through the library
 
 [Open Project 06](notebooks/06_portfolio_black_littreman.html)
+
 :::
 
-::::
+::: {.project-seed data-project-id="7"}
 
-:::: {.columns}
-
-::: {.column width="50%"}
 ### 7. Dynamic Hedge Ratios and Residual Trading
 
 - Estimate static, rolling, ridge, and Kalman/state-space hedge ratios
@@ -121,9 +282,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Test residual spreads with ADF, Engle-Granger, half-life, z-score rules, no-trade bands, and robustness repeats
 
 [Open Project 07](notebooks/07_dynamic_hedge_ratios.html)
+
 :::
 
-::: {.column width="50%"}
+::: {.project-seed data-project-id="8"}
+
 ### 8. Volatility Surface and Local Volatility
 
 - Construct a clean SPX option surface from forwards, rates, paired quotes, and bid-ask-aware IV
@@ -132,13 +295,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Build historical surface features, PCA surface dynamics, surface-aware Greeks, and a BTC options repeat
 
 [Open Project 08](notebooks/08_vol_surface_local_vol.html)
+
 :::
 
-::::
+::: {.project-seed data-project-id="9"}
 
-:::: {.columns}
-
-::: {.column width="50%"}
 ### 9. Term Structure Models, Curve Factors, and Swap-Based Duration Overlays
 
 - Reuse Treasury curve data to build monthly zero-rate panels, SOFR returns, and curve factors
@@ -147,9 +308,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Convert curve views into duration-ladder and fixed-for-floating swap overlay backtests
 
 [Open Project 09](notebooks/09_term_structure_models.html)
+
 :::
 
-::: {.column width="50%"}
+::: {.project-seed data-project-id="10"}
+
 ### 10. Portfolio Optimization: Tail Risk, Risk Parity and Robust Models
 
 - Compare tail-risk, CVaR, risk-parity, HRP, robust, and Wasserstein-DRO portfolio objectives
@@ -158,13 +321,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Evaluate drawdowns, costs, turnover, risk contributions, and secondary library replication
 
 [Open Project 10](notebooks/10_portfolio_tail_parity_robust.html)
+
 :::
 
-::::
+::: {.project-seed data-project-id="11"}
 
-:::: {.columns}
-
-::: {.column width="50%"}
 ### 11. Stochastic Volatility Models and Model-Risk-Aware Option Relative Value
 
 - Build a clean SPX option modeling panel from the earlier option-chain and IV stack
@@ -173,9 +334,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Trade model-risk-aware option relative value with hedging attribution, controls, and secondary market repeats
 
 [Open Project 11](notebooks/11_stochastic_volatility.html)
+
 :::
 
-::: {.column width="50%"}
+::: {.project-seed data-project-id="12"}
+
 ### 12. Macro Financial Conditions Index and Macro-Regime Allocation
 
 - Transform macro series into stress-oriented monthly features across inflation, policy, growth, labor, housing, trade, and breadth
@@ -184,13 +347,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Apply macro-regime signals to sector rotation and risk scaling with performance, drawdown, and library replication
 
 [Open Project 12](notebooks/12_financial_conditions_index.html)
+
 :::
 
-::::
+::: {.project-seed data-project-id="13"}
 
-:::: {.columns}
-
-::: {.column width="50%"}
 ### 13. American Options and Numerical Pricing Methods
 
 - Price American options with Cox-Ross-Rubinstein trees, finite differences, PDE logic, and Longstaff-Schwartz Monte Carlo
@@ -199,9 +360,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Compare Python, Numba, and C++ engines and repeat the workflow through reusable library tools
 
 [Open Project 13](notebooks/13_american_option_numerics.html)
+
 :::
 
-::: {.column width="50%"}
+::: {.project-seed data-project-id="14"}
+
 ### 14. Fourier-Based Methods for Option Pricing
 
 - Price options from characteristic functions instead of closed-form formulas, trees, or simulated paths
@@ -210,13 +373,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Diagnose SPX and BTC fit, convergence, runtime, jump risk, stochastic volatility, and reusable library implementation
 
 [Open Project 14](notebooks/14_fourier_option_pricing.html)
+
 :::
 
-::::
+::: {.project-seed data-project-id="15"}
 
-:::: {.columns}
-
-::: {.column width="50%"}
 ### 15. Factor Investing and Fama-French Allocation
 
 - Build Fama-French factor, sector ETF, industry portfolio, and broad ETF return panels
@@ -225,9 +386,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Test factor-timing and sector-rotation portfolios with risk, turnover, drawdown, and library diagnostics
 
 [Open Project 15](notebooks/15_factor_investing.html)
+
 :::
 
-::: {.column width="50%"}
+::: {.project-seed data-project-id="16"}
+
 ### 16. Regime Switching Portfolio Selection
 
 - Build cross-asset, macro, FCI, breadth, volatility, drawdown, and correlation features
@@ -236,13 +399,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Convert regime probabilities into state-conditioned sleeves and repeat the workflow on sector ETFs
 
 [Open Project 16](notebooks/16_regime_switching_portfolio.html)
+
 :::
 
-::::
+::: {.project-seed data-project-id="17"}
 
-:::: {.columns}
-
-::: {.column width="50%"}
 ### 17. Network-Aware Portfolio Construction
 
 - Turn a rolling NASDAQ stock universe into correlation and tail-dependence networks
@@ -251,9 +412,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Use network scores as portfolio signals with diversification, turnover, and stress diagnostics
 
 [Open Project 17](notebooks/17_network_portfolio.html)
+
 :::
 
-::: {.column width="50%"}
+::: {.project-seed data-project-id="18"}
+
 ### 18. Rough Volatility for Option Pricing
 
 - Estimate physical roughness from log realized variance and moment-scaling diagnostics
@@ -262,13 +425,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Simulate and calibrate rBergomi and rough-Heston-style models for pricing, calibration, and hedge sensitivity
 
 [Open Project 18](notebooks/18_rough_volatility.html)
+
 :::
 
-::::
+::: {.project-seed data-project-id="19"}
 
-:::: {.columns}
-
-::: {.column width="50%"}
 ### 19. Machine Learning and Neural Forecasting for Uncertainty-Aware Kelly Allocation
 
 - Build 21-day cross-asset forward alpha targets and date-asset feature panels
@@ -277,9 +438,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Convert forecasts into fractional Kelly and forecast-gated MaxSharpe allocations with sector ETF transfer
 
 [Open Project 19](notebooks/19_forecasting_kelly_allocation.html)
+
 :::
 
-::: {.column width="50%"}
+::: {.project-seed data-project-id="20"}
+
 ### 20. Reinforcement Learning for Portfolio Allocation
 
 - Build a weekly RL portfolio environment with costs, drawdown, volatility, prior weights, and market-state features
@@ -288,13 +451,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Compare RL policies against forecast-gated, Kelly, and regime-aware baselines plus a sector ETF library transfer
 
 [Open Project 20](notebooks/20_rl_portfolio_allocation.html)
+
 :::
 
-::::
+::: {.project-seed data-project-id="21"}
 
-:::: {.columns}
-
-::: {.column width="50%"}
 ### 21. Fundamental Equity Research, Scoring and Reporting
 
 - Reconstruct quarterly and trailing statements from point-in-time SEC filings
@@ -303,9 +464,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Produce issuer reports and reproduce the historical S&P 500 workflow with library calls
 
 [Open Project 21](notebooks/21_fundamental_analysis.html)
+
 :::
 
-::: {.column width="50%"}
+::: {.project-seed data-project-id="22"}
+
 ### 22. Corporate Credit Risk, Market Pricing and Structured Credit
 
 - Construct censored bankruptcy and distress targets from SEC filing histories
@@ -314,13 +477,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Simulate issuer portfolios, copula dependence, tranche losses and joint credit stresses
 
 [Open Project 22](notebooks/22_credit_risk.html)
+
 :::
 
-::::
+::: {.project-seed data-project-id="23"}
 
-:::: {.columns}
-
-::: {.column width="50%"}
 ### 23. Real-Time Macro and Monetary Policy Nowcasting
 
 - Build as-of information sets and first-release GDP, inflation and labor targets
@@ -329,9 +490,11 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Repeat the models on Canadian releases, Bank of Canada data and international inputs
 
 [Open Project 23](notebooks/23_macro_nowcasting.html)
+
 :::
 
-::: {.column width="50%"}
+::: {.project-seed data-project-id="24"}
+
 ### 24. Building a financial analyst with LLM, Fine tuning and retrieval
 
 - Retrieve official releases and selected SEC disclosures with publication cutoffs
@@ -340,29 +503,106 @@ The goal is to build a series that is both **research-grade** (well explained) a
 - Produce readable, cited company, macro, event and daily analyses
 
 [Open Project 24](notebooks/24_financial_analysis_with_llm.html)
+
 :::
 
-::::
+:::
 
----
-
-## Data {#data}
-
-**The notebooks cannot be re-run directly on a fresh clone. Data has to be prepared first.** No large or licensed market data is committed to the repository. Instead, the repository ships a `data/` reproducibility layer: one small, readable script per data source, plus a `README.md` documenting exactly what each one does and where its data comes from.
-
-Two kinds of sources are handled differently:
-
-- **Scripted/automatic sources**: FRED (US Treasury yields, NFCI), the NY Fed (ACM term premia), Japan's Ministry of Finance (JGB yields), yfinance (equities, ETFs, BTC), the Kenneth French data library (factor returns) download themselves when you run the corresponding script, for example `python data/us_treasury_yields/download.py`.
-- **Manual/licensed sources**: OptionsDX option chains (SPX, SPY, QQQ, BTC/Deribit) and Stooq's bulk equity archives require you to obtain the files yourself from the linked source (free registration in OptionsDX's case) and place them in the matching `data/<source>/raw/` folder; a `build.py` script then turns them into the clean file each notebook expects.
-
-The complete list of sources, what to put where, and citation requirements per source live in `data/README.md` in the repository. Every number in every notebook has a scripted path back to where it came from.
-
-## The library
-
-Reusable logic from every project lives in **`quantfinlab`**, a typed, tested Python package covering fixed income, options pricing (with a compiled C++ pricing core for the numerically heavy methods), portfolio construction, risk reporting, volatility modeling, hedging, fundamental equity research, corporate credit, real-time macro and ML/RL applications for finance. Tests cover model properties from optimizer invariants and pricing kernels to statement reconstruction and release timing. Full documentation, the module map, and worked examples are in [`quantfinlab/README.md`](https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md) on GitHub.
-
----
-
-## Disclaimer
-
-This repository is for **research and educational purposes**. Nothing here is investment advice, and results may vary by dataset, assumptions, costs, constraints, and implementation details.
+```{=html}
+<div id="empty-state" class="empty-state" hidden>
+      <h3>No matching projects.</h3>
+      <p>Try another method, project number, or track.</p>
+      <button id="reset-search" class="button" type="button">
+        Show all projects <span aria-hidden="true">↗</span>
+      </button>
+    </div>
+    <noscript
+      ><p>
+        This interactive preview needs JavaScript.
+        <a href="index.html"
+          >Read the original homepage and all 24 projects.</a
+        >
+      </p></noscript
+    >
+  </section>
+  <section
+    class="practice-section wrap"
+    id="library"
+    aria-labelledby="practice-heading"
+  >
+    <div class="practice-intro">
+      <h2 id="practice-heading">
+        Built in notebooks.<br />Reusable in Python.
+      </h2>
+      <p>
+        The experiments become tools. <code>quantfinlab</code> brings the
+        reusable methods together in a typed, tested Python library — from
+        curve construction and pricing to portfolios, credit, macro and
+        financial analysis.
+      </p>
+      <a
+        class="text-link"
+        href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/blob/main/quantfinlab/README.md"
+        target="_blank"
+        rel="noreferrer"
+        >Read the library documentation
+        <span aria-hidden="true">↗</span></a
+      >
+    </div>
+    <div class="library-note">
+      <div class="code-label">
+        quantfinlab <span>Python 3.11–3.12</span>
+      </div>
+      <code class="install-command"
+        ><span>$</span> pip install quantfinlab</code
+      >
+      <div class="library-modules">
+        <span>fixed_income</span><span>options</span><span>portfolio</span
+        ><span>risk</span><span>fundamentals</span><span>credit</span
+        ><span>macro</span><span>analyst</span>
+      </div>
+      <a
+        href="https://pypi.org/project/quantfinlab/"
+        target="_blank"
+        rel="noreferrer"
+        >View on PyPI <span aria-hidden="true">↗</span></a
+      >
+    </div>
+  </section>
+  <aside class="data-note wrap" id="data" aria-labelledby="data-heading">
+    <div>
+      <h2 id="data-heading">Start with the data.</h2>
+      <p>
+        The notebooks need their data prepared before they can run. Each
+        source has a script and documentation; large and licensed market
+        datasets are not redistributed.
+      </p>
+    </div>
+    <a
+      class="text-link"
+      href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab/tree/main/data"
+      target="_blank"
+      rel="noreferrer"
+      >Data & reproducibility <span aria-hidden="true">↗</span></a
+    >
+  </aside>
+</main>
+<footer class="site-footer wrap">
+  <div class="footer-main">
+    <a class="wordmark" href="#top">QUANTITATIVE FINANCE LAB</a>
+    <div class="footer-links">
+      <a href="overview.html">About</a
+      ><a
+        href="https://github.com/ramtin-asadi/Quantitative-Finance-Lab"
+        target="_blank"
+        rel="noreferrer"
+        >GitHub ↗</a
+      ><a href="#top">Back to top ↑</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>Ramtin Asadi · Open source / MIT</span
+    ><span>Research and education. Nothing here is investment advice.</span>
+  </div>
+</footer>
+```

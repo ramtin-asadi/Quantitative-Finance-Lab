@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="$if(lang)$$lang$$else$en$endif$">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="description" content="$description$">
+    <title>$pagetitle$</title>
+    <link rel="icon" type="image/svg+xml" href="config/website/homepage/mark.svg">
+    <link rel="preload" href="config/website/homepage/fonts/source-serif.woff2" as="font" type="font/woff2" crossorigin>
+    $for(css)$
+    <link rel="stylesheet" href="$css$">
+    $endfor$
+    <script defer src="config/website/homepage/app.js"></script>
+  </head>
+  <body class="qfl-home">
+    $body$
+  </body>
+</html>
