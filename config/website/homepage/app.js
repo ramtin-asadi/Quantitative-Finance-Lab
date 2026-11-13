@@ -369,7 +369,10 @@ function trackGraphic(id) {
   );
 }
 
-function selectTrack(id, { focus = false, scroll = false } = {}) {
+function selectTrack(
+  id,
+  { focus = false, scroll = false, updateHash = false } = {},
+) {
   const track = TRACKS.find((t) => t.id === id);
   document.querySelectorAll(".track-card").forEach((button) => {
     const selected = button.dataset.track === id;
@@ -386,6 +389,7 @@ function selectTrack(id, { focus = false, scroll = false } = {}) {
       return `<a class="panel-project" href="${esc(p.url)}"><span class="project-num">${num(id)}</span><span>${esc(SHORT[id])}</span><span class="project-link-arrow" aria-hidden="true">↗</span></a>`;
     })
     .join("")}</div>`;
+  if (updateHash) history.replaceState(null, "", `#track-${id}`);
   if (scroll)
     panel.scrollIntoView({
       behavior: reducedMotion.matches ? "instant" : "smooth",
@@ -401,7 +405,8 @@ function renderTracks() {
   ).join("");
   list.addEventListener("click", (event) => {
     const button = event.target.closest("[data-track]");
-    if (button) selectTrack(button.dataset.track, { scroll: true });
+    if (button)
+      selectTrack(button.dataset.track, { scroll: true, updateHash: true });
   });
   list.addEventListener("keydown", (event) => {
     const keys = [
@@ -425,7 +430,7 @@ function renderTracks() {
       next = (current + TRACKS.length - 1) % TRACKS.length;
     if (event.key === "Home") next = 0;
     if (event.key === "End") next = TRACKS.length - 1;
-    selectTrack(TRACKS[next].id, { focus: true });
+    selectTrack(TRACKS[next].id, { focus: true, updateHash: true });
   });
   selectTrack("rates");
 }
@@ -569,16 +574,26 @@ function initDirectory() {
   renderDirectory();
 }
 
+function followPageAnchor() {
+  const anchor = location.hash.slice(1);
+  const track = TRACKS.find((t) => `track-${t.id}` === anchor);
+  if (track) selectTrack(track.id);
+  // Track links open the matching tab and keep the section heading in view.
+  // Existing section and project anchors keep their original destinations.
+  const target = document.getElementById(track ? "tracks" : anchor);
+  if (target)
+    requestAnimationFrame(() =>
+      target.scrollIntoView({ block: "start", behavior: "instant" }),
+    );
+}
+
 function initHomepage() {
   drawSurface();
   renderTracks();
   renderMap();
   initDirectory();
-  const target = document.getElementById(location.hash.slice(1));
-  if (target)
-    requestAnimationFrame(() =>
-      target.scrollIntoView({ block: "start", behavior: "instant" }),
-    );
+  followPageAnchor();
+  window.addEventListener("hashchange", followPageAnchor);
 }
 
 // Quarto first processes the static HTML links. Enhance on the next turn so

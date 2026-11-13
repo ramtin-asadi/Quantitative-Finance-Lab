@@ -5,11 +5,22 @@
 [![Python](https://img.shields.io/pypi/pyversions/quantfinlab.svg)](https://pypi.org/project/quantfinlab/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+<a href="https://ramtin-asadi.github.io/Quantitative-Finance-Lab/">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="config/website/readme/market-paths-dark.svg">
+    <img src="config/website/readme/market-paths.svg" width="960" alt="Explore Quantitative Finance Lab: illustrated market paths and possible outcomes">
+  </picture>
+</a>
+
+**[Explore the full website](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/)** · [Project roadmap](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/#roadmap)
+
+**[Python library: modules and examples](quantfinlab/README.md)** · [PyPI](https://pypi.org/project/quantfinlab/) · `pip install quantfinlab`
+
 **Quantitative Finance Lab** is a series of projects. It can be used as a **self-study curriculum** that codes, and tests every model against real market data, as a **research notebook series** that experiments different topics from the most famous to more recently developing areas with clear flow (motivation, mathematics, implementation, diagnostics, discussion), and as a **reusable Python library**, `quantfinlab`, that turns the parts of each project into tested, documented, importable code instead of just the notebook cells.
 
 In the numerical projects, we build the model, run it on real data with relevant frictions and timing controls, extract reusable components into the library, and finish with a visible library-only repeat. Most repeats use a **second dataset**, usually a different market, asset class, or country. When a project repeats the same source universe, that checks implementation reproducibility rather than independent-market validation. Repeated parts from earlier notebooks also use the library instead of re-implementing them.
 
-- The numerical notebooks develop the mathematics before the code. Project 24 exposes calculations and evidence handling, composes atomic library functions, and closes with high-level analysis calls.
+- The numerical notebooks develop the mathematics and the code. 
 - Every reusable component lives in `quantfinlab`, has type hints, has tests, and is importable outside the notebook that created it (like `from quantfinlab.options import bsm`)
 - Every dataset used has a documented, scripted path back to its source (see [Data](#data-and-reproducibility) below).
 
@@ -30,6 +41,16 @@ docs/             Rendered GitHub Pages site (built by Quarto)
 The rendered website is the best way to read the work. code, output, and plots all together are easily visible in website:
 
 **https://ramtin-asadi.github.io/Quantitative-Finance-Lab/**
+
+## Research tracks
+
+Browse by topic on the website, or follow the project-by-project descriptions below.
+
+- [**Rates & credit**](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/#track-rates): yield curves, term structure and credit risk.
+- [**Derivatives & volatility**](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/#track-derivatives): pricing, volatility surfaces, hedging and numerical methods.
+- [**Portfolios & risk**](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/#track-portfolio): allocation, factors, regimes, dependence and risk reporting.
+- [**Macro & fundamentals**](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/#track-macro): economic conditions, company research and real-time nowcasting.
+- [**Machine learning & AI**](https://ramtin-asadi.github.io/Quantitative-Finance-Lab/#track-intelligence): forecasting, reinforcement learning and financial analysis with LLMs.
 
 ## Projects
 
